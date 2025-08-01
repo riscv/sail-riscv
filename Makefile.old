@@ -44,6 +44,7 @@ SAIL_DEFAULT_INST += riscv_insts_zcb.sail
 SAIL_DEFAULT_INST += riscv_insts_zfh.sail
 # Zfa needs to be added after fext, dext and Zfh (as it needs
 # definitions from those)
+SAIL_DEFAULT_INST += riscv_insts_zfbfmin.sail
 SAIL_DEFAULT_INST += riscv_insts_zfa.sail
 
 SAIL_DEFAULT_INST += riscv_insts_zkn.sail
@@ -68,6 +69,8 @@ SAIL_DEFAULT_INST += riscv_insts_vext_red.sail
 SAIL_DEFAULT_INST += riscv_insts_vext_fp_red.sail
 SAIL_DEFAULT_INST += riscv_insts_zicbom.sail
 SAIL_DEFAULT_INST += riscv_insts_zicboz.sail
+SAIL_DEFAULT_INST += riscv_insts_zvfbfmin.sail
+SAIL_DEFAULT_INST += riscv_insts_zvfbfwma.sail
 SAIL_DEFAULT_INST += riscv_insts_zvbb.sail
 SAIL_DEFAULT_INST += riscv_insts_zvbc.sail
 SAIL_DEFAULT_INST += riscv_insts_zvknhab.sail

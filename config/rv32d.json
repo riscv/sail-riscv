@@ -129,6 +129,9 @@
     "Zfa": {
       "supported": true
     },
+    "Zfbfmin": {
+      "supported": true
+    },
     "Zfh": {
       "supported": true
     },
@@ -233,6 +236,12 @@
       "supported": true
     },
     "Zvkt": {
+      "supported": true
+    },
+    "Zvfbfmin": {
+      "supported": true
+    },
+    "Zvfbfwma": {
       "supported": true
     },
     "Sscofpmf": {

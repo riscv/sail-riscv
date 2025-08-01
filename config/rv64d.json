@@ -129,6 +129,9 @@
     "Zfa": {
       "supported": true
     },
+    "Zfbfmin": {
+      "supported": true
+    },
     "Zfh": {
       "supported": true
     },
@@ -204,6 +207,12 @@
     },
     "Zhinxmin": {
       "supported": false
+    },
+    "Zvfbfmin": {
+      "supported": true
+    },
+    "Zvfbfwma": {
+      "supported": true
     },
     "Zvbb": {
       "supported": true
