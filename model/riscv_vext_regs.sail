@@ -11,7 +11,12 @@ newtype vregno = Vregno : range(0, 31)
 
 function vregidx_to_vregno (Vregidx(b) : vregidx) -> vregno = Vregno(unsigned(b))
 function vregno_to_vregidx (Vregno(b) : vregno) -> vregidx = Vregidx(to_bits(5, b))
+
 function vregidx_offset(Vregidx(r) : vregidx, o : bits(5)) -> vregidx = Vregidx(r + o)
+function vregidx_offset_range(Vregidx(r) : vregidx, o : range(0, 31)) -> vregidx = Vregidx(r + o)
+
+overload operator + = { vregidx_offset, vregidx_offset_range }
+
 function vregidx_bits (Vregidx(b) : vregidx) -> bits(5) = b
 
 mapping encdec_vreg : vregidx <-> bits(5) = { Vregidx(r) <-> r }

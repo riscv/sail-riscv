@@ -90,17 +90,25 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
   result
 }
 
-/* Single element reading operation */
+// Read a single element of a vector register group (starting at vrid).
 val read_single_element : forall 'm, is_sew_bitsize('m) . (int('m), nat, vregidx) -> bits('m)
 function read_single_element(EEW, index, vrid) = {
-  assert(vlen >= EEW);
-  let 'elem_per_reg = vlen / EEW;
-  assert('elem_per_reg > 0);
-  let real_vrid  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, index / 'elem_per_reg));
-  let real_index : int    = index % 'elem_per_reg;
-  let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
-  assert(0 <= real_index & real_index < 'elem_per_reg);
-  vrid_val[real_index]
+  assert(EEW <= vlen);
+
+  // Number of EEW-bit elements per vector register.
+  let elem_per_reg = vlen / EEW;
+
+  // Register in group. Max LMUL is 8, so this should be in [0, 8).
+  let reg_in_group = index / elem_per_reg;
+  assert(reg_in_group < 8);
+
+  // Get the actual register in the group that we need to write, and the index into it.
+  let vrid = vrid + reg_in_group;
+  let index = index % elem_per_reg;
+  // Bit offset in register.
+  let offset = index * EEW;
+
+  V(vrid)[(offset + EEW - 1) .. offset]
 }
 
 /* The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
@@ -125,28 +133,26 @@ function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   }
 }
 
-/* Single element writing operation */
+// Write a single element of a vector register group (starting at vrid),
+// leaving all other elements unchanged.
 val write_single_element : forall 'm, is_sew_bitsize('m) . (int('m), nat, vregidx, bits('m)) -> unit
 function write_single_element(EEW, index, vrid, value) = {
   assert(EEW <= vlen);
 
-  let 'elem_per_reg = vlen / EEW;
-  assert('elem_per_reg > 0);
+  // Number of EEW-bit elements per vector register.
+  let elem_per_reg = vlen / EEW;
 
-  let real_vrid  : vregidx = vregidx_offset(vrid, to_bits_unsafe(5, index / 'elem_per_reg));
-  let real_index : int    = index % 'elem_per_reg;
+  // Register in group. Max LMUL is 8, so this should be in [0, 8).
+  let reg_in_group = index / elem_per_reg;
+  assert(reg_in_group < 8);
 
-  let vrid_val : vector('elem_per_reg, bits('m)) = read_single_vreg('elem_per_reg, EEW, real_vrid);
-  var r : vlenbits = zeros();
-  foreach (i from ('elem_per_reg - 1) downto 0) {
-    r = r << EEW;
-    if i == real_index then {
-      r = r | zero_extend(value);
-    } else {
-      r = r | zero_extend(vrid_val[i]);
-    }
-  };
-  V(real_vrid) = r;
+  // Get the actual register in the group that we need to write, and the index into it.
+  let vrid = vrid + reg_in_group;
+  let index = index % elem_per_reg;
+  // Bit offset in register.
+  let offset = index * EEW;
+
+  V(vrid) = [V(vrid) with (offset + EEW - 1) .. offset = value];
 }
 
 /* Mask register reading operation with num_elem as max(VLMAX,vlen/SEW)) */
