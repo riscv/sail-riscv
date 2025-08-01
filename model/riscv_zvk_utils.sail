@@ -14,7 +14,11 @@ function zvk_valid_reg_overlap(rs, rd, emul_pow) = {
   (rs_int + reg_group_size <= rd_int) | (rd_int + reg_group_size <= rs_int)
 }
 
-function zvk_check_encdec(EGW : nat, EGS : nat1) -> bool = (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & (2 ^ get_lmul_pow() * vlen) >= EGW
+function zvk_check_encdec(EGW: nat, EGS: nat1) -> bool = {
+  let LMUL_pow = get_lmul_pow();
+  let LMUL_times_VLEN = if LMUL_pow < 0 then vlen / (2 ^ abs_int(LMUL_pow)) else (2 ^ LMUL_pow) * vlen in
+  (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & LMUL_times_VLEN >= EGW
+}
 
 /*
  * Utility functions for Zvknh[ab]
