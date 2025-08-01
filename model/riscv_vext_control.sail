@@ -22,12 +22,15 @@ function get_num_elem(LMUL_pow, SEW) = {
 /* Reads a single vreg into multiple elements */
 val read_single_vreg : forall 'n 'm, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), vregidx) -> vector('n, bits('m))
 function read_single_vreg(num_elem, SEW, vrid) = {
+  // TODO: This should be part of the type signature for this function.
+  assert(num_elem * SEW <= vlen);
+
   let bv = V(vrid);
   var result : vector('n, bits('m)) = vector_init(zeros());
 
   foreach (i from 0 to (num_elem - 1)) {
     let start_index = i * SEW;
-    result[i] = slice(bv, start_index, SEW);
+    result[i] = bv[start_index + SEW - 1 .. start_index];
   };
 
   result
@@ -63,7 +66,8 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
     /* vrid must be a multiple of emul */
     assert(false, "invalid register group: vrid is not a multiple of EMUL")
   } else {
-    if LMUL_pow < 0 then {
+    /* Check if a single register read suffices. */
+    if num_elem * SEW < vlen then {
       result = read_single_vreg('n, SEW, vrid);
     } else {
       let 'num_elem_single = vlen / SEW;
