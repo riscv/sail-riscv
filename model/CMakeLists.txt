@@ -48,7 +48,8 @@ set(c_model_no_ext "${CMAKE_BINARY_DIR}/sail_riscv_model")
 set(c_model "${c_model_no_ext}.c")
 set(c_model_header "${c_model_no_ext}.h")
 # JSON schema for configuration file.
-set(schema_file "${CMAKE_BINARY_DIR}/sail_riscv_config_schema.json")
+set(schema_base_file "sail_riscv_config_schema.json")
+set(schema_file "${CMAKE_BINARY_DIR}/${schema_base_file}")
 
 if (COVERAGE)
     set(branch_info_file "${c_model_no_ext}.branch_info")
@@ -125,6 +126,9 @@ add_custom_target(generated_sail_riscv_model DEPENDS ${c_model} ${c_model_header
 install(FILES ${schema_file}
     DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
 )
+# Make schema locations visible to c_emulator build.
+set(schema_file "${schema_file}" PARENT_SCOPE)
+set(installed_schema_location "${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/${schema_base_file}" PARENT_SCOPE)
 
 ############# JSON #############
 

@@ -26,7 +26,6 @@
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
-#include "default_config.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
 #include "riscv_callbacks_if.h"
@@ -39,9 +38,11 @@ bool do_print_build_info = false;
 bool do_print_default_config = false;
 bool do_print_dts = false;
 bool do_validate_config = false;
+bool do_validate_schema = false;
 bool do_print_isa = false;
 
 std::string config_file;
+std::string schema_file;
 std::string term_log;
 std::string trace_log_path;
 FILE *trace_log = NULL;
@@ -162,6 +163,8 @@ static void setup_options(CLI::App &app)
                "Print default configuration");
   app.add_flag("--validate-config", do_validate_config,
                "Validate configuration");
+  app.add_flag("--validate-config-schema", do_validate_schema,
+               "Validate schema conformance of configuration");
   app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
   app.add_flag("--enable-experimental-extensions",
@@ -178,6 +181,9 @@ static void setup_options(CLI::App &app)
   app.add_option("--test-signature", sig_file, "Test signature file")
       ->option_text("<file>");
   app.add_option("--config", config_file, "Configuration file")
+      ->check(CLI::ExistingFile)
+      ->option_text("<file>");
+  app.add_option("--config-schema", schema_file, "Configuration schema file")
       ->check(CLI::ExistingFile)
       ->option_text("<file>");
   app.add_option("--trace-output", trace_log_path, "Trace output file")
@@ -576,7 +582,7 @@ int main(int argc, char **argv)
     exit(EXIT_SUCCESS);
   }
   if (do_print_default_config) {
-    printf("%s", DEFAULT_JSON);
+    printf("%s", get_default_config());
     exit(EXIT_SUCCESS);
   }
   if (rvfi_dii_port != 0) {
@@ -607,11 +613,18 @@ int main(int argc, char **argv)
     read_dtb(dtb_file.c_str());
   }
 
+  // Validate the config.  This would ideally always be done even for
+  // normal execution, but for now guard it with an enable flag (since
+  // it has an external dependency) and exit after schema validation.
+  if (do_validate_schema) {
+    validate_config_schema(schema_file, config_file);
+  }
+
   // Initialize the model.
   if (!config_file.empty()) {
     sail_config_set_file(config_file.c_str());
   } else {
-    sail_config_set_string(DEFAULT_JSON);
+    sail_config_set_string(get_default_config());
   }
   sail_set_abstract_xlen();
   sail_set_abstract_vlen_exp();
