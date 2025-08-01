@@ -27,7 +27,6 @@
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
-#include "default_config.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
 #include "riscv_callbacks_if.h"
@@ -38,8 +37,10 @@ bool do_show_times = false;
 bool do_print_version = false;
 bool do_print_build_info = false;
 bool do_print_default_config = false;
+bool do_print_default_config_schema = false;
 bool do_print_dts = false;
 bool do_validate_config = false;
+bool do_validate_schema = false;
 bool do_print_isa = false;
 
 std::string config_file;
@@ -162,8 +163,12 @@ static void setup_options(CLI::App &app)
   app.add_flag("--build-info", do_print_build_info, "Print build information");
   app.add_flag("--print-default-config", do_print_default_config,
                "Print default configuration");
+  app.add_flag("--print-default-config-schema", do_print_default_config_schema,
+               "Print default configuration schema");
   app.add_flag("--validate-config", do_validate_config,
                "Validate configuration");
+  app.add_flag("--validate-config-schema", do_validate_schema,
+               "Validate schema conformance of configuration");
   app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
   app.add_flag("--enable-experimental-extensions",
@@ -607,7 +612,11 @@ int main(int argc, char **argv)
     exit(EXIT_SUCCESS);
   }
   if (do_print_default_config) {
-    printf("%s", DEFAULT_JSON);
+    printf("%s", get_default_config());
+    exit(EXIT_SUCCESS);
+  }
+  if (do_print_default_config_schema) {
+    printf("%s", get_default_config_schema());
     exit(EXIT_SUCCESS);
   }
   if (rvfi_dii_port != 0) {
@@ -638,11 +647,18 @@ int main(int argc, char **argv)
     read_dtb(dtb_file.c_str());
   }
 
+  // Validate the config.  This would ideally always be done even for
+  // normal execution, but for now guard it with an enable flag (since
+  // it has an external dependency) and exit after schema validation.
+  if (do_validate_schema) {
+    validate_config_schema(config_file);
+  }
+
   // Initialize the model.
   if (!config_file.empty()) {
     sail_config_set_file(config_file.c_str());
   } else {
-    sail_config_set_string(DEFAULT_JSON);
+    sail_config_set_string(get_default_config());
   }
   sail_set_abstract_xlen();
   sail_set_abstract_vlen_exp();
