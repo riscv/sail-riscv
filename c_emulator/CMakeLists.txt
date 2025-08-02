@@ -20,6 +20,9 @@ message(STATUS "CXX compiler version: ${cxx_compiler_version}")
 # make version available to emulator
 configure_file(sail_riscv_version.cpp.in sail_riscv_version.cpp @ONLY)
 
+# make schema file locations available to emulator
+configure_file(schema_file_info.cpp.in schema_file_info.cpp @ONLY)
+
 ## A library that contains the C model and support code.
 
 add_library(riscv_model
@@ -38,8 +41,10 @@ add_library(riscv_model
     riscv_softfloat.h
     config_utils.cpp
     config_utils.h
-    sail_riscv_version.h
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
+    sail_riscv_version.h
+    "${CMAKE_CURRENT_BINARY_DIR}/schema_file_info.cpp"
+    schema_file_info.h
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
 )
@@ -53,7 +58,7 @@ target_include_directories(riscv_model
 )
 
 target_link_libraries(riscv_model
-    PUBLIC softfloat CLI11 sail_runtime
+    PUBLIC softfloat CLI11 sail_runtime default_config
 )
 
 add_dependencies(riscv_model generated_sail_riscv_model)
@@ -85,7 +90,7 @@ set_source_files_properties(
 add_dependencies(sail_riscv_sim generated_sail_riscv_model)
 
 target_link_libraries(sail_riscv_sim
-    PRIVATE riscv_model default_config
+    PRIVATE riscv_model
 )
 
 # TODO: Enable warnings when we use the #include trick

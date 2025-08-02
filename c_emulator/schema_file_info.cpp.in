@@ -1,0 +1,8 @@
+#include "schema_file_info.h"
+
+namespace schema_file_info {
+
+const std::string_view build_location = "@schema_file@";
+const std::string_view relative_install_location = "@installed_schema_location@";
+
+}
