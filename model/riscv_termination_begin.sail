@@ -63,3 +63,6 @@ termination_measure vmem_read repeat n
 termination_measure loop while 100
 
 $endif
+
+termination_measure vmem_write_addr repeat n
+termination_measure vmem_read repeat n
