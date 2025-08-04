@@ -7,7 +7,8 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
-    "mtval_has_illegal_instruction_bits": false
+    "mtval_has_illegal_instruction_bits": false,
+    "excp_breakpoint_updates_tval": true
   },
   "memory": {
     "pmp": {
