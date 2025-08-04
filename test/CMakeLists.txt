@@ -67,20 +67,8 @@ foreach(vlen IN ITEMS 128 256 512)
                 "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv64*"
             )
 
-            add_custom_command(
-                OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
-                COMMAND jq
-                    '.base.xlen = ${elen} |
-                     .extensions.V.vlen_exp = (${vlen} | log2) |
-                     .extensions.V.elen_exp = (${elen} | log2) '
-                    "${CMAKE_CURRENT_SOURCE_DIR}/../config/rv${elen}d.json"
-                    > "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
-                DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../config/rv${elen}d.json"
-                COMMENT "Generating config for vlen=${vlen}, elen=${elen}, xlen=${elen}"
-            )
-
             add_custom_target(config_rv${elen}d_v${vlen}_e${elen} ALL
-                DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
+                DEPENDS "${CMAKE_BINARY_DIR}/config/rv${elen}-v${vlen}.json"
             )
 
             foreach(arch IN ITEMS "rv32d" "rv64d")
@@ -90,7 +78,7 @@ foreach(vlen IN ITEMS 128 256 512)
                         NAME "${arch}_${elf_name}"
                         COMMAND
                             $<TARGET_FILE:sail_riscv_sim>
-                            --config "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
+                            --config "${CMAKE_BINARY_DIR}/config/rv${elen}-v${vlen}.json"
                             ${elf}
                     )
                 endforeach()
