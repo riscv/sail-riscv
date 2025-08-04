@@ -5016,6 +5016,9 @@ class FormatterBase {
     /// The width of the left column (options/flags/subcommands)
     std::size_t column_width_{30};
 
+    /// The offset at which long options begin in the left column
+    std::size_t long_options_offset_{6};
+
     /// The width of the right column (description of options/flags/subcommands)
     std::size_t right_column_width_{65};
 
@@ -5055,6 +5058,10 @@ class FormatterBase {
 
     /// Set the left column width (options/flags/subcommands)
     void column_width(std::size_t val) { column_width_ = val; }
+
+    /// Set the offset at which long options begin in the left column
+    /// XXX: local changes in the spirit of https://github.com/CLIUtils/CLI11/pull/1185
+    void long_options_offset(std::size_t offset) { long_options_offset_ = offset; }
 
     /// Set the right column width (description of options/flags/subcommands)
     void right_column_width(std::size_t val) { right_column_width_ = val; }
@@ -11414,9 +11421,8 @@ CLI11_INLINE std::string Formatter::make_option(const Option *opt, bool is_posit
         std::string longNames = detail::join(vlongNames, ", ");
 
         // Calculate setw sizes
-        const auto shortNamesColumnWidth = static_cast<int>(column_width_ / 3);  // 33% left for short names
-        const auto longNamesColumnWidth = static_cast<int>(std::ceil(
-            static_cast<float>(column_width_) / 3.0f * 2.0f));  // 66% right for long names and options, ceil result
+        const auto shortNamesColumnWidth = static_cast<int>(long_options_offset_);
+        const auto longNamesColumnWidth = static_cast<int>(column_width_) - shortNamesColumnWidth;
         int shortNamesOverSize = 0;
 
         // Print short names
