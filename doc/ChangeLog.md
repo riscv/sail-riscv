@@ -1,3 +1,10 @@
+# Notes since the last release
+
+- Support for the RV32E and RV64E base ISAs has been added. These
+  are enabled by setting `base.E` to `true` in `config/rv32d.json`
+  and `config/rv64d.json` respectively. Dynamic switching between
+  the 'E' and 'I' base ISAs is not supported.
+
 # Release notes for the 0.8 release
 
 This is a major release with some backwards-incompatible changes.
@@ -38,8 +45,8 @@ The configuration parameters for the model are now specified in a JSON
 file. These parameters include `base.xlen` (which is set to `32` for
 RV32 or `64` for RV64), various platform settings and flags to enable
 each individual extension, and any parameters for these extensions.
-Sample configurations are provided for RV32 (`config/rv32.json`) and
-RV64 (`config/rv64.json`).
+Sample configurations are provided for RV32 (`config/rv32d.json`) and
+RV64 (`config/rv64d.json`).
 
 The `--config` option to `sail_riscv_sim` is used to specify the
 configuration file. The default configuration can be printed using
