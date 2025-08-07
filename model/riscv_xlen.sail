@@ -10,7 +10,7 @@
 // This is done using the smallest/most logarithmic possible value since Sail's
 // type system works well for multiply and 2^ but not divide and log2.
 
-type xlen : Int = config base.xlen
+type xlen : Int = config base.mxlen
 constraint xlen in {32, 64}
 
 type log2_xlen  : Int = if xlen == 32 then 5 else 6
