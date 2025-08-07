@@ -18,8 +18,8 @@ public:
       = 0;
   virtual void mem_exception_callback(sbits paddr, uint64_t num_of_exception)
       = 0;
-  virtual void xreg_full_write_callback(const_sail_string abi_name,
-                                        unsigned reg, sbits value)
+  virtual void xreg_full_write_callback(const_sail_string abi_name, sbits reg,
+                                        sbits value)
       = 0;
   virtual void freg_write_callback(unsigned reg, sbits value) = 0;
   virtual void csr_full_write_callback(const_sail_string csr_name, unsigned reg,

@@ -1,6 +1,7 @@
 {
   "base": {
     "xlen": 64,
+    "E": false,
     "writable_misa": true,
     "writable_fiom": true,
     "writable_hpm_counters": {

@@ -15,7 +15,7 @@ public:
   void mem_read_callback(const char *type, sbits paddr, uint64_t width,
                          lbits value) override;
   void mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
-  void xreg_full_write_callback(const_sail_string abi_name, unsigned reg,
+  void xreg_full_write_callback(const_sail_string abi_name, sbits reg,
                                 sbits value) override;
   void freg_write_callback(unsigned reg, sbits value) override;
   void csr_full_write_callback(const_sail_string csr_name, unsigned reg,
