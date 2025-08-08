@@ -356,6 +356,3 @@ struct mul_op = {
   signed_rs1 : bool,
   signed_rs2 : bool
 }
-
-/* Pointer masking extensions */
-enum PM_Ext = {PM_SSNPM, PM_SMNPM, PM_SMMPM}

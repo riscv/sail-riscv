@@ -7,10 +7,13 @@
 /*=======================================================================================*/
 
 function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm) & currentlyEnabled(Ext_S) & (xlen != 32)
-function clause currentlyEnabled(Ext_Sspm)  = hartSupports(Ext_Sspm)  & currentlyEnabled(Ext_S) & (xlen != 32)
-function clause currentlyEnabled(Ext_Supm)  = hartSupports(Ext_Supm)  & currentlyEnabled(Ext_U) & (xlen != 32)
 function clause currentlyEnabled(Ext_Smmpm) = hartSupports(Ext_Smmpm) & (xlen != 32)
 function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm) & (xlen != 32)
+
+function clause currentlyEnabled(Ext_Sspm)  = hartSupports(Ext_Sspm)  & currentlyEnabled(Ext_S)
+function clause currentlyEnabled(Ext_Supm)  = hartSupports(Ext_Supm)  & currentlyEnabled(Ext_U)
+
+enum PM_Ext = {PM_SSNPM, PM_SMNPM, PM_SMMPM}
 
 enum PointerMaskingMode = {
   PMM_Disabled,
