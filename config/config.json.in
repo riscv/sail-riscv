@@ -244,11 +244,14 @@
     "Sscofpmf": {
       "supported": true
     },
+<<<<<<< HEAD:config/config.json.in
     "Ssnpm": {
       "supported": false,
       "supported_xlen_57": true,
       "supported_xlen_48": true
     },
+=======
+>>>>>>> d7ff2693 (Rebase):config/rv32d.json
     "Sstc": {
       "supported": true
     },
@@ -256,6 +259,7 @@
       "supported": true
     },
     "Ssnpm": {
+<<<<<<< HEAD:config/config.json.in
       "supported": @CONFIG_XLEN_IS_64@,
       "enabled7": true,
       "enabled16": true
@@ -269,6 +273,11 @@
       "supported": @CONFIG_XLEN_IS_64@,
       "enabled7": true,
       "enabled16": true
+=======
+      "supported": false,
+      "supported_xlen_57": false,
+      "supported_xlen_48": false
+>>>>>>> d7ff2693 (Rebase):config/rv32d.json
     },
     "Svbare": {
       "supported": true,

@@ -395,6 +395,19 @@ enum clause extension = Ext_Smnpm
 mapping clause extensionName = Ext_Smnpm <-> "smnpm"
 function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported
 
+// Environment extensions
+// These extensions are neither defined in the device tree nor configurable via the config file
+// To avoid ordering issues, they are placed at the bottom
+
+// Indicates whether pointer masking support is available in supervisor mode
+enum clause extension = Ext_Sspm
+mapping clause extensionName = Ext_Sspm <-> "sspm"
+function clause hartSupports(Ext_Sspm) = hartSupports(Ext_Ssnpm) & hartSupports(Ext_S)
+// Indicates whether pointer masking support is available in user mode
+enum clause extension = Ext_Supm
+mapping clause extensionName = Ext_Supm <-> "supm"
+function clause hartSupports(Ext_Supm) = hartSupports(Ext_Smnpm) | (hartSupports(Ext_Ssnpm) & hartSupports(Ext_S))
+
 let extensions_ordered_for_isa_string = [
   // Single letter extensions.
   Ext_M,
@@ -492,10 +505,13 @@ let extensions_ordered_for_isa_string = [
   // Ext_Svadu,
   Ext_Svinval,
   Ext_Svnapot,
+  Ext_Ssnpm,
   Ext_Svpbmt,
 
   // Hypervisor extensions, ordered alphabetically.
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smmpm,
+  Ext_Smnpm,
 ]
