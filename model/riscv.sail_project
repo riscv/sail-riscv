@@ -25,6 +25,7 @@ riscv_core {
     riscv_reg_type.sail,
     riscv_regs.sail,
     riscv_pc_access.sail,
+    riscv_zpm.sail,
     riscv_sys_regs.sail,
     riscv_ext_regs.sail,
     riscv_addr_checks_common.sail,
