@@ -71,32 +71,9 @@ function htif_tohost_base() -> physaddrbits = trunc(plat_htif_tohost())
 
 /* Physical memory map predicates */
 
+// FOR SP1: checking this is meaningless for a VM
 function within_phys_mem forall 'n, 'n <= max_mem_access. (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
-  /* To avoid overflow issues when physical memory extends to the end
-   * of the addressable range, we need to perform address bound checks
-   * on unsigned unbounded integers.
-   */
-  let addr_int     = unsigned(addr);
-  let ram_base_int = unsigned(plat_ram_base);
-  let rom_base_int = unsigned(plat_rom_base);
-  let ram_size_int = unsigned(plat_ram_size);
-  let rom_size_int = unsigned(plat_rom_size);
-
-  /* todo: iterate over segment list */
-  if      (  ram_base_int <= addr_int
-           & (addr_int + sizeof('n)) <= (ram_base_int + ram_size_int))
-  then    true
-  else if (  rom_base_int <= addr_int
-           & (addr_int + sizeof('n)) <= (rom_base_int + rom_size_int))
-  then    true
-  else {
-    print_platform("within_phys_mem: " ^ BitStr(addr) ^ " not within phys-mem:");
-    print_platform("  plat_rom_base: " ^ BitStr(plat_rom_base));
-    print_platform("  plat_rom_size: " ^ BitStr(plat_rom_size));
-    print_platform("  plat_ram_base: " ^ BitStr(plat_ram_base));
-    print_platform("  plat_ram_size: " ^ BitStr(plat_ram_size));
-    false
-  }
+  true
 }
 
 function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
