@@ -76,7 +76,7 @@ val get_config_use_abi_names = pure {c:"get_config_use_abi_names"} : unit -> boo
 // defaults for other backends
 function get_config_print_instr () = false
 function get_config_print_platform () = false
-function get_config_rvfi () = false
+function get_config_rvfi () = true
 function get_config_use_abi_names () = false
 
 val sign_extend : forall 'n 'm, 'm >= 'n. (implicit('m), bits('n)) -> bits('m)
