@@ -35,6 +35,9 @@
 #include "riscv_callbacks_if.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
+// jsoncons
+#include <jsoncons/json.hpp>
+#include <jsoncons_ext/jsonschema/jsonschema.hpp>
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -507,6 +510,59 @@ void init_logs()
 #endif
 }
 
+static std::string validate_json(std::string config_file)
+{
+  using namespace jsoncons;
+  json config;
+  try {
+    if (!config_file.empty()) {
+      std::ifstream is(config_file);
+      config = json::parse(is);
+    } else {
+      config = json::parse(DEFAULT_JSON);
+    }
+  } catch (const jsoncons::ser_error &e) {
+    std::cout << "Unable to parse config with category "
+              << e.code().category().name() << ", code " << e.code().value()
+              << " and message [" << e.what() << "]" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  json schema;
+  try {
+    schema = json::parse(JSON_SCHEMA);
+  } catch (const jsoncons::ser_error &e) {
+    std::cout << "Unable to parse schema with category "
+              << e.code().category().name() << ", code " << e.code().value()
+              << " and message [" << e.what() << "]" << std::endl
+              << "Report bug via https://github.com/riscv/sail-riscv/issues/new"
+              << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  try {
+    jsonschema::json_schema<json> compiled
+        = jsoncons::jsonschema::make_json_schema(
+            schema,
+            jsonschema::evaluation_options {}.default_version(
+                jsonschema::schema_version::draft202012()));
+    jsoncons::json_decoder<ojson> decoder;
+    compiled.validate(config, decoder);
+    ojson output = decoder.get_result();
+    if (output.size()) {
+      std::cout << "Validation failed due to" << std::endl
+                << pretty_print(output) << std::endl;
+      exit(EXIT_FAILURE);
+    }
+  } catch (const jsoncons::jsonschema::schema_error &e) {
+    std::cout << "Unable to compile schema due to [ " << e.what() << "]"
+              << std::endl
+              << "Report bug via https://github.com/riscv/sail-riscv/issues/new"
+              << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  return config.to_string();
+}
+
 int inner_main(int argc, char **argv)
 {
   CLI::App app("Sail RISC-V Model");
@@ -567,13 +623,11 @@ int inner_main(int argc, char **argv)
   }
 
   // Initialize the model.
-  if (!config_file.empty()) {
-    sail_config_set_file(config_file.c_str());
-  } else {
-    sail_config_set_string(DEFAULT_JSON);
-  }
-
-  init_sail_configured_types();
+  sail_config_set_string(validate_json(config_file).c_str());
+  sail_set_abstract_xlen();
+  sail_set_abstract_vlen_exp();
+  sail_set_abstract_ext_d_supported();
+  sail_set_abstract_elen_exp();
   model_init();
 
   if (do_validate_config) {

@@ -92,6 +92,8 @@ target_link_libraries(sail_riscv_sim
     PRIVATE CLI11 riscv_model default_config
 )
 
+target_link_libraries(sail_riscv_sim PRIVATE jsoncons)
+
 # TODO: Enable warnings when we use the #include trick
 # to include the generated Sail code. Currently it
 # generates too many warnings to turn these on globally.
