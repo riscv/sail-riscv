@@ -153,6 +153,20 @@ option(COVERAGE "Compile with Sail coverage collection enabled.")
 
 include(GNUInstallDirs)
 
+set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "jsoncons test suite")
+find_package(jsoncons QUIET)
+if(NOT jsoncons_FOUND)
+    # Download from source if no system lib detected.
+    include(FetchContent)
+    FetchContent_Declare(
+        jsoncons
+        GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
+        GIT_TAG        v1.3.2
+    )
+    message(STATUS "Downloading jsoncons from remote...")
+    FetchContent_MakeAvailable(jsoncons)
+endif()
+
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
 
