@@ -10,6 +10,7 @@ extern "C" {
 unit print_string(sail_string prefix, sail_string msg);
 
 unit print_log(sail_string s);
+unit print_log_instr(sail_string s, uint64_t pc);
 unit print_step(unit);
 
 bool get_config_print_instr(unit);

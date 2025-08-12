@@ -1,6 +1,7 @@
 #include "riscv_prelude.h"
 #include "riscv_config.h"
 #include "riscv_platform_impl.h"
+#include "symbol_table.h"
 
 unit print_string(sail_string prefix, sail_string msg)
 {
@@ -11,6 +12,17 @@ unit print_string(sail_string prefix, sail_string msg)
 unit print_log(sail_string s)
 {
   fprintf(trace_log, "%s\n", s);
+  return UNIT;
+}
+
+unit print_log_instr(sail_string s, uint64_t pc)
+{
+  auto maybe_symbol = symbolize_address(g_symbols, pc);
+  if (maybe_symbol.has_value()) {
+    fprintf(trace_log, "%80s    %s+%lu\n", s, maybe_symbol->second.c_str(), pc - maybe_symbol->first);
+  } else {
+    fprintf(trace_log, "%s\n", s);
+  }
   return UNIT;
 }
 
