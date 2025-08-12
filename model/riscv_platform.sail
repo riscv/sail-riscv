@@ -24,9 +24,6 @@ val elf_entry = pure {
   c: "elf_entry"
 } : unit -> int
 
-// Return symbol+offset for an address, or an empty string.
-val symbolize = pure {c: "symbolize"} : xlenbits -> string
-function symbolize(address) = ""
 
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
