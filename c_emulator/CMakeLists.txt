@@ -83,9 +83,10 @@ set_source_files_properties(
 )
 
 add_dependencies(sail_riscv_sim generated_sail_riscv_model)
+add_dependencies(sail_riscv_sim elfloader)
 
 target_link_libraries(sail_riscv_sim
-    PRIVATE riscv_model default_config
+    PRIVATE riscv_model default_config elfloader
 )
 
 # TODO: Enable warnings when we use the #include trick

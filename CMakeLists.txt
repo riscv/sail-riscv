@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 cmake_policy(VERSION 3.20...3.31)
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
 # CMake 3.24 and newer don't use the mtimes from archives when extracting
 # GMP in ExternalProject_Add(). This reverts that behaviour so that the
 # mtimes in the archive are used. This is necessary because otherwise
@@ -171,6 +171,9 @@ add_subdirectory("dependencies/softfloat")
 
 # CLI11
 add_subdirectory("dependencies/CLIUtils")
+
+# ELF loader
+add_subdirectory("elfloader")
 
 # Sail C runtime.
 add_subdirectory("sail_runtime")
