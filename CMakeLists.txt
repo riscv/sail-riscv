@@ -153,11 +153,8 @@ option(COVERAGE "Compile with Sail coverage collection enabled.")
 
 include(GNUInstallDirs)
 
-# Softfloat support.
-add_subdirectory("dependencies/softfloat")
-
-# CLI11
-add_subdirectory("dependencies/CLIUtils")
+# Third party dependencies
+add_subdirectory("dependencies")
 
 # Sail C runtime.
 add_subdirectory("sail_runtime")
