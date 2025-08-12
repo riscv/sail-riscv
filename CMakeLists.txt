@@ -153,6 +153,19 @@ option(COVERAGE "Compile with Sail coverage collection enabled.")
 
 include(GNUInstallDirs)
 
+find_package(elfio QUIET)
+if(NOT elfio_FOUND)
+    # Download from source if no system lib detected.
+    include(FetchContent)
+    FetchContent_Declare(
+        elfio
+        GIT_REPOSITORY https://github.com/serge1/ELFIO.git
+        GIT_TAG        Release_3.12 
+    )
+    message(STATUS "Downloading elfio from remote...")
+    FetchContent_MakeAvailable(elfio)
+endif()
+
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
 
