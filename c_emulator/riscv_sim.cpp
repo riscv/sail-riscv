@@ -16,10 +16,11 @@
 #include <cstring>
 
 #include "CLI11.hpp"
-#include "elf.h"
+#include "elf_loader.h"
 #include "sail.h"
 #include "sail_config.h"
 #include "rts.h"
+#include "symbol_table.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
@@ -231,53 +232,70 @@ static void setup_options(CLI::App &app)
       "file. This is optional with some arguments, e.g. --print-isa-string.");
 }
 
-void check_elf(bool is32bit)
+uint64_t load_sail(const std::string &filename, bool main_file)
 {
-  if (is32bit) {
+  ELF elf = ELF::open(filename);
+
+  switch (elf.architecture()) {
+  case Architecture::RV32:
     if (zxlen != 32) {
       fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
               zxlen);
       exit(EXIT_FAILURE);
     }
-  } else {
+    break;
+  case Architecture::RV64:
     if (zxlen != 64) {
       fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n",
               zxlen);
       exit(EXIT_FAILURE);
     }
+    break;
   }
-}
 
-uint64_t load_sail(const char *f, bool main_file)
-{
-  bool is32bit;
-  uint64_t entry;
-  uint64_t begin_sig, end_sig;
-  // Needs a change in Sail lib API to remove const_cast.
-  load_elf(const_cast<char *>(f), &is32bit, &entry);
-  check_elf(is32bit);
+  // Load into memory.
+  elf.load([](uint64_t address, const uint8_t *data, uint64_t length) {
+    // TODO: We could definitely improve on rts.c's memory implementation
+    // (which is O(N^2)) and writing one byte at a time here.
+    for (uint64_t i = 0; i < length; ++i) {
+      write_mem(address + i, data[i]);
+    }
+  });
+
   if (!main_file) {
-    /* Don't scan for test-signature/htif symbols for additional ELF files. */
-    return entry;
+    // Don't scan for test-signature/htif symbols for additional ELF files.
+    return elf.entry();
   }
-  fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", entry);
-  /* locate htif ports */
-  if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
+
+  fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", elf.entry());
+
+  // Load the entire symbol table.
+  auto symbols = elf.symbols();
+
+  // Save reversed symbol table for log symbolization.
+  g_symbols = reverse_symbol_table(symbols);
+
+  const auto &tohost = symbols.find("tohost");
+  if (tohost == symbols.end()) {
     fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
     rv_enable_htif = false;
   } else {
+    rv_htif_tohost = tohost->second;
     fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", rv_htif_tohost);
   }
-  /* locate test-signature locations if any */
-  if (!lookup_sym(f, "begin_signature", &begin_sig)) {
-    fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig);
-    mem_sig_start = begin_sig;
+  // Locate test-signature locations if any.
+  const auto &begin_sig = symbols.find("begin_signature");
+  if (begin_sig != symbols.end()) {
+    fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig->second);
+    mem_sig_start = begin_sig->second;
   }
-  if (!lookup_sym(f, "end_signature", &end_sig)) {
-    fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig);
-    mem_sig_end = end_sig;
+  const auto &end_sig = symbols.find("end_signature");
+  if (end_sig != symbols.end()) {
+    fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig->second);
+    mem_sig_end = end_sig->second;
   }
-  return entry;
+
+  return elf.entry();
 }
 
 void init_sail_reset_vector(uint64_t entry)
@@ -659,14 +677,13 @@ int main(int argc, char **argv)
   }
 
   const std::string &initial_elf_file = elfs[0];
-  uint64_t entry = rvfi
-      ? rvfi->get_entry()
-      : load_sail(initial_elf_file.c_str(), /*main_file=*/true);
+  uint64_t entry = rvfi ? rvfi->get_entry()
+                        : load_sail(initial_elf_file, /*main_file=*/true);
 
   /* Load any additional ELF files into memory */
   for (auto it = elfs.cbegin() + 1; it != elfs.cend(); it++) {
     fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
-    (void)load_sail(it->c_str(), /*main_file=*/false);
+    (void)load_sail(*it, /*main_file=*/false);
   }
 
   init_sail(entry, config_file.c_str());
