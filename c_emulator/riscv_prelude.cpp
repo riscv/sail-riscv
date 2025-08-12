@@ -8,10 +8,9 @@ unit print_string(sail_string prefix, sail_string msg)
   return UNIT;
 }
 
-unit print_instr(sail_string s)
+unit print_log(sail_string s)
 {
-  if (config_print_instr)
-    fprintf(trace_log, "%s\n", s);
+  fprintf(trace_log, "%s\n", s);
   return UNIT;
 }
 
@@ -19,13 +18,6 @@ unit print_step(unit)
 {
   if (config_print_step)
     fprintf(trace_log, "\n");
-  return UNIT;
-}
-
-unit print_platform(sail_string s)
-{
-  if (config_print_platform)
-    fprintf(trace_log, "%s\n", s);
   return UNIT;
 }
 
