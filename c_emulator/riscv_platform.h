@@ -22,6 +22,10 @@ bool sys_enable_experimental_extensions(unit);
 
 unit memea(mach_bits, sail_int);
 
+// Return symbol+offset for an address, or an empty string.
+// Value is returned in *symbol.
+unit symbolize(sail_string *symbol, sbits address);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -1,9 +1,8 @@
 #include "sail.h"
-#include "rts.h"
-#include "riscv_prelude.h"
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
+#include "symbol_table.h"
 
 #ifdef DEBUG_RESERVATION
 #include <stdio.h>
@@ -88,5 +87,20 @@ bool sys_enable_experimental_extensions(unit)
 
 unit memea(mach_bits, sail_int)
 {
+  return UNIT;
+}
+
+unit symbolize(sail_string *symbol, sbits address)
+{
+  auto maybe_symbol = symbolize_address(g_symbols, address.bits);
+  if (maybe_symbol.has_value()) {
+    // TODO: This could be more efficient potentially.
+    std::string result = maybe_symbol->second;
+    result += "+";
+    result += std::to_string(address.bits - maybe_symbol->first);
+    COPY(sail_string)(symbol, result.c_str());
+  } else {
+    COPY(sail_string)(symbol, "");
+  }
   return UNIT;
 }
