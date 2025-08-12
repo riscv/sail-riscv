@@ -19,17 +19,6 @@ Sail modules is present in the
 https://alasdair.github.io/manual.html#_modular_sail_specifications[Sail
 language manual].
 
-A simplified rendering of this modular structure is shown in
-
-image:./figs/sail_riscv_project.dot.svg[]
-
-where arrows indicate a dependency relationship.  The
-link:../model/riscv.sail_project[riscv.sail_project] file can be
-easier to understand than the figure; it is also more authoritative.
-
-TIP: One might need to right-click on the image and open the image in
-a new tab or window to see it in more detail.
-
 A Sail module typically consists of a group of closely related Sail
 source files, and a declaration of their dependencies on other
 modules.  The RISC-V specification consists of a few core modules and
