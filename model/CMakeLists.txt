@@ -50,10 +50,6 @@ set(c_model_header "${c_model_no_ext}.h")
 # JSON schema for configuration file.
 set(schema_file "${CMAKE_BINARY_DIR}/sail_riscv_config_schema.json")
 
-# Module dependency graph: This depends on the release of the
-# Sail compiler after 0.19.1
-# set(depgraph_file "${CMAKE_BINARY_DIR}/sail_riscv_project.dot")
-
 if (COVERAGE)
     set(branch_info_file "${c_model_no_ext}.branch_info")
     set(coverage_args "--c-coverage" ${branch_info_file})
@@ -65,7 +61,6 @@ endif()
 add_custom_command(
     DEPENDS ${sail_srcs} ${project_file}
     OUTPUT ${c_model} ${c_model_header} ${branch_info_file} ${schema_file}
-           # ${depgraph_file} Uncomment after next Sail compiler release.
     VERBATIM
     COMMENT "Building C code from Sail model"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -79,11 +74,6 @@ add_custom_command(
         ${coverage_args}
         # Generate schema for configuration.
         --output-schema ${schema_file}
-
-        # Generate the module dependency graph.  Uncomment after
-        # the next Sail compiler release.
-        # --ddump-project-depgraph ${depgraph_file}
-        # --ddump-project-depgraph-skip-deps
 
         # Optimisations.
         -O --Oconstant-fold
