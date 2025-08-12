@@ -1,0 +1,5 @@
+set(default_config_filename "${CMAKE_CURRENT_LIST_DIR}/rv64d.json")
+set(config_schema "${CMAKE_BINARY_DIR}/../sail_riscv_config_schema.json")
+file(READ ${default_config_filename} DEFAULT_JSON)
+file(READ ${config_schema} JSON_SCHEMA)
+configure_file("${CMAKE_CURRENT_LIST_DIR}/default_config.h.in" "default_config.h" @ONLY)
