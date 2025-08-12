@@ -46,13 +46,14 @@ mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
-val process_vlseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
+val process_vlseg : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let vm_val : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vd_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
 
   let 'm = nf * load_width_bytes * 8;
+  let 'n = num_elem;
   let (result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, 'm, EMUL_pow, vd_seg, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -106,14 +107,15 @@ mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
-val process_vlsegff : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
+val process_vlsegff : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
 function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let vm_val : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vd_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
-  let tail_ag : agtype = get_vtype_vta();
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
+  let tail_ag = get_vtype_vta();
 
   let 'm = nf * load_width_bytes * 8;
+  let 'n = num_elem;
   let (result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -183,12 +185,13 @@ mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
-val process_vsseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, int('p), int('n)) -> ExecutionResult
+val process_vsseg : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
 function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
 
+  let 'n = num_elem;
   let mask : bits('n) = match init_masked_source(num_elem, EMUL_pow, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -240,14 +243,15 @@ mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
-val process_vlsseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> ExecutionResult
+val process_vlsseg : (nfields, bits(1), vregidx, word_width, regidx, regidx, int, nat1) -> ExecutionResult
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vd_seg  : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
-  let rs2_val : int = unsigned(get_scalar(rs2, xlen));
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let vm_val  = read_vmask(num_elem, vm, zvreg);
+  let vd_seg  = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
+  let rs2_val = unsigned(get_scalar(rs2, xlen));
 
   let 'm = nf * load_width_bytes * 8;
+  let 'n = num_elem;
   let (result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -301,13 +305,14 @@ mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
-val process_vssseg : forall 'f 'b 'n 'p, nfields_range('f) & is_mem_width('b) & ('n > 0). (int('f), bits(1), vregidx, int('b), regidx, regidx, int('p), int('n)) -> ExecutionResult
+val process_vssseg : (nfields, bits(1), vregidx, word_width, regidx, regidx, int, nat1) -> ExecutionResult
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
-  let EMUL_reg : int = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs3_seg : vector('n, bits('f * 'b * 8)) = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
-  let rs2_val : int = unsigned(get_scalar(rs2, xlen));
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
+  let rs2_val = unsigned(get_scalar(rs2, xlen));
 
+  let 'n = num_elem;
   let mask : bits('n) = match init_masked_source(num_elem, EMUL_pow, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -359,14 +364,15 @@ mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
-val process_vlxseg : forall 'f 'ib 'db 'ip 'dp 'n, nfields_range('f) & is_mem_width('ib) & is_mem_width('db) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> ExecutionResult
+val process_vlxseg : (nfields, bits(1), vregidx, word_width, word_width, int, int, regidx, vregidx, nat1, int) -> ExecutionResult
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
-  let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vd_seg  : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
-  let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
+  let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vd_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
+  let vs2_val = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
 
   let 'm = nf * EEW_data_bytes * 8;
+  let 'n = num_elem;
   let (result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, nf * EEW_data_bytes * 8, EMUL_data_pow, vd_seg, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -449,13 +455,14 @@ mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
-val process_vsxseg : forall 'f 'ib 'db 'ip 'dp 'n, nfields_range('f) & is_mem_width('ib) & is_mem_width('db) & ('n > 0). (int('f), bits(1), vregidx, int('ib), int('db), int('ip), int('dp), regidx, vregidx, int('n), int) -> ExecutionResult
+val process_vsxseg : (nfields, bits(1), vregidx, word_width, word_width, int, int, regidx, vregidx, nat1, int) -> ExecutionResult
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
-  let EMUL_data_reg : int = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
-  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
-  let vs3_seg : vector('n, bits('f * 'db * 8)) = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
-  let vs2_val : vector('n, bits('ib * 8)) = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
+  let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
+  let vm_val = read_vmask(num_elem, vm, zvreg);
+  let vs3_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
+  let vs2_val = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
 
+  let 'n = num_elem;
   let mask : bits('n) = match init_masked_source(num_elem, EMUL_data_pow, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -536,7 +543,7 @@ mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
   <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_V)
 
-val process_vlre : forall 'f 'b 'n, nfields_range_pow2('f) & is_mem_width('b) & ('n >= 0). (int('f), vregidx, int('b), regidx, int('n)) -> ExecutionResult
+val process_vlre : (nfields_pow2, vregidx, word_width, regidx, nat) -> ExecutionResult
 function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
@@ -596,7 +603,7 @@ mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_V)
 
-val process_vsre : forall 'f 'b 'n, nfields_range_pow2('f) & is_mem_width('b) & ('n >= 0). (int('f), int('b), regidx, vregidx, int('n)) -> ExecutionResult
+val process_vsre : (nfields_pow2, word_width, regidx, vregidx, nat) -> ExecutionResult
 function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
@@ -624,7 +631,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
   };
 
   foreach (j from cur_field to (nf - 1)) {
-    let vs3_val : vector('n, bits('b * 8)) = read_vreg(elem_per_reg, load_width_bytes * 8, 0, vregidx_offset(vs3, to_bits_unsafe(5, j)));
+    let vs3_val = read_vreg(elem_per_reg, load_width_bytes * 8, 0, vregidx_offset(vs3, to_bits_unsafe(5, j)));
     foreach (i from 0 to (elem_per_reg - 1)) {
       set_vstart(to_bits_unsafe(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
@@ -666,12 +673,13 @@ mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op)
   <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vd_or_vs3) @ encdec_lsop(op)
   when currentlyEnabled(Ext_V)
 
-val process_vm : forall 'n 'l, ('n >= 0 & 'l >= 0). (vregidx, regidx, int('n), int('l), vmlsop) -> ExecutionResult
+val process_vm : (vregidx, regidx, nat, nat, vmlsop) -> ExecutionResult
 function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
+  let 'n = num_elem;
   let vd_or_vs3_val : vector('n, bits(8)) = read_vreg(num_elem, 8, 0, vd_or_vs3);
 
   foreach (i from start_element to (num_elem - 1)) {
