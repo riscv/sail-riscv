@@ -4,9 +4,9 @@ This repository contains a formal specification of the RISC-V architecture, writ
 [Sail](https://github.com/rems-project/sail). It has been adopted by RISC-V International.
 
 The model specifies assembly language formats of the instructions, the corresponding
-encoders and decoders, and the instruction semantics. A [reading guide](doc/ReadingGuide.md)
+encoders and decoders, and the instruction semantics. A [reading guide](doc/ReadingGuide.adoc)
 to the model is provided in the [doc/](doc/) subdirectory, along with a guide on [how to
-extend](doc/ExtendingGuide.md) the model.
+add a new extension](doc/AddingExtensions.adoc) the model.
 
 ## What is Sail?
 
