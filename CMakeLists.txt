@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 cmake_policy(VERSION 3.20...3.31)
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
 # CMake 3.24 and newer don't use the mtimes from archives when extracting
 # GMP in ExternalProject_Add(). This reverts that behaviour so that the
 # mtimes in the archive are used. This is necessary because otherwise
@@ -153,11 +153,27 @@ option(COVERAGE "Compile with Sail coverage collection enabled.")
 
 include(GNUInstallDirs)
 
+find_package(elfio QUIET)
+if(NOT elfio_FOUND)
+    # Download from source if no system lib detected.
+    include(FetchContent)
+    FetchContent_Declare(
+        elfio
+        GIT_REPOSITORY https://github.com/serge1/ELFIO.git
+        GIT_TAG        Release_3.12 
+    )
+    message(STATUS "Downloading elfio from remote...")
+    FetchContent_MakeAvailable(elfio)
+endif()
+
 # Softfloat support.
 add_subdirectory("dependencies/softfloat")
 
 # CLI11
 add_subdirectory("dependencies/CLIUtils")
+
+# ELF loader
+add_subdirectory("elfloader")
 
 # Sail C runtime.
 add_subdirectory("sail_runtime")
