@@ -24,10 +24,6 @@ public:
   // Return the entry point (where execution should begin).
   uint64_t entry() const;
 
-  // Return true if this is a Position-Independent Executable (the `type` is
-  // ET_DYN).
-  bool pie() const;
-
   // Call `writer()` to load all of the loadable sections into memory (or you
   // can do anything else with them).
   void
