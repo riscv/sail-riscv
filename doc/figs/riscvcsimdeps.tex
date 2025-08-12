@@ -1,29 +1,46 @@
 \documentclass[tikz]{standalone}
 
 \usepackage{tikz}
-\usetikzlibrary{calc,positioning}
+\usetikzlibrary{calc,positioning,backgrounds}
 
 \begin{document}
 \begin{tikzpicture}[
+    % these two lines are needed for the svg to receive a white background.
+    background rectangle/.style={rounded corners,fill=gray!20},
+    framed,
+    % general settings
     node distance=5mm,
     align=center,
-    base/.style={rectangle, rounded corners=3mm, minimum size=10mm, thick, draw=black},
-    cmodel/.style={base, fill=yellow!50},
-    sail/.style={base, fill=red!30},
+    % nodes
+    base/.style={rectangle, rounded corners=3mm, minimum size=10mm, thick, draw=black,fill=white},
+    cmodel/.style={base, fill=green!30},
+    sail/.style={base, fill=cyan!40},
     c/.style={base},
-    csail/.style={base,fill=red!10},
+    csail/.style={base,fill=cyan!20},
+    % arrows
     dep/.style={black, very thick},
-    gen/.style={red, very thick}
+    gen/.style={blue, very thick}
   ]
 
-  \node (cmodel)     [cmodel]                        {\textbf{C translation}\\
-                                                         \texttt{riscv\_model\_\$ARCH}};
+  \pgfdeclarelayer{background}
+  \pgfdeclarelayer{arrows} % arrows directly on the background layer don't seem to show
+  \pgfsetlayers{background,arrows,main}
 
-  \node (csim)       [c, above left=of cmodel]       {\textbf{C Simulator}\\
-                                                         \texttt{riscv\_sim}\\
+  \pgfonlayer{main}
+
+  \node (cmodel)     [cmodel]                        {\textbf{C translation}\\
+                                                         \texttt{sail\_riscv\_model}};
+
+  \node (csim)       [c, above left=of cmodel]       {\textbf{C++ Simulator}\\
+                                                         \texttt{sail\_riscv\_sim}\\
                                                          command line options\\
                                                          initialization\\
                                                          exit code};
+
+  \node (callbacks)  [c, below left=of cmodel]       {\textbf{Callbacks}\\
+                                                         \texttt{riscv\_callbacks.\{sail,cpp\}}\\
+                                                         state-change callbacks\\
+                                                         logging};
 
   \coordinate (smloc) at ($(csim)!2!(csim -| cmodel)$);
   \node (sailmodel)  [sail] at (smloc)               {\textbf{Sail model}\\
@@ -39,24 +56,31 @@
                                                          \texttt{riscv\_platform\_impl}};
 
   \coordinate (clib) at ($(cmodel)!1.5!(cmodel |- platimpl)$);
-
   \node (csail)      [csail]  at (clib)              {\textbf{C Sail library}\\
                                                          \texttt{sail,rts,elf}\\
                                                          Sail values\\
                                                          raw memory\\
                                                          ELF loading};
 
+  \endpgfonlayer
+
+  \pgfonlayer{arrows}
+
   \draw[->,gen]  (sailmodel) edge                    (cmodel);
 
   \draw[->,dep]  (cmodel)    edge                    (plat)
-                             edge                    (csail);
+                             edge                    (csail)
+                             edge                    (callbacks);
 
   \draw[->,dep]  (plat)      edge                    (platimpl);
 
+  \draw[->,dep]  (platimpl)  edge                    (csail);
+
   \draw[->,dep]  (csim)      edge                    (cmodel)
+                             edge                    (callbacks)
                              edge [out=-90,in=180]   (platimpl)
                              edge [out=-90,in=135]   (csail);
 
-  \draw[->,dep]  (platimpl)  edge                    (csail);
+  \endpgfonlayer
 \end{tikzpicture}
 \end{document}
