@@ -44,11 +44,6 @@ uint64_t ELF::entry() const
   return m_reader.get_entry();
 }
 
-bool ELF::pie() const
-{
-  return m_reader.get_type() == ELFIO::ET_DYN;
-}
-
 void ELF::load(
     std::function<void(uint64_t, const uint8_t *, uint64_t)> writer) const
 {
