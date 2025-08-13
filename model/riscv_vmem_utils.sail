@@ -163,6 +163,52 @@ function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
   Ok(write_success)
 }
 
+/* Pointer Masking */
+
+/* Return the 2-bit PMM value based on the current effective privilege mode. */
+function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = match eff_privilege {
+  Machine    => pmm_mode(mseccfg[PMM]),
+  Supervisor => pmm_mode(menvcfg[PMM]),
+  User       => if currentlyEnabled(Ext_S) then pmm_mode(senvcfg[PMM]) else pmm_mode(menvcfg[PMM]),
+}
+
+/* Check whether PMM is applicable.
+ * NOTE: mstatus[MXR] == 1'b1 disables pointer masking in S and U mode, but not in M-mode.
+ */
+function is_pmm_applicable(typ : AccessType(ext_access_type), eff_privilege : Privilege) -> bool =
+  typ != InstructionFetch() & (eff_privilege == Machine | mstatus[MXR] == 0b0)
+
+/* Get the effective PMLEN value */
+function get_pmlen(typ : AccessType(ext_access_type), eff_privilege : Privilege) -> {0, 7, 16} = {
+  let pmm = get_pmm(eff_privilege);
+  if is_pmm_applicable(typ, eff_privilege) then {
+    assert(xlen == 64);
+    match pmm {
+      PMM_Disabled => 0,
+      PMM_XLEN_57  => xlen - 57,
+      PMM_XLEN_48  => xlen - 48,
+      PMM_Reserved => { internal_error(__FILE__, __LINE__, "Invalid pointer masking mode"); 0}
+    }
+  } else {
+    /* PMM not active */
+    0
+  }
+}
+
+/* Transforms a virtual address by sign-extending the relevant upper bits. */
+function transform_VA(Virtaddr(effective_address) : virtaddr, pmlen : {0, 7, 16}) -> virtaddr = Virtaddr(sign_extend(effective_address[xlen - pmlen - 1 .. 0]))
+
+/* Transforms a physical address by zero-extending the relevant upper bits. */
+function transform_PA(Virtaddr(effective_address) : virtaddr, pmlen : {0, 7, 16}) -> virtaddr = Virtaddr(zero_extend(effective_address[xlen - pmlen - 1 .. 0]))
+
+/* Transforms the effective address based on PMM settings and the current translation mode. */
+function transform_effective_address(vaddr : virtaddr, typ : AccessType(ext_access_type)) -> virtaddr = {
+  let eff_privilege = effectivePrivilege(typ, mstatus, cur_privilege);
+  let pmlen = get_pmlen(typ, eff_privilege);
+  let mode = translationMode(eff_privilege);
+  if mode == Bare then transform_PA(vaddr, pmlen) else transform_VA(vaddr, pmlen)
+}
+
 /****    External API    ****/
 
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
@@ -185,6 +231,9 @@ function vmem_read(rs, offset, width, acc, aq, rl, res) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
+
+  /* Apply pointer masking */
+  let vaddr = transform_effective_address(vaddr, Read(Data));
 
   // TODO: Rationalize to use a single alignment definition if possible.
   if res then {
@@ -250,6 +299,9 @@ function vmem_write(rs_addr, offset, width, data, acc, aq, rl, res) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
+
+  /* Apply pointer masking */
+  let vaddr = transform_effective_address(vaddr, Write(Data));
 
   if   check_misaligned(vaddr, width)
   then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));

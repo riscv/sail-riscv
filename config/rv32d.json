@@ -239,14 +239,16 @@
     "Sscofpmf": {
       "supported": true
     },
-    "Smcntrpmf": {
-      "supported": true
-    },
     "Sstc": {
       "supported": true
     },
     "Svinval": {
       "supported": true
+    },
+    "Ssnpm": {
+      "supported": false,
+      "supported_xlen_57": false,
+      "supported_xlen_48": false
     },
     "Svbare": {
       "supported": true,
@@ -263,6 +265,19 @@
     },
     "Sv57": {
       "supported": false
+    },
+    "Smcntrpmf": {
+      "supported": true
+    },
+    "Smnpm": {
+      "supported": false,
+      "supported_xlen_57": false,
+      "supported_xlen_48": false
+    },
+    "Smmpm": {
+      "supported": false,
+      "supported_xlen_57": false,
+      "supported_xlen_48": false
     }
   }
 }
