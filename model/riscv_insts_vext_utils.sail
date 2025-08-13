@@ -456,9 +456,10 @@ function get_fixed_rounding_incr(vec_elem, shift_amount) = {
     match rounding_mode {
       0b00 => bit_to_bits(vec_elem[shift_amount - 1]),
       0b01 => {
-        assert(shift_amount - 2 >= 0);
+        assert(shift_amount - 1 >= 0);
         bool_to_bits(
-          vec_elem[shift_amount - 1] == bitone & vec_elem[shift_amount - 2 .. 0] != zeros() | vec_elem[shift_amount] == bitone)
+          vec_elem[shift_amount - 1] == bitone &
+          ((if shift_amount == 1 then false else vec_elem[shift_amount - 2 .. 0] != zeros()) | vec_elem[shift_amount] == bitone))
       },
       0b10 => 0b0,
       0b11 => bool_to_bits(
