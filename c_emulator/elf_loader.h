@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 
 #include <elfio/elfio.hpp>
@@ -38,7 +39,10 @@ public:
   std::map<std::string, uint64_t> symbols() const;
 
 private:
-  explicit ELF(ELFIO::elfio reader);
+  explicit ELF(std::unique_ptr<ELFIO::elfio> reader);
 
-  ELFIO::elfio m_reader;
+  // Unfortunately there's a bug in ELFIO which means we can't std::move() it,
+  // so we have to put it in a unique_ptr.
+  // https://github.com/serge1/ELFIO/issues/157
+  std::unique_ptr<ELFIO::elfio> m_reader;
 };
