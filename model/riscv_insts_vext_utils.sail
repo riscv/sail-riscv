@@ -462,7 +462,7 @@ function get_fixed_rounding_incr(vec_elem, shift_amount) = {
       },
       0b10 => 0b0,
       0b11 => bool_to_bits(
-        not(vec_elem[shift_amount] == bitone) & (vec_elem[shift_amount - 1 .. 0] != zeros()))
+        vec_elem[shift_amount] != bitone & vec_elem[shift_amount - 1 .. 0] != zeros())
     }
   }
 }
