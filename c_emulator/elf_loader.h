@@ -32,8 +32,9 @@ public:
            writer) const;
 
   // Load and return the symbol table. It isn't cached - every time you call
-  // this the entire symbol table is loaded from disk. Note only STT_FUNC and
-  // STT_NOTYPE symbols that are not SHN_UNDEF are returned.
+  // this the entire symbol table is loaded from disk. Note only STT_FUNC,
+  // STT_OBJECT, STT_COMMON and STT_NOTYPE symbols that are not SHN_UNDEF are
+  // returned.
   std::map<std::string, uint64_t> symbols() const;
 
 private:
