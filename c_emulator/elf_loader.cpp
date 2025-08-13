@@ -3,21 +3,21 @@
 
 #include <elfio/elfio.hpp>
 
-ELF::ELF(ELFIO::elfio reader)
+ELF::ELF(std::unique_ptr<ELFIO::elfio> reader)
     : m_reader(std::move(reader))
 {
 }
 
 ELF ELF::open(const std::string &filename)
 {
-  ELFIO::elfio reader;
+  auto reader = std::make_unique<ELFIO::elfio>();
 
-  if (!reader.load(filename)) {
+  if (!reader->load(filename)) {
     throw std::runtime_error("File '" + filename
                              + "' is not found or it is not an ELF file");
   }
 
-  if (reader.get_machine() != ELFIO::EM_RISCV) {
+  if (reader->get_machine() != ELFIO::EM_RISCV) {
     throw std::runtime_error("File '" + filename
                              + "' is not a RISC-V ELF file");
   }
@@ -27,27 +27,27 @@ ELF ELF::open(const std::string &filename)
 
 Architecture ELF::architecture() const
 {
-  switch (m_reader.get_class()) {
+  switch (m_reader->get_class()) {
   case ELFIO::ELFCLASS32:
     return Architecture::RV32;
   case ELFIO::ELFCLASS64:
     return Architecture::RV64;
   default:
     throw std::runtime_error("Unknown ELF class "
-                             + std::to_string(m_reader.get_class()));
+                             + std::to_string(m_reader->get_class()));
   }
 }
 
 // Entry point.
 uint64_t ELF::entry() const
 {
-  return m_reader.get_entry();
+  return m_reader->get_entry();
 }
 
 void ELF::load(
     std::function<void(uint64_t, const uint8_t *, uint64_t)> writer) const
 {
-  for (const auto &seg : m_reader.segments) {
+  for (const auto &seg : m_reader->segments) {
     if (seg->get_type() == ELFIO::PT_LOAD) {
       // It's a segment that we should load into memory.
       if (seg->get_file_size() > seg->get_memory_size()) {
@@ -80,9 +80,9 @@ std::map<std::string, uint64_t> ELF::symbols() const
 
   std::map<std::string, uint64_t> symbolMap;
 
-  const section *symtab = m_reader.sections[".symtab"];
+  const section *symtab = m_reader->sections[".symtab"];
   if (symtab != nullptr) {
-    const_symbol_section_accessor accessor(m_reader, symtab);
+    const_symbol_section_accessor accessor(*m_reader, symtab);
     unsigned index = 0;
     std::string name;
     Elf64_Addr value = 0;
