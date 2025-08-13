@@ -1,8 +1,0 @@
-add_subdirectory(add_section)
-add_subdirectory(anonymizer)
-add_subdirectory(elfdump)
-add_subdirectory(proc_mem)
-add_subdirectory(tutorial)
-add_subdirectory(write_obj)
-add_subdirectory(writer)
-#add_subdirectory(c_wrapper)
