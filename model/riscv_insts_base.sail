@@ -25,11 +25,16 @@ mapping clause encdec = UTYPE(imm, rd, op)
 
 function clause execute (UTYPE(imm, rd, op)) = {
   let off : xlenbits = sign_extend(imm @ 0x000);
-  X(rd) = match op {
-    LUI   => off,
-    AUIPC => get_arch_pc() + off
-  };
-  RETIRE_SUCCESS
+  match op {
+    LUI   => { X(rd) = off; RETIRE_SUCCESS },
+    AUIPC => {
+      if   in_debug_abstract_command() & not(debug_is_pc_instr_legal())
+      then return Illegal_Instruction();
+
+      X(rd) = get_arch_pc() + off;
+      RETIRE_SUCCESS
+    },
+  }
 }
 
 mapping utype_mnemonic : uop <-> string = {
@@ -50,6 +55,8 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   match ext_control_check_pc(target) {
     Ext_ControlAddr_Error(e) => Ext_ControlAddr_Check_Failure(e),
     Ext_ControlAddr_OK(target) => {
+      if   in_debug_abstract_command() & not(debug_is_legal_ct_target(target))
+      then return Illegal_Instruction();
       // Perform standard alignment check.
       let target_bits = bits_of(target);
       // Check target is at least 2-byte aligned (callers must ensure
@@ -510,6 +517,9 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
+  if   in_debug_abstract_command()
+  then return debug_mode_ecall_hook();
+
   let t : sync_exception =
     struct { trap = match (cur_privilege) {
                       User       => E_U_EnvCall(),
@@ -530,6 +540,9 @@ mapping clause encdec = MRET()
   <-> 0b0011000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute MRET() = {
+  if   in_debug_abstract_command()
+  then return debug_mode_mret_hook();
+
   if   cur_privilege != Machine
   then Illegal_Instruction()
   else if not(ext_check_xret_priv(Machine))
@@ -549,6 +562,9 @@ mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
+  if   in_debug_abstract_command()
+  then return debug_mode_sret_hook();
+
   let sret_illegal : bool = match cur_privilege {
     User       => true,
     Supervisor => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
@@ -572,8 +588,24 @@ union clause instruction = EBREAK : unit
 mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
+function ebreak_into_debug() -> bool =
+  if   currentlyEnabled(Ext_Sdext)
+  then match cur_privilege {
+    User       => bool_bits(dcsr[EBreakU]),
+    Supervisor => bool_bits(dcsr[EBreakS]),
+    Machine    => bool_bits(dcsr[EBreakM]),
+    // TODO: VS/VU modes
+  }
+  else false
+
 function clause execute EBREAK() =
-  Memory_Exception(Virtaddr(PC), E_Breakpoint())
+  if in_debug_abstract_command() then {
+    Exit_Debug_Abstract_Command()
+  } else if ebreak_into_debug() then {
+    Enter_Debug_Mode(DBGEntry_EBreak)
+  } else {
+    Memory_Exception(Virtaddr(PC), E_Breakpoint())
+  }
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
@@ -584,7 +616,9 @@ mapping clause encdec = WFI()
   <-> 0b000100000101 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute WFI() =
-  match cur_privilege {
+  if   in_debug_abstract_command() | in_single_step()
+  then RETIRE_SUCCESS
+  else match cur_privilege {
     Machine    => Enter_Wait(WAIT_WFI),
     Supervisor => if   mstatus[TW] == 0b1
                   then Illegal_Instruction()
