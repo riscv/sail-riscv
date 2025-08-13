@@ -149,6 +149,7 @@ extensions {
         riscv_insts_zcd.sail,
         riscv_insts_zfh.sail,
         riscv_insts_zfa.sail,
+        riscv_insts_zfbfmin.sail,
     }
   }
 
@@ -203,6 +204,15 @@ extensions {
     Zbkx {
       requires riscv
       files riscv_insts_zbkx.sail
+    }
+  }
+
+  vector_bfloat16 {
+    Zvfbfmin {
+      requires riscv, FD, V
+      files
+        riscv_insts_zvfbfmin.sail,
+        riscv_insts_zvfbfwma.sail
     }
   }
 
