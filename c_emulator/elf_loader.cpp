@@ -94,7 +94,8 @@ std::map<std::string, uint64_t> ELF::symbols() const
 
     while (accessor.get_symbol(index, name, value, size, bind, type,
                                section_index, other)) {
-      if ((type == STT_NOTYPE || type == STT_FUNC || type == STT_OBJECT || type == STT_COMMON)
+      if ((type == STT_NOTYPE || type == STT_FUNC || type == STT_OBJECT
+           || type == STT_COMMON)
           && section_index != SHN_UNDEF) {
         symbolMap[name] = value;
       }
