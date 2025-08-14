@@ -61,10 +61,3 @@ function ext_data_get_addr(base : regidx, offset : xlenbits, acc : AccessType(ex
 
 function ext_handle_data_check_error(err : ext_data_addr_error) -> unit =
   ()
-
-/* Default implementations of these hooks permit all accesses.  */
-function ext_check_phys_mem_read (access_type, paddr, width, acquire, release, reserved, read_meta) =
-  Ext_PhysAddr_OK ()
-
-function ext_check_phys_mem_write(write_kind, paddr, width, data, metadata) =
-  Ext_PhysAddr_OK ()

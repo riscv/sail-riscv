@@ -119,10 +119,8 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
       if   within_mmio_readable(paddr, width)
       then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
       else if within_phys_mem(paddr, width)
-      then match ext_check_phys_mem_read(t, paddr, width, aq, rl, res, meta) {
-        Ext_PhysAddr_OK()     => phys_mem_read(t, paddr, width, aq, rl, res, meta),
-        Ext_PhysAddr_Error(e) => Err(e)
-      } else match t {
+      then phys_mem_read(t, paddr, width, aq, rl, res, meta)
+      else match t {
         InstructionFetch() => Err(E_Fetch_Access_Fault()),
         Read(Data) => Err(E_Load_Access_Fault()),
         _          => Err(E_SAMO_Access_Fault())
@@ -195,10 +193,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
       else if within_phys_mem(paddr, width)
       then {
         let wk = write_kind_of_flags(aq, rl, con);
-        match ext_check_phys_mem_write (wk, paddr, width, data, meta) {
-          Ext_PhysAddr_OK() => phys_mem_write(wk, paddr, width, data, meta),
-          Ext_PhysAddr_Error(e)  => Err(e),
-        }
+        phys_mem_write(wk, paddr, width, data, meta)
       } else Err(E_SAMO_Access_Fault())
     }
   }
