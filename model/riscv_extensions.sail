@@ -96,6 +96,14 @@ function clause hartSupports(Ext_Zicsr) = config extensions.Zicsr.supported
 enum clause extension = Ext_Zifencei
 mapping clause extensionName = Ext_Zifencei <-> "zifencei"
 function clause hartSupports(Ext_Zifencei) = config extensions.Zifencei.supported
+// Non-temporal Locality Hints
+enum clause extension = Ext_Zihintntl
+mapping clause extensionName = Ext_Zihintntl <-> "zihintntl"
+function clause hartSupports(Ext_Zihintntl) = config extensions.Zihintntl.supported
+// Pause Hint
+enum clause extension = Ext_Zihintpause
+mapping clause extensionName = Ext_Zihintpause <-> "zihintpause"
+function clause hartSupports(Ext_Zihintpause) = config extensions.Zihintpause.supported
 // Hardware Performance Counters
 enum clause extension = Ext_Zihpm
 mapping clause extensionName = Ext_Zihpm <-> "zihpm"
@@ -398,6 +406,8 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicond,
   Ext_Zicsr,
   Ext_Zifencei,
+  Ext_Zihintntl,
+  Ext_Zihintpause,
   Ext_Zihpm,
   Ext_Zimop,
 
