@@ -23,6 +23,8 @@ configure_file(sail_riscv_version.cpp.in sail_riscv_version.cpp @ONLY)
 ## A library that contains the C model and support code.
 
 add_library(riscv_model
+    elf_loader.cpp
+    elf_loader.h
     riscv_callbacks.cpp
     riscv_callbacks.h
     riscv_callbacks_if.h
@@ -38,6 +40,8 @@ add_library(riscv_model
     riscv_softfloat.h
     config_utils.cpp
     config_utils.h
+    symbol_table.cpp
+    symbol_table.h
     sail_riscv_version.h
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
@@ -53,7 +57,7 @@ target_include_directories(riscv_model
 )
 
 target_link_libraries(riscv_model
-    PUBLIC softfloat CLI11 sail_runtime
+    PUBLIC elfio softfloat CLI11 sail_runtime
 )
 
 add_dependencies(riscv_model generated_sail_riscv_model)
