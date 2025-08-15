@@ -271,10 +271,6 @@ function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
 type csrRW = bits(2)  /* read/write */
 
 /* instruction opcode grouping */
-enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR, /* AMO ops */
-              AMOMIN, AMOMAX, AMOMINU, AMOMAXU,
-              AMOCAS}
-
 type shamt_zba = bits(2)
 
 enum brop_zbb = {ANDN, ORN, XNOR, MAX, MAXU, MIN, MINU, ROL, ROR}
