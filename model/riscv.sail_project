@@ -106,19 +106,26 @@ extensions {
 
   // RISC-V Bit manipulation extensions
   B {
-    requires riscv
+    B_types {
+      before riscv
+      files riscv_bext_types.sail
+    }
 
-    Zba {
-      files riscv_insts_zba.sail
-    }
-    Zbb {
-      files riscv_insts_zbb.sail
-    }
-    Zbc {
-      files riscv_insts_zbc.sail
-    }
-    Zbs {
-      files riscv_insts_zbs.sail
+    B_insts {
+      requires riscv, B_types
+
+      Zba {
+        files riscv_insts_zba.sail
+      }
+      Zbb {
+        files riscv_insts_zbb.sail
+      }
+      Zbc {
+        files riscv_insts_zbc.sail
+      }
+      Zbs {
+        files riscv_insts_zbs.sail
+      }
     }
   }
 
@@ -207,7 +214,7 @@ extensions {
       files riscv_zkr_control.sail
     }
     Zbkb {
-      requires riscv
+      requires riscv, B_types
       files riscv_insts_zbkb.sail
     }
     Zbkx {

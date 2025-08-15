@@ -270,20 +270,7 @@ function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
 
 type csrRW = bits(2)  /* read/write */
 
-/* instruction opcode grouping */
-type shamt_zba = bits(2)
-
-enum brop_zbb = {ANDN, ORN, XNOR, MAX, MAXU, MIN, MINU, ROL, ROR}
-
-enum brop_zbkb = {PACK, PACKH}
-
-enum brop_zbs = {BCLR, BEXT, BINV, BSET}
-
-enum bropw_zbb = {ROLW, RORW}
-
-enum biop_zbs = {BCLRI, BEXTI, BINVI, BSETI}
-
-enum extop_zbb = {SEXTB, SEXTH, ZEXTH}
+/* Wait state reasons */
 
 enum WaitReason = {WAIT_WFI, WAIT_WRS_STO, WAIT_WRS_NTO}
 mapping wait_name : WaitReason <-> string = {
