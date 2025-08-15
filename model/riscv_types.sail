@@ -271,21 +271,9 @@ function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
 type csrRW = bits(2)  /* read/write */
 
 /* instruction opcode grouping */
-enum uop = {LUI, AUIPC}                          /* upper immediate ops */
-enum bop = {BEQ, BNE, BLT, BGE, BLTU, BGEU}      /* branch ops */
-enum iop = {ADDI, SLTI, SLTIU, XORI, ORI, ANDI}  /* immediate ops */
-enum sop = {SLLI, SRLI, SRAI}                    /* shift ops */
-enum rop = {ADD, SUB, SLL, SLT, SLTU, XOR,
-            SRL, SRA, OR, AND}                   /* reg-reg ops */
-
-enum ropw  = {ADDW, SUBW, SLLW, SRLW, SRAW}           /* reg-reg 32-bit ops */
-enum sopw  = {SLLIW, SRLIW, SRAIW}                    /* RV64-only shift ops */
 enum amoop = {AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR, /* AMO ops */
               AMOMIN, AMOMAX, AMOMINU, AMOMAXU,
               AMOCAS}
-enum csrop = {CSRRW, CSRRS, CSRRC}                    /* CSR ops */
-
-enum cbop_zicbom = {CBO_CLEAN, CBO_FLUSH, CBO_INVAL}  /* Zicbom ops */
 
 type shamt_zba = bits(2)
 
@@ -300,10 +288,6 @@ enum bropw_zbb = {ROLW, RORW}
 enum biop_zbs = {BCLRI, BEXTI, BINVI, BSETI}
 
 enum extop_zbb = {SEXTB, SEXTH, ZEXTH}
-
-enum zicondop = {CZERO_EQZ, CZERO_NEZ}
-
-enum wrsop = {WRS_STO, WRS_NTO}
 
 enum WaitReason = {WAIT_WFI, WAIT_WRS_STO, WAIT_WRS_NTO}
 mapping wait_name : WaitReason <-> string = {
