@@ -79,6 +79,8 @@ For booting operating system images, see the information under the
 - Zicond extension for integer conditional operations, v1.0
 - Zicbom and Zicboz extensions for cache-block management (Zicbop not currently supported), v1.0
 - Zimop extension for May-Be-Operations, v1.0
+- Zihintntl extension for Non-temporal Locality Hints, v1.0
+- Zihintpause extension for Pause Hint, v2.0
 - M extension for integer multiplication and division, v2.0
 - Zmmul extension for integer multiplication only, v1.0
 - A extension for atomic instructions, v2.1
