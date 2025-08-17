@@ -3,11 +3,20 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * 0"
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
 env:
   SAIL_VERSION: "0.19.1"
   CMAKE_VERSION: "3.20"
 jobs:
   run-riscv-tests:
+    # If triggered by a PR event, only run if the 'run-riscv-tests' label is present
+    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-riscv-tests') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
