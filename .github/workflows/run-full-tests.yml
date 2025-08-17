@@ -1,9 +1,10 @@
-name: Run risc-v tests
+name: Run full tests
 on:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * 0"
   pull_request:
+    # Explicit listing of types is necessary to run the workflow when a label is added
     types:
       - opened
       - synchronize
@@ -14,9 +15,9 @@ env:
   SAIL_VERSION: "0.19.1"
   CMAKE_VERSION: "3.20"
 jobs:
-  run-riscv-tests:
-    # If triggered by a PR event, only run if the 'run-riscv-tests' label is present
-    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-riscv-tests') }}
+  run-full-tests:
+    # If triggered by a PR event, only run if the 'run-full-tests' label is present
+    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-full-tests') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
