@@ -58,7 +58,7 @@ val print_string = pure "print_string" : (string, string) -> unit
 // Print to the --trace log file.
 val print_log = pure {interpreter: "print_endline", c: "print_log", lem: "print_dbg", _: "print_endline"} : string -> unit
 // Print an instruction to the --trace log file. The second argument is PC which can be used for
-// smbolization. This is only supported by the C backend so other backends just do a normal print.
+// symbolization. This is only supported by the C backend so other backends just do a normal print.
 val print_log_instr = pure {c: "print_log_instr"} : (string, bits(64)) -> unit
 function print_log_instr(message, pc) = print_log(message)
 
