@@ -3,19 +3,19 @@
 #include "riscv_platform_impl.h"
 #include "symbol_table.h"
 
-unit print_string(sail_string prefix, sail_string msg)
+unit print_string(const_sail_string prefix, const_sail_string msg)
 {
   printf("%s%s\n", prefix, msg);
   return UNIT;
 }
 
-unit print_log(sail_string s)
+unit print_log(const_sail_string s)
 {
   fprintf(trace_log, "%s\n", s);
   return UNIT;
 }
 
-unit print_log_instr(sail_string s, uint64_t pc)
+unit print_log_instr(const_sail_string s, uint64_t pc)
 {
   auto maybe_symbol = symbolize_address(g_symbols, pc);
   if (maybe_symbol.has_value()) {
