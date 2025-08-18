@@ -308,13 +308,8 @@ extensions {
     }
     Zihintntl_insts {
       requires riscv, Zihintntl_types
-      before I // NTL instructions override ADD
+      before I, Zca // NTL instructions override ADD, C.NTL overrides C.ADD
       files riscv_insts_zihintntl.sail
-    }
-    Zihintntl_insts_compressed {
-      requires riscv, Zihintntl_types, Zihintntl_insts
-      before Zca // C.NTL instructions override C.ADD
-      files riscv_insts_zihintntlc.sail
     }
   }
 
