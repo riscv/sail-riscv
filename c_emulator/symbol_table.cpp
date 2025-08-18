@@ -6,8 +6,8 @@ reverse_symbol_table(const std::map<std::string, uint64_t> &symbols)
 {
   std::map<uint64_t, std::string> reversed;
   for (const auto &it : symbols) {
-    // If multiple symbols have the same value the first one alphabetically wins.
-    reversed.insert(std::make_pair(it.second, it.first));
+    // If multiple symbols have the same value the last one alphabetically wins.
+    reversed[it.second] = it.first;
   }
   return reversed;
 }
