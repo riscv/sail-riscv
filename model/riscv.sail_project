@@ -85,16 +85,16 @@ extensions {
   }
 
   A {
-    Zaamo_types {
+    A_types {
       before riscv
-      files riscv_zaamo_types.sail
+      files riscv_aext_types.sail
     }
     Zaamo {
-      requires riscv, Zaamo_types
+      requires riscv, A_types
       files riscv_insts_zaamo.sail
     }
     Zalrsc {
-      requires riscv, Zaamo_types
+      requires riscv, A_types
       files riscv_insts_zalrsc.sail
     }
   }
