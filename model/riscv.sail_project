@@ -320,7 +320,7 @@ extensions {
 
   Zihintpause {
     requires riscv
-    before Zifenci // PAUSE overrides a FENCE
+    before I // PAUSE overrides a FENCE
     files riscv_insts_zihintpause.sail
   }
 }
