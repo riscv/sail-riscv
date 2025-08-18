@@ -116,6 +116,7 @@ static void print_build_info(void)
   std::cout << "C++ compiler: " << version_info::cxx_compiler_version
             << std::endl;
   std::cout << "CLI11: " << CLI11_VERSION << std::endl;
+  std::cout << "ELFIO: " << ELFIO_VERSION << std::endl;
 }
 
 static bool is_32bit_model(void)
@@ -262,37 +263,39 @@ uint64_t load_sail(const std::string &filename, bool main_file)
     }
   });
 
-  if (!main_file) {
-    // Don't scan for test-signature/htif symbols for additional ELF files.
-    return elf.entry();
-  }
 
   fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", elf.entry());
 
   // Load the entire symbol table.
-  auto symbols = elf.symbols();
+  const auto symbols = elf.symbols();
 
   // Save reversed symbol table for log symbolization.
-  g_symbols = reverse_symbol_table(symbols);
+  // If multiple symbols from different ELF files have the same value the first one wins.
+  const auto reversed_symbols = reverse_symbol_table(symbols);
+  g_symbols.insert(reversed_symbols.begin(), reversed_symbols.end());
 
-  const auto &tohost = symbols.find("tohost");
-  if (tohost == symbols.end()) {
-    fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
-    rv_enable_htif = false;
-  } else {
-    rv_htif_tohost = tohost->second;
-    fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", rv_htif_tohost);
-  }
-  // Locate test-signature locations if any.
-  const auto &begin_sig = symbols.find("begin_signature");
-  if (begin_sig != symbols.end()) {
-    fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig->second);
-    mem_sig_start = begin_sig->second;
-  }
-  const auto &end_sig = symbols.find("end_signature");
-  if (end_sig != symbols.end()) {
-    fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig->second);
-    mem_sig_end = end_sig->second;
+  if (main_file) {
+    // Only scan for test-signature/htif symbols in the main ELF file.
+
+    const auto &tohost = symbols.find("tohost");
+    if (tohost == symbols.end()) {
+      fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
+      rv_enable_htif = false;
+    } else {
+      rv_htif_tohost = tohost->second;
+      fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", rv_htif_tohost);
+    }
+    // Locate test-signature locations if any.
+    const auto &begin_sig = symbols.find("begin_signature");
+    if (begin_sig != symbols.end()) {
+      fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig->second);
+      mem_sig_start = begin_sig->second;
+    }
+    const auto &end_sig = symbols.find("end_signature");
+    if (end_sig != symbols.end()) {
+      fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig->second);
+      mem_sig_end = end_sig->second;
+    }
   }
 
   return elf.entry();
