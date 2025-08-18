@@ -26,7 +26,7 @@ mach_bits plat_get_16_random_bits(unit)
 
 // Note: Store-Conditionals are allowed to spuriously fail. If you want
 // that to happen you can spuriously set `reservation_valid = false`
-// either directly in `load_reservation()` or by callling
+// either directly in `load_reservation()` or by calling
 // `cancel_reservation()`.
 
 unit load_reservation(sbits addr)

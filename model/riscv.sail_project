@@ -303,7 +303,7 @@ extensions {
 }
 
 // May-be-operations (MOPS) defined after extensions so they can be
-// overriden by earlier extensions
+// overridden by earlier extensions
 mops {
   after extensions
   requires riscv_core, riscv

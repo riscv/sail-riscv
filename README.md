@@ -104,15 +104,15 @@ For booting operating system images, see the information under the
 - Zvbc extension for vector carryless multiplication, v1.0
 - Zvkb extension for vector cryptography bit-manipulation, v1.0
 - Zvkg extension for vector GCM/GMAC, v1.0
-- Zvkn extension for vector crytography NIST Algorithm Suite
-- Zvknc extension for vector crytography NIST Algorithm Suite with carryless multiply
+- Zvkn extension for vector cryptography NIST Algorithm Suite
+- Zvknc extension for vector cryptography NIST Algorithm Suite with carryless multiply
 - Zvkned extension for vector cryptography NIST Suite: Vector AES Block Cipher, v1.0
-- Zvkng extension for vector crytography NIST Algorithm Suite with GCM
+- Zvkng extension for vector cryptography NIST Algorithm Suite with GCM
 - Zvknha and Zvknhb extensions for vector cryptography NIST Suite: Vector SHA-2 Secure Hash, v1.0
-- Zvks extension for vector crytography ShangMi Algorithm Suite
-- Zvksc extension for vector crytography ShangMi Algorithm Suite with carryless multiplication
+- Zvks extension for vector cryptography ShangMi Algorithm Suite
+- Zvksc extension for vector cryptography ShangMi Algorithm Suite with carryless multiplication
 - Zvksed extension for vector cryptography ShangMi Suite: SM4 Block Cipher, v1.0
-- Zvksg extension for vector crytography ShangMi Algorithm Suite with GCM
+- Zvksg extension for vector cryptography ShangMi Algorithm Suite with GCM
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
