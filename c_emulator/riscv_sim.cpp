@@ -263,14 +263,14 @@ uint64_t load_sail(const std::string &filename, bool main_file)
     }
   });
 
-
   fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", elf.entry());
 
   // Load the entire symbol table.
   const auto symbols = elf.symbols();
 
   // Save reversed symbol table for log symbolization.
-  // If multiple symbols from different ELF files have the same value the first one wins.
+  // If multiple symbols from different ELF files have the same value the first
+  // one wins.
   const auto reversed_symbols = reverse_symbol_table(symbols);
   g_symbols.insert(reversed_symbols.begin(), reversed_symbols.end());
 
