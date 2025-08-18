@@ -72,7 +72,7 @@ extensions {
   I {
     I_types {
       before riscv
-      files riscv_ibase_types.sail
+      files riscv_base_types.sail
     }
     I_insts {
       requires riscv_exceptions, riscv, I_types
