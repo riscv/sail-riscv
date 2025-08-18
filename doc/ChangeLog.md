@@ -6,7 +6,8 @@
   the 'E' and 'I' base ISAs is not supported.
 
 - The following extensions have been added:
-  Zihintntl, Zihintpause
+  . Zihintntl
+  . Zihintpause
 
 # Release notes for the 0.8 release
 
