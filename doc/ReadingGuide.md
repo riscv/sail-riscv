@@ -1,153 +1,273 @@
-## A guide to reading the specification
+# A guide to reading the Sail RISC-V specification
 
-> [!WARNING]
-> This document is undergoing updates and is not fully up to date
-> with the current state of the model. Please refer to the
-> [Sail code](../model/) itself for the most up to date information.
+:toc: left
+:toc-title: Contents
+:sectanchors:
 
-The model is written in the Sail language. Although specifications in
-Sail are quite readable as pseudocode, it would help to have the [Sail
-manual](https://alasdair.github.io/manual.html) handy.
+This RISC-V specification is written in the Sail language. Although
+specifications in Sail are quite readable as pseudocode, it would help
+to have the [Sail manual](https://alasdair.github.io/manual.html)
+handy.
 
-The Sail modules in the `model` directory have the structure shown
-below. Arrows indicate a dependency relationship, and _italics_
-indicate fragments that are not strictly part of the specification,
-such as the platform memory map.
+## Structure of the specification
 
-<img src="figs/riscvspecdeps.svg">
+The Sail files in the [model](../model/) subdirectory have a
+modular structure that is best understood by looking at the
+[riscv.sail_project](../model/riscv.sail_project) file.  This file
+describes the various modules in the Sail model, the files that
+constitute them, and their inter-dependencies.  More information on
+Sail modules is present in the
+[Sail language manual](https://alasdair.github.io/manual.html#_modular_sail_specifications).
 
-- `riscv_xlen32.sail` and `riscv_xlen64.sail` define xlen dependent
-  variables (`log2_xlen_bytes` and `physaddrbits_len`) for RV32 and
-  RV64. One of them is chosen during the build using the ARCH variable.
+A Sail module typically consists of a group of closely related Sail
+source files, and a declaration of their dependencies on other
+modules.  The RISC-V specification consists of a few core modules and
+several extension modules.  Within a module, the later files in the
+module usually depend on the earlier ones.
 
-- `prelude_*.sail` contain useful Sail library functions. These
-  files should be referred to as needed. The lowest level memory
-  access primitives are defined in `prelude_mem.sail`, and are
-  implemented by the various Sail backends. `prelude_mem.sail`
-  depends on the value of `xlen`.
+The `riscv_core`, `riscv` and `riscv_postlude` modules are the primary
+core modules, with most of the other modules being submodules of the
+`extensions` module.
 
-- `riscv_types.sail` contains some basic RISC-V definitions. This
-  file should be read first, since these definitions
-  are used throughout the specification, such as privilege levels,
-  register indices, interrupt and exception definitions
-  and enumerations, and types used to define memory accesses. The
-  register type is separately defined in `riscv_reg_type.sail` so that
-  extensions of the model can redefine it if required.
+### The `riscv_core` module
 
-- `riscv_regs.sail` contains the base register file, where each
-  register is defined as having the `regtype` type defined in
-  `riscv_reg_type.sail` and indexed by the indices defined in
-  `riscv_types.sail`.
+This module provide the types and functions that the rest of the
+modules depend on.
 
-- `riscv_pc_access.sail` defines functions to access and modify the
-  program counter.
+[riscv_xlen.sail](../model/riscv_xlen.sail),
+[riscv_flen.sail](../model/riscv_flen.sail) and
+[riscv_vlen.sail](../model/riscv_vlen.sail) define the types and
+widths used in the model for the base ISA (e.g. `xlen`,
+`physaddr_bits`), the floating point extensions (`flen`) and the
+vector extensions (`vlen`) respectively.  These widths are specified
+as `config` values, which means their value is derived from the
+configuration file for the model.
 
-- `riscv_sys_regs.sail` describes the privileged architectural state,
-  viz. M-mode and S-mode CSRs, and contains helpers to interpret their
-  content, such as WLRL and WARL fields. `riscv_sys_control.sail`
-  describes interrupt and exception delegation and dispatch, and the
-  handling of privilege transitions. `riscv_sys_exceptions.sail`
-  defines the handling of the addresses involved in exception
-  handling. `riscv_sync_exception.sail` describes the structure used
-  to capture the architectural information for an exception.
+[prelude.sail](../model/prelude.sail) contains useful Sail library
+functions.  The lowest level memory access primitives are defined in
+[prelude_mem.sail](../model/prelude.sail) and are implemented by the
+various Sail backends.
+[prelude_mem_addrtype.sail](../model/prelude_mem_addrtype.sail) and
+[prelude_mem_metadata.sail](../model/prelude_mem_metadata.sail)
+contain other low-level definitions related to memory.
 
-  Since WLRL and WARL fields are intended to capture platform-specific
-  functionality, future versions of the model might separate their
-  handling functions out into a separate platform-defined file. The
-  current implementation of these functions usually implement the same
-  behavior as the Spike emulator.
+[riscv_extensions.sail](../model/riscv_extensions.sail) sets up the
+basic infrastructure for the definition of modules implementing RISC-V
+extensions.  The `hartSupports` function determines whether an
+extension is supported by the model configuration, while the
+`currentlyEnabled` determines whether the extension is usable given
+the current dynamic state of the hart.
 
-- `riscv_pmp_regs.sail` and `riscv_pmp_control.sail` implement support
-  for physical memory protection (PMP). `riscv_pmp_regs` handle read
-  and write access to the PMP registers, while `riscv_pmp_control`
-  implements the permission checking and matching priority.
+`rvfi_dii*.sail` implement functionality for [RISC-V Formal
+Interface - Direct Instruction Injection
+(RVFI-DII)](https://github.com/CTSRD-CHERI/TestRIG/blob/master/RVFI-DII.md),
+allowing the model to be used with testing tools such as
+[TestRIG](https://github.com/CTSRD-CHERI/TestRIG).  These files can be
+ignored on a first reading.
 
-- `riscv_platform.sail` contains platform-specific functionality for
-  the model. It contains the physical memory map, the local interrupt
-  controller, and the MMIO interfaces to the clock, timer and terminal
-  devices. Sail `extern` definitions are used to connect externally
-  provided (i.e. external to the Sail model) platform functionality,
-  such as those provided by the platform support in the C
-  emulator. This file also contains the externally selectable
-  options for platform behavior, such as the handling of misaligned
-  memory accesses, the handling of PTE dirty-bit updates during
-  address translation, etc. These platform options can be specified
-  via command line switches in the C emulator.
+`riscv_types*.sail` and `riscv_*types.sail` contain important types
+that are used in the rest of the specification.
+[riscv_types.sail](../model/riscv_types.sail) contains some basic
+RISC-V definitions. This file should be read early since these
+definitions are used throughout the specification for privilege
+levels, register indices, interrupt and exception definitions and
+enumerations, and types used to define memory accesses.
 
-- `riscv_mem.sail` contains the functions that convert accesses to
-  physical addresses into accesses to physical memory, or MMIO
-  accesses to the devices provided by the platform, or into the
-  appropriate access fault. This file also contains definitions that
-  are used in the weak memory concurrency model.
+[riscv_regs.sail](../model/riscv_regs.sail) contains the base
+register file, where each register is defined as having the `regtype`
+type defined in [riscv_reg_type.sail](../model/riscv_reg_type.sail)
+and indexed by the indices defined in
+[riscv_types.sail](../model/riscv_types.sail).
 
-- The `riscv_vmem_{types,pte,ptw,tlb}.sail` and `riscv_vmem.sail`
-  files describe the S-mode address translation.
-  See the [Virtual Memory Notes](./notes_Virtual_Memory.adoc) for
-  details.
+[riscv_csr_begin.sail](../model/riscv_csr_begin.sail) sets up the
+infrastructure for the scattered definitions of CSRs and their access
+for read and write operations.
 
-- The `riscv_vmem_utils.sail` file provides a higher level interface
-  to virtual memory for load/store style instructions that handles
-  address translation and accesses to misaligned addresses taking
-  platform configuration options into account.
+[riscv_callback.sail](../model/riscv_callbacks.sail) contains
+definitions for callbacks that inform an external harness (such as the
+C++ emulator) about state-changing events.
 
-- The `riscv_addr_checks_common.sail` and `riscv_addr_checks.sail`
-  contain extension hooks to support the checking and transformation
-  of memory addresses during the execution of an instruction. The
-  transformed addresses are used for any address translation; however,
-  any memory access exceptions are reported in terms of the original
-  memory address (i.e. the one generated by the instruction, not the
-  hook).
+[riscv_pc_access.sail](../model/riscv_pc_access.sail) defines
+functions to access and modify the program counter.
 
-- Files matching `riscv_insts_*.sail` capture the instruction
-  definitions and their assembly language formats. Each file contains
-  the instructions for an extension, with `riscv_insts_base.sail` containing
-  the base integer instruction set. Each instruction is represented
-  as a variant clause of the `instruction` type, and its execution semantics
-  are represented as a clause of the `execute` function. `mapping`
-  clauses specify the encoding and decoding of each instruction to and
-  from their binary representations and assembly language formats.
+[riscv_sys_regs.sail](../model/riscv_sys_regs.sail) describes the
+privileged architectural state, viz. M-mode and S-mode CSRs, and
+contains helpers to interpret their content, such as WLRL and WARL
+fields.
 
-- `riscv_fetch.sail` contains the instruction fetch function. It
-  supports checking and transformation of the fetch address as
-  described above.
+[riscv_addr_checks_common.sail](../model/riscv_addr_checks_common.sail)
+and [riscv_addr_checks.sail](../model/riscv_addr_checks.sail)
+contain extension hooks to support the checking and transformation of
+memory addresses during the execution of an instruction. The
+transformed addresses are used for any address translation; however,
+any memory access exceptions are reported in terms of the original
+memory address (i.e. the one generated by the instruction, not the
+hook).
 
-- `riscv_step.sail` implements the top-level fetch and execute loop.
-  The `fetch` is done in 16-bit granules to handle RVC instructions.
-  The `step` function performs the instruction fetch, handles any
-  fetch errors, decodes the fetched value, dispatches the execution of
-  the decoded instruction, and checks for any pending interrupts that may
-  need to be handled. A `loop` function implements the execute loop,
-  and uses the same HTIF (host-target interface) mechanism as the
-  Spike emulator to detect termination of execution.
+The floating point arithmetic in the model is implemented by a wrapper
+around the Berkeley Softfloat library; this wrapper is implemented in
+[riscv_softfloat_interface.sail](../model/riscv_softfloat_interface.sail).
 
-Note that the files above are listed in dependency order, i.e. files
-earlier in the order do not depend on later files.
+### The `riscv_exceptions` and `pmp` modules
 
-## Structure of the C emulator
+The handling of the addresses involved in exception handling are
+specified by the functions in
+[riscv_sys_exceptions.sail](../model/riscv_sys_exceptions.sail)
+while
+[riscv_sync_exception.sail](../model/riscv_sync_exception.sail)
+defines a structure that is used to capture the architectural
+information for an exception. These files constitute the
+`riscv_exceptions` module.
 
-The diagram below illustrates how the C emulator is built from the
+The `pmp` module implements physical memory protection
+(PMP). [riscv_pmp_regs.sail](../model/riscv_pmp_regs.sail) defines
+the PMP registers and their read and write accessors while
+[riscv_pmp_control.sail](../model/riscv_pmp_control.sail)
+implements the PMP permission checks and matching priority.
+
+### The `riscv` module
+
+This core module deals with the hart's reservation state, physical and
+virtual memory, the platform memory map, and interrupt and exception
+handling.
+
+The reservation state is maintained external to the model and is
+accessed through the functions in
+[riscv_sys_reservation.sail](../model/riscv_sys_reservation.sail).
+
+[riscv_sys_control.sail](../model/riscv_sys_control.sail) describes
+interrupt and exception delegation and dispatch, and the handling of
+privilege transitions.
+
+[riscv_platform.sail](../model/riscv_platform.sail) contains
+platform-specific functionality for the model. It contains the
+definitions for the physical memory map, the cache block size, the
+local interrupt controller, and the MMIO interfaces to the clock,
+timer and terminal devices.  Sail functions connect to externally
+provided (i.e. external to the Sail model) platform functionality,
+such as those provided by the platform support in the C++
+emulator. This file also contains some of the configurable options
+for platform behavior, such as the handling of misaligned memory
+accesses, the handling of PTE dirty-bit updates during address
+translation, etc.
+
+[riscv_mem.sail](../model/riscv_mem.sail) contains the functions
+that convert accesses to physical addresses into accesses to physical
+memory, or MMIO accesses to the devices provided by the platform, or
+into the appropriate access fault. This file also contains definitions
+that are used in the weak memory concurrency model.
+
+The `riscv_vmem_{types,pte,ptw,tlb}.sail` and
+[riscv_vmem.sail](../model/riscv_vmem.sail) files describe the
+S-mode address translation.  More details are in
+[Virtual Memory Notes](./notes_Virtual_Memory.adoc).
+
+[riscv_vmem_utils.sail](../model/riscv_vmem_utils.sail) provides a
+higher level interface to virtual memory for load/store style
+instructions that handles address translation and accesses to
+misaligned addresses taking platform configuration options into
+account.
+
+[riscv_insts_begin.sail](../model/riscv_insts_begin.sail) sets up
+the infrastructure for the definition of instructions in the rest of
+the model.  Files matching `riscv_insts_*.sail` capture the
+instruction definitions and their assembly language formats. Each file
+contains the instructions for an extension. Each instruction is
+represented as a variant clause of the `instruction` type, and its
+execution semantics are represented as a clause of the `execute`
+function. `mapping` clauses specify the encoding and decoding of each
+instruction to and from their binary representations and assembly
+language formats.
+
+### The `riscv_postlude` module
+
+This module essentially completes the specification by providing
+implementations of the instruction fetcher and the driving function
+for the fetch-decode-execute cycle.
+
+[riscv_insts_end.sail](../model/riscv_insts_end.sail) and
+[riscv_csr_end.sail](../model/riscv_csr_end.sail) terminate the
+scattered definitions begun in the `riscv_insts_begin.sail` file in
+the `riscv` module and the `riscv_csr_begin.sail` file in the
+`riscv_core` module respectively.
+
+Definitions for the instruction stepper are in
+[riscv_step_common.sail](../model/riscv_step_common.sail), while
+some hooks to customize the stepper and the instruction decode are in
+[riscv_step_ext.sail](../model/riscv_step_ext.sail) and
+[riscv_decode_ext.sail](../model/riscv_decode_ext.sail)
+respectively.  The instruction fetch is implemented in
+[riscv_fetch.sail](../model/riscv_fetch.sail), where the `fetch` is
+done in 16-bit granules to handle RVC instructions.
+
+The top-level fetch-decode-execute driver is in
+[riscv_step.sail](../model/riscv_step.sail) The `try_step` function
+performs the instruction fetch, handles any fetch errors, decodes the
+fetched value, dispatches the execution of the decoded instruction,
+checks for any pending interrupts that may need to be handled, and
+maintains the current state of the model.  The `try_step` function is
+the primary interface to the external C++ simulator harness.
+
+A `loop` function in `riscv_step.sail` implements the standalone
+version of the fetch-decode-execute loop, and uses the same HTIF
+(host-target interface) mechanism as the Spike emulator to detect
+termination of execution.  This function can be used to drive the
+model without the use of the C++ simulator.
+
+The configuration for the model is validated in
+[riscv_validate_config.sail](../model/riscv_validate_config.sail).
+A device tree and ISA string for the configuration is generated using
+functions in
+[riscv_device_tree.sail](../model/riscv_device_tree.sail).
+Model initialization and reset are implemented in
+[riscv_model.sail](../model/riscv_model.sail).
+
+`riscv_fetch_rvfi.sail` provides the fetch function when the model
+is used for RVFI, and complements the `rvfi_dii*.sail` files mentioned
+above.
+
+### Extensions
+
+The `extensions` module contains a sequence of submodules, each
+typically implementing an ISA extension.  In some cases, submodules
+implementing related extensions (e.g. `Zaamo` and `Zalrsc`) may be
+grouped together and nested within another submodule (e.g. `A`) under
+the `extensions` module.  This nested structure helps to organize the
+files implementing large related extensions such as those in the
+Vector (`V`) and cryptography (`K`) extensions.
+
+### Other modules
+
+The `riscv_termination` module specifies
+[functions](../model/riscv_termination.sail) that are used to prove
+loop termination for theorem prover backends of Sail.  The
+`unit_tests` module collects Sail unit tests for the specification.
+The `riscv_main` module provides a [`main()`](../model/main.sail)
+function that is used in other Sail backends.
+
+## Structure of the C++ emulator
+
+The diagram below illustrates how the C++ emulator is built from the
 Sail model.
 
-<img src="figs/riscvcsimdeps.svg">
+image:./figs/riscvcsimdeps.svg[]
 
-The nodes that are not colored are the handwritten C files for the C
+The nodes that are not colored are the handwritten files for the C++
 emulator. The black arrows indicate dependency relationships, while
-the red arrow indicates a file generated by the Sail compiler from
+the blue arrow indicates a file generated by the Sail compiler from
 Sail source files.
 
-`riscv_sim` is the top level file for the C emulator: it processes
-command line options, initializes the platform model with any ISA
-implementation choices if specified, and loads the ELF program or OS
-image into raw memory, including any ROM firmware such as the Berkeley
-boot loader and DeviceTree binary blobs, and initializes the memory
-map.
+[riscv_sim.cpp](../c_emulator/riscv_sim.cpp) is the top level file
+for the emulator: it processes command line options, initializes the
+platform model with any ISA implementation choices if specified, and
+loads the ELF program or OS image into raw memory, including any ROM
+firmware and DeviceTree binary blobs, and initializes the memory map.
 
-The generated C model `sail_riscv_sim` is built from the Sail
-sources by the Sail compiler for the specified architecture $ARCH,
-either RV32 or RV64. It contains calls to the platform interface
-`riscv_platform` for platform-specific information; the latter is
-typically defined as externally specified in the Sail file
-`riscv_platform.sail`.
+The generated C model `sail_riscv_sim` is built from the Sail sources
+by the Sail compiler and contains calls to the platform interface
+[riscv_platform.h](../c_emulator/riscv_platform.h) for
+platform-specific information; the latter is typically defined as
+externally specified in the Sail file `riscv_platform.sail`.
 
 The Sail system provides a C library for use with its C backend, which
 provides the low-level details of the implementation of raw memory and
