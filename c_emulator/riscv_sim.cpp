@@ -562,6 +562,11 @@ int main(int argc, char **argv)
   argv = app.ensure_utf8(argv);
   setup_options(app);
 
+  if (argc == 1) {
+    fprintf(stdout, "%s\n", app.help().c_str());
+    exit(EXIT_SUCCESS);
+  }
+
   // long_options_offset() is a local addition, so when updating CLI11,
   // see how https://github.com/CLIUtils/CLI11/pull/1185 ended up,
   // and possibly implement the upstream solution.
