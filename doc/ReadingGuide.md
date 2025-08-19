@@ -9,16 +9,16 @@ handy.
 
 The Sail files in the [model](../model/) subdirectory have a
 modular structure that is best understood by looking at the
-[riscv.sail_project](../model/riscv.sail_project) file.  This file
+[riscv.sail_project](../model/riscv.sail_project) file. This file
 describes the various modules in the Sail model, the files that
-constitute them, and their inter-dependencies.  More information on
+constitute them, and their inter-dependencies. More information on
 Sail modules is present in the
 [Sail language manual](https://alasdair.github.io/manual.html#_modular_sail_specifications).
 
 A Sail module typically consists of a group of closely related Sail
 source files, and a declaration of their dependencies on other
-modules.  The RISC-V specification consists of a few core modules and
-several extension modules.  Within a module, the later files in the
+modules. The RISC-V specification consists of a few core modules and
+several extension modules. Within a module, the later files in the
 module usually depend on the earlier ones.
 
 The `riscv_core`, `riscv` and `riscv_postlude` modules are the primary
@@ -35,12 +35,12 @@ modules depend on.
 [riscv_vlen.sail](../model/riscv_vlen.sail) define the types and
 widths used in the model for the base ISA (e.g. `xlen`,
 `physaddr_bits`), the floating point extensions (`flen`) and the
-vector extensions (`vlen`) respectively.  These widths are specified
+vector extensions (`vlen`) respectively. These widths are specified
 as `config` values, which means their value is derived from the
 configuration file for the model.
 
 [prelude.sail](../model/prelude.sail) contains useful Sail library
-functions.  The lowest level memory access primitives are defined in
+functions. The lowest level memory access primitives are defined in
 [prelude_mem.sail](../model/prelude.sail) and are implemented by the
 various Sail backends.
 [prelude_mem_addrtype.sail](../model/prelude_mem_addrtype.sail) and
@@ -49,7 +49,7 @@ contain other low-level definitions related to memory.
 
 [riscv_extensions.sail](../model/riscv_extensions.sail) sets up the
 basic infrastructure for the definition of modules implementing RISC-V
-extensions.  The `hartSupports` function determines whether an
+extensions. The `hartSupports` function determines whether an
 extension is supported by the model configuration, while the
 `currentlyEnabled` determines whether the extension is usable given
 the current dynamic state of the hart.
@@ -58,7 +58,7 @@ the current dynamic state of the hart.
 Interface - Direct Instruction Injection
 (RVFI-DII)](https://github.com/CTSRD-CHERI/TestRIG/blob/master/RVFI-DII.md),
 allowing the model to be used with testing tools such as
-[TestRIG](https://github.com/CTSRD-CHERI/TestRIG).  These files can be
+[TestRIG](https://github.com/CTSRD-CHERI/TestRIG). These files can be
 ignored on a first reading.
 
 `riscv_types*.sail` and `riscv_*types.sail` contain important types
@@ -139,7 +139,7 @@ privilege transitions.
 platform-specific functionality for the model. It contains the
 definitions for the physical memory map, the cache block size, the
 local interrupt controller, and the MMIO interfaces to the clock,
-timer and terminal devices.  Sail functions connect to externally
+timer and terminal devices. Sail functions connect to externally
 provided (i.e. external to the Sail model) platform functionality,
 such as those provided by the platform support in the C++
 emulator. This file also contains some of the configurable options
@@ -155,7 +155,7 @@ that are used in the weak memory concurrency model.
 
 The `riscv_vmem_{types,pte,ptw,tlb}.sail` and
 [riscv_vmem.sail](../model/riscv_vmem.sail) files describe the
-S-mode address translation.  More details are in
+S-mode address translation. More details are in
 [Virtual Memory Notes](./notes_Virtual_Memory.adoc).
 
 [riscv_vmem_utils.sail](../model/riscv_vmem_utils.sail) provides a
@@ -166,7 +166,7 @@ account.
 
 [riscv_insts_begin.sail](../model/riscv_insts_begin.sail) sets up
 the infrastructure for the definition of instructions in the rest of
-the model.  Files matching `riscv_insts_*.sail` capture the
+the model. Files matching `riscv_insts_*.sail` capture the
 instruction definitions and their assembly language formats. Each file
 contains the instructions for an extension. Each instruction is
 represented as a variant clause of the `instruction` type, and its
@@ -192,7 +192,7 @@ Definitions for the instruction stepper are in
 some hooks to customize the stepper and the instruction decode are in
 [riscv_step_ext.sail](../model/riscv_step_ext.sail) and
 [riscv_decode_ext.sail](../model/riscv_decode_ext.sail)
-respectively.  The instruction fetch is implemented in
+respectively. The instruction fetch is implemented in
 [riscv_fetch.sail](../model/riscv_fetch.sail), where the `fetch` is
 done in 16-bit granules to handle RVC instructions.
 
@@ -201,13 +201,13 @@ The top-level fetch-decode-execute driver is in
 performs the instruction fetch, handles any fetch errors, decodes the
 fetched value, dispatches the execution of the decoded instruction,
 checks for any pending interrupts that may need to be handled, and
-maintains the current state of the model.  The `try_step` function is
+maintains the current state of the model. The `try_step` function is
 the primary interface to the external C++ simulator harness.
 
 A `loop` function in `riscv_step.sail` implements the standalone
 version of the fetch-decode-execute loop, and uses the same HTIF
 (host-target interface) mechanism as the Spike emulator to detect
-termination of execution.  This function can be used to drive the
+termination of execution. This function can be used to drive the
 model without the use of the C++ simulator.
 
 The configuration for the model is validated in
@@ -225,10 +225,10 @@ above.
 ### Extensions
 
 The `extensions` module contains a sequence of submodules, each
-typically implementing an ISA extension.  In some cases, submodules
+typically implementing an ISA extension. In some cases, submodules
 implementing related extensions (e.g. `Zaamo` and `Zalrsc`) may be
 grouped together and nested within another submodule (e.g. `A`) under
-the `extensions` module.  This nested structure helps to organize the
+the `extensions` module. This nested structure helps to organize the
 files implementing large related extensions such as those in the
 Vector (`V`) and cryptography (`K`) extensions.
 
@@ -236,7 +236,7 @@ Vector (`V`) and cryptography (`K`) extensions.
 
 The `riscv_termination` module specifies
 [functions](../model/riscv_termination.sail) that are used to prove
-loop termination for theorem prover backends of Sail.  The
+loop termination for theorem prover backends of Sail. The
 `unit_tests` module collects Sail unit tests for the specification.
 The `riscv_main` module provides a [`main()`](../model/main.sail)
 function that is used in other Sail backends.

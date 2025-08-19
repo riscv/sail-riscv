@@ -1,7 +1,7 @@
 # Adding an extension
 
 Here are some suggestions for dealing with common issues when adding a
-new simple extension to the Sail RISC-V model.  For historical
+new simple extension to the Sail RISC-V model. For historical
 reasons, existing extensions may not always follow these guidelines.
 These guidelines will not suffice for larger and more complex
 extensions.
@@ -15,18 +15,18 @@ A simple extension could be defined in a single file named
 `riscv_<ext_name>.sail`.
 
 More complex extensions will typically require the definition of new
-types, enums and helper or utility functions.  New types and enums
+types, enums and helper or utility functions. New types and enums
 could be defined in `riscv_<ext_name>_types.sail` and helper functions
-in `riscv_<ext_name>_utils.sail`.  New instructions should go in a
+in `riscv_<ext_name>_utils.sail`. New instructions should go in a
 file named `riscv_insts_<ext_name>.sail`.
 
 ## Adding the extension to the project file
 
 A new module for the extension would need to be defined in the
 [riscv.sail_project](../model/riscv.sail_project) that specifies
-the new files for the extension.  Complex extensions might need to be
+the new files for the extension. Complex extensions might need to be
 split into multiple modules, as has been done for the `V` vector
-extension.  Modules for related extensions could be grouped under a
+extension. Modules for related extensions could be grouped under a
 common module, as for example the `Zaamo` and `Zalrsc` under the `A`
 module.
 
@@ -39,16 +39,16 @@ specification.
 An enum clause for the extension needs to be added to
 [riscv_extensions.sail](../model/riscv_extensions.sail) at an
 appropriate location according to the canonical ordering described
-there.  The extension should also be added to the
+there. The extension should also be added to the
 `extensions_ordered_for_isa_string` array.
 
 A new `"<ext_name>"` entry for the extension should also be created in
 the `"extensions"` list in the JSON configuration files for RV32
 ([rv32d.json](../config/rv32d.json)) and RV64
-([rv64d.json](../config/rv64d.json)).  This entry should have a
-"supported"` field with a boolean value.  If an extension is not
+([rv64d.json](../config/rv64d.json)). This entry should have a
+`"supported"` field with a boolean value. If an extension is not
 defined for a base ISA, it should still be added to the configuration
-file for that ISA with a `"supported"` value of `"false"`.  Any
+file for that ISA with a `"supported"` value of `"false"`. Any
 configuration parameters for the extension should be specified as
 fields of this entry.
 
@@ -66,7 +66,7 @@ Each new set of instructions can be specified in a separate
 self-contained file, with their instruction encodings, assembly
 language specifications and the corresponding encoders and decoders,
 and execution semantics. The various `riscv_insts_*.sail` files can be
-examined for examples on how this can done.  Care should be taken when
+examined for examples on how this can done. Care should be taken when
 defining the assembly clauses to ensure they are consistent with the
 format expected by assemblers in standard toolchains.
 
@@ -78,6 +78,6 @@ defined in [riscv_vmem_utils.sail](../model/riscv_vmem_utils.sail).
 Architectural state such as CSRs should be introduced with `register`
 declarations. Any bit-oriented structure of a CSR should be specified
 with a `bitfield` definition; the type of the `register` definition
-will usually be this `bitfield` type.  Clauses of the
+will usually be this `bitfield` type. Clauses of the
 `is_CSR_accessible`, `read_CSR` and `write_CSR` functions should be
 added for each CSR.
