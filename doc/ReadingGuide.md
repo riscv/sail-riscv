@@ -250,7 +250,7 @@ function that is used in other Sail backends.
 The diagram below illustrates how the C++ emulator is built from the
 Sail model.
 
-image:./figs/riscvcsimdeps.svg[]
+![](./figs/riscvcsimdeps.svg)
 
 The nodes that are not colored are the handwritten files for the C++
 emulator. The black arrows indicate dependency relationships, while
