@@ -1,9 +1,5 @@
 # A guide to reading the Sail RISC-V specification
 
-:toc: left
-:toc-title: Contents
-:sectanchors:
-
 This RISC-V specification is written in the Sail language. Although
 specifications in Sail are quite readable as pseudocode, it would help
 to have the [Sail manual](https://alasdair.github.io/manual.html)

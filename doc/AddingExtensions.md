@@ -1,7 +1,4 @@
 # Adding an extension
-:toc:
-:toc-title: Contents
-:sectanchors:
 
 Here are some suggestions for dealing with common issues when adding a
 new simple extension to the Sail RISC-V model.  For historical
