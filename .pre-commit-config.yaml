@@ -36,3 +36,9 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.13.7
+    hooks:
+      - id: markdown-link-check
+        args: [-q]
+        types: [file, markdown]
