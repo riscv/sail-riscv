@@ -100,8 +100,14 @@ extensions {
   }
 
   M {
-    requires riscv, I
-    files riscv_insts_mext.sail
+    M_types {
+      before riscv
+      files riscv_mext_types.sail
+    }
+    M_insts {
+      requires riscv, I, M_types
+      files riscv_insts_mext.sail
+    }
   }
 
   // RISC-V Bit manipulation extensions

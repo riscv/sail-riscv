@@ -317,9 +317,3 @@ mapping width_mnemonic_wide : word_width_wide <-> string = {
   8  <-> "d",
   16 <-> "q",
 }
-
-struct mul_op = {
-  high       : bool,
-  signed_rs1 : bool,
-  signed_rs2 : bool
-}
