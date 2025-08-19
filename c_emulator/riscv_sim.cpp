@@ -263,8 +263,6 @@ uint64_t load_sail(const std::string &filename, bool main_file)
     }
   });
 
-  fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", elf.entry());
-
   // Load the entire symbol table.
   const auto symbols = elf.symbols();
 
@@ -682,6 +680,8 @@ int main(int argc, char **argv)
   const std::string &initial_elf_file = elfs[0];
   uint64_t entry = rvfi ? rvfi->get_entry()
                         : load_sail(initial_elf_file, /*main_file=*/true);
+
+  fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
 
   /* Load any additional ELF files into memory */
   for (auto it = elfs.cbegin() + 1; it != elfs.cend(); it++) {
