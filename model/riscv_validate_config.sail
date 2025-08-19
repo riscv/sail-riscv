@@ -18,39 +18,20 @@ function check_privs() -> bool = {
 // This logic will need to change once MXL/SXL/UXL can differ.
 function check_mmu_config() -> bool = {
   var valid : bool = true;
-  if xlen == 64 then {
-    if not(hartSupports(Ext_S)) & (hartSupports(Ext_Sv57) | hartSupports(Ext_Sv48) | hartSupports(Ext_Sv39))
-    then {
-      valid = false;
-      print_endline("Supervisor mode (S) disabled but one of (Sv57, Sv48, Sv39) is enabled: cannot support address translation without supervisor mode.");
-    };
-    if hartSupports(Ext_Sv57) & not(hartSupports(Ext_Sv48))
-    then {
-      valid = false;
-      print_endline("Sv57 is enabled but Sv48 is disabled: supporting Sv57 requires supporting Sv48.");
-    };
-    if hartSupports(Ext_Sv48) & not(hartSupports(Ext_Sv39))
-    then {
-      valid = false;
-      print_endline("Sv48 is enabled but Sv39 is disabled: supporting Sv48 requires supporting Sv39.");
-    };
-    if hartSupports(Ext_Sv32)
-    then {
-      valid = false;
-      print_endline("Sv32 is enabled: Sv32 is not supported on RV64.");
-    };
-  } else {
-    assert(xlen == 32);
-    if not(hartSupports(Ext_S)) & hartSupports(Ext_Sv32)
-    then {
-      valid = false;
-      print_endline("Supervisor mode (S) is disabled but Sv32 is enabled: cannot support address translation without supervisor mode.");
-    };
-    if hartSupports(Ext_Sv39) | hartSupports(Ext_Sv48) |  hartSupports(Ext_Sv57)
-    then {
-      valid = false;
-      print_endline("One or more of Sv39/Sv48/Sv57 is enabled: these are not supported on RV32.");
-    };
+  if not(hartSupports(Ext_S)) & (hartSupports(Ext_Sv32) | hartSupports(Ext_Sv39) | hartSupports(Ext_Sv48) | hartSupports(Ext_Sv57))
+  then {
+    valid = false;
+    print_endline("Supervisor mode (S) disabled but one of (Sv32, Sv39, Sv48, Sv57) is enabled: cannot support address translation without supervisor mode.");
+  };
+  if hartSupports(Ext_Sv57) & not(hartSupports(Ext_Sv48))
+  then {
+    valid = false;
+    print_endline("Sv57 is enabled but Sv48 is disabled: supporting Sv57 requires supporting Sv48.");
+  };
+  if hartSupports(Ext_Sv48) & not(hartSupports(Ext_Sv39))
+  then {
+    valid = false;
+    print_endline("Sv48 is enabled but Sv39 is disabled: supporting Sv48 requires supporting Sv39.");
   };
   valid
 }
