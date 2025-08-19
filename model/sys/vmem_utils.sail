@@ -120,7 +120,7 @@ function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = match eff_pr
  * NOTE: mstatus[MXR] == 1'b1 disables pointer masking in S and U mode, but not in M-mode.
  */
 function is_pmm_applicable(typ : AccessType(ext_access_type), eff_privilege : Privilege) -> bool =
-  typ != InstructionFetch() & (eff_privilege == Machine | mstatus[MXR] == 0b0)
+  typ != InstructionFetch() & (eff_privilege == Machine | mstatus[MXR] == 0b0) & xlen == 64
 
 /* Get the effective PMLEN value */
 function get_pmlen(typ : AccessType(ext_access_type), eff_privilege : Privilege) -> {0, 7, 16} = {
