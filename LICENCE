@@ -1,9 +1,9 @@
 RISCV Sail Model
 
 This Sail RISC-V architecture model, comprising all files and
-directories except for the snapshots of the Lem and Sail libraries
-in the prover_snapshots directory (which include copies of their
-licences), is subject to the BSD two-clause licence below.
+directories except for the third party dependencies in the
+'dependencies' directory (which include copies of their licences), is
+subject to the BSD two-clause licence below.
 
 Copyright (c) 2017-2025
    ahadali5000
