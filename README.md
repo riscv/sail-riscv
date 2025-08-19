@@ -4,9 +4,9 @@ This repository contains a formal specification of the RISC-V architecture, writ
 [Sail](https://github.com/rems-project/sail). It has been adopted by RISC-V International.
 
 The model specifies assembly language formats of the instructions, the corresponding
-encoders and decoders, and the instruction semantics. A [reading guide](doc/ReadingGuide.adoc)
+encoders and decoders, and the instruction semantics. A [reading guide](doc/ReadingGuide.md)
 to the model is provided in the [doc/](doc/) subdirectory, along with a guide on [how to
-add a new extension](doc/AddingExtensions.adoc) the model.
+add a new extension](doc/AddingExtensions.md) the model.
 
 ## What is Sail?
 
@@ -33,7 +33,7 @@ will build the simulator at `build/c_emulator/sail_riscv_sim`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.19.1 or later.
 
-By default `build_simulators.sh` will download and build [libgmp](https://gmplib.org/).
+By default `build_simulators.sh` will download and build [libgmp](https://gmplib.org).
 To use a system installation of libgmp, run `env DOWNLOAD_GMP=FALSE ./build_simulators.sh` instead.
 
 ### Executing test binaries
@@ -249,7 +249,8 @@ specification written in Bluespec SystemVerilog.
 
 The ISA model is integrated with the operational model of the RISC-V
 relaxed memory model, RVWMO (as described in an appendix of the [RISC-V
-user-level specification](https://github.com/riscv/riscv-isa-manual/releases/tag/draft-20181227-c6741cb)), which is one of the reference models used
+user-level specification](https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/)),
+which is one of the reference models used
 in the development of the RISC-V concurrency architecture; this is
 part of the [RMEM](http://www.cl.cam.ac.uk/users/pes20/rmem) tool.
 It is also integrated with the RISC-V axiomatic concurrency model
