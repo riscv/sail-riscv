@@ -83,6 +83,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zhinx => 3,
     Ext_Zvkb => 3,
     Ext_Sscofpmf => 3,
+    Ext_Supm => 3,
     Ext_Zhinxmin => 4,
     _ => 2
   }
@@ -95,6 +96,8 @@ function hartSupports_measure(ext : extension) -> int =
     Ext_D => 1,
     Ext_Zvkn => 1,
     Ext_Zvks => 1,
+    Ext_Sspm => 1,
+    Ext_Supm => 1,
     Ext_C => 2,
     Ext_Zvknc => 2,
     Ext_Zvkng => 2,
