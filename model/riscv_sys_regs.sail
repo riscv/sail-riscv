@@ -247,7 +247,12 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     FS = if hartSupports(Ext_Zfinx) then extStatus_to_bits(Off) else v[FS],
     MPP = if have_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
-    VS = v[VS],
+    /* TODO: make this configurable
+     * If neither the v registers nor S-mode is implemented, then VS is
+     * read-only zero. If S-mode is implemented but the v registers are not,
+     * VS may optionally be read-only zero.
+     */
+    VS = if hartSupports(Ext_V) then v[VS] else 0b00,
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
