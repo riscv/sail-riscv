@@ -102,6 +102,8 @@ function bool_to_bit(x : bool) -> bit = bool_bit(x)
 function bit_to_bool(x : bit) -> bool = bool_bit(x)
 function bool_to_bits(x : bool) -> bits(1) = bool_bits(x)
 function bits_to_bool(x : bits(1)) -> bool = bool_bits(x)
+function bit_to_bits(x : bit) -> bits(1) = bool_bits(bit_to_bool(x))
+function bits_to_bit(x : bits(1)) -> bit = bool_to_bit(bits_to_bool(x))
 
 // Convert an integer to bits. This requires that the integer is known to fit
 // inside the resulting bit vector. Note this only admits non-negative numbers.

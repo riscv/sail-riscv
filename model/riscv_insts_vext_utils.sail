@@ -179,8 +179,11 @@ function get_velem_quad(v, i) = v[4 * i + 3] @ v[4 * i + 2] @ v[4 * i + 1] @ v[4
 /* Divide the input bitvector into 4 equal slices and store them in vd starting at position 4*i */
 val write_velem_quad : forall 'n, 'n > 0 . (vregidx, sew_bitsize, bits('n), nat) -> unit
 function write_velem_quad(vd, SEW, input, i) = {
-  foreach(j from 0 to 3)
-    write_single_element(SEW, 4 * i + j, vd, slice(input, j * SEW, SEW));
+  foreach(j from 0 to 3) {
+    // TODO: Change the type signature to enforce this assertion.
+    assert((j + 1) * SEW <= 'n);
+    write_single_element(SEW, 4 * i + j, vd, input[(j + 1) * SEW - 1 .. j * SEW]);
+  }
 }
 
 /* Extracts 8 consecutive vector elements starting from index 8*i and returns a
@@ -448,13 +451,18 @@ function get_fixed_rounding_incr(vec_elem, shift_amount) = {
   if shift_amount == 0 then 0b0
   else {
     let rounding_mode = vcsr[vxrm];
+    // TODO: Change the type signature to enforce this assertion.
+    assert(shift_amount < 'm);
     match rounding_mode {
-      0b00 => slice(vec_elem, shift_amount - 1, 1),
-      0b01 => bool_to_bits(
-        (slice(vec_elem, shift_amount - 1, 1) == 0b1) & (slice(vec_elem, 0, shift_amount - 1) != zeros() | slice(vec_elem, shift_amount, 1) == 0b1)),
+      0b00 => bit_to_bits(vec_elem[shift_amount - 1]),
+      0b01 => {
+        bool_to_bits(
+          vec_elem[shift_amount - 1] == bitone &
+          ((if shift_amount == 1 then false else vec_elem[shift_amount - 2 .. 0] != zeros()) | vec_elem[shift_amount] == bitone))
+      },
       0b10 => 0b0,
       0b11 => bool_to_bits(
-        not(slice(vec_elem, shift_amount, 1) == 0b1) & (slice(vec_elem, 0, shift_amount) != zeros()))
+        vec_elem[shift_amount] != bitone & vec_elem[shift_amount - 1 .. 0] != zeros())
     }
   }
 }
