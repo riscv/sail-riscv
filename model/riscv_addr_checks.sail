@@ -17,7 +17,7 @@ type ext_fetch_addr_error = unit
  * returns:  the *virtual* memory address to use for the fetch.
  *           any address translation errors are reported for pc, not the returned value.
  */
-function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> Ext_FetchAddr_Check(ext_fetch_addr_error) =
+function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> option(ext_fetch_addr_error) =
   None()
 
 function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit =
