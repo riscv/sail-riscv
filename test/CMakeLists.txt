@@ -96,16 +96,11 @@ if(ENABLE_RISCV_TESTS)
         "${DOWNLOAD_URL}"
     )
 
-    file(GLOB elfs_rv32 CONFIGURE_DEPENDS LIST_DIRECTORIES false
-        "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv32*"
-    )
-
-    file(GLOB elfs_rv64 CONFIGURE_DEPENDS LIST_DIRECTORIES false
-        "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv64*"
-    )
-
     foreach(xlen IN ITEMS 32 64)
-        foreach(elf IN LISTS elfs_rv${xlen})
+        file(GLOB elf_list CONFIGURE_DEPENDS LIST_DIRECTORIES false
+           "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv${xlen}*"
+        )
+        foreach(elf IN LISTS elf_list)
             file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
             add_test(
                 # `elf_name` includes xlen so we don't need to add any details.
