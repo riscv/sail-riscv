@@ -8,6 +8,9 @@
 
 /* Machine-mode and supervisor-mode functionality. */
 
+/* whether breakpoint exception stores pc or zero into tval */
+let plat_excp_breakpoint_updates_tval : bool = config base.excp_breakpoint_updates_tval
+
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != InstructionFetch() & m[MPRV] == 0b1
   then privLevel_of_bits(m[MPP])
@@ -168,7 +171,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
        mstatus[MPIE] = mstatus[MIE];
        mstatus[MIE]  = 0b0;
        mstatus[MPP]  = privLevel_to_bits(cur_privilege);
-       mtval         = tval(info);
+       mtval         = if not(plat_excp_breakpoint_updates_tval) & c == 0x03 then zeros() else tval(info);
        mepc          = pc;
 
        cur_privilege = del_priv;
@@ -192,7 +195,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
                            Supervisor => 0b1,
                            Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
                          };
-       stval           = tval(info);
+       stval           = if not(plat_excp_breakpoint_updates_tval) & c == 0x03 then zeros() else tval(info);
        sepc            = pc;
 
        cur_privilege   = del_priv;
