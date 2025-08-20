@@ -173,7 +173,9 @@ represented as a variant clause of the `instruction` type, and its
 execution semantics are represented as a clause of the `execute`
 function. `mapping` clauses specify the encoding and decoding of each
 instruction to and from their binary representations and assembly
-language formats.
+language formats. Though the assembly mappings are defined
+bidirectionally, only the disassembler direction (i.e., binary
+encoding to assembler) is used.
 
 ### The `riscv_postlude` module
 
@@ -255,17 +257,21 @@ Sail source files.
 
 [riscv_sim.cpp](../c_emulator/riscv_sim.cpp) is the top level file
 for the emulator: it processes command line options, initializes the
-platform model with any ISA implementation choices if specified, and
+platform model with any ISA implementation choices if specified,
 loads the ELF program or OS image into raw memory, including any ROM
 firmware and DeviceTree binary blobs, and initializes the memory map.
 
 The generated C model `sail_riscv_sim` is built from the Sail sources
 by the Sail compiler and contains calls to the platform interface
 [riscv_platform.h](../c_emulator/riscv_platform.h) for
-platform-specific information; the latter is typically defined as
-externally specified in the Sail file `riscv_platform.sail`.
+platform-specific information and to the callback interface
+[riscv_callbacks.h](../c_emulator/riscv_callbacks.h) for state-change
+events and logging. These provide the definitions declared as
+externally specified in the Sail files
+[riscv_platform.sail](../model/riscv_platform.sail) and
+[riscv_callbacks.sail](../model/riscv_callbacks.sail).
 
-The Sail system provides a C library for use with its C backend, which
+The Sail run-time system provides a C library for use with its C backend, which
 provides the low-level details of the implementation of raw memory and
 bitvectors (typically optimized to use the native machine word
 representation).

@@ -23,7 +23,7 @@ file named `riscv_insts_<ext_name>.sail`.
 ## Adding the extension to the project file
 
 A new module for the extension would need to be defined in the
-[riscv.sail_project](../model/riscv.sail_project) that specifies
+[riscv.sail_project](../model/riscv.sail_project) project file that specifies
 the new files for the extension. Complex extensions might need to be
 split into multiple modules, as has been done for the `V` vector
 extension. Modules for related extensions could be grouped under a
@@ -66,7 +66,7 @@ Each new set of instructions can be specified in a separate
 self-contained file, with their instruction encodings, assembly
 language specifications and the corresponding encoders and decoders,
 and execution semantics. The various `riscv_insts_*.sail` files can be
-examined for examples on how this can done. Care should be taken when
+examined for examples on how this can be done. Care should be taken when
 defining the assembly clauses to ensure they are consistent with the
 format expected by assemblers in standard toolchains.
 

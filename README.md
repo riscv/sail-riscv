@@ -6,7 +6,7 @@ This repository contains a formal specification of the RISC-V architecture, writ
 The model specifies assembly language formats of the instructions, the corresponding
 encoders and decoders, and the instruction semantics. A [reading guide](doc/ReadingGuide.md)
 to the model is provided in the [doc/](doc/) subdirectory, along with a guide on [how to
-add a new extension](doc/AddingExtensions.md) the model.
+add a new extension](doc/AddingExtensions.md) to the model.
 
 ## What is Sail?
 
