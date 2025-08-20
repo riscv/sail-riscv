@@ -268,7 +268,8 @@ platform-specific information and to the callback interface
 [riscv_callbacks.h](../c_emulator/riscv_callbacks.h) for state-change
 events and logging. These provide the definitions declared as
 externally specified in the Sail files
-[riscv_platform.sail](../model/riscv_platform.sail) and
+[riscv_platform.sail](../model/riscv_platform.sail),
+[riscv_sys_reservation.sail](../model/riscv_sys_reservation.sail) and
 [riscv_callbacks.sail](../model/riscv_callbacks.sail).
 
 The Sail run-time system provides a C library for use with its C backend, which
