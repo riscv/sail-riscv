@@ -300,6 +300,24 @@ extensions {
     requires riscv
     files riscv_insts_zifencei.sail
   }
+
+  Zihintntl {
+    Zihintntl_types {
+      before riscv // needs to appear before definition of `instruction`
+      files riscv_zihintntl_types.sail
+    }
+    Zihintntl_insts {
+      requires riscv, Zihintntl_types
+      before I, Zca // NTL instructions override ADD, C.NTL overrides C.ADD
+      files riscv_insts_zihintntl.sail
+    }
+  }
+
+  Zihintpause {
+    requires riscv
+    before I // PAUSE overrides a FENCE
+    files riscv_insts_zihintpause.sail
+  }
 }
 
 // May-be-operations (MOPS) defined after extensions so they can be

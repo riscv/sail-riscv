@@ -5,6 +5,10 @@
   and `config/rv64d.json` respectively. Dynamic switching between
   the 'E' and 'I' base ISAs is not supported.
 
+- The following extensions have been added:
+  - Zihintntl
+  - Zihintpause
+
 # Release notes for the 0.8 release
 
 This is a major release with some backwards-incompatible changes.

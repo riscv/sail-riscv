@@ -97,6 +97,12 @@
     "Zifencei": {
       "supported": true
     },
+    "Zihintntl": {
+      "supported": true
+    },
+    "Zihintpause": {
+      "supported": true
+    },
     "Zihpm": {
       "supported": true
     },
