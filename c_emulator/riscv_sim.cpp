@@ -293,6 +293,7 @@ void init_sail(uint64_t elf_entry, const char *config_file)
 {
   zinit_model(config_file != nullptr ? config_file : "");
   zforce_pc(elf_entry);
+  zinit_boot_requirements(UNIT);
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
