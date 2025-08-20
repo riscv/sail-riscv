@@ -48,7 +48,9 @@ the `"extensions"` list in the JSON configuration files for RV32
 ([rv64d.json](../config/rv64d.json)). This entry should have a
 `"supported"` field with a boolean value. If an extension is not
 defined for a base ISA, it should still be added to the configuration
-file for that ISA with a `"supported"` value of `"false"`. Any
+file for that ISA with a `"supported"` value of `"false"`. For
+example, the `Sv39` extension is specified (as unsupported) in config
+files for RV32 even though `Sv39` is not defined for RV32. Any
 configuration parameters for the extension should be specified as
 fields of this entry.
 
