@@ -564,7 +564,7 @@ int main(int argc, char **argv)
 
   if (argc == 1) {
     fprintf(stdout, "%s\n", app.help().c_str());
-    exit(EXIT_SUCCESS);
+    exit(EXIT_FAILURE);
   }
 
   // long_options_offset() is a local addition, so when updating CLI11,
