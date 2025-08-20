@@ -48,23 +48,21 @@ mapping clause assembly = UTYPE(imm, rd, op)
 function jump_to(target : xlenbits) -> ExecutionResult = {
   // Extensions get the first checks on the prospective target address.
   match ext_control_check_pc(target) {
-    Ext_ControlAddr_Error(e) => Ext_ControlAddr_Check_Failure(e),
-    Ext_ControlAddr_OK(target) => {
-      // Perform standard alignment check.
-      let target_bits = bits_of(target);
-      // Check target is at least 2-byte aligned (callers must ensure
-      // this so it can be an assertion).
-      assert(target_bits[0] == bitzero);
-      // If it is not 4-byte aligned and compressed instructions are
-      // not enabled then raise an alignment exception.
-      if bit_to_bool(target_bits[1]) & not(currentlyEnabled(Ext_Zca)) then {
-        Memory_Exception(target, E_Fetch_Addr_Align())
-      } else {
-        set_next_pc(target_bits);
-        RETIRE_SUCCESS
-      }
-    }
-  }
+    Some(e) => return Ext_ControlAddr_Check_Failure(e),
+    None()  => (),
+  };
+
+  // Perform standard alignment check.
+  // Check target is at least 2-byte aligned (callers must ensure
+  // this so it can be an assertion).
+  assert(target[0] == bitzero);
+  // If it is not 4-byte aligned and compressed instructions are
+  // not enabled then raise an alignment exception.
+  if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
+  then return Memory_Exception(Virtaddr(target), E_Fetch_Addr_Align());
+
+  set_next_pc(target);
+  RETIRE_SUCCESS
 }
 
 /* ****************************************************************** */
