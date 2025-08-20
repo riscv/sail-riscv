@@ -1,6 +1,4 @@
 #include "sail.h"
-#include "rts.h"
-#include "riscv_prelude.h"
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"

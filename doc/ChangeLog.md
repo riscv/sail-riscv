@@ -6,8 +6,13 @@
   the 'E' and 'I' base ISAs is not supported.
 
 - The following extensions have been added:
+
   - Zihintntl
   - Zihintpause
+
+- Switch to ELFIO for ELF parsing, and add symbolization in the
+  instruction log output. Each instruction will print
+  `<symbol>+<offset>` at the end of the line, e.g. `_start+4`.
 
 # Release notes for the 0.8 release
 
