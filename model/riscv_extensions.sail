@@ -143,6 +143,10 @@ function clause hartSupports(Ext_Zawrs) = config extensions.Zawrs.supported
 enum clause extension = Ext_Zfa
 mapping clause extensionName = Ext_Zfa <-> "zfa"
 function clause hartSupports(Ext_Zfa) = config extensions.Zfa.supported
+// Scalar BF16 Converts
+enum clause extension = Ext_Zfbfmin
+mapping clause extensionName = Ext_Zfbfmin <-> "zfbfmin"
+function clause hartSupports(Ext_Zfbfmin) = config extensions.Zfbfmin.supported
 // Half-Precision Floating-Point
 enum clause extension = Ext_Zfh
 mapping clause extensionName = Ext_Zfh <-> "zfh"
@@ -340,6 +344,11 @@ mapping clause extensionName = Ext_Zvksg <-> "zvksg"
 function clause hartSupports(Ext_Zvksg) = hartSupports(Ext_Zvks) & hartSupports(Ext_Zvkg)
 function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 
+// Vector BF16 Converts
+enum clause extension = Ext_Zvfbfmin
+mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"
+function clause hartSupports(Ext_Zvfbfmin) = config extensions.Zvfbfmin.supported
+
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
@@ -423,6 +432,7 @@ let extensions_ordered_for_isa_string = [
 
   // Zf, Zd, and Zq
   Ext_Zfa,
+  Ext_Zfbfmin,
   Ext_Zfh,
   Ext_Zfhmin,
   Ext_Zfinx,
@@ -456,6 +466,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zkt,
 
   // Zv
+  Ext_Zvfbfmin,
   Ext_Zvbb,
   Ext_Zvbc,
   Ext_Zvkb,
