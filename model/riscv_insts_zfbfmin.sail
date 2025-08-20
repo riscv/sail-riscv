@@ -26,7 +26,10 @@ function bf16_to_f32 (v : bits(16)) -> bits(32) = {
   }
 }
 
-function clause currentlyEnabled(Ext_Zfbfmin) = hartSupports(Ext_Zfbfmin) & currentlyEnabled(Ext_Zfh)
+function clause currentlyEnabled(Ext_Zfbfmin) = hartSupports(Ext_Zfbfmin)
+
+// Zfbfmin also defines FLH, FSH, FMV.X.H, and FMV.H.X instructions as defined in the Zfh extension
+function clause currentlyEnabled(Ext_Internal_Zfhmove) = currentlyEnabled(Ext_Zfbfmin)
 
 union clause instruction = FCVT_BF16_S : (fregidx, rounding_mode, fregidx)
 

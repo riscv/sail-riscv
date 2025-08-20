@@ -147,6 +147,12 @@ function clause hartSupports(Ext_Zfa) = config extensions.Zfa.supported
 enum clause extension = Ext_Zfbfmin
 mapping clause extensionName = Ext_Zfbfmin <-> "zfbfmin"
 function clause hartSupports(Ext_Zfbfmin) = config extensions.Zfbfmin.supported
+// Internal extension for half-precision load/store and move instructions
+// Enables FLH, FSH, FMV.X.H, and FMV.H.X instructions
+// Required by Zfbfmin
+enum clause extension = Ext_Internal_Zfhmove
+mapping clause extensionName = Ext_Internal_Zfhmove <-> "zfhmove"
+function clause hartSupports(Ext_Internal_Zfhmove) = hartSupports(Ext_Zfbfmin)
 // Half-Precision Floating-Point
 enum clause extension = Ext_Zfh
 mapping clause extensionName = Ext_Zfh <-> "zfh"
