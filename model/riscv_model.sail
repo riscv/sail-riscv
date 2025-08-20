@@ -24,4 +24,9 @@ function init_model(config_filename : string) -> unit = {
   hart_state = HART_ACTIVE();
   init_platform();
   reset();
+
+  // For compatibility with the de facto boot interface, set a0=mhartid, a1=&dtb.
+  // The C++ code always places the DTB at the start of the ROM.
+  X(Regno(10)) = mhartid;
+  X(Regno(11)) = to_bits_checked(config platform.rom.base : int);
 }

@@ -1,6 +1,8 @@
 #include <cassert>
 #include <ctype.h>
 #include <climits>
+#include <exception>
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -47,8 +49,6 @@ std::string term_log;
 std::string trace_log_path;
 FILE *trace_log = NULL;
 std::string dtb_file;
-unsigned char *dtb = NULL;
-size_t dtb_len = 0;
 int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
 std::vector<std::string> elfs;
@@ -119,39 +119,11 @@ static void print_build_info(void)
   std::cout << "ELFIO: " << ELFIO_VERSION << std::endl;
 }
 
-static bool is_32bit_model(void)
+std::vector<uint8_t> read_file(const std::string &file_path)
 {
-  return zxlen == 32;
-}
-
-static void read_dtb(const char *path)
-{
-  int fd = open(path, O_RDONLY);
-  if (fd < 0) {
-    fprintf(stderr, "Unable to read DTB file %s: %s\n", path, strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-  struct stat st;
-  if (fstat(fd, &st) < 0) {
-    fprintf(stderr, "Unable to stat DTB file %s: %s\n", path, strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-  char *m = (char *)mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (m == MAP_FAILED) {
-    fprintf(stderr, "Unable to map DTB file %s: %s\n", path, strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-  dtb = (unsigned char *)malloc(st.st_size);
-  if (dtb == NULL) {
-    fprintf(stderr, "Cannot allocate DTB from file %s!\n", path);
-    exit(EXIT_FAILURE);
-  }
-  memcpy(dtb, m, st.st_size);
-  dtb_len = st.st_size;
-  munmap(m, st.st_size);
-  close(fd);
-
-  fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
+  std::ifstream instream(file_path, std::ios::in | std::ios::binary);
+  return {std::istreambuf_iterator<char>(instream),
+          std::istreambuf_iterator<char>()};
 }
 
 // Set up command line option processing.
@@ -299,75 +271,28 @@ uint64_t load_sail(const std::string &filename, bool main_file)
   return elf.entry();
 }
 
-void init_sail_reset_vector(uint64_t entry)
+void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
 {
-#define RST_VEC_SIZE 8
-  uint32_t reset_vec[RST_VEC_SIZE]
-      = {0x297,                              // auipc  t0,0x0
-         0x28593 + (RST_VEC_SIZE * 4 << 20), // addi   a1, t0, &dtb
-         0xf1402573,                         // csrr   a0, mhartid
-         is_32bit_model() ? 0x0182a283u :    // lw     t0,24(t0)
-             0x0182b283u,                    // ld     t0,24(t0)
-         0x28067,                            // jr     t0
-         0,
-         (uint32_t)(entry & 0xffffffff),
-         (uint32_t)(entry >> 32)};
+  uint64_t rom_base = get_config_uint64({"platform", "rom", "base"});
+  uint64_t rom_size = get_config_uint64({"platform", "rom", "size"});
 
-  uint64_t rom_base = get_config_uint64({"platform", "reset_vector"});
   uint64_t addr = rom_base;
 
-  for (int i = 0; i < sizeof(reset_vec); i++)
-    write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
-
-  if (dtb && dtb_len) {
-    for (size_t i = 0; i < dtb_len; i++)
-      write_mem(addr++, dtb[i]);
+  if (dtb.size() > rom_size) {
+    throw std::runtime_error("DTB (" + std::to_string(dtb.size())
+                             + " bytes) does not fit in platform.rom.size ("
+                             + std::to_string(rom_size) + " bytes).");
   }
 
-  /* zero-fill to page boundary */
-  const int align = 0x1000;
-  uint64_t rom_end = (addr + align - 1) / align * align;
-  for (uint64_t i = addr; i < rom_end; i++)
-    write_mem(addr++, 0);
-
-  /* calculate rom size */
-  uint64_t rom_size = rom_end - rom_base;
-
-  /* check calculated rom values match configuration */
-  if (rom_base != get_config_uint64({"platform", "rom", "base"})) {
-    fprintf(stderr,
-            "Configuration value platform.rom.base does not match %" PRIu64
-            ".\n",
-            rom_base);
+  for (uint8_t d : dtb) {
+    write_mem(addr++, d);
   }
-  if (rom_size != get_config_uint64({"platform", "rom", "size"})) {
-    fprintf(stderr,
-            "Configuration value platform.rom.size does not match %" PRIu64
-            ".\n",
-            rom_size);
-  }
-
-  /* boot at reset vector */
-  zforce_pc(rom_base);
 }
 
 void init_sail(uint64_t elf_entry, const char *config_file)
 {
   zinit_model(config_file != nullptr ? config_file : "");
-  if (rvfi) {
-    /*
-    rv_ram_base = UINT64_C(0x80000000);
-    rv_ram_size = UINT64_C(0x800000);
-    rv_rom_base = UINT64_C(0);
-    rv_rom_size = UINT64_C(0);
-    rv_clint_base = UINT64_C(0);
-    rv_clint_size = UINT64_C(0);
-    rv_htif_tohost = UINT64_C(0);
-    */
-    zforce_pc(elf_entry);
-  } else {
-    init_sail_reset_vector(elf_entry);
-  }
+  zforce_pc(elf_entry);
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
@@ -575,7 +500,7 @@ void init_logs()
 #endif
 }
 
-int main(int argc, char **argv)
+int inner_main(int argc, char **argv)
 {
   CLI::App app("Sail RISC-V Model");
   argv = app.ensure_utf8(argv);
@@ -633,10 +558,6 @@ int main(int argc, char **argv)
   if (!trace_log_path.empty()) {
     fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
   }
-  if (!dtb_file.empty()) {
-    fprintf(stderr, "using %s as DTB file.\n", dtb_file.c_str());
-    read_dtb(dtb_file.c_str());
-  }
 
   // Initialize the model.
   if (!config_file.empty()) {
@@ -684,6 +605,11 @@ int main(int argc, char **argv)
     register_callback(&rvfi_cbs);
   }
 
+  if (!dtb_file.empty()) {
+    fprintf(stderr, "using %s as DTB file.\n", dtb_file.c_str());
+    write_dtb_to_rom(read_file(dtb_file));
+  }
+
   const std::string &initial_elf_file = elfs[0];
   uint64_t entry = rvfi ? rvfi->get_entry()
                         : load_sail(initial_elf_file, /*main_file=*/true);
@@ -714,4 +640,17 @@ int main(int argc, char **argv)
   model_fini();
   flush_logs();
   close_logs();
+
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
+  // Catch all exceptions and print them a bit more nicely than the default.
+  try {
+    return inner_main(argc, argv);
+  } catch (const std::exception &exc) {
+    std::cerr << "Error: " << exc.what() << std::endl;
+  }
+  return 1;
 }
