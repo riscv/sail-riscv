@@ -46,6 +46,13 @@ axiom elf_entry : Unit → Int
 axiom plat_enable_dirty_update : Unit → Bool
 axiom plat_enable_misaligned_access : Unit → Bool
 axiom plat_mtval_has_illegal_inst_bits  : Unit → Bool
+axiom plat_mtval_has_breakpoint_pc  : Unit → Bool
+axiom plat_mtval_has_load_access_fault_addr  : Unit → Bool
+axiom plat_mtval_has_load_misalign_addr  : Unit → Bool
+axiom plat_mtval_has_samo_access_fault_addr  : Unit → Bool
+axiom plat_mtval_has_samo_misalign_addr  : Unit → Bool
+axiom plat_mtval_has_fetch_access_fault_addr  : Unit → Bool
+axiom plat_mtval_has_fetch_misalign_addr  : Unit → Bool
 axiom plat_rom_base : Unit → Arch.pa
 axiom plat_rom_size : Unit → Arch.pa
 axiom plat_enable_htif : Unit → Bool

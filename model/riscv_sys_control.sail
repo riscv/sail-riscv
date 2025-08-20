@@ -253,20 +253,6 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   }
 }
 
-function handle_mem_exception(Virtaddr(addr) : virtaddr, e : ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = Some(addr),
-                                    ext     = None() } in
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
-}
-
-function handle_exception(e: ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = None(),
-                                    ext     = None() } in
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
-}
-
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 

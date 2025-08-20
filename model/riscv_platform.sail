@@ -44,9 +44,6 @@ let plat_enable_dirty_update : bool = config memory.translation.dirty_update
  */
 let plat_enable_misaligned_access : bool = config memory.misaligned.supported
 
-/* whether mtval stores the bits of a faulting instruction on illegal instruction exceptions */
-let plat_mtval_has_illegal_inst_bits : bool = config base.mtval_has_illegal_instruction_bits
-
 /* ROM holding reset vector and device-tree DTB */
 // Use `register` instead of `let` since `to_bits_checked` is not a pure initializer
 // due to its use of `assert`.
@@ -445,17 +442,37 @@ function init_platform() -> unit = {
   htif_payload_writes = zeros();
 }
 
-/* Platform-specific handling of instruction faults */
-
-function handle_illegal(instbits : instbits) -> unit = {
-  let info = if   plat_mtval_has_illegal_inst_bits
-             then Some(zero_extend(xlen, instbits))
-             else None();
-  let t : sync_exception = struct { trap    = E_Illegal_Instr(),
-                                    excinfo = info,
-                                    ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+// Compute the value to write to mtval on a trap.
+function mtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
+  if match e {
+    E_Breakpoint() => config base.xtval_nonzero.breakpoint,
+    E_Load_Addr_Align() => config base.xtval_nonzero.load_address_misaligned,
+    E_Load_Access_Fault() => config base.xtval_nonzero.load_access_fault,
+    E_SAMO_Addr_Align() => config base.xtval_nonzero.samo_address_misaligned,
+    E_SAMO_Access_Fault() => config base.xtval_nonzero.samo_access_fault,
+    E_Fetch_Addr_Align() => config base.xtval_nonzero.fetch_address_misaligned,
+    E_Fetch_Access_Fault() => config base.xtval_nonzero.fetch_access_fault,
+    E_Illegal_Instr() => config base.xtval_nonzero.illegal_instruction,
+    _ => true
+  } then Some(excinfo) else None()
 }
 
 /* Platform-specific wait-for-interrupt */
 function platform_wfi() -> unit = ()
+
+
+/* Platform-specific trap handlers */
+
+function handle_mem_exception(Virtaddr(addr) : virtaddr, e : ExceptionType) -> unit = {
+  let t : sync_exception = struct { trap    = e,
+                                    excinfo = mtval_exception_value(e, addr),
+                                    ext     = None() } in
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+}
+
+function handle_illegal_instr(instbits : instbits) -> unit = {
+  let t : sync_exception = struct { trap    = E_Illegal_Instr(),
+                                    excinfo = mtval_exception_value(E_Illegal_Instr(), zero_extend(instbits)),
+                                    ext     = None() };
+  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+}

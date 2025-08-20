@@ -192,6 +192,34 @@ val plat_mtval_has_illegal_inst_bits : unit -> bool
 let plat_mtval_has_illegal_inst_bits () = false
 declare ocaml target_rep function plat_mtval_has_illegal_inst_bits = `Platform.mtval_has_illegal_inst_bits`
 
+val plat_mtval_has_breakpoint_pc : unit -> bool
+let plat_mtval_has_breakpoint_pc () = false
+declare ocaml target_rep function plat_mtval_has_breakpoint_pc = `Platform.mtval_has_breakpoint_pc`
+
+val plat_mtval_has_load_access_fault_addr : unit -> bool
+let plat_mtval_has_load_access_fault_addr () = false
+declare ocaml target_rep function plat_mtval_has_load_access_fault_addr = `Platform.mtval_has_load_access_fault_addr`
+
+val plat_mtval_has_load_misalign_addr : unit -> bool
+let plat_mtval_has_load_misalign_addr () = false
+declare ocaml target_rep function plat_mtval_has_load_misalign_addr = `Platform.mtval_has_load_misalign_addr`
+
+val plat_mtval_has_samo_access_fault_addr : unit -> bool
+let plat_mtval_has_samo_access_fault_addr () = false
+declare ocaml target_rep function plat_mtval_has_samo_access_fault_addr = `Platform.mtval_has_samo_access_fault_addr`
+
+val plat_mtval_has_samo_misalign_addr : unit -> bool
+let plat_mtval_has_samo_misalign_addr () = false
+declare ocaml target_rep function plat_mtval_has_samo_misalign_addr = `Platform.mtval_has_samo_misalign_addr`
+
+val plat_mtval_has_fetch_access_fault_addr : unit -> bool
+let plat_mtval_has_fetch_access_fault_addr () = false
+declare ocaml target_rep function plat_mtval_has_fetch_access_fault_addr = `Platform.mtval_has_fetch_access_fault_addr`
+
+val plat_mtval_has_fetch_misalign_addr : unit -> bool
+let plat_mtval_has_fetch_misalign_addr () = false
+declare ocaml target_rep function plat_mtval_has_fetch_misalign_addr = `Platform.mtval_has_fetch_misalign_addr`
+
 val plat_insns_per_tick : unit -> integer
 let plat_insns_per_tick () = 1
 declare ocaml target_rep function plat_insns_per_tick = `Platform.insns_per_tick`
