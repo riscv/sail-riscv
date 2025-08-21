@@ -13,7 +13,7 @@ foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
 
             configure_file(config.json.in ${config_filename})
 
-            install(FILES ${config_filename}
+            install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${config_filename}
                 DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/config
             )
         endforeach()
