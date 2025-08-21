@@ -104,33 +104,25 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
                               pte_flags : PTE_Flags,
                               ext       : PTE_Ext,
                               ext_ptw   : ext_ptw) -> PTE_Check = {
-  let pte_U = pte_flags[U];
-  let pte_R = pte_flags[R];
-  let pte_W = pte_flags[W];
-  let pte_X = pte_flags[X];
-  let success : bool =
-    match (ac, priv) {
-      // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
-      // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
-      (Read(_),         User)       => (pte_U == 0b1)
-                                       & ((pte_R == 0b1)
-                                          | ((pte_X == 0b1 & mxr))),
-      (Write(_),        User)       => (pte_U == 0b1) & (pte_W == 0b1),
-      (ReadWrite(_, _), User)       => (pte_U == 0b1)
-                                       & (pte_W == 0b1)
-                                       & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
-      (InstructionFetch(),    User) => (pte_U == 0b1) & (pte_X == 0b1),
-      (Read(_),         Supervisor) => ((pte_U == 0b0) | do_sum)
-                                       & ((pte_R == 0b1) | ((pte_X == 0b1) & mxr)),
-      (Write(_),        Supervisor) => ((pte_U == 0b0) | do_sum)
-                                       & (pte_W == 0b1),
-      (ReadWrite(_, _), Supervisor) => ((pte_U == 0b0) | do_sum)
-                                       & (pte_W == 0b1)
-                                       & ((pte_R == 0b1)
-                                          | ((pte_X == 0b1) & mxr)),
-      (InstructionFetch(),Supervisor) => (pte_U == 0b0) & (pte_X == 0b1),
-      (_,               Machine)    => internal_error(__FILE__, __LINE__,
-                                                      "m-mode mem perm check")};
+  let pte_U = bits_to_bool(pte_flags[U]);
+  let pte_R = bits_to_bool(pte_flags[R]);
+  let pte_W = bits_to_bool(pte_flags[W]);
+  let pte_X = bits_to_bool(pte_flags[X]);
+
+  let success : bool = match (ac, priv) {
+    // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
+    // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
+    (Read(_),            User      ) => pte_U & (pte_R | (pte_X & mxr)),
+    (Write(_),           User      ) => pte_U & pte_W,
+    (ReadWrite(_, _),    User      ) => pte_U & pte_W & (pte_R | (pte_X & mxr)),
+    (InstructionFetch(), User      ) => pte_U & pte_X,
+    (Read(_),            Supervisor) => (not(pte_U) | do_sum) & (pte_R | (pte_X & mxr)),
+    (Write(_),           Supervisor) => (not(pte_U) | do_sum) & pte_W,
+    (ReadWrite(_, _),    Supervisor) => (not(pte_U) | do_sum) & pte_W & (pte_R | (pte_X & mxr)),
+    (InstructionFetch(), Supervisor) => not(pte_U) & pte_X,
+    (_,                  Machine   ) => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
+  };
+
   if success then PTE_Check_Success(())
   else            PTE_Check_Failure((), ())
 }
