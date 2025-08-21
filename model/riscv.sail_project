@@ -355,14 +355,14 @@ extensions {
     }
     Zihintntl_insts {
       requires riscv, Zihintntl_types
-      before I, Zca // NTL instructions override ADD, C.NTL overrides C.ADD
+      before I_insts, Zca // NTL instructions override ADD, C.NTL overrides C.ADD
       files riscv_insts_zihintntl.sail
     }
   }
 
   Zihintpause {
     requires riscv
-    before I // PAUSE overrides a FENCE
+    before I_insts // PAUSE overrides a FENCE
     files riscv_insts_zihintpause.sail
   }
 }
