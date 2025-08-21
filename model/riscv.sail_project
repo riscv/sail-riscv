@@ -70,45 +70,68 @@ extensions {
   requires riscv_core
 
   I {
-    requires riscv_exceptions, riscv
+    I_types {
+      before riscv
+      files riscv_base_types.sail
+    }
+    I_insts {
+      requires riscv_exceptions, riscv, I_types
 
-    files
-      riscv_insts_base.sail,
-      riscv_insts_reserved_fence.sail,
-      riscv_jalr_seq.sail
+      files
+        riscv_insts_base.sail,
+        riscv_insts_reserved_fence.sail,
+        riscv_jalr_seq.sail
+    }
   }
 
   A {
-    requires riscv_exceptions, riscv, I
+    A_types {
+      before riscv
+      files riscv_aext_types.sail
+    }
     Zaamo {
+      requires riscv, A_types
       files riscv_insts_zaamo.sail
     }
     Zalrsc {
-      requires Zaamo
+      requires riscv, A_types
       files riscv_insts_zalrsc.sail
     }
   }
 
   M {
-    requires riscv, I
-    files riscv_insts_mext.sail
+    M_types {
+      before riscv
+      files riscv_mext_types.sail
+    }
+    M_insts {
+      requires riscv, I, M_types
+      files riscv_insts_mext.sail
+    }
   }
 
   // RISC-V Bit manipulation extensions
   B {
-    requires riscv
+    B_types {
+      before riscv
+      files riscv_bext_types.sail
+    }
 
-    Zba {
-      files riscv_insts_zba.sail
-    }
-    Zbb {
-      files riscv_insts_zbb.sail
-    }
-    Zbc {
-      files riscv_insts_zbc.sail
-    }
-    Zbs {
-      files riscv_insts_zbs.sail
+    B_insts {
+      requires riscv, B_types
+
+      Zba {
+        files riscv_insts_zba.sail
+      }
+      Zbb {
+        files riscv_insts_zbb.sail
+      }
+      Zbc {
+        files riscv_insts_zbc.sail
+      }
+      Zbs {
+        files riscv_insts_zbs.sail
+      }
     }
   }
 
@@ -197,7 +220,7 @@ extensions {
       files riscv_zkr_control.sail
     }
     Zbkb {
-      requires riscv
+      requires riscv, B_types
       files riscv_insts_zbkb.sail
     }
     Zbkx {
@@ -245,8 +268,14 @@ extensions {
 
   // Control and Status Register (CSR) Instructions
   Zicsr {
-    requires riscv, riscv_exceptions, pmp, V_core
-    files riscv_insts_zicsr.sail
+    Zicsr_types {
+      before riscv
+      files riscv_zicsr_types.sail
+    }
+    Zicsr_insts {
+      requires riscv, riscv_exceptions, pmp, V_core, Zicsr_types
+      files riscv_insts_zicsr.sail
+    }
   }
 
   Svinval {
@@ -273,13 +302,25 @@ extensions {
   }
 
   Zawrs {
-    requires riscv
-    files riscv_insts_zawrs.sail
+    Zawrs_types {
+      before riscv
+      files riscv_zawrs_types.sail
+    }
+    Zawrs_insts {
+      requires riscv, Zawrs_types
+      files riscv_insts_zawrs.sail
+    }
   }
 
   Zicond {
-    requires riscv
-    files riscv_insts_zicond.sail
+    Zicond_types {
+      before riscv
+      files riscv_zicond_types.sail
+    }
+    Zicond_insts {
+      requires riscv, Zicond_types
+      files riscv_insts_zicond.sail
+    }
   }
 
   Zicntr {
@@ -287,8 +328,14 @@ extensions {
   }
 
   Zicbom {
-    requires riscv
-    files riscv_insts_zicbom.sail
+    Zicbom_types {
+      before riscv
+      files riscv_zicbom_types.sail
+    }
+    Zicbom_insts {
+      requires riscv, Zicbom_types
+      files riscv_insts_zicbom.sail
+    }
   }
 
   Zicboz {
