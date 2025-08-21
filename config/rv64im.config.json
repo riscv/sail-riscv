@@ -1,6 +1,7 @@
 {
   "base": {
-    "xlen": 32,
+    "xlen": 64,
+    "E": false,
     "writable_misa": true,
     "writable_fiom": true,
     "writable_hpm_counters": {
@@ -96,6 +97,12 @@
     "Zifencei": {
       "supported": true
     },
+    "Zihintntl": {
+      "supported": false
+    },
+    "Zihintpause": {
+      "supported": false
+    },
     "Zihpm": {
       "supported": true
     },
@@ -110,6 +117,9 @@
     },
     "Zabha": {
       "supported": true
+    },
+    "Zacas": {
+      "supported": false
     },
     "Zalrsc": {
       "supported": false
@@ -139,7 +149,7 @@
       "supported": true
     },
     "Zcf": {
-      "supported": true
+      "supported": false
     },
     "Zcd": {
       "supported": true
@@ -249,16 +259,16 @@
       "sfence_vma_illegal_if_svbare_only": true
     },
     "Sv32": {
-      "supported": true
+      "supported": false
     },
     "Sv39": {
-      "supported": false
+      "supported": true
     },
     "Sv48": {
-      "supported": false
+      "supported": true
     },
     "Sv57": {
-      "supported": false
+      "supported": true
     }
   }
 }
