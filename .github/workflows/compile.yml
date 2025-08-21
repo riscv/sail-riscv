@@ -27,7 +27,7 @@ jobs:
       - name: Install packages (Linux)
         if: startsWith(matrix.os, 'ubuntu-')
         run: |
-          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build jq
+          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
 
       - name: Install packages (macOS)
         if: startsWith(matrix.os, 'macos-')

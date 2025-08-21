@@ -167,8 +167,12 @@ add_custom_target(generated_sail_riscv_docs DEPENDS "${CMAKE_CURRENT_BINARY_DIR}
 ############# Formal #############
 
 # Theorem prover backends require compile time configuration.
-foreach (arch IN ITEMS "rv32d" "rv64d")
-    set(config_file "${CMAKE_SOURCE_DIR}/config/${arch}.json")
+foreach (xlen IN ITEMS 32 64)
+    # Use ELEN=XLEN.
+    set(config_file "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v256_e${xlen}.json")
+    # This name is used in a lot of places so it excludes the `_v256_e{xlen}`
+    # for backwards compatibility.
+    set(arch "rv${xlen}d")
 
     ############# SMT #############
 
