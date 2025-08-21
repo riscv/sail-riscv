@@ -25,13 +25,6 @@ mapping encdec_vlewidth : vlewidth <-> bits(3) = {
   VLE64     <-> 0b111
 }
 
-mapping vlewidth_bytesnumber : vlewidth <-> {1, 2, 4, 8} = {
-  VLE8      <-> 1,
-  VLE16     <-> 2,
-  VLE32     <-> 4,
-  VLE64     <-> 8
-}
-
 mapping vlewidth_pow : vlewidth <-> {3, 4, 5, 6} = {
   VLE8      <-> 3,
   VLE16     <-> 4,
@@ -81,9 +74,9 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
 }
 
 function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
-  let load_width_bytes = vlewidth_bytesnumber(width);
-  let EEW = load_width_bytes * 8;
   let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
@@ -158,9 +151,9 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
 
 function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
-  let load_width_bytes = vlewidth_bytesnumber(width);
-  let EEW = load_width_bytes * 8;
   let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
@@ -215,9 +208,9 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
 }
 
 function clause execute(VSSEGTYPE(nf, vm, rs1, width, vs3)) = {
-  let load_width_bytes = vlewidth_bytesnumber(width);
-  let EEW = load_width_bytes * 8;
   let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
@@ -276,9 +269,9 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
 }
 
 function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
-  let load_width_bytes = vlewidth_bytesnumber(width);
-  let EEW = load_width_bytes * 8;
   let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
@@ -334,9 +327,9 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
 }
 
 function clause execute(VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)) = {
-  let load_width_bytes = vlewidth_bytesnumber(width);
-  let EEW = load_width_bytes * 8;
   let EEW_pow = vlewidth_pow(width);
+  let EEW = 2 ^ EEW_pow;
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
@@ -397,7 +390,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
 
 function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EEW_index_pow = vlewidth_pow(width);
-  let EEW_index_bytes = vlewidth_bytesnumber(width);
+  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
@@ -406,7 +399,7 @@ function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
 
   assert(num_elem > 0);
 
-  if illegal_indexed_load(vd, vm, nf, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
   process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
@@ -424,7 +417,7 @@ mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
 
 function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EEW_index_pow = vlewidth_pow(width);
-  let EEW_index_bytes = vlewidth_bytesnumber(width);
+  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
@@ -433,7 +426,7 @@ function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
 
   assert(num_elem > 0);
 
-  if illegal_indexed_load(vd, vm, nf, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
   process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
@@ -484,7 +477,7 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
 
 function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EEW_index_pow = vlewidth_pow(width);
-  let EEW_index_bytes = vlewidth_bytesnumber(width);
+  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
@@ -493,7 +486,7 @@ function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
 
   assert(num_elem > 0);
 
-  if illegal_indexed_store(nf, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
   process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
@@ -511,7 +504,7 @@ mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
 
 function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EEW_index_pow = vlewidth_pow(width);
-  let EEW_index_bytes = vlewidth_bytesnumber(width);
+  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
@@ -520,7 +513,7 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
 
   assert(num_elem > 0);
 
-  if illegal_indexed_store(nf, EEW_index_bytes * 8, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
   process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
@@ -577,8 +570,9 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
 }
 
 function clause execute(VLRETYPE(nf, rs1, width, vd)) = {
-  let load_width_bytes = vlewidth_bytesnumber(width);
-  let EEW = load_width_bytes * 8;
+  let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
   let elem_per_reg = vlen / EEW;
 
   assert(elem_per_reg >= 0);
