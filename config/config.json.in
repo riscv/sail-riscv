@@ -33,7 +33,6 @@
     "archid": 0,
     "impid": 0,
     "hartid": 0,
-    "reset_vector": 4096,
     "cache_block_size_exp": 6,
     "ram": {
       "base": 2147483648,

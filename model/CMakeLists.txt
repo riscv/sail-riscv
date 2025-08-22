@@ -91,6 +91,7 @@ add_custom_command(
         --c-include riscv_callbacks.h
         # Don't dead-code eliminate these functions.
         --c-preserve init_model
+        --c-preserve init_boot_requirements
         --c-preserve try_step
         --c-preserve tick_clock
         --c-preserve force_pc
