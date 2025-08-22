@@ -60,40 +60,23 @@ foreach(vlen IN ITEMS 128 256 512)
                 "${DOWNLOAD_URL}"
             )
 
-            file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-                "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv32*"
-            )
-            file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-                "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv64*"
+            # These tests use XLEN=ELEN. There are no tests with XLEN=64 & ELEN=32 or vice versa.
+            set(xlen ${elen})
+
+            file(GLOB elfs CONFIGURE_DEPENDS LIST_DIRECTORIES false
+                "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv${xlen}*"
             )
 
-            add_custom_command(
-                OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
-                COMMAND jq
-                    '.base.xlen = ${elen} |
-                     .extensions.V.vlen_exp = (${vlen} | log2) |
-                     .extensions.V.elen_exp = (${elen} | log2) '
-                    "${CMAKE_CURRENT_SOURCE_DIR}/../config/rv${elen}d.json"
-                    > "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
-                DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../config/rv${elen}d.json"
-                COMMENT "Generating config for vlen=${vlen}, elen=${elen}, xlen=${elen}"
-            )
-
-            add_custom_target(config_rv${elen}d_v${vlen}_e${elen} ALL
-                DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
-            )
-
-            foreach(arch IN ITEMS "rv32d" "rv64d")
-                foreach(elf IN LISTS elfs_${arch})
-                    file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
-                    add_test(
-                        NAME "${arch}_${elf_name}"
-                        COMMAND
-                            $<TARGET_FILE:sail_riscv_sim>
-                            --config "${CMAKE_CURRENT_BINARY_DIR}/config_rv${elen}d_v${vlen}_e${elen}.json"
-                            ${elf}
-                    )
-                endforeach()
+            foreach(elf IN LISTS elfs)
+                file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
+                add_test(
+                    # `elf_name` includes xlen/vlen/elen so we don't need to add any details.
+                    NAME "${elf_name}"
+                    COMMAND
+                        $<TARGET_FILE:sail_riscv_sim>
+                        --config "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v${vlen}_e${elen}.json"
+                        ${elf}
+                )
             endforeach()
         endif()
     endforeach()
@@ -113,22 +96,19 @@ if(ENABLE_RISCV_TESTS)
         "${DOWNLOAD_URL}"
     )
 
-    file(GLOB elfs_rv32d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-        "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv32*"
-    )
-
-    file(GLOB elfs_rv64d CONFIGURE_DEPENDS LIST_DIRECTORIES false
-        "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv64*"
-    )
-
-    foreach(arch IN ITEMS "rv32d" "rv64d")
-        foreach(elf IN LISTS elfs_${arch})
+    foreach(xlen IN ITEMS 32 64)
+        file(GLOB elf_list CONFIGURE_DEPENDS LIST_DIRECTORIES false
+           "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv${xlen}*"
+        )
+        foreach(elf IN LISTS elf_list)
             file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
             add_test(
-                NAME "${arch}_${elf_name}"
+                # `elf_name` includes xlen so we don't need to add any details.
+                NAME "${elf_name}"
                 COMMAND
                     $<TARGET_FILE:sail_riscv_sim>
-                    --config "${CMAKE_SOURCE_DIR}/config/${arch}.json"
+                    # Use ELEN=XLEN. These tests don't use vector so it doesn't actually matter.
+                    --config "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v256_e${xlen}.json"
                     ${elf}
             )
         endforeach()

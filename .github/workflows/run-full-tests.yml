@@ -38,7 +38,7 @@ jobs:
       - name: Install packages (Linux)
         run: |
           sudo apt update
-          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build jq
+          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
       - name: Install CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:

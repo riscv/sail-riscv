@@ -1,6 +1,8 @@
 #include <cassert>
 #include <ctype.h>
 #include <climits>
+#include <exception>
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -16,10 +18,11 @@
 #include <cstring>
 
 #include "CLI11.hpp"
-#include "elf.h"
+#include "elf_loader.h"
 #include "sail.h"
 #include "sail_config.h"
 #include "rts.h"
+#include "symbol_table.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
@@ -46,8 +49,6 @@ std::string term_log;
 std::string trace_log_path;
 FILE *trace_log = NULL;
 std::string dtb_file;
-unsigned char *dtb = NULL;
-size_t dtb_len = 0;
 int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
 std::vector<std::string> elfs;
@@ -115,41 +116,14 @@ static void print_build_info(void)
   std::cout << "C++ compiler: " << version_info::cxx_compiler_version
             << std::endl;
   std::cout << "CLI11: " << CLI11_VERSION << std::endl;
+  std::cout << "ELFIO: " << ELFIO_VERSION << std::endl;
 }
 
-static bool is_32bit_model(void)
+std::vector<uint8_t> read_file(const std::string &file_path)
 {
-  return zxlen == 32;
-}
-
-static void read_dtb(const char *path)
-{
-  int fd = open(path, O_RDONLY);
-  if (fd < 0) {
-    fprintf(stderr, "Unable to read DTB file %s: %s\n", path, strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-  struct stat st;
-  if (fstat(fd, &st) < 0) {
-    fprintf(stderr, "Unable to stat DTB file %s: %s\n", path, strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-  char *m = (char *)mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (m == MAP_FAILED) {
-    fprintf(stderr, "Unable to map DTB file %s: %s\n", path, strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-  dtb = (unsigned char *)malloc(st.st_size);
-  if (dtb == NULL) {
-    fprintf(stderr, "Cannot allocate DTB from file %s!\n", path);
-    exit(EXIT_FAILURE);
-  }
-  memcpy(dtb, m, st.st_size);
-  dtb_len = st.st_size;
-  munmap(m, st.st_size);
-  close(fd);
-
-  fprintf(stdout, "Read %zd bytes of DTB from %s.\n", dtb_len, path);
+  std::ifstream instream(file_path, std::ios::in | std::ios::binary);
+  return {std::istreambuf_iterator<char>(instream),
+          std::istreambuf_iterator<char>()};
 }
 
 // Set up command line option processing.
@@ -231,124 +205,95 @@ static void setup_options(CLI::App &app)
       "file. This is optional with some arguments, e.g. --print-isa-string.");
 }
 
-void check_elf(bool is32bit)
+uint64_t load_sail(const std::string &filename, bool main_file)
 {
-  if (is32bit) {
+  ELF elf = ELF::open(filename);
+
+  switch (elf.architecture()) {
+  case Architecture::RV32:
     if (zxlen != 32) {
       fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
               zxlen);
       exit(EXIT_FAILURE);
     }
-  } else {
+    break;
+  case Architecture::RV64:
     if (zxlen != 64) {
       fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n",
               zxlen);
       exit(EXIT_FAILURE);
     }
+    break;
   }
+
+  // Load into memory.
+  elf.load([](uint64_t address, const uint8_t *data, uint64_t length) {
+    // TODO: We could definitely improve on rts.c's memory implementation
+    // (which is O(N^2)) and writing one byte at a time here.
+    for (uint64_t i = 0; i < length; ++i) {
+      write_mem(address + i, data[i]);
+    }
+  });
+
+  // Load the entire symbol table.
+  const auto symbols = elf.symbols();
+
+  // Save reversed symbol table for log symbolization.
+  // If multiple symbols from different ELF files have the same value the first
+  // one wins.
+  const auto reversed_symbols = reverse_symbol_table(symbols);
+  g_symbols.insert(reversed_symbols.begin(), reversed_symbols.end());
+
+  if (main_file) {
+    // Only scan for test-signature/htif symbols in the main ELF file.
+
+    const auto &tohost = symbols.find("tohost");
+    if (tohost == symbols.end()) {
+      fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
+      rv_enable_htif = false;
+    } else {
+      rv_htif_tohost = tohost->second;
+      fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", rv_htif_tohost);
+    }
+    // Locate test-signature locations if any.
+    const auto &begin_sig = symbols.find("begin_signature");
+    if (begin_sig != symbols.end()) {
+      fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig->second);
+      mem_sig_start = begin_sig->second;
+    }
+    const auto &end_sig = symbols.find("end_signature");
+    if (end_sig != symbols.end()) {
+      fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig->second);
+      mem_sig_end = end_sig->second;
+    }
+  }
+
+  return elf.entry();
 }
 
-uint64_t load_sail(const char *f, bool main_file)
+void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
 {
-  bool is32bit;
-  uint64_t entry;
-  uint64_t begin_sig, end_sig;
-  // Needs a change in Sail lib API to remove const_cast.
-  load_elf(const_cast<char *>(f), &is32bit, &entry);
-  check_elf(is32bit);
-  if (!main_file) {
-    /* Don't scan for test-signature/htif symbols for additional ELF files. */
-    return entry;
-  }
-  fprintf(stdout, "ELF Entry @ 0x%" PRIx64 "\n", entry);
-  /* locate htif ports */
-  if (lookup_sym(f, "tohost", &rv_htif_tohost) < 0) {
-    fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
-    rv_enable_htif = false;
-  } else {
-    fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", rv_htif_tohost);
-  }
-  /* locate test-signature locations if any */
-  if (!lookup_sym(f, "begin_signature", &begin_sig)) {
-    fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig);
-    mem_sig_start = begin_sig;
-  }
-  if (!lookup_sym(f, "end_signature", &end_sig)) {
-    fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig);
-    mem_sig_end = end_sig;
-  }
-  return entry;
-}
+  uint64_t rom_base = get_config_uint64({"platform", "rom", "base"});
+  uint64_t rom_size = get_config_uint64({"platform", "rom", "size"});
 
-void init_sail_reset_vector(uint64_t entry)
-{
-#define RST_VEC_SIZE 8
-  uint32_t reset_vec[RST_VEC_SIZE]
-      = {0x297,                              // auipc  t0,0x0
-         0x28593 + (RST_VEC_SIZE * 4 << 20), // addi   a1, t0, &dtb
-         0xf1402573,                         // csrr   a0, mhartid
-         is_32bit_model() ? 0x0182a283u :    // lw     t0,24(t0)
-             0x0182b283u,                    // ld     t0,24(t0)
-         0x28067,                            // jr     t0
-         0,
-         (uint32_t)(entry & 0xffffffff),
-         (uint32_t)(entry >> 32)};
-
-  uint64_t rom_base = get_config_uint64({"platform", "reset_vector"});
   uint64_t addr = rom_base;
 
-  for (int i = 0; i < sizeof(reset_vec); i++)
-    write_mem(addr++, (uint64_t)((char *)reset_vec)[i]);
-
-  if (dtb && dtb_len) {
-    for (size_t i = 0; i < dtb_len; i++)
-      write_mem(addr++, dtb[i]);
+  if (dtb.size() > rom_size) {
+    throw std::runtime_error("DTB (" + std::to_string(dtb.size())
+                             + " bytes) does not fit in platform.rom.size ("
+                             + std::to_string(rom_size) + " bytes).");
   }
 
-  /* zero-fill to page boundary */
-  const int align = 0x1000;
-  uint64_t rom_end = (addr + align - 1) / align * align;
-  for (uint64_t i = addr; i < rom_end; i++)
-    write_mem(addr++, 0);
-
-  /* calculate rom size */
-  uint64_t rom_size = rom_end - rom_base;
-
-  /* check calculated rom values match configuration */
-  if (rom_base != get_config_uint64({"platform", "rom", "base"})) {
-    fprintf(stderr,
-            "Configuration value platform.rom.base does not match %" PRIu64
-            ".\n",
-            rom_base);
+  for (uint8_t d : dtb) {
+    write_mem(addr++, d);
   }
-  if (rom_size != get_config_uint64({"platform", "rom", "size"})) {
-    fprintf(stderr,
-            "Configuration value platform.rom.size does not match %" PRIu64
-            ".\n",
-            rom_size);
-  }
-
-  /* boot at reset vector */
-  zforce_pc(rom_base);
 }
 
 void init_sail(uint64_t elf_entry, const char *config_file)
 {
   zinit_model(config_file != nullptr ? config_file : "");
-  if (rvfi) {
-    /*
-    rv_ram_base = UINT64_C(0x80000000);
-    rv_ram_size = UINT64_C(0x800000);
-    rv_rom_base = UINT64_C(0);
-    rv_rom_size = UINT64_C(0);
-    rv_clint_base = UINT64_C(0);
-    rv_clint_size = UINT64_C(0);
-    rv_htif_tohost = UINT64_C(0);
-    */
-    zforce_pc(elf_entry);
-  } else {
-    init_sail_reset_vector(elf_entry);
-  }
+  zforce_pc(elf_entry);
+  zinit_boot_requirements(UNIT);
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
@@ -556,11 +501,16 @@ void init_logs()
 #endif
 }
 
-int main(int argc, char **argv)
+int inner_main(int argc, char **argv)
 {
   CLI::App app("Sail RISC-V Model");
   argv = app.ensure_utf8(argv);
   setup_options(app);
+
+  if (argc == 1) {
+    fprintf(stdout, "%s\n", app.help().c_str());
+    exit(EXIT_FAILURE);
+  }
 
   // long_options_offset() is a local addition, so when updating CLI11,
   // see how https://github.com/CLIUtils/CLI11/pull/1185 ended up,
@@ -609,10 +559,6 @@ int main(int argc, char **argv)
   if (!trace_log_path.empty()) {
     fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
   }
-  if (!dtb_file.empty()) {
-    fprintf(stderr, "using %s as DTB file.\n", dtb_file.c_str());
-    read_dtb(dtb_file.c_str());
-  }
 
   // Initialize the model.
   if (!config_file.empty()) {
@@ -624,6 +570,8 @@ int main(int argc, char **argv)
   sail_set_abstract_vlen_exp();
   sail_set_abstract_ext_d_supported();
   sail_set_abstract_elen_exp();
+  sail_set_abstract_base_E_enabled();
+
   model_init();
 
   if (do_validate_config) {
@@ -658,15 +606,21 @@ int main(int argc, char **argv)
     register_callback(&rvfi_cbs);
   }
 
+  if (!dtb_file.empty()) {
+    fprintf(stderr, "using %s as DTB file.\n", dtb_file.c_str());
+    write_dtb_to_rom(read_file(dtb_file));
+  }
+
   const std::string &initial_elf_file = elfs[0];
-  uint64_t entry = rvfi
-      ? rvfi->get_entry()
-      : load_sail(initial_elf_file.c_str(), /*main_file=*/true);
+  uint64_t entry = rvfi ? rvfi->get_entry()
+                        : load_sail(initial_elf_file, /*main_file=*/true);
+
+  fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
 
   /* Load any additional ELF files into memory */
   for (auto it = elfs.cbegin() + 1; it != elfs.cend(); it++) {
     fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
-    (void)load_sail(it->c_str(), /*main_file=*/false);
+    (void)load_sail(*it, /*main_file=*/false);
   }
 
   init_sail(entry, config_file.c_str());
@@ -687,4 +641,17 @@ int main(int argc, char **argv)
   model_fini();
   flush_logs();
   close_logs();
+
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
+  // Catch all exceptions and print them a bit more nicely than the default.
+  try {
+    return inner_main(argc, argv);
+  } catch (const std::exception &exc) {
+    std::cerr << "Error: " << exc.what() << std::endl;
+  }
+  return 1;
 }

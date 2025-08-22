@@ -36,10 +36,6 @@ type ext_control_addr_error = unit
  * value, which will have bit[0] cleared by the caller if needed.
  */
 
-/* the control address is derived from a non-PC register, e.g. in JALR */
-function ext_control_check_addr(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
-  Ext_ControlAddr_OK(Virtaddr(pc))
-
 /* the control address is derived from the PC register, e.g. in JAL */
 function ext_control_check_pc(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
   Ext_ControlAddr_OK(Virtaddr(pc))
@@ -61,10 +57,3 @@ function ext_data_get_addr(base : regidx, offset : xlenbits, acc : AccessType(ex
 
 function ext_handle_data_check_error(err : ext_data_addr_error) -> unit =
   ()
-
-/* Default implementations of these hooks permit all accesses.  */
-function ext_check_phys_mem_read (access_type, paddr, width, acquire, release, reserved, read_meta) =
-  Ext_PhysAddr_OK ()
-
-function ext_check_phys_mem_write(write_kind, paddr, width, data, metadata) =
-  Ext_PhysAddr_OK ()

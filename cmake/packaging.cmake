@@ -16,9 +16,13 @@ install(FILES "${CMAKE_SOURCE_DIR}/dependencies/softfloat/berkeley-softfloat-3/C
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
     RENAME "Berkeley-SoftFloat-LICENSE.txt"
 )
-install(FILES "${CMAKE_SOURCE_DIR}/dependencies/CLIUtils/LICENSE"
+install(FILES "${CMAKE_SOURCE_DIR}/dependencies/CLI11/LICENSE"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
     RENAME "CLI11-LICENSE.txt"
+)
+install(FILES "${CMAKE_SOURCE_DIR}/dependencies/elfio/LICENSE.txt"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
+    RENAME "ELFIO-LICENSE.txt"
 )
 
 # `file(ARCHIVE_CREATE COMPRESSION Gzip)` creates files with

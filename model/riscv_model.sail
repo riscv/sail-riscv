@@ -25,3 +25,12 @@ function init_model(config_filename : string) -> unit = {
   init_platform();
   reset();
 }
+
+// For compatibility with the de facto boot interface, set a0=mhartid, a1=&dtb.
+// The C++ code always places the DTB at the start of the ROM.
+//
+// See https://github.com/torvalds/linux/blob/master/Documentation/arch/riscv/boot.rst
+function init_boot_requirements() -> unit = {
+  X(Regno(10)) = mhartid;
+  X(Regno(11)) = to_bits_checked(config platform.rom.base : int);
+}
