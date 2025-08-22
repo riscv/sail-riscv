@@ -36,10 +36,6 @@ type ext_control_addr_error = unit
  * value, which will have bit[0] cleared by the caller if needed.
  */
 
-/* the control address is derived from a non-PC register, e.g. in JALR */
-function ext_control_check_addr(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
-  Ext_ControlAddr_OK(Virtaddr(pc))
-
 /* the control address is derived from the PC register, e.g. in JAL */
 function ext_control_check_pc(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
   Ext_ControlAddr_OK(Virtaddr(pc))
