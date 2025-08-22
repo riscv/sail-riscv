@@ -443,7 +443,7 @@ function init_platform() -> unit = {
 }
 
 // Compute the value to write to mtval on a trap.
-function mtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
+function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
     E_Breakpoint() => config base.xtval_nonzero.breakpoint,
     E_Load_Addr_Align() => config base.xtval_nonzero.load_address_misaligned,
@@ -465,14 +465,14 @@ function platform_wfi() -> unit = ()
 
 function handle_mem_exception(Virtaddr(addr) : virtaddr, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
-                                    excinfo = mtval_exception_value(e, addr),
+                                    excinfo = xtval_exception_value(e, addr),
                                     ext     = None() } in
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
 function handle_illegal_instr(instbits : instbits) -> unit = {
   let t : sync_exception = struct { trap    = E_Illegal_Instr(),
-                                    excinfo = mtval_exception_value(E_Illegal_Instr(), zero_extend(instbits)),
+                                    excinfo = xtval_exception_value(E_Illegal_Instr(), zero_extend(instbits)),
                                     ext     = None() };
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
