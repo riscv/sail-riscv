@@ -648,6 +648,8 @@ int main(int argc, char **argv)
   sail_set_abstract_vlen_exp();
   sail_set_abstract_ext_d_supported();
   sail_set_abstract_elen_exp();
+  sail_set_abstract_base_E_enabled();
+
   model_init();
 
   if (do_validate_config) {
