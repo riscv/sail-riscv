@@ -99,7 +99,9 @@ union PTE_Check = {
 // PRIVATE
 function check_PTE_permission(ac        : AccessType(ext_access_type),
                               priv      : Privilege,
+                              // Make eXecutable Readable
                               mxr       : bool,
+                              // permit Supervisor User Memory access
                               do_sum    : bool,
                               pte_flags : PTE_Flags,
                               ext       : PTE_Ext,
@@ -109,22 +111,24 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
   let pte_W = bits_to_bool(pte_flags[W]);
   let pte_X = bits_to_bool(pte_flags[X]);
 
-  let success : bool = match (ac, priv) {
-    // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
-    // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
-    (Read(_),            User      ) => pte_U & (pte_R | (pte_X & mxr)),
-    (Write(_),           User      ) => pte_U & pte_W,
-    (ReadWrite(_, _),    User      ) => pte_U & pte_W & (pte_R | (pte_X & mxr)),
-    (InstructionFetch(), User      ) => pte_U & pte_X,
-    (Read(_),            Supervisor) => (not(pte_U) | do_sum) & (pte_R | (pte_X & mxr)),
-    (Write(_),           Supervisor) => (not(pte_U) | do_sum) & pte_W,
-    (ReadWrite(_, _),    Supervisor) => (not(pte_U) | do_sum) & pte_W & (pte_R | (pte_X & mxr)),
-    (InstructionFetch(), Supervisor) => not(pte_U) & pte_X,
-    (_,                  Machine   ) => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
+  // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
+  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
+  let access_ok : bool = match ac {
+    Read(_)             => pte_R | (pte_X & mxr),
+    Write(_)            => pte_W,
+    ReadWrite(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
+    InstructionFetch(_) => pte_X,
   };
 
-  if success then PTE_Check_Success(())
-  else            PTE_Check_Failure((), ())
+  let priv_ok : bool = match priv {
+    User       => pte_U,
+    // SUM allows supervisor mode to access U-mode pages, but only for
+    // loads and stores; not instruction fetch.
+    Supervisor => not(pte_U) | (do_sum & is_load_store(ac)),
+    Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
+  };
+
+  if access_ok & priv_ok then PTE_Check_Success(()) else PTE_Check_Failure((), ())
 }
 
 // Update PTE bits if needed; return new PTE if updated
