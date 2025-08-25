@@ -463,16 +463,9 @@ function platform_wfi() -> unit = ()
 
 /* Platform-specific trap handlers */
 
-function handle_mem_exception(Virtaddr(addr) : virtaddr, e : ExceptionType) -> unit = {
+function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
-                                    excinfo = xtval_exception_value(e, addr),
-                                    ext     = None() } in
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
-}
-
-function handle_illegal_instr(instbits : instbits) -> unit = {
-  let t : sync_exception = struct { trap    = E_Illegal_Instr(),
-                                    excinfo = xtval_exception_value(E_Illegal_Instr(), zero_extend(instbits)),
+                                    excinfo = xtval_exception_value(e, xtval),
                                     ext     = None() };
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }

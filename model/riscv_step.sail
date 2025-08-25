@@ -185,13 +185,13 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       handle_interrupt(intr, priv)
     },
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
-    Step_Fetch_Failure(vaddr, e) => handle_mem_exception(vaddr, e),
+    Step_Fetch_Failure(vaddr, e) => handle_exception(bits_of(vaddr), e),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
     Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Memory_Exception(vaddr, e), _) => handle_mem_exception(vaddr, e),
-    Step_Execute(Illegal_Instruction(), instbits) => handle_illegal_instr(instbits),
+    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e),
+    Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
     Step_Execute(Enter_Wait(wr), instbits) => {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
