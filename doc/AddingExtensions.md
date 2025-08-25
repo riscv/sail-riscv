@@ -43,9 +43,8 @@ there. The extension should also be added to the
 `extensions_ordered_for_isa_string` array.
 
 A new `"<ext_name>"` entry for the extension should also be created in
-the `"extensions"` list in the JSON configuration files for RV32
-([rv32d.json](../config/rv32d.json)) and RV64
-([rv64d.json](../config/rv64d.json)). This entry should have a
+the `"extensions"` list in the JSON configuration file template
+([config.json.in](../config/config.json.in)). This entry should have a
 `"supported"` field with a boolean value. If an extension is not
 defined for a base ISA, it should still be added to the configuration
 file for that ISA with a `"supported"` value of `"false"`. For
@@ -83,3 +82,9 @@ with a `bitfield` definition; the type of the `register` definition
 will usually be this `bitfield` type. Clauses of the
 `is_CSR_accessible`, `read_CSR` and `write_CSR` functions should be
 added for each CSR.
+
+## Building and testing the extended model
+
+The contains instructions on
+[building](../README.md#building-the-model) the model and on
+[testing](../README.md#executing-test-binaries) with test binaries.
