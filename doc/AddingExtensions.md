@@ -85,6 +85,6 @@ added for each CSR.
 
 ## Building and testing the extended model
 
-The contains instructions on
+The [README.md](../README.md) contains instructions on
 [building](../README.md#building-the-model) the model and on
 [testing](../README.md#executing-test-binaries) with test binaries.
