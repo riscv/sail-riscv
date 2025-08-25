@@ -31,6 +31,7 @@ riscv_core {
     riscv_addr_checks.sail,
     riscv_misa_ext.sail,
     riscv_softfloat_interface.sail,
+    riscv_sys_reservation.sail,
 }
 
 riscv_exceptions {
@@ -42,7 +43,7 @@ riscv_exceptions {
 }
 
 pmp {
-  requires riscv_core
+  requires riscv_core, Sdext_regs
 
   files
     riscv_pmp_regs.sail,
@@ -50,10 +51,9 @@ pmp {
 }
 
 riscv {
-  requires riscv_core, riscv_exceptions, pmp, V_core, Smcntrpmf
+  requires riscv_core, riscv_exceptions, pmp, V_core, Smcntrpmf, Sdext_regs, Sdext_control
 
   files
-    riscv_sys_reservation.sail,
     riscv_sys_control.sail,
     riscv_platform.sail,
     riscv_mem.sail,
@@ -75,8 +75,7 @@ extensions {
       files riscv_base_types.sail
     }
     I_insts {
-      requires riscv_exceptions, riscv, I_types
-
+      requires riscv_exceptions, riscv, I_types, Sdext_types, Sdext_regs, Sdext_hooks
       files
         riscv_insts_base.sail,
         riscv_insts_reserved_fence.sail,
@@ -307,7 +306,7 @@ extensions {
       files riscv_zawrs_types.sail
     }
     Zawrs_insts {
-      requires riscv, Zawrs_types
+      requires riscv, Zawrs_types, Sdext_regs
       files riscv_insts_zawrs.sail
     }
   }
@@ -324,6 +323,7 @@ extensions {
   }
 
   Zicntr {
+    requires Sdext_regs
     files riscv_zicntr_control.sail
   }
 
@@ -365,6 +365,39 @@ extensions {
     before I_insts // PAUSE overrides a FENCE
     files riscv_insts_zihintpause.sail
   }
+
+  Sdext {
+    Sdext_types {
+      before riscv
+      files riscv_sdext_types.sail
+    }
+
+    Sdext_regs {
+      requires riscv_core, Sdext_types
+      files
+        riscv_sdext_regs.sail
+    }
+
+    Sdext_control {
+      requires riscv_core, riscv_exceptions, Sdext_types, Sdext_regs
+      before riscv
+      files
+        riscv_sdext_control.sail
+    }
+
+    Sdext_hooks {
+      requires riscv
+      before I_insts
+      files
+        riscv_sdext_inst_hooks.sail
+    }
+
+    Sdext_instructions {
+      requires riscv, Sdext_regs
+      files
+        riscv_insts_sdext.sail
+    }
+  }
 }
 
 // May-be-operations (MOPS) defined after extensions so they can be
@@ -385,7 +418,7 @@ mops {
 riscv_postlude {
   after extensions, mops
 
-  requires riscv_core, riscv, riscv_exceptions, Smcntrpmf, pmp
+  requires riscv_core, riscv, riscv_exceptions, Smcntrpmf, pmp, Sdext_types, Sdext_regs, Sdext_control
 
   files
     riscv_insts_end.sail,
