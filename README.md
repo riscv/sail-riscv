@@ -33,7 +33,7 @@ will build the simulator at `build/c_emulator/sail_riscv_sim`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.19.1 or later.
 
-By default `build_simulators.sh` will download and build [libgmp](https://gmplib.org).
+By default [`build_simulators.sh`](./build_simulators.sh) will download and build [libgmp](https://gmplib.org).
 To use a system installation of libgmp, run `env DOWNLOAD_GMP=FALSE ./build_simulators.sh` instead.
 
 ### Executing test binaries
@@ -48,7 +48,7 @@ Test suites targeting RV32, RV64, and RVV (RISC-V Vector Extension) are download
 The standard `riscv-tests` suite is enabled by default, while vector extension tests
 can be enabled via CMake options such as `-DENABLE_RISCV_VECTOR_TESTS_V128_E32=ON`.
 All enabled test suites can be executed using `make test` or `ctest` in the build directory
-(see `test/README.md` for more information).
+(see [`test/README.md`](test/README.md) for more information).
 
 ### Configuring platform options
 
@@ -287,7 +287,7 @@ monad over an effect datatype of memory actions. This monad is also
 used as part of the aforementioned concurrency support via the RMEM
 tool.
 
-The files under `handwritten_support` provide library definitions for
+The files under [`handwritten_support`](./handwritten_support) provide library definitions for
 each prover.
 
 ## Directory Structure
@@ -308,13 +308,13 @@ sail-riscv
 
 ## Licence
 
-The model is made available under the BSD two-clause licence in LICENCE.
+The model is made available under the BSD two-clause licence in [LICENCE](./LICENCE).
 
 ## Authors
 
 Originally written by Prashanth Mundkur at SRI International, and further developed by others, especially researchers at the University of Cambridge.
 
-See `LICENCE` and Git blame for a complete list of authors.
+See [`LICENCE`](./LICENCE) and Git blame for a complete list of authors.
 
 ## Funding
 
