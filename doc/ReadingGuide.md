@@ -51,7 +51,7 @@ contain other low-level definitions related to memory.
 basic infrastructure for the definition of modules implementing RISC-V
 extensions. The `hartSupports` function determines whether an
 extension is supported by the model configuration, while the
-`currentlyEnabled` determines whether the extension is usable given
+`currentlyEnabled` function determines whether the extension is usable given
 the current dynamic state of the hart.
 
 `rvfi_dii*.sail` implement functionality for [RISC-V Formal
@@ -232,7 +232,7 @@ implementing related extensions (e.g. `Zaamo` and `Zalrsc`) may be
 grouped together and nested within another submodule (e.g. `A`) under
 the `extensions` module. This nested structure helps to organize the
 files implementing large related extensions such as those in the
-Vector (`V`) and cryptography (`K`) extensions.
+Vector (`V`) and cryptography (`Zk*`) extensions.
 
 ### Other modules
 
