@@ -31,3 +31,6 @@ We recommend installing pre-commit hooks that ensure certain basic coding
 style issues can be detected and fixed before submitting the pull request.
 To set up these hooks, install [pre-commit](https://pre-commit.com)
 (e.g. using `pip install --user pre-commit`) and run `pre-commit install`.
+
+For information on contributing an extension, please see
+[doc/AddingExtensions.md](doc/AddingExtensions.md).
