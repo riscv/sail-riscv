@@ -89,32 +89,11 @@ function has_overlap(a_lo : nat, a_hi : nat, b_lo : nat, b_hi : nat) -> bool = {
 
 // This will change when we have a more general memory layout.
 function check_mem_layout() -> bool = {
-  var valid : bool = true;
-  // Memory regions should not overlap. There are currently only three: ram, rom and clint.
-  let ram_lo = unsigned(plat_ram_base);
-  let ram_hi = unsigned(plat_ram_base) + unsigned(plat_ram_size);
-  let rom_lo = unsigned(plat_rom_base);
-  let rom_hi = unsigned(plat_rom_base) + unsigned(plat_rom_size);
-  let clint_lo = unsigned(plat_clint_base);
-  let clint_hi = unsigned(plat_clint_base) + unsigned(plat_clint_size);
-  if has_overlap(rom_lo, rom_hi, ram_lo, ram_hi)
-  then {
-    valid = false;
-    print_endline("The RAM and ROM regions overlap.");
-  };
-  if has_overlap(clint_lo, clint_hi, rom_lo, rom_hi)
-  then {
-    valid = false;
-    print_endline("The Clint and ROM regions overlap.");
-  };
-  if has_overlap(clint_lo, clint_hi, ram_lo, ram_hi)
-  then {
-    valid = false;
-    print_endline("The Clint and RAM regions overlap.");
-  };
-
+  // var valid : bool = true;
+  // TODO: Implement this.
   // Should memory regions also be 4K aligned?
-  valid
+  // valid
+  true
 }
 
 function check_pmp() -> bool = {

@@ -18,6 +18,9 @@
       "na4_supported": true,
       "napot_supported": true
     },
+    // This controls global support for misaligned access so it is
+    // checked before address translation. "misalignedFault" in
+    // "regions" is checked after address translation.
     "misaligned": {
       "supported": true,
       "byte_by_byte": false,
@@ -26,7 +29,62 @@
     },
     "translation": {
       "dirty_update": false
-    }
+    },
+    // Address to write DTB to (if provided).
+    "dtb_address": {
+      "len": 64,
+      "value": "0x1000",
+    },
+    "regions": [
+      // ROM
+      {
+        "base": {
+          "len": 64,
+          "value": "0x1000"
+        },
+        "size": {
+          "len": 64,
+          "value": "0x1000"
+        },
+        "attributes": {
+          "cacheable": true,
+          "coherent": true,
+          "executable": true,
+          "readable": true,
+          "writable": false,
+          "readIdempotent": true,
+          "writeIdempotent": true,
+          "misalignedFault": "NoFault",
+          "atomicSupport": "AMONone",
+          "reservability": "RsrvNone",
+          "supportsCboZero": false
+        }
+      },
+      // RAM
+      {
+        "base": {
+          "len": 64,
+          "value": "0x80000000"
+        },
+        "size": {
+          "len": 64,
+          "value": "0x80000000"
+        },
+        "attributes": {
+          "cacheable": true,
+          "coherent": true,
+          "executable": true,
+          "readable": true,
+          "writable": true,
+          "readIdempotent": true,
+          "writeIdempotent": true,
+          "misalignedFault": "NoFault",
+          "atomicSupport": "AMOArithmetic",
+          "reservability": "RsrvEventual",
+          "supportsCboZero": true
+        }
+      }
+    ]
   },
   "platform": {
     "vendorid": 0,
@@ -34,14 +92,6 @@
     "impid": 0,
     "hartid": 0,
     "cache_block_size_exp": 6,
-    "ram": {
-      "base": 2147483648,
-      "size": 2147483648
-    },
-    "rom": {
-      "base": 4096,
-      "size": 4096
-    },
     "clint": {
       "base": 33554432,
       "size": 786432
