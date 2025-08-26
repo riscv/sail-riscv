@@ -160,6 +160,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
                       ^ bits_str(c) ^ " at priv " ^ to_str(del_priv)
                       ^ " with tval " ^ bits_str(tval(info)));
 
+  if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
+
   match (del_priv) {
     Machine => {
        mcause[IsInterrupt] = bool_to_bits(intr);
@@ -228,6 +230,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
+      if   hartSupports(Ext_Zicfilp)
+      then zicfilp_restore_elp_on_xret(prev_priv, cur_privilege);
+
       if   get_config_print_platform()
       then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
@@ -243,6 +248,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       then mstatus[MPRV] = 0b0;
 
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
+      if   hartSupports(Ext_Zicfilp)
+      then zicfilp_restore_elp_on_xret(prev_priv, cur_privilege);
 
       if   get_config_print_platform()
       then print_log("ret-ing from " ^ to_str(prev_priv)
@@ -346,6 +354,9 @@ function reset_sys() -> unit = {
   // not allow them to be in an undefined state after a reset."
   mseccfg[SSEED] = bool_to_bits(config extensions.Zkr.sseed_reset_value : bool);
   mseccfg[USEED] = bool_to_bits(config extensions.Zkr.useed_reset_value : bool);
+
+  // If the Zicfilp extension is implemented, the mseccfg.MLPE field is reset to 0.
+  if hartSupports(Ext_Zicfilp) then mseccfg[MLPE] = 0b0;
 
   // TODO: Probably need to remove these vector resets too but it needs
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
