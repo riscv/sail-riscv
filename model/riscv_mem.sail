@@ -94,24 +94,6 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
   }
 }
 
-// Convert the AMO operation to the required PMA support level.
-// TODO: Use this.
-function amo_op_to_pma(op : amoop) -> AtomicSupport = {
-  match op {
-    AMOSWAP => AMOSwap,
-    AMOXOR => AMOLogical,
-    AMOAND => AMOLogical,
-    AMOOR => AMOLogical,
-    AMOADD => AMOArithmetic,
-    AMOMIN => AMOArithmetic,
-    AMOMAX => AMOArithmetic,
-    AMOMINU => AMOArithmetic,
-    AMOMAXU => AMOArithmetic,
-    AMOCAS => AMOCASW,
-    // TODO: AMOCASD, AMOCASQ
-  }
-}
-
 function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 (
   paddr      : physaddr,
@@ -135,11 +117,10 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             InstructionFetch() => attributes.executable,
             Read(_)            => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
             Write(_)           => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
-            // TODO: Extend ReadWrite with the specific type of AMO operation. For now we assume
-            // everything is arithmetic which is wrong. Also unfortunately AMO uses Write not ReadWrite
-            // for its final write, so it will currently fail if you have AMOArithmetic and RsrvNone.
-            ReadWrite(_, _)    => attributes.readable & attributes.writable & attributes.atomicSupport == AMOArithmetic,
-            // TODO: Uncomment when the Cache access type is available.
+            // TODO: Extend AccessType with the specific type of AMO operation. For now we assume all memory
+            // supports all AMO operations.
+            ReadWrite(_, _)    => attributes.readable & attributes.writable,
+            // TODO: Extend AccessType with a Cache() option. See https://github.com/riscv/sail-riscv/pull/792
             // Cache(Zero)     => attributes.writable & attributes.supportsCboZero,
             // Cache(_)        => internal_error(__FILE__, __LINE__,
             //                                   "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),

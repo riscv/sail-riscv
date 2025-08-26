@@ -83,18 +83,23 @@ function check_vlen_elen() -> bool = {
   true
 }
 
-function has_overlap(a_lo : nat, a_hi : nat, b_lo : nat, b_hi : nat) -> bool = {
-  not((a_lo < b_lo & a_hi < b_lo) | (b_lo < a_lo & b_hi < a_lo))
-}
+// Return true if a list of PMA regions are sorted and don't overlap.
+function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64)) -> bool =
+  match pmas {
+    [||] => true,
+    pma :: rest => {
+      if pma.base <_u prev_base + prev_size then {
+        print_endline("Memory region starting at " ^ bits_str(pma.base) ^
+                      " is not above the end of the previous region starting at " ^
+                      bits_str(prev_base) ^ ".");
+        return false;
+      };
+      check_pma_regions(rest, pma.base, pma.size)
+    },
+  }
 
-// This will change when we have a more general memory layout.
-function check_mem_layout() -> bool = {
-  // var valid : bool = true;
-  // TODO: Implement this.
-  // Should memory regions also be 4K aligned?
-  // valid
-  true
-}
+// Check that all memory regions are sorted and don't overlap.
+function check_mem_layout() -> bool = check_pma_regions(pma_regions, zeros(), zeros())
 
 function check_pmp() -> bool = {
   var valid : bool = true;

@@ -33,7 +33,7 @@
     // Address to write DTB to (if provided).
     "dtb_address": {
       "len": 64,
-      "value": "0x1000",
+      "value": "0x1000"
     },
     "regions": [
       // ROM

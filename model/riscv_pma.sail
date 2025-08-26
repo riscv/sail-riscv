@@ -1,3 +1,4 @@
+
 /*=======================================================================================*/
 /*  This Sail RISC-V architecture model, comprising all files and                        */
 /*  directories except where otherwise noted is subject the BSD                          */
@@ -80,7 +81,9 @@ struct PMA = {
   writeIdempotent : bool,
   // Optionally cause an access/alignment fault on misaligned access.
   misalignedFault : MisalignedFault,
-  atomicSupport   : AtomicSupport,
+  // TODO: Implement atomicity PMA. This is not supported yet because
+  // the AccessType needs to be extended to indicate the AMO type.
+  // atomicSupport   : AtomicSupport,
   reservability   : Reservability,
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
   // have this set.
@@ -117,7 +120,8 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.readIdempotent then " read-idempotent" else "") ^
   (if attr.writeIdempotent then " write-idempotent" else "") ^
   " MisalignedFault:" ^ to_str(attr.misalignedFault) ^
-  " " ^ to_str(attr.atomicSupport) ^
+  // TODO: Atomicity PMA.
+  // " " ^ to_str(attr.atomicSupport) ^
   " " ^ to_str(attr.reservability) ^
   (if attr.supportsCboZero then " supportsCboZero" else "")
 
@@ -127,7 +131,7 @@ function pma_region_to_str(region : PMA_Region) -> string =
 
 overload to_str = {pma_attributes_to_str, pma_region_to_str}
 
-// The list of PMAs. The behaviour is undefined if these overlap.
+// The list of PMAs. These must be sorted and cannot overlap.
 register pma_regions : list(PMA_Region) = config memory.regions
 
 function accessFaultFromAccessType(accTy : AccessType(ext_access_type)) -> ExceptionType =
