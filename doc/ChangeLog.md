@@ -8,6 +8,7 @@
 - The following extensions have been added:
 
   - Zicbop
+  - Zicfilp
   - Zihintntl
   - Zihintpause
   - Svrsw60t59b
