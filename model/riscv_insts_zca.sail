@@ -485,10 +485,8 @@ mapping clause encdec_compressed = C_JR(rs1)
   <-> 0b100 @ 0b0 @ encdec_reg(rs1) @ 0b00000 @ 0b10
   when rs1 != zreg & currentlyEnabled(Ext_Zca)
 
-function clause execute (C_JR(rs1)) = {
-  set_elp(rs1);
+function clause execute (C_JR(rs1)) =
   execute(JALR(zeros(), rs1, zreg))
-}
 
 mapping clause assembly = C_JR(rs1)
   <-> "c.jr" ^ spc() ^ reg_name(rs1)
@@ -501,10 +499,8 @@ mapping clause encdec_compressed = C_JALR(rs1)
   <-> 0b100 @ 0b1 @ encdec_reg(rs1) @ 0b00000 @ 0b10
   when rs1 != zreg & currentlyEnabled(Ext_Zca)
 
-function clause execute (C_JALR(rs1)) = {
-  set_elp(rs1);
+function clause execute (C_JALR(rs1)) =
   execute(JALR(zeros(), rs1, ra))
-}
 
 mapping clause assembly = C_JALR(rs1)
   <-> "c.jalr" ^ spc() ^ reg_name(rs1)
