@@ -192,10 +192,10 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
                            Supervisor => 0b1,
                            Machine => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap")
                          };
-       stval           = tval(info);
-       sepc            = pc;
+       stval         = tval(info);
+       sepc          = pc;
 
-       cur_privilege   = del_priv;
+       cur_privilege = del_priv;
 
        handle_trap_extension(del_priv, pc, ext);
 
@@ -209,19 +209,19 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
-  match (cur_priv, ctl) {
-    (_, CTL_TRAP(e)) => {
+  match ctl {
+    CTL_TRAP(e) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
       if   get_config_print_platform()
       then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
       trap_handler(del_priv, false, exceptionType_to_bits(e.trap), pc, e.excinfo, e.ext)
     },
-    (_, CTL_MRET())  => {
-      let prev_priv   = cur_privilege;
+    CTL_MRET()  => {
+      let prev_priv = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
-      cur_privilege   = privLevel_of_bits(mstatus[MPP]);
+      cur_privilege = privLevel_of_bits(mstatus[MPP]);
       mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
@@ -233,11 +233,11 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 
       prepare_xret_target(Machine)
     },
-    (_, CTL_SRET())  => {
-      let prev_priv   = cur_privilege;
+    CTL_SRET()  => {
+      let prev_priv = cur_privilege;
       mstatus[SIE]  = mstatus[SPIE];
       mstatus[SPIE] = 0b1;
-      cur_privilege   = if mstatus[SPP] == 0b1 then Supervisor else User;
+      cur_privilege = if mstatus[SPP] == 0b1 then Supervisor else User;
       mstatus[SPP]  = 0b0;
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
