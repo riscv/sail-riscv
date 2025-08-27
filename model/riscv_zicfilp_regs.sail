@@ -76,8 +76,8 @@ function zicfilp_preserve_elp_on_trap(del_priv : Privilege) -> unit = {
 // When executing an xRET instruction, if the new privilege mode is y,
 // then ELP is set to the value of xPELP if yLPE is 1; otherwise, it
 // is set to NO_LP_EXPECTED; xPELP is set to NO_LP_EXPECTED.
-function zicfilp_restore_elp_on_xret(source_priv: Privilege, target_priv: Privilege) -> unit = {
-  let new_elp : bool = match source_priv {
+function zicfilp_restore_elp_on_xret(xret : Privilege, target_priv: Privilege) -> unit = {
+  let new_elp : bool = match xret {
     Machine => {
       let pelp = mstatus[MPELP];
       mstatus = [mstatus with MPELP = 0b0];
