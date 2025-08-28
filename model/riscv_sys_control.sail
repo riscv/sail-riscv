@@ -268,12 +268,6 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
-/* Platform-specific wait-for-interrupt */
-function platform_wfi() -> unit = ()
-
-
-/* Platform-specific trap handlers */
-
 function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
                                     excinfo = xtval_exception_value(e, xtval),

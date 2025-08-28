@@ -442,3 +442,5 @@ function init_platform() -> unit = {
   htif_payload_writes = zeros();
 }
 
+/* Platform-specific wait-for-interrupt */
+function platform_wfi() -> unit = ()
