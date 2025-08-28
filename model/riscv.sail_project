@@ -138,7 +138,7 @@ extensions {
   // Compressed instructions
   C {
     Zca {
-      requires riscv_exceptions, riscv, I, Zicfilp_regs
+      requires riscv_exceptions, riscv, I
       files riscv_insts_zca.sail
     }
     Zcb {
