@@ -91,7 +91,7 @@ function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_s
       if pma.base <_u prev_base + prev_size then {
         print_endline("Memory region starting at " ^ bits_str(pma.base) ^
                       " is not above the end of the previous region starting at " ^
-                      bits_str(prev_base) ^ ".");
+                      bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
         return false;
       };
       check_pma_regions(rest, pma.base, pma.size)
