@@ -57,9 +57,6 @@ function is_lp_expected() -> bool =
 function reset_elp() -> unit =
   elp = false // equivalent to `elp_state(NO_LP_EXPECTED)`
 
-function init_zicfilp () -> unit =
-  reset_elp()
-
 /* Interaction with system registers. */
 
 // When a trap is taken into privilege mode x, the xPELP is set
