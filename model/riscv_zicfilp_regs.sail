@@ -63,9 +63,9 @@ function init_zicfilp () -> unit =
 
 // When a trap is taken into privilege mode x, the xPELP is set
 // to ELP and ELP is set to NO_LP_EXPECTED.
-function zicfilp_preserve_elp_on_trap(del_priv : Privilege) -> unit = {
+function zicfilp_preserve_elp_on_trap(x : Privilege) -> unit = {
   // When Sdext is added, ELP will need to be preserved there as well.
-  match del_priv {
+  match x {
     Machine    => { mstatus = [mstatus with MPELP = bool_bits(elp)]; },
     Supervisor => { mstatus = [mstatus with SPELP = bool_bits(elp)]; },
     User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
@@ -76,19 +76,18 @@ function zicfilp_preserve_elp_on_trap(del_priv : Privilege) -> unit = {
 // When executing an xRET instruction, if the new privilege mode is y,
 // then ELP is set to the value of xPELP if yLPE is 1; otherwise, it
 // is set to NO_LP_EXPECTED; xPELP is set to NO_LP_EXPECTED.
-function zicfilp_restore_elp_on_xret(xret : Privilege, target_priv: Privilege) -> unit = {
+function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = {
   let new_elp : bool = match xret {
-    Machine => {
+    mRET => {
       let pelp = mstatus[MPELP];
       mstatus = [mstatus with MPELP = 0b0];
-      if get_xLPE(target_priv) then bool_bits(pelp) else false
+      if get_xLPE(y) then bool_bits(pelp) else false
     },
-    Supervisor => {
+    sRET => {
       let pelp = mstatus[SPELP];
       mstatus = [mstatus with SPELP = 0b0];
-      if get_xLPE(target_priv) then bool_bits(pelp) else false
+      if get_xLPE(y) then bool_bits(pelp) else false
     },
-    User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
   elp = new_elp;
 }

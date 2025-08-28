@@ -249,6 +249,11 @@ function trapVectorMode_of_bits (m) =
     _    => TV_Reserved
   }
 
+/* xRET types */
+
+// capitalized versions conflict with the instructions themselves
+enum xRET_type = {mRET, sRET}
+
 /* extension context status */
 
 type ext_status = bits(2)
