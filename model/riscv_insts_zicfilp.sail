@@ -16,7 +16,7 @@ union clause instruction = LPAD : (lpl)
 // LPAD is encoded as AUIPC with rd as x0
 mapping clause encdec = LPAD(lpl)
   <-> lpl @ 0b00000 @ 0b0010111
-      when currentlyEnabled(Ext_Zicfilp)
+  when currentlyEnabled(Ext_Zicfilp)
 
 function clause execute LPAD(lpl) = {
   if is_lp_expected() then {
