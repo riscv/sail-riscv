@@ -60,8 +60,8 @@ function reset_elp() -> unit =
 function zicfilp_preserve_elp_on_trap(x : Privilege) -> unit = {
   // When Sdext is added, ELP will need to be preserved there as well.
   match x {
-    Machine    => { mstatus = [mstatus with MPELP = bool_bits(elp)]; },
-    Supervisor => { mstatus = [mstatus with SPELP = bool_bits(elp)]; },
+    Machine    => { mstatus[MPELP] = bool_bits(elp); },
+    Supervisor => { mstatus[SPELP] = bool_bits(elp); },
     User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
   reset_elp();
@@ -74,12 +74,12 @@ function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = 
   let new_elp : bool = match xret {
     mRET => {
       let pelp = mstatus[MPELP];
-      mstatus = [mstatus with MPELP = 0b0];
+      mstatus[MPELP] = 0b0;
       if get_xLPE(y) then bool_bits(pelp) else NO_LP_EXPECTED
     },
     sRET => {
       let pelp = mstatus[SPELP];
-      mstatus = [mstatus with SPELP = 0b0];
+      mstatus[SPELP] = 0b0;
       if get_xLPE(y) then bool_bits(pelp) else NO_LP_EXPECTED
     },
   };
