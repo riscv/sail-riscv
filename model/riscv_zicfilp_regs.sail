@@ -44,7 +44,7 @@ mapping elp_state : bool <-> ELP = {
   true  <-> LP_EXPECTED,
 }
 
-function set_elp(rs1 : regidx) -> unit =
+function update_elp_state(rs1 : regidx) -> unit =
   if currentlyEnabled(Ext_Zicfilp) then {
     let is_software_guarded_branch = rs1 == Regidx(zero_extend(0x7));
     let is_return = rs1 == Regidx(zero_extend(0x1)) | rs1 == Regidx(zero_extend(0x5));
