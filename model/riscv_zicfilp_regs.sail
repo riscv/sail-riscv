@@ -34,6 +34,7 @@ function clause currentlyEnabled(Ext_Zicfilp) =
 
 /* Architectural state for the Zicfilp extension. */
 
+// Expected Landing Pad
 register elp : bool
 
 enum ELP = {NO_LP_EXPECTED, LP_EXPECTED}
