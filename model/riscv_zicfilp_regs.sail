@@ -37,12 +37,8 @@ function clause currentlyEnabled(Ext_Zicfilp) =
 // Expected Landing Pad
 register elp : bool
 
-enum ELP = {NO_LP_EXPECTED, LP_EXPECTED}
-
-mapping elp_state : bool <-> ELP = {
-  false <-> NO_LP_EXPECTED,
-  true  <-> LP_EXPECTED,
-}
+let NO_LP_EXPECTED = false
+let LP_EXPECTED = true
 
 function update_elp_state(rs1 : regidx) -> unit =
   if currentlyEnabled(Ext_Zicfilp) then {
@@ -52,10 +48,10 @@ function update_elp_state(rs1 : regidx) -> unit =
   }
 
 function is_lp_expected() -> bool =
-  elp         // equivalent to `elp_state(elp) == LP_EXPECTED`
+  elp == LP_EXPECTED
 
 function reset_elp() -> unit =
-  elp = false // equivalent to `elp_state(NO_LP_EXPECTED)`
+  elp = NO_LP_EXPECTED
 
 /* Interaction with system registers. */
 
@@ -79,12 +75,12 @@ function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = 
     mRET => {
       let pelp = mstatus[MPELP];
       mstatus = [mstatus with MPELP = 0b0];
-      if get_xLPE(y) then bool_bits(pelp) else false
+      if get_xLPE(y) then bool_bits(pelp) else NO_LP_EXPECTED
     },
     sRET => {
       let pelp = mstatus[SPELP];
       mstatus = [mstatus with SPELP = 0b0];
-      if get_xLPE(y) then bool_bits(pelp) else false
+      if get_xLPE(y) then bool_bits(pelp) else NO_LP_EXPECTED
     },
   };
   elp = new_elp;
