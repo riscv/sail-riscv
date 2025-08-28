@@ -6,6 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
+// Landing pad label.
 type lpl = bits(20)
 
 enum Software_Check_Code = {
