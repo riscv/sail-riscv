@@ -21,7 +21,7 @@ mapping clause encdec = LPAD(lpl)
 function clause execute LPAD(lpl) = {
   if is_lp_expected() then {
     let unaligned_pc = get_arch_pc()[1 .. 0] != 0b00;
-    let label_mismatch = X(Regidx(zero_extend(0x7)))[31 .. 12] != lpl & lpl != zeros();
+    let label_mismatch = X(Regno(7))[31 .. 12] != lpl & lpl != zeros();
     if unaligned_pc | label_mismatch then {
       Trap(cur_privilege, CTL_TRAP(make_lpad_exception()), PC)
     } else {
