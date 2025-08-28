@@ -231,7 +231,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
       if   hartSupports(Ext_Zicfilp)
-      then zicfilp_restore_elp_on_xret(Machine, cur_privilege);
+      then zicfilp_restore_elp_on_xret(mRET, cur_privilege);
 
       if   get_config_print_platform()
       then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
@@ -250,7 +250,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
       if   hartSupports(Ext_Zicfilp)
-      then zicfilp_restore_elp_on_xret(Supervisor, cur_privilege);
+      then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
 
       if   get_config_print_platform()
       then print_log("ret-ing from " ^ to_str(prev_priv)
