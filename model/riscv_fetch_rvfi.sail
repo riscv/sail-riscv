@@ -14,33 +14,33 @@ function rvfi_fetch() -> FetchResult = {
 
   /* First allow extensions to check pc */
   match ext_fetch_check_pc(PC, PC) {
-    Ext_FetchAddr_Error(e)   => F_Ext_Error(e),
-    Ext_FetchAddr_OK(use_pc) => {
-      /* then check PC alignment */
-      let use_pc_bits = bits_of(use_pc);
-      if   (use_pc_bits[0] != bitzero | (use_pc_bits[1] != bitzero & not(currentlyEnabled(Ext_Zca))))
-      then F_Error(E_Fetch_Addr_Align(), PC)
-      else match translateAddr(use_pc, InstructionFetch()) {
-        Err(e, _) => F_Error(e, PC),
-        Ok(_, _)  => {
-          let i = rvfi_instruction[rvfi_insn];
-          rvfi_inst_data[rvfi_insn]   = zero_extend(i);
-          if   (i[1 .. 0] != 0b11)
-          then F_RVC(i[15 .. 0])
-          else {
-            /* fetch PC check for the next instruction granule */
-            let PC_hi = PC + 2;
-            match ext_fetch_check_pc(PC, PC_hi) {
-              Ext_FetchAddr_Error(e)      => F_Ext_Error(e),
-              Ext_FetchAddr_OK(use_pc_hi) =>
-                match translateAddr(use_pc_hi, InstructionFetch()) {
-                  Err(e, _) => F_Error(e, PC),
-                  Ok(_, _)  => F_Base(i)
-              }
-            }
-          }
-        }
-      }
-    }
+    Some(e) => return F_Ext_Error(e),
+    None()  => (),
+  };
+
+  /* Then check PC alignment */
+  if   (PC[0] != bitzero | (PC[1] != bitzero & not(currentlyEnabled(Ext_Zca))))
+  then return F_Error(E_Fetch_Addr_Align(), PC);
+
+  match translateAddr(Virtaddr(PC), InstructionFetch()) {
+    Err(e, _) => return F_Error(e, PC),
+    Ok(_, _)  => (),
+  };
+
+  let i = rvfi_instruction[rvfi_insn];
+  rvfi_inst_data[rvfi_insn]   = zero_extend(i);
+  if   (i[1 .. 0] != 0b11)
+  then return F_RVC(i[15 .. 0]);
+
+  /* fetch PC check for the next instruction granule */
+  let PC_hi = PC + 2;
+  match ext_fetch_check_pc(PC, PC_hi) {
+    Some(e) => return F_Ext_Error(e),
+    None()  => (),
+  };
+
+  match translateAddr(Virtaddr(PC_hi), InstructionFetch()) {
+    Err(e, _) => F_Error(e, PC),
+    Ok(_, _)  => F_Base(i)
   }
 }

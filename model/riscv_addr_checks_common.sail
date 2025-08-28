@@ -14,11 +14,6 @@
  * extensions would need to define their own functions to override them.
  */
 
-union Ext_FetchAddr_Check ('a : Type) = {
-  Ext_FetchAddr_OK  : virtaddr,  /* PC value to use for the actual fetch */
-  Ext_FetchAddr_Error : 'a
-}
-
 union Ext_ControlAddr_Check ('a : Type) = {
   Ext_ControlAddr_OK : virtaddr, /* PC value to use for the target of the control operation */
   Ext_ControlAddr_Error : 'a

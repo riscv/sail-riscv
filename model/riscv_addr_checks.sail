@@ -14,11 +14,10 @@ type ext_fetch_addr_error = unit
  * start_pc: the PC at the start of the current fetch sequence
  * pc:       the PC for the current granule
  *
- * returns:  the *virtual* memory address to use for the fetch.
- *           any address translation errors are reported for pc, not the returned value.
+ * returns:  an optional fetch error.
  */
-function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> Ext_FetchAddr_Check(ext_fetch_addr_error) =
-  Ext_FetchAddr_OK(Virtaddr(pc))
+function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> option(ext_fetch_addr_error) =
+  None()
 
 function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit =
   ()
