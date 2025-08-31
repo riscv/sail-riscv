@@ -23,7 +23,7 @@ function get_num_elem(LMUL_pow : LMUL_pow, SEW : sew_bitsize) -> range(1, vlen) 
 }
 
 // Read a single element of a vector register group (starting at vrid).
-val read_single_element : forall 'm, is_sew_bitsize('m) . (int('m), nat, vregidx) -> bits('m)
+val read_single_element : forall 'sew, is_sew_bitsize('sew) . (int('sew), nat, vregidx) -> bits('sew)
 function read_single_element(EEW, index, vrid) = {
   assert(EEW <= vlen);
 
@@ -44,14 +44,14 @@ function read_single_element(EEW, index, vrid) = {
 }
 
 /* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val read_vreg : forall 'n 'm 'p, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), int('p), vregidx) -> vector('n, bits('m))
+val read_vreg : forall 'n 'sew 'p, 'n >= 0 & is_sew_bitsize('sew) . (int('n), int('sew), int('p), vregidx) -> vector('n, bits('sew))
 function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
   let vrid_val = unsigned(vregidx_bits(vrid));
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
   assert(vrid_val + 2 ^ LMUL_pow_reg <= 32, "invalid register group: vrid overflow the largest number");
   assert(vrid_val % (2 ^ LMUL_pow_reg) == 0, "invalid register group: vrid is not a multiple of EMUL");
 
-  var result : vector('n, bits('m)) = vector_init(zeros());
+  var result : vector('n, bits('sew)) = vector_init(zeros());
 
   foreach (i from 0 to (num_elem - 1)) {
     result[i] = read_single_element(SEW, i, vrid);
@@ -62,7 +62,7 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
 
 // Write a single element of a vector register group (starting at vrid),
 // leaving all other elements unchanged.
-val write_single_element : forall 'm, is_sew_bitsize('m) . (int('m), nat, vregidx, bits('m)) -> unit
+val write_single_element : forall 'sew, is_sew_bitsize('sew) . (int('sew), nat, vregidx, bits('sew)) -> unit
 function write_single_element(EEW, index, vrid, value) = {
   assert(EEW <= vlen);
 
@@ -82,13 +82,34 @@ function write_single_element(EEW, index, vrid, value) = {
   V(vrid) = [V(vrid) with (offset + EEW - 1) .. offset = value];
 }
 
-/* The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
-val write_vreg : forall 'n 'm 'p, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), int('p), vregidx, vector('n, bits('m))) -> unit
+// Write a complete vector register group.
+//
+// num_elem: Number of elements in the entire group (ignoring
+//           fractional lmul and vl).
+// SEW:      Element size in bits.
+// LMUL_pow: LMUL exponent; size of the register group.
+//           Negative values indicate fractions of a single register, but
+//           we still require the full register's worth of elements.
+//           Note this is technically redundant, but it is checked just in case.
+// vrid:     Index of the first register in the group.
+// data:     Data of each element.
+val write_vreg : forall 'n 'sew, 'n >= 0 & is_sew_bitsize('sew) . (int('n), int('sew), LMUL_pow, vregidx, vector('n, bits('sew))) -> unit
 function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
-  // TODO: LMUL_pow is unused; we can remove it.
-  foreach (i from 0 to (num_elem - 1)) {
-    write_single_element(SEW, i, vrid, vec[i]);
-  };
+  // Number of registers in the group (treating fractional lmul as 0).
+  let group_size = 2 ^ max(LMUL_pow, 0);
+
+  // Number of SEW-bit elements per vector register.
+  let elem_per_reg = vlen / SEW;
+
+  assert(group_size * elem_per_reg == num_elem);
+
+  foreach (reg_in_group from 0 to (group_size - 1)) {
+    var reg_value : vlenbits = zeros();
+    foreach (i_elem from 0 to (elem_per_reg - 1)) {
+      reg_value[(i_elem * SEW) + SEW - 1 .. (i_elem * SEW)] = vec[reg_in_group * elem_per_reg + i_elem];
+    };
+    V(vrid + reg_in_group) = reg_value;
+  }
 }
 
 // Mask register reading operation with num_elem as max(VLMAX,vlen/SEW)).

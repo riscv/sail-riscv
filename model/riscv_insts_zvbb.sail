@@ -526,6 +526,7 @@ function clause execute (VWSLL_VV(vm, vs2, vs1, vd)) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -576,6 +577,7 @@ function clause execute (VWSLL_VX(vm, vs2, rs1, vd)) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -625,6 +627,7 @@ function clause execute (VWSLL_VI(vm, vs2, uimm, vd)) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
