@@ -116,6 +116,16 @@ function clause hartSupports(Ext_Zihpm) = config extensions.Zihpm.supported
 enum clause extension = Ext_Zimop
 mapping clause extensionName = Ext_Zimop <-> "zimop"
 function clause hartSupports(Ext_Zimop) = config extensions.Zimop.supported
+// Instruction/Data Coherence and Consistency
+enum clause extension = Ext_Ziccid
+mapping clause extensionName = Ext_Ziccid <-> "ziccid"
+function clause hartSupports(Ext_Ziccid) = config extensions.Ziccid.supported : bool & sys_enable_experimental_extensions()
+// Instruction-Fetch Atomicity
+enum clause extension = Ext_Ziccif
+mapping clause extensionName = Ext_Ziccif <-> "ziccif"
+function clause hartSupports(Ext_Ziccif) = config extensions.Ziccif.supported
+function clause currentlyEnabled(Ext_Ziccif) = hartSupports(Ext_Ziccif)
+function clause currentlyEnabled(Ext_Ziccid) = hartSupports(Ext_Ziccid) & currentlyEnabled(Ext_Ziccif)
 
 // Multiplication and Division: Multiplication only
 enum clause extension = Ext_Zmmul
@@ -416,6 +426,8 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicbom,
   Ext_Zicbop,
   Ext_Zicboz,
+  Ext_Ziccid,
+  Ext_Ziccif,
   Ext_Zicntr,
   Ext_Zicond,
   Ext_Zicsr,
