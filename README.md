@@ -125,10 +125,11 @@ For booting operating system images, see the information under the
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Svbare extension for Bare mode virtual-memory translation
 - Physical Memory Protection (PMP)
+- Ziccif Extension for Instruction-Fetch Atomicity, v1.0
 
-<!-- Uncomment the following section when unratified extensions are added
-The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
--  -->
+### The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
+
+- Ziccid Extension for Instruction/Data Coherence and Consistency, v0.2
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 

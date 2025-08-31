@@ -87,6 +87,12 @@
     "Zicond": {
       "supported": true
     },
+    "Ziccif": {
+      "supported": true
+    },
+    "Ziccid": {
+      "supported": true
+    },
     "Zicntr": {
       "supported": true
     },
