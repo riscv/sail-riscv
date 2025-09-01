@@ -77,7 +77,7 @@ For booting operating system images, see the information under the
 - Zicsr extension for CSR instructions, v2.0
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0
-- Zicbom and Zicboz extensions for cache-block management (Zicbop not currently supported), v1.0
+- Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
 - Zihintpause extension for Pause Hint, v2.0
