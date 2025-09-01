@@ -375,12 +375,16 @@ foreach (xlen IN ITEMS 32 64)
         --lean-import-file ../handwritten_support/RiscvExtras.lean
         -o "Lean_${arch_uppercase}"
     )
+    set(lean_sail_executable
+        --lean-import-file ../handwritten_support/RiscvExtrasExecutable.lean
+        -o "Lean_${arch_uppercase}_executable"
+    )
     add_custom_command(
         DEPENDS
             ${sail_srcs}
             ${project_file}
             ${config_file}
-            ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtrasExecutable.lean
+            ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtras.lean
         VERBATIM
         OUTPUT "lean_${arch_uppercase}.lean"
         COMMENT "Building Lean definitions from Sail model (${arch})"
@@ -399,7 +403,7 @@ foreach (xlen IN ITEMS 32 64)
             ${sail_srcs}
             ${project_file}
             ${config_file}
-            ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtras.lean
+            ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtrasExecutable.lean
         VERBATIM
         OUTPUT "lean_executable_${arch_uppercase}.lean"
         COMMENT "Building executable Lean definitions from Sail model (${arch})"
