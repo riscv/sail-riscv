@@ -132,10 +132,19 @@ function check_pmp() -> bool = {
   valid
 }
 
+function check_bfloat16() -> bool = {
+  var valid : bool = true;
+  if hartSupports(Ext_Zfbfmin) & not(hartSupports(Ext_F)) then {
+    valid = false;
+  };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
   & check_mem_layout()
   & check_vlen_elen()
   & check_pmp()
+  & check_bfloat16()
 }
