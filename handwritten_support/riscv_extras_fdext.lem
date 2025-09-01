@@ -177,9 +177,6 @@ let softfloat_f64_to_f32 _ _ = ()
 val softfloat_f32_to_bf16: bitvector -> bitvector -> unit
 let softfloat_f32_to_bf16 _ _ = ()
 
-val softfloat_bf16_to_f32: bitvector -> bitvector -> unit
-let softfloat_bf16_to_f32 _ _ = ()
-
 val softfloat_f16_lt : bitvector -> bitvector -> unit
 let softfloat_f16_lt _ _ = ()
 
