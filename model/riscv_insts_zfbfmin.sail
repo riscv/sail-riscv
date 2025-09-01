@@ -26,7 +26,7 @@ function bf16_to_f32 (v : bits(16)) -> bits(32) = {
   }
 }
 
-function clause currentlyEnabled(Ext_Zfbfmin) = hartSupports(Ext_Zfbfmin)
+function clause currentlyEnabled(Ext_Zfbfmin) = hartSupports(Ext_Zfbfmin) & currentlyEnabled(Ext_F)
 
 // Zfbfmin also defines FLH, FSH, FMV.X.H, and FMV.H.X instructions as defined in the Zfh extension
 function clause currentlyEnabled(Ext_Internal_Zfhmove) = currentlyEnabled(Ext_Zfbfmin)
