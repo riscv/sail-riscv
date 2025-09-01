@@ -386,7 +386,7 @@ foreach (xlen IN ITEMS 32 64)
             ${config_file}
             ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtras.lean
         VERBATIM
-        OUTPUT "lean_${arch_uppercase}.lean"
+        OUTPUT "Lean_${arch_uppercase}/Lean${arch_uppercase}.lean"
         COMMENT "Building Lean definitions from Sail model (${arch})"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND
@@ -405,7 +405,7 @@ foreach (xlen IN ITEMS 32 64)
             ${config_file}
             ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtrasExecutable.lean
         VERBATIM
-        OUTPUT "lean_executable_${arch_uppercase}.lean"
+        OUTPUT "Lean_${arch_uppercase}_executable/Lean${arch_uppercase}Executable.lean"
         COMMENT "Building executable Lean definitions from Sail model (${arch})"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND
@@ -418,8 +418,8 @@ foreach (xlen IN ITEMS 32 64)
             ${project_file}
     )
 
-    add_custom_target(generated_lean_${arch} DEPENDS "lean_${arch_uppercase}.lean")
-    add_custom_target(generated_lean_executable_${arch} DEPENDS "lean_executable_${arch_uppercase}.lean")
+    add_custom_target(generated_lean_${arch} DEPENDS "Lean_${arch_uppercase}/Lean${arch_uppercase}.lean")
+    add_custom_target(generated_lean_executable_${arch} DEPENDS "Lean_${arch_uppercase}_executable/Lean${arch_uppercase}Executable.lean")
 
     ############# Lem #############
 
