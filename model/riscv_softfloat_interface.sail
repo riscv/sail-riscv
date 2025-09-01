@@ -401,13 +401,6 @@ function riscv_f32ToBF16 (rm, v) = {
   (float_fflags[4 .. 0], float_result[15 .. 0])
 }
 
-val extern_bf16ToF32 = pure {c: "softfloat_bf16tof32", lem: "softfloat_bf16_to_f32"} : (bits_rm, bits_BF16) -> unit
-val riscv_bf16ToF32 : (bits_rm, bits_BF16) -> (bits_fflags, bits_S)
-function riscv_bf16ToF32 (rm, v) = {
-  extern_bf16ToF32(rm, v);
-  (float_fflags[4 .. 0], float_result[31 .. 0])
-}
-
 /* **************************************************************** */
 /* COMPARISONS                                                      */
 

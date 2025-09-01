@@ -79,12 +79,10 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zcd => 3,
     Ext_Zcf => 3,
     Ext_Zcmop => 3,
-    Ext_Zfbfmin => 3,
     Ext_Zfhmin => 3,
     Ext_Zhinx => 3,
     Ext_Zvkb => 3,
     Ext_Sscofpmf => 3,
-    Ext_Internal_Zfhmove => 4,
     Ext_Zhinxmin => 4,
     _ => 2
   }
@@ -94,7 +92,6 @@ termination_measure virtual_memory_supported(_) = 3
 
 function hartSupports_measure(ext : extension) -> int =
   match ext {
-    Ext_Internal_Zfhmove => 1,
     Ext_D => 1,
     Ext_Zvkn => 1,
     Ext_Zvks => 1,
