@@ -212,14 +212,14 @@ overload F = {rF_bits, wF_bits, rF, wF}
 
 val rF_BF16 : fregidx -> bits(16)
 function rF_BF16(i) = {
-  assert(flen >= 16);
+  assert(flen >= 32);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   nan_unbox(F(i))
 }
 
 val wF_BF16 : (fregidx, bits(16)) -> unit
 function wF_BF16(i, data) = {
-  assert(flen >= 16);
+  assert(flen >= 32);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i) = nan_box(data)
 }
@@ -273,7 +273,7 @@ overload F_D = { rF_D, wF_D }
 
 val rF_or_X_BF16 : fregidx -> bits(16)
 function rF_or_X_BF16(i) = {
-  assert(flen >= 16);
+  assert(flen >= 32);
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
   then F_BF16(i)
@@ -315,7 +315,7 @@ function rF_or_X_D(i) = {
 
 val wF_or_X_BF16 : (fregidx, bits(16)) -> unit
 function wF_or_X_BF16(i, data) = {
-  assert(flen >= 16);
+  assert(flen >= 32);
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
   then F_BF16(i) = data
