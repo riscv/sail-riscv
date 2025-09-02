@@ -24,12 +24,12 @@ type pte_ext_bits = bits(10)
 
 bitfield PTE_Ext : pte_ext_bits = {
   // NAPOT page table entry
-  N         : 9,
+  N          : 9,
   // Page based memory types
-  PBMT      : 8 .. 7,
+  PBMT       : 8 .. 7,
   // Svrsw60t59b: Additional reserved-for-software bits
-  EXT_RSW   : 6 .. 5,
-  reserved  : 4 .. 0,
+  RSW_60t59b : 6 .. 5,
+  reserved   : 4 .. 0,
 }
 
 /*
@@ -87,7 +87,7 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
   // a flag when the Sail model allows specifying the spec version.
   | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
   | (pte_ext[PBMT] != zeros() & not(currentlyEnabled(Ext_Svpbmt)))
-  | (pte_ext[EXT_RSW] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b)))
+  | (pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b)))
   | pte_ext[reserved] != zeros()
 
 // ----------------
