@@ -24,6 +24,7 @@ val elf_entry = pure {
   c: "elf_entry"
 } : unit -> int
 
+val dispatch_syscall = impure "dispatch_syscall" : bits(64) -> unit
 
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
@@ -387,7 +388,9 @@ function htif_store(Physaddr(paddr), width, data) = {
              htif_done = true;
              htif_exit_code = (zero_extend(64, cmd[payload]) >> 1)
         }
-        else ()
+        else {
+             dispatch_syscall(zero_extend(cmd[payload]))
+        }
       },
       0x01 => { /* terminal */
         if   get_config_print_platform()
