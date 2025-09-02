@@ -6,22 +6,24 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function split_BF16 (v : bits(16)) -> (bits(1), bits(8), bits(7)) = (v[15..15], v[14..7], v[6..0])
+function fsplit_BF16 (v : bits(16)) -> (bits(1), bits(8), bits(7)) = (v[15..15], v[14..7], v[6..0])
+
+function fmake_BF16 (sign : bits(1), exp : bits(8), mant : bits(7)) -> (bits(16)) = (sign @ exp @ mant)
 
 function bf16_to_f32 (v : bits(16)) -> bits(32) = {
-  let (sign, exp, mant) = split_BF16(v);
-  let is_nan = exp == 0xFF & mant != 0b0000000;
-  let is_inf = exp == 0xFF & mant == 0b0000000;
+  let (sign, exp, mant) = fsplit_BF16(v);
+  let is_nan = exp == ones() & mant != zeros();
+  let is_inf = exp == ones() & mant == zeros();
 
   if is_nan then {
-    if mant[6] == bitzero then accrue_fflags(nvFlag());
+    if signed(mant) >= 0 then accrue_fflags(nvFlag());
     // 32-Bit Floating-Point NaN
     canonical_NaN_S()
   } else if is_inf then {
     // Infinity
-    sign @ 0xFF @ zeros(23)
+    fmake_S(sign, ones(), zeros())
   } else {
     // Normal/Subnormal
-    sign @ exp @ mant @ zeros(16)
+    fmake_S(sign, exp, mant @ zeros(16))
   }
 }
