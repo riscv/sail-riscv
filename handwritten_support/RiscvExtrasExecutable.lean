@@ -10,51 +10,15 @@ def prerr_string (_: String) : Unit := ()
 def putchar {T} (_: T ) : Unit := ()
 def string_of_int (z : Int) := s!"{z}"
 
--- From: https://github.com/riscv/sail-riscv/blob/46a813bd847272a8e0901c7310bd362f7ffc303e/c_emulator/riscv_platform_impl.cpp
-def sys_enable_writable_misa (_:Unit) : Bool := true
-def sys_enable_rvc (_:Unit) : Bool := true
-def sys_enable_fdext (_:Unit) : Bool := true
-def sys_enable_svinval (_:Unit) : Bool := false
-def sys_enable_zcb (_:Unit) : Bool := false
-def sys_enable_zfinx (_:Unit) : Bool := false
-def sys_enable_writable_fiom (_:Unit) : Bool := true
-def sys_enable_vext (_:Unit) : Bool := true
-def sys_enable_bext (_:Unit) : Bool := false
-def sys_enable_zicbom (_:Unit) : Bool := false
-def sys_enable_zicboz (_:Unit) : Bool := false
-def sys_enable_sstc (_:Unit) : Bool := false
-def sys_writable_hpm_counters (_:Unit) : BitVec 32 := (0xFFFFFFFF:UInt32).toBitVec
-def sys_enable_zvkb (_: Unit) := false
-
-def sys_vext_vl_use_ceil (_:Unit) : Bool := false
-def sys_vector_elen_exp (_:Unit) : Nat := 0x6
-def sys_vector_vlen_exp (_:Unit) : Nat := 0x9
-
-def sys_pmp_count (_:Unit) : Nat := 0
-theorem sys_pmp_count_ok : 0 ≤ sys_pmp_count () ∧ sys_pmp_count () ≤ 64 := by simp; rw [sys_pmp_count]; simp
-def sys_pmp_grain (_:Unit) : Nat := 0
-theorem sys_pmp_grain_ok : 0 ≤ sys_pmp_grain () ∧ sys_pmp_grain () ≤ 63 := by simp; rw [sys_pmp_grain]; simp
-
 section defs
 
 variable [Arch]
 
 -- Platform definitions
-def plat_ram_base (_:Unit) : BitVec n := 0x80000000
-def plat_ram_size (_:Unit) : BitVec n := 0x80000000
 def elf_tohost (_:Unit) : Int := panic "TODO"
 def elf_entry (_:Unit) : Int := panic "TODO"
-def plat_enable_dirty_update (_:Unit) : Bool := false
-def plat_enable_misaligned_access (_:Unit) : Bool := panic "TODO"
-def plat_mtval_has_illegal_inst_bits  (_:Unit) : Bool := false
-def plat_rom_base (_:Unit) : BitVec n := 0x1000
-def plat_rom_size (_:Unit) : BitVec n := 0x100
 def plat_enable_htif (_ : Unit) := false
 def plat_htif_tohost (_:Unit) : BitVec n := 0x80001000
-def plat_clint_base (_:Unit) : BitVec n := 0x2000000
-def plat_clint_size (_:Unit) : BitVec n := 0xc0000
-def plat_insns_per_tick (_:Unit) : Int := 100
-def plat_cache_block_size_exp (_:Unit) : Int := 6
 
 section Effectful
 
