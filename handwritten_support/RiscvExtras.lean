@@ -52,7 +52,6 @@ axiom elf_tohost : Unit → Int
 axiom elf_entry : Unit → Int
 axiom plat_enable_dirty_update : Unit → Bool
 axiom plat_enable_misaligned_access : Unit → Bool
-axiom plat_mtval_has_illegal_inst_bits  : Unit → Bool
 axiom plat_rom_base : Unit → Arch.pa
 axiom plat_rom_size : Unit → Arch.pa
 axiom plat_enable_htif : Unit → Bool

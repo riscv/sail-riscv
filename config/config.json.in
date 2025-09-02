@@ -8,7 +8,16 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
-    "mtval_has_illegal_instruction_bits": false
+    "xtval_nonzero": {
+      "illegal_instruction": false,
+      "breakpoint": false,
+      "load_address_misaligned": false,
+      "load_access_fault": false,
+      "samo_address_misaligned": false,
+      "samo_access_fault": false,
+      "fetch_address_misaligned": false,
+      "fetch_access_fault": false
+    }
   },
   "memory": {
     "pmp": {
