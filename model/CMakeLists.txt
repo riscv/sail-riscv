@@ -94,7 +94,8 @@ add_custom_command(
         --c-preserve init_boot_requirements
         --c-preserve try_step
         --c-preserve tick_clock
-        --c-preserve force_pc
+        --c-preserve enable_htif
+        --c-preserve set_pc_reset_address
         --c-preserve generate_dts
         --c-preserve config_is_valid
         --c-preserve generate_canonical_isa_string

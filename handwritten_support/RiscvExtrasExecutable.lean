@@ -22,11 +22,6 @@ section defs
 variable [Arch]
 
 -- Platform definitions
-def elf_tohost (_:Unit) : Int := panic "TODO"
-def elf_entry (_:Unit) : Int := panic "TODO"
-def plat_enable_htif (_ : Unit) := false
-def plat_htif_tohost (_:Unit) : BitVec n := 0x80001000
-
 section Effectful
 
 variable {Register : Type} {RegisterType : Register → Type} [DecidableEq Register] [Hashable Register]

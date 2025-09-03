@@ -23,13 +23,6 @@ let match_reservation _ = true
 let cancel_reservation () = return ()
 let valid_reservation () = false
 
-val plat_enable_htif : unit -> bool
-let plat_enable_htif () = false
-
-val plat_htif_tohost : unit -> bitvector
-let plat_htif_tohost () = []
-declare ocaml target_rep function plat_htif_tohost = `Platform.htif_tohost`
-
 val plat_term_write : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. bitvector -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv unit 'e
 let plat_term_write _ = return ()
 declare ocaml target_rep function plat_term_write = `Platform.term_write`
