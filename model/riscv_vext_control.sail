@@ -90,9 +90,9 @@ function write_single_element(EEW, index, vrid, value) = {
 // LMUL_pow: LMUL exponent; size of the register group.
 //           Negative values indicate fractions of a single register, but
 //           we still require the full register's worth of elements.
-//           Note this is technically redundant, but it is checked just in case.
 // vrid:     Index of the first register in the group.
 // data:     Data of each element.
+//
 val write_vreg : forall 'n 'sew, 'n >= 0 & is_sew_bitsize('sew) . (int('n), int('sew), LMUL_pow, vregidx, vector('n, bits('sew))) -> unit
 function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   // Number of registers in the group (treating fractional lmul as 0).
@@ -101,7 +101,16 @@ function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   // Number of SEW-bit elements per vector register.
   let elem_per_reg = vlen / SEW;
 
-  assert(group_size * elem_per_reg == num_elem);
+  // Normally num_elem == group_size * elem_per_reg, however
+  // in the specific case of fractional lmul with widening instructions
+  // get_num_elem() returns vlen / SEW, but SEW is doubled before
+  // feeding into this instruction, so elem_per_reg is half the
+  // pre-widening value. Since `group_size` will be unchanged
+  // (because max(LMUL_pow, 0) is still 0), we will end up
+  // with num_elem == group_size * (elem_per_reg * 2).
+  //
+  // In that case the second half of the `vec` array will be ignored.
+  assert(num_elem >= group_size * elem_per_reg);
 
   foreach (reg_in_group from 0 to (group_size - 1)) {
     var reg_value : vlenbits = zeros();
