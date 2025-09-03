@@ -1,14 +1,14 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zbs) = hartSupports(Ext_Zbs) | currentlyEnabled(Ext_B)
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)
 
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BCLRI)
@@ -52,7 +52,7 @@ function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBS_RTYPE : (regidx, regidx, regidx, brop_zbs)
 
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BCLR)

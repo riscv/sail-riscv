@@ -1,18 +1,17 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* These functions define the primitives for physical memory access.
- * They depend on the XLEN of the architecture.
- *
- * They also depend on the type of metadata that is read and written
- * to physical memory.  For models that do not require this metadata,
- * a unit type can be used.
- */
+// These functions define the primitives for physical memory access.
+// They depend on the XLEN of the architecture.
+//
+// They also depend on the type of metadata that is read and written
+// to physical memory.  For models that do not require this metadata,
+// a unit type can be used.
 
 $include <concurrency_interface.sail>
 
@@ -49,20 +48,20 @@ enum barrier_kind = {
   Barrier_RISCV_i,
 }
 
-/* Most of the above read/write_kinds are understood natively by the
-   Sail concurrency interface, except for the strong acquire release
-   variants which require an architecture specific access kind. */
+// Most of the above read/write_kinds are understood natively by the
+// Sail concurrency interface, except for the strong acquire release
+// variants which require an architecture specific access kind.
 struct RISCV_strong_access = {
   variety : Access_variety,
 }
 
-/* The Sail concurrency interface lets us have a physical address type
-   with additional information, provided we can supply a function that
-   converts it into a bitvector. When in RV32 mode, physaddrbits is
-   bits(34), which needs to be zero-extended to bits(64) for
-   sail_mem_write/read interface. This conversion is necessary because
-   the memory interface only supports 32-bit or 64-bit physical
-   addresses regardless of the actual physical address width. */
+// The Sail concurrency interface lets us have a physical address type
+// with additional information, provided we can supply a function that
+// converts it into a bitvector. When in RV32 mode, physaddrbits is
+// bits(34), which needs to be zero-extended to bits(64) for
+// sail_mem_write/read interface. This conversion is necessary because
+// the memory interface only supports 32-bit or 64-bit physical
+// addresses regardless of the actual physical address width.
 val physaddrbits_zero_extend : physaddrbits -> bits(64)
 
 function physaddrbits_zero_extend xs = zero_extend(xs)
@@ -70,12 +69,12 @@ function physaddrbits_zero_extend xs = zero_extend(xs)
 instantiation sail_mem_write with
   'pa = physaddrbits,
   pa_bits = physaddrbits_zero_extend,
-  /* We don't have a relaxed-memory translation model for RISC-V, so
-     we just use unit as a dummy type. */
+  // We don't have a relaxed-memory translation model for RISC-V, so
+  // we just use unit as a dummy type.
   'translation_summary = unit,
   'arch_ak = RISCV_strong_access,
-  /* Similarly to translation_summary, we don't have a defined type for external
-     aborts, so just use unit here too */
+  // Similarly to translation_summary, we don't have a defined type for external
+  // aborts, so just use unit here too
   'abort = unit
 
 val write_ram : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n), bits(8 * 'n), mem_meta) -> bool
@@ -97,13 +96,12 @@ function write_ram(wk, Physaddr(addr), width, data, meta) = {
     value = Some(data),
     tag = None(),
   };
-  /* Write out metadata only if the value write succeeds.
-   * It is assumed for now that this write always succeeds;
-   * there is currently no return value.
-   * FIXME: We should convert the external API for all backends
-   * (not just for Lem) to consume the value along with the
-   * metadata to ensure atomicity.
-   */
+  // Write out metadata only if the value write succeeds.
+  // It is assumed for now that this write always succeeds;
+  // there is currently no return value.
+  // FIXME: We should convert the external API for all backends
+  // (not just for Lem) to consume the value along with the
+  // metadata to ensure atomicity.
   match sail_mem_write(request) {
     Ok(_) => {
       __WriteRAM_Meta(addr, width, meta);

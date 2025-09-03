@@ -1,14 +1,14 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ****************************************************************** */
-/* This file specifies the instructions in the 'Zicsr' extension.     */
-/* ****************************************************************** */
+// *****************************************************************
+// This file specifies the instructions in the 'Zicsr' extension.
+// *****************************************************************
 function clause currentlyEnabled(Ext_Zicsr) = hartSupports(Ext_Zicsr)
 
 union clause instruction = CSRReg  : (csreg, regidx, regidx, csrop)
@@ -34,7 +34,7 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_
   else if not(ext_check_CSR(csr, cur_privilege, is_CSR_Write))
   then Ext_CSR_Check_Failure()
   else {
-    /* CSRRW should not generate read side-effects if rd == 0 */
+    // CSRRW should not generate read side-effects if rd == 0
     let is_CSR_Read = not(op == CSRRW & rd == zreg);
     let csr_val : xlenbits = if is_CSR_Read then read_CSR(csr) else zeros();
     if is_CSR_Write then {
