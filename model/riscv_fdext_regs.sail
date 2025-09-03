@@ -1,20 +1,20 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* **************************************************************** */
-/* Floating point register file and accessors for F, D extensions   */
-/* Floating point CSR and accessors                                 */
-/* **************************************************************** */
+// ***************************************************************
+// Floating point register file and accessors for F, D extensions
+// Floating point CSR and accessors
+// ***************************************************************
 
-/* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
+// Original version written by Rishiyur S. Nikhil, Sept-Oct 2019
 
-/* **************************************************************** */
-/* NaN boxing/unboxing.                                             */
+// ***************************************************************
+// NaN boxing/unboxing.
 
 // Canonical NaNs are used when an invalid boxed value is unboxed.
 val canonical_NaN : forall 'n, 'n in {16, 32, 64, 128} . (implicit('n)) -> bits('n)
@@ -49,8 +49,8 @@ function nan_unbox(m, x) = if 'n == 'm then x else (
   if x['n - 1 .. 'm] == ones() then x['m - 1 .. 0] else canonical_NaN()
 )
 
-/* **************************************************************** */
-/* Floating point register file                                     */
+// ***************************************************************
+// Floating point register file
 
 newtype fregidx = Fregidx : bits(5)
 newtype fregno = Fregno : range(0, 31)
@@ -62,10 +62,9 @@ function fregidx_bits(Fregidx(r) : fregidx) -> bits(5) = r
 function cfregidx_to_fregidx (Cfregidx(b) : cfregidx) -> fregidx = Fregidx(0b01 @ b)
 
 mapping encdec_cfreg : cfregidx <-> bits(3) = { Cfregidx(r) <-> r }
-/*
- * TODO: This is not quite right for having both Zfinx and E, but at least it
- * marks the places we need to consider it
- */
+
+// TODO: This is not quite right for having both Zfinx and E, but at least it
+// marks the places we need to consider it
 function fregidx_to_regidx (Fregidx(b) : fregidx) -> regidx =
   Regidx(trunc(b))
 
@@ -329,7 +328,7 @@ overload F_or_X_H = { rF_or_X_H, wF_or_X_H }
 overload F_or_X_S = { rF_or_X_S, wF_or_X_S }
 overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
 
-/* mappings for assembly */
+// mappings for assembly
 
 mapping freg_abi_name_raw : bits(5) <-> string = {
     0b00000 <-> "ft0",
@@ -414,11 +413,11 @@ mapping freg_or_reg_name : fregidx <-> string = {
 
 mapping cfreg_name : cfregidx <-> string = { Cfregidx(i) <-> freg_name(Fregidx(0b01 @ i)) }
 
-/* **************************************************************** */
-/* Floating Point CSR                                               */
-/*     fflags    address 0x001    same as fcrs [4..0]               */
-/*     frm       address 0x002    same as fcrs [7..5]               */
-/*     fcsr      address 0x003                                      */
+// ***************************************************************
+// Floating Point CSR
+// fflags    address 0x001    same as fcrs [4..0]
+// frm       address 0x002    same as fcrs [7..5]
+// fcsr      address 0x003
 
 
 bitfield Fcsr : bits(32) = {
@@ -430,12 +429,12 @@ register fcsr : Fcsr
 
 val write_fcsr : (bits(3), bits(5)) -> unit
 function write_fcsr (frm, fflags) = {
-  fcsr[FRM]    = frm;      /* Note: frm can be an illegal value, 101, 110, 111 */
+  fcsr[FRM]    = frm;      // Note: frm can be an illegal value, 101, 110, 111
   fcsr[FFLAGS] = fflags;
   dirty_fd_context_if_present();
 }
 
-/* OR flags into the fflags register. */
+// OR flags into the fflags register.
 val accrue_fflags : (bits(5)) -> unit
 function accrue_fflags(flags) = {
   let f = fcsr[FFLAGS] | flags;

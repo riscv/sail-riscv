@@ -1,15 +1,15 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zbc) = hartSupports(Ext_Zbc)
 function clause currentlyEnabled(Ext_Zbkc) = hartSupports(Ext_Zbkc)
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CLMUL : (regidx, regidx, regidx)
 
 mapping clause encdec = CLMUL(rs2, rs1, rd)
@@ -25,7 +25,7 @@ function clause execute (CLMUL(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CLMULH : (regidx, regidx, regidx)
 
 mapping clause encdec = CLMULH(rs2, rs1, rd)
@@ -41,7 +41,7 @@ function clause execute (CLMULH(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CLMULR : (regidx, regidx, regidx)
 
 mapping clause encdec = CLMULR(rs2, rs1, rd)

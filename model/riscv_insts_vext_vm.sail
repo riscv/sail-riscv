@@ -1,24 +1,24 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ******************************************************************************* */
-/* This file implements part of the vector extension.                              */
-/* Mask instructions from Chap 11 (integer arithmetic)                             */
-/* ******************************************************************************* */
+// ******************************************************************************
+// This file implements part of the vector extension.
+// Mask instructions from Chap 11 (integer arithmetic)
+// ******************************************************************************
 
-/* ******************************* OPIVV (VVMTYPE) ******************************* */
-/* VVM instructions' destination is a mask register (e.g. carry out) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ****************************** OPIVV (VVMTYPE) *******************************
+// VVM instructions' destination is a mask register (e.g. carry out)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VVMTYPE : (vvmfunct6, vregidx, vregidx, vregidx)
 
 mapping encdec_vvmfunct6 : vvmfunct6 <-> bits(6) = {
-  VVM_VMADC    <-> 0b010001, /* carry in, carry out */
+  VVM_VMADC    <-> 0b010001, // carry in, carry out
   VVM_VMSBC    <-> 0b010011
 }
 
@@ -63,21 +63,21 @@ function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
 }
 
 mapping vvmtype_mnemonic : vvmfunct6 <-> string = {
-  VVM_VMADC    <-> "vmadc.vvm", /* carry in, carry out */
+  VVM_VMADC    <-> "vmadc.vvm", // carry in, carry out
   VVM_VMSBC    <-> "vmsbc.vvm"
 }
 
 mapping clause assembly = VVMTYPE(funct6, vs2, vs1, vd)
   <-> vvmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ "v0"
 
-/* ****************************** OPIVV (VVMCTYPE) ******************************* */
-/* VVMC instructions' destination is a mask register (e.g. carry out) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ***************************** OPIVV (VVMCTYPE) *******************************
+// VVMC instructions' destination is a mask register (e.g. carry out)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VVMCTYPE : (vvmcfunct6, vregidx, vregidx, vregidx)
 
 mapping encdec_vvmcfunct6 : vvmcfunct6 <-> bits(6) = {
-  VVMC_VMADC    <-> 0b010001, /* no carry in, carry out */
+  VVMC_VMADC    <-> 0b010001, // no carry in, carry out
   VVMC_VMSBC    <-> 0b010011
 }
 
@@ -121,21 +121,21 @@ function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
 }
 
 mapping vvmctype_mnemonic : vvmcfunct6 <-> string = {
-  VVMC_VMADC    <-> "vmadc.vv", /* no carry in, carry out */
+  VVMC_VMADC    <-> "vmadc.vv", // no carry in, carry out
   VVMC_VMSBC    <-> "vmsbc.vv"
 }
 
 mapping clause assembly = VVMCTYPE(funct6, vs2, vs1, vd)
   <-> vvmctype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
-/* ****************************** OPIVV (VVMSTYPE) ******************************* */
-/* VVMS instructions' destination is a vector register (e.g. actual sum) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ***************************** OPIVV (VVMSTYPE) *******************************
+// VVMS instructions' destination is a vector register (e.g. actual sum)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VVMSTYPE : (vvmsfunct6, vregidx, vregidx, vregidx)
 
 mapping encdec_vvmsfunct6 : vvmsfunct6 <-> bits(6) = {
-  VVMS_VADC     <-> 0b010000, /* carry in, no carry out */
+  VVMS_VADC     <-> 0b010000, // carry in, no carry out
   VVMS_VSBC     <-> 0b010010
 }
 
@@ -153,7 +153,7 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  /* for bypassing normal masking in init_masked_result */
+  // for bypassing normal masking in init_masked_result
   let vec_trues : bits('n) = ones();
 
   let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
@@ -182,15 +182,15 @@ function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
 }
 
 mapping vvmstype_mnemonic : vvmsfunct6 <-> string = {
-  VVMS_VADC     <-> "vadc.vvm", /* carry in, no carry out */
+  VVMS_VADC     <-> "vadc.vvm", // carry in, no carry out
   VVMS_VSBC     <-> "vsbc.vvm"
 }
 
 mapping clause assembly = VVMSTYPE(funct6, vs2, vs1, vd)
   <-> vvmstype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ sep() ^ "v0"
 
-/* ***************** OPIVV (Vector Integer Compare Instructions) ***************** */
-/* VVCMP instructions' destination is a mask register */
+// **************** OPIVV (Vector Integer Compare Instructions) *****************
+// VVCMP instructions' destination is a mask register
 union clause instruction = VVCMPTYPE : (vvcmpfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_vvcmpfunct6 : vvcmpfunct6 <-> bits(6) = {
@@ -258,14 +258,14 @@ mapping vvcmptype_mnemonic : vvcmpfunct6 <-> string = {
 mapping clause assembly = VVCMPTYPE(funct6, vm, vs2, vs1, vd)
   <-> vvcmptype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-/* ******************************* OPIVX (VXMTYPE) ******************************* */
-/* VXM instructions' destination is a mask register (e.g. carry out) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ****************************** OPIVX (VXMTYPE) *******************************
+// VXM instructions' destination is a mask register (e.g. carry out)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VXMTYPE : (vxmfunct6, vregidx, regidx, vregidx)
 
 mapping encdec_vxmfunct6 : vxmfunct6 <-> bits(6) = {
-  VXM_VMADC    <-> 0b010001, /* carry in, carry out */
+  VXM_VMADC    <-> 0b010001, // carry in, carry out
   VXM_VMSBC    <-> 0b010011
 }
 
@@ -310,21 +310,21 @@ function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
 }
 
 mapping vxmtype_mnemonic : vxmfunct6 <-> string = {
-  VXM_VMADC    <-> "vmadc.vxm", /* carry in, carry out */
+  VXM_VMADC    <-> "vmadc.vxm", // carry in, carry out
   VXM_VMSBC    <-> "vmsbc.vxm"
 }
 
 mapping clause assembly = VXMTYPE(funct6, vs2, rs1, vd)
   <-> vxmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ "v0"
 
-/* ****************************** OPIVX (VXMCTYPE) ******************************* */
-/* VXMC instructions' destination is a mask register (e.g. carry out) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ***************************** OPIVX (VXMCTYPE) *******************************
+// VXMC instructions' destination is a mask register (e.g. carry out)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VXMCTYPE : (vxmcfunct6, vregidx, regidx, vregidx)
 
 mapping encdec_vxmcfunct6 : vxmcfunct6 <-> bits(6) = {
-  VXMC_VMADC    <-> 0b010001, /* carry in, carry out */
+  VXMC_VMADC    <-> 0b010001, // carry in, carry out
   VXMC_VMSBC    <-> 0b010011
 }
 
@@ -368,21 +368,21 @@ function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
 }
 
 mapping vxmctype_mnemonic : vxmcfunct6 <-> string = {
-  VXMC_VMADC    <-> "vmadc.vx", /* carry in, carry out */
+  VXMC_VMADC    <-> "vmadc.vx", // carry in, carry out
   VXMC_VMSBC    <-> "vmsbc.vx"
 }
 
 mapping clause assembly = VXMCTYPE(funct6, vs2, rs1, vd)
   <-> vxmctype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1)
 
-/* ****************************** OPIVX (VXMSTYPE) ******************************* */
-/* VXMS instructions' destination is a vector register (e.g. actual sum) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ***************************** OPIVX (VXMSTYPE) *******************************
+// VXMS instructions' destination is a vector register (e.g. actual sum)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VXMSTYPE : (vxmsfunct6, vregidx, regidx, vregidx)
 
 mapping encdec_vxmsfunct6 : vxmsfunct6 <-> bits(6) = {
-  VXMS_VADC     <-> 0b010000, /* carry in, no carry out */
+  VXMS_VADC     <-> 0b010000, // carry in, no carry out
   VXMS_VSBC     <-> 0b010010
 }
 
@@ -400,7 +400,7 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  /* for bypassing normal masking in init_masked_result */
+  // for bypassing normal masking in init_masked_result
   let vec_trues : bits('n) = ones();
 
   let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
@@ -429,15 +429,15 @@ function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
 }
 
 mapping vxmstype_mnemonic : vxmsfunct6 <-> string = {
-  VXMS_VADC     <-> "vadc.vxm", /* carry in, no carry out */
+  VXMS_VADC     <-> "vadc.vxm", // carry in, no carry out
   VXMS_VSBC     <-> "vsbc.vxm"
 }
 
 mapping clause assembly = VXMSTYPE(funct6, vs2, rs1, vd)
   <-> vxmstype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ sep() ^ "v0"
 
-/* ***************** OPIVX (Vector Integer Compare Instructions) ***************** */
-/* VXCMP instructions' destination is a mask register */
+// **************** OPIVX (Vector Integer Compare Instructions) *****************
+// VXCMP instructions' destination is a mask register
 union clause instruction = VXCMPTYPE : (vxcmpfunct6, bits(1), vregidx, regidx, vregidx)
 
 mapping encdec_vxcmpfunct6 : vxcmpfunct6 <-> bits(6) = {
@@ -511,14 +511,14 @@ mapping vxcmptype_mnemonic : vxcmpfunct6 <-> string = {
 mapping clause assembly = VXCMPTYPE(funct6, vm, vs2, rs1, vd)
   <-> vxcmptype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
-/* ******************************* OPIVI (VIMTYPE) ******************************* */
-/* VIM instructions' destination is a mask register (e.g. carry out) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ****************************** OPIVI (VIMTYPE) *******************************
+// VIM instructions' destination is a mask register (e.g. carry out)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VIMTYPE : (vimfunct6, vregidx, bits(5), vregidx)
 
 mapping encdec_vimfunct6 : vimfunct6 <-> bits(6) = {
-  VIM_VMADC    <-> 0b010001 /* carry in, carry out */
+  VIM_VMADC    <-> 0b010001 // carry in, carry out
 }
 
 mapping clause encdec = VIMTYPE(funct6, vs2, simm, vd)
@@ -561,20 +561,20 @@ function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
 }
 
 mapping vimtype_mnemonic : vimfunct6 <-> string = {
-  VIM_VMADC    <-> "vmadc.vim" /* carry in, carry out */
+  VIM_VMADC    <-> "vmadc.vim" // carry in, carry out
 }
 
 mapping clause assembly = VIMTYPE(funct6, vs2, simm, vd)
   <-> vimtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ sep() ^ "v0"
 
-/* ****************************** OPIVI (VIMCTYPE) ******************************* */
-/* VIMC instructions' destination is a mask register (e.g. carry out) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ***************************** OPIVI (VIMCTYPE) *******************************
+// VIMC instructions' destination is a mask register (e.g. carry out)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VIMCTYPE : (vimcfunct6, vregidx, bits(5), vregidx)
 
 mapping encdec_vimcfunct6 : vimcfunct6 <-> bits(6) = {
-  VIMC_VMADC    <-> 0b010001 /* carry in, carry out */
+  VIMC_VMADC    <-> 0b010001 // carry in, carry out
 }
 
 mapping clause encdec = VIMCTYPE(funct6, vs2, simm, vd)
@@ -616,20 +616,20 @@ function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
 }
 
 mapping vimctype_mnemonic : vimcfunct6 <-> string = {
-  VIMC_VMADC    <-> "vmadc.vi" /* Carry in, carry out */
+  VIMC_VMADC    <-> "vmadc.vi" // Carry in, carry out
 }
 
 mapping clause assembly = VIMCTYPE(funct6, vs2, simm, vd)
   <-> vimctype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm)
 
-/* ****************************** OPIVI (VIMSTYPE) ******************************* */
-/* VIMS instructions' destination is a vector register (e.g. actual sum) */
-/* Instructions with no carry out will set mask result to current mask value */
-/* May or may not read from source mask register (e.g. carry in) */
+// ***************************** OPIVI (VIMSTYPE) *******************************
+// VIMS instructions' destination is a vector register (e.g. actual sum)
+// Instructions with no carry out will set mask result to current mask value
+// May or may not read from source mask register (e.g. carry in)
 union clause instruction = VIMSTYPE : (vimsfunct6, vregidx, bits(5), vregidx)
 
 mapping encdec_vimsfunct6 : vimsfunct6 <-> bits(6) = {
-  VIMS_VADC     <-> 0b010000 /* Carry in, no carry out */
+  VIMS_VADC     <-> 0b010000 // Carry in, no carry out
 }
 
 mapping clause encdec = VIMSTYPE(funct6, vs2, simm, vd)
@@ -646,7 +646,7 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  /* for bypassing normal masking in init_masked_result */
+  // for bypassing normal masking in init_masked_result
   let vec_trues : bits('n) = ones();
 
   let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
@@ -674,14 +674,14 @@ function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
 }
 
 mapping vimstype_mnemonic : vimsfunct6 <-> string = {
-  VIMS_VADC     <-> "vadc.vim" /* Carry in, no carry out */
+  VIMS_VADC     <-> "vadc.vim" // Carry in, no carry out
 }
 
 mapping clause assembly = VIMSTYPE(funct6, vs2, simm, vd)
   <-> vimstype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_signed_5(simm) ^ sep() ^ "v0"
 
-/* ***************** OPIVI (Vector Integer Compare Instructions) ***************** */
-/* VICMP instructions' destination is a mask register */
+// **************** OPIVI (Vector Integer Compare Instructions) *****************
+// VICMP instructions' destination is a mask register
 union clause instruction = VICMPTYPE : (vicmpfunct6, bits(1), vregidx, bits(5), vregidx)
 
 mapping encdec_vicmpfunct6 : vicmpfunct6 <-> bits(6) = {

@@ -1,17 +1,17 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* program counter */
+// program counter
 
 register PC       : xlenbits
 register nextPC   : xlenbits
 
-/* Mappings for encoding */
+// Mappings for encoding
 
 mapping encdec_reg : regidx <-> bits(5) = {
   forwards Regidx(r) => zero_extend(r),
@@ -20,7 +20,7 @@ mapping encdec_reg : regidx <-> bits(5) = {
 
 mapping encdec_creg : cregidx <-> bits(3) = { Cregidx(r) <-> r }
 
-/* mappings for assembly */
+// mappings for assembly
 
 mapping reg_abi_name_raw : bits(5) <-> string = {
     0b00000 <-> "zero",
@@ -114,7 +114,7 @@ function xreg_write_callback(reg : regidx, value : xlenbits) -> unit = {
   xreg_full_write_callback(name, reg, value);
 }
 
-/* register file and accessors */
+// register file and accessors
 
 register x1  : regtype
 register x2  : regtype

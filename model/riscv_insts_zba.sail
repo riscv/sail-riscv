@@ -1,15 +1,15 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_B) = hartSupports(Ext_B) & misa[B] == 0b1
 function clause currentlyEnabled(Ext_Zba) = hartSupports(Ext_Zba) | currentlyEnabled(Ext_B)
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = SLLIUW : (bits(6), regidx, regidx)
 
 mapping clause encdec = SLLIUW(shamt, rs1, rd)
@@ -24,7 +24,7 @@ function clause execute (SLLIUW(shamt, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBA_RTYPEUW : (regidx, regidx, regidx, shamt_zba)
 
 // add.uw
@@ -52,7 +52,7 @@ function clause execute (ZBA_RTYPEUW(rs2, rs1, rd, shamt)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBA_RTYPE : (regidx, regidx, regidx, shamt_zba)
 
 mapping clause encdec = ZBA_RTYPE(rs2, rs1, rd, shamt)

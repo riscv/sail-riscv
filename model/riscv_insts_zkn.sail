@@ -1,15 +1,14 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/*
- * Scalar Cryptography Extension - Scalar SHA256 instructions (RV32/RV64)
- * ----------------------------------------------------------------------
- */
+//
+// Scalar Cryptography Extension - Scalar SHA256 instructions (RV32/RV64)
+// ----------------------------------------------------------------------
 
 function clause currentlyEnabled(Ext_Zknh) = hartSupports(Ext_Zknh)
 
@@ -74,10 +73,8 @@ function clause execute (SHA256SUM1(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/*
- * Scalar Cryptography Extension - Scalar 32-bit AES instructions (encrypt)
- * ----------------------------------------------------------------------
- */
+// Scalar Cryptography Extension - Scalar 32-bit AES instructions (encrypt)
+// ----------------------------------------------------------------------
 
 function clause currentlyEnabled(Ext_Zkne) = hartSupports(Ext_Zkne)
 
@@ -91,8 +88,8 @@ mapping clause assembly = AES32ESMI (bs, rs2, rs1, rd) <->
     "aes32esmi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
 
 function clause execute (AES32ESMI (bs, rs2, rs1, rd)) = {
-  let shamt   : bits( 5) = bs @ 0b000; /* shamt = bs*8 */
-  let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; /* SBox Input */
+  let shamt   : bits( 5) = bs @ 0b000; // shamt = bs*8
+  let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; // SBox Input
   let so      : bits( 8) = aes_sbox_fwd(si);
   let mixed   : bits(32) = aes_mixcolumn_byte_fwd(so);
   let result  : bits(32) = X(rs1)[31..0] ^ (mixed <<< shamt);
@@ -110,18 +107,16 @@ mapping clause assembly = AES32ESI (bs, rs2, rs1, rd) <->
     "aes32esi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
 
 function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
-  let shamt   : bits( 5) = bs @ 0b000; /* shamt = bs*8 */
-  let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; /* SBox Input */
+  let shamt   : bits( 5) = bs @ 0b000; // shamt = bs*8
+  let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; // SBox Input
   let so      : bits(32) = 0x000000 @ aes_sbox_fwd(si);
   let result  : bits(32) = X(rs1)[31..0] ^ (so <<< shamt);
   X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
-/*
- * Scalar Cryptography Extension - Scalar 32-bit AES instructions (decrypt)
- * ----------------------------------------------------------------------
- */
+// Scalar Cryptography Extension - Scalar 32-bit AES instructions (decrypt)
+// ----------------------------------------------------------------------
 
 function clause currentlyEnabled(Ext_Zknd) = hartSupports(Ext_Zknd)
 
@@ -135,8 +130,8 @@ mapping clause assembly = AES32DSMI (bs, rs2, rs1, rd) <->
     "aes32dsmi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
 
 function clause execute (AES32DSMI (bs, rs2, rs1, rd)) = {
-  let shamt   : bits( 5) = bs @ 0b000; /* shamt = bs*8 */
-  let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; /* SBox Input */
+  let shamt   : bits( 5) = bs @ 0b000; // shamt = bs*8
+  let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; // SBox Input
   let so      : bits( 8) = aes_sbox_inv(si);
   let mixed   : bits(32) = aes_mixcolumn_byte_inv(so);
   let result  : bits(32) = X(rs1)[31..0] ^ (mixed <<< shamt);
@@ -154,18 +149,16 @@ mapping clause assembly = AES32DSI (bs, rs2, rs1, rd) <->
     "aes32dsi" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
 
 function clause execute (AES32DSI (bs, rs2, rs1, rd)) = {
-  let shamt   : bits( 5) = bs @ 0b000; /* shamt = bs*8 */
-  let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; /* SBox Input */
+  let shamt   : bits( 5) = bs @ 0b000; // shamt = bs*8
+  let si      : bits( 8) = (X(rs2) >> shamt)[7..0]; // SBox Input
   let so      : bits(32) = 0x000000 @ aes_sbox_inv(si);
   let result  : bits(32) = X(rs1)[31..0] ^ (so <<< shamt);
   X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
-/*
- * Scalar Cryptography Extension - Scalar 32-bit SHA512 instructions
- * ----------------------------------------------------------------------
- */
+// Scalar Cryptography Extension - Scalar 32-bit SHA512 instructions
+// ----------------------------------------------------------------------
 
 union clause instruction = SHA512SIG0L : (regidx, regidx, regidx)
 union clause instruction = SHA512SIG0H : (regidx, regidx, regidx)
@@ -252,10 +245,8 @@ function clause execute (SHA512SUM1R(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/*
- * Scalar Cryptography Extension - Scalar 64-bit AES instructions
- * ----------------------------------------------------------------------
- */
+// Scalar Cryptography Extension - Scalar 64-bit AES instructions
+// ----------------------------------------------------------------------
 
 union clause instruction = AES64KS1I : (bits(4), regidx, regidx)
 union clause instruction = AES64KS2  : (regidx, regidx, regidx)
@@ -314,9 +305,9 @@ mapping clause assembly = AES64DSM (rs2, rs1, rd)
 mapping clause assembly = AES64DS (rs2, rs1, rd)
   <-> "aes64ds" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-/* Note: The decoding for this instruction ensures that `rnum` is always in
-   the range 0x0..0xA. See the encdec clause for AES64KS1I.
-   The rum == 0xA case is used specifically for the AES-256 KeySchedule */
+// Note: The decoding for this instruction ensures that `rnum` is always in
+// the range 0x0..0xA. See the encdec clause for AES64KS1I.
+// The rum == 0xA case is used specifically for the AES-256 KeySchedule
 function clause execute (AES64KS1I(rnum, rs1, rd)) = {
   assert(xlen == 64);
   let prev     : bits(32) = X(rs1)[63..32];
@@ -377,10 +368,8 @@ function clause execute (AES64DS(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/*
- * Scalar Cryptography Extension - Scalar 64-bit SHA512 instructions
- * ----------------------------------------------------------------------
- */
+// Scalar Cryptography Extension - Scalar 64-bit SHA512 instructions
+// ----------------------------------------------------------------------
 
 union clause instruction = SHA512SIG0 : (regidx, regidx)
 union clause instruction = SHA512SIG1 : (regidx, regidx)
@@ -415,7 +404,7 @@ mapping clause assembly = SHA512SUM0 (rs1, rd)
 mapping clause assembly = SHA512SUM1 (rs1, rd)
   <-> "sha512sum1" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-/* Execute clauses for the 64-bit SHA512 instructions. */
+// Execute clauses for the 64-bit SHA512 instructions.
 
 function clause execute (SHA512SIG0(rs1, rd)) = {
   assert(xlen == 64);

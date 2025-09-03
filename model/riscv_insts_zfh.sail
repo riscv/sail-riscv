@@ -1,32 +1,32 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zhinx) = hartSupports(Ext_Zhinx) & currentlyEnabled(Ext_Zfinx)
 function clause currentlyEnabled(Ext_Zhinxmin) = (hartSupports(Ext_Zhinxmin) & currentlyEnabled(Ext_Zfinx))| currentlyEnabled(Ext_Zhinx)
 
-/* **************************************************************** */
-/* This file specifies the instructions in the Zfh extension        */
-/* (half precision floating point).                                 */
+// ***************************************************************
+// This file specifies the instructions in the Zfh extension
+// (half precision floating point).
 
-/* RISC-V follows IEEE 754-2008 floating point arithmetic standard. */
+// RISC-V follows IEEE 754-2008 floating point arithmetic standard.
 
-/* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
+// Original version written by Rishiyur S. Nikhil, Sept-Oct 2019
 
-/* **************************************************************** */
-/* IMPORTANT!                                                       */
-/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and   */
-/* 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,       */
-/* respectively.                                                    */
-/* The texts follow each other very closely; please try to maintain */
-/* this correspondence as the files are maintained for bug-fixes,   */
-/* improvements, and version updates.                               */
+// ***************************************************************
+// IMPORTANT!
+// The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and
+// 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,
+// respectively.
+// The texts follow each other very closely; please try to maintain
+// this correspondence as the files are maintained for bug-fixes,
+// improvements, and version updates.
 
-/* **************************************************************** */
+// ***************************************************************
 
 val      fsplit_H : bits(16) -> (bits(1), bits(5), bits(10))
 function fsplit_H   (xf16) = (xf16[15..15], xf16[14..10], xf16[9..0])
@@ -120,7 +120,7 @@ function f_is_QNaN_H   xf16 = {
    & (mant [9] == bitone))
 }
 
-/* Either QNaN or SNan */
+// Either QNaN or SNan
 val      f_is_NaN_H : bits(16) -> bool
 function f_is_NaN_H   xf16 = {
   let (sign, exp, mant) = fsplit_H (xf16);
@@ -142,7 +142,7 @@ function fle_H   (v1,       v2,        is_quiet) = {
       then unsigned (m1) <=  unsigned (m2)
       else unsigned (e1)  <  unsigned (e2)
     else if (s1 == 0b0) & (s2 == 0b1)
-    then (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
+    then (v1Is0 & v2Is0)                         // Equal in this case (+0=-0)
     else if (s1 == 0b1) & (s2 == 0b0)
     then true
     else
@@ -162,29 +162,29 @@ function fle_H   (v1,       v2,        is_quiet) = {
   (result, fflags)
 }
 
-/* **************************************************************** */
-/* Helper functions for 'encdec()'                                  */
+// ***************************************************************
+// Helper functions for 'encdec()'
 // Full half support.
 function haveHalfFPU() -> bool = currentlyEnabled(Ext_Zfh) | currentlyEnabled(Ext_Zhinx)
 // Support for conversion of halves to/from single & double, but no actual
 // calculations with halves.
 function haveHalfMin() -> bool = haveHalfFPU() | currentlyEnabled(Ext_Zfhmin) | currentlyEnabled(Ext_Zhinxmin)
 
-/* ****************************************************************** */
-/* Floating-point loads                                               */
-/* These are defined in: riscv_insts_fext.sail                        */
+// *****************************************************************
+// Floating-point loads
+// These are defined in: riscv_insts_fext.sail
 
-/* ****************************************************************** */
-/* Floating-point stores                                              */
-/* These are defined in: riscv_insts_fext.sail                        */
+// *****************************************************************
+// Floating-point stores
+// These are defined in: riscv_insts_fext.sail
 
-/* Binary ops with rounding mode */
+// Binary ops with rounding mode
 
-/* instruction */
+// instruction
 
 union clause instruction = F_BIN_RM_TYPE_H : (fregidx, fregidx, rounding_mode, fregidx, f_bin_rm_op_H)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FADD_H)
 <-> 0b000_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
@@ -202,7 +202,7 @@ mapping clause encdec = F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, FDIV_H)
 <-> 0b000_1110 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
   when haveHalfFPU()
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)) = {
   let rs1_val_16b = F_or_X_H(rs1);
@@ -224,7 +224,7 @@ function clause execute (F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)) = {
   }
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_bin_rm_type_mnemonic_H : f_bin_rm_op_H <-> string = {
   FADD_H  <-> "fadd.h",
@@ -240,14 +240,14 @@ mapping clause assembly = F_BIN_RM_TYPE_H(rs2, rs1, rm, rd, op)
                           ^ sep() ^ freg_or_reg_name(rs2)
                           ^ sep() ^ frm_mnemonic(rm)
 
-/* ****************************************************************** */
-/* Fused multiply-add */
+// *****************************************************************
+// Fused multiply-add
 
-/* instruction */
+// instruction
 
 union clause instruction = F_MADD_TYPE_H : (fregidx, fregidx, fregidx, rounding_mode, fregidx, f_madd_op_H)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FMADD_H)
 <-> encdec_freg(rs3) @ 0b10 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0011
@@ -265,7 +265,7 @@ mapping clause encdec = F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, FNMADD_H)
 <-> encdec_freg(rs3) @ 0b10 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_1111
   when haveHalfFPU()
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)) = {
   let rs1_val_16b = F_or_X_H(rs1);
@@ -289,7 +289,7 @@ function clause execute (F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)) = {
   }
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_madd_type_mnemonic_H : f_madd_op_H <-> string = {
     FMADD_H  <-> "fmadd.h",
@@ -306,15 +306,15 @@ mapping clause assembly = F_MADD_TYPE_H(rs3, rs2, rs1, rm, rd, op)
                           ^ sep() ^ freg_or_reg_name(rs3)
                           ^ sep() ^ frm_mnemonic(rm)
 
-/* ****************************************************************** */
-/* Binary, no rounding mode */
+// *****************************************************************
+// Binary, no rounding mode
 
-/* instruction */
+// instruction
 
 union clause instruction = F_BIN_F_TYPE_H : (fregidx, fregidx, fregidx, f_bin_f_op_H)
 union clause instruction = F_BIN_X_TYPE_H : (fregidx, fregidx, regidx, f_bin_x_op_H)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJ_H)
   <-> 0b001_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
@@ -348,7 +348,7 @@ mapping clause encdec = F_BIN_X_TYPE_H(rs2, rs1, rd, FLE_H)
   <-> 0b101_0010 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
   when haveHalfFPU()
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJ_H)) = {
   let rs1_val_H    = F_or_X_H(rs1);
@@ -459,7 +459,7 @@ function clause execute (F_BIN_X_TYPE_H(rs2, rs1, rd, FLE_H)) = {
   RETIRE_SUCCESS
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_bin_f_type_mnemonic_H : f_bin_f_op_H <-> string = {
     FSGNJ_H  <-> "fsgnj.h",
@@ -487,16 +487,16 @@ mapping clause assembly = F_BIN_X_TYPE_H(rs2, rs1, rd, op)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ freg_or_reg_name(rs2)
 
-/* ****************************************************************** */
-/* Unary with rounding mode */
+// *****************************************************************
+// Unary with rounding mode
 
-/* instruction */
+// instruction
 
 union clause instruction = F_UN_RM_FF_TYPE_H : (fregidx, rounding_mode, fregidx, f_un_rm_ff_op_H)
 union clause instruction = F_UN_RM_FX_TYPE_H : (fregidx, rounding_mode, regidx, f_un_rm_fx_op_H)
 union clause instruction = F_UN_RM_XF_TYPE_H : (regidx, rounding_mode, fregidx, f_un_rm_xf_op_H)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_UN_RM_FF_TYPE_H(rs1, rm, rd, FSQRT_H)
 <-> 0b010_1110 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
@@ -535,9 +535,9 @@ mapping clause encdec = F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_D_H)
   when haveHalfMin() & (haveDoubleFPU() & validDoubleRegs([rd]))
 
 // TODO:
-/* FCVT_H_Q, FCVT_Q_H : Will be added with Q Extension */
+// FCVT_H_Q, FCVT_Q_H : Will be added with Q Extension
 
-/* F instructions, RV64 only */
+// F instructions, RV64 only
 
 mapping clause encdec = F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_L_H)
 <-> 0b110_0010 @ 0b00010 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011
@@ -555,7 +555,7 @@ mapping clause encdec = F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_LU)
 <-> 0b110_1010 @ 0b00011 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
   when haveHalfFPU() & xlen >= 64
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FSQRT_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
@@ -756,7 +756,7 @@ function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_LU)) = {
   }
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_un_rm_ff_type_mnemonic_H : f_un_rm_ff_op_H <-> string = {
     FSQRT_H   <-> "fsqrt.h",
@@ -798,13 +798,13 @@ mapping clause assembly = F_UN_RM_XF_TYPE_H(rs1, rm, rd, op)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
-/* ****************************************************************** */
-/* Unary, no rounding mode */
+// *****************************************************************
+// Unary, no rounding mode
 
 union clause instruction = F_UN_F_TYPE_H : (regidx, fregidx, f_un_f_op_H)
 union clause instruction = F_UN_X_TYPE_H : (fregidx, regidx, f_un_x_op_H)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_UN_X_TYPE_H(rs1, rd, FCLASS_H)
   <-> 0b111_0010 @ 0b00000 @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011
@@ -818,7 +818,7 @@ mapping clause encdec = F_UN_F_TYPE_H(rs1, rd, FMV_H_X)
   <-> 0b111_1010 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
   when currentlyEnabled(Ext_Zfhmin)
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_UN_X_TYPE_H(rs1, rd, FCLASS_H)) = {
   let rs1_val_H = F_or_X_H(rs1);
@@ -854,7 +854,7 @@ function clause execute (F_UN_F_TYPE_H(rs1, rd, FMV_H_X)) = {
   RETIRE_SUCCESS
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_un_f_type_mnemonic_H : f_un_f_op_H <-> string = {
     FMV_H_X  <-> "fmv.h.x"

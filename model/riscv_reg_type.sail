@@ -1,22 +1,22 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* default register type */
+// default register type
 type regtype = xlenbits
 
-/* default zero register */
+// default zero register
 let zero_reg : regtype = zeros()
 
-/* default register printer */
+// default register printer
 val RegStr : regtype -> string
 function RegStr(r) = bits_str(r)
 
-/* conversions */
+// conversions
 
 val regval_from_reg : regtype -> xlenbits
 function regval_from_reg(r) = r

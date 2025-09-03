@@ -1,12 +1,12 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBKB_RTYPE : (regidx, regidx, regidx, brop_zbkb)
 
 mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, PACK)
@@ -36,7 +36,7 @@ function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBKB_PACKW : (regidx, regidx, regidx)
 
 mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd)
@@ -55,7 +55,7 @@ function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZIP : (regidx, regidx)
 
 mapping clause encdec = ZIP(rs1, rd)
@@ -77,7 +77,7 @@ function clause execute (ZIP(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = UNZIP : (regidx, regidx)
 
 mapping clause encdec = UNZIP(rs1, rd)
@@ -99,7 +99,7 @@ function clause execute (UNZIP(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = BREV8 : (regidx, regidx)
 
 mapping clause encdec = BREV8(rs1, rd)

@@ -1,13 +1,13 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 
-/* permission checks */
+// permission checks
 
 val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type)) -> bool
 function pmpCheckRWX(ent, acc) =
@@ -19,7 +19,7 @@ function pmpCheckRWX(ent, acc) =
   }
 
 
-/* matching logic */
+// matching logic
 
 enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
 
@@ -79,7 +79,7 @@ function pmpMatchAddr(
   }
 }
 
-/* priority checks */
+// priority checks
 
 function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
   match acc {

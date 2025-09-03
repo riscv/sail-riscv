@@ -1,15 +1,15 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ******************************************************************************* */
-/* This file implements part of the vector extension.                              */
-/* Chapter 7: Vector Loads and Stores                                              */
-/* ******************************************************************************* */
+// ******************************************************************************
+// This file implements part of the vector extension.
+// Chapter 7: Vector Loads and Stores
+// ******************************************************************************
 
 mapping vlewidth_bitsnumberstr : vlewidth <-> string = {
   VLE8      <-> "8",
@@ -32,7 +32,7 @@ mapping vlewidth_pow : vlewidth <-> {3, 4, 5, 6} = {
   VLE64     <-> 6
 }
 
-/* ******************** Vector Load Unit-Stride Normal & Segment (mop=0b00, lumop=0b00000) ********************* */
+// ******************* Vector Load Unit-Stride Normal & Segment (mop=0b00, lumop=0b00000) *********************
 union clause instruction = VLSEGTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
@@ -53,7 +53,7 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { /* active segments */
+    if mask[i] == bitone then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
@@ -62,7 +62,7 @@ function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) =
           Err(e)   => return e,
         }
       }
-    } else { /* prestart, masked or tail segments */
+    } else { // prestart, masked or tail segments
       foreach (j from 0 to (nf - 1)) {
         let skipped_elem = (result[i] >> (j * load_width_bytes * 8))[(load_width_bytes * 8 - 1) .. 0];
         write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_reg)), skipped_elem)
@@ -81,7 +81,7 @@ function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-  let num_elem = get_num_elem(EMUL_pow, EEW); /* # of element of each register group */
+  let num_elem = get_num_elem(EMUL_pow, EEW); // # of element of each register group
 
   assert(num_elem > 0);
 
@@ -93,7 +93,7 @@ function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
 mapping clause assembly = VLSEGTYPE(nf, vm, rs1, width, vd)
   <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
-/* ************ Vector Load Unit-Stride Normal & Segment Fault-Only-First (mop=0b00, lumop=0b10000) ************ */
+// *********** Vector Load Unit-Stride Normal & Segment Fault-Only-First (mop=0b00, lumop=0b10000) ************
 union clause instruction = VLSEGFFTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
@@ -117,7 +117,7 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
   var trimmed : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if not(trimmed) then {
-      if mask[i] == bitone then { /* active segments */
+      if mask[i] == bitone then { // active segments
         foreach (j from 0 to (nf - 1)) {
           let elem_offset = (i * nf + j) * load_width_bytes;
           match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Read(Data), false, false, false) {
@@ -130,20 +130,20 @@ function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
                         },
           }
         }
-      } else { /* prestart, masked or tail segments */
+      } else { // prestart, masked or tail segments
         foreach (j from 0 to (nf - 1)) {
           let skipped_elem = (result[i] >> (j * load_width_bytes * 8))[(load_width_bytes * 8 - 1) .. 0];
           write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_reg)), skipped_elem)
         }
       }
     } else {
-      /* if vl is trimmed, elements past the new vl are treated as tail elements */
+      // if vl is trimmed, elements past the new vl are treated as tail elements
       if tail_ag == AGNOSTIC then {
         foreach (j from 0 to (nf - 1)) {
           let skipped_elem = (vd_seg[i] >> (j * load_width_bytes * 8))[(load_width_bytes * 8 - 1) .. 0];
           write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_reg)), skipped_elem)
         }
-        /* TODO: configuration support for agnostic behavior */
+        // TODO: configuration support for agnostic behavior
       }
     }
   };
@@ -171,7 +171,7 @@ function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
 mapping clause assembly = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ "ff.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
-/* ******************** Vector Store Unit-Stride Normal & Segment (mop=0b00, sumop=0b00000) ******************** */
+// ******************* Vector Store Unit-Stride Normal & Segment (mop=0b00, sumop=0b00000) ********************
 union clause instruction = VSSEGTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
@@ -191,7 +191,7 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { /* active segments */
+    if mask[i] == bitone then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
@@ -229,7 +229,7 @@ function clause execute(VSSEGTYPE(nf, vm, rs1, width, vs3)) = {
 mapping clause assembly = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> "vs" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
-/* ****************************** Vector Load Strided Normal & Segment (mop=0b10) ****************************** */
+// ***************************** Vector Load Strided Normal & Segment (mop=0b10) ******************************
 union clause instruction = VLSSEGTYPE : (nfields, bits(1), regidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
@@ -251,7 +251,7 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { /* active segments */
+    if mask[i] == bitone then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
@@ -260,7 +260,7 @@ function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_e
           Err(e)   => return e,
         }
       }
-    } else { /* prestart, masked or tail segments */
+    } else { // prestart, masked or tail segments
       foreach (j from 0 to (nf - 1)) {
         let skipped_elem = (result[i] >> (j * load_width_bytes * 8))[(load_width_bytes * 8 - 1) .. 0];
         write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_reg)), skipped_elem)
@@ -291,7 +291,7 @@ function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
 mapping clause assembly = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> "vls" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
-/* ***************************** Vector Store Strided Normal & Segment (mop=0b10) ****************************** */
+// **************************** Vector Store Strided Normal & Segment (mop=0b10) ******************************
 union clause instruction = VSSSEGTYPE : (nfields, bits(1), regidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
@@ -312,7 +312,7 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { /* active segments */
+    if mask[i] == bitone then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
@@ -350,7 +350,7 @@ function clause execute(VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)) = {
 mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> "vss" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
-/* ************************* Vector Load Indexed Unordered Normal & Segment (mop=0b01) ************************* */
+// ************************ Vector Load Indexed Unordered Normal & Segment (mop=0b01) *************************
 union clause instruction = VLUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
@@ -371,9 +371,9 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
     Err(()) => return Illegal_Instruction()
   };
 
-  /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
+  // currently mop = 1 (unordered) or 3 (ordered) do the same operations
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { /* active segments */
+    if mask[i] == bitone then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
@@ -382,7 +382,7 @@ function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index
           Err(e)   => return e,
         }
       }
-    } else { /* prestart, masked or tail segments */
+    } else { // prestart, masked or tail segments
       foreach (j from 0 to (nf - 1)) {
         let skipped_elem = (result[i] >> (j * EEW_data_bytes * 8))[(EEW_data_bytes * 8 - 1) .. 0];
         write_single_element(EEW_data_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_data_reg)), skipped_elem)
@@ -414,7 +414,7 @@ function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
 mapping clause assembly = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> "vlux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ************************** Vector Load Indexed Ordered Normal & Segment (mop=0b11) ************************** */
+// ************************* Vector Load Indexed Ordered Normal & Segment (mop=0b11) **************************
 union clause instruction = VLOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
@@ -441,7 +441,7 @@ function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
 mapping clause assembly = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> "vlox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ************************ Vector Store Indexed Unordered Normal & Segment (mop=0b01) ************************* */
+// *********************** Vector Store Indexed Unordered Normal & Segment (mop=0b01) *************************
 union clause instruction = VSUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
@@ -461,9 +461,9 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
     Err(()) => return Illegal_Instruction()
   };
 
-  /* currently mop = 1 (unordered) or 3 (ordered) do the same operations */
+  // currently mop = 1 (unordered) or 3 (ordered) do the same operations
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { /* active segments */
+    if mask[i] == bitone then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
@@ -489,7 +489,7 @@ function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); // number of data and indices are the same
 
   assert(num_elem > 0);
 
@@ -502,7 +502,7 @@ function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
 mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> "vsux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ************************* Vector Store Indexed Ordered Normal & Segment (mop=0b11) ************************** */
+// ************************ Vector Store Indexed Ordered Normal & Segment (mop=0b11) **************************
 union clause instruction = VSOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
@@ -516,7 +516,7 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); /* number of data and indices are the same */
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); // number of data and indices are the same
 
   assert(num_elem > 0);
 
@@ -529,7 +529,7 @@ function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
 mapping clause assembly = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> "vsox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ***************** Vector Load Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ****************** */
+// **************** Vector Load Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ******************
 union clause instruction = VLRETYPE : (nfields_pow2, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
@@ -542,7 +542,7 @@ function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
-  if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS; /* no elements are written if vstart >= evl */
+  if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS; // no elements are written if vstart >= evl
   let elem_to_align : int = start_element % elem_per_reg;
   var cur_field : int = start_element / elem_per_reg;
   var cur_elem  : int = start_element;
@@ -590,7 +590,7 @@ function clause execute(VLRETYPE(nf, rs1, width, vd)) = {
 mapping clause assembly = VLRETYPE(nf, rs1, width, vd)
   <-> "vl" ^ nfields_pow2_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
-/* ***************** Vector Store Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ***************** */
+// **************** Vector Store Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) *****************
 union clause instruction = VSRETYPE : (nfields_pow2, regidx, vregidx)
 
 mapping clause encdec = VSRETYPE(nf, rs1, vs3)
@@ -603,7 +603,7 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
-  if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS; /* no elements are written if vstart >= evl */
+  if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS; // no elements are written if vstart >= evl
   let elem_to_align : int = start_element % elem_per_reg;
   var cur_field : int = start_element / elem_per_reg;
   var cur_elem  : int = start_element;
@@ -655,7 +655,7 @@ function clause execute(VSRETYPE(nf, rs1, vs3)) = {
 mapping clause assembly = VSRETYPE(nf, rs1, vs3)
   <-> "vs" ^ nfields_pow2_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
-/* ************** Vector Mask Load/Store Unit-Stride (nf=0b000, mop=0b00, lumop or sumop=0b01011) ************** */
+// ************* Vector Mask Load/Store Unit-Stride (nf=0b000, mop=0b00, lumop or sumop=0b01011) **************
 union clause instruction = VMTYPE : (regidx, vregidx, vmlsop)
 
 mapping encdec_lsop : vmlsop <-> bits(7) = {
@@ -677,24 +677,24 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
   let vd_or_vs3_val : vector('n, bits(8)) = read_vreg(num_elem, 8, 0, vd_or_vs3);
 
   foreach (i from start_element to (num_elem - 1)) {
-    if i < evl then { /* active elements */
+    if i < evl then { // active elements
       set_vstart(to_bits_unsafe(16, i));
-      if op == VLM then { /* load */
+      if op == VLM then { // load
         match vmem_read(rs1, to_bits_unsafe(xlen, i), 1, Read(Data), false, false, false) {
           Ok(elem) => write_single_element(8, i, vd_or_vs3, elem),
           Err(e)   => return e,
         }
-      } else if op == VSM then { /* store */
+      } else if op == VSM then { // store
         match vmem_write(rs1, to_bits_unsafe(xlen, i), 1, vd_or_vs3_val[i], Write(Data), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,
         }
       }
-    } else { /* tail elements for mask load, always with agnostic policy */
+    } else { // tail elements for mask load, always with agnostic policy
       if op == VLM then {
         write_single_element(8, i, vd_or_vs3, vd_or_vs3_val[i])
-        /* TODO: configuration support for agnostic behavior */
+        // TODO: configuration support for agnostic behavior
       }
     }
   };
@@ -707,7 +707,7 @@ function clause execute(VMTYPE(rs1, vd_or_vs3, op)) = {
   let EEW = 8;
   let EMUL_pow = 0;
   let vl_val = unsigned(vl);
-  let evl : int = if vl_val % 8 == 0 then vl_val / 8 else vl_val / 8 + 1; /* the effective vector length is evl=ceil(vl/8) */
+  let evl : int = if vl_val % 8 == 0 then vl_val / 8 else vl_val / 8 + 1; // the effective vector length is evl=ceil(vl/8)
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
   if illegal_vd_unmasked() then return Illegal_Instruction();

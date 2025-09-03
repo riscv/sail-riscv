@@ -1,14 +1,14 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zbkx) = hartSupports(Ext_Zbkx)
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = XPERM8 : (regidx, regidx, regidx)
 
 mapping clause encdec = XPERM8(rs2, rs1, rd)
@@ -32,7 +32,7 @@ function clause execute (XPERM8(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = XPERM4 : (regidx, regidx, regidx)
 
 mapping clause encdec = XPERM4(rs2, rs1, rd)

@@ -1,25 +1,25 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zicsr)
 
-/* num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec */
+// num_elem means max(VLMAX,VLEN/SEW)) according to Section 5.4 of RVV spec
 val get_num_elem : (int, sew_bitsize) -> nat1
 function get_num_elem(LMUL_pow, SEW) = {
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
-  /* Ignore lmul < 1 so that the entire vreg is read, allowing all masking to
-   * be handled in init_masked_result */
+  // Ignore lmul < 1 so that the entire vreg is read, allowing all masking to
+  // be handled in init_masked_result
   let num_elem = (2 ^ LMUL_pow_reg) * vlen / SEW;
   assert(num_elem > 0);
   num_elem
 }
 
-/* Reads a single vreg into multiple elements */
+// Reads a single vreg into multiple elements
 val read_single_vreg : forall 'n 'm, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), vregidx) -> vector('n, bits('m))
 function read_single_vreg(num_elem, SEW, vrid) = {
   // TODO: This should be part of the type signature for this function.
@@ -36,7 +36,7 @@ function read_single_vreg(num_elem, SEW, vrid) = {
   result
 }
 
-/* Writes multiple elements into a single vreg */
+// Writes multiple elements into a single vreg
 val write_single_vreg : forall 'n 'm, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), vregidx, vector('n, bits('m))) -> unit
 function write_single_vreg(num_elem, SEW, vrid, v) = {
   var r : vlenbits = zeros();
@@ -51,22 +51,22 @@ function write_single_vreg(num_elem, SEW, vrid, v) = {
   V(vrid) = r
 }
 
-/* The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW)) */
+// The general vreg reading operation with num_elem as max(VLMAX,VLEN/SEW))
 val read_vreg : forall 'n 'm 'p, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), int('p), vregidx) -> vector('n, bits('m))
 function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
   let vrid_val = unsigned(vregidx_bits(vrid));
   var result : vector('n, bits('m)) = vector_init(zeros());
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
 
-  /* Check for valid vrid */
+  // Check for valid vrid
   if vrid_val + 2 ^ LMUL_pow_reg > 32 then {
-    /* vrid would read past largest vreg (v31) */
+    // vrid would read past largest vreg (v31)
     assert(false, "invalid register group: vrid overflow the largest number")
   } else if vrid_val % (2 ^ LMUL_pow_reg) != 0 then {
-    /* vrid must be a multiple of emul */
+    // vrid must be a multiple of emul
     assert(false, "invalid register group: vrid is not a multiple of EMUL")
   } else {
-    /* Check if a single register read suffices. */
+    // Check if a single register read suffices.
     if num_elem * SEW < vlen then {
       result = read_single_vreg('n, SEW, vrid);
     } else {
@@ -111,7 +111,7 @@ function read_single_element(EEW, index, vrid) = {
   V(vrid)[(offset + EEW - 1) .. offset]
 }
 
-/* The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW)) */
+// The general vreg writing operation with num_elem as max(VLMAX,VLEN/SEW))
 val write_vreg : forall 'n 'm 'p, 'n >= 0 & is_sew_bitsize('m) . (int('n), int('m), int('p), vregidx, vector('n, bits('m))) -> unit
 function write_vreg(num_elem, SEW, LMUL_pow, vrid, vec) = {
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
@@ -155,7 +155,7 @@ function write_single_element(EEW, index, vrid, value) = {
   V(vrid) = [V(vrid) with (offset + EEW - 1) .. offset = value];
 }
 
-/* Mask register reading operation with num_elem as max(VLMAX,vlen/SEW)) */
+// Mask register reading operation with num_elem as max(VLMAX,vlen/SEW))
 val read_vmask : forall 'n, 'n > 0. (int('n), bits(1), vregidx) -> bits('n)
 function read_vmask(num_elem, vm, vrid) = {
   assert(num_elem <= vlen);
@@ -174,7 +174,7 @@ function read_vmask(num_elem, vm, vrid) = {
   result
 }
 
-/* This is a special version of read_vmask for carry/borrow instructions, where vm=1 means no carry */
+// This is a special version of read_vmask for carry/borrow instructions, where vm=1 means no carry
 val read_vmask_carry : forall 'n, 'n > 0. (int('n), bits(1), vregidx) -> bits('n)
 function read_vmask_carry(num_elem, vm, vrid) = {
   assert(num_elem <= vlen);
@@ -193,7 +193,7 @@ function read_vmask_carry(num_elem, vm, vrid) = {
   result
 }
 
-/* Mask register writing operation with num_elem as max(VLMAX,vlen/SEW)) */
+// Mask register writing operation with num_elem as max(VLMAX,vlen/SEW))
 val write_vmask : forall 'n, 'n > 0. (int('n), vregidx, bits('n)) -> unit
 function write_vmask(num_elem, vrid, v) = {
   assert(0 < num_elem & num_elem <= vlen);
@@ -204,8 +204,8 @@ function write_vmask(num_elem, vrid, v) = {
     result[i] = v[i]
   };
   foreach (i from num_elem to (vlen - 1)) {
-    /* Mask tail is always agnostic */
-    result[i] = vreg_val[i] /* TODO: configuration support */
+    // Mask tail is always agnostic
+    result[i] = vreg_val[i] // TODO: configuration support
   };
 
   V(vrid) = result

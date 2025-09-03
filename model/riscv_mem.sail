@@ -1,43 +1,42 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Physical memory model.
- *
- * This assumes that the platform memory map has been defined, so that accesses
- * to MMIO regions can be dispatched.
- *
- * The implementation below supports the reading and writing of memory
- * metadata in addition to raw memory data.
- *
- * The external API for this module is composed of three central functions
- *
- *   mem_read_priv_meta
- *   mem_write_ea
- *   mem_write_value_priv_meta
- *
- * and some special cases which partially apply these functions:
- *
- *   mem_read_priv - strips metadata from reads
- *   mem_read_meta - uses effectivePrivilege
- *   mem_read      - both of the above partial applications
- *
- *   mem_write_value_meta - uses effectivePrivilege
- *   mem_write_value_priv - uses a default value for metadata
- *   mem_write_value      - both of the above partial applications
- *
- * The internal implementation first performs a PMP check (if PMP is
- * enabled), and then dispatches to MMIO regions or physical memory as
- * per the platform memory map.
- *
- * A helper to check address alignment is also provided in the external API.
- *
- *   is_aligned_addr - checks for alignment of a physical or virtual address
- */
+// Physical memory model.
+//
+// This assumes that the platform memory map has been defined, so that accesses
+// to MMIO regions can be dispatched.
+//
+// The implementation below supports the reading and writing of memory
+// metadata in addition to raw memory data.
+//
+// The external API for this module is composed of three central functions
+//
+//   mem_read_priv_meta
+//   mem_write_ea
+//   mem_write_value_priv_meta
+//
+// and some special cases which partially apply these functions:
+//
+//   mem_read_priv - strips metadata from reads
+//   mem_read_meta - uses effectivePrivilege
+//   mem_read      - both of the above partial applications
+//
+//   mem_write_value_meta - uses effectivePrivilege
+//   mem_write_value_priv - uses a default value for metadata
+//   mem_write_value      - both of the above partial applications
+//
+// The internal implementation first performs a PMP check (if PMP is
+// enabled), and then dispatches to MMIO regions or physical memory as
+// per the platform memory map.
+//
+// A helper to check address alignment is also provided in the external API.
+//
+//   is_aligned_addr - checks for alignment of a physical or virtual address
 
 function is_aligned_paddr(Physaddr(addr) : physaddr, width : nat1) -> bool =
   unsigned(addr) % width == 0
@@ -63,7 +62,7 @@ function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_ki
     (false, false, true)  => Some(Read_RISCV_reserved),
     (true, false, true)   => Some(Read_RISCV_reserved_acquire),
     (true, true, true)    => Some(Read_RISCV_reserved_strong_acquire),
-    (false, true, false)  => None(), /* should these be instead throwing error_not_implemented as below? */
+    (false, true, false)  => None(), // should these be instead throwing error_not_implemented as below?
     (false, true, true)   => None()
   }
 
@@ -102,7 +101,7 @@ function phys_access_check (t, p, paddr, width) = {
   pmpError
 }
 
-/* dispatches to MMIO regions or physical memory regions depending on physical memory map */
+// dispatches to MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   t : AccessType(ext_access_type),
   priv : Privilege,
@@ -128,14 +127,14 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
     }
   }
 
-/* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
+// Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
 val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
 val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
 val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
 val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
 
-/* The most generic memory read operation */
+// The most generic memory read operation
 function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
   let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
     if (aq | res) & not(is_aligned_addr(paddr, width))
@@ -155,11 +154,11 @@ function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
 function mem_read_meta (typ, paddr, width, aq, rl, res, meta) =
   mem_read_priv_meta(typ, effectivePrivilege(typ, mstatus, cur_privilege), paddr, width, aq, rl, res, meta)
 
-/* Specialized mem_read_meta that drops the metadata */
+// Specialized mem_read_meta that drops the metadata
 function mem_read_priv (typ, priv, paddr, width, aq, rl, res) =
   MemoryOpResult_drop_meta(mem_read_priv_meta(typ, priv, paddr, width, aq, rl, res, false))
 
-/* Specialized mem_read_priv that operates at the default effective privilege */
+// Specialized mem_read_priv that operates at the default effective privilege
 function mem_read (typ, paddr, width, aq, rel, res) =
   mem_read_priv(typ, effectivePrivilege(typ, mstatus, cur_privilege), paddr, width, aq, rel, res)
 
@@ -173,7 +172,7 @@ function mem_write_ea (addr, width, aq, rl, con) =
 function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) =
   Ok(write_ram(wk, paddr, width, data, meta))
 
-/* dispatches to MMIO regions or physical memory regions depending on physical memory map */
+// dispatches to MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   paddr : physaddr,
   width : int('n),
@@ -198,12 +197,11 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
     }
   }
 
-/* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
+// Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
-/* Memory write with an explicit metadata value.  Metadata writes are
- * currently assumed to have the same alignment constraints as their
- * data.
- */
+// Memory write with an explicit metadata value.  Metadata writes are
+// currently assumed to have the same alignment constraints as their
+// data.
 val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), AccessType(ext_access_type), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl, con) = {
   if (rl | con) & not(is_aligned_addr(paddr, width))
@@ -218,12 +216,12 @@ function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl
   }
 }
 
-/* Memory write with explicit Privilege, implicit AccessType and metadata */
+// Memory write with explicit Privilege, implicit AccessType and metadata
 val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_priv (paddr, width, value, priv, aq, rl, con) =
   mem_write_value_priv_meta(paddr, width, value, Write(default_write_acc), priv, default_meta, aq, rl, con)
 
-/* Memory write with explicit metadata and AccessType, implicit and Privilege */
+// Memory write with explicit metadata and AccessType, implicit and Privilege
 val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), ext_access_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) = {
   let typ = Write(ext_acc);
@@ -231,7 +229,7 @@ function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) 
   mem_write_value_priv_meta(paddr, width, value, typ, ep, meta, aq, rl, con)
 }
 
-/* Memory write with default AccessType, Privilege, and metadata */
+// Memory write with default AccessType, Privilege, and metadata
 val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value (paddr, width, value, aq, rl, con) = {
   mem_write_value_meta(paddr, width, value, default_write_acc, default_meta, aq, rl, con)

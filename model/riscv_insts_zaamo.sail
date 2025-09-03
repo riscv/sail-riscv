@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_A) = hartSupports(Ext_A) & misa[A] == 0b1 // TODO: Move currentlyEnabled(Ext_A) to a more central file
 function clause currentlyEnabled(Ext_Zaamo) = hartSupports(Ext_Zaamo) | currentlyEnabled(Ext_A)
@@ -31,7 +31,7 @@ function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : r
     width <= xlen_bytes | (op == AMOCAS & width <= xlen_bytes * 2 & rs2[0] == bitzero & rd[0] == bitzero)
   ))
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = AMO : (amoop, bool, bool, regidx, regidx, word_width_wide, regidx)
 
@@ -52,17 +52,16 @@ mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
   <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ width_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when amo_encoding_valid(size, op, rs2, rd)
 
-/* NOTE: Currently, we only EA if address translation is successful.
-   This may need revisiting. */
+// NOTE: Currently, we only EA if address translation is successful.
+// This may need revisiting.
 function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   let 'width = width;
 
   // This is checked during decoding.
   assert(width <= xlen_bytes * 2);
 
-  /* Get the address, X(rs1) (no offset).
-    * Some extensions perform additional checks on address validity.
-    */
+  // Get the address, X(rs1) (no offset).
+  // Some extensions perform additional checks on address validity.
   match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {

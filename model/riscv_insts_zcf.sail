@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zcf) = hartSupports(Ext_Zcf) & currentlyEnabled(Ext_F) & currentlyEnabled(Ext_Zca) & (currentlyEnabled(Ext_C) | not(hartSupports(Ext_C)))
 
@@ -23,7 +23,7 @@ mapping clause assembly = C_FLWSP(imm, rd)
   <-> "c.flwsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_8(imm @ 0b00) ^ "(" ^ sp_reg_name() ^ ")"
   when xlen == 32
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = C_FSWSP : (bits(6), fregidx)
 
 mapping clause encdec_compressed = C_FSWSP(ui76 @ ui52, rs2)
@@ -39,7 +39,7 @@ mapping clause assembly = C_FSWSP(uimm, rs2)
   <-> "c.fswsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_8(uimm @ 0b00) ^ "(" ^ sp_reg_name() ^ ")"
   when xlen == 32
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = C_FLW : (bits(5), cregidx, cfregidx)
 
 mapping clause encdec_compressed = C_FLW(ui6 @ ui53 @ ui2, rs1, rd)
@@ -57,7 +57,7 @@ mapping clause assembly = C_FLW(uimm, rsc, rdc)
   <-> "c.flw" ^ spc() ^ cfreg_name(rdc) ^ sep() ^ hex_bits_7(uimm @ 0b00) ^ "(" ^ creg_name(rsc) ^ ")"
   when xlen == 32
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = C_FSW : (bits(5), cregidx, cfregidx)
 
 mapping clause encdec_compressed = C_FSW(ui6 @ ui53 @ ui2, rs1, rs2)

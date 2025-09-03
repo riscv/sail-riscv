@@ -1,23 +1,23 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* default exception model */
+// default exception model
 
 type ext_exception = unit
 
-/* Is XRET from given mode permitted by extension? */
+// Is XRET from given mode permitted by extension?
 function ext_check_xret_priv (p : Privilege) : Privilege -> bool = true
-/* Called if above check fails */
+// Called if above check fails
 function ext_fail_xret_priv () : unit -> unit = ()
 
 function handle_trap_extension(p : Privilege, pc : xlenbits, u : option(unit)) -> unit = ()
 
-/* used for traps and ECALL */
+// used for traps and ECALL
 function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
   let tvec : Mtvec = match p {
                        Machine    => mtvec,
@@ -30,12 +30,11 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
   }
 }
 
-/* xRET handling involves three functions:
- *
- * get_xepc:            used to read the value of the xret target  (no control flow transfer)
- * set_xepc:            used to write a value of the xret target   (no control flow transfer)
- * prepare_xret_target: used to get the value for control transfer to the xret target
- */
+// xRET handling involves three functions:
+//
+// get_xepc:            used to read the value of the xret target  (no control flow transfer)
+// set_xepc:            used to write a value of the xret target   (no control flow transfer)
+// prepare_xret_target: used to get the value for control transfer to the xret target
 
 val get_xepc : Privilege -> xlenbits
 function get_xepc(p) =
@@ -60,7 +59,7 @@ val prepare_xret_target : (Privilege) -> xlenbits
 function prepare_xret_target(p) =
   get_xepc(p)
 
-/* other trap-related CSRs */
+// other trap-related CSRs
 
 function get_mtvec() -> xlenbits =
   mtvec.bits
