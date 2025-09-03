@@ -68,7 +68,7 @@ if (NOT CROSS_COMPILER_COMMAND_RV32 OR NOT CROSS_COMPILER_COMMAND_RV64)
     endif()
 endif()
 
-# On macOS, use lld to avoid ld: unknown options: -Bstatic --no-relax -T
+# On macOS, use lld instead of the system linker which does not support ELF
 if (APPLE)
     set(CROSS_COMPILER_COMMAND_RV32 ${CROSS_COMPILER_COMMAND_RV32} -fuse-ld=lld)
     set(CROSS_COMPILER_COMMAND_RV64 ${CROSS_COMPILER_COMMAND_RV64} -fuse-ld=lld)
