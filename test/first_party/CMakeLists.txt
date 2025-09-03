@@ -68,6 +68,12 @@ if (NOT CROSS_COMPILER_COMMAND_RV32 OR NOT CROSS_COMPILER_COMMAND_RV64)
     endif()
 endif()
 
+# On macOS, use lld to avoid ld: unknown options: -Bstatic --no-relax -T
+if (APPLE)
+    set(CROSS_COMPILER_COMMAND_RV32 ${CROSS_COMPILER_COMMAND_RV32} -fuse-ld=lld)
+    set(CROSS_COMPILER_COMMAND_RV64 ${CROSS_COMPILER_COMMAND_RV64} -fuse-ld=lld)
+endif()
+
 message(STATUS "Compiling RV32 tests with: ${CROSS_COMPILER_COMMAND_RV32}")
 message(STATUS "Compiling RV64 tests with: ${CROSS_COMPILER_COMMAND_RV64}")
 
