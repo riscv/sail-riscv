@@ -46,14 +46,30 @@ jobs:
           sudo mkdir -p /usr/local
           curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
-      - name: Install Sail (macOS)
+      - name: Restore cached opam (macOS)
         if: startsWith(matrix.os, 'macos-')
+        id: cache-opam-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.opam
+          key: ${{ matrix.os }}-${{ matrix.cmake_version }}-${{ env.SAIL_VERSION }}-opam
+
+      - name: Install Sail (macOS)
+        if: steps.cache-opam-restore.outputs.cache-hit != 'true' && startsWith(matrix.os, 'macos-')
         run: |
           opam init --auto-setup --bare
           opam switch create default 5.3.0
           eval $(opam env)
           opam update
           opam install -y sail.$SAIL_VERSION
+
+      - name: Save cached opam (macOS)
+        if: startsWith(matrix.os, 'macos-')
+        id: cache-opam-save
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.opam
+          key: ${{ steps.cache-opam-restore.outputs.cache-primary-key }}
 
       - name: Load OPAM environment (macOS)
         if: startsWith(matrix.os, 'macos-' )
