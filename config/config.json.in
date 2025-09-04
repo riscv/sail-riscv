@@ -253,6 +253,21 @@
     "Svinval": {
       "supported": true
     },
+    "Ssnpm": {
+      "supported": @CONFIG_XLEN_IS_64@,
+      "supported_xlen_57": true,
+      "supported_xlen_48": true
+    },
+    "Smnpm": {
+      "supported": @CONFIG_XLEN_IS_64@,
+      "supported_xlen_57": true,
+      "supported_xlen_48": true
+    },
+    "Smmpm": {
+      "supported": @CONFIG_XLEN_IS_64@,
+      "supported_xlen_57": true,
+      "supported_xlen_48": true
+    },
     "Svbare": {
       "supported": true,
       "sfence_vma_illegal_if_svbare_only": true

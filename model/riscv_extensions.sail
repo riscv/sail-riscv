@@ -344,6 +344,10 @@ function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
+// Supervisor-Level pointer masking for next lower privilege mode
+enum clause extension = Ext_Ssnpm
+mapping clause extensionName = Ext_Ssnpm <-> "ssnpm"
+function clause hartSupports(Ext_Ssnpm) = config extensions.Ssnpm.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -382,6 +386,27 @@ function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Machine-Level pointer masking for machine mode
+enum clause extension = Ext_Smmpm
+mapping clause extensionName = Ext_Smmpm <-> "smmpm"
+function clause hartSupports(Ext_Smmpm) = config extensions.Smmpm.supported
+// Machine-Level pointer masking for next lower privilege mode
+enum clause extension = Ext_Smnpm
+mapping clause extensionName = Ext_Smnpm <-> "smnpm"
+function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported
+
+// Environment extensions
+// These extensions are neither defined in the device tree nor configurable via the config file
+// To avoid ordering issues, they are placed at the bottom
+
+// Indicates whether pointer masking support is available in supervisor mode
+enum clause extension = Ext_Sspm
+mapping clause extensionName = Ext_Sspm <-> "sspm"
+function clause hartSupports(Ext_Sspm) = hartSupports(Ext_Ssnpm) & hartSupports(Ext_S)
+// Indicates whether pointer masking support is available in user mode
+enum clause extension = Ext_Supm
+mapping clause extensionName = Ext_Supm <-> "supm"
+function clause hartSupports(Ext_Supm) = hartSupports(Ext_Smnpm) | (hartSupports(Ext_Ssnpm) & hartSupports(Ext_S))
 
 let extensions_ordered_for_isa_string = [
   // Single letter extensions.
@@ -480,10 +505,13 @@ let extensions_ordered_for_isa_string = [
   // Ext_Svadu,
   Ext_Svinval,
   Ext_Svnapot,
+  Ext_Ssnpm,
   Ext_Svpbmt,
 
   // Hypervisor extensions, ordered alphabetically.
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smmpm,
+  Ext_Smnpm,
 ]

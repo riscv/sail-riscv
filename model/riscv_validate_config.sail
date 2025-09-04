@@ -83,6 +83,14 @@ function check_vlen_elen() -> bool = {
   true
 }
 
+function check_zpm() -> bool = {
+  if (xlen == 32 & (hartSupports(Ext_Ssnpm) | hartSupports(Ext_Smmpm) | hartSupports(Ext_Smnpm))) then {
+    print_endline("The Pointer Masking extensions (Ssnpm, Smmpm, Smnpm) are not supported on RV32.");
+    return false;
+  };
+  true
+}
+
 function has_overlap(a_lo : nat, a_hi : nat, b_lo : nat, b_hi : nat) -> bool = {
   not((a_lo < b_lo & a_hi < b_lo) | (b_lo < a_lo & b_hi < a_lo))
 }
@@ -133,4 +141,5 @@ function config_is_valid() -> bool = {
   & check_mem_layout()
   & check_vlen_elen()
   & check_pmp()
+  & check_zpm()
 }
