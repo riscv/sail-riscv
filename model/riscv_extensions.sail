@@ -76,6 +76,10 @@ function clause hartSupports(Ext_H) = false
 enum clause extension = Ext_Zicbom
 mapping clause extensionName = Ext_Zicbom <-> "zicbom"
 function clause hartSupports(Ext_Zicbom) = config extensions.Zicbom.supported
+// Cache-Block Prefetch Instructions
+enum clause extension = Ext_Zicbop
+mapping clause extensionName = Ext_Zicbop <-> "zicbop"
+function clause hartSupports(Ext_Zicbop) = config extensions.Zicbop.supported
 // Cache-Block Zero Instructions
 enum clause extension = Ext_Zicboz
 mapping clause extensionName = Ext_Zicboz <-> "zicboz"
@@ -401,6 +405,7 @@ let extensions_ordered_for_isa_string = [
   // Z extensions, ordered by category and then alphabetically.
   // Zi
   Ext_Zicbom,
+  Ext_Zicbop,
   Ext_Zicboz,
   Ext_Zicntr,
   Ext_Zicond,
