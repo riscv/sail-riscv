@@ -256,6 +256,9 @@
     "Svinval": {
       "supported": true
     },
+    "Svrsw60t59b": {
+      "supported": @CONFIG_XLEN_IS_64@
+    },
     "Svbare": {
       "supported": true,
       "sfence_vma_illegal_if_svbare_only": true
