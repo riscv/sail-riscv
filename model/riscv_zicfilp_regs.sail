@@ -7,20 +7,20 @@
 /*=======================================================================================*/
 
 function get_xLPE(p : Privilege) -> bool =
-  /* When S-mode is implemented:
-   *   Priv      xLPE
-   *   ----------------------
-   *   M         mseccfg.MLPE
-   *   S/HS      menvcfg.LPE
-   *   VS        henvcfg.LPE
-   *   U/VU      senvcfg.LPE
-   *
-   * When S-mode is not implemented:
-   *   Priv      xLPE
-   *   ----------------------
-   *   M         mseccfg.MLPE
-   *   U         menvcfg.LPE
-   */
+  // When S-mode is implemented:
+  //   Priv      xLPE
+  //   ----------------------
+  //   M         mseccfg.MLPE
+  //   S/HS      menvcfg.LPE
+  //   VS        henvcfg.LPE
+  //   U/VU      senvcfg.LPE
+  //
+  // When S-mode is not implemented:
+  //   Priv      xLPE
+  //   ----------------------
+  //   M         mseccfg.MLPE
+  //   U         menvcfg.LPE
+  //
   match p {
     Machine    => bool_bits(mseccfg[MLPE]),
     Supervisor => bool_bits(menvcfg[LPE]),      // TODO: check henvcfg for VS mode
@@ -32,7 +32,7 @@ function get_xLPE(p : Privilege) -> bool =
 function clause currentlyEnabled(Ext_Zicfilp) =
   hartSupports(Ext_Zicfilp) & get_xLPE(cur_privilege)
 
-/* Architectural state for the Zicfilp extension. */
+/// Architectural state for the Zicfilp extension.
 
 // Expected Landing Pad
 register elp : bool
@@ -53,7 +53,7 @@ function is_lp_expected() -> bool =
 function reset_elp() -> unit =
   elp = NO_LP_EXPECTED
 
-/* Interaction with system registers. */
+/// Interaction with system registers.
 
 // When a trap is taken into privilege mode x, the xPELP is set
 // to ELP and ELP is set to NO_LP_EXPECTED.
