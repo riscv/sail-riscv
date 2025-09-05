@@ -6,12 +6,12 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function make_lpad_exception() -> sync_exception =
+function make_landing_pad_exception() -> sync_exception =
   struct { trap    = E_Software_Check(),
            excinfo = Some(enc_software_check(SWC_LANDING_PAD_FAULT)),
            ext     = None() }
 
-union clause instruction = LPAD : (lpl)
+union clause instruction = LPAD : (landing_pad_label)
 
 // LPAD is encoded as AUIPC with rd as x0
 mapping clause encdec = LPAD(lpl)
@@ -19,11 +19,11 @@ mapping clause encdec = LPAD(lpl)
   when currentlyEnabled(Ext_Zicfilp)
 
 function clause execute LPAD(lpl) = {
-  if is_lp_expected() then {
+  if is_landing_pad_expected() then {
     let unaligned_pc = get_arch_pc()[1 .. 0] != 0b00;
     let label_mismatch = X(Regno(7))[31 .. 12] != lpl & lpl != zeros();
     if unaligned_pc | label_mismatch then {
-      Trap(cur_privilege, CTL_TRAP(make_lpad_exception()), PC)
+      Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC)
     } else {
       reset_elp();
       RETIRE_SUCCESS
