@@ -1,4 +1,8 @@
 # Create a variety of configuration files for different XLEN/ELEN/VLENs.
+# This list needs to be kept consistent with `validate_generated_configs.cmake.in`
+# in this directory.
+
+set(generated_configs "")
 foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
     foreach(CONFIG__V__ELEN_EXP RANGE 5 6)
         foreach(CONFIG__V__VLEN_EXP RANGE 7 9)
@@ -11,7 +15,9 @@ foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
             set(CONFIG_XLEN_IS_64 "false")
             set(CONFIG_XLEN_IS_${CONFIG__BASE__XLEN} "true")
 
-            configure_file(config.json.in ${CMAKE_CURRENT_BINARY_DIR}/${config_filename})
+            set(generated_config ${CMAKE_CURRENT_BINARY_DIR}/${config_filename})
+            configure_file(config.json.in ${generated_config})
+            list(APPEND generated_configs ${generated_config})
 
             install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${config_filename}
                 DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/config
@@ -28,3 +34,5 @@ add_library(default_config INTERFACE
 )
 
 target_include_directories(default_config INTERFACE "${CMAKE_CURRENT_BINARY_DIR}")
+
+set(generated_configs ${generated_configs} PARENT_SCOPE)

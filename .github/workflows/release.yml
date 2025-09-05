@@ -56,7 +56,8 @@ jobs:
               gcc \
               gcc-c++ \
               cmake \
-              ninja-build
+              ninja-build \
+              cargo
           curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz
           tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
 

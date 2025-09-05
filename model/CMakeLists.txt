@@ -128,6 +128,28 @@ install(FILES ${schema_file}
     DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
 )
 
+# generate script to validate generated configurations
+get_property(boon_path
+    TARGET boon_cli
+    PROPERTY IMPORTED_LOCATION
+)
+configure_file(${CMAKE_SOURCE_DIR}/config/validate_generated_configs.cmake.in
+    ${CMAKE_BINARY_DIR}/config/validate_generated_configs.cmake
+    @ONLY)
+
+# run the script after the schema is generated and if the generated configs
+# have changed.
+set(config_validation_stamp_file "${CMAKE_CURRENT_BINARY_DIR}/validated_configs.stamp")
+add_custom_command(
+    DEPENDS boon_cli generated_sail_riscv_model ${generated_configs}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/config
+    COMMAND cmake -P validate_generated_configs.cmake
+    COMMAND ${CMAKE_COMMAND} -E touch ${config_validation_stamp_file}
+    VERBATIM
+    OUTPUT ${config_validation_stamp_file}
+)
+add_custom_target(validate_configs DEPENDS ${config_validation_stamp_file})
+
 ############# JSON #############
 
 # Generate JSON snippets file.
