@@ -300,11 +300,8 @@ void init_sail(uint64_t elf_entry, const char *config_file)
 void reinit_sail(uint64_t elf_entry, const char *config_file)
 {
   model_fini();
-  sail_set_abstract_xlen();
-  sail_set_abstract_vlen_exp();
-  sail_set_abstract_ext_d_supported();
-  sail_set_abstract_elen_exp();
-  sail_set_abstract_base_E_enabled();
+
+  init_sail_configured_types();
   model_init();
   init_sail(elf_entry, config_file);
 }
@@ -567,12 +564,8 @@ int inner_main(int argc, char **argv)
   } else {
     sail_config_set_string(DEFAULT_JSON);
   }
-  sail_set_abstract_xlen();
-  sail_set_abstract_vlen_exp();
-  sail_set_abstract_ext_d_supported();
-  sail_set_abstract_elen_exp();
-  sail_set_abstract_base_E_enabled();
 
+  init_sail_configured_types();
   model_init();
 
   if (do_validate_config) {
