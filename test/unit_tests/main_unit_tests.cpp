@@ -2,8 +2,7 @@
 #include <sail_config.h>
 
 #include "default_config.h"
-
-#include "sail_riscv_model.h"
+#include "config_utils.h"
 
 // Generated in the model C code. This is a simple test runner that just
 // runs the tests in series and aborts on the first failure. In future
@@ -25,9 +24,6 @@ int main()
   trace_log = stdout;
 
   sail_config_set_string(DEFAULT_JSON);
-  sail_set_abstract_xlen();
-  sail_set_abstract_vlen_exp();
-  sail_set_abstract_ext_d_supported();
-  sail_set_abstract_elen_exp();
+  init_sail_configured_types();
   model_test();
 }
