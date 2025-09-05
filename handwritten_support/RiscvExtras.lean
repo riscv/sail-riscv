@@ -22,11 +22,6 @@ section defs
 variable [Arch]
 
 -- Platform definitions
-axiom elf_tohost : Unit → Int
-axiom elf_entry : Unit → Int
-axiom plat_enable_htif : Unit → Bool
-axiom plat_htif_tohost : Unit → Arch.pa
-
 section Effectful
 
 variable {Register : Type} {RegisterType : Register → Type} [DecidableEq Register] [Hashable Register]

@@ -295,6 +295,12 @@ function reset_misa() -> unit = {
   csr_write_callback("misa", misa.bits);
 }
 
+// Address to reset PC to on reset.
+register pc_reset_address : xlenbits = zeros()
+// This is called externally to set the PC reset address to the ELF entry point.
+// bits(64) is used because it's easier to deal with in C.
+function set_pc_reset_address(addr : bits(64)) -> unit = pc_reset_address = trunc(addr)
+
 // This function is called on reset, so it should only perform the reset actions
 // described in the "Reset" section of the privileged architecture specification.
 function reset_sys() -> unit = {
@@ -322,7 +328,8 @@ function reset_sys() -> unit = {
   cancel_reservation();
 
   // "The pc is set to an implementation-defined reset vector."
-  // This is outside the scope of this function.
+  PC = pc_reset_address;
+  nextPC = pc_reset_address;
 
   // "The mcause register is set to a value indicating the cause of the reset."
   // "The mcause values after reset have implementation-specific interpretation,
