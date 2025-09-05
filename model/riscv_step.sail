@@ -105,8 +105,8 @@ function run_hart_active(step_no: nat) -> Step = {
         };
         // When ELP is set to LP_EXPECTED, the next instruction needs to be
         // the non-RVC `LPAD` instruction.
-        if is_lp_expected() then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_lpad_exception()), PC);
+        if is_landing_pad_expected() then {
+          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
           Step_Execute(r, instbits)
         }
         /* check for RVC once here instead of every RVC execute clause. */
@@ -129,8 +129,8 @@ function run_hart_active(step_no: nat) -> Step = {
         // When ELP is set to LP_EXPECTED, if the next instruction in
         // the instruction stream is not LPAD, then a software check
         // exception with a landing pad fault code is thrown.
-        if is_lp_expected() & not(is_lpad_instruction(instruction)) then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_lpad_exception()), PC);
+        if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
+          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
           Step_Execute(r, instbits)
         } else {
           nextPC = PC + 4;

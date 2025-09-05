@@ -6,8 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-// Landing pad label.
-type lpl = bits(20)
+type landing_pad_label = bits(20)
 
 enum Software_Check_Code = {
   SWC_NO_INFO,

@@ -47,7 +47,7 @@ function update_elp_state(rs1 : regidx) -> unit =
     elp = not(is_software_guarded_branch) & not(is_return);
   }
 
-function is_lp_expected() -> bool =
+function is_landing_pad_expected() -> bool =
   elp == LP_EXPECTED
 
 function reset_elp() -> unit =
