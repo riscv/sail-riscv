@@ -78,9 +78,10 @@ For booting operating system images, see the information under the
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0
 - Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
-- Zimop extension for May-Be-Operations, v1.0
+- Zicfilp extension for Landing Pad Control Flow Integrity, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
 - Zihintpause extension for Pause Hint, v2.0
+- Zimop extension for May-Be-Operations, v1.0
 - M extension for integer multiplication and division, v2.0
 - Zmmul extension for integer multiplication only, v1.0
 - A extension for atomic instructions, v2.1
@@ -96,7 +97,6 @@ For booting operating system images, see the information under the
 - C extension for compressed instructions, v2.0
 - Zca, Zcf, Zcd, and Zcb extensions for code size reduction, v1.0
 - Zcmop extension for compressed May-Be-Operations, v1.0
-- Zicfilp extension for Landing Pad Control Flow Integrity, v1.0
 - B (Zba, Zbb, Zbs) and Zbc extensions for bit manipulation, v1.0
 - Zbkb, Zbkc, and Zbkx extensions for bit manipulation for cryptography, v1.0
 - Zkn (Zknd, Zkne, Zknh) and Zks (Zksed, Zksh) extensions for scalar cryptography, v1.0.1
