@@ -267,7 +267,7 @@ function haveSingleFPU() -> bool = currentlyEnabled(Ext_F) | currentlyEnabled(Ex
 function float_load_store_width_supported(width : word_width) -> bool =
   match width {
     1 => false,
-    2 => currentlyEnabled(Ext_Zfhmin),
+    2 => currentlyEnabled(Ext_Zfhmin) | currentlyEnabled(Ext_Zfbfmin),
     4 => currentlyEnabled(Ext_F),
     8 => currentlyEnabled(Ext_D),
   }

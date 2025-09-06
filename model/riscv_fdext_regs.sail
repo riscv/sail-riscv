@@ -210,6 +210,20 @@ function wF_bits(Fregidx(i) : fregidx, data: flenbits) -> unit = {
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
+val rF_BF16 : fregidx -> bits(16)
+function rF_BF16(i) = {
+  assert(flen >= 32);
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
+  nan_unbox(F(i))
+}
+
+val wF_BF16 : (fregidx, bits(16)) -> unit
+function wF_BF16(i, data) = {
+  assert(flen >= 32);
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
+  F(i) = nan_box(data)
+}
+
 val rF_H : fregidx -> bits(16)
 function rF_H(i) = {
   assert(flen >= 16);
@@ -252,9 +266,19 @@ function wF_D(i, data) = {
   F(i) = data
 }
 
+overload F_BF16 = { rF_BF16, wF_BF16 }
 overload F_H = { rF_H, wF_H }
 overload F_S = { rF_S, wF_S }
 overload F_D = { rF_D, wF_D }
+
+val rF_or_X_BF16 : fregidx -> bits(16)
+function rF_or_X_BF16(i) = {
+  assert(flen >= 32);
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if   hartSupports(Ext_F)
+  then F_BF16(i)
+  else X(fregidx_to_regidx(i))[15..0]
+}
 
 val rF_or_X_H : fregidx -> bits(16)
 function rF_or_X_H(i) = {
@@ -287,6 +311,15 @@ function rF_or_X_D(i) = {
     assert(regidx_bits(ridx)[0] == bitzero);
     if ridx == zreg then zeros() else X(ridx + 1) @ X(ridx)
   }
+}
+
+val wF_or_X_BF16 : (fregidx, bits(16)) -> unit
+function wF_or_X_BF16(i, data) = {
+  assert(flen >= 32);
+  assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
+  if   hartSupports(Ext_F)
+  then F_BF16(i) = data
+  else X(fregidx_to_regidx(i)) = sign_extend(data)
 }
 
 val wF_or_X_H : (fregidx, bits(16)) -> unit
@@ -325,6 +358,7 @@ function wF_or_X_D(i, data) = {
   }
 }
 
+overload F_or_X_BF16 = { rF_or_X_BF16, wF_or_X_BF16 }
 overload F_or_X_H = { rF_or_X_H, wF_or_X_H }
 overload F_or_X_S = { rF_or_X_S, wF_or_X_S }
 overload F_or_X_D = { rF_or_X_D, wF_or_X_D }
