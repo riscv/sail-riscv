@@ -31,6 +31,13 @@ mapping cbop_mnemonic : cbop_zicbom <-> string = {
   CBO_INVAL <-> "cbo.inval"
 }
 
+function cbop_to_access_type(cbop) : cbop_zicbom -> AccessType(ext_access_type) =
+  match cbop {
+    CBO_CLEAN => Cache(CleanFlush),
+    CBO_FLUSH => Cache(CleanFlush),
+    CBO_INVAL => Cache(Inval),
+  }
+
 mapping clause assembly = ZICBOM(cbop, rs1)
   <-> cbop_mnemonic(cbop) ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
@@ -67,6 +74,7 @@ val process_clean_inval : (regidx, cbop_zicbom) -> ExecutionResult
 function process_clean_inval(rs1, cbop) = {
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
+  let access_type = cbop_to_access_type(cbop);
 
   // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
   // is aligned to the cache block, or negative if rs1 is misaligned.
@@ -75,10 +83,10 @@ function process_clean_inval(rs1, cbop) = {
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match ext_data_get_addr(rs1, negative_offset, Read(Data), cache_block_size) {
+  match ext_data_get_addr(rs1, negative_offset, access_type, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
+      let res : option(ExceptionType) = match translateAddr(vaddr, access_type) {
         Ok(paddr, _) => {
           // "A cache-block management instruction is permitted to access the
           // specified cache block whenever a load instruction or store instruction
