@@ -152,7 +152,7 @@ function virtual_memory_supported() -> bool = {
 function lowest_supported_privLevel() -> Privilege =
   if currentlyEnabled(Ext_U) then User else Machine
 
-function have_privLevel(priv : priv_level) -> bool =
+function have_privLevel(priv : nom_priv_bits) -> bool =
   match priv {
     0b00 => currentlyEnabled(Ext_U),
     0b01 => currentlyEnabled(Ext_S),
@@ -296,9 +296,11 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 function cur_architecture() -> Architecture = {
   let a : arch_xlen =
     match cur_privilege {
-      Machine    => misa[MXL],
-      Supervisor => get_mstatus_SXL(mstatus),
-      User       => get_mstatus_UXL(mstatus)
+      Machine           => misa[MXL],
+      Supervisor        => get_mstatus_SXL(mstatus),
+      User              => get_mstatus_UXL(mstatus),
+      VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+      VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     };
   architecture(a)
 }
@@ -439,9 +441,11 @@ function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, 
 // imply memory fence.
 function is_fiom_active() -> bool = {
   match cur_privilege {
-    Machine => false,
-    Supervisor => menvcfg[FIOM] == 0b1,
-    User => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
+    Machine           => false,
+    Supervisor        => menvcfg[FIOM] == 0b1,
+    User              => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 }
 
@@ -962,6 +966,8 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, super
   Machine => true,
   Supervisor => machine_enable_bit == bitone,
   User => machine_enable_bit == bitone & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+  VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
 }
 
 // Return true if the counter is enabled.
