@@ -27,7 +27,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ~/.opam
-          key: ${{ matrix.os }}-${{ matrix.version }}
+          key: ${{ matrix.os }}-${{ matrix.version }}-opam
 
       - name: Setup opam
         if: steps.cache-opam-restore.outputs.cache-hit != 'true'
@@ -67,7 +67,7 @@ jobs:
           path: |
             build/model/Lean_RV64D/.lake
             build/model/Lean_RV64D_executable/.lake
-          key: ${{ matrix.os }}-${{ matrix.version }}
+          key: ${{ matrix.os }}-${{ matrix.version }}-lake
 
       - name: Use Lean to build the model and report errors
         run: |

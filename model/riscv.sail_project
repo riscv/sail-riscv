@@ -338,6 +338,19 @@ extensions {
     }
   }
 
+  Zicbop {
+    Zicbop_types {
+      before riscv
+      files riscv_zicbop_types.sail
+    }
+    Zicbop_insts {
+      // PREFETCH.{I,R,W} instructions override ORI hints (rd=0)
+      before I_insts
+      requires riscv, Zicbop_types
+      files riscv_insts_zicbop.sail
+    }
+  }
+
   Zicboz {
     requires riscv
     files riscv_insts_zicboz.sail

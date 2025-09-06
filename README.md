@@ -77,7 +77,7 @@ For booting operating system images, see the information under the
 - Zicsr extension for CSR instructions, v2.0
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0
-- Zicbom and Zicboz extensions for cache-block management (Zicbop not currently supported), v1.0
+- Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
 - Zihintpause extension for Pause Hint, v2.0
@@ -123,9 +123,10 @@ For booting operating system images, see the information under the
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
-- Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Svbare extension for Bare mode virtual-memory translation
+- Svinval extension for fine-grained address-translation cache invalidation, v1.0
+- Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
 - Physical Memory Protection (PMP)
 
 <!-- Uncomment the following section when unratified extensions are added

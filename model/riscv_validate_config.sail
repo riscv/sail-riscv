@@ -52,6 +52,11 @@ function check_mmu_config() -> bool = {
       print_endline("One or more of Sv39/Sv48/Sv57 is enabled: these are not supported on RV32.");
     };
   };
+  if hartSupports(Ext_Svrsw60t59b) & not(hartSupports(Ext_Sv39))
+  then {
+    valid = false;
+    print_endline("Svrsw60t59b is enabled but Sv39 is disabled: supporting Svrsw60t59b requires supporting Sv39.");
+  };
   valid
 }
 

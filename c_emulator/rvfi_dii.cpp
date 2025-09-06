@@ -12,6 +12,7 @@
 #include <netinet/ip.h>
 #include <fcntl.h>
 #include <string.h>
+#include <vector>
 
 #include "sail.h"
 #include "riscv_sail.h"
@@ -109,12 +110,11 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
     fprintf(stderr, "Unexpected large packet size (> 4KB): %zd\n", send_size);
     exit(EXIT_FAILURE);
   }
-  unsigned char bytes[send_size];
   /* mpz_export might not write all of the null bytes */
-  memset(bytes, 0, sizeof(bytes));
-  mpz_export(bytes, NULL, -1, 1, 0, 0, *(packet.bits));
+  std::vector<unsigned char> bytes(send_size, 0);
+  mpz_export(bytes.data(), NULL, -1, 1, 0, 0, *(packet.bits));
   /* Ensure that we can send a full packet */
-  if (write(dii_sock, bytes, send_size) != send_size) {
+  if (write(dii_sock, bytes.data(), send_size) != send_size) {
     fprintf(stderr, "Writing RVFI DII trace failed: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
