@@ -126,10 +126,11 @@ For booting operating system images, see the information under the
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
 - Physical Memory Protection (PMP)
+- Ziccif Extension for Instruction-Fetch Atomicity, v1.0
 
-<!-- Uncomment the following section when unratified extensions are added
-The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
--  -->
+### The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
+
+- Ziccid Extension for Instruction/Data Coherence and Consistency, v0.2
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
