@@ -1,50 +1,49 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Machine-mode and supervisor-mode state definitions. */
+// Machine-mode and supervisor-mode state definitions.
 
-/* privilege level */
+// privilege level
 
 register cur_privilege : Privilege
 
-/* current instruction bits, used for illegal instruction exceptions */
+// current instruction bits, used for illegal instruction exceptions
 
 register cur_inst : xlenbits
 
-/* State projections
- *
- * Some machine state is processed via projections from machine-mode views to
- * views from lower privilege levels.  So, for e.g. when mstatus is read from
- * lower privilege levels, we use 'lowering_' projections:
- *
- *   mstatus  ->  sstatus
- *
- * Similarly, when machine state is written from lower privileges, that state is
- * lifted into the appropriate value for the machine-mode state.
- *
- *   sstatus  ->  mstatus
- *
- * In addition, several fields in machine state registers are WARL or WLRL,
- * requiring that values written to the registers be legalized.  For each such
- * register, there will be an associated 'legalize_' function.  These functions
- * will need to be supplied externally, and will depend on the legal values
- * supported by a platform/implementation (or misa).  The legalize_ functions
- * generate a legal value from the current value and the written value.  In more
- * complex cases, they will also implicitly read the current values of misa,
- * mstatus, etc.
- *
- * Each register definition below is followed by custom projections
- * and choice of legalizations if needed.  For now, we typically
- * implement the simplest legalize_ alternatives.
- */
+// State projections
+//
+// Some machine state is processed via projections from machine-mode views to
+// views from lower privilege levels.  So, for e.g. when mstatus is read from
+// lower privilege levels, we use 'lowering_' projections:
+//
+// mstatus  ->  sstatus
+//
+// Similarly, when machine state is written from lower privileges, that state is
+// lifted into the appropriate value for the machine-mode state.
+//
+// sstatus  ->  mstatus
+//
+// In addition, several fields in machine state registers are WARL or WLRL,
+// requiring that values written to the registers be legalized.  For each such
+// register, there will be an associated 'legalize_' function.  These functions
+// will need to be supplied externally, and will depend on the legal values
+// supported by a platform/implementation (or misa).  The legalize_ functions
+// generate a legal value from the current value and the written value.  In more
+// complex cases, they will also implicitly read the current values of misa,
+// mstatus, etc.
+//
+// Each register definition below is followed by custom projections
+// and choice of legalizations if needed.  For now, we typically
+// implement the simplest legalize_ alternatives.
 
 
-/* M-mode registers */
+// M-mode registers
 
 bitfield Misa : xlenbits = {
   MXL  : xlen - 1 .. xlen - 2,
@@ -82,27 +81,27 @@ register misa : Misa =
     MXL = architecture(if xlen == 32 then RV32 else RV64),
   ]
 
-/* whether misa is R/W */
+// whether misa is R/W
 let sys_enable_writable_misa : bool = config base.writable_misa
 
-/* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
-   supervisor mode is implemented and non-bare addressing modes are supported. */
+// Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
+// supervisor mode is implemented and non-bare addressing modes are supported.
 let sys_enable_writable_fiom : bool = config base.writable_fiom
 
-/* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
+// Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored.
 let sys_writable_hpm_counters : bits(32) = config base.writable_hpm_counters
 
 // Supervisor timecmp
 function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
 
-/* This function allows an extension to veto a write to Misa
-   if it would violate an alignment restriction on
-   unsetting C. If it returns true the write will have no effect. */
+// This function allows an extension to veto a write to Misa
+// if it would violate an alignment restriction on
+// unsetting C. If it returns true the write will have no effect.
 val ext_veto_disable_C : unit -> bool
 
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   let v = Mk_Misa(v);
-  /* Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes */
+  // Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes
   if   not(sys_enable_writable_misa) | (v[C] == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C()))
   then m
   else [m with
@@ -145,10 +144,9 @@ function virtual_memory_supported() -> bool = {
   currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
 }
 
-/*
- * Illegal values legalized to least privileged mode supported.
- * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
- */
+//
+// Illegal values legalized to least privileged mode supported.
+// Note: the only valid combinations of supported modes are M, M+U, M+S+U.
 function lowest_supported_privLevel() -> Privilege =
   if currentlyEnabled(Ext_U) then User else Machine
 
@@ -211,11 +209,9 @@ function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
 }
 
 function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
-  /*
-   * Populate all defined fields using the bits of v, stripping anything
-   * that does not have a matching bitfield entry. The SD bits are handled
-   * explicitly later depending on xlen.
-   */
+  // Populate all defined fields using the bits of v, stripping anything
+  // that does not have a matching bitfield entry. The SD bits are handled
+  // explicitly later depending on xlen.
   let v = Mk_Mstatus(v);
 
   let o = [o with
@@ -223,10 +219,10 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // MPELP = v[MPELP],
     // MPV = v[MPV],
     // GVA = v[GVA],
-    /* We don't currently support changing MBE and SBE. */
+    // We don't currently support changing MBE and SBE.
     // MBE = v[MBE],
     // SBE = v[SBE],
-    /* We don't support dynamic changes to SXL and UXL. */
+    // We don't support dynamic changes to SXL and UXL.
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
     // SDT = v[SDT],
@@ -237,21 +233,19 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     MXR = if currentlyEnabled(Ext_S) then v[MXR] else 0b0,
     SUM = if virtual_memory_supported() then v[SUM] else 0b0,
     MPRV = if currentlyEnabled(Ext_U) then v[MPRV] else 0b0,
-    /* We don't have any extension context yet. */
+    // We don't have any extension context yet.
     XS = extStatus_to_bits(Off),
-  /* FS is WARL, and making FS writable can support the M-mode emulation of an FPU
-   * to support code running in S/U-modes.  Spike does this, and for now, we match it,
-   * but only if Zfinx isn't enabled.
-   * FIXME: This should be made a platform parameter.
-   */
+    // FS is WARL, and making FS writable can support the M-mode emulation of an FPU
+    // to support code running in S/U-modes.  Spike does this, and for now, we match it,
+    // but only if Zfinx isn't enabled.
+    // FIXME: This should be made a platform parameter.
     FS = if hartSupports(Ext_Zfinx) then extStatus_to_bits(Off) else v[FS],
     MPP = if have_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
-    /* TODO: make this configurable
-     * If neither the v registers nor S-mode is implemented, then VS is
-     * read-only zero. If S-mode is implemented but the v registers are not,
-     * VS may optionally be read-only zero.
-     */
+    // TODO: make this configurable
+    // If neither the v registers nor S-mode is implemented, then VS is
+    // read-only zero. If S-mode is implemented but the v registers are not,
+    // VS may optionally be read-only zero.
     VS = if hartSupports(Ext_V) then v[VS] else 0b00,
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
@@ -291,7 +285,7 @@ function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_m
 function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); Ok(mstatus.bits[31 .. 0]) }
 function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); Ok(mstatus.bits[63 .. 32]) }
 
-/* architecture and extension checks */
+// architecture and extension checks
 
 function cur_architecture() -> Architecture = {
   let a : arch_xlen =
@@ -445,16 +439,16 @@ function is_fiom_active() -> bool = {
   }
 }
 
-/* interrupt processing state */
+// interrupt processing state
 
 bitfield Minterrupts : xlenbits = {
-  MEI : 11, /* external interrupts */
+  MEI : 11, // external interrupts
   SEI : 9,
 
-  MTI : 7,  /* timers interrupts */
+  MTI : 7,  // timers interrupts
   STI : 5,
 
-  MSI : 3,  /* software interrupts */
+  MSI : 3,  // software interrupts
   SSI : 1,
 }
 
@@ -484,12 +478,12 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 }
 
 function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  /* M-mode interrupt delegation bits "should" be hardwired to 0. */
-  /* FIXME: needs verification against eventual spec language. */
+  // M-mode interrupt delegation bits "should" be hardwired to 0.
+  // FIXME: needs verification against eventual spec language.
   [Mk_Minterrupts(v) with MEI = 0b0, MTI = 0b0, MSI = 0b0]
 }
 
-/* exception processing state */
+// exception processing state
 
 bitfield Medeleg : bits(64) = {
   SAMO_Page_Fault   : 15,
@@ -509,14 +503,14 @@ bitfield Medeleg : bits(64) = {
 }
 
 function legalize_medeleg(o : Medeleg, v : bits(64)) -> Medeleg = {
-  /* M-EnvCalls delegation is not supported */
+  // M-EnvCalls delegation is not supported
   [Mk_Medeleg(v) with MEnvCall = 0b0]
 }
 
-register mie     : Minterrupts /* Enabled */
-register mip     : Minterrupts /* Pending */
-register medeleg : Medeleg     /* Exception delegation to S-mode */
-register mideleg : Minterrupts /* Interrupt delegation to S-mode */
+register mie     : Minterrupts // Enabled
+register mip     : Minterrupts // Pending
+register medeleg : Medeleg     // Exception delegation to S-mode
+register mideleg : Minterrupts // Interrupt delegation to S-mode
 
 mapping clause csr_name_map = 0x304  <-> "mie"
 mapping clause csr_name_map = 0x344  <-> "mip"
@@ -543,13 +537,13 @@ function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_m
 function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); Ok(medeleg.bits[63 .. 32]) }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); Ok(mideleg.bits) }
 
-/* registers for trap handling */
+// registers for trap handling
 
 bitfield Mtvec : xlenbits = {
   Base : xlen - 1 .. 2,
   Mode : 1 .. 0
 }
-register mtvec : Mtvec  /* Trap Vector */
+register mtvec : Mtvec  // Trap Vector
 
 function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  let v = Mk_Mtvec(v);
@@ -570,7 +564,7 @@ function clause is_CSR_accessible(0x342, _, _) = true // mcause
 function clause read_CSR(0x342) = mcause.bits
 function clause write_CSR(0x342, value) = { mcause.bits = value; Ok(mcause.bits) }
 
-/* Interpreting the trap-vector address */
+// Interpreting the trap-vector address
 function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   let base : xlenbits = m[Base] @ 0b00;
   match (trapVectorMode_of_bits(m[Mode])) {
@@ -582,7 +576,7 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   }
 }
 
-/* Exception PC */
+// Exception PC
 
 register mepc : xlenbits
 
@@ -602,7 +596,7 @@ function align_pc(addr : xlenbits) -> xlenbits = {
   else [addr with 1..0 = zeros()]
 }
 
-/* auxiliary exception registers */
+// auxiliary exception registers
 
 register mtval    : xlenbits
 register mscratch : xlenbits
@@ -619,7 +613,7 @@ function clause read_CSR(0x340) = mscratch
 function clause write_CSR(0x343, value) = { mtval = value; Ok(mtval) }
 function clause write_CSR(0x340, value) = { mscratch = value; Ok(mscratch) }
 
-/* counters */
+// counters
 
 bitfield Counteren : bits(32) = {
   HPM  : 31 .. 3,
@@ -675,23 +669,22 @@ function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhib
 register mcycle : bits(64)
 register mtime : bits(64)
 
-/* minstret
- *
- * minstret is an architectural register, and can be written to.  The
- * spec says that minstret increments on instruction retires need to
- * occur before any explicit writes to instret.  However, in our
- * simulation loop, we need to execute an instruction to find out
- * whether it retired, and hence can only increment instret after
- * execution.  To avoid doing this in the case minstret was explicitly
- * written to, we track whether it should increment in a separate
- * model-internal register.
- */
+// minstret
+//
+// minstret is an architectural register, and can be written to.  The
+// spec says that minstret increments on instruction retires need to
+// occur before any explicit writes to instret.  However, in our
+// simulation loop, we need to execute an instruction to find out
+// whether it retired, and hence can only increment instret after
+// execution.  To avoid doing this in the case minstret was explicitly
+// written to, we track whether it should increment in a separate
+// model-internal register.
 register minstret : bits(64)
 
-/* Should minstret be incremented when the instruction is retired. */
+// Should minstret be incremented when the instruction is retired.
 register minstret_increment : bool
 
-/* machine information registers */
+// machine information registers
 register mvendorid : bits(32) = to_bits_checked(config platform.vendorid : int)
 register mimpid    : xlenbits = to_bits_checked(config platform.impid : int)
 register marchid   : xlenbits = to_bits_checked(config platform.archid : int)
@@ -717,9 +710,9 @@ function clause read_CSR(0xF13) = mimpid
 function clause read_CSR(0xF14) = mhartid
 function clause read_CSR(0xF15) = mconfigptr
 
-/* S-mode registers */
+// S-mode registers
 
-/* sstatus reveals a subset of mstatus */
+// sstatus reveals a subset of mstatus
 bitfield Sstatus : bits(64) = {
   SD    : xlen - 1,
 
@@ -735,7 +728,7 @@ bitfield Sstatus : bits(64) = {
   SPIE  : 5,
   SIE   : 1,
 }
-/* sstatus is a view of mstatus, so there is no register defined. */
+// sstatus is a view of mstatus, so there is no register defined.
 
 function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zeros());
@@ -787,15 +780,15 @@ function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, 
 
 
 bitfield Sinterrupts : xlenbits = {
-  SEI : 9,  /* external interrupts */
+  SEI : 9,  // external interrupts
 
-  STI : 5,  /* timers interrupts */
+  STI : 5,  // timers interrupts
 
-  SSI : 1,  /* software interrupts */
+  SSI : 1,  // software interrupts
 }
 
 // sip
-/* Provides the sip read view of mip (m) as delegated by mideleg (d). */
+// Provides the sip read view of mip (m) as delegated by mideleg (d).
 function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
@@ -806,7 +799,7 @@ function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   ]
 }
 
-/* Provides the sie read view of mie (m) as delegated by mideleg (d). */
+// Provides the sie read view of mie (m) as delegated by mideleg (d).
 function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
@@ -817,7 +810,7 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   ]
 }
 
-/* Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d). */
+// Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d).
 function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
   let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
@@ -835,7 +828,7 @@ function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, val
 
 
 // sie
-/* Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d). */
+// Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d).
 function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
   [m with
@@ -856,7 +849,7 @@ function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
 function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); Ok(lower_mie(mie, mideleg).bits) }
 
 
-/* other non-VM related supervisor state */
+// other non-VM related supervisor state
 register stvec    : Mtvec
 register sscratch : xlenbits
 register sepc     : xlenbits
@@ -879,10 +872,9 @@ function clause write_CSR(0x140, value) = { sscratch = value; Ok(sscratch) }
 function clause write_CSR(0x142, value) = { scause.bits = value; Ok(scause.bits) }
 function clause write_CSR(0x143, value) = { stval = value; Ok(stval) }
 
-/*
- * S-mode address translation and protection (satp) layout.
- * The actual satp register is defined in an architecture-specific file.
- */
+//
+// S-mode address translation and protection (satp) layout.
+// The actual satp register is defined in an architecture-specific file.
 
 bitfield Satp64 : bits(64) = {
   Mode : 63 .. 60,
@@ -930,7 +922,7 @@ function legalize_satp(
   }
 }
 
-/* disabled trigger/debug module */
+// disabled trigger/debug module
 register tselect : xlenbits
 
 mapping clause csr_name_map = 0x7a0  <-> "tselect"
@@ -939,16 +931,15 @@ mapping clause csr_name_map = 0x7a2  <-> "tdata2"
 mapping clause csr_name_map = 0x7a3  <-> "tdata3"
 
 function clause is_CSR_accessible(0x7a0, _, _) = true
-function clause read_CSR(0x7a0) = ~(tselect)  /* this indicates we don't have any trigger support */
+function clause read_CSR(0x7a0) = ~(tselect)  // this indicates we don't have any trigger support
 function clause write_CSR(0x7a0, value) = { tselect = value; Ok(tselect) }
 
-/*
- * Entropy Source - Platform access to random bits.
- * NOTE: This would be better placed in riscv_platform.sail, but that file
- *       appears _after_ this one in the compile order meaning the valspec
- *       for this function is unavailable when it's first encountered in
- *       read_seed_csr. Hence it appears here.
- */
+//
+// Entropy Source - Platform access to random bits.
+// NOTE: This would be better placed in riscv_platform.sail, but that file
+// appears _after_ this one in the compile order meaning the valspec
+// for this function is unavailable when it's first encountered in
+// read_seed_csr. Hence it appears here.
 val get_16_random_bits = impure {
     interpreter: "Platform.get_16_random_bits",
     c: "plat_get_16_random_bits",

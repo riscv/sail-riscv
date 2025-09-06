@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 newtype vregidx = Vregidx : bits(5)
 newtype vregno = Vregno : range(0, 31)
@@ -24,9 +24,9 @@ mapping encdec_vreg : vregidx <-> bits(5) = { Vregidx(r) <-> r }
 val vreg_write_callback = pure {c: "vreg_write_callback"} : (vregidx, vlenbits) -> unit
 function vreg_write_callback(_) = ()
 
-let zvreg : vregidx = Vregidx(0b00000) /* v0, zero register  */
+let zvreg : vregidx = Vregidx(0b00000) // v0, zero register
 
-/* vector registers */
+// vector registers
 register vr0 : vlenbits
 register vr1 : vlenbits
 register vr2 : vlenbits
@@ -227,7 +227,7 @@ function init_vregs () = {
   vr31 = zero_vreg
 }
 
-/* vector csrs */
+// vector csrs
 
 register vstart : xlenbits
 register vl     : xlenbits
@@ -271,8 +271,8 @@ function is_invalid_sew_pow(v : bits(3)) -> bool =
 function is_invalid_lmul_pow(v : bits(3)) -> bool =
   v == 0b100
 
-/* the dynamic selected element width (SEW) */
-/* this returns the power of 2 for SEW */
+// the dynamic selected element width (SEW)
+// this returns the power of 2 for SEW
 function get_sew_pow() -> SEW_pow = {
   let sew_pow = vtype[vsew];
   sew_pow_val(sew_pow)
@@ -282,16 +282,16 @@ function get_sew_pow() -> SEW_pow = {
 type sew_bitsize = {8, 16, 32, 64}
 type is_sew_bitsize('n) -> Bool = 'n in {8, 16, 32, 64}
 
-/* this returns the actual value of SEW */
+// this returns the actual value of SEW
 function get_sew() -> sew_bitsize =
   2 ^ get_sew_pow()
 
-/* this returns the value of SEW in bytes */
+// this returns the value of SEW in bytes
 function get_sew_bytes() -> {1, 2, 4, 8} =
   get_sew() / 8
 
-/* the vector register group multiplier (LMUL) */
-/* this returns the power of 2 for LMUL */
+// the vector register group multiplier (LMUL)
+// this returns the power of 2 for LMUL
 val get_lmul_pow : unit -> LMUL_pow
 function get_lmul_pow() = {
   let lmul_pow = vtype[vlmul];
@@ -355,7 +355,7 @@ function set_vstart(value : bits(16)) -> unit = {
 
 val ext_write_vcsr : (bits(2), bits(1)) -> unit
 function ext_write_vcsr (vxrm_val, vxsat_val) = {
-  vcsr[vxrm]  = vxrm_val; /* Note: frm can be an illegal value, 101, 110, 111 */
+  vcsr[vxrm]  = vxrm_val; // Note: frm can be an illegal value, 101, 110, 111
   vcsr[vxsat] = vxsat_val;
   dirty_v_context()
 }

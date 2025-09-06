@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 // ****************************************************************
 // PTE (Page Table Entry) in PTN (Page Table Node)
@@ -32,15 +32,14 @@ bitfield PTE_Ext : pte_ext_bits = {
   reserved   : 4 .. 0,
 }
 
-/*
- * On SV32, there are no reserved bits available to extensions. Therefore, by
- * default, we initialize the PTE extension field with all zeros. However,
- * extensions may wish, on SV39/48/56, to put flags in the reserved region of
- * those PTEs. To avoid the need for "inhibit" bits in extensions (i.e., so
- * that extensions can use the more common and more RISC-V flavored "enable"
- * disposition), we allow extensions to use any constant value by overriding
- * this default_sv32_ext_pte value.
- */
+//
+// On SV32, there are no reserved bits available to extensions. Therefore, by
+// default, we initialize the PTE extension field with all zeros. However,
+// extensions may wish, on SV39/48/56, to put flags in the reserved region of
+// those PTEs. To avoid the need for "inhibit" bits in extensions (i.e., so
+// that extensions can use the more common and more RISC-V flavored "enable"
+// disposition), we allow extensions to use any constant value by overriding
+// this default_sv32_ext_pte value.
 let default_sv32_ext_pte : pte_ext_bits = zeros()
 
 // PRIVATE: extract ext bits of PTE above the PPN.

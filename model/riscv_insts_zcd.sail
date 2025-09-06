@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zcd) = hartSupports(Ext_Zcd) & currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zca) & (currentlyEnabled(Ext_C) | not(hartSupports(Ext_C)))
 
@@ -22,7 +22,7 @@ function clause execute (C_FLDSP(uimm, rd)) = {
 mapping clause assembly = C_FLDSP(uimm, rd)
   <-> "c.fldsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_9(uimm @ 0b000) ^ "(" ^ sp_reg_name() ^ ")"
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = C_FSDSP : (bits(6), fregidx)
 
 mapping clause encdec_compressed = C_FSDSP(ui86 @ ui53, rs2)
@@ -37,7 +37,7 @@ function clause execute (C_FSDSP(uimm, rs2)) = {
 mapping clause assembly = C_FSDSP(uimm, rs2)
   <-> "c.fsdsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_9(uimm @ 0b000) ^ "(" ^ sp_reg_name() ^ ")"
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = C_FLD : (bits(5), cregidx, cfregidx)
 
 mapping clause encdec_compressed = C_FLD(ui76 @ ui53, rs1, rd)
@@ -54,7 +54,7 @@ function clause execute (C_FLD(uimm, rsc, rdc)) = {
 mapping clause assembly = C_FLD(uimm, rsc, rdc)
   <-> "c.fld" ^ spc() ^ cfreg_name(rdc) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc) ^ ")"
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = C_FSD : (bits(5), cregidx, cfregidx)
 
 mapping clause encdec_compressed = C_FSD(ui76 @ ui53, rs1, rs2)

@@ -1,15 +1,15 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ******************************************************************************* */
-/* This file implements part of the vector extension.                              */
-/* Chapter 6: Configuration-Setting Instructions                                   */
-/* ******************************************************************************* */
+// ******************************************************************************
+// This file implements part of the vector extension.
+// Chapter 6: Configuration-Setting Instructions
+// ******************************************************************************
 
 
 mapping sew_flag : string <-> bits(3) = {
@@ -27,7 +27,7 @@ mapping maybe_lmul_flag : string <-> bits(3) = {
   sep() ^ "m2"    <-> 0b001,
   sep() ^ "m4"    <-> 0b010,
   sep() ^ "m8"    <-> 0b011,
-  forwards ""      => 0b000, /* m1 by default */
+  forwards ""      => 0b000, // m1 by default
 }
 
 mapping ta_flag : string <-> bits(1) = {
@@ -51,13 +51,12 @@ mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
 
 val handle_illegal_vtype : unit -> unit
 function handle_illegal_vtype() = {
-  /* Note: Implementations can set vill or trap with an illegal
-   * instruction if the vtype setting is not supported.
-   * TODO: configuration support for both solutions.
-   * NOTE: vstart should NOT be zeroed out if trapping.
-   */
+  // Note: Implementations can set vill or trap with an illegal
+  // instruction if the vtype setting is not supported.
+  // TODO: configuration support for both solutions.
+  // NOTE: vstart should NOT be zeroed out if trapping.
 
-  vtype.bits = 0b1 @ zeros(xlen - 1); /* set vtype.vill */
+  vtype.bits = 0b1 @ zeros(xlen - 1); // set vtype.vill
   vl = zeros();
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
@@ -81,7 +80,7 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
   to_bits_unsafe(xlen, new_vl)
 }
 
-/* *********************************** vsetvli *********************************** */
+// ********************************** vsetvli ***********************************
 union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
 mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
@@ -93,7 +92,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   let SEW_pow_ori   = get_sew_pow();
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
-  /* check new SEW and LMUL are legal and calculate VLMAX */
+  // check new SEW and LMUL are legal and calculate VLMAX
   if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype();
     return RETIRE_SUCCESS
@@ -104,25 +103,25 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
-  /* set vl according to VLMAX and AVL */
-  if (rs1 != zreg) then { /* normal stripmining */
+  // set vl according to VLMAX and AVL
+  if (rs1 != zreg) then { // normal stripmining
     let rs1_val = X(rs1);
     let AVL = unsigned(rs1_val);
     vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
-  } else if (rd != zreg) then { /* set vl to VLMAX */
+  } else if (rd != zreg) then { // set vl to VLMAX
     vl = to_bits_unsafe(xlen, VLMAX);
     X(rd) = vl;
-  } else { /* keep existing vl if it is compatible and vtype.ill is valid */
+  } else { // keep existing vl if it is compatible and vtype.ill is valid
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
     let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
     if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
   };
 
-  /* set vtype */
+  // set vtype
   vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
 
-  /* reset vstart to 0 */
+  // reset vstart to 0
   set_vstart(zeros());
 
   csr_write_callback("vtype", vtype.bits);
@@ -135,7 +134,7 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
 mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
   <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul)
 
-/* *********************************** vsetvl ************************************ */
+// ********************************** vsetvl ************************************
 union clause instruction = VSETVL : (regidx, regidx, regidx)
 
 mapping clause encdec = VSETVL(rs2, rs1, rd)
@@ -157,7 +156,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let sew  = vtype_new[vsew];
   let lmul = vtype_new[vlmul];
 
-  /* check new SEW and LMUL are legal and calculate VLMAX */
+  // check new SEW and LMUL are legal and calculate VLMAX
   if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype();
     return RETIRE_SUCCESS
@@ -168,25 +167,25 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
-  /* set vl according to VLMAX and AVL */
-  if (rs1 != zreg) then { /* normal stripmining */
+  // set vl according to VLMAX and AVL
+  if (rs1 != zreg) then { // normal stripmining
     let rs1_val = X(rs1);
     let AVL = unsigned(rs1_val);
     vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
-  } else if (rd != zreg) then { /* set vl to VLMAX */
+  } else if (rd != zreg) then { // set vl to VLMAX
     vl = to_bits_unsafe(xlen, VLMAX);
     X(rd) = vl;
-  } else { /* keep existing vl if it is compatible and vtype.ill is valid */
+  } else { // keep existing vl if it is compatible and vtype.ill is valid
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
     let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
     if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
   };
 
-  /* set vtype */
+  // set vtype
   vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
 
-  /* reset vstart to 0 */
+  // reset vstart to 0
   set_vstart(zeros());
 
   csr_write_callback("vtype", vtype.bits);
@@ -199,7 +198,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
 mapping clause assembly = VSETVL(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-/* ********************************** vsetivli *********************************** */
+// ********************************* vsetivli ***********************************
 union clause instruction = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
 mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
@@ -207,7 +206,7 @@ mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
   when currentlyEnabled(Ext_V)
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
-  /* check new SEW and LMUL are legal and calculate VLMAX */
+  // check new SEW and LMUL are legal and calculate VLMAX
   if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype();
     return RETIRE_SUCCESS
@@ -218,15 +217,15 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
-  /* set vl according to VLMAX and AVL */
-  let AVL = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
+  // set vl according to VLMAX and AVL
+  let AVL = unsigned(uimm); // AVL is encoded as 5-bit zero-extended imm in the rs1 field
   vl = calculate_new_vl(AVL, VLMAX);
   X(rd) = vl;
 
-  /* set vtype */
+  // set vtype
   vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
 
-  /* reset vstart to 0 */
+  // reset vstart to 0
   set_vstart(zeros());
 
   csr_write_callback("vtype", vtype.bits);

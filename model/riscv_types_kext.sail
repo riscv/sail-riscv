@@ -1,24 +1,22 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/*
- * This file contains types, mappings and functions used across the
- * cryptography extension instructions.
- *
- * This file must be included in the model build whatever the value of XLEN.
- */
+//
+// This file contains types, mappings and functions used across the
+// cryptography extension instructions.
+//
+// This file must be included in the model build whatever the value of XLEN.
 
-/*
- * Cryptography extension shared / utility functions
- * ----------------------------------------------------------------------
- */
+//
+// Cryptography extension shared / utility functions
+// ----------------------------------------------------------------------
 
-/* Auxiliary function for performing GF multiplicaiton */
+// Auxiliary function for performing GF multiplicaiton
 val xt2 : bits(8) -> bits(8)
 function xt2(x) = {
   (x << 1) ^ (if bit_to_bool(x[7]) then 0x1b else 0x00)
@@ -27,7 +25,7 @@ function xt2(x) = {
 val xt3 : bits(8) -> bits(8)
 function xt3(x) = x ^ xt2(x)
 
-/* Multiply 8-bit field element by 4-bit value for AES MixCols step */
+// Multiply 8-bit field element by 4-bit value for AES MixCols step
 val gfmul : (bits(8), bits(4)) -> bits(8)
 function gfmul( x, y) = {
   (if bit_to_bool(y[0]) then             x    else 0x00) ^
@@ -36,19 +34,19 @@ function gfmul( x, y) = {
   (if bit_to_bool(y[3]) then xt2(xt2(xt2(x))) else 0x00)
 }
 
-/* 8-bit to 32-bit partial AES Mix Column - forwards */
+// 8-bit to 32-bit partial AES Mix Column - forwards
 val aes_mixcolumn_byte_fwd : bits(8) -> bits(32)
 function aes_mixcolumn_byte_fwd(so) = {
   gfmul(so, 0x3) @ so @ so @ gfmul(so, 0x2)
 }
 
-/* 8-bit to 32-bit partial AES Mix Column - inverse*/
+// 8-bit to 32-bit partial AES Mix Column - inverse
 val aes_mixcolumn_byte_inv : bits(8) -> bits(32)
 function aes_mixcolumn_byte_inv(so) = {
   gfmul(so, 0xb) @ gfmul(so, 0xd) @ gfmul(so, 0x9) @ gfmul(so, 0xe)
 }
 
-/* 32-bit to 32-bit AES forward MixColumn */
+// 32-bit to 32-bit AES forward MixColumn
 val aes_mixcolumn_fwd : bits(32) -> bits(32)
 function aes_mixcolumn_fwd(x) = {
   let s0 : bits (8) = x[ 7.. 0];
@@ -59,10 +57,10 @@ function aes_mixcolumn_fwd(x) = {
   let b1 : bits (8) =    (s0) ^ xt2(s1) ^ xt3(s2) ^    (s3);
   let b2 : bits (8) =    (s0) ^    (s1) ^ xt2(s2) ^ xt3(s3);
   let b3 : bits (8) = xt3(s0) ^    (s1) ^    (s2) ^ xt2(s3);
-  b3 @ b2 @ b1 @ b0 /* Return value */
+  b3 @ b2 @ b1 @ b0 // Return value
 }
 
-/* 32-bit to 32-bit AES inverse MixColumn */
+// 32-bit to 32-bit AES inverse MixColumn
 val aes_mixcolumn_inv : bits(32) -> bits(32)
 function aes_mixcolumn_inv(x) = {
   let s0 : bits (8) = x[ 7.. 0];
@@ -73,15 +71,15 @@ function aes_mixcolumn_inv(x) = {
   let b1 : bits (8) = gfmul(s0, 0x9) ^ gfmul(s1, 0xE) ^ gfmul(s2, 0xB) ^ gfmul(s3, 0xD);
   let b2 : bits (8) = gfmul(s0, 0xD) ^ gfmul(s1, 0x9) ^ gfmul(s2, 0xE) ^ gfmul(s3, 0xB);
   let b3 : bits (8) = gfmul(s0, 0xB) ^ gfmul(s1, 0xD) ^ gfmul(s2, 0x9) ^ gfmul(s3, 0xE);
-  b3 @ b2 @ b1 @ b0 /* Return value */
+  b3 @ b2 @ b1 @ b0 // Return value
 }
 
-/* Turn a round number into a round constant for AES. Note that the
-   AES64KS1I instruction is defined such that the r argument is always
-   in the range 0x0..0xA. Values of rnum outside the range 0x0..0xA
-   do not decode to the AES64KS1I instruction. The 0xA case is used
-   specifically for the AES-256 KeySchedule, and this function is never
-   called in that case. */
+// Turn a round number into a round constant for AES. Note that the
+// AES64KS1I instruction is defined such that the r argument is always
+// in the range 0x0..0xA. Values of rnum outside the range 0x0..0xA
+// do not decode to the AES64KS1I instruction. The 0xA case is used
+// specifically for the AES-256 KeySchedule, and this function is never
+// called in that case.
 val aes_decode_rcon : bits(4) -> bits(32)
 function aes_decode_rcon(r) = {
   assert(r <_u 0xA);
@@ -96,11 +94,11 @@ function aes_decode_rcon(r) = {
     0x7 => 0x00000080,
     0x8 => 0x0000001b,
     0x9 => 0x00000036,
-    _   => internal_error(__FILE__, __LINE__, "Unexpected AES r") /* unreachable -- required to silence Sail warning */
+    _   => internal_error(__FILE__, __LINE__, "Unexpected AES r") // unreachable -- required to silence Sail warning
   }
 }
 
-/* SM4 SBox - only one sbox for forwards and inverse */
+// SM4 SBox - only one sbox for forwards and inverse
 let sm4_sbox_table : vector(256, bits(8)) = [
   0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28,
   0xFB, 0x2C, 0x05, 0x2B, 0x67, 0x9A, 0x76, 0x2A, 0xBE, 0x04, 0xC3, 0xAA, 0x44,
@@ -170,26 +168,24 @@ let aes_sbox_inv_table : vector(256, bits(8)) = [
   0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d,
 ]
 
-/* Lookup function - takes an index and a table, and retrieves the
- * x'th element of that table. Note that the Sail vector literals
- * start at index 255, and go down to 0.
- */
+// Lookup function - takes an index and a table, and retrieves the
+// x'th element of that table. Note that the Sail vector literals
+// start at index 255, and go down to 0.
 val sbox_lookup : (bits(8), vector(256, bits(8))) -> bits(8)
 function sbox_lookup(x, table) = {
   table[255 - unsigned(x)]
 }
 
-/* Easy function to perform a forward AES SBox operation on 1 byte. */
+// Easy function to perform a forward AES SBox operation on 1 byte.
 val aes_sbox_fwd : bits(8) -> bits(8)
 function aes_sbox_fwd(x) = sbox_lookup(x, aes_sbox_fwd_table)
 
-/* Easy function to perform an inverse AES SBox operation on 1 byte. */
+// Easy function to perform an inverse AES SBox operation on 1 byte.
 val aes_sbox_inv : bits(8) -> bits(8)
 function aes_sbox_inv(x) = sbox_lookup(x, aes_sbox_inv_table)
 
-/* AES SubWord function used in the key expansion
- * - Applies the forward sbox to each byte in the input word.
- */
+// AES SubWord function used in the key expansion
+// - Applies the forward sbox to each byte in the input word.
 val aes_subword_fwd : bits(32) -> bits(32)
 function aes_subword_fwd(x) = {
   aes_sbox_fwd(x[31..24]) @
@@ -198,9 +194,8 @@ function aes_subword_fwd(x) = {
   aes_sbox_fwd(x[ 7.. 0])
 }
 
-/* AES Inverse SubWord function.
- * - Applies the inverse sbox to each byte in the input word.
- */
+// AES Inverse SubWord function.
+// - Applies the inverse sbox to each byte in the input word.
 val aes_subword_inv : bits(32) -> bits(32)
 function aes_subword_inv(x) = {
   aes_sbox_inv(x[31..24]) @
@@ -209,16 +204,15 @@ function aes_subword_inv(x) = {
   aes_sbox_inv(x[ 7.. 0])
 }
 
-/* Easy function to perform an SM4 SBox operation on 1 byte. */
+// Easy function to perform an SM4 SBox operation on 1 byte.
 val sm4_sbox : bits(8) -> bits(8)
 function sm4_sbox(x) = sbox_lookup(x, sm4_sbox_table)
 
 function aes_get_column(state : bits(128), c : range(0, 3)) -> bits(32) =
   state[32 * c + 31 .. 32 * c]
 
-/* 64-bit to 64-bit function which applies the AES forward sbox to each byte
- * in a 64-bit word.
- */
+// 64-bit to 64-bit function which applies the AES forward sbox to each byte
+// in a 64-bit word.
 val aes_apply_fwd_sbox_to_each_byte : bits(64) -> bits(64)
 function aes_apply_fwd_sbox_to_each_byte(x) = {
   aes_sbox_fwd(x[63..56]) @
@@ -231,9 +225,8 @@ function aes_apply_fwd_sbox_to_each_byte(x) = {
   aes_sbox_fwd(x[ 7.. 0])
 }
 
-/* 64-bit to 64-bit function which applies the AES inverse sbox to each byte
- * in a 64-bit word.
- */
+// 64-bit to 64-bit function which applies the AES inverse sbox to each byte
+// in a 64-bit word.
 val aes_apply_inv_sbox_to_each_byte : bits(64) -> bits(64)
 function aes_apply_inv_sbox_to_each_byte(x) = {
   aes_sbox_inv(x[63..56]) @
@@ -246,9 +239,7 @@ function aes_apply_inv_sbox_to_each_byte(x) = {
   aes_sbox_inv(x[ 7.. 0])
 }
 
-/*
- * AES full-round transformation functions.
- */
+// AES full-round transformation functions.
 
 function getbyte(x : bits(64), i : range(0, 7)) -> bits(8) =
   x[8 * i + 7 .. 8 * i]
@@ -277,10 +268,9 @@ function aes_rv64_shiftrows_inv(rs2, rs1) = {
   getbyte(rs1, 0)
 }
 
-/* 128-bit to 128-bit implementation of the forward AES ShiftRows transform.
- * Byte 0 of state is input column 0, bits  7..0.
- * Byte 5 of state is input column 1, bits 15..8.
- */
+// 128-bit to 128-bit implementation of the forward AES ShiftRows transform.
+// Byte 0 of state is input column 0, bits  7..0.
+// Byte 5 of state is input column 1, bits 15..8.
 val aes_shift_rows_fwd : bits(128) -> bits(128)
 function aes_shift_rows_fwd(x) = {
   let ic3 : bits(32) = aes_get_column(x, 3);
@@ -291,16 +281,15 @@ function aes_shift_rows_fwd(x) = {
   let oc1 : bits(32) = ic0[31..24] @ ic3[23..16] @ ic2[15.. 8] @ ic1[ 7.. 0];
   let oc2 : bits(32) = ic1[31..24] @ ic0[23..16] @ ic3[15.. 8] @ ic2[ 7.. 0];
   let oc3 : bits(32) = ic2[31..24] @ ic1[23..16] @ ic0[15.. 8] @ ic3[ 7.. 0];
-  (oc3 @ oc2 @ oc1 @ oc0) /* Return value */
+  (oc3 @ oc2 @ oc1 @ oc0) // Return value
 }
 
-/* 128-bit to 128-bit implementation of the inverse AES ShiftRows transform.
- * Byte 0 of state is input column 0, bits  7..0.
- * Byte 5 of state is input column 1, bits 15..8.
- */
+// 128-bit to 128-bit implementation of the inverse AES ShiftRows transform.
+// Byte 0 of state is input column 0, bits  7..0.
+// Byte 5 of state is input column 1, bits 15..8.
 val aes_shift_rows_inv : bits(128) -> bits(128)
 function aes_shift_rows_inv(x) = {
-  let ic3 : bits(32) = aes_get_column(x, 3); /* In column 3 */
+  let ic3 : bits(32) = aes_get_column(x, 3); // In column 3
   let ic2 : bits(32) = aes_get_column(x, 2);
   let ic1 : bits(32) = aes_get_column(x, 1);
   let ic0 : bits(32) = aes_get_column(x, 0);
@@ -308,53 +297,49 @@ function aes_shift_rows_inv(x) = {
   let oc1 : bits(32) = ic2[31..24] @ ic3[23..16] @ ic0[15.. 8] @ ic1[ 7.. 0];
   let oc2 : bits(32) = ic3[31..24] @ ic0[23..16] @ ic1[15.. 8] @ ic2[ 7.. 0];
   let oc3 : bits(32) = ic0[31..24] @ ic1[23..16] @ ic2[15.. 8] @ ic3[ 7.. 0];
-  (oc3 @ oc2 @ oc1 @ oc0) /* Return value */
+  (oc3 @ oc2 @ oc1 @ oc0) // Return value
 }
 
-/* Applies the forward sub-bytes step of AES to a 128-bit vector
- * representation of its state.
- */
+// Applies the forward sub-bytes step of AES to a 128-bit vector
+// representation of its state.
 val aes_subbytes_fwd : bits(128) -> bits(128)
 function aes_subbytes_fwd(x) = {
   let oc0 : bits(32) = aes_subword_fwd(aes_get_column(x, 0));
   let oc1 : bits(32) = aes_subword_fwd(aes_get_column(x, 1));
   let oc2 : bits(32) = aes_subword_fwd(aes_get_column(x, 2));
   let oc3 : bits(32) = aes_subword_fwd(aes_get_column(x, 3));
-  (oc3 @ oc2 @ oc1 @ oc0) /* Return value */
+  (oc3 @ oc2 @ oc1 @ oc0) // Return value
 }
 
-/* Applies the inverse sub-bytes step of AES to a 128-bit vector
- * representation of its state.
- */
+// Applies the inverse sub-bytes step of AES to a 128-bit vector
+// representation of its state.
 val aes_subbytes_inv : bits(128) -> bits(128)
 function aes_subbytes_inv(x) = {
   let oc0 : bits(32) = aes_subword_inv(aes_get_column(x, 0));
   let oc1 : bits(32) = aes_subword_inv(aes_get_column(x, 1));
   let oc2 : bits(32) = aes_subword_inv(aes_get_column(x, 2));
   let oc3 : bits(32) = aes_subword_inv(aes_get_column(x, 3));
-  (oc3 @ oc2 @ oc1 @ oc0) /* Return value */
+  (oc3 @ oc2 @ oc1 @ oc0) // Return value
 }
 
-/* Applies the forward MixColumns step of AES to a 128-bit vector
- * representation of its state.
- */
+// Applies the forward MixColumns step of AES to a 128-bit vector
+// representation of its state.
 val aes_mixcolumns_fwd : bits(128) -> bits(128)
 function aes_mixcolumns_fwd(x) = {
   let oc0 : bits(32) = aes_mixcolumn_fwd(aes_get_column(x, 0));
   let oc1 : bits(32) = aes_mixcolumn_fwd(aes_get_column(x, 1));
   let oc2 : bits(32) = aes_mixcolumn_fwd(aes_get_column(x, 2));
   let oc3 : bits(32) = aes_mixcolumn_fwd(aes_get_column(x, 3));
-  (oc3 @ oc2 @ oc1 @ oc0) /* Return value */
+  (oc3 @ oc2 @ oc1 @ oc0) // Return value
 }
 
-/* Applies the inverse MixColumns step of AES to a 128-bit vector
- * representation of its state.
- */
+// Applies the inverse MixColumns step of AES to a 128-bit vector
+// representation of its state.
 val aes_mixcolumns_inv : bits(128) -> bits(128)
 function aes_mixcolumns_inv(x) = {
   let oc0 : bits(32) = aes_mixcolumn_inv(aes_get_column(x, 0));
   let oc1 : bits(32) = aes_mixcolumn_inv(aes_get_column(x, 1));
   let oc2 : bits(32) = aes_mixcolumn_inv(aes_get_column(x, 2));
   let oc3 : bits(32) = aes_mixcolumn_inv(aes_get_column(x, 3));
-  (oc3 @ oc2 @ oc1 @ oc0) /* Return value */
+  (oc3 @ oc2 @ oc1 @ oc0) // Return value
 }

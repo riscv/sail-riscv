@@ -1,17 +1,17 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ******************************************************************************* */
-/* This file implements part of the vector extension.                              */
-/* Chapter 15: vector mask instructions                                            */
-/* ******************************************************************************* */
+// ******************************************************************************
+// This file implements part of the vector extension.
+// Chapter 15: vector mask instructions
+// ******************************************************************************
 
-/* ******************************* OPMVV (MMTYPE) ******************************** */
+// ****************************** OPMVV (MMTYPE) ********************************
 union clause instruction = MMTYPE : (mmfunct6, vregidx, vregidx, vregidx)
 
 mapping encdec_mmfunct6 : mmfunct6 <-> bits(6) = {
@@ -83,7 +83,7 @@ mapping mmtype_mnemonic : mmfunct6 <-> string = {
 mapping clause assembly = MMTYPE(funct6, vs2, vs1, vd)
   <-> mmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
 
-/* ************************* OPMVV (vcpop in VWXUNARY0) ************************** */
+// ************************ OPMVV (vcpop in VWXUNARY0) **************************
 union clause instruction = VCPOP_M : (bits(1), vregidx, regidx)
 
 mapping clause encdec = VCPOP_M(vm, vs2, rd)
@@ -121,7 +121,7 @@ function clause execute(VCPOP_M(vm, vs2, rd)) = {
 mapping clause assembly = VCPOP_M(vm, vs2, rd)
   <-> "vcpop.m" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ************************* OPMVV (vfirst in VWXUNARY0) ************************* */
+// ************************ OPMVV (vfirst in VWXUNARY0) *************************
 union clause instruction = VFIRST_M : (bits(1), vregidx, regidx)
 
 mapping clause encdec = VFIRST_M(vm, vs2, rd)
@@ -161,7 +161,7 @@ function clause execute(VFIRST_M(vm, vs2, rd)) = {
 mapping clause assembly = VFIRST_M(vm, vs2, rd)
   <-> "vfirst.m" ^ spc() ^ reg_name(rd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ************************** OPMVV (vmsbf in VMUNARY0) ************************** */
+// ************************* OPMVV (vmsbf in VMUNARY0) **************************
 union clause instruction = VMSBF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSBF_M(vm, vs2, vd)
@@ -205,7 +205,7 @@ function clause execute(VMSBF_M(vm, vs2, vd)) = {
 mapping clause assembly = VMSBF_M(vm, vs2, vd)
   <-> "vmsbf.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ************************** OPMVV (vmsif in VMUNARY0) ************************** */
+// ************************* OPMVV (vmsif in VMUNARY0) **************************
 union clause instruction = VMSIF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSIF_M(vm, vs2, vd)
@@ -249,7 +249,7 @@ function clause execute(VMSIF_M(vm, vs2, vd)) = {
 mapping clause assembly = VMSIF_M(vm, vs2, vd)
   <-> "vmsif.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ************************** OPMVV (vmsof in VMUNARY0) ************************** */
+// ************************* OPMVV (vmsof in VMUNARY0) **************************
 union clause instruction = VMSOF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSOF_M(vm, vs2, vd)
@@ -297,7 +297,7 @@ function clause execute(VMSOF_M(vm, vs2, vd)) = {
 mapping clause assembly = VMSOF_M(vm, vs2, vd)
   <-> "vmsof.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* ************************** OPMVV (viota in VMUNARY0) ************************** */
+// ************************* OPMVV (viota in VMUNARY0) **************************
 union clause instruction = VIOTA_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VIOTA_M(vm, vs2, vd)
@@ -341,7 +341,7 @@ function clause execute(VIOTA_M(vm, vs2, vd)) = {
 mapping clause assembly = VIOTA_M(vm, vs2, vd)
   <-> "viota.m" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-/* *************************** OPMVV (vid in VMUNARY0) *************************** */
+// ************************** OPMVV (vid in VMUNARY0) ***************************
 union clause instruction = VID_V : (bits(1), vregidx)
 
 mapping clause encdec = VID_V(vm, vd)

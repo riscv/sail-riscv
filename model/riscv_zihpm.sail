@@ -1,15 +1,15 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Hardware Performance Monitoring counters */
+// Hardware Performance Monitoring counters
 function clause currentlyEnabled(Ext_Zihpm) = hartSupports(Ext_Zihpm) & currentlyEnabled(Ext_Zicsr)
 
-/* Hardware performance monitoring counters */
+// Hardware performance monitoring counters
 mapping clause csr_name_map = 0xC03  <-> "hpmcounter3"
 mapping clause csr_name_map = 0xC04  <-> "hpmcounter4"
 mapping clause csr_name_map = 0xC05  <-> "hpmcounter5"
@@ -70,7 +70,7 @@ mapping clause csr_name_map = 0xC9D  <-> "hpmcounter29h"
 mapping clause csr_name_map = 0xC9E  <-> "hpmcounter30h"
 mapping clause csr_name_map = 0xC9F  <-> "hpmcounter31h"
 
-/* hardware performance counter event selection */
+// hardware performance counter event selection
 mapping clause csr_name_map = 0x323  <-> "mhpmevent3"
 mapping clause csr_name_map = 0x324  <-> "mhpmevent4"
 mapping clause csr_name_map = 0x325  <-> "mhpmevent5"
@@ -101,7 +101,7 @@ mapping clause csr_name_map = 0x33D  <-> "mhpmevent29"
 mapping clause csr_name_map = 0x33E  <-> "mhpmevent30"
 mapping clause csr_name_map = 0x33F  <-> "mhpmevent31"
 
-/* machine hardware performance counters */
+// machine hardware performance counters
 mapping clause csr_name_map = 0xB03  <-> "mhpmcounter3"
 mapping clause csr_name_map = 0xB04  <-> "mhpmcounter4"
 mapping clause csr_name_map = 0xB05  <-> "mhpmcounter5"
@@ -223,7 +223,7 @@ function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
     _ => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
   }))
 
-/* Hardware Performance Monitoring event selection */
+// Hardware Performance Monitoring event selection
 function clause is_CSR_accessible((0b0011001 /* 0x320 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) // mhpmevent3..31
 function clause read_CSR(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmevent(hpmidx_from_bits(index))
 function clause write_CSR((0b0011001 /* 0x320 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
@@ -232,7 +232,7 @@ function clause write_CSR((0b0011001 /* 0x320 */ @ index : bits(5), value) if un
   Ok(read_mhpmevent(index))
 }
 
-/* Hardware Performance Monitoring machine mode counters */
+// Hardware Performance Monitoring machine mode counters
 function clause is_CSR_accessible((0b1011000 /* 0xB00 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) // mhpmcounter3..31
 function clause is_CSR_accessible((0b1011100 /* 0xB80 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) & xlen == 32 // mhpmcounterh3..31
 
@@ -250,7 +250,7 @@ function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xl
   Ok(read_mhpmcounterh(index))
 }
 
-/* Hardware Performance Monitoring user mode counters */
+// Hardware Performance Monitoring user mode counters
 function clause is_CSR_accessible((0b1100000 /* 0xC00 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U) & counter_enabled(unsigned(index), priv) // hpmcounter3..31
 function clause is_CSR_accessible((0b1100100 /* 0xC80 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U) & xlen == 32 & counter_enabled(unsigned(index), priv) // hpmcounterh3..31
 
