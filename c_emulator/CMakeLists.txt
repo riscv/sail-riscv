@@ -46,6 +46,10 @@ add_library(riscv_model
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
+    jtag_dtm.cpp
+    jtag_dtm.h
+    remote_bitbang.cpp
+    remote_bitbang.h
 )
 
 target_include_directories(riscv_model

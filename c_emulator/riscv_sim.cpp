@@ -35,6 +35,8 @@
 #include "riscv_callbacks_if.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
+#include "jtag_dtm.h"
+#include "remote_bitbang.h"
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -70,6 +72,10 @@ bool config_print_step = false;
 
 bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
+
+uint16_t rbb_port = 0;
+// TODO: Add command-line option to set required_rti_cycles at runtime
+uint64_t required_rti_cycles = 0;
 
 struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
@@ -129,6 +135,9 @@ std::vector<uint8_t> read_file(const std::string &file_path)
 // Set up command line option processing.
 static void setup_options(CLI::App &app)
 {
+  app.add_option("--debug", rbb_port, "Debug mode")
+      ->check(CLI::Range(1, 65535))
+      ->option_text("<int> (within [1 - 65535])");
   app.add_flag("--show-times", do_show_times, "Show execution times");
   app.add_flag("--version", do_print_version, "Print model version");
   app.add_flag("--build-info", do_print_build_info, "Print build information");
@@ -291,6 +300,7 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
 
 void init_sail(uint64_t elf_entry, const char *config_file)
 {
+
   zinit_model(config_file != nullptr ? config_file : "");
   zforce_pc(elf_entry);
   zinit_boot_requirements(UNIT);
@@ -387,6 +397,10 @@ void run_sail(void)
   bool exit_wait = true;
   bool diverged = false;
 
+  std::shared_ptr<jtag_dtm_t> jtag_dtm(new jtag_dtm_t(required_rti_cycles));
+  std::shared_ptr<remote_bitbang_t> remote_bitbang
+      = remote_bitbang_t::make(rbb_port, jtag_dtm.get());
+
   /* initialize the step number */
   mach_int step_no = 0;
   uint64_t insn_cnt = 0;
@@ -415,6 +429,19 @@ void run_sail(void)
       }
     }
     { /* run a Sail step */
+      if (rbb_port != 0) {
+        // If enabled, advances the bit banging protocol and sends
+        // data to the debugger (over OpenOCD) or reads from it
+        // NOTE: This is a temporary solution and needs to be redone
+        // we want to avoid the simulation ending too early
+        // so we keep polling to see if the debugger has sent more data
+        int max_ticks = 10000000;
+        int ticks = 0;
+        while (ticks < max_ticks) {
+          remote_bitbang->tick();
+          ticks++;
+        }
+      }
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);

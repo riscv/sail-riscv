@@ -22,6 +22,7 @@ riscv_core {
     riscv_vext_types.sail,
     riscv_csr_begin.sail,
     riscv_callbacks.sail,
+    riscv_debug_module_interface.sail,
     riscv_reg_type.sail,
     riscv_regs.sail,
     riscv_pc_access.sail,
