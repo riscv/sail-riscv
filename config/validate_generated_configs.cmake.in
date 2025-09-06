@@ -1,0 +1,22 @@
+# This list needs to be kept consistent with `CMakeLists.txt` in this directory.
+
+set(boon_path @boon_path@)
+set(schema_file @schema_file@)
+
+foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
+    foreach(CONFIG__V__ELEN_EXP RANGE 5 6)
+        foreach(CONFIG__V__VLEN_EXP RANGE 7 9)
+
+            math(EXPR vlen "1 << ${CONFIG__V__VLEN_EXP}")
+            math(EXPR elen "1 << ${CONFIG__V__ELEN_EXP}")
+
+            set(config_filename "rv${CONFIG__BASE__XLEN}d_v${vlen}_e${elen}.json")
+
+            message(STATUS "Validating ${config_filename} against ${schema_file}")
+            execute_process(
+                COMMAND ${boon_path} ${schema_file} ${config_filename}
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+        endforeach()
+    endforeach()
+endforeach()

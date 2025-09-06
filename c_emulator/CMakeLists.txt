@@ -60,7 +60,7 @@ target_link_libraries(riscv_model
     PUBLIC elfio softfloat sail_runtime
 )
 
-add_dependencies(riscv_model generated_sail_riscv_model)
+add_dependencies(riscv_model generated_sail_riscv_model validate_configs)
 
 ## A binary that can load an ELF file into the model and run it.
 

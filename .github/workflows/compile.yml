@@ -27,12 +27,12 @@ jobs:
       - name: Install packages (Linux)
         if: startsWith(matrix.os, 'ubuntu-')
         run: |
-          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
+          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build cargo
 
       - name: Install packages (macOS)
         if: startsWith(matrix.os, 'macos-')
         run: |
-          brew install opam llvm lld
+          brew install opam llvm lld rust
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
       - name: Install CMake
