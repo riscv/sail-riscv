@@ -17,9 +17,6 @@ uint64_t rv_16_random_bits(void)
   return (uint64_t)val;
 }
 
-uint64_t rv_htif_tohost = UINT64_C(0x80001000);
-bool rv_enable_htif = true;
-
 bool rv_enable_experimental_extensions = false;
 
 int term_fd = 1; // set during startup

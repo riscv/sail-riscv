@@ -8,6 +8,9 @@
 
 // Chip reset. This only does the minimum resets required by the RISC-V spec.
 function reset() -> unit = {
+  // Come out of WFI/WRS.
+  hart_state = HART_ACTIVE();
+
   reset_sys();
   reset_vmem();
 
@@ -21,7 +24,6 @@ function init_model(config_filename : string) -> unit = {
                              then "Default config"
                              else "Config in " ^ config_filename)
                              ^ " is invalid.");
-  hart_state = HART_ACTIVE();
   init_platform();
   reset();
 }

@@ -28,10 +28,6 @@ match vs with
 | _ => Fail "empty list in internal_pick"
 end.
 
-(*val elf_entry : unit -> integer*)
-Definition elf_entry (_:unit) : Z := 0.
-(*declare ocaml target_rep function elf_entry := `Elf_loader.elf_entry`*)
-
 (*val get_time_ns : unit -> integer*)
 Definition get_time_ns (_:unit) : Z := 0.
 (*declare ocaml target_rep function get_time_ns := `(fun () -> Big_int.of_int (int_of_float (1e9 *. Unix.gettimeofday ())))`*)
@@ -41,4 +37,3 @@ Definition get_time_ns (_:unit) : Z := 0.
 Definition mults_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mults_vec l r.
 Definition mult_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mult_vec l r.
 Definition print_string (_ _:string) : unit := tt.
-Definition plat_enable_htif (_:unit) : bool := false.

@@ -14,17 +14,6 @@
    - it relies on externs to get platform address information and doesn't hardcode them
 */
 
-val elf_tohost = pure {
-  interpreter: "Elf_loader.elf_tohost",
-  c: "elf_tohost"
-} :  unit -> int
-
-val elf_entry = pure {
-  interpreter: "Elf_loader.elf_entry",
-  c: "elf_entry"
-} : unit -> int
-
-
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.
@@ -59,15 +48,12 @@ register plat_rom_size : physaddrbits = to_bits_checked(config platform.rom.size
 register plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 register plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
-// Whether HTIF (Host Target InterFace) is enabled. This is used for
-// console output and signalling the end of tests.
-val plat_enable_htif = pure "plat_enable_htif" : unit -> bool
-
-/* Location of HTIF ports */
-val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> bits(64)
-function htif_tohost_base() -> physaddrbits = trunc(plat_htif_tohost())
-
-// todo: fromhost
+// Location of HTIF (Host Target InterFace) tohost port. None if not enabled.
+// This is used for console output and signalling the end of tests.
+register htif_tohost_base : option(physaddrbits) = None()
+let htif_tohost_size = 8
+// This is called externally. bits(64) is used because it's easier to deal with from C.
+function enable_htif(tohost_addr : bits(64)) -> unit = htif_tohost_base = Some(trunc(tohost_addr))
 
 /* Physical memory map predicates */
 
@@ -114,10 +100,13 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : ph
 }
 
 function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
-    plat_enable_htif() & (htif_tohost_base() == addr | (htif_tohost_base() + 4 == addr & width == 4))
+  match htif_tohost_base {
+    None() => false,
+    Some(base) => (addr <_u base + htif_tohost_size) & (addr + width >=_u base)
+  }
 
-function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
-    plat_enable_htif() & (htif_tohost_base() == addr | (htif_tohost_base() + 4 == addr & width == 4))
+function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
+  within_htif_writable(addr, width)
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
@@ -303,6 +292,7 @@ bitfield htif_cmd : bits(64) = {
   payload : 47 .. 0
 }
 
+// Current value of the HTIF tohost register.
 register htif_tohost : bits(64)
 register htif_done   : bool
 register htif_exit_code : bits(64)
@@ -330,46 +320,58 @@ function reset_htif () -> unit = {
  * dispatched the address.
  */
 
-val htif_load : forall 'n, 'n > 0. (AccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
-function htif_load(t, Physaddr(paddr), width) = {
+val htif_load : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+function htif_load(acc, Physaddr(paddr), width) = {
   if   get_config_print_platform()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ bits_str(htif_tohost));
-  /* FIXME: For now, only allow the expected access widths. */
-  if      width == 8 & (paddr == htif_tohost_base())
+
+  let base : physaddrbits = match htif_tohost_base {
+    Some(base) => base,
+    None() => internal_error(__FILE__, __LINE__, "HTIF load while HTIF isn't enabled"),
+  };
+
+  // Only aligned 4-byte and 8-byte accesses are supported.
+  if      width == 8 & paddr == base
   then    Ok(zero_extend(64, htif_tohost))         /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else if width == 4 & paddr == htif_tohost_base()
+  else if width == 4 & paddr == base
   then    Ok(zero_extend(32, htif_tohost[31..0]))  /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else if width == 4 & paddr == htif_tohost_base() + 4
+  else if width == 4 & paddr == base + 4
   then    Ok(zero_extend(32, htif_tohost[63..32])) /* FIXME: Redundant zero_extend currently required by Lem backend */
-  else match t {
+  else match acc {
     InstructionFetch() => Err(E_Fetch_Access_Fault()),
     Read(Data) => Err(E_Load_Access_Fault()),
     _          => Err(E_SAMO_Access_Fault())
   }
 }
 
-val htif_store: forall 'n, 0 < 'n <= 8. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
+val htif_store : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function htif_store(Physaddr(paddr), width, data) = {
   if   get_config_print_platform()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] <- " ^ bits_str(data));
-  /* Store the written value so that we can ack it later. */
-  if      width == 8
+
+  let base : physaddrbits = match htif_tohost_base {
+    Some(base) => base,
+    None() => internal_error(__FILE__, __LINE__, "HTIF store while HTIF isn't enabled"),
+  };
+
+  // Store the written value so that we can ack it later.
+  // Only aligned 4-byte and 8-byte accesses are supported.
+  if      width == 8 & paddr == base
   then    { htif_cmd_write = bitone;
             htif_payload_writes = htif_payload_writes + 1;
             htif_tohost = zero_extend(data) }
-  else if width == 4 & paddr == htif_tohost_base()
+  else if width == 4 & paddr == base
   then    { if   data == htif_tohost[31 .. 0]
             then htif_payload_writes = htif_payload_writes + 1
             else htif_payload_writes = 0x1;
             htif_tohost = vector_update_subrange(htif_tohost, 31, 0, data) }
-  else if width == 4 & paddr == htif_tohost_base() + 4
+  else if width == 4 & paddr == base + 4
   then    { if   data[15 .. 0] == htif_tohost[47 .. 32]
             then htif_payload_writes = htif_payload_writes + 1
             else htif_payload_writes = 0x1;
             htif_cmd_write = bitone;
             htif_tohost = vector_update_subrange(htif_tohost, 63, 32, data) }
-  /* unaligned command writes are not supported and will not be detected */
-  else    { htif_tohost = zero_extend(data) };
+  else return Err(E_SAMO_Access_Fault());
 
   /* Execute if there were repeated writes of the same payload without
    * a cmd (e.g. in riscv-tests), or we have a complete htif command.
@@ -420,7 +422,7 @@ function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : phys
 function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
   then clint_load(t, paddr, width)
-  else if within_htif_readable(paddr, width) & (1 <= 'n)
+  else if within_htif_readable(paddr, width)
   then htif_load(t, paddr, width)
   else match t {
     InstructionFetch() => Err(E_Fetch_Access_Fault()),
@@ -428,10 +430,10 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_acc
     _          => Err(E_SAMO_Access_Fault())
   }
 
-function mmio_write forall 'n, 0 <'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
+function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)
   then clint_store(paddr, width, data)
-  else if within_htif_writable(paddr, width) & 'n <= 8
+  else if within_htif_writable(paddr, width)
   then htif_store(paddr, width, data)
   else Err(E_SAMO_Access_Fault())
 
