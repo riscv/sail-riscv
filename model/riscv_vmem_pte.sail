@@ -24,10 +24,12 @@ type pte_ext_bits = bits(10)
 
 bitfield PTE_Ext : pte_ext_bits = {
   // NAPOT page table entry
-  N         : 9,
+  N          : 9,
   // Page based memory types
-  PBMT      : 8 .. 7,
-  reserved  : 6 .. 0,
+  PBMT       : 8 .. 7,
+  // Svrsw60t59b: Additional reserved-for-software bits
+  RSW_60t59b : 6 .. 5,
+  reserved   : 4 .. 0,
 }
 
 /*
@@ -73,6 +75,9 @@ function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
 function clause currentlyEnabled(Ext_Svnapot) = false
 function clause currentlyEnabled(Ext_Svpbmt) = false
 
+// Svrsw60t59b: PTE Reserved for software bits 60-59
+function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b) & currentlyEnabled(Ext_Sv39)
+
 // PRIVATE: check if a PTE is valid
 function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0
@@ -82,6 +87,7 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
   // a flag when the Sail model allows specifying the spec version.
   | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
   | (pte_ext[PBMT] != zeros() & not(currentlyEnabled(Ext_Svpbmt)))
+  | (pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b)))
   | pte_ext[reserved] != zeros()
 
 // ----------------
@@ -99,7 +105,9 @@ union PTE_Check = {
 // PRIVATE
 function check_PTE_permission(ac        : AccessType(ext_access_type),
                               priv      : Privilege,
+                              // Make eXecutable Readable
                               mxr       : bool,
+                              // permit Supervisor User Memory access
                               do_sum    : bool,
                               pte_flags : PTE_Flags,
                               ext       : PTE_Ext,
@@ -109,22 +117,24 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
   let pte_W = bits_to_bool(pte_flags[W]);
   let pte_X = bits_to_bool(pte_flags[X]);
 
-  let success : bool = match (ac, priv) {
-    // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
-    // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
-    (Read(_),            User      ) => pte_U & (pte_R | (pte_X & mxr)),
-    (Write(_),           User      ) => pte_U & pte_W,
-    (ReadWrite(_, _),    User      ) => pte_U & pte_W & (pte_R | (pte_X & mxr)),
-    (InstructionFetch(), User      ) => pte_U & pte_X,
-    (Read(_),            Supervisor) => (not(pte_U) | do_sum) & (pte_R | (pte_X & mxr)),
-    (Write(_),           Supervisor) => (not(pte_U) | do_sum) & pte_W,
-    (ReadWrite(_, _),    Supervisor) => (not(pte_U) | do_sum) & pte_W & (pte_R | (pte_X & mxr)),
-    (InstructionFetch(), Supervisor) => not(pte_U) & pte_X,
-    (_,                  Machine   ) => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
+  // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
+  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
+  let access_ok : bool = match ac {
+    Read(_)             => pte_R | (pte_X & mxr),
+    Write(_)            => pte_W,
+    ReadWrite(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
+    InstructionFetch(_) => pte_X,
   };
 
-  if success then PTE_Check_Success(())
-  else            PTE_Check_Failure((), ())
+  let priv_ok : bool = match priv {
+    User       => pte_U,
+    // SUM allows supervisor mode to access U-mode pages, but only for
+    // loads and stores; not instruction fetch.
+    Supervisor => not(pte_U) | (do_sum & is_load_store(ac)),
+    Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
+  };
+
+  if access_ok & priv_ok then PTE_Check_Success(()) else PTE_Check_Failure((), ())
 }
 
 // Update PTE bits if needed; return new PTE if updated

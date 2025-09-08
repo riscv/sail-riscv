@@ -90,6 +90,9 @@
     "Zicbom": {
       "supported": true
     },
+    "Zicbop": {
+      "supported": true
+    },
     "Zicboz": {
       "supported": true
     },
@@ -261,6 +264,9 @@
     },
     "Svinval": {
       "supported": true
+    },
+    "Svrsw60t59b": {
+      "supported": @CONFIG_XLEN_IS_64@
     },
     "Svbare": {
       "supported": true,

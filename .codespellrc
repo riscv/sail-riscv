@@ -1,0 +1,3 @@
+[codespell]
+ignore-words-list = fle, hart, SIE, sie, SXL, sxl, USEED, vill, vor
+skip = test/first_party/src/common/encoding.h

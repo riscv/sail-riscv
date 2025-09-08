@@ -94,6 +94,15 @@ union AccessType ('a : Type) = {
   InstructionFetch : unit
 }
 
+// Some features only affect loads/stores; not instruction fetch.
+function is_load_store forall ('a : Type) . (ac : AccessType('a)) -> bool =
+  match ac {
+    Read(_) => true,
+    Write(_) => true,
+    ReadWrite(_) => true,
+    InstructionFetch(_) => false,
+  }
+
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
 
 /* architectural interrupt definitions */

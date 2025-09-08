@@ -14,11 +14,10 @@ type ext_fetch_addr_error = unit
  * start_pc: the PC at the start of the current fetch sequence
  * pc:       the PC for the current granule
  *
- * returns:  the *virtual* memory address to use for the fetch.
- *           any address translation errors are reported for pc, not the returned value.
+ * returns:  an optional fetch error.
  */
-function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> Ext_FetchAddr_Check(ext_fetch_addr_error) =
-  Ext_FetchAddr_OK(Virtaddr(pc))
+function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> option(ext_fetch_addr_error) =
+  None()
 
 function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit =
   ()
@@ -27,18 +26,16 @@ function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit =
 
 type ext_control_addr_error = unit
 
-/* these functions return the address to use as the target for
- * the control transfer.  any address translation or other errors
- * are reported for the original value, not the returned value.
+/* This function returns an optional exception for the address to use
+ * as the target for the control transfer. The control address is
+ * derived from the PC register, e.g. in JAL.
  *
  * NOTE: the input value does *not* have bit[0] set to 0, to enable
- * more accurate bounds checking.  There is no constraint on the output
- * value, which will have bit[0] cleared by the caller if needed.
+ * more accurate bounds checking.
  */
 
-/* the control address is derived from the PC register, e.g. in JAL */
-function ext_control_check_pc(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
-  Ext_ControlAddr_OK(Virtaddr(pc))
+function ext_control_check_pc(pc : xlenbits) -> option(ext_control_addr_error) =
+  None()
 
 function ext_handle_control_check_error(err : ext_control_addr_error) -> unit =
   ()

@@ -53,6 +53,9 @@ int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
 std::vector<std::string> elfs;
 
+// The address of the HTIF tohost port, if it is enabled.
+std::optional<uint64_t> htif_tohost_address;
+
 rvfi_callbacks rvfi_cbs;
 
 std::string sig_file;
@@ -250,10 +253,10 @@ uint64_t load_sail(const std::string &filename, bool main_file)
     const auto &tohost = symbols.find("tohost");
     if (tohost == symbols.end()) {
       fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
-      rv_enable_htif = false;
+      htif_tohost_address = std::nullopt;
     } else {
-      rv_htif_tohost = tohost->second;
-      fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", rv_htif_tohost);
+      htif_tohost_address = tohost->second;
+      fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", *htif_tohost_address);
     }
     // Locate test-signature locations if any.
     const auto &begin_sig = symbols.find("begin_signature");
@@ -291,8 +294,13 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
 
 void init_sail(uint64_t elf_entry, const char *config_file)
 {
+  // zset_pc_reset_address must be called before zinit_model
+  // because reset happens inside init_model().
+  zset_pc_reset_address(elf_entry);
+  if (htif_tohost_address.has_value()) {
+    zenable_htif(*htif_tohost_address);
+  }
   zinit_model(config_file != nullptr ? config_file : "");
-  zforce_pc(elf_entry);
   zinit_boot_requirements(UNIT);
 }
 
@@ -300,10 +308,8 @@ void init_sail(uint64_t elf_entry, const char *config_file)
 void reinit_sail(uint64_t elf_entry, const char *config_file)
 {
   model_fini();
-  sail_set_abstract_xlen();
-  sail_set_abstract_vlen_exp();
-  sail_set_abstract_ext_d_supported();
-  sail_set_abstract_elen_exp();
+
+  init_sail_configured_types();
   model_init();
   init_sail(elf_entry, config_file);
 }
@@ -566,12 +572,8 @@ int inner_main(int argc, char **argv)
   } else {
     sail_config_set_string(DEFAULT_JSON);
   }
-  sail_set_abstract_xlen();
-  sail_set_abstract_vlen_exp();
-  sail_set_abstract_ext_d_supported();
-  sail_set_abstract_elen_exp();
-  sail_set_abstract_base_E_enabled();
 
+  init_sail_configured_types();
   model_init();
 
   if (do_validate_config) {

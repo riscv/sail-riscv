@@ -57,7 +57,7 @@ target_include_directories(riscv_model
 )
 
 target_link_libraries(riscv_model
-    PUBLIC elfio softfloat CLI11 sail_runtime
+    PUBLIC elfio softfloat sail_runtime
 )
 
 add_dependencies(riscv_model generated_sail_riscv_model)
@@ -89,7 +89,7 @@ set_source_files_properties(
 add_dependencies(sail_riscv_sim generated_sail_riscv_model)
 
 target_link_libraries(sail_riscv_sim
-    PRIVATE riscv_model default_config
+    PRIVATE CLI11 riscv_model default_config
 )
 
 # TODO: Enable warnings when we use the #include trick

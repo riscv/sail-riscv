@@ -1,71 +1,9 @@
 (*=======================================================================================*)
-(*  RISCV Sail Model                                                                     *)
-(*                                                                                       *)
 (*  This Sail RISC-V architecture model, comprising all files and                        *)
-(*  directories except for the snapshots of the Lem and Sail libraries                   *)
-(*  in the prover_snapshots directory (which include copies of their                     *)
-(*  licences), is subject to the BSD two-clause licence below.                           *)
+(*  directories except where otherwise noted is subject the BSD                          *)
+(*  two-clause license in the LICENSE file.                                              *)
 (*                                                                                       *)
-(*  Copyright (c) 2017-2023                                                              *)
-(*    Prashanth Mundkur                                                                  *)
-(*    Rishiyur S. Nikhil and Bluespec, Inc.                                              *)
-(*    Jon French                                                                         *)
-(*    Brian Campbell                                                                     *)
-(*    Robert Norton-Wright                                                               *)
-(*    Alasdair Armstrong                                                                 *)
-(*    Thomas Bauereiss                                                                   *)
-(*    Shaked Flur                                                                        *)
-(*    Christopher Pulte                                                                  *)
-(*    Peter Sewell                                                                       *)
-(*    Alexander Richardson                                                               *)
-(*    Hesham Almatary                                                                    *)
-(*    Jessica Clarke                                                                     *)
-(*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  *)
-(*    Peter Rugg                                                                         *)
-(*    Aril Computer Corp., for contributions by Scott Johnson                            *)
-(*    Philipp Tomsich                                                                    *)
-(*    VRULL GmbH, for contributions by its employees                                     *)
-(*                                                                                       *)
-(*  All rights reserved.                                                                 *)
-(*                                                                                       *)
-(*  This software was developed by the above within the Rigorous                         *)
-(*  Engineering of Mainstream Systems (REMS) project, partly funded by                   *)
-(*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       *)
-(*  Edinburgh.                                                                           *)
-(*                                                                                       *)
-(*  This software was developed by SRI International and the University of               *)
-(*  Cambridge Computer Laboratory (Department of Computer Science and                    *)
-(*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 *)
-(*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 *)
-(*  SSITH research programme.                                                            *)
-(*                                                                                       *)
-(*  This project has received funding from the European Research Council                 *)
-(*  (ERC) under the European Union’s Horizon 2020 research and innovation                *)
-(*  programme (grant agreement 789108, ELVER).                                           *)
-(*                                                                                       *)
-(*                                                                                       *)
-(*  Redistribution and use in source and binary forms, with or without                   *)
-(*  modification, are permitted provided that the following conditions                   *)
-(*  are met:                                                                             *)
-(*  1. Redistributions of source code must retain the above copyright                    *)
-(*     notice, this list of conditions and the following disclaimer.                     *)
-(*  2. Redistributions in binary form must reproduce the above copyright                 *)
-(*     notice, this list of conditions and the following disclaimer in                   *)
-(*     the documentation and/or other materials provided with the                        *)
-(*     distribution.                                                                     *)
-(*                                                                                       *)
-(*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   *)
-(*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    *)
-(*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      *)
-(*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  *)
-(*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         *)
-(*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     *)
-(*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     *)
-(*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  *)
-(*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   *)
-(*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   *)
-(*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   *)
-(*  SUCH DAMAGE.                                                                         *)
+(*  SPDX-License-Identifier: BSD-2-Clause                                                *)
 (*=======================================================================================*)
 
 open import Pervasives
@@ -135,66 +73,6 @@ let load_reservation addr = ()
 let match_reservation _ = true
 let cancel_reservation () = ()
 let valid_reservation () = false
-
-val sys_enable_writable_misa : unit -> bool
-let sys_enable_writable_misa () = true
-declare ocaml target_rep function sys_enable_writable_misa = `Platform.enable_writable_misa`
-
-val sys_enable_rvc : unit -> bool
-let sys_enable_rvc () = true
-declare ocaml target_rep function sys_enable_rvc = `Platform.enable_rvc`
-
-val sys_enable_zfinx : unit -> bool
-let sys_enable_zfinx () = false
-declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
-
-val sys_enable_writable_fiom : unit -> bool
-let sys_enable_writable_fiom () = true
-declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`
-
-val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a
-let plat_ram_base () = wordFromInteger 0
-declare ocaml target_rep function plat_ram_base = `Platform.dram_base`
-
-val plat_ram_size : forall 'a. Size 'a => unit -> bitvector 'a
-let plat_ram_size () = wordFromInteger 0
-declare ocaml target_rep function plat_ram_size = `Platform.dram_size`
-
-val plat_rom_base : forall 'a. Size 'a => unit -> bitvector 'a
-let plat_rom_base () = wordFromInteger 0
-declare ocaml target_rep function plat_rom_base = `Platform.rom_base`
-
-val plat_rom_size : forall 'a. Size 'a => unit -> bitvector 'a
-let plat_rom_size () = wordFromInteger 0
-declare ocaml target_rep function plat_rom_size = `Platform.rom_size`
-
-val plat_cache_block_size_exp : unit -> integer
-let plat_cache_block_size_exp () = wordFromInteger 0
-declare ocaml target_rep function plat_cache_block_size_exp = `Platform.cache_block_size_exp`
-
-val plat_clint_base : forall 'a. Size 'a => unit -> bitvector 'a
-let plat_clint_base () = wordFromInteger 0
-declare ocaml target_rep function plat_clint_base = `Platform.clint_base`
-
-val plat_clint_size : forall 'a. Size 'a => unit -> bitvector 'a
-let plat_clint_size () = wordFromInteger 0
-declare ocaml target_rep function plat_clint_size = `Platform.clint_size`
-
-val plat_enable_dirty_update : unit -> bool
-let plat_enable_dirty_update () = false
-declare ocaml target_rep function plat_enable_dirty_update = `Platform.enable_dirty_update`
-
-val plat_enable_misaligned_access : unit -> bool
-let plat_enable_misaligned_access () = false
-declare ocaml target_rep function plat_enable_misaligned_access = `Platform.enable_misaligned_access`
-
-val plat_insns_per_tick : unit -> integer
-let plat_insns_per_tick () = 1
-declare ocaml target_rep function plat_insns_per_tick = `Platform.insns_per_tick`
-
-val plat_htif_tohost : forall 'a. Size 'a => unit -> bitvector 'a
-let plat_htif_tohost () = wordFromInteger 0
-declare ocaml target_rep function plat_htif_tohost = `Platform.htif_tohost`
 
 val plat_term_write : forall 'a. Size 'a => bitvector 'a -> unit
 let plat_term_write _ = ()

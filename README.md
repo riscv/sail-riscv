@@ -6,7 +6,7 @@ This repository contains a formal specification of the RISC-V architecture, writ
 The model specifies assembly language formats of the instructions, the corresponding
 encoders and decoders, and the instruction semantics. A [reading guide](doc/ReadingGuide.md)
 to the model is provided in the [doc/](doc/) subdirectory, along with a guide on [how to
-extend](doc/ExtendingGuide.md) the model.
+add a new extension](doc/AddingExtensions.md) to the model.
 
 ## What is Sail?
 
@@ -33,7 +33,7 @@ will build the simulator at `build/c_emulator/sail_riscv_sim`.
 
 If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.19.1 or later.
 
-By default `build_simulators.sh` will download and build [libgmp](https://gmplib.org/).
+By default [`build_simulators.sh`](./build_simulators.sh) will download and build [libgmp](https://gmplib.org).
 To use a system installation of libgmp, run `env DOWNLOAD_GMP=FALSE ./build_simulators.sh` instead.
 
 ### Executing test binaries
@@ -48,7 +48,7 @@ Test suites targeting RV32, RV64, and RVV (RISC-V Vector Extension) are download
 The standard `riscv-tests` suite is enabled by default, while vector extension tests
 can be enabled via CMake options such as `-DENABLE_RISCV_VECTOR_TESTS_V128_E32=ON`.
 All enabled test suites can be executed using `make test` or `ctest` in the build directory
-(see `test/README.md` for more information).
+(see [`test/README.md`](test/README.md) for more information).
 
 ### Configuring platform options
 
@@ -77,7 +77,7 @@ For booting operating system images, see the information under the
 - Zicsr extension for CSR instructions, v2.0
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0
-- Zicbom and Zicboz extensions for cache-block management (Zicbop not currently supported), v1.0
+- Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
 - Zihintpause extension for Pause Hint, v2.0
@@ -121,9 +121,10 @@ For booting operating system images, see the information under the
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
-- Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Svbare extension for Bare mode virtual-memory translation
+- Svinval extension for fine-grained address-translation cache invalidation, v1.0
+- Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
 - Physical Memory Protection (PMP)
 
 <!-- Uncomment the following section when unratified extensions are added
@@ -249,7 +250,8 @@ specification written in Bluespec SystemVerilog.
 
 The ISA model is integrated with the operational model of the RISC-V
 relaxed memory model, RVWMO (as described in an appendix of the [RISC-V
-user-level specification](https://github.com/riscv/riscv-isa-manual/releases/tag/draft-20181227-c6741cb)), which is one of the reference models used
+user-level specification](https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/)),
+which is one of the reference models used
 in the development of the RISC-V concurrency architecture; this is
 part of the [RMEM](http://www.cl.cam.ac.uk/users/pes20/rmem) tool.
 It is also integrated with the RISC-V axiomatic concurrency model
@@ -286,7 +288,7 @@ monad over an effect datatype of memory actions. This monad is also
 used as part of the aforementioned concurrency support via the RMEM
 tool.
 
-The files under `handwritten_support` provide library definitions for
+The files under [`handwritten_support`](./handwritten_support) provide library definitions for
 each prover.
 
 ## Directory Structure
@@ -307,13 +309,13 @@ sail-riscv
 
 ## Licence
 
-The model is made available under the BSD two-clause licence in LICENCE.
+The model is made available under the BSD two-clause licence in [LICENCE](./LICENCE).
 
 ## Authors
 
 Originally written by Prashanth Mundkur at SRI International, and further developed by others, especially researchers at the University of Cambridge.
 
-See `LICENCE` and Git blame for a complete list of authors.
+See [`LICENCE`](./LICENCE) and Git blame for a complete list of authors.
 
 ## Funding
 
