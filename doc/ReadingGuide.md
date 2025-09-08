@@ -156,7 +156,7 @@ that are used in the weak memory concurrency model.
 The `riscv_vmem_{types,pte,ptw,tlb}.sail` and
 [riscv_vmem.sail](../model/riscv_vmem.sail) files describe the
 S-mode address translation. More details are in
-[Virtual Memory Notes](./notes_Virtual_Memory.adoc).
+[Virtual Memory Notes](./VirtualMemory.md).
 
 [riscv_vmem_utils.sail](../model/riscv_vmem_utils.sail) provides a
 higher level interface to virtual memory for load/store style
