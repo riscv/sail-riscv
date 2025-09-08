@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+unit fetch_callback(sail_int step_no, uint64_t code, bool rvc);
 unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
                         lbits value);
 unit mem_read_callback(const char *type, sbits paddr, uint64_t width,

@@ -7,6 +7,9 @@
 /*=======================================================================================*/
 
 // Callbacks for state-changing events
+val fetch_callback = pure {c: "fetch_callback"} : (nat, bits(32), bool) -> unit
+function fetch_callback(_, _, _) = ()
+
 val mem_write_callback = pure {c: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_write_callback(_) = ()
 

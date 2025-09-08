@@ -10,6 +10,9 @@ public:
                 bool config_use_abi_names = false, FILE *trace_log = NULL);
 
   // callbacks_if
+  virtual void fetch_callback(sail_int step_no, uint64_t code,
+                              bool rvc) override;
+
   void mem_write_callback(const char *type, sbits paddr, uint64_t width,
                           lbits value) override;
   void mem_read_callback(const char *type, sbits paddr, uint64_t width,

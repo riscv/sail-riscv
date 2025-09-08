@@ -107,3 +107,24 @@ void log_callbacks::vreg_write_callback(unsigned reg, lbits value)
 void log_callbacks::pc_write_callback(sbits) { }
 
 void log_callbacks::trap_callback() { }
+
+#define CREATEX(T, val)                                                        \
+  T val;                                                                       \
+  CREATE(T)(&val);
+
+void log_callbacks::fetch_callback(sail_int step_no, uint64_t code, bool rvc)
+{
+  CREATEX(sail_string, cur_privilege_str);
+  zprivLevel_to_str(&cur_privilege_str, zcur_privilege);
+  CREATEX(sail_string, insn_str);
+  char code_str[11] = {};
+  if (rvc) {
+    zassembly_half(&insn_str, (uint16_t)code);
+    sprintf(code_str, "0x%" PRIX16, (uint16_t)code);
+  } else {
+    zassembly_word(&insn_str, (uint32_t)code);
+    sprintf(code_str, "0x%" PRIX32, (uint32_t)code);
+  }
+  gmp_printf("[%Zd] [%s]: 0x%" PRIX64 " (%s) %s", step_no, cur_privilege_str,
+             zPC.bits, code_str, insn_str);
+}

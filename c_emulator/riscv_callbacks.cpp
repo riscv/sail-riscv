@@ -18,6 +18,14 @@ void remove_callback(callbacks_if *cb)
                   callbacks.end());
 }
 
+unit fetch_callback(sail_int step_no, uint64_t code, bool rvc)
+{
+  for (auto cb : callbacks) {
+    cb->fetch_callback(step_no, code, rvc);
+  }
+  return UNIT;
+}
+
 unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
                         lbits value)
 {
