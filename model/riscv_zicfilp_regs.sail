@@ -34,24 +34,28 @@ function clause currentlyEnabled(Ext_Zicfilp) =
 
 /// Architectural state for the Zicfilp extension.
 
-// Expected Landing Pad
-register elp : bool
+enum landing_pad_expectation = { NO_LP_EXPECTED, LP_EXPECTED }
 
-let NO_LP_EXPECTED = false
-let LP_EXPECTED = true
+// Expected Landing Pad
+register elp : bits(1)
+
+mapping landing_pad_bits : bits(1) <-> landing_pad_expectation = {
+  0b0 <-> NO_LP_EXPECTED,
+  0b1 <-> LP_EXPECTED,
+}
 
 function update_elp_state(rs1 : regidx) -> unit =
   if currentlyEnabled(Ext_Zicfilp) then {
     let is_software_guarded_branch = rs1 == Regidx(zero_extend(0x7));
     let is_return = rs1 == Regidx(zero_extend(0x1)) | rs1 == Regidx(zero_extend(0x5));
-    elp = not(is_software_guarded_branch) & not(is_return);
+    elp = bool_to_bits(not(is_software_guarded_branch) & not(is_return))
   }
 
 function is_landing_pad_expected() -> bool =
-  elp == LP_EXPECTED
+  elp == landing_pad_bits(LP_EXPECTED)
 
 function reset_elp() -> unit =
-  elp = NO_LP_EXPECTED
+  elp = landing_pad_bits(NO_LP_EXPECTED)
 
 /// Interaction with system registers.
 
@@ -60,8 +64,8 @@ function reset_elp() -> unit =
 function zicfilp_preserve_elp_on_trap(x : Privilege) -> unit = {
   // When Sdext is added, ELP will need to be preserved there as well.
   match x {
-    Machine    => { mstatus[MPELP] = bool_bits(elp); },
-    Supervisor => { mstatus[SPELP] = bool_bits(elp); },
+    Machine    => { mstatus[MPELP] = elp; },
+    Supervisor => { mstatus[SPELP] = elp; },
     User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
   reset_elp();
@@ -74,14 +78,14 @@ function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = 
   let pelp : bits(1) = match xret {
     mRET => {
       let pelp = mstatus[MPELP];
-      mstatus[MPELP] = 0b0;
+      mstatus[MPELP] = landing_pad_bits(NO_LP_EXPECTED);
       pelp
     },
     sRET => {
       let pelp = mstatus[SPELP];
-      mstatus[SPELP] = 0b0;
+      mstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
       pelp
     },
   };
-  elp = if get_xLPE(y) then bool_bits(pelp) else NO_LP_EXPECTED;
+  elp = if get_xLPE(y) then pelp else landing_pad_bits(NO_LP_EXPECTED);
 }
