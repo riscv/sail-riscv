@@ -13,8 +13,7 @@ enum Software_Check_Code = {
   SWC_LANDING_PAD_FAULT,
 }
 
-function enc_software_check(c : Software_Check_Code) -> xlenbits =
-  match c {
-    SWC_NO_INFO => zeros(),
-    SWC_LANDING_PAD_FAULT => zero_extend(0x2),
-  }
+mapping software_check_cause : Software_Check_Code <-> bits(2) = {
+  SWC_NO_INFO           <-> 0b00,
+  SWC_LANDING_PAD_FAULT <-> 0b10,
+}
