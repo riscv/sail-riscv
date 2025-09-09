@@ -16,6 +16,11 @@
   instruction log output. Each instruction will print
   `<symbol>+<offset>` at the end of the line, e.g. `_start+4`.
 
+- The documentation (in particular, the [Reading
+  Guide](./ReadingGuide.md)) has been brought up to date. A new
+  [document](./AddingExtensions.md) providing basic suggestions on
+  adding an extension to the model has been added.
+
 # Release notes for the 0.8 release
 
 This is a major release with some backwards-incompatible changes.
