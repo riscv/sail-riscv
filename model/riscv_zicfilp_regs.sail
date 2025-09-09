@@ -30,7 +30,7 @@ function get_xLPE(p : Privilege) -> bool =
   }
 
 function clause currentlyEnabled(Ext_Zicfilp) =
-  hartSupports(Ext_Zicfilp) & get_xLPE(cur_privilege)
+  currentlyEnabled(Ext_Zicsr) & hartSupports(Ext_Zicfilp) & get_xLPE(cur_privilege)
 
 /// Architectural state for the Zicfilp extension.
 
