@@ -104,7 +104,7 @@ function matching_pma(pmas : list(PMA_Region), addr : physaddr, width : mem_acce
   match pmas {
     [||] => None(),
     pma :: rest => {
-      if range_subset(zero_extend(bits_of(addr)), zero_extend(bits_of(addr) + width), pma.base, pma.base + pma.size)
+      if range_subset(zero_extend(bits_of(addr)), to_bits(width), pma.base, pma.size)
       then Some(pma)
       else matching_pma(rest, addr, width)
     },
