@@ -104,7 +104,11 @@ function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_s
   }
 
 // Check that all memory regions are sorted and don't overlap.
-function check_mem_layout() -> bool = check_pma_regions(pma_regions, zeros(), zeros())
+function check_mem_layout() -> bool =
+  if pma_regions == [||] then {
+    print_endline("No memory regions specified.");
+    false
+  } else check_pma_regions(pma_regions, zeros(), zeros())
 
 function check_pmp() -> bool = {
   var valid : bool = true;
