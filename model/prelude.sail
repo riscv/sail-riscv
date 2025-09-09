@@ -160,6 +160,10 @@ function operator >_u  (x, y) = unsigned(x) > unsigned(y)
 function operator <=_u (x, y) = unsigned(x) <= unsigned(y)
 function operator >=_u (x, y) = unsigned(x) >= unsigned(y)
 
+// Implication. This has the lowest precedence.
+infix 1 ==>
+function operator ==> (x : bool, y : bool) -> bool = not(x) | y
+
 infix 7 >>
 infix 7 <<
 
