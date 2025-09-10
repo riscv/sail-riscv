@@ -136,7 +136,7 @@ The following unratified extensions are supported and can be enabled using the `
 
 ## Example RISC-V instruction specifications
 
-These are verbatim excerpts from the model file containing the base instructions, [riscv_insts_base.sail](model/riscv_insts_base.sail), with a few comments added.
+These are verbatim excerpts from the model file containing the base instructions, [I/base_insts.sail](model/extensions/I/base_insts.sail), with a few comments added.
 
 ### ITYPE (or ADDI)
 
