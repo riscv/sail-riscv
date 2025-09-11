@@ -33,9 +33,6 @@ let plat_enable_dirty_update : bool = config memory.translation.dirty_update
  */
 let plat_enable_misaligned_access : bool = config memory.misaligned.supported
 
-/* whether mtval stores the bits of a faulting instruction on illegal instruction exceptions */
-let plat_mtval_has_illegal_inst_bits : bool = config base.mtval_has_illegal_instruction_bits
-
 /* ROM holding reset vector and device-tree DTB */
 // Use `register` instead of `let` since `to_bits_checked` is not a pure initializer
 // due to its use of `assert`.
@@ -445,18 +442,6 @@ function init_platform() -> unit = {
   htif_exit_code = zeros();
   htif_cmd_write = bitzero;
   htif_payload_writes = zeros();
-}
-
-/* Platform-specific handling of instruction faults */
-
-function handle_illegal(instbits : instbits) -> unit = {
-  let info = if   plat_mtval_has_illegal_inst_bits
-             then Some(zero_extend(xlen, instbits))
-             else None();
-  let t : sync_exception = struct { trap    = E_Illegal_Instr(),
-                                    excinfo = info,
-                                    ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
 /* Platform-specific wait-for-interrupt */
