@@ -27,6 +27,7 @@ mapping zicond_mnemonic : zicondop <-> string = {
 mapping clause assembly = ZICOND_RTYPE(rs2, rs1, rd, op)
   <-> zicond_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
+$[split op]
 function clause execute ZICOND_RTYPE(rs2, rs1, rd, op) = {
   let condition : bool = match op {
     CZERO_EQZ => X(rs2) == zeros(),
