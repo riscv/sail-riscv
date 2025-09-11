@@ -168,7 +168,7 @@ add_custom_target(generated_sail_riscv_docs DEPENDS "${CMAKE_CURRENT_BINARY_DIR}
 
 ############# HTML #############
 
-# Generate HTML zip
+# Generate HTML tgz
 set(model_html_tgz "sail_riscv_html.tgz")
 set(model_html_out "html_docs")
 
@@ -193,7 +193,7 @@ add_custom_command(
         --all-modules
         ${project_file}
 )
-# Create zip with the build directory as working directory.
+# Create tgz with the build directory as working directory.
 add_custom_command(
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${model_html_out}"
     OUTPUT ${model_html_tgz}
