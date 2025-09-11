@@ -37,7 +37,8 @@ mapping zbs_iop_mnemonic : biop_zbs <-> string = {
 mapping clause assembly = ZBS_IOP(shamt, rs1, rd, op)
   <-> zbs_iop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
 
-function clause execute (ZBS_IOP(shamt, rs1, rd, op)) = {
+$[split op]
+function clause execute ZBS_IOP(shamt, rs1, rd, op) = {
   let rs1_val = X(rs1);
   let mask : xlenbits = if xlen == 32
                         then zero_extend(0b1) << shamt[4..0]
@@ -81,7 +82,8 @@ mapping zbs_rtype_mnemonic : brop_zbs <-> string = {
 mapping clause assembly = ZBS_RTYPE(rs2, rs1, rd, op)
   <-> zbs_rtype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (ZBS_RTYPE(rs2, rs1, rd, op)) = {
+$[split op]
+function clause execute ZBS_RTYPE(rs2, rs1, rd, op) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let mask : xlenbits = if xlen == 32

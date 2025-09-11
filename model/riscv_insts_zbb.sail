@@ -59,7 +59,8 @@ mapping zbb_rtypew_mnemonic : bropw_zbb <-> string = {
 mapping clause assembly = ZBB_RTYPEW(rs2, rs1, rd, op)
   <-> zbb_rtypew_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
+$[split op]
+function clause execute ZBB_RTYPEW(rs2, rs1, rd, op) = {
   let rs1_val = X(rs1)[31..0];
   let shamt = X(rs2)[4..0];
   let result : bits(32) = match op {
@@ -124,7 +125,8 @@ mapping zbb_rtype_mnemonic : brop_zbb <-> string = {
 mapping clause assembly = ZBB_RTYPE(rs2, rs1, rd, op)
   <-> zbb_rtype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
+$[split op]
+function clause execute ZBB_RTYPE(rs2, rs1, rd, op) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
@@ -170,7 +172,8 @@ mapping zbb_extop_mnemonic : extop_zbb <-> string = {
 mapping clause assembly = ZBB_EXTOP(rs1, rd, op)
   <-> zbb_extop_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
+$[split op]
+function clause execute ZBB_EXTOP(rs1, rd, op) = {
   let rs1_val = X(rs1);
   let result : xlenbits = match op {
     SEXTB => sign_extend(rs1_val[7..0]),
