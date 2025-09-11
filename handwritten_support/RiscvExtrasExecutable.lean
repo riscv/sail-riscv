@@ -36,6 +36,7 @@ def cancel_reservation : Unit → SailM Unit := λ _ => panic "TODO"
 def valid_reservation : Unit → Bool := λ _ => false
 
 def get_16_random_bits : Unit → SailM (BitVec 16) := λ _ => panic "TODO"
+def sys_enable_experimental_extensions : Unit → Bool := λ _ => false
 
 end Effectful
 
