@@ -42,8 +42,10 @@ function clause execute (FCVT_S_BF16(rs1, rm, rd)) = {
   if select_instr_or_fcsr_rm(rm) == None()
     then return Illegal_Instruction();
 
-  F_or_X_S(rd) = bf16_to_f32(F_or_X_BF16(rs1));
+  let (fflags, rd_val_S) = bf16_to_f32(F_or_X_BF16(rs1));
 
+  accrue_fflags(fflags);
+  F_or_X_S(rd) = rd_val_S;
   RETIRE_SUCCESS
 }
 
