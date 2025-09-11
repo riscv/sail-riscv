@@ -136,6 +136,7 @@ function check_bfloat16() -> bool = {
   var valid : bool = true;
   if hartSupports(Ext_Zfbfmin) & not(hartSupports(Ext_F)) then {
     valid = false;
+    print_endline("Zfbfmin extension requires F extension");
   };
   valid
 }
