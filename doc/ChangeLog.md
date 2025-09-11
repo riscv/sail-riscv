@@ -21,6 +21,9 @@
   [document](./AddingExtensions.md) providing basic suggestions on
   adding an extension to the model has been added.
 
+- A tarfile of the HTML-rendered Sail sources was added to the
+  build and release artifacts.
+
 # Release notes for the 0.8 release
 
 This is a major release with some backwards-incompatible changes.

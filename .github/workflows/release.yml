@@ -68,7 +68,7 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Build simulators and JSON
+      - name: Build simulators, JSON and HTML
         run: |
           git config --global --add safe.directory '*'
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
@@ -84,6 +84,7 @@ jobs:
           path: |
             build/sail-riscv-*
             build/model/sail_riscv_model.json
+            build/model/sail_riscv_html.tgz
           if-no-files-found: error
 
   release:
@@ -101,6 +102,7 @@ jobs:
           files: |
             release-linux-amd64/sail-riscv-Linux-x86_64.tar.gz
             release-linux-amd64/model/sail_riscv_model.json
+            release-linux-amd64/model/sail_riscv_html.tgz
           fail_on_unmatched_files: true
           tag_name: ${{ inputs.version }}
           body: ${{ inputs.notes }}

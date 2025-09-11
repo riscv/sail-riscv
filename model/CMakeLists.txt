@@ -166,6 +166,46 @@ add_custom_command(
 
 add_custom_target(generated_sail_riscv_docs DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${model_doc}")
 
+############# HTML #############
+
+# Generate HTML tgz
+set(model_html_tgz "sail_riscv_html.tgz")
+set(model_html_out "html_docs")
+
+add_custom_command(
+    DEPENDS ${sail_srcs} ${project_file}
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${model_html_out}"
+    VERBATIM
+    COMMENT "Building HTML from Sail model"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    # Ensure the output directory exists to work around
+    # a bug in Sail 0.19.1 that got fixed in
+    # https://github.com/rems-project/sail/commit/cbd2c49b8953378685cb135306ed4a3bcde07824
+    COMMAND
+        cmake -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${model_html_out}"
+    COMMAND
+        ${SAIL_BIN}
+        ${sail_common}
+        # Generate HTML
+        --html
+        -o "${CMAKE_CURRENT_BINARY_DIR}/${model_html_out}"
+        # Input files
+        --all-modules
+        ${project_file}
+)
+# Create tgz with the build directory as working directory.
+add_custom_command(
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${model_html_out}"
+    OUTPUT ${model_html_tgz}
+    VERBATIM
+    COMMENT "Creating HTML tgz bundle"
+    COMMAND
+        cmake -E tar cvfz ${model_html_tgz} ${model_html_out}
+)
+
+add_custom_target(generated_html_tgz DEPENDS ${model_html_tgz})
+add_dependencies(generated_sail_riscv_docs generated_html_tgz)
+
 ############# Formal #############
 
 # Theorem prover backends require compile time configuration.
