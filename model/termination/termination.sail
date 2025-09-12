@@ -107,6 +107,7 @@ termination_measure virtual_memory_supported(_) = 3
 function hartSupports_measure(ext : extension) -> int =
   match ext {
     Ext_D => 1,
+    Ext_V => 1,
     Ext_Zvkn => 1,
     Ext_Zvks => 1,
     Ext_C => 2,
