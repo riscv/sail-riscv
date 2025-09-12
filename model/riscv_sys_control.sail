@@ -364,12 +364,7 @@ function reset_sys() -> unit = {
   vl               = zeros();
   vcsr[vxrm]       = 0b00;
   vcsr[vxsat]      = 0b0;
-  vtype[vill]      = 0b1;
-  vtype[reserved]  = zeros();
-  vtype[vma]       = 0b0;
-  vtype[vta]       = 0b0;
-  vtype[vsew]      = 0b000;
-  vtype[vlmul]     = 0b000;
+  vtype[vill]      = zeros();
 }
 
 /* memory access exceptions, defined here for use by the platform model. */
