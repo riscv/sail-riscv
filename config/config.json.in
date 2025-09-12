@@ -223,6 +223,9 @@
     "Zhinxmin": {
       "supported": false
     },
+    "Zicfilp": {
+      "supported": true
+    },
     "Zvbb": {
       "supported": true
     },
