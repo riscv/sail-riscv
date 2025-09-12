@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sail.h>
+
 unit softfloat_f16add(mach_bits rm, mach_bits v1, mach_bits v2);
 unit softfloat_f16sub(mach_bits rm, mach_bits v1, mach_bits v2);
 unit softfloat_f16mul(mach_bits rm, mach_bits v1, mach_bits v2);

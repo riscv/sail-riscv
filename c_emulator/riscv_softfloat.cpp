@@ -1,8 +1,8 @@
 #include "sail.h"
-#include "rts.h"
-#include "riscv_sail.h"
 #include "riscv_softfloat.h"
+extern "C" {
 #include "softfloat.h"
+}
 
 static uint_fast8_t uint8_of_rm(mach_bits rm)
 {
@@ -14,9 +14,12 @@ static uint_fast8_t uint8_of_rm(mach_bits rm)
   softfloat_exceptionFlags = 0;                                                \
   softfloat_roundingMode = (uint_fast8_t)rm
 
-#define SOFTFLOAT_POSTLUDE(res)                                                \
-  zfloat_result = res.v;                                                       \
-  zfloat_fflags = (mach_bits)softfloat_exceptionFlags
+// TODO: Need to revive https://github.com/riscv/sail-riscv/pull/340
+// #define SOFTFLOAT_POSTLUDE(res)
+//   zfloat_result = res.v;
+//   zfloat_fflags = (mach_bits)softfloat_exceptionFlags
+
+#define SOFTFLOAT_POSTLUDE(res) (void)res;
 
 unit softfloat_f16add(mach_bits rm, mach_bits v1, mach_bits v2)
 {

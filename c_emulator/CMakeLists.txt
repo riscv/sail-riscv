@@ -25,18 +25,13 @@ configure_file(sail_riscv_version.cpp.in sail_riscv_version.cpp @ONLY)
 add_library(riscv_model
     elf_loader.cpp
     elf_loader.h
-    riscv_callbacks.cpp
-    riscv_callbacks.h
     riscv_callbacks_if.h
     riscv_config.h
-    riscv_platform.cpp
-    riscv_platform.h
-    riscv_platform_impl.cpp
-    riscv_platform_impl.h
-    riscv_prelude.cpp
-    riscv_prelude.h
+    riscv_platform_if.h
+    riscv_model_impl.cpp
+    riscv_model_impl.h
     riscv_sail.h
-    riscv_softfloat.c
+    riscv_softfloat.cpp
     riscv_softfloat.h
     config_utils.cpp
     config_utils.h
@@ -44,7 +39,7 @@ add_library(riscv_model
     symbol_table.h
     sail_riscv_version.h
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
-    "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
+    "${CMAKE_BINARY_DIR}/sail_riscv_model.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
 )
 
@@ -81,7 +76,7 @@ set(_generated_c_warning_opt_out
     -Wno-uninitialized
 )
 set_source_files_properties(
-    "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
+    "${CMAKE_BINARY_DIR}/sail_riscv_model.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
     PROPERTIES COMPILE_OPTIONS "${_generated_c_warning_opt_out}"
 )
