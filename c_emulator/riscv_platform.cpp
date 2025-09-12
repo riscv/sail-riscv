@@ -69,16 +69,6 @@ unit plat_term_write(mach_bits s)
   return UNIT;
 }
 
-bool plat_enable_htif(unit)
-{
-  return rv_enable_htif;
-}
-
-mach_bits plat_htif_tohost(unit)
-{
-  return rv_htif_tohost;
-}
-
 bool sys_enable_experimental_extensions(unit)
 {
   return rv_enable_experimental_extensions;

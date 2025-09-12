@@ -253,17 +253,25 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   }
 }
 
-function handle_mem_exception(Virtaddr(addr) : virtaddr, e : ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = Some(addr),
-                                    ext     = None() } in
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
+// Compute the value to write to mtval on a trap.
+function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
+  if match e {
+    E_Breakpoint() => config base.xtval_nonzero.breakpoint,
+    E_Load_Addr_Align() => config base.xtval_nonzero.load_address_misaligned,
+    E_Load_Access_Fault() => config base.xtval_nonzero.load_access_fault,
+    E_SAMO_Addr_Align() => config base.xtval_nonzero.samo_address_misaligned,
+    E_SAMO_Access_Fault() => config base.xtval_nonzero.samo_access_fault,
+    E_Fetch_Addr_Align() => config base.xtval_nonzero.fetch_address_misaligned,
+    E_Fetch_Access_Fault() => config base.xtval_nonzero.fetch_access_fault,
+    E_Illegal_Instr() => config base.xtval_nonzero.illegal_instruction,
+    _ => true
+  } then Some(excinfo) else None()
 }
 
-function handle_exception(e: ExceptionType) -> unit = {
+function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
   let t : sync_exception = struct { trap    = e,
-                                    excinfo = None(),
-                                    ext     = None() } in
+                                    excinfo = xtval_exception_value(e, xtval),
+                                    ext     = None() };
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
@@ -295,6 +303,12 @@ function reset_misa() -> unit = {
   csr_write_callback("misa", misa.bits);
 }
 
+// Address to reset PC to on reset.
+register pc_reset_address : xlenbits = zeros()
+// This is called externally to set the PC reset address to the ELF entry point.
+// bits(64) is used because it's easier to deal with in C.
+function set_pc_reset_address(addr : bits(64)) -> unit = pc_reset_address = trunc(addr)
+
 // This function is called on reset, so it should only perform the reset actions
 // described in the "Reset" section of the privileged architecture specification.
 function reset_sys() -> unit = {
@@ -322,7 +336,8 @@ function reset_sys() -> unit = {
   cancel_reservation();
 
   // "The pc is set to an implementation-defined reset vector."
-  // This is outside the scope of this function.
+  PC = pc_reset_address;
+  nextPC = pc_reset_address;
 
   // "The mcause register is set to a value indicating the cause of the reset."
   // "The mcause values after reset have implementation-specific interpretation,
