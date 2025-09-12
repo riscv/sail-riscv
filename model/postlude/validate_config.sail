@@ -91,6 +91,18 @@ function check_vlen_elen() -> bool = {
 function check_vext_config() -> bool = {
   var valid : bool = true;
   // Standard Vector Extensions
+  if (config extensions.V.f.supported : bool) & not(hartSupports(Ext_F)) then {
+    valid = false;
+    print_endline("Zve*f is enabled but F is disabled: supporting Zve*f requires F.");
+  };
+  if (config extensions.V.d.supported : bool) & (elen_exp : nat) < 6 then {
+    valid = false;
+    print_endline("Zve*d is enabled but ELEN is 2^" ^ dec_str(elen_exp) ^ ": ELEN must be >= 2^6");
+  };
+  if (config extensions.V.d.supported : bool) & not(hartSupports(Ext_D)) then {
+    valid = false;
+    print_endline("Zve*d is enabled but D is disabled: supporting Zve*d requires D.");
+  };
   if hartSupports(Ext_Zve32x) & not(hartSupports(Ext_Zicsr)) then {
     valid = false;
     print_endline("Zve32x is enabled but Zicsr is disabled: supporting Zve32x requires Zicsr.");

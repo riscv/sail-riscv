@@ -135,7 +135,7 @@ function rV (Vregno(r) : vregno) -> vlenbits = {
 }
 
 function dirty_v_context() -> unit = {
-  assert(hartSupports(Ext_V));
+  assert(hartSupports(Ext_Zve32x));
   mstatus[VS] = extStatus_to_bits(Dirty);
   mstatus[SD] = 0b1;
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
@@ -328,13 +328,13 @@ mapping clause csr_name_map = 0xC20  <-> "vl"
 mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
 
-function clause is_CSR_accessible(0x008, _, _) = currentlyEnabled(Ext_V) // vstart
-function clause is_CSR_accessible(0x009, _, _) = currentlyEnabled(Ext_V) // vxsat
-function clause is_CSR_accessible(0x00A, _, _) = currentlyEnabled(Ext_V) // vxrm
-function clause is_CSR_accessible(0x00F, _, _) = currentlyEnabled(Ext_V) // vcsr
-function clause is_CSR_accessible(0xC20, _, _) = currentlyEnabled(Ext_V) // vl
-function clause is_CSR_accessible(0xC21, _, _) = currentlyEnabled(Ext_V) // vtype
-function clause is_CSR_accessible(0xC22, _, _) = currentlyEnabled(Ext_V) // vlenb
+function clause is_CSR_accessible(0x008, _, _) = currentlyEnabled(Ext_Zve32x) // vstart
+function clause is_CSR_accessible(0x009, _, _) = currentlyEnabled(Ext_Zve32x) // vxsat
+function clause is_CSR_accessible(0x00A, _, _) = currentlyEnabled(Ext_Zve32x) // vxrm
+function clause is_CSR_accessible(0x00F, _, _) = currentlyEnabled(Ext_Zve32x) // vcsr
+function clause is_CSR_accessible(0xC20, _, _) = currentlyEnabled(Ext_Zve32x) // vl
+function clause is_CSR_accessible(0xC21, _, _) = currentlyEnabled(Ext_Zve32x) // vtype
+function clause is_CSR_accessible(0xC22, _, _) = currentlyEnabled(Ext_Zve32x) // vlenb
 
 function clause read_CSR(0x008) = vstart
 function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])

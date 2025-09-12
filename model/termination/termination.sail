@@ -117,6 +117,7 @@ termination_measure get_xLPE(_) = 2
 function hartSupports_measure(ext : extension) -> int =
   match ext {
     Ext_D => 1,
+    Ext_V => 1,
     Ext_Zvkn => 1,
     Ext_Zvks => 1,
     Ext_C => 2,

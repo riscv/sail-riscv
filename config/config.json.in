@@ -73,10 +73,15 @@
       "supported": true
     },
     "V": {
-      "supported": true,
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
-      "vl_use_ceil": false
+      "vl_use_ceil": false,
+      "f": {
+        "supported": true
+      },
+      "d": {
+        "supported": @CONFIG_ELEN_IS_64@
+      }
     },
     "B": {
       "supported": true
@@ -228,21 +233,6 @@
     },
     "Zhinxmin": {
       "supported": false
-    },
-    "Zve32f": {
-      "supported": true
-    },
-    "Zve32x": {
-      "supported": true
-    },
-    "Zve64d": {
-      "supported": true
-    },
-    "Zve64f": {
-      "supported": true
-    },
-    "Zve64x": {
-      "supported": true
     },
     "Zvfh": {
       "supported": true
