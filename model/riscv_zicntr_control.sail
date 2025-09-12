@@ -1,13 +1,13 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 function clause currentlyEnabled(Ext_Zicntr) = hartSupports(Ext_Zicntr) & currentlyEnabled(Ext_Zicsr)
 
-/* unprivileged counters/timers */
+// unprivileged counters/timers
 mapping clause csr_name_map = 0xC00  <-> "cycle"
 mapping clause csr_name_map = 0xC01  <-> "time"
 mapping clause csr_name_map = 0xC02  <-> "instret"
@@ -30,7 +30,7 @@ function clause read_CSR(0xC81 if xlen == 32) = mtime[63 .. 32]
 function clause read_CSR(0xC82 if xlen == 32) = minstret[63 .. 32]
 
 
-/* machine counters/timers */
+// machine counters/timers
 mapping clause csr_name_map = 0xB00  <-> "mcycle"
 mapping clause csr_name_map = 0xB02  <-> "minstret"
 mapping clause csr_name_map = 0xB80  <-> "mcycleh"

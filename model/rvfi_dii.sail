@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 // "RISC-V Formal Interface - Direct Instruction Injection" support
 // For use with https://github.com/CTSRD-CHERI/TestRIG
@@ -219,13 +219,13 @@ function print_rvfi_exec () = {
   print_bits("rvfi_order    : ", rvfi_inst_data[rvfi_order]);
 }
 
-/* RVFI records */
+// RVFI records
 val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n)) -> unit
 function rvfi_write (paddr, width, value) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(paddr);
   rvfi_mem_data_present = true;
   if width <= 16 then {
-    /* TODO: report tag bit for capability writes and extend mask by one bit. */
+    // TODO: report tag bit for capability writes and extend mask by one bit.
     rvfi_mem_data[rvfi_mem_wdata] = sail_zero_extend(value, 256);
     rvfi_mem_data[rvfi_mem_wmask] = rvfi_encode_width_mask(width);
   } else {
@@ -238,7 +238,7 @@ function rvfi_read (paddr, width, value) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(paddr);
   rvfi_mem_data_present = true;
   if width <= 16 then {
-    /* TODO: report tag bit for capability writes and extend mask by one bit. */
+    // TODO: report tag bit for capability writes and extend mask by one bit.
     rvfi_mem_data[rvfi_mem_rdata] = sail_zero_extend(value, 256);
     rvfi_mem_data[rvfi_mem_rmask] = rvfi_encode_width_mask(width)
   } else {
@@ -248,7 +248,7 @@ function rvfi_read (paddr, width, value) = {
 
 val rvfi_mem_exception : xlenbits -> unit
 function rvfi_mem_exception (paddr) = {
-  /* Log only the memory address (without the value) if the write fails. */
+  // Log only the memory address (without the value) if the write fails.
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(paddr);
   rvfi_mem_data_present = true;
 }

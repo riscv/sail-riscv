@@ -1,15 +1,15 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zbb) = hartSupports(Ext_Zbb) | currentlyEnabled(Ext_B)
 function clause currentlyEnabled(Ext_Zbkb) = hartSupports(Ext_Zbkb)
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = RORIW : (bits(5), regidx, regidx)
 
 mapping clause encdec = RORIW(shamt, rs1, rd)
@@ -24,7 +24,7 @@ function clause execute (RORIW(shamt, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = RORI : (bits(6), regidx, regidx)
 
 mapping clause encdec = RORI(shamt, rs1, rd)
@@ -40,7 +40,7 @@ function clause execute (RORI(shamt, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBB_RTYPEW : (regidx, regidx, regidx, bropw_zbb)
 
 mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, ROLW)
@@ -70,7 +70,7 @@ function clause execute (ZBB_RTYPEW(rs2, rs1, rd, op)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBB_RTYPE : (regidx, regidx, regidx, brop_zbb)
 
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, ANDN)
@@ -142,7 +142,7 @@ function clause execute (ZBB_RTYPE(rs2, rs1, rd, op)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZBB_EXTOP : (regidx, regidx, extop_zbb)
 
 mapping clause encdec = ZBB_EXTOP(rs1, rd, SEXTB)
@@ -181,7 +181,7 @@ function clause execute (ZBB_EXTOP(rs1, rd, op)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = REV8 : (regidx, regidx)
 
 mapping clause encdec = REV8(rs1, rd)
@@ -200,7 +200,7 @@ function clause execute (REV8(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ORCB : (regidx, regidx)
 
 mapping clause encdec = ORCB(rs1, rd)
@@ -221,7 +221,7 @@ function clause execute (ORCB(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CPOP : (regidx, regidx)
 
 mapping clause encdec = CPOP(rs1, rd)
@@ -236,7 +236,7 @@ function clause execute (CPOP(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CPOPW : (regidx, regidx)
 
 mapping clause encdec = CPOPW(rs1, rd)
@@ -251,7 +251,7 @@ function clause execute (CPOPW(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CLZ : (regidx, regidx)
 
 mapping clause encdec = CLZ(rs1, rd)
@@ -266,7 +266,7 @@ function clause execute (CLZ(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CLZW : (regidx, regidx)
 
 mapping clause encdec = CLZW(rs1, rd)
@@ -281,7 +281,7 @@ function clause execute (CLZW(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CTZ : (regidx, regidx)
 
 mapping clause encdec = CTZ(rs1, rd)
@@ -296,7 +296,7 @@ function clause execute (CTZ(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = CTZW : (regidx, regidx)
 
 mapping clause encdec = CTZW(rs1, rd)

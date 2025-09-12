@@ -1,12 +1,12 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Counter OverFlow and Privilege Mode Filtering */
+// Counter OverFlow and Privilege Mode Filtering
 function clause currentlyEnabled(Ext_Sscofpmf) = hartSupports(Ext_Sscofpmf) & currentlyEnabled(Ext_Zihpm)
 
 mapping clause csr_name_map = 0x723  <-> "mhpmevent3h"

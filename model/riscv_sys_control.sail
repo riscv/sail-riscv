@@ -1,19 +1,19 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Machine-mode and supervisor-mode functionality. */
+// Machine-mode and supervisor-mode functionality.
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != InstructionFetch() & m[MPRV] == 0b1
   then privLevel_of_bits(m[MPP])
   else priv
 
-/* CSR access control */
+// CSR access control
 
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> priv_level = csr[9..8]
@@ -31,21 +31,19 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
   & check_CSR_access(csr, isWrite)
   & is_CSR_accessible(csr, p, isWrite)
 
-/* Exception delegation: given an exception and the privilege at which
- * it occurred, returns the privilege at which it should be handled.
- */
+// Exception delegation: given an exception and the privilege at which
+// it occurred, returns the privilege at which it should be handled.
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx   = num_of_ExceptionType(e);
   let super = bit_to_bool(medeleg.bits[idx]);
   let deleg = if currentlyEnabled(Ext_S) & super then Supervisor else Machine;
-  /* We cannot transition to a less-privileged mode. */
+  // We cannot transition to a less-privileged mode.
   if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
   then p else deleg
 }
 
-/* Interrupts are prioritized in privilege order, and for each
- * privilege, in the order: external, software, timers.
- */
+// Interrupts are prioritized in privilege order, and for each
+// privilege, in the order: external, software, timers.
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   let ip = Mk_Minterrupts(ip);
   if      ip[MEI] == 0b1 then Some(I_M_External)
@@ -57,14 +55,13 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else                        None()
 }
 
-/* Given the current privilege level, return the pending set
- * of interrupts for the highest privilege that has any pending.
- *
- * We don't use the lowered views of {xie,xip} here, since the spec
- * allows for example the M_Timer to be delegated to the S-mode.
- *
- * This is used when the hart is in the Active state.
- */
+// Given the current privilege level, return the pending set
+// of interrupts for the highest privilege that has any pending.
+//
+// We don't use the lowered views of {xie,xip} here, since the spec
+// allows for example the M_Timer to be delegated to the S-mode.
+//
+// This is used when the hart is in the Active state.
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
   assert(currentlyEnabled(Ext_S) | mideleg.bits == zeros());
@@ -80,33 +77,31 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   else None()
 }
 
-/* Check if a locally enabled interrupt is pending.
- *
- * This does not examine the global enable bits (MIE and SIE in
- * mstatus) and their delegation in mideleg. It does honor the
- * local interrupt enables in mie.
- *
- * This is used when the hart is in the Waiting state, caused by
- * instructions such as WFI and WRS.{NTO,STO}.
- *
- * The relevant detail in the privileged spec is:
- * https://riscv.github.io/riscv-isa-manual/snapshot/privileged/#wfi
- *
- * "The operation of WFI must be unaffected by the global interrupt
- * bits in mstatus (MIE and SIE) and the delegation register mideleg
- * (i.e., the hart must resume if a locally enabled interrupt becomes
- * pending, even if it has been delegated to a less-privileged mode),
- * but should honor the individual interrupt enables (e.g, MTIE)
- * (i.e., implementations should avoid resuming the hart if the
- * interrupt is pending but not individually enabled)."
- */
+// Check if a locally enabled interrupt is pending.
+//
+// This does not examine the global enable bits (MIE and SIE in
+// mstatus) and their delegation in mideleg. It does honor the
+// local interrupt enables in mie.
+//
+// This is used when the hart is in the Waiting state, caused by
+// instructions such as WFI and WRS.{NTO,STO}.
+//
+// The relevant detail in the privileged spec is:
+// https://riscv.github.io/riscv-isa-manual/snapshot/privileged/#wfi
+//
+// "The operation of WFI must be unaffected by the global interrupt
+// bits in mstatus (MIE and SIE) and the delegation register mideleg
+// (i.e., the hart must resume if a locally enabled interrupt becomes
+// pending, even if it has been delegated to a less-privileged mode),
+// but should honor the individual interrupt enables (e.g, MTIE)
+// (i.e., implementations should avoid resuming the hart if the
+// interrupt is pending but not individually enabled)."
 function shouldWakeForInterrupt() -> bool = {
   (mip.bits & mie.bits) != zeros()
 }
 
-/* Examine the current interrupt state and return an interrupt to be *
- * handled (if any), and the privilege it should be handled at.
- */
+// Examine the current interrupt state and return an interrupt to be *
+// handled (if any), and the privilege it should be handled at.
 function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
   match getPendingSet(priv) {
     None()       => None(),
@@ -117,7 +112,7 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
   }
 }
 
-/* types of privilege transitions */
+// types of privilege transitions
 
 union ctl_result = {
   CTL_TRAP : sync_exception,
@@ -125,7 +120,7 @@ union ctl_result = {
   CTL_MRET : unit,
 }
 
-/* trap value */
+// trap value
 
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
   match (excinfo) {
@@ -151,7 +146,7 @@ function track_trap(p : Privilege) -> unit = {
   };
 }
 
-/* handle exceptional ctl flow by updating nextPC and operating privilege */
+// handle exceptional ctl flow by updating nextPC and operating privilege
 function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
   trap_callback();
@@ -280,13 +275,13 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
-  misa[A]   = bool_to_bits(hartSupports(Ext_A));   /* atomics */
-  misa[C]   = bool_to_bits(hartSupports(Ext_C));   /* RVC */
-  misa[B]   = bool_to_bits(hartSupports(Ext_B));   /* Bit-manipulation */
-  misa[M]   = bool_to_bits(hartSupports(Ext_M));   /* integer multiply/divide */
-  misa[U]   = bool_to_bits(hartSupports(Ext_U));   /* user-mode */
-  misa[S]   = bool_to_bits(hartSupports(Ext_S));   /* supervisor-mode */
-  misa[V]   = bool_to_bits(hartSupports(Ext_V));   /* vector extension */
+  misa[A]   = bool_to_bits(hartSupports(Ext_A));   // atomics
+  misa[C]   = bool_to_bits(hartSupports(Ext_C));   // RVC
+  misa[B]   = bool_to_bits(hartSupports(Ext_B));   // Bit-manipulation
+  misa[M]   = bool_to_bits(hartSupports(Ext_M));   // integer multiply/divide
+  misa[U]   = bool_to_bits(hartSupports(Ext_U));   // user-mode
+  misa[S]   = bool_to_bits(hartSupports(Ext_S));   // supervisor-mode
+  misa[V]   = bool_to_bits(hartSupports(Ext_V));   // vector extension
 
   // Base integer ISA (disabled if we only support the 16-register E base).
   misa[E] = bool_to_bits(base_E_enabled);
@@ -295,10 +290,10 @@ function reset_misa() -> unit = {
   if   hartSupports(Ext_F) & hartSupports(Ext_Zfinx)
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
 
-  /* We currently support both F and D */
-  misa[F]   = bool_to_bits(hartSupports(Ext_F));      /* single-precision */
+  // We currently support both F and D
+  misa[F]   = bool_to_bits(hartSupports(Ext_F));      // single-precision
   misa[D]   = if   flen >= 64
-              then bool_to_bits(hartSupports(Ext_D))  /* double-precision */
+              then bool_to_bits(hartSupports(Ext_D))  // double-precision
               else 0b0;
   csr_write_callback("misa", misa.bits);
 }
@@ -359,7 +354,7 @@ function reset_sys() -> unit = {
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.
   // If they are kept then callbacks need to be added.
 
-  /* initialize vector csrs */
+  // initialize vector csrs
   vstart           = zeros();
   vl               = zeros();
   vcsr[vxrm]       = 0b00;
@@ -372,7 +367,7 @@ function reset_sys() -> unit = {
   vtype[vlmul]     = 0b000;
 }
 
-/* memory access exceptions, defined here for use by the platform model. */
+// memory access exceptions, defined here for use by the platform model.
 
 type MemoryOpResult('a : Type) = result('a, ExceptionType)
 

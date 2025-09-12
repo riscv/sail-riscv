@@ -1,14 +1,14 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zfa) = hartSupports(Ext_Zfa) & currentlyEnabled(Ext_F)
 
-/* FLI.H */
+// FLI.H
 
 union clause instruction = FLI_H : (bits(5), fregidx)
 
@@ -21,44 +21,44 @@ mapping clause assembly = FLI_H(constantidx, rd)
 
 function clause execute (FLI_H(constantidx, rd)) = {
   let bits : bits(16) = match constantidx {
-    0b00000 => { 0xbc00 },  /* -1.0 */
-    0b00001 => { 0x0400 },  /* minimum positive normal */
-    0b00010 => { 0x0100 },  /* 1.0 * 2^-16 */
-    0b00011 => { 0x0200 },  /* 1.0 * 2^-15 */
-    0b00100 => { 0x1c00 },  /* 1.0 * 2^-8  */
-    0b00101 => { 0x2000 },  /* 1.0 * 2^-7  */
-    0b00110 => { 0x2c00 },  /* 1.0 * 2^-4  */
-    0b00111 => { 0x3000 },  /* 1.0 * 2^-3  */
-    0b01000 => { 0x3400 },  /* 0.25 */
-    0b01001 => { 0x3500 },  /* 0.3125 */
-    0b01010 => { 0x3600 },  /* 0.375 */
-    0b01011 => { 0x3700 },  /* 0.4375 */
-    0b01100 => { 0x3800 },  /* 0.5 */
-    0b01101 => { 0x3900 },  /* 0.625 */
-    0b01110 => { 0x3a00 },  /* 0.75 */
-    0b01111 => { 0x3b00 },  /* 0.875 */
-    0b10000 => { 0x3c00 },  /* 1.0 */
-    0b10001 => { 0x3d00 },  /* 1.25 */
-    0b10010 => { 0x3e00 },  /* 1.5 */
-    0b10011 => { 0x3f00 },  /* 1.75 */
-    0b10100 => { 0x4000 },  /* 2.0 */
-    0b10101 => { 0x4100 },  /* 2.5 */
-    0b10110 => { 0x4200 },  /* 3 */
-    0b10111 => { 0x4400 },  /* 4 */
-    0b11000 => { 0x4800 },  /* 8 */
-    0b11001 => { 0x4c00 },  /* 16 */
-    0b11010 => { 0x5800 },  /* 2^7 */
-    0b11011 => { 0x5c00 },  /* 2^8 */
-    0b11100 => { 0x7800 },  /* 2^15 */
-    0b11101 => { 0x7c00 },  /* 2^16 */
-    0b11110 => { 0x7c00 },  /* +inf */
+    0b00000 => { 0xbc00 },  // -1.0
+    0b00001 => { 0x0400 },  // minimum positive normal
+    0b00010 => { 0x0100 },  // 1.0 * 2^-16
+    0b00011 => { 0x0200 },  // 1.0 * 2^-15
+    0b00100 => { 0x1c00 },  // 1.0 * 2^-8
+    0b00101 => { 0x2000 },  // 1.0 * 2^-7
+    0b00110 => { 0x2c00 },  // 1.0 * 2^-4
+    0b00111 => { 0x3000 },  // 1.0 * 2^-3
+    0b01000 => { 0x3400 },  // 0.25
+    0b01001 => { 0x3500 },  // 0.3125
+    0b01010 => { 0x3600 },  // 0.375
+    0b01011 => { 0x3700 },  // 0.4375
+    0b01100 => { 0x3800 },  // 0.5
+    0b01101 => { 0x3900 },  // 0.625
+    0b01110 => { 0x3a00 },  // 0.75
+    0b01111 => { 0x3b00 },  // 0.875
+    0b10000 => { 0x3c00 },  // 1.0
+    0b10001 => { 0x3d00 },  // 1.25
+    0b10010 => { 0x3e00 },  // 1.5
+    0b10011 => { 0x3f00 },  // 1.75
+    0b10100 => { 0x4000 },  // 2.0
+    0b10101 => { 0x4100 },  // 2.5
+    0b10110 => { 0x4200 },  // 3
+    0b10111 => { 0x4400 },  // 4
+    0b11000 => { 0x4800 },  // 8
+    0b11001 => { 0x4c00 },  // 16
+    0b11010 => { 0x5800 },  // 2^7
+    0b11011 => { 0x5c00 },  // 2^8
+    0b11100 => { 0x7800 },  // 2^15
+    0b11101 => { 0x7c00 },  // 2^16
+    0b11110 => { 0x7c00 },  // +inf
     0b11111 => { canonical_NaN_H() },
   };
   F_H(rd) = bits;
   RETIRE_SUCCESS
 }
 
-/* FLI.S */
+// FLI.S
 
 union clause instruction = FLI_S : (bits(5), fregidx)
 
@@ -71,44 +71,44 @@ mapping clause assembly = FLI_S(constantidx, rd)
 
 function clause execute (FLI_S(constantidx, rd)) = {
   let bits : bits(32) = match constantidx {
-    0b00000 => { 0xbf800000 },  /* -1.0 */
-    0b00001 => { 0x00800000 },  /* minimum positive normal */
-    0b00010 => { 0x37800000 },  /* 1.0 * 2^-16 */
-    0b00011 => { 0x38000000 },  /* 1.0 * 2^-15 */
-    0b00100 => { 0x3b800000 },  /* 1.0 * 2^-8  */
-    0b00101 => { 0x3c000000 },  /* 1.0 * 2^-7  */
-    0b00110 => { 0x3d800000 },  /* 1.0 * 2^-4  */
-    0b00111 => { 0x3e000000 },  /* 1.0 * 2^-3  */
-    0b01000 => { 0x3e800000 },  /* 0.25 */
-    0b01001 => { 0x3ea00000 },  /* 0.3125 */
-    0b01010 => { 0x3ec00000 },  /* 0.375 */
-    0b01011 => { 0x3ee00000 },  /* 0.4375 */
-    0b01100 => { 0x3f000000 },  /* 0.5 */
-    0b01101 => { 0x3f200000 },  /* 0.625 */
-    0b01110 => { 0x3f400000 },  /* 0.75 */
-    0b01111 => { 0x3f600000 },  /* 0.875 */
-    0b10000 => { 0x3f800000 },  /* 1.0 */
-    0b10001 => { 0x3fa00000 },  /* 1.25 */
-    0b10010 => { 0x3fc00000 },  /* 1.5 */
-    0b10011 => { 0x3fe00000 },  /* 1.75 */
-    0b10100 => { 0x40000000 },  /* 2.0 */
-    0b10101 => { 0x40200000 },  /* 2.5 */
-    0b10110 => { 0x40400000 },  /* 3 */
-    0b10111 => { 0x40800000 },  /* 4 */
-    0b11000 => { 0x41000000 },  /* 8 */
-    0b11001 => { 0x41800000 },  /* 16 */
-    0b11010 => { 0x43000000 },  /* 2^7 */
-    0b11011 => { 0x43800000 },  /* 2^8 */
-    0b11100 => { 0x47000000 },  /* 2^15 */
-    0b11101 => { 0x47800000 },  /* 2^16 */
-    0b11110 => { 0x7f800000 },  /* +inf */
+    0b00000 => { 0xbf800000 },  // -1.0
+    0b00001 => { 0x00800000 },  // minimum positive normal
+    0b00010 => { 0x37800000 },  // 1.0 * 2^-16
+    0b00011 => { 0x38000000 },  // 1.0 * 2^-15
+    0b00100 => { 0x3b800000 },  // 1.0 * 2^-8
+    0b00101 => { 0x3c000000 },  // 1.0 * 2^-7
+    0b00110 => { 0x3d800000 },  // 1.0 * 2^-4
+    0b00111 => { 0x3e000000 },  // 1.0 * 2^-3
+    0b01000 => { 0x3e800000 },  // 0.25
+    0b01001 => { 0x3ea00000 },  // 0.3125
+    0b01010 => { 0x3ec00000 },  // 0.375
+    0b01011 => { 0x3ee00000 },  // 0.4375
+    0b01100 => { 0x3f000000 },  // 0.5
+    0b01101 => { 0x3f200000 },  // 0.625
+    0b01110 => { 0x3f400000 },  // 0.75
+    0b01111 => { 0x3f600000 },  // 0.875
+    0b10000 => { 0x3f800000 },  // 1.0
+    0b10001 => { 0x3fa00000 },  // 1.25
+    0b10010 => { 0x3fc00000 },  // 1.5
+    0b10011 => { 0x3fe00000 },  // 1.75
+    0b10100 => { 0x40000000 },  // 2.0
+    0b10101 => { 0x40200000 },  // 2.5
+    0b10110 => { 0x40400000 },  // 3
+    0b10111 => { 0x40800000 },  // 4
+    0b11000 => { 0x41000000 },  // 8
+    0b11001 => { 0x41800000 },  // 16
+    0b11010 => { 0x43000000 },  // 2^7
+    0b11011 => { 0x43800000 },  // 2^8
+    0b11100 => { 0x47000000 },  // 2^15
+    0b11101 => { 0x47800000 },  // 2^16
+    0b11110 => { 0x7f800000 },  // +inf
     0b11111 => { canonical_NaN_S() },
   };
   F_S(rd) = bits;
   RETIRE_SUCCESS
 }
 
-/* FLI.D */
+// FLI.D
 
 union clause instruction = FLI_D : (bits(5), fregidx)
 
@@ -121,44 +121,44 @@ mapping clause assembly = FLI_D(constantidx, rd)
 
 function clause execute (FLI_D(constantidx, rd)) = {
   let bits : bits(64) = match constantidx {
-    0b00000 => { 0xbff0000000000000 },  /* -1.0 */
-    0b00001 => { 0x0010000000000000 },  /* minimum positive normal */
-    0b00010 => { 0x3Ef0000000000000 },  /* 1.0 * 2^-16 */
-    0b00011 => { 0x3f00000000000000 },  /* 1.0 * 2^-15 */
-    0b00100 => { 0x3f70000000000000 },  /* 1.0 * 2^-8  */
-    0b00101 => { 0x3f80000000000000 },  /* 1.0 * 2^-7  */
-    0b00110 => { 0x3fb0000000000000 },  /* 1.0 * 2^-4  */
-    0b00111 => { 0x3fc0000000000000 },  /* 1.0 * 2^-3  */
-    0b01000 => { 0x3fd0000000000000 },  /* 0.25 */
-    0b01001 => { 0x3fd4000000000000 },  /* 0.3125 */
-    0b01010 => { 0x3fd8000000000000 },  /* 0.375 */
-    0b01011 => { 0x3fdc000000000000 },  /* 0.4375 */
-    0b01100 => { 0x3fe0000000000000 },  /* 0.5 */
-    0b01101 => { 0x3fe4000000000000 },  /* 0.625 */
-    0b01110 => { 0x3fe8000000000000 },  /* 0.75 */
-    0b01111 => { 0x3fec000000000000 },  /* 0.875 */
-    0b10000 => { 0x3ff0000000000000 },  /* 1.0 */
-    0b10001 => { 0x3ff4000000000000 },  /* 1.25 */
-    0b10010 => { 0x3ff8000000000000 },  /* 1.5 */
-    0b10011 => { 0x3ffc000000000000 },  /* 1.75 */
-    0b10100 => { 0x4000000000000000 },  /* 2.0 */
-    0b10101 => { 0x4004000000000000 },  /* 2.5 */
-    0b10110 => { 0x4008000000000000 },  /* 3 */
-    0b10111 => { 0x4010000000000000 },  /* 4 */
-    0b11000 => { 0x4020000000000000 },  /* 8 */
-    0b11001 => { 0x4030000000000000 },  /* 16 */
-    0b11010 => { 0x4060000000000000 },  /* 2^7 */
-    0b11011 => { 0x4070000000000000 },  /* 2^8 */
-    0b11100 => { 0x40e0000000000000 },  /* 2^15 */
-    0b11101 => { 0x40f0000000000000 },  /* 2^16 */
-    0b11110 => { 0x7ff0000000000000 },  /* +inf */
+    0b00000 => { 0xbff0000000000000 },  // -1.0
+    0b00001 => { 0x0010000000000000 },  // minimum positive normal
+    0b00010 => { 0x3Ef0000000000000 },  // 1.0 * 2^-16
+    0b00011 => { 0x3f00000000000000 },  // 1.0 * 2^-15
+    0b00100 => { 0x3f70000000000000 },  // 1.0 * 2^-8
+    0b00101 => { 0x3f80000000000000 },  // 1.0 * 2^-7
+    0b00110 => { 0x3fb0000000000000 },  // 1.0 * 2^-4
+    0b00111 => { 0x3fc0000000000000 },  // 1.0 * 2^-3
+    0b01000 => { 0x3fd0000000000000 },  // 0.25
+    0b01001 => { 0x3fd4000000000000 },  // 0.3125
+    0b01010 => { 0x3fd8000000000000 },  // 0.375
+    0b01011 => { 0x3fdc000000000000 },  // 0.4375
+    0b01100 => { 0x3fe0000000000000 },  // 0.5
+    0b01101 => { 0x3fe4000000000000 },  // 0.625
+    0b01110 => { 0x3fe8000000000000 },  // 0.75
+    0b01111 => { 0x3fec000000000000 },  // 0.875
+    0b10000 => { 0x3ff0000000000000 },  // 1.0
+    0b10001 => { 0x3ff4000000000000 },  // 1.25
+    0b10010 => { 0x3ff8000000000000 },  // 1.5
+    0b10011 => { 0x3ffc000000000000 },  // 1.75
+    0b10100 => { 0x4000000000000000 },  // 2.0
+    0b10101 => { 0x4004000000000000 },  // 2.5
+    0b10110 => { 0x4008000000000000 },  // 3
+    0b10111 => { 0x4010000000000000 },  // 4
+    0b11000 => { 0x4020000000000000 },  // 8
+    0b11001 => { 0x4030000000000000 },  // 16
+    0b11010 => { 0x4060000000000000 },  // 2^7
+    0b11011 => { 0x4070000000000000 },  // 2^8
+    0b11100 => { 0x40e0000000000000 },  // 2^15
+    0b11101 => { 0x40f0000000000000 },  // 2^16
+    0b11110 => { 0x7ff0000000000000 },  // +inf
     0b11111 => { canonical_NaN_D() },
   };
   F_D(rd) = bits;
   RETIRE_SUCCESS
 }
 
-/* FMINM.H */
+// FMINM.H
 
 union clause instruction = FMINM_H : (fregidx, fregidx, fregidx)
 
@@ -189,7 +189,7 @@ function clause execute (FMINM_H(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FMAXM.H */
+// FMAXM.H
 
 union clause instruction = FMAXM_H : (fregidx, fregidx, fregidx)
 
@@ -220,7 +220,7 @@ function clause execute (FMAXM_H(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FMINM.S */
+// FMINM.S
 
 union clause instruction = FMINM_S : (fregidx, fregidx, fregidx)
 
@@ -251,7 +251,7 @@ function clause execute (FMINM_S(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FMAXM.S */
+// FMAXM.S
 
 union clause instruction = FMAXM_S : (fregidx, fregidx, fregidx)
 
@@ -282,7 +282,7 @@ function clause execute (FMAXM_S(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FMINM.D */
+// FMINM.D
 
 union clause instruction = FMINM_D : (fregidx, fregidx, fregidx)
 
@@ -313,7 +313,7 @@ function clause execute (FMINM_D(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FMAXM.D */
+// FMAXM.D
 
 union clause instruction = FMAXM_D : (fregidx, fregidx, fregidx)
 
@@ -344,7 +344,7 @@ function clause execute (FMAXM_D(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FROUND.H */
+// FROUND.H
 
 union clause instruction = FROUND_H : (fregidx, rounding_mode, fregidx)
 
@@ -373,7 +373,7 @@ function clause execute (FROUND_H(rs1, rm, rd)) = {
   }
 }
 
-/* FROUNDNX.H */
+// FROUNDNX.H
 
 union clause instruction = FROUNDNX_H : (fregidx, rounding_mode, fregidx)
 
@@ -402,7 +402,7 @@ function clause execute (FROUNDNX_H(rs1, rm, rd)) = {
   }
 }
 
-/* FROUND.S */
+// FROUND.S
 
 union clause instruction = FROUND_S : (fregidx, rounding_mode, fregidx)
 
@@ -431,7 +431,7 @@ function clause execute (FROUND_S(rs1, rm, rd)) = {
   }
 }
 
-/* FROUNDNX.S */
+// FROUNDNX.S
 
 union clause instruction = FROUNDNX_S : (fregidx, rounding_mode, fregidx)
 
@@ -460,7 +460,7 @@ function clause execute (FROUNDNX_S(rs1, rm, rd)) = {
   }
 }
 
-/* FROUND.D */
+// FROUND.D
 
 union clause instruction = FROUND_D : (fregidx, rounding_mode, fregidx)
 
@@ -489,7 +489,7 @@ function clause execute (FROUND_D(rs1, rm, rd)) = {
   }
 }
 
-/* FROUNDNX.D */
+// FROUNDNX.D
 
 union clause instruction = FROUNDNX_D : (fregidx, rounding_mode, fregidx)
 
@@ -518,7 +518,7 @@ function clause execute (FROUNDNX_D(rs1, rm, rd)) = {
   }
 }
 
-/* FMVH.X.D */
+// FMVH.X.D
 
 union clause instruction = FMVH_X_D : (fregidx, regidx)
 
@@ -537,7 +537,7 @@ function clause execute (FMVH_X_D(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FMVP.X.D */
+// FMVP.X.D
 
 union clause instruction = FMVP_D_X : (regidx, regidx, fregidx)
 
@@ -554,18 +554,18 @@ function clause execute (FMVP_D_X(rs2, rs1, rd)) = {
   let rs1_val_X     = X(rs1)[31..0];
   let rs2_val_X     = X(rs2)[31..0];
 
-  /* Concatenate the two values using '@' operator */
-  /* e.g. */
-  /*   rs1 = 0x01234567 */
-  /*   rs2 = 0x89abcdef */
-  /*   rd  = rs1 @ rs2 => 0x89abcdef01234567 */
+  // Concatenate the two values using '@' operator, e.g.
+  //
+  //   rs1 = 0x01234567
+  //   rs2 = 0x89abcdef
+  //   rd  = rs1 @ rs2 => 0x89abcdef01234567
   let rd_val_D      = rs2_val_X @ rs1_val_X;
 
   F_D(rd)           = rd_val_D;
   RETIRE_SUCCESS
 }
 
-/* FLEQ.H */
+// FLEQ.H
 
 union clause instruction = FLEQ_H : (fregidx, fregidx, regidx)
 
@@ -590,7 +590,7 @@ function clause execute(FLEQ_H(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FLTQ.H */
+// FLTQ.H
 
 union clause instruction = FLTQ_H : (fregidx, fregidx, regidx)
 
@@ -615,7 +615,7 @@ function clause execute(FLTQ_H(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FLEQ.S */
+// FLEQ.S
 
 union clause instruction = FLEQ_S : (fregidx, fregidx, regidx)
 
@@ -640,7 +640,7 @@ function clause execute(FLEQ_S(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FLTQ.S */
+// FLTQ.S
 
 union clause instruction = FLTQ_S : (fregidx, fregidx, regidx)
 
@@ -666,7 +666,7 @@ function clause execute(FLTQ_S(rs2, rs1, rd)) = {
 }
 
 
-/* FLEQ.D */
+// FLEQ.D
 
 union clause instruction = FLEQ_D : (fregidx, fregidx, regidx)
 
@@ -691,7 +691,7 @@ function clause execute(FLEQ_D(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FLTQ.D */
+// FLTQ.D
 
 union clause instruction = FLTQ_D : (fregidx, fregidx, regidx)
 
@@ -716,35 +716,32 @@ function clause execute(FLTQ_D(rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/* FCVTMOD.W.D */
+// FCVTMOD.W.D
 
-/*
- * Implement float64 to int32 conversion without saturation, the
- * result is supplied modulo 2^32.
- */
+//
+// Implement float64 to int32 conversion without saturation, the
+// result is supplied modulo 2^32.
 val      fcvtmod_helper : bits(64) -> (bits(5), bits(32))
 function fcvtmod_helper(x64) = {
   let (sign, exp, mant) = fsplit_D(x64);
 
-  /* Detect the non-normal cases */
+  // Detect the non-normal cases
   let is_subnorm    = exp == zeros() & mant != zeros();
   let is_zero       = exp == zeros() & mant == zeros();
   let is_nan_or_inf = exp == ones();
 
-  /* For normal numbers, the mantissa and exponent use special encoding */
-  let true_mant     = 0b1 @ mant;  /* concatenate with the implicit bit */
-  let true_exp      = unsigned(exp) - 1023;   /* undo the offset-binary */
+  // For normal numbers, the mantissa and exponent use special encoding
+  let true_mant     = 0b1 @ mant;  // concatenate with the implicit bit
+  let true_exp      = unsigned(exp) - 1023;   // undo the offset-binary
 
-  /*
-   * Detect the trivial cases for normal numbers.
-   *
-   * While is_too_large could subsume is_nan_or_inf, and is_too_small
-   * could subsume is_subnorm, we deliberately enumerate these
-   * separately as is_too_large/is_too_small operate on normal
-   * numbers.
-   */
-  let is_too_large  = true_exp >= 84;  /* bits will be 'multiplied' out */
-  let is_too_small  = true_exp <  0;   /* bits will be 'divided' out    */
+  // Detect the trivial cases for normal numbers.
+  //
+  // While is_too_large could subsume is_nan_or_inf, and is_too_small
+  // could subsume is_subnorm, we deliberately enumerate these
+  // separately as is_too_large/is_too_small operate on normal
+  // numbers.
+  let is_too_large  = true_exp >= 84;  // bits will be 'multiplied' out
+  let is_too_small  = true_exp <  0;   // bits will be 'divided' out
 
        if is_zero       then (zeros(),  zeros())
   else if is_subnorm    then (nxFlag(), zeros())
@@ -752,24 +749,22 @@ function fcvtmod_helper(x64) = {
   else if is_too_large  then (nvFlag(), zeros())
   else if is_too_small  then (nxFlag(), zeros())
   else {
-    /*
-     * Calculate the low 32 bits of the integer value from the
-     * binary64 floating-point number and return them together with an
-     * indicator whether a NV (overflow) or NX (inexact) exceptions is
-     * to be raised.
-     */
+    // Calculate the low 32 bits of the integer value from the
+    // binary64 floating-point number and return them together with an
+    // indicator whether a NV (overflow) or NX (inexact) exceptions is
+    // to be raised.
 
-    /* Perform the exponentiation on the fixed-point mantissa and
-       extract the integer part */
+    // Perform the exponentiation on the fixed-point mantissa and
+    // extract the integer part
     let fixedpoint : bits(84) = zero_extend(true_mant) << true_exp;
     let integer    = fixedpoint[83..52];
     let fractional = fixedpoint[51..0];
 
-    /* Apply the sign bit */
+    // Apply the sign bit
     let result = if sign == 0b1 then ~(integer) + 1
                                 else integer;
 
-    /* Raise FP exception flags, honoring the precedence of nV > nX */
+    // Raise FP exception flags, honoring the precedence of nV > nX
     let max_integer = if sign == 0b1 then unsigned(0x80000000)
                                      else unsigned(0x7fffffff);
     let flags : bits(5) = if true_exp > 31 then nvFlag()
@@ -783,7 +778,7 @@ function fcvtmod_helper(x64) = {
 
 union clause instruction = FCVTMOD_W_D : (fregidx, regidx)
 
-/* We need rounding mode to be explicitly specified to RTZ(0b001) */
+// We need rounding mode to be explicitly specified to RTZ(0b001)
 mapping clause encdec = FCVTMOD_W_D(rs1, rd)
   <-> 0b110_0001 @ 0b01000 @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011
   when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)

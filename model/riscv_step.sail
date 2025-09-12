@@ -1,12 +1,12 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* The emulator fetch-execute-interrupt dispatch loop. */
+// The emulator fetch-execute-interrupt dispatch loop.
 
 register hart_state : HartState = HART_ACTIVE()
 
@@ -90,11 +90,11 @@ function run_hart_active(step_no: nat) -> Step = {
   match dispatchInterrupt(cur_privilege) {
     Some(intr, priv) => Step_Pending_Interrupt(intr, priv),
     None() => match ext_fetch_hook(fetch()) {
-      /* extension error */
+      // extension error
       F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
-      /* standard error */
+      // standard error
       F_Error(e, addr) => Step_Fetch_Failure(Virtaddr(addr), e),
-      /* non-error cases: */
+      // non-error cases:
       F_RVC(h) => {
         sail_instr_announce(h);
         let instbits : instbits = zero_extend(h);
@@ -103,7 +103,7 @@ function run_hart_active(step_no: nat) -> Step = {
         then {
           print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
         };
-        /* check for RVC once here instead of every RVC execute clause. */
+        // check for RVC once here instead of every RVC execute clause.
         if currentlyEnabled(Ext_Zca) then {
           nextPC = PC + 2;
           let r = execute(instruction);
@@ -160,17 +160,15 @@ function wait_is_nop(wr : WaitReason) -> bool =
 //              `try_step()` (but see `wait_is_nop()`).
 //
 function try_step(step_no : nat, exit_wait : bool) -> bool = {
-  /* for step extensions */
+  // for step extensions
   ext_pre_step_hook();
 
-  /*
-   * This records whether or not minstret should be incremented when
-   * the instruction is retired. Since retirement occurs before CSR
-   * writes we initialise it based on mcountinhibit here, before it is
-   * potentially changed. This is also set to false if minstret is
-   * written.  See the note near the minstret declaration for more
-   * information.
-   */
+  // This records whether or not minstret should be incremented when
+  // the instruction is retired. Since retirement occurs before CSR
+  // writes we initialise it based on mcountinhibit here, before it is
+  // potentially changed. This is also set to false if minstret is
+  // written.  See the note near the minstret declaration for more
+  // information.
   minstret_increment = should_inc_minstret(cur_privilege);
 
   let step_val : Step = match hart_state {
@@ -259,13 +257,13 @@ function loop () : unit -> unit = {
       sail_end_cycle()
     };
 
-    /* check htif exit */
+    // check htif exit
     if htif_done then {
       let exit_val = unsigned(htif_exit_code);
       if exit_val == 0 then print("SUCCESS")
       else print_int("FAILURE: ", exit_val);
     } else {
-      /* update time */
+      // update time
       i = i + 1;
       if i == plat_insns_per_tick then {
         tick_clock();

@@ -1,12 +1,12 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Basic type and function definitions used pervasively in the model. */
+// Basic type and function definitions used pervasively in the model.
 
 type half = bits(16)
 type word = bits(32)
@@ -24,32 +24,32 @@ let  pagesize_bits = sizeof(pagesize_bits)
 type base_E_enabled : Bool = config base.E
 let base_E_enabled = constraint(base_E_enabled)
 
-/* register identifiers */
+// register identifiers
 
 type regidx_bit_width = if base_E_enabled then 4 else 5
 let regidx_bit_width = sizeof(regidx_bit_width)
 
-newtype regidx = Regidx : bits(regidx_bit_width)  /* uncompressed register identifiers */
-newtype cregidx = Cregidx : bits(3) /* identifiers in RVC instructions */
-type csreg = bits(12)  /* CSR addressing */
+newtype regidx = Regidx : bits(regidx_bit_width)  // uncompressed register identifiers
+newtype cregidx = Cregidx : bits(3) // identifiers in RVC instructions
+type csreg = bits(12)  // CSR addressing
 
 function regidx_offset(Regidx(r) : regidx, o : bits(regidx_bit_width)) -> regidx = Regidx(r + o)
 function regidx_offset_range(Regidx(r) : regidx, o : range(0, 31)) -> regidx = Regidx(r + o)
 function regidx_bits(Regidx(b) : regidx) -> bits(regidx_bit_width) = b
 overload operator + = { regidx_offset, regidx_offset_range }
-/* register file indexing */
+// register file indexing
 
 newtype regno = Regno : range(0, 2 ^ regidx_bit_width - 1)
 
-/* mapping RVC register indices into normal indices */
+// mapping RVC register indices into normal indices
 function creg2reg_idx(Cregidx(i) : cregidx) -> regidx = Regidx(zero_extend(0b1 @ i))
 
-/* some architecture and ABI relevant register identifiers */
-let zreg : regidx = Regidx(zero_extend(0b00)) /* x0, zero register  */
-let ra   : regidx = Regidx(zero_extend(0b01)) /* x1, return address */
-let sp   : regidx = Regidx(zero_extend(0b10)) /* x2, stack pointer  */
+// some architecture and ABI relevant register identifiers
+let zreg : regidx = Regidx(zero_extend(0b00)) // x0, zero register
+let ra   : regidx = Regidx(zero_extend(0b01)) // x1, return address
+let sp   : regidx = Regidx(zero_extend(0b10)) // x2, stack pointer
 
-/* base architecture definitions */
+// base architecture definitions
 
 enum Architecture = {RV32, RV64, RV128}
 type arch_xlen = bits(2)
@@ -61,7 +61,7 @@ mapping architecture : Architecture <-> arch_xlen = {
   backwards 0b00 => internal_error(__FILE__, __LINE__, "architecture(0b00) is invalid")
 }
 
-/* privilege levels */
+// privilege levels
 
 type priv_level = bits(2)
 enum Privilege  = {User, Supervisor, Machine}
@@ -85,7 +85,7 @@ function privLevel_to_str (p : Privilege) -> string =
 
 overload to_str = {privLevel_to_str}
 
-/* memory access types */
+// memory access types
 
 union AccessType ('a : Type) = {
   Read      : 'a,
@@ -105,7 +105,7 @@ function is_load_store forall ('a : Type) . (ac : AccessType('a)) -> bool =
 
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
 
-/* architectural interrupt definitions */
+// architectural interrupt definitions
 
 enum InterruptType = {
   I_U_Software,
@@ -133,7 +133,7 @@ function interruptType_to_bits (i) =
     I_M_External => 0x0b
   }
 
-/* architectural exception definitions */
+// architectural exception definitions
 
 union ExceptionType = {
   E_Fetch_Addr_Align   : unit,
@@ -153,7 +153,7 @@ union ExceptionType = {
   E_Reserved_14        : unit,
   E_SAMO_Page_Fault    : unit,
 
-  /* extensions */
+  // extensions
   E_Extension          : ext_exc_type
 }
 
@@ -177,7 +177,7 @@ function exceptionType_to_bits(e) =
     E_Reserved_14()        => 0x0e,
     E_SAMO_Page_Fault()    => 0x0f,
 
-    /* extensions */
+    // extensions
     E_Extension(e)         => ext_exc_type_to_bits(e)
   }
 
@@ -201,7 +201,7 @@ function num_of_ExceptionType(e) =
     E_Reserved_14()        => 14,
     E_SAMO_Page_Fault()    => 15,
 
-    /* extensions */
+    // extensions
     E_Extension(e)         => num_of_ext_exc_type(e)
 
   }
@@ -226,13 +226,13 @@ function exceptionType_to_str(e) =
     E_Reserved_14()        => "reserved-1",
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
 
-    /* extensions */
+    // extensions
     E_Extension(e)         => ext_exc_type_to_str(e)
   }
 
 overload to_str = {exceptionType_to_str}
 
-/* trap modes */
+// trap modes
 
 type tv_mode = bits(2)
 enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
@@ -245,7 +245,7 @@ function trapVectorMode_of_bits (m) =
     _    => TV_Reserved
   }
 
-/* extension context status */
+// extension context status
 
 type ext_status = bits(2)
 enum ExtStatus = {Off, Initial, Clean, Dirty}
@@ -260,7 +260,7 @@ mapping extStatus_bits : ExtStatus <-> ext_status = {
 function extStatus_to_bits(e : ExtStatus) -> ext_status = extStatus_bits(e)
 function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
 
-/* supervisor-level address translation modes */
+// supervisor-level address translation modes
 
 type satp_mode = bits(4)
 enum SATPMode = {Bare, Sv32, Sv39, Sv48, Sv57}
@@ -275,11 +275,11 @@ function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
     (_, _)      => None()
   }
 
-/* CSR access control bits (from CSR addresses) */
+// CSR access control bits (from CSR addresses)
 
-type csrRW = bits(2)  /* read/write */
+type csrRW = bits(2)  // read/write
 
-/* Wait state reasons */
+// Wait state reasons
 
 enum WaitReason = {WAIT_WFI, WAIT_WRS_STO, WAIT_WRS_NTO}
 mapping wait_name : WaitReason <-> string = {

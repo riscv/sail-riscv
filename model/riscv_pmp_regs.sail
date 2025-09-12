@@ -1,21 +1,21 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Platform configuration */
+// Platform configuration
 
-/* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
+// How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime).
 let sys_pmp_count : {0, 16, 64} = config memory.pmp.count
 
-/* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
-   G=0 -> 4 bytes, G=10 -> 4096 bytes. */
+// G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
+// G=0 -> 4 bytes, G=10 -> 4096 bytes.
 let sys_pmp_grain : range(0, 63) = config memory.pmp.grain
 
-/* PMP configuration entries */
+// PMP configuration entries
 
 enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
 
@@ -27,19 +27,19 @@ mapping pmpAddrMatchType_encdec : PmpAddrMatchType <-> bits(2) = {
 }
 
 bitfield Pmpcfg_ent : bits(8) = {
-  L : 7,        /* locking */
-  A : 4 .. 3,   /* address match type, encoded as above */
+  L : 7,        // locking
+  A : 4 .. 3,   // address match type, encoded as above
 
-  /* permissions */
-  X : 2,        /* execute */
-  W : 1,        /* write */
-  R : 0         /* read */
+  // permissions
+  X : 2,        // execute
+  W : 1,        // write
+  R : 0         // read
 }
 
 register pmpcfg_n : vector(64, Pmpcfg_ent)
 register pmpaddr_n : vector(64, xlenbits)
 
-/* Packing and unpacking pmpcfg regs for xlen-width accesses */
+// Packing and unpacking pmpcfg regs for xlen-width accesses
 
 function pmpReadCfgReg(n : range(0, 15)) -> xlenbits = {
   if xlen == 32
@@ -84,7 +84,7 @@ function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
   }
 }
 
-/* Helpers to handle locked entries */
+// Helpers to handle locked entries
 function pmpLocked(cfg: Pmpcfg_ent) -> bool =
    cfg[L] == 0b1
 
@@ -152,7 +152,7 @@ function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
   );
 }
 
-/* PMP CSRs */
+// PMP CSRs
 mapping clause csr_name_map = 0x3A0  <-> "pmpcfg0"
 mapping clause csr_name_map = 0x3A1  <-> "pmpcfg1"
 mapping clause csr_name_map = 0x3A2  <-> "pmpcfg2"

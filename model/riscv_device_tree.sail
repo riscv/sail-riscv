@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 // Identifies the largest MMU address translation mode supported by this hart.
 function mmu_type() -> string = {
@@ -32,46 +32,45 @@ function generate_isa_base() -> string = {
 
 enum ISA_Format = {Canonical_Lowercase, DeviceTree_ISA_Extensions}
 
-/* Some notes from the "ISA Extension Naming Convections" section of
-   the manual; some aspects do not apply to the
-   DeviceTree_ISA_Extensions generator.
-
-  . The first letter following the "Z" conventionally indicates the
-    most closely related alphabetical extension category,
-    IMAFDQLCBKJTPVH.  If multiple "Z" extensions are named, they
-    should be ordered first by category, then alphabetically within a
-    category—for example, "Zicsr_Zifencei_Ztso".
-
-  . All multi-letter extensions, including those with the "Z" prefix, must be
-    separated from other multi-letter extensions by an underscore, e.g.,
-    "RV32IMACZicsr_Zifencei" (but see the next point).
-
-  . An underscore between the single letter extensions and the first
-    multi-letter extension is optional, e.g., "RV32IMAC_Zicsr_Zifencei".
-    The canonical generator below includes it.
-
-  . Standard supervisor-level extensions (prefixed with either 'Ss' or
-    'Sv') should be listed after standard unprivileged extensions, and
-    like other multi-letter extensions, must be separated from other
-    multi-letter extensions by an underscore. If multiple
-    supervisor-level extensions are listed, they should be ordered
-    alphabetically.
-
-  . Standard machine-level extensions (prefixed with the letters "Sm")
-    should be listed after standard lesser-privileged extensions, and
-    like other multi-letter extensions, must be separated from other
-    multi-letter extensions by an underscore. If multiple
-    machine-level extensions are listed, they should be ordered
-    alphabetically.
-
-  Once the Sail configuration supports extension version numbers, we could
-  add them to the generated isa string.
-
-  The device-tree specification for the ISA string is at:
-  https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/devicetree/bindings/riscv/extensions.yaml
-
-  As the above document uses lower-case, the generator below does too.
-*/
+// Some notes from the "ISA Extension Naming Convections" section of
+// the manual; some aspects do not apply to the
+// DeviceTree_ISA_Extensions generator.
+//
+// * The first letter following the "Z" conventionally indicates the
+//   most closely related alphabetical extension category,
+//   IMAFDQLCBKJTPVH.  If multiple "Z" extensions are named, they
+//   should be ordered first by category, then alphabetically within a
+//   category—for example, "Zicsr_Zifencei_Ztso".
+//
+// * All multi-letter extensions, including those with the "Z" prefix, must be
+//   separated from other multi-letter extensions by an underscore, e.g.,
+//   "RV32IMACZicsr_Zifencei" (but see the next point).
+//
+// * An underscore between the single letter extensions and the first
+//   multi-letter extension is optional, e.g., "RV32IMAC_Zicsr_Zifencei".
+//   The canonical generator below includes it.
+//
+// * Standard supervisor-level extensions (prefixed with either 'Ss' or
+//   'Sv') should be listed after standard unprivileged extensions, and
+//   like other multi-letter extensions, must be separated from other
+//   multi-letter extensions by an underscore. If multiple
+//   supervisor-level extensions are listed, they should be ordered
+//   alphabetically.
+//
+// * Standard machine-level extensions (prefixed with the letters "Sm")
+//   should be listed after standard lesser-privileged extensions, and
+//   like other multi-letter extensions, must be separated from other
+//   multi-letter extensions by an underscore. If multiple
+//   machine-level extensions are listed, they should be ordered
+//   alphabetically.
+//
+// Once the Sail configuration supports extension version numbers, we could
+// add them to the generated isa string.
+//
+// The device-tree specification for the ISA string is at:
+// https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/devicetree/bindings/riscv/extensions.yaml
+//
+// As the above document uses lower-case, the generator below does too.
 
 function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
   if not(hartSupports(ext)) then return "";
