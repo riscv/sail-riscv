@@ -36,6 +36,7 @@ axiom cancel_reservation : Unit → SailM Unit
 axiom valid_reservation : Unit → Bool
 
 axiom get_16_random_bits : Unit → SailM (BitVec 16)
+axiom sys_enable_experimental_extensions : Unit → Bool
 
 end Effectful
 

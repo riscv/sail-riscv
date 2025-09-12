@@ -36,6 +36,8 @@ val plat_get_16_random_bits : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_o
 let plat_get_16_random_bits () = choose_bitvector "plat_get_16_random_bits" 16
 declare ocaml target_rep function plat_get_16_random_bits = `Platform.get_16_random_bits`
 
+def sys_enable_experimental_extensions () = false
+
 val shift_bits_right : bitvector -> bitvector -> bitvector
 let shift_bits_right v m = shiftr v (uint m)
 val shift_bits_left : bitvector -> bitvector -> bitvector
