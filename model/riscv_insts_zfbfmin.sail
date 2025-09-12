@@ -13,7 +13,8 @@ function clause currentlyEnabled(Ext_Zfbfmin) = hartSupports(Ext_Zfbfmin) & curr
 union clause instruction = FCVT_BF16_S : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FCVT_BF16_S(rs1, rm, rd)
- <-> 0b01000 @ 0b10 @ 0b01000 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011 when currentlyEnabled(Ext_Zfbfmin)
+  <-> 0b01000 @ 0b10 @ 0b01000 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011
+  when currentlyEnabled(Ext_Zfbfmin)
 
 function clause execute (FCVT_BF16_S(rs1, rm, rd)) = {
   let rs1_val_S = F_or_X_S(rs1);
@@ -36,11 +37,12 @@ mapping clause assembly = FCVT_BF16_S(rs1, rm, rd)
 union clause instruction = FCVT_S_BF16 : (fregidx, rounding_mode, fregidx)
 
 mapping clause encdec = FCVT_S_BF16(rs1, rm, rd)
- <-> 0b01000 @ 0b00 @ 0b00110 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011 when currentlyEnabled(Ext_Zfbfmin)
+  <-> 0b01000 @ 0b00 @ 0b00110 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011
+  when currentlyEnabled(Ext_Zfbfmin)
 
 function clause execute (FCVT_S_BF16(rs1, rm, rd)) = {
   if select_instr_or_fcsr_rm(rm) == None()
-    then return Illegal_Instruction();
+  then return Illegal_Instruction();
 
   let (fflags, rd_val_S) = bf16_to_f32(F_BF16(rs1));
 
