@@ -448,13 +448,15 @@ function is_fiom_active() -> bool = {
 /* interrupt processing state */
 
 bitfield Minterrupts : xlenbits = {
-  MEI : 11, /* external interrupts */
+  LCOFI : 13, // local counter overflow interrupts
+
+  MEI : 11, // external interrupts
   SEI : 9,
 
-  MTI : 7,  /* timers interrupts */
+  MTI : 7,  // timers interrupts
   STI : 5,
 
-  MSI : 3,  /* software interrupts */
+  MSI : 3,  // software interrupts
   SSI : 1,
 }
 
@@ -462,6 +464,7 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
   [o with
+    LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
     STI = if currentlyEnabled(Ext_S) then (
@@ -474,6 +477,7 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [o with
+    LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     MEI = v[MEI],
     MTI = v[MTI],
     MSI = v[MSI],
@@ -787,11 +791,13 @@ function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, 
 
 
 bitfield Sinterrupts : xlenbits = {
-  SEI : 9,  /* external interrupts */
+  LCOFI : 13, // local counter overflow interrupts
 
-  STI : 5,  /* timers interrupts */
+  SEI : 9,  // external interrupts
 
-  SSI : 1,  /* software interrupts */
+  STI : 5,  // timers interrupts
+
+  SSI : 1,  // software interrupts
 }
 
 // sip
@@ -800,6 +806,7 @@ function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
   [s with
+    LCOFI = m[LCOFI] & d[LCOFI],
     SEI = m[SEI] & d[SEI],
     STI = m[STI] & d[STI],
     SSI = m[SSI] & d[SSI],
@@ -811,6 +818,7 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
   [s with
+    LCOFI = m[LCOFI] & d[LCOFI],
     SEI = m[SEI] & d[SEI],
     STI = m[STI] & d[STI],
     SSI = m[SSI] & d[SSI],
@@ -819,9 +827,10 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 
 /* Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d). */
 function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
-  let m : Minterrupts = o;
-  let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
-  m
+  [o with
+    LCOFI = if d[LCOFI] == 0b1 then s[LCOFI] else o[LCOFI],
+    SSI = if d[SSI] == 0b1 then s[SSI] else o[SSI],
+  ]
 }
 
 function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -839,6 +848,7 @@ function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, val
 function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
   [m with
+    LCOFI = if d[LCOFI] == 0b1 then s[LCOFI] else m[LCOFI],
     SEI = if d[SEI] == 0b1 then s[SEI] else m[SEI],
     STI = if d[STI] == 0b1 then s[STI] else m[STI],
     SSI = if d[SSI] == 0b1 then s[SSI] else m[SSI],

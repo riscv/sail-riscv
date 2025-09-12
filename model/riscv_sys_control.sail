@@ -48,13 +48,14 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
  */
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   let ip = Mk_Minterrupts(ip);
-  if      ip[MEI] == 0b1 then Some(I_M_External)
-  else if ip[MSI] == 0b1 then Some(I_M_Software)
-  else if ip[MTI] == 0b1 then Some(I_M_Timer)
-  else if ip[SEI] == 0b1 then Some(I_S_External)
-  else if ip[SSI] == 0b1 then Some(I_S_Software)
-  else if ip[STI] == 0b1 then Some(I_S_Timer)
-  else                        None()
+  if      ip[MEI]   == 0b1 then Some(I_M_External)
+  else if ip[MSI]   == 0b1 then Some(I_M_Software)
+  else if ip[MTI]   == 0b1 then Some(I_M_Timer)
+  else if ip[SEI]   == 0b1 then Some(I_S_External)
+  else if ip[SSI]   == 0b1 then Some(I_S_Software)
+  else if ip[STI]   == 0b1 then Some(I_S_Timer)
+  else if ip[LCOFI] == 0b1 then Some(I_L_Counter_Overflow)
+  else                          None()
 }
 
 /* Given the current privilege level, return the pending set
