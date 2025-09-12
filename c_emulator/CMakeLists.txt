@@ -36,7 +36,7 @@ add_library(riscv_model
     riscv_prelude.cpp
     riscv_prelude.h
     riscv_sail.h
-    riscv_softfloat.c
+    riscv_softfloat.cpp
     riscv_softfloat.h
     config_utils.cpp
     config_utils.h
