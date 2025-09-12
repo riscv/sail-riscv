@@ -99,10 +99,7 @@ function run_hart_active(step_no: nat) -> Step = {
         sail_instr_announce(h);
         let instbits : instbits = zero_extend(h);
         let instruction = ext_decode_compressed(h);
-        if   get_config_print_instr()
-        then {
-          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
-        };
+        fetch_callback(step_no, zero_extend(h), true);
         /* check for RVC once here instead of every RVC execute clause. */
         if currentlyEnabled(Ext_Zca) then {
           nextPC = PC + 2;
@@ -116,10 +113,7 @@ function run_hart_active(step_no: nat) -> Step = {
         sail_instr_announce(w);
         let instbits : instbits = zero_extend(w);
         let instruction = ext_decode(w);
-        if   get_config_print_instr()
-        then {
-          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
-        };
+        fetch_callback(step_no, zero_extend(w), false);
         nextPC = PC + 4;
         let r = execute(instruction);
         Step_Execute(r, instbits)

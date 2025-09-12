@@ -10,6 +10,9 @@ public:
   virtual ~callbacks_if() = default;
 
   // TODO: finding ways to improve the format
+  virtual void fetch_callback(sail_int /*step_no*/, uint64_t /*code*/,
+                              bool /*rvc*/) { };
+
   virtual void mem_write_callback(const char *type, sbits paddr, uint64_t width,
                                   lbits value)
       = 0;

@@ -99,6 +99,8 @@ add_custom_command(
         --c-preserve generate_dts
         --c-preserve config_is_valid
         --c-preserve generate_canonical_isa_string
+        --c-preserve assembly_half
+        --c-preserve assembly_word
         # Preserve RVFI functions.
         --c-preserve rvfi_set_instr_packet
         --c-preserve rvfi_get_cmd

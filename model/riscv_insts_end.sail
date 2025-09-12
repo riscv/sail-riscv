@@ -40,4 +40,16 @@ end encdec_compressed
 val print_insn : instruction -> string
 function print_insn insn = assembly(insn)
 
+val assembly_half : half -> string
+function assembly_half(code) = {
+    let insn : instruction = encdec_compressed(code);
+    assembly(insn)
+}
+
+val assembly_word : word -> string
+function assembly_word(code) = {
+    let insn : instruction = encdec(code);
+    assembly(insn)
+}
+
 overload to_str = {print_insn}
