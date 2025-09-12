@@ -85,24 +85,6 @@ function privLevel_to_str (p : Privilege) -> string =
 
 overload to_str = {privLevel_to_str}
 
-/* memory access types */
-
-union AccessType ('a : Type) = {
-  Read      : 'a,
-  Write     : 'a,
-  ReadWrite : ('a, 'a),
-  InstructionFetch : unit
-}
-
-// Some features only affect loads/stores; not instruction fetch.
-function is_load_store forall ('a : Type) . (ac : AccessType('a)) -> bool =
-  match ac {
-    Read(_) => true,
-    Write(_) => true,
-    ReadWrite(_) => true,
-    InstructionFetch(_) => false,
-  }
-
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
 
 /* architectural interrupt definitions */
@@ -326,3 +308,42 @@ mapping width_mnemonic_wide : word_width_wide <-> string = {
   8  <-> "d",
   16 <-> "q",
 }
+
+/* memory access types */
+
+enum CacheAccessType = {
+  CleanFlush,
+  Inval,
+  Zero,
+}
+
+enum AmoLevel = {
+  AMOSwap,
+  AMOLogical,
+  AMOArithmetic,
+  AMOCASW,
+  AMOCASD,
+  AMOCASQ,
+}
+
+union AccessType ('a : Type) = {
+  Read             : 'a,
+  Write            : 'a,
+  AMOAccess        : (AmoLevel, bool, bool, 'a, 'a),
+  LoadReserved     : (bool, bool, 'a),
+  StoreConditional : (bool, bool, 'a),
+  InstructionFetch : unit,
+  Cache            : CacheAccessType,
+}
+
+// Some features only affect loads/stores; not instruction fetch.
+function is_load_store forall ('a : Type) . (ac : AccessType('a)) -> bool =
+  match ac {
+    Read(_) => true,
+    Write(_) => true,
+    AMOAccess(_) => true,
+    LoadReserved(_) => true,
+    StoreConditional(_) => true,
+    InstructionFetch(_) => false,
+    Cache(_) => true,
+  }
