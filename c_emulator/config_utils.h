@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <vector>
 
-void init_sail_configured_types();
-
 // Get a uint64_t from the JSON config file. This works with integers and
 // non-abstract bit vectors. Bit vectors over 64 bits throw an exception.
 // Integers over 64 bits are currently silently truncated, and the sign

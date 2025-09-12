@@ -26,15 +26,13 @@
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
-#include "riscv_platform_impl.h"
-#include "riscv_sail.h"
 #include "rvfi_dii.h"
 #include "default_config.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
-#include "riscv_callbacks_if.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
+#include "riscv_model_impl.h"
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -81,9 +79,11 @@ uint64_t insn_limit = 0;
 char *sailcov_file = NULL;
 #endif
 
+ModelImpl g_model;
+
 static void validate_config(const std::string &conf_file)
 {
-  const char *s = zconfig_is_valid(UNIT) ? "valid" : "invalid";
+  const char *s = g_model.zconfig_is_valid(UNIT) ? "valid" : "invalid";
   if (!conf_file.empty()) {
     fprintf(stdout, "Configuration in %s is %s.\n", conf_file.c_str(), s);
   } else {
@@ -95,7 +95,7 @@ static void validate_config(const std::string &conf_file)
 static void print_dts(void)
 {
   char *dts = NULL;
-  zgenerate_dts(&dts, UNIT);
+  g_model.zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
   exit(EXIT_SUCCESS);
@@ -104,7 +104,7 @@ static void print_dts(void)
 static void print_isa(void)
 {
   char *isa = NULL;
-  zgenerate_canonical_isa_string(&isa, UNIT);
+  g_model.zgenerate_canonical_isa_string(&isa, UNIT);
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
   exit(EXIT_SUCCESS);
@@ -214,16 +214,16 @@ uint64_t load_sail(const std::string &filename, bool main_file)
 
   switch (elf.architecture()) {
   case Architecture::RV32:
-    if (zxlen != 32) {
+    if (g_model.zxlen != 32) {
       fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen);
+              g_model.zxlen);
       exit(EXIT_FAILURE);
     }
     break;
   case Architecture::RV64:
-    if (zxlen != 64) {
+    if (g_model.zxlen != 64) {
       fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen);
+              g_model.zxlen);
       exit(EXIT_FAILURE);
     }
     break;
@@ -296,21 +296,19 @@ void init_sail(uint64_t elf_entry, const char *config_file)
 {
   // zset_pc_reset_address must be called before zinit_model
   // because reset happens inside init_model().
-  zset_pc_reset_address(elf_entry);
+  g_model.zset_pc_reset_address(elf_entry);
   if (htif_tohost_address.has_value()) {
-    zenable_htif(*htif_tohost_address);
+    g_model.zenable_htif(*htif_tohost_address);
   }
-  zinit_model(config_file != nullptr ? config_file : "");
-  zinit_boot_requirements(UNIT);
+  g_model.zinit_model(config_file != nullptr ? config_file : "");
+  g_model.zinit_boot_requirements(UNIT);
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
 void reinit_sail(uint64_t elf_entry, const char *config_file)
 {
-  model_fini();
-
-  init_sail_configured_types();
-  model_init();
+  g_model.model_fini();
+  g_model.model_init();
   init_sail(elf_entry, config_file);
 }
 
@@ -358,7 +356,7 @@ void finish(int ec)
   if (!sig_file.empty())
     write_signature(sig_file.c_str());
 
-  model_fini();
+  g_model.model_fini();
   if (gettimeofday(&run_end, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
@@ -405,7 +403,7 @@ void run_sail(void)
     exit(EXIT_FAILURE);
   }
 
-  while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
+  while (!g_model.zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
     if (rvfi) {
       switch (rvfi->pre_step(config_print_rvfi)) {
       case RVFI_prestep_continue:
@@ -423,8 +421,8 @@ void run_sail(void)
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      is_waiting = ztry_step(sail_step, exit_wait);
-      if (have_exception)
+      is_waiting = g_model.ztry_step(sail_step, exit_wait);
+      if (g_model.have_exception)
         goto step_exception;
       flush_logs();
       KILL(sail_int)(&sail_step);
@@ -454,19 +452,19 @@ void run_sail(void)
               ((uint64_t)1000) * 0x100000 / (end_us - start_us));
     }
 
-    if (zhtif_done) {
+    if (g_model.zhtif_done) {
       /* check exit code */
-      if (zhtif_exit_code == 0) {
+      if (g_model.zhtif_exit_code == 0) {
         fprintf(stdout, "SUCCESS\n");
       } else {
-        fprintf(stdout, "FAILURE: %" PRIi64 "\n", zhtif_exit_code);
+        fprintf(stdout, "FAILURE: %" PRIi64 "\n", g_model.zhtif_exit_code);
         exit(EXIT_FAILURE);
       }
     }
 
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
-      ztick_clock(UNIT);
+      g_model.ztick_clock(UNIT);
     }
   }
 
@@ -544,7 +542,7 @@ int inner_main(int argc, char **argv)
   }
   if (rvfi_dii_port != 0) {
     config_enable_rvfi = true;
-    rvfi = rvfi_handler(rvfi_dii_port);
+    rvfi.emplace(rvfi_dii_port, g_model);
   }
   if (do_show_times) {
     fprintf(stderr, "will show execution times on completion.\n");
@@ -573,8 +571,7 @@ int inner_main(int argc, char **argv)
     sail_config_set_string(DEFAULT_JSON);
   }
 
-  init_sail_configured_types();
-  model_init();
+  g_model.model_init();
 
   if (do_validate_config) {
     validate_config(config_file);
@@ -595,7 +592,7 @@ int inner_main(int argc, char **argv)
   init_logs();
   log_callbacks log_cbs(config_print_reg, config_print_mem_access,
                         config_use_abi_names, trace_log);
-  register_callback(&log_cbs);
+  g_model.register_callback(&log_cbs);
 
   if (gettimeofday(&init_start, NULL) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
@@ -605,7 +602,7 @@ int inner_main(int argc, char **argv)
   if (rvfi) {
     if (!rvfi->setup_socket(config_print_rvfi))
       return 1;
-    register_callback(&rvfi_cbs);
+    g_model.register_callback(&rvfi_cbs);
   }
 
   if (!dtb_file.empty()) {
@@ -640,7 +637,7 @@ int inner_main(int argc, char **argv)
     }
   } while (rvfi);
 
-  model_fini();
+  g_model.model_fini();
   flush_logs();
   close_logs();
 

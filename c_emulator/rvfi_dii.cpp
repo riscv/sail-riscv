@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -15,13 +14,11 @@
 #include <vector>
 
 #include "sail.h"
-#include "riscv_sail.h"
 #include "rvfi_dii.h"
 
-#define UNUSED(var) (void)(var)
-
-rvfi_handler::rvfi_handler(int port)
+rvfi_handler::rvfi_handler(int port, model::Model &model)
     : dii_port(port)
+    , m_model(model)
 {
   fprintf(stderr, "using %d as RVFI port.\n", port);
 }
@@ -94,7 +91,7 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
 {
   lbits packet;
   CREATE(lbits)(&packet);
-  reader(&packet, UNIT);
+  (m_model.*reader)(&packet, UNIT);
   /* Note: packet.len is the size in bits, not bytes. */
   if (packet.len % 8 != 0) {
     fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n",
@@ -130,13 +127,13 @@ void rvfi_handler::send_trace(bool config_print)
     fprintf(stderr, "Sending v%d trace response...\n", trace_version);
   }
   if (trace_version == 1) {
-    get_and_send_packet(zrvfi_get_exec_packet_v1, config_print);
+    get_and_send_packet(&model::Model::zrvfi_get_exec_packet_v1, config_print);
   } else if (trace_version == 2) {
-    get_and_send_packet(zrvfi_get_exec_packet_v2, config_print);
-    if (zrvfi_int_data_present)
-      get_and_send_packet(zrvfi_get_int_data, config_print);
-    if (zrvfi_mem_data_present)
-      get_and_send_packet(zrvfi_get_mem_data, config_print);
+    get_and_send_packet(&model::Model::zrvfi_get_exec_packet_v2, config_print);
+    if (m_model.zrvfi_int_data_present)
+      get_and_send_packet(&model::Model::zrvfi_get_int_data, config_print);
+    if (m_model.zrvfi_mem_data_present)
+      get_and_send_packet(&model::Model::zrvfi_get_mem_data, config_print);
   } else {
     fprintf(stderr, "Sending v%d packets not implemented yet!\n",
             trace_version);
@@ -153,7 +150,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
   int res = read(dii_sock, &instr_bits, sizeof(instr_bits));
   if (config_print) {
     fprintf(stderr, "Read cmd packet: %016jx\n", (intmax_t)instr_bits);
-    zprint_instr_packet(instr_bits);
+    m_model.zprint_instr_packet(instr_bits);
   }
   if (res == 0) {
     if (config_print) {
@@ -169,15 +166,15 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     fprintf(stderr, "Reading RVFI DII command failed: insufficient input");
     exit(EXIT_FAILURE);
   }
-  zrvfi_set_instr_packet(instr_bits);
-  zrvfi_zzero_exec_packet(UNIT);
-  mach_bits cmd = zrvfi_get_cmd(UNIT);
+  m_model.zrvfi_set_instr_packet(instr_bits);
+  m_model.zrvfi_zzero_exec_packet(UNIT);
+  mach_bits cmd = m_model.zrvfi_get_cmd(UNIT);
   switch (cmd) {
   case 0: { /* EndOfTrace */
     if (config_print) {
       fprintf(stderr, "Got EndOfTrace packet.\n");
     }
-    mach_bits insn = zrvfi_get_insn(UNIT);
+    mach_bits insn = m_model.zrvfi_get_insn(UNIT);
     if (insn == (('V' << 24) | ('E' << 16) | ('R' << 8) | 'S')) {
       /*
        * Reset with insn set to 'VERS' is a version negotiation request
@@ -188,10 +185,11 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
         fprintf(stderr,
                 "EndOfTrace was actually a version negotiation packet.\n");
       }
-      get_and_send_packet(&zrvfi_get_v2_support_packet, config_print);
+      get_and_send_packet(&model::Model::zrvfi_get_v2_support_packet,
+                          config_print);
       return RVFI_prestep_continue;
     } else {
-      zrvfi_halt_exec_packet(UNIT);
+      m_model.zrvfi_halt_exec_packet(UNIT);
       send_trace(trace_version);
       return RVFI_prestep_end_trace;
     }
@@ -199,7 +197,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
   case 1: /* Instruction */
     break;
   case 'v': { /* Set wire format version */
-    mach_bits insn = zrvfi_get_insn(UNIT);
+    mach_bits insn = m_model.zrvfi_get_insn(UNIT);
     if (config_print) {
       fprintf(stderr, "Got request for v%jd trace format!\n", (intmax_t)insn);
     }
