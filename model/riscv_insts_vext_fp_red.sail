@@ -1,17 +1,17 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ******************************************************************************* */
-/* This file implements part of the vector extension.                              */
-/* Chapter 14: Vector Reduction Instructions                                       */
-/* ******************************************************************************* */
+// ******************************************************************************
+// This file implements part of the vector extension.
+// Chapter 14: Vector Reduction Instructions
+// ******************************************************************************
 
-/* ********************** OPFVV (Floating-Point Reduction) *********************** */
+// ********************* OPFVV (Floating-Point Reduction) ***********************
 union clause instruction = RFVVTYPE : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
@@ -30,12 +30,12 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
 val process_rfvv_single : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, nat1, sew_bitsize, range(-3, 3)) -> ExecutionResult
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b = fcsr[FRM];
-  let num_elem_vd = get_num_elem(0, SEW); /* vd regardless of LMUL setting */
+  let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
 
   if illegal_fp_reduction(SEW, rm_3b) then return Illegal_Instruction();
   assert(SEW != 8);
 
-  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS; // if vl=0, no operation is performed
 
   let 'n = num_elem_vs;
   let 'd = num_elem_vd;
@@ -49,11 +49,11 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
     Err(()) => return Illegal_Instruction()
   };
 
-  var sum : bits('m) = read_single_element(SEW, 0, vs1); /* vs1 regardless of LMUL setting */
+  var sum : bits('m) = read_single_element(SEW, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] == bitone then {
       sum = match funct6 {
-        /* currently ordered/unordered sum reductions do the same operations */
+        // currently ordered/unordered sum reductions do the same operations
         FVV_VFREDOSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDUSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDMAX    => fp_max(sum, vs2_val[i]),
@@ -64,8 +64,8 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   };
 
   write_single_element(SEW, 0, vd, sum);
-  /* other elements in vd are treated as tail elements, currently remain unchanged */
-  /* TODO: configuration support for agnostic behavior */
+  // other elements in vd are treated as tail elements, currently remain unchanged
+  // TODO: configuration support for agnostic behavior
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
@@ -78,9 +78,9 @@ function process_rfvv_widening_reduction(funct6, vm, vs2, vs1, vd, num_elem_vs, 
   if illegal_fp_widening_reduction(SEW, rm_3b, SEW_widen) then return Illegal_Instruction();
   assert(SEW >= 16 & SEW_widen <= 64);
 
-  let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
+  let num_elem_vd = get_num_elem(0, SEW_widen); // vd regardless of LMUL setting
 
-  if unsigned(vl) == 0 then return RETIRE_SUCCESS; /* if vl=0, no operation is performed */
+  if unsigned(vl) == 0 then return RETIRE_SUCCESS; // if vl=0, no operation is performed
 
   let 'n = num_elem_vs;
   let 'd = num_elem_vd;
@@ -95,17 +95,17 @@ function process_rfvv_widening_reduction(funct6, vm, vs2, vs1, vd, num_elem_vs, 
     Err(()) => return Illegal_Instruction()
   };
 
-  var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); /* vs1 regardless of LMUL setting */
+  var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
     if mask[i] == bitone then {
-      /* currently ordered/unordered sum reductions do the same operations */
+      // currently ordered/unordered sum reductions do the same operations
       sum = fp_add(rm_3b, sum, fp_widen(vs2_val[i]))
     }
   };
 
   write_single_element(SEW_widen, 0, vd, sum);
-  /* other elements in vd are treated as tail elements, currently remain unchanged */
-  /* TODO: configuration support for agnostic behavior */
+  // other elements in vd are treated as tail elements, currently remain unchanged
+  // TODO: configuration support for agnostic behavior
   set_vstart(zeros());
   RETIRE_SUCCESS
 }

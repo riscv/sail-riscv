@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 function clause currentlyEnabled(Ext_Zcb) = hartSupports(Ext_Zcb) & currentlyEnabled(Ext_Zca)
 
@@ -24,7 +24,7 @@ function clause execute C_LBU(uimm, rdc, rsc1) = {
   execute(LOAD(imm, rs1, rd, true, 1))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_LHU : (bits(2), cregidx, cregidx)
 
@@ -42,7 +42,7 @@ function clause execute C_LHU(uimm, rdc, rsc1) = {
   execute(LOAD(imm, rs1, rd, true, 2))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_LH : (bits(2), cregidx, cregidx)
 
@@ -60,7 +60,7 @@ function clause execute C_LH(uimm, rdc, rsc1) = {
   execute(LOAD(imm, rs1, rd, false, 2))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_SB : (bits(2), cregidx, cregidx)
 
@@ -78,7 +78,7 @@ function clause execute C_SB(uimm, rsc1, rsc2) = {
   execute(STORE(imm, rs2, rs1, 1))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_SH : (bits(2), cregidx, cregidx)
 
@@ -96,7 +96,7 @@ function clause execute C_SH(uimm, rsc1, rsc2) = {
   execute(STORE(imm, rs2, rs1, 2))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_ZEXT_B : (cregidx)
 
@@ -113,7 +113,7 @@ function clause execute C_ZEXT_B(rsdc) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_SEXT_B : (cregidx)
 
@@ -129,7 +129,7 @@ function clause execute C_SEXT_B(rsdc) = {
   execute(ZBB_EXTOP(rsd, rsd, SEXTB))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_ZEXT_H : (cregidx)
 
@@ -145,7 +145,7 @@ function clause execute C_ZEXT_H(rsdc) = {
   execute(ZBB_EXTOP(rsd, rsd, ZEXTH))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_SEXT_H : (cregidx)
 
@@ -161,7 +161,7 @@ function clause execute C_SEXT_H(rsdc) = {
   execute(ZBB_EXTOP(rsd, rsd,  SEXTH))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_ZEXT_W : (cregidx)
 
@@ -177,7 +177,7 @@ function clause execute C_ZEXT_W(rsdc) = {
   execute (ZBA_RTYPEUW(zreg, rsd, rsd, 0b00))
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_NOT : (cregidx)
 
@@ -194,7 +194,7 @@ function clause execute C_NOT(rsdc) = {
   RETIRE_SUCCESS
 }
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = C_MUL : (cregidx, cregidx)
 

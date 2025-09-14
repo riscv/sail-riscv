@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 val zvk_valid_reg_overlap : (vregidx, vregidx, int) -> bool
 function zvk_valid_reg_overlap(rs, rd, emul_pow) = {
@@ -20,10 +20,8 @@ function zvk_check_encdec(EGW: nat, EGS: nat1) -> bool = {
   (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & LMUL_times_VLEN >= EGW
 }
 
-/*
- * Utility functions for Zvknh[ab]
- * ----------------------------------------------------------------------
- */
+// Utility functions for Zvknh[ab]
+// ----------------------------------------------------------------------
 
 enum zvk_vsha2_funct6 = {ZVK_VSHA2CH_VV, ZVK_VSHA2CL_VV}
 
@@ -71,10 +69,8 @@ function zvk_ch(x, y, z) = (x & y) ^ (~(x) & z)
 val zvk_maj : forall 'n, 'n >= 0. (bits('n), bits('n), bits('n)) -> bits('n)
 function zvk_maj(x, y, z) = (x & y) ^ (x & z) ^ (y & z)
 
-/*
- * Utility functions for Zvksed
- * ----------------------------------------------------------------------
- */
+// Utility functions for Zvksed
+// ----------------------------------------------------------------------
 
 enum zvk_vsm4r_funct6 = {ZVK_VSM4R_VV, ZVK_VSM4R_VS}
 
@@ -112,10 +108,8 @@ function zvk_sm4_subword(x) = {
   sm4_sbox(x[ 7.. 0])
 }
 
-/*
- * Utility functions for Zvksh
- * ----------------------------------------------------------------------
- */
+// Utility functions for Zvksh
+// ----------------------------------------------------------------------
 
 val zvk_p0 : bits(32) -> bits(32)
 function zvk_p0(X) = X ^ (X <<<  9) ^ (X <<< 17)
@@ -163,10 +157,8 @@ function zvk_sm3_round(A_H : vector(8, bits(32)), w : bits(32), x : bits(32), j 
   [ A_H[6], G1, A_H[4], E1, A_H[2], C1, A_H[0], A1 ]
 }
 
-/*
- * Utility functions for Zvkned
- * ----------------------------------------------------------------------
- */
+// Utility functions for Zvkned
+// ----------------------------------------------------------------------
 
 enum zvk_vaesdf_funct6 = {ZVK_VAESDF_VV, ZVK_VAESDF_VS}
 enum zvk_vaesdm_funct6 = {ZVK_VAESDM_VV, ZVK_VAESDM_VS}

@@ -1,14 +1,14 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ****************************************************************** */
-/* This file specifies the instructions in the 'M' extension.         */
-/* ****************************************************************** */
+// *****************************************************************
+// This file specifies the instructions in the 'M' extension.
+// *****************************************************************
 
 function clause currentlyEnabled(Ext_M) = hartSupports(Ext_M) & misa[M] == 0b1
 function clause currentlyEnabled(Ext_Zmmul) = hartSupports(Ext_Zmmul) | currentlyEnabled(Ext_M)
@@ -49,7 +49,7 @@ mapping mul_mnemonic : mul_op <-> string = {
 mapping clause assembly = MUL(rs2, rs1, rd, mul_op)
   <-> mul_mnemonic(mul_op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = DIV : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIV(rs2, rs1, rd, is_unsigned)
@@ -72,7 +72,7 @@ function clause execute (DIV(rs2, rs1, rd, is_unsigned)) = {
 mapping clause assembly = DIV(rs2, rs1, rd, is_unsigned)
   <-> "div" ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = REM : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REM(rs2, rs1, rd, is_unsigned)
@@ -94,7 +94,7 @@ function clause execute (REM(rs2, rs1, rd, is_unsigned)) = {
 mapping clause assembly = REM(rs2, rs1, rd, is_unsigned)
   <-> "rem" ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = MULW : (regidx, regidx, regidx)
 
 mapping clause encdec = MULW(rs2, rs1, rd)
@@ -116,7 +116,7 @@ mapping clause assembly = MULW(rs2, rs1, rd)
   <-> "mulw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
   when xlen == 64
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = DIVW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, is_unsigned)
@@ -140,7 +140,7 @@ mapping clause assembly = DIVW(rs2, rs1, rd, is_unsigned)
   <-> "div" ^ maybe_u(is_unsigned) ^ "w" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
   when xlen == 64
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = REMW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, is_unsigned)

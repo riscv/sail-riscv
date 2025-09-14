@@ -1,45 +1,45 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* **************************************************************** */
-/* This file specifies the instructions in the D extension          */
-/* (double precision floating point).                               */
+// ***************************************************************
+// This file specifies the instructions in the D extension
+// (double precision floating point).
 
-/* RISC-V follows IEEE 754-2008 floating point arithmetic standard. */
+// RISC-V follows IEEE 754-2008 floating point arithmetic standard.
 
-/* Original version written by Rishiyur S. Nikhil, Sept-Oct 2019    */
+// Original version written by Rishiyur S. Nikhil, Sept-Oct 2019
 
-/* **************************************************************** */
-/* IMPORTANT!                                                       */
-/* The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and   */
-/* 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,       */
-/* respectively.                                                    */
-/* The texts follow each other very closely; please try to maintain */
-/* this correspondence as the files are maintained for bug-fixes,   */
-/* improvements, and version updates.                               */
+// ***************************************************************
+// IMPORTANT!
+// The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and
+// 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,
+// respectively.
+// The texts follow each other very closely; please try to maintain
+// this correspondence as the files are maintained for bug-fixes,
+// improvements, and version updates.
 
-/* **************************************************************** */
-/* Note: Rounding Modes and Floating point accrued exception flags  */
-/* are defined in riscv_insts_fext.sail.                            */
-/* In RISC-V, the D extension requires the F extension, so that     */
-/* should have been processed before this one.                      */
+// ***************************************************************
+// Note: Rounding Modes and Floating point accrued exception flags
+// are defined in riscv_insts_fext.sail.
+// In RISC-V, the D extension requires the F extension, so that
+// should have been processed before this one.
 
-/* **************************************************************** */
-/* S and D value structure (sign, exponent, mantissa)               */
+// ***************************************************************
+// S and D value structure (sign, exponent, mantissa)
 
-/* TODO: this should be a 'mapping' */
+// TODO: this should be a 'mapping'
 val      fsplit_D : bits(64) -> (bits(1), bits(11), bits(52))
 function fsplit_D   x64 = (x64[63..63], x64[62..52], x64[51..0])
 
 val      fmake_D  : (bits(1), bits(11), bits(52)) -> bits(64)
 function fmake_D (sign, exp, mant) = sign @ exp @ mant
 
-/* ---- Structure tests */
+// ---- Structure tests
 
 val      f_is_neg_inf_D : bits(64) -> bool
 function f_is_neg_inf_D   x64 = {
@@ -120,7 +120,7 @@ function f_is_QNaN_D   x64 = {
    & (mant [51] == bitone))
 }
 
-/* Either QNaN or SNan */
+// Either QNaN or SNan
 val      f_is_NaN_D : bits(64) -> bool
 function f_is_NaN_D   x64 = {
   let (sign, exp, mant) = fsplit_D (x64);
@@ -129,8 +129,8 @@ function f_is_NaN_D   x64 = {
 }
 
 
-/* **************************************************************** */
-/* Help functions used in the semantic functions                    */
+// ***************************************************************
+// Help functions used in the semantic functions
 
 val      negate_D : bits(64) -> bits(64)
 function negate_D (x64) = {
@@ -201,7 +201,7 @@ function fle_D   (v1,       v2,        is_quiet) = {
       then unsigned (m1) <=  unsigned (m2)
       else unsigned (e1)  <  unsigned (e2)
     else if (s1 == 0b0) & (s2 == 0b1) then
-      (v1Is0 & v2Is0)                         /* Equal in this case (+0=-0) */
+      (v1Is0 & v2Is0)                         // Equal in this case (+0=-0)
     else if (s1 == 0b1) & (s2 == 0b0) then
       true
     else
@@ -221,15 +221,15 @@ function fle_D   (v1,       v2,        is_quiet) = {
   (result, fflags)
 }
 
-/* **************************************************************** */
-/* Helper functions for 'encdec()'                                  */
+// ***************************************************************
+// Helper functions for 'encdec()'
 
 function clause currentlyEnabled(Ext_Zdinx) = hartSupports(Ext_Zdinx) & flen >= 64 // TODO: Separate Zfinx and Zdinx
 
 function haveDoubleFPU() -> bool = currentlyEnabled(Ext_D) | currentlyEnabled(Ext_Zdinx)
 
-/* RV32Zdinx requires even register pairs; can be omitted for code  */
-/* not used for RV32Zdinx (i.e. RV64-only or D-only).               */
+// RV32Zdinx requires even register pairs; can be omitted for code
+// not used for RV32Zdinx (i.e. RV64-only or D-only).
 val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, fregidx)) -> bool
 function validDoubleRegs(n, regs) = {
   if currentlyEnabled(Ext_Zdinx) & xlen == 32 then {
@@ -240,22 +240,22 @@ function validDoubleRegs(n, regs) = {
   true
 }
 
-/* ****************************************************************** */
-/* Floating-point loads                                               */
-/* These are defined in: riscv_insts_fext.sail                        */
+// *****************************************************************
+// Floating-point loads
+// These are defined in: riscv_insts_fext.sail
 
-/* ****************************************************************** */
-/* Floating-point stores                                              */
-/* These are defined in: riscv_insts_fext.sail                        */
+// *****************************************************************
+// Floating-point stores
+// These are defined in: riscv_insts_fext.sail
 
-/* ****************************************************************** */
-/* Fused multiply-add */
+// *****************************************************************
+// Fused multiply-add
 
-/* instruction */
+// instruction
 
 union clause instruction = F_MADD_TYPE_D : (fregidx, fregidx, fregidx, rounding_mode, fregidx, f_madd_op_D)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FMADD_D)
   <-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_0011
@@ -273,7 +273,7 @@ mapping clause encdec = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMADD_D)
   <-> encdec_freg(rs3) @ 0b01 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b100_1111
   when haveDoubleFPU() & validDoubleRegs([rs3, rs2, rs1, rd])
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
   let rs1_val_64b = F_or_X_D(rs1);
@@ -298,7 +298,7 @@ function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
   }
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_madd_type_mnemonic_D : f_madd_op_D <-> string = {
     FMADD_D  <-> "fmadd.d",
@@ -315,14 +315,14 @@ mapping clause assembly = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)
                           ^ sep() ^ freg_or_reg_name(rs3)
                           ^ sep() ^ frm_mnemonic(rm)
 
-/* ****************************************************************** */
-/* Binary ops with rounding mode */
+// *****************************************************************
+// Binary ops with rounding mode
 
-/* instruction */
+// instruction
 
 union clause instruction = F_BIN_RM_TYPE_D : (fregidx, fregidx, rounding_mode, fregidx, f_bin_rm_op_D)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FADD_D)
   <-> 0b000_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
@@ -340,7 +340,7 @@ mapping clause encdec = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FDIV_D)
   <-> 0b000_1101 @ encdec_freg(rs2) @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
   when haveDoubleFPU() & validDoubleRegs([rs2, rs1, rd])
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
   let rs1_val_64b = F_or_X_D(rs1);
@@ -362,7 +362,7 @@ function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
   }
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_bin_rm_type_mnemonic_D : f_bin_rm_op_D <-> string = {
   FADD_D  <-> "fadd.d",
@@ -378,16 +378,16 @@ mapping clause assembly = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)
                           ^ sep() ^ freg_or_reg_name(rs2)
                           ^ sep() ^ frm_mnemonic(rm)
 
-/* ****************************************************************** */
-/* Unary with rounding mode */
+// *****************************************************************
+// Unary with rounding mode
 
-/* instruction */
+// instruction
 
 union clause instruction = F_UN_RM_FF_TYPE_D : (fregidx, rounding_mode, fregidx, f_un_rm_ff_op_D)
 union clause instruction = F_UN_RM_XF_TYPE_D : (regidx, rounding_mode, fregidx, f_un_rm_xf_op_D)
 union clause instruction = F_UN_RM_FX_TYPE_D : (fregidx, rounding_mode, regidx, f_un_rm_fx_op_D)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_UN_RM_FF_TYPE_D(rs1, rm, rd, FSQRT_D)
   <-> 0b010_1101 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
@@ -417,7 +417,7 @@ mapping clause encdec = F_UN_RM_FF_TYPE_D(rs1, rm, rd, FCVT_D_S)
   <-> 0b010_0001 @ 0b00000 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
   when haveDoubleFPU() & validDoubleRegs([rd])
 
-/* D instructions, RV64 only */
+// D instructions, RV64 only
 
 mapping clause encdec = F_UN_RM_FX_TYPE_D(rs1, rm, rd, FCVT_L_D)
   <-> 0b110_0001 @ 0b00010 @ encdec_freg(rs1) @ encdec_rounding_mode (rm) @ encdec_reg(rd) @ 0b101_0011
@@ -435,7 +435,7 @@ mapping clause encdec = F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_LU)
   <-> 0b110_1001 @ 0b00011 @ encdec_reg(rs1) @ encdec_rounding_mode (rm) @ encdec_freg(rd) @ 0b101_0011
   when haveDoubleFPU() & xlen >= 64
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_UN_RM_FF_TYPE_D(rs1, rm, rd, FSQRT_D)) = {
   let rs1_val_D = F_or_X_D(rs1);
@@ -606,7 +606,7 @@ function clause execute (F_UN_RM_XF_TYPE_D(rs1, rm, rd, FCVT_D_LU)) = {
   }
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_un_rm_ff_type_mnemonic_D : f_un_rm_ff_op_D <-> string = {
     FSQRT_D   <-> "fsqrt.d",
@@ -646,15 +646,15 @@ mapping clause assembly = F_UN_RM_XF_TYPE_D(rs1, rm, rd, op)
                           ^ sep() ^ reg_name(rs1)
                           ^ sep() ^ frm_mnemonic(rm)
 
-/* ****************************************************************** */
-/* Binary, no rounding mode */
+// *****************************************************************
+// Binary, no rounding mode
 
-/* instruction */
+// instruction
 
 union clause instruction = F_BIN_F_TYPE_D : (fregidx, fregidx, fregidx, f_bin_f_op_D)
 union clause instruction = F_BIN_X_TYPE_D : (fregidx, fregidx, regidx, f_bin_x_op_D)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJ_D)
                     <-> 0b001_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
@@ -688,7 +688,7 @@ mapping clause encdec = F_BIN_X_TYPE_D(rs2, rs1, rd, FLE_D)
                     <-> 0b101_0001 @ encdec_freg(rs2) @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
                     when haveDoubleFPU() & validDoubleRegs([rs2, rs1])
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_BIN_F_TYPE_D(rs2, rs1, rd, FSGNJ_D)) = {
   let rs1_val_D    = F_or_X_D(rs1);
@@ -800,7 +800,7 @@ function clause execute (F_BIN_X_TYPE_D(rs2, rs1, rd, FLE_D)) = {
   RETIRE_SUCCESS
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_bin_f_type_mnemonic_D : f_bin_f_op_D <-> string = {
     FSGNJ_D  <-> "fsgnj.d",
@@ -828,19 +828,19 @@ mapping clause assembly = F_BIN_X_TYPE_D(rs2, rs1, rd, op)
                           ^ sep() ^ freg_or_reg_name(rs1)
                           ^ sep() ^ freg_or_reg_name(rs2)
 
-/* ****************************************************************** */
-/* Unary, no rounding mode */
+// *****************************************************************
+// Unary, no rounding mode
 
 union clause instruction = F_UN_X_TYPE_D : (fregidx, regidx, f_un_x_op_D)
 union clause instruction = F_UN_F_TYPE_D : (regidx, fregidx, f_un_f_op_D)
 
-/* instruction <-> Binary encoding ================================ */
+// instruction <-> Binary encoding ================================
 
 mapping clause encdec = F_UN_X_TYPE_D(rs1, rd, FCLASS_D)
                     <-> 0b111_0001 @ 0b00000 @ encdec_freg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b101_0011
                     when haveDoubleFPU() & validDoubleRegs([rs1])
 
-/* D instructions, RV64 only */
+// D instructions, RV64 only
 
 mapping clause encdec = F_UN_X_TYPE_D(rs1, rd, FMV_X_D)
                     <-> 0b111_0001 @ 0b00000 @ encdec_freg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b101_0011
@@ -850,7 +850,7 @@ mapping clause encdec = F_UN_F_TYPE_D(rs1, rd, FMV_D_X)
                     <-> 0b111_1001 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_freg(rd) @ 0b101_0011
                     when currentlyEnabled(Ext_D) & xlen >= 64
 
-/* Execution semantics ================================ */
+// Execution semantics ================================
 
 function clause execute (F_UN_X_TYPE_D(rs1, rd, FCLASS_D)) = {
   let rs1_val_D = F_or_X_D(rs1);
@@ -884,7 +884,7 @@ function clause execute (F_UN_F_TYPE_D(rs1, rd, FMV_D_X)) = {
   RETIRE_SUCCESS
 }
 
-/* instruction -> Assembly notation ================================ */
+// instruction -> Assembly notation ================================
 
 mapping f_un_x_type_mnemonic_D : f_un_x_op_D <-> string = {
     FMV_X_D  <-> "fmv.x.d",
@@ -905,4 +905,4 @@ mapping clause assembly = F_UN_F_TYPE_D(rs1, rd, op)
                           ^ spc() ^ freg_name(rd)
                           ^ sep() ^ reg_name(rs1)
 
-/* ****************************************************************** */
+// *****************************************************************

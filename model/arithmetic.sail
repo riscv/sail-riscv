@@ -1,12 +1,12 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Reverse bits in each byte */
+// Reverse bits in each byte
 val brev8 : forall 'm, 'm >= 0 & mod('m, 8) == 0. (bits('m)) -> bits('m)
 function brev8(input) = {
   var output : bits('m) = zeros();
@@ -15,7 +15,7 @@ function brev8(input) = {
   output
 }
 
-/* Carry-less multiply. */
+// Carry-less multiply.
 val carryless_mul : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits(2 * 'n)
 function carryless_mul(a, b) = {
   var result : bits(2 * 'n) = zeros();
@@ -26,7 +26,7 @@ function carryless_mul(a, b) = {
   result
 }
 
-/* Reverse carry-less multiply. */
+// Reverse carry-less multiply.
 val carryless_mulr : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits('n)
 function carryless_mulr(a, b) = {
   var result : bits('n) = zeros();
@@ -37,7 +37,7 @@ function carryless_mulr(a, b) = {
   result
 }
 
-/* Equivalent reverse carry-less multiply. */
+// Equivalent reverse carry-less multiply.
 val carryless_mul_reversed : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits('n)
 function carryless_mul_reversed(a, b) = {
   let prod = carryless_mul(reverse_bits(a), reverse_bits(b));

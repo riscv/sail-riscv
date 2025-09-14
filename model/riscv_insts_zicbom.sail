@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 // Cache Block Operations - Management
 
@@ -12,7 +12,7 @@ function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 
 function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
 
-/* ****************************************************************** */
+// *****************************************************************
 union clause instruction = ZICBOM : (cbop_zicbom, regidx)
 
 mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
@@ -34,7 +34,7 @@ mapping cbop_mnemonic : cbop_zicbom <-> string = {
 mapping clause assembly = ZICBOM(cbop, rs1)
   <-> cbop_mnemonic(cbop) ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
-/* CBIE from xenvcfg */
+// CBIE from xenvcfg
 enum cbie = {CBIE_ILLEGAL, CBIE_EXEC_FLUSH, CBIE_EXEC_INVAL}
 
 mapping encdec_cbie : cbie <-> bits(2) = {

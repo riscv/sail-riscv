@@ -1,10 +1,10 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 default Order dec
 
@@ -219,10 +219,9 @@ overload operator * = {mult_atom, mult_int}
 overload operator / = {quot_positive_round_zero}
 overload operator % = {rem_positive_round_zero}
 
-/* helper for vector extension
- * 1. EEW between 8 and 64
- * 2. EMUL in vmv<nr>r.v instructions between 1 and 8
- */
+// helper for vector extension
+// 1. EEW between 8 and 64
+// 2. EMUL in vmv<nr>r.v instructions between 1 and 8
 val log2 : forall 'n, 'n in {1, 2, 4, 8, 16, 32, 64}. int('n) -> int
 function log2(n) = {
   let result : int = match n {
@@ -237,19 +236,18 @@ function log2(n) = {
   result
 }
 
-/* This is a slightly arbitrary limit on the maximum number of bytes
-   in a memory access.  It helps to generate slightly better C code
-   because it means width argument can be fast native integer. It
-   would be even better if it could be <= 8 bytes so that data can
-   also be a 64-bit int but CHERI needs 128-bit accesses for
-   capabilities and SIMD / vector instructions will also need more.
-
-   The specific value does not matter (if it is >8) since anything up
-   to 2^64-1 will result in a native int being used for the width type.
-
-   4096 was chosen because it is a page size, and a reasonable maximum
-   for cbo.zero.
-   */
+// This is a slightly arbitrary limit on the maximum number of bytes
+// in a memory access.  It helps to generate slightly better C code
+// because it means width argument can be fast native integer. It
+// would be even better if it could be <= 8 bytes so that data can
+// also be a 64-bit int but CHERI needs 128-bit accesses for
+// capabilities and SIMD / vector instructions will also need more.
+//
+// The specific value does not matter (if it is >8) since anything up
+// to 2^64-1 will result in a native int being used for the width type.
+//
+// 4096 was chosen because it is a page size, and a reasonable maximum
+// for cbo.zero.
 type max_mem_access : Int = 4096
 
 // Type used for memory access widths. Zero byte accesses are not allowed.

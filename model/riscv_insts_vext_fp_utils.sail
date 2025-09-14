@@ -1,66 +1,65 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ******************************************************************************* */
-/* This file implements functions used by vector instructions.                     */
-/* ******************************************************************************* */
+// ******************************************************************************
+// This file implements functions used by vector instructions.
+// ******************************************************************************
 
-/* Check for valid floating-point operation types
- *  1. Valid element width of floating-point numbers
- *  2. Valid floating-point rounding mode
- */
+// Check for valid floating-point operation types
+// 1. Valid element width of floating-point numbers
+// 2. Valid floating-point rounding mode
 val valid_fp_op : (sew_bitsize, bits(3)) -> bool
 function valid_fp_op(SEW, rm_3b) = {
-  /* 128-bit floating-point values will be supported in future extensions */
+  // 128-bit floating-point values will be supported in future extensions
   let valid_sew = (SEW >= 16 & SEW <= 128);
   let valid_rm = not(rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111);
   valid_sew & valid_rm
 }
 
-/* a. Normal check for floating-point instructions */
+// a. Normal check for floating-point instructions
 val illegal_fp_normal : (vregidx, bits(1), sew_bitsize, bits(3)) -> bool
 function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
 }
 
-/* b. Masked check for floating-point instructions encoded with vm = 0 */
+// b. Masked check for floating-point instructions encoded with vm = 0
 val illegal_fp_vd_masked : (vregidx, sew_bitsize, bits(3)) -> bool
 function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
   not(valid_vtype()) | vd == zvreg | not(valid_fp_op(SEW, rm_3b))
 }
 
-/* c. Unmasked check for floating-point instructions encoded with vm = 1 */
+// c. Unmasked check for floating-point instructions encoded with vm = 1
 val illegal_fp_vd_unmasked : (sew_bitsize, bits(3)) -> bool
 function illegal_fp_vd_unmasked(SEW, rm_3b) = {
   not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b))
 }
 
-/* d. Variable width check for floating-point widening/narrowing instructions */
+// d. Variable width check for floating-point widening/narrowing instructions
 val illegal_fp_variable_width : (vregidx, bits(1), sew_bitsize, bits(3), int, int) -> bool
 function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
-/* e. Normal check for floating-point reduction instructions */
+// e. Normal check for floating-point reduction instructions
 val illegal_fp_reduction : (sew_bitsize, bits(3)) -> bool
 function illegal_fp_reduction(SEW, rm_3b) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
 }
 
-/* f. Variable width check for floating-point widening reduction instructions */
+// f. Variable width check for floating-point widening reduction instructions
 val illegal_fp_widening_reduction : (sew_bitsize, bits(3), int) -> bool
 function illegal_fp_widening_reduction(SEW, rm_3b, EEW) = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
   not(EEW >= 8 & EEW <= elen)
 }
 
-/* Floating point classification functions */
+// Floating point classification functions
 val f_is_neg_inf : forall 'm, 'm in {16, 32, 64}. bits('m) -> bool
 function f_is_neg_inf(xf) = {
   match 'm {
@@ -160,7 +159,7 @@ function f_is_NaN(xf) = {
   }
 }
 
-/* Scalar register shaping for floating point operations */
+// Scalar register shaping for floating point operations
 val get_scalar_fp : forall 'n, 'n in {16, 32, 64}. (fregidx, int('n)) -> bits('n)
 function get_scalar_fp(rs1, SEW) = {
   assert(flen >= SEW, "invalid vector floating-point type width: FLEN < SEW");
@@ -171,11 +170,11 @@ function get_scalar_fp(rs1, SEW) = {
   }
 }
 
-/* Get the floating point rounding mode from csr fcsr */
+// Get the floating point rounding mode from csr fcsr
 val get_fp_rounding_mode : unit -> rounding_mode
 function get_fp_rounding_mode() = encdec_rounding_mode(fcsr[FRM])
 
-/* Negate a floating point number */
+// Negate a floating point number
 val negate_fp : forall 'm, 'm in {16, 32, 64}. bits('m) -> bits('m)
 function negate_fp(xf) = {
   match 'm {
@@ -185,7 +184,7 @@ function negate_fp(xf) = {
   }
 }
 
-/* Floating point functions using softfloat interface */
+// Floating point functions using softfloat interface
 val fp_add: forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
 function fp_add(rm_3b, op1, op2) = {
   let (fflags, result_val) : (bits_fflags, bits('m)) = match 'm {
@@ -402,7 +401,7 @@ function fp_widen(nval) = {
   wval
 }
 
-/* Floating point functions without softfloat support */
+// Floating point functions without softfloat support
 val riscv_f16ToI16 : (bits_rm, bits_H) -> (bits_fflags, bits(16))
 function riscv_f16ToI16 (rm, v) = {
   let (flag, sig32) = riscv_f16ToI32(rm, v);

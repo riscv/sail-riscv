@@ -1,51 +1,50 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* **************************************************************** */
-/* This file lists all the external Berkeley softfloat functions    */
-/* invoked from the SAIL spec for RISC-V F and D extensions         */
-/* (in:    riscv_insts_fdext.sail)                                  */
-/*                                                                  */
-/* Each of these functions corresponds to one in 'SoftFloat.hs'     */
-/* in    https://github.com/GaloisInc/softfloat-hs.git              */
-/* written by Ben Selfridge,                                        */
-/* which is a set of pure-functional Haskell wrappers on the        */
-/* Berkely softfloat C library written by John Hauser.              */
+// ***************************************************************
+// This file lists all the external Berkeley softfloat functions
+// invoked from the SAIL spec for RISC-V F and D extensions
+// (in:    riscv_insts_fdext.sail)
+//
+// Each of these functions corresponds to one in 'SoftFloat.hs'
+// in    https://github.com/GaloisInc/softfloat-hs.git
+// written by Ben Selfridge,
+// which is a set of pure-functional Haskell wrappers on the
+// Berkely softfloat C library written by John Hauser.
 
-/* For now, the bodies of all these functions are placeholders      */
-/* while we develop    riscv_insts_fdext.sail                       */
-/* They should be replaced with external calls to Berkeley softfloat*/
-/* functions in a similar manner to the Haskell softfloat wrappers. */
+// For now, the bodies of all these functions are placeholders
+// while we develop    riscv_insts_fdext.sail
+// They should be replaced with external calls to Berkeley softfloat
+// functions in a similar manner to the Haskell softfloat wrappers.
 
-/* **************************************************************** */
-/* All arguments and results have one of these types                */
+// ***************************************************************
+// All arguments and results have one of these types
 
-type bits_rm     = bits(3)    /* Rounding mode */
-type bits_fflags = bits(5)    /* Accrued exceptions: NV,DZ,OF,UF,NX */
-type bits_H      = bits(16)   /* Half-precision float value */
-type bits_S      = bits(32)   /* Single-precision float value */
-type bits_D      = bits(64)   /* Double-precision float value */
+type bits_rm     = bits(3)    // Rounding mode
+type bits_fflags = bits(5)    // Accrued exceptions: NV,DZ,OF,UF,NX
+type bits_H      = bits(16)   // Half-precision float value
+type bits_S      = bits(32)   // Single-precision float value
+type bits_D      = bits(64)   // Double-precision float value
 
-type bits_W      = bits(32)   /* Signed integer */
-type bits_WU     = bits(32)   /* Unsigned integer */
+type bits_W      = bits(32)   // Signed integer
+type bits_WU     = bits(32)   // Unsigned integer
 
-type bits_L      = bits(64)   /* Signed integer */
-type bits_LU     = bits(64)   /* Unsigned integer */
+type bits_L      = bits(64)   // Signed integer
+type bits_LU     = bits(64)   // Unsigned integer
 
-/* ***************************************************************** */
-/* Internal registers to pass results across the softfloat interface
- * to avoid return types involving structures.
- */
+// ****************************************************************
+// Internal registers to pass results across the softfloat interface
+// to avoid return types involving structures.
 register float_result : bits(64)
 register float_fflags : bits(64)
 
-/* **************************************************************** */
-/* ADD/SUB/MUL/DIV                                                  */
+// ***************************************************************
+// ADD/SUB/MUL/DIV
 
 val     extern_f16Add = pure {c: "softfloat_f16add", lem: "softfloat_f16_add"} : (bits_rm, bits_H, bits_H) -> unit
 val      riscv_f16Add : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H)
@@ -131,8 +130,8 @@ function riscv_f64Div (rm, v1, v2) = {
   (float_fflags[4 .. 0], float_result)
 }
 
-/* **************************************************************** */
-/* MULTIPLY-ADD                                                     */
+// ***************************************************************
+// MULTIPLY-ADD
 
 val     extern_f16MulAdd = pure {c: "softfloat_f16muladd", lem: "softfloat_f16_muladd"} : (bits_rm, bits_H, bits_H, bits_H) -> unit
 val      riscv_f16MulAdd : (bits_rm, bits_H, bits_H, bits_H) -> (bits_fflags, bits_H)
@@ -155,8 +154,8 @@ function riscv_f64MulAdd (rm, v1, v2, v3) = {
   (float_fflags[4 .. 0], float_result)
 }
 
-/* **************************************************************** */
-/* SQUARE ROOT                                                      */
+// ***************************************************************
+// SQUARE ROOT
 
 val     extern_f16Sqrt = pure {c: "softfloat_f16sqrt", lem: "softfloat_f16_sqrt"} : (bits_rm, bits_H) -> unit
 val      riscv_f16Sqrt : (bits_rm, bits_H) -> (bits_fflags, bits_H)
@@ -179,8 +178,8 @@ function riscv_f64Sqrt (rm, v) = {
   (float_fflags[4 .. 0], float_result)
 }
 
-/* **************************************************************** */
-/* CONVERSIONS                                                      */
+// ***************************************************************
+// CONVERSIONS
 
 val     extern_f16ToI32 = pure {c: "softfloat_f16toi32", lem: "softfloat_f16_to_i32"} : (bits_rm, bits_H) -> unit
 val      riscv_f16ToI32 : (bits_rm, bits_H) -> (bits_fflags, bits_W)
@@ -393,8 +392,8 @@ function riscv_f64ToF32 (rm, v) = {
   (float_fflags[4 .. 0], float_result[31 .. 0])
 }
 
-/* **************************************************************** */
-/* COMPARISONS                                                      */
+// ***************************************************************
+// COMPARISONS
 
 val     extern_f16Lt = pure {c: "softfloat_f16lt", lem: "softfloat_f16_lt"} : (bits_H, bits_H) -> unit
 val      riscv_f16Lt : (bits_H, bits_H) -> (bits_fflags, bool)
@@ -521,4 +520,4 @@ function riscv_f64roundToInt (rm, v, exact) = {
   extern_f64roundToInt(rm, v, exact);
   (float_fflags[4 .. 0], float_result)
 }
-/* **************************************************************** */
+// ***************************************************************

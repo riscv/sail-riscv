@@ -1,15 +1,13 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/*
- * Scalar Cryptography Extension - Scalar SM3 instructions
- * ----------------------------------------------------------------------
- */
+// Scalar Cryptography Extension - Scalar SM3 instructions
+// ----------------------------------------------------------------------
 
 function clause currentlyEnabled(Ext_Zksh) = hartSupports(Ext_Zksh)
 
@@ -44,10 +42,8 @@ function clause execute (SM3P1(rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-/*
- * Scalar Cryptography Extension - Scalar SM4 instructions
- * ----------------------------------------------------------------------
- */
+// Scalar Cryptography Extension - Scalar SM4 instructions
+// ----------------------------------------------------------------------
 
 function clause currentlyEnabled(Ext_Zksed) = hartSupports(Ext_Zksed)
 
@@ -69,7 +65,7 @@ mapping clause assembly = SM4KS (bs, rs2, rs1, rd) <->
     "sm4ks" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
 
 function clause execute (SM4ED (bs, rs2, rs1, rd)) = {
-  let shamt : bits(5)  = bs @ 0b000; /* shamt = bs*8 */
+  let shamt : bits(5)  = bs @ 0b000; // shamt = bs*8
   let sb_in : bits(8)  = (X(rs2)[31..0] >> shamt)[7..0];
   let x     : bits(32) = 0x000000 @ sm4_sbox(sb_in);
   let y     : bits(32) = x ^ (x               <<  8) ^ ( x               <<  2) ^
@@ -82,7 +78,7 @@ function clause execute (SM4ED (bs, rs2, rs1, rd)) = {
 }
 
 function clause execute (SM4KS (bs, rs2, rs1, rd)) = {
-  let shamt : bits(5)  = (bs @ 0b000); /* shamt = bs*8 */
+  let shamt : bits(5)  = (bs @ 0b000); // shamt = bs*8
   let sb_in : bits(8)  = (X(rs2)[31..0] >> shamt)[7..0];
   let x     : bits(32) = 0x000000 @ sm4_sbox(sb_in);
   let y     : bits(32) = x ^ ((x & 0x00000007) << 29) ^ ((x & 0x000000FE) <<  7) ^

@@ -1,37 +1,30 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Definitions for floating point registers (F and D extensions) */
+// Definitions for floating point registers (F and D extensions)
 
-/* default register type */
+// default register type
 type fregtype = flenbits
 
-/* default zero register */
+// default zero register
 let zero_freg : fregtype = zeros()
 
-/* default register printer */
+// default register printer
 val FRegStr : fregtype -> string
 function FRegStr(r) = bits_str(r)
 
-/* conversions */
+// conversions
 
 val fregval_from_freg : fregtype -> flenbits
 function fregval_from_freg(r) = r
 
 val fregval_into_freg : flenbits -> fregtype
 function fregval_into_freg(v) = v
-
-
-/* Rounding Mode
-    Rounding modes occur as a 3-bit field in F,D instructions,
-    and also as a 3-bit 'frm' field in the 'fcsr' CSR.
-    RISC-V uses the following IEEE-defined rounding modes.
-*/
 
 enum f_madd_op_H = {FMADD_H, FMSUB_H, FNMSUB_H, FNMADD_H}
 
@@ -53,6 +46,9 @@ enum f_bin_f_op_H = {FSGNJ_H, FSGNJN_H, FSGNJX_H, FMIN_H, FMAX_H}
 
 enum f_bin_x_op_H = {FEQ_H, FLT_H, FLE_H}
 
+// Rounding modes occur as a 3-bit field in F,D instructions,
+// and also as a 3-bit 'frm' field in the 'fcsr' CSR.
+// RISC-V uses the following IEEE-defined rounding modes.
 enum rounding_mode = {RM_RNE, RM_RTZ, RM_RDN, RM_RUP, RM_RMM, RM_DYN}
 
 enum f_madd_op_S = {FMADD_S, FMSUB_S, FNMSUB_S, FNMADD_S}
@@ -67,9 +63,9 @@ enum f_un_rm_fx_op_S = { FCVT_W_S, FCVT_WU_S, // RV32 and RV64
 enum f_un_rm_xf_op_S = { FCVT_S_W, FCVT_S_WU, // RV32 and RV64
                          FCVT_S_L, FCVT_S_LU } // RV64 only
 
-enum f_un_op_f_S = {FMV_W_X}    /* RV32 and RV64 */
+enum f_un_op_f_S = {FMV_W_X}    // RV32 and RV64
 
-enum f_un_op_x_S = {FCLASS_S, FMV_X_W}    /* RV32 and RV64 */
+enum f_un_op_x_S = {FCLASS_S, FMV_X_W}    // RV32 and RV64
 
 enum f_bin_op_f_S = {FSGNJ_S, FSGNJN_S, FSGNJX_S, FMIN_S, FMAX_S}
 
@@ -91,7 +87,7 @@ enum f_bin_f_op_D = {FSGNJ_D, FSGNJN_D, FSGNJX_D, FMIN_D, FMAX_D}
 
 enum f_bin_x_op_D = {FEQ_D, FLT_D, FLE_D}
 
-enum f_un_x_op_D = {FCLASS_D,   /* RV32 and RV64 */
-                    FMV_X_D}    /* RV64 only */
+enum f_un_x_op_D = {FCLASS_D,   // RV32 and RV64
+                    FMV_X_D}    // RV64 only
 
 enum f_un_f_op_D = {FMV_D_X}

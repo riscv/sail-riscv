@@ -1,16 +1,16 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* This file specifies the instructions in the 'Zawrs' extension.  */
+// This file specifies the instructions in the 'Zawrs' extension.
 
 function clause currentlyEnabled(Ext_Zawrs) = hartSupports(Ext_Zawrs)
 
-/* ****************************************************************** */
+// *****************************************************************
 
 union clause instruction = WRS : (wrsop)
 mapping encdec_wrsop : wrsop <-> bits(12) = {

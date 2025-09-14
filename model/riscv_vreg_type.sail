@@ -1,16 +1,16 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* Definitions for vector registers (V extension) */
+// Definitions for vector registers (V extension)
 
 type vlenbits = bits(vlen)
 
-/* vector instruction types */
+// vector instruction types
 
 enum vvfunct6     = { VV_VADD, VV_VSUB, VV_VMINU, VV_VMIN, VV_VMAXU, VV_VMAX, VV_VAND, VV_VOR, VV_VXOR,
   VV_VRGATHER, VV_VRGATHEREI16, VV_VSADDU, VV_VSADD, VV_VSSUBU, VV_VSSUB, VV_VSLL, VV_VSMUL,

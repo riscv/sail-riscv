@@ -1,18 +1,18 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
+//
+// SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
-/* ******************************************************************************* */
-/* This file implements part of the vector extension.                              */
-/* Mask instructions from Chap 13 (floating-point)                                 */
-/* ******************************************************************************* */
+// ******************************************************************************
+// This file implements part of the vector extension.
+// Mask instructions from Chap 13 (floating-point)
+// ******************************************************************************
 
-/* ******************************* OPFVV (VVMTYPE) ******************************* */
-/* FVVM instructions' destination is a mask register */
+// ****************************** OPFVV (VVMTYPE) *******************************
+// FVVM instructions' destination is a mask register
 union clause instruction = FVVMTYPE : (fvvmfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fvvmfunct6 : fvvmfunct6 <-> bits(6) = {
@@ -76,8 +76,8 @@ mapping fvvmtype_mnemonic : fvvmfunct6 <-> string = {
 mapping clause assembly = FVVMTYPE(funct6, vm, vs2, vs1, vd)
   <-> fvvmtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-/* ******************************* OPFVF (VFMTYPE) ******************************* */
-/* VFM instructions' destination is a mask register */
+// ****************************** OPFVF (VFMTYPE) *******************************
+// VFM instructions' destination is a mask register
 union clause instruction = FVFMTYPE : (fvfmfunct6, bits(1), vregidx, fregidx, vregidx)
 
 mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
