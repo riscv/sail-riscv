@@ -461,3 +461,8 @@ function handle_illegal(instbits : instbits) -> unit = {
 
 /* Platform-specific wait-for-interrupt */
 function platform_wfi() -> unit = ()
+
+// Execute semihosting call
+val semihosting_call = impure "semihosting_call" : unit -> unit
+// Check if instruction sequence is a semihosting call
+val is_semihosting = impure "is_semihosting" : unit -> bool

@@ -8,3 +8,4 @@ extern bool config_print_mem_access;
 extern bool config_print_platform;
 extern bool config_enable_rvfi;
 extern bool config_use_abi_names;
+extern bool config_enable_semihosting;
