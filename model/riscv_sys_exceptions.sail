@@ -20,10 +20,12 @@ function handle_trap_extension(p : Privilege, pc : xlenbits, u : option(unit)) -
 // used for traps and ECALL
 function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
   let tvec : Mtvec = match p {
-                       Machine    => mtvec,
-                       Supervisor => stvec,
-                       User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-                     };
+    Machine           => mtvec,
+    Supervisor        => stvec,
+    User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  };
   match tvec_addr(tvec, cause) {
     Some(epc) => epc,
     None()    => internal_error(__FILE__, __LINE__, "Invalid tvec mode")
@@ -39,18 +41,22 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
 val get_xepc : Privilege -> xlenbits
 function get_xepc(p) =
   match p {
-    Machine    => align_pc(mepc),
-    Supervisor => align_pc(sepc),
-    User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    Machine           => align_pc(mepc),
+    Supervisor        => align_pc(sepc),
+    User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 
 val set_xepc : (Privilege, xlenbits) -> xlenbits
 function set_xepc(p, value) = {
   let target = legalize_xepc(value);
   match p {
-    Machine    => mepc = target,
-    Supervisor => sepc = target,
-    User       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    Machine           => mepc = target,
+    Supervisor        => sepc = target,
+    User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
   target
 }

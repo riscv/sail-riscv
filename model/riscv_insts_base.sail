@@ -515,14 +515,18 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
-  let t : sync_exception =
-    struct { trap = match (cur_privilege) {
-                      User       => E_U_EnvCall(),
-                      Supervisor => E_S_EnvCall(),
-                      Machine    => E_M_EnvCall()
-                    },
-             excinfo = (None() : option(xlenbits)),
-             ext     = None() };
+  let trap : ExceptionType = match cur_privilege {
+    User              => E_U_EnvCall(),
+    Supervisor        => E_S_EnvCall(),
+    Machine           => E_M_EnvCall(),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  };
+  let t : sync_exception = struct {
+    trap    = trap,
+    excinfo = (None() : option(xlenbits)),
+    ext     = None(),
+  };
   Trap(cur_privilege, CTL_TRAP(t), PC)
 }
 
@@ -555,9 +559,11 @@ mapping clause encdec = SRET()
 
 function clause execute SRET() = {
   let sret_illegal : bool = match cur_privilege {
-    User       => true,
-    Supervisor => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
-    Machine    => not(currentlyEnabled(Ext_S))
+    User              => true,
+    Supervisor        => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
+    Machine           => not(currentlyEnabled(Ext_S)),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
   if   sret_illegal
   then Illegal_Instruction()
@@ -590,11 +596,13 @@ mapping clause encdec = WFI()
 
 function clause execute WFI() =
   match cur_privilege {
-    Machine    => Enter_Wait(WAIT_WFI),
-    Supervisor => if   mstatus[TW] == 0b1
-                  then Illegal_Instruction()
-                  else Enter_Wait(WAIT_WFI),
-    User       => Illegal_Instruction()
+    Machine           => Enter_Wait(WAIT_WFI),
+    Supervisor        => if   mstatus[TW] == 0b1
+                         then Illegal_Instruction()
+                         else Enter_Wait(WAIT_WFI),
+    User              => Illegal_Instruction(),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 
 mapping clause assembly = WFI() <-> "wfi"
@@ -613,12 +621,14 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   // is 9 but we always set it to 16 for RV64.
   let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
   match cur_privilege {
-    User       => Illegal_Instruction(),
-    Supervisor => match mstatus[TVM] {
-                    0b1 => Illegal_Instruction(),
-                    0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
-                  },
-    Machine    => { flush_TLB(asid, addr); RETIRE_SUCCESS }
+    User              => Illegal_Instruction(),
+    Supervisor        => match mstatus[TVM] {
+                           0b1 => Illegal_Instruction(),
+                           0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+                         },
+    Machine           => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 }
 
