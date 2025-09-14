@@ -275,7 +275,8 @@ mapping clause encdec = F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, FNMADD_D)
 
 // Execution semantics ================================
 
-function clause execute (F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op)) = {
+$[split op]
+function clause execute F_MADD_TYPE_D(rs3, rs2, rs1, rm, rd, op) = {
   let rs1_val_64b = F_or_X_D(rs1);
   let rs2_val_64b = F_or_X_D(rs2);
   let rs3_val_64b = F_or_X_D(rs3);
@@ -342,7 +343,8 @@ mapping clause encdec = F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, FDIV_D)
 
 // Execution semantics ================================
 
-function clause execute (F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op)) = {
+$[split op]
+function clause execute F_BIN_RM_TYPE_D(rs2, rs1, rm, rd, op) = {
   let rs1_val_64b = F_or_X_D(rs1);
   let rs2_val_64b = F_or_X_D(rs2);
   match (select_instr_or_fcsr_rm (rm)) {

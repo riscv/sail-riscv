@@ -25,7 +25,8 @@ mapping zbkb_rtype_mnemonic : brop_zbkb <-> string = {
 mapping clause assembly = ZBKB_RTYPE(rs2, rs1, rd, op)
   <-> zbkb_rtype_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (ZBKB_RTYPE(rs2, rs1, rd, op)) = {
+$[split op]
+function clause execute ZBKB_RTYPE(rs2, rs1, rd, op) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   let result : xlenbits = match op {
