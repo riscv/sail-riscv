@@ -54,7 +54,8 @@ mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
 
 // NOTE: Currently, we only EA if address translation is successful.
 // This may need revisiting.
-function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
+$[split op]
+function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   let 'width = width;
 
   // This is checked during decoding.

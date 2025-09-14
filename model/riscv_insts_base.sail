@@ -23,7 +23,8 @@ mapping encdec_uop : uop <-> bits(7) = {
 mapping clause encdec = UTYPE(imm, rd, op)
   <-> imm @ encdec_reg(rd) @ encdec_uop(op)
 
-function clause execute (UTYPE(imm, rd, op)) = {
+$[split op]
+function clause execute UTYPE(imm, rd, op) = {
   let off : xlenbits = sign_extend(imm @ 0x000);
   X(rd) = match op {
     LUI   => off,
@@ -110,7 +111,8 @@ mapping encdec_bop : bop <-> bits(3) = {
 mapping clause encdec = BTYPE(imm7_6 @ imm5_0 @ imm7_5_0 @ imm5_4_1 @ 0b0, rs2, rs1, op)
   <-> imm7_6 : bits(1) @ imm7_5_0 : bits(6) @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_bop(op) @ imm5_4_1 : bits(4) @ imm5_0 : bits(1) @ 0b1100011
 
-function clause execute (BTYPE(imm, rs2, rs1, op)) = {
+$[split op]
+function clause execute BTYPE(imm, rs2, rs1, op) = {
   let taken : bool = match op {
     BEQ  => X(rs1) == X(rs2),
     BNE  => X(rs1) != X(rs2),
@@ -151,7 +153,8 @@ mapping encdec_iop : iop <-> bits(3) = {
 mapping clause encdec = ITYPE(imm, rs1, rd, op)
   <-> imm @ encdec_reg(rs1) @ encdec_iop(op) @ encdec_reg(rd) @ 0b0010011
 
-function clause execute (ITYPE (imm, rs1, rd, op)) = {
+$[split op]
+function clause execute ITYPE(imm, rs1, rd, op) = {
   let immext : xlenbits = sign_extend(imm);
   X(rd) = match op {
     ADDI  => X(rs1) + immext,
@@ -195,7 +198,8 @@ mapping clause encdec = SHIFTIOP(shamt, rs1, rd, SRAI)
   <-> 0b010000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
   when xlen == 64 | shamt[5] == bitzero
 
-function clause execute (SHIFTIOP(shamt, rs1, rd, op)) = {
+$[split op]
+function clause execute SHIFTIOP(shamt, rs1, rd, op) = {
   let shamt = shamt[log2_xlen - 1 .. 0];
   X(rd) = match op {
     SLLI => X(rs1) << shamt,
@@ -228,7 +232,8 @@ mapping clause encdec = RTYPE(rs2, rs1, rd, SRL)  <-> 0b0000000 @ encdec_reg(rs2
 mapping clause encdec = RTYPE(rs2, rs1, rd, SUB)  <-> 0b0100000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
 mapping clause encdec = RTYPE(rs2, rs1, rd, SRA)  <-> 0b0100000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011
 
-function clause execute (RTYPE(rs2, rs1, rd, op)) = {
+$[split op]
+function clause execute RTYPE(rs2, rs1, rd, op) = {
   X(rd) = match op {
     ADD  => X(rs1) + X(rs2),
     SLT  => zero_extend(bool_to_bits(X(rs1) <_s X(rs2))),
@@ -357,7 +362,8 @@ mapping clause encdec = RTYPEW(rs2, rs1, rd, SRAW)
   <-> 0b0100000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0111011
   when xlen == 64
 
-function clause execute (RTYPEW(rs2, rs1, rd, op)) = {
+$[split op]
+function clause execute RTYPEW(rs2, rs1, rd, op) = {
   let rs1_val = X(rs1)[31..0];
   let rs2_val = X(rs2)[31..0];
   let result : bits(32) = match op {
@@ -396,7 +402,8 @@ mapping clause encdec = SHIFTIWOP(shamt, rs1, rd, SRAIW)
   <-> 0b0100000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0011011
   when xlen == 64
 
-function clause execute (SHIFTIWOP(shamt, rs1, rd, op)) = {
+$[split op]
+function clause execute SHIFTIWOP(shamt, rs1, rd, op) = {
   let rs1_val = X(rs1)[31..0];
   let result : bits(32) = match op {
     SLLIW => rs1_val << shamt,
