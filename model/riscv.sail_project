@@ -378,6 +378,18 @@ extensions {
     before I_insts // PAUSE overrides a FENCE
     files riscv_insts_zihintpause.sail
   }
+
+  bfloat16 {
+    bfloat16_core {
+      requires riscv, FD
+      files riscv_insts_zfbfmin_utils.sail
+    }
+    Zfbfmin {
+      requires riscv, FD, bfloat16_core
+      files riscv_insts_zfbfmin.sail
+    }
+  }
+
 }
 
 // May-be-operations (MOPS) defined after extensions so they can be

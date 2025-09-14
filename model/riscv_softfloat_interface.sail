@@ -27,6 +27,7 @@
 
 type bits_rm     = bits(3)    // Rounding mode
 type bits_fflags = bits(5)    // Accrued exceptions: NV,DZ,OF,UF,NX
+type bits_BF16   = bits(16)   // BFloat16-precision float value
 type bits_H      = bits(16)   // Half-precision float value
 type bits_S      = bits(32)   // Single-precision float value
 type bits_D      = bits(64)   // Double-precision float value
@@ -390,6 +391,13 @@ val      riscv_f64ToF32 : (bits_rm, bits_D) -> (bits_fflags, bits_S)
 function riscv_f64ToF32 (rm, v) = {
   extern_f64ToF32(rm, v);
   (float_fflags[4 .. 0], float_result[31 .. 0])
+}
+
+val extern_f32ToBF16 = pure {c: "softfloat_f32tobf16", lem: "softfloat_f32_to_bf16"} : (bits_rm, bits_S) -> unit
+val riscv_f32ToBF16 : (bits_rm, bits_S) -> (bits_fflags, bits_BF16)
+function riscv_f32ToBF16 (rm, v) = {
+  extern_f32ToBF16(rm, v);
+  (float_fflags[4 .. 0], float_result[15 .. 0])
 }
 
 // ***************************************************************

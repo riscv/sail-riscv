@@ -64,6 +64,8 @@ unit softfloat_f32tof16(mach_bits rm, mach_bits v);
 unit softfloat_f64tof16(mach_bits rm, mach_bits v);
 unit softfloat_f64tof32(mach_bits rm, mach_bits v);
 
+unit softfloat_f32tobf16(mach_bits rm, mach_bits v);
+
 unit softfloat_f16lt(mach_bits v1, mach_bits v2);
 unit softfloat_f16lt_quiet(mach_bits v1, mach_bits v2);
 unit softfloat_f16le(mach_bits v1, mach_bits v2);

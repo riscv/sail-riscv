@@ -147,6 +147,10 @@ function clause hartSupports(Ext_Zawrs) = config extensions.Zawrs.supported
 enum clause extension = Ext_Zfa
 mapping clause extensionName = Ext_Zfa <-> "zfa"
 function clause hartSupports(Ext_Zfa) = config extensions.Zfa.supported
+// Scalar BF16 Converts
+enum clause extension = Ext_Zfbfmin
+mapping clause extensionName = Ext_Zfbfmin <-> "zfbfmin"
+function clause hartSupports(Ext_Zfbfmin) = config extensions.Zfbfmin.supported
 // Half-Precision Floating-Point
 enum clause extension = Ext_Zfh
 mapping clause extensionName = Ext_Zfh <-> "zfh"
@@ -433,6 +437,7 @@ let extensions_ordered_for_isa_string = [
 
   // Zf, Zd, and Zq
   Ext_Zfa,
+  Ext_Zfbfmin,
   Ext_Zfh,
   Ext_Zfhmin,
   Ext_Zfinx,
