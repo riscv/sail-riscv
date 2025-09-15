@@ -7,9 +7,8 @@
 // =======================================================================================
 
 
-/* This file contains register handling functions that can be
- * overridden by extensions.
- */
+// This file contains register handling functions that can be
+// overridden by extensions.
 
 /*!
 THIS(csrno, priv, isWrite) allows an extension to block access to csrno,
