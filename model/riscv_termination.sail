@@ -81,6 +81,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zcmop => 3,
     Ext_Zfhmin => 3,
     Ext_Zhinx => 3,
+    Ext_Ziccid => 3,
     Ext_Zvkb => 3,
     Ext_Sscofpmf => 3,
     Ext_Svrsw60t59b => 3,

@@ -78,6 +78,7 @@ For booting operating system images, see the information under the
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0
 - Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
+- Ziccif Extension for Instruction-Fetch Atomicity, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
 - Zihintpause extension for Pause Hint, v2.0
@@ -128,9 +129,9 @@ For booting operating system images, see the information under the
 - Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
 - Physical Memory Protection (PMP)
 
-<!-- Uncomment the following section when unratified extensions are added
-The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
--  -->
+### The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
+
+- Ziccid Extension for Instruction/Data Coherence and Consistency, v0.2
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
