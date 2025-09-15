@@ -15,6 +15,7 @@ bool config_print_reg = false;
 bool config_print_mem_access = false;
 bool config_print_platform = false;
 bool config_enable_rvfi = false;
+bool config_enable_semihosting = false;
 bool config_use_abi_names = false;
 
 FILE *trace_log = NULL;

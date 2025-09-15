@@ -73,6 +73,7 @@ bool config_print_step = false;
 
 bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
+bool config_enable_semihosting = false;
 
 struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
