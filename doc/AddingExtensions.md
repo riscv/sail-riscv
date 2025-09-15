@@ -11,14 +11,14 @@ extensions.
 Each file implementing an extension should embed the extension name
 (ideally as it appears in the ISA string) into the file name.
 
-A simple extension could be defined in a single file named
-`riscv_<ext_name>.sail`.
+For a simple extension, use a single file named
+`<ext_name>.sail` and place it in the directory `model/extension/<ext_name>`.
 
 More complex extensions will typically require the definition of new
 types, enums and helper or utility functions. New types and enums
-could be defined in `riscv_<ext_name>_types.sail` and helper functions
-in `riscv_<ext_name>_utils.sail`. New instructions should go in a
-file named `riscv_insts_<ext_name>.sail`.
+could be defined in `<ext_name>_types.sail` and helper functions
+in `<ext_name>_utils.sail`. New instructions should go in a
+file named `<ext_name>_insts.sail`.
 
 ## Adding the extension to the project file
 
@@ -37,7 +37,7 @@ specification.
 ## Registering and configuring the extension
 
 An enum clause for the extension needs to be added to
-[riscv_extensions.sail](../model/riscv_extensions.sail) at an
+[riscv_extensions.sail](../model/core/extensions.sail) at an
 appropriate location according to the canonical ordering described
 there. The extension should also be added to the
 `extensions_ordered_for_isa_string` array.
@@ -55,7 +55,7 @@ fields of this entry.
 
 The value of `"supported"` in the JSON config file is used to define
 the `hartSupports` clause for the extension in
-[riscv_extensions.sail](../model/riscv_extensions.sail) using the
+[riscv_extensions.sail](../model/core/extensions.sail) using the
 `config extensions.<ext_name>.supported` construct.
 
 A definition for the `currentlyEnabled` clause for the extension
@@ -72,7 +72,7 @@ defining the assembly clauses to ensure they are consistent with the
 format expected by assemblers in standard toolchains.
 
 Instructions that interact with virtual memory can use the functions
-defined in [riscv_vmem_utils.sail](../model/riscv_vmem_utils.sail).
+defined in [riscv_vmem_utils.sail](../model/sys/vmem_utils.sail).
 
 ## Adding new CSRs
 
