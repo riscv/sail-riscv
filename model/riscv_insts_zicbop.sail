@@ -1,16 +1,16 @@
-/*=======================================================================================*/
-/*  This Sail RISC-V architecture model, comprising all files and                        */
-/*  directories except where otherwise noted is subject the BSD                          */
-/*  two-clause license in the LICENSE file.                                              */
-/*                                                                                       */
-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
-/*=======================================================================================*/
+// =======================================================================================
+//   This Sail RISC-V architecture model, comprising all files and
+//   directories except where otherwise noted is subject the BSD
+//   two-clause license in the LICENSE file.
+//
+//   SPDX-License-Identifier: BSD-2-Clause
+// =======================================================================================
 
 // Cache Block Operations - Prefetch
 
 function clause currentlyEnabled(Ext_Zicbop) = hartSupports(Ext_Zicbop)
 
-/* ****************************************************************** */
+// ******************************************************************
 union clause instruction = ZICBOP : (cbop_zicbop, regidx, bits(12))
 
 mapping encdec_cbop_zicbop : cbop_zicbop <-> bits(5) = {

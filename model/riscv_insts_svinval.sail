@@ -55,6 +55,6 @@ function clause execute SFENCE_INVAL_IR() = {
 
 mapping clause assembly = SFENCE_INVAL_IR() <-> "sfence.inval.ir"
 
-/* ****************************************************************** */
+// ******************************************************************
 
 // TODO: Implement HINVAL.VVMA amd HINVAL.GVMA
