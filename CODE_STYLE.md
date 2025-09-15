@@ -23,7 +23,7 @@ for example, Python should follow the standard PEP-8 style.
 
 - Files should be free from leading, trailing and double blank lines
 
-- Use line comments rather than block comments where possible
+- Use line comments (i.e. `//`) rather than block comments (i.e. `/* .. */`) where possible
 
 - There should be one space either side of operators such as `=` and `+`
 
