@@ -7,28 +7,28 @@
 // =======================================================================================
 
 // Callbacks for state-changing events
-val mem_write_callback = pure {c: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+val mem_write_callback = pure {cpp: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_write_callback(_) = ()
 
-val mem_read_callback = pure {c: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+val mem_read_callback = pure {cpp: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_read_callback(_) = ()
 
-val mem_exception_callback = pure {c: "mem_exception_callback"} : forall 'n, 0 <= 'n < xlen . (/* addr */ physaddrbits, /* num_of_ExceptionType */ int('n)) -> unit
+val mem_exception_callback = pure {cpp: "mem_exception_callback"} : forall 'n, 0 <= 'n < xlen . (/* addr */ physaddrbits, /* num_of_ExceptionType */ int('n)) -> unit
 function mem_exception_callback(_) = ()
 
-val pc_write_callback = pure {c: "pc_write_callback"} : xlenbits -> unit
+val pc_write_callback = pure {cpp: "pc_write_callback"} : xlenbits -> unit
 function pc_write_callback(_) = ()
 
-val xreg_full_write_callback = pure {c: "xreg_full_write_callback"} : (string, regidx, xlenbits) -> unit
+val xreg_full_write_callback = pure {cpp: "xreg_full_write_callback"} : (string, regidx, xlenbits) -> unit
 function xreg_full_write_callback(_) = ()
 
-val csr_full_write_callback = pure {c: "csr_full_write_callback"} : (string, csreg, xlenbits) -> unit
+val csr_full_write_callback = pure {cpp: "csr_full_write_callback"} : (string, csreg, xlenbits) -> unit
 function csr_full_write_callback(_) = ()
 
-val csr_full_read_callback = pure {c: "csr_full_read_callback"} : (string, csreg, xlenbits) -> unit
+val csr_full_read_callback = pure {cpp: "csr_full_read_callback"} : (string, csreg, xlenbits) -> unit
 function csr_full_read_callback(_) = ()
 
-val trap_callback = pure {c: "trap_callback"} : unit -> unit
+val trap_callback = pure {cpp: "trap_callback"} : unit -> unit
 function trap_callback(_) = ()
 
 // Overloads for easier use of callbacks

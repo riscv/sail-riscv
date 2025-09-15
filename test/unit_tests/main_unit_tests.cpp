@@ -2,12 +2,11 @@
 #include <sail_config.h>
 
 #include "default_config.h"
-#include "config_utils.h"
 
 // Generated in the model C code. This is a simple test runner that just
 // runs the tests in series and aborts on the first failure. In future
 // we can do something fancier.
-extern "C" void model_test();
+extern void model_test();
 
 bool config_print_instr = false;
 bool config_print_step = false;
@@ -17,13 +16,10 @@ bool config_print_platform = false;
 bool config_enable_rvfi = false;
 bool config_use_abi_names = false;
 
-FILE *trace_log = NULL;
+FILE *trace_log = stdout;
 
 int main()
 {
-  trace_log = stdout;
-
   sail_config_set_string(DEFAULT_JSON);
-  init_sail_configured_types();
   model_test();
 }

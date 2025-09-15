@@ -41,73 +41,73 @@ axiom sys_enable_experimental_extensions : Unit → Bool
 end Effectful
 
 -- Floats
-axiom extern_f16Add : BitVec 3 → BitVec 16 → BitVec 16 → Unit
-axiom extern_f16Sub : BitVec 3 → BitVec 16 → BitVec 16 → Unit
-axiom extern_f16Mul : BitVec 3 → BitVec 16 → BitVec 16 → Unit
-axiom extern_f16Div : BitVec 3 → BitVec 16 → BitVec 16 → Unit
-axiom extern_f32Add : BitVec 3 → BitVec 32 → BitVec 32 → Unit
-axiom extern_f32Sub : BitVec 3 → BitVec 32 → BitVec 32 → Unit
-axiom extern_f32Mul : BitVec 3 → BitVec 32 → BitVec 32 → Unit
-axiom extern_f32Div : BitVec 3 → BitVec 32 → BitVec 32 → Unit
-axiom extern_f64Add : BitVec 3 → BitVec 64 → BitVec 64 → Unit
-axiom extern_f64Sub : BitVec 3 → BitVec 64 → BitVec 64 → Unit
-axiom extern_f64Mul : BitVec 3 → BitVec 64 → BitVec 64 → Unit
-axiom extern_f64Div : BitVec 3 → BitVec 64 → BitVec 64 → Unit
-axiom extern_f16MulAdd : BitVec 3 → BitVec 16 → BitVec 16 → BitVec 16 → Unit
-axiom extern_f32MulAdd : BitVec 3 → BitVec 32 → BitVec 32 → BitVec 32 → Unit
-axiom extern_f64MulAdd : BitVec 3 → BitVec 64 → BitVec 64 → BitVec 64 → Unit
-axiom extern_f16Sqrt : BitVec 3 → BitVec 16 → Unit
-axiom extern_f32Sqrt : BitVec 3 → BitVec 32 → Unit
-axiom extern_f64Sqrt : BitVec 3 → BitVec 64 → Unit
-axiom extern_f16ToI32 : BitVec 3 → BitVec 16 → Unit
-axiom extern_f16ToUi32 : BitVec 3 → BitVec 16 → Unit
-axiom extern_i32ToF16 : BitVec 3 → BitVec 32 → Unit
-axiom extern_ui32ToF16 : BitVec 3 → BitVec 32 → Unit
-axiom extern_f16ToI64 : BitVec 3 → BitVec 16 → Unit
-axiom extern_f16ToUi64 : BitVec 3 → BitVec 16 → Unit
-axiom extern_i64ToF16 : BitVec 3 → BitVec 64 → Unit
-axiom extern_ui64ToF16 : BitVec 3 → BitVec 64 → Unit
-axiom extern_f32ToI32 : BitVec 3 → BitVec 32 → Unit
-axiom extern_f32ToUi32 : BitVec 3 → BitVec 32 → Unit
-axiom extern_i32ToF32 : BitVec 3 → BitVec 32 → Unit
-axiom extern_ui32ToF32 : BitVec 3 → BitVec 32 → Unit
-axiom extern_f32ToI64 : BitVec 3 → BitVec 32 → Unit
-axiom extern_f32ToUi64 : BitVec 3 → BitVec 32 → Unit
-axiom extern_i64ToF32 : BitVec 3 → BitVec 64 → Unit
-axiom extern_ui64ToF32 : BitVec 3 → BitVec 64 → Unit
-axiom extern_f64ToI32 : BitVec 3 → BitVec 64 → Unit
-axiom extern_f64ToUi32 : BitVec 3 → BitVec 64 → Unit
-axiom extern_i32ToF64 : BitVec 3 → BitVec 32 → Unit
-axiom extern_ui32ToF64 : BitVec 3 → BitVec 32 → Unit
-axiom extern_f64ToI64 : BitVec 3 → BitVec 64 → Unit
-axiom extern_f64ToUi64 : BitVec 3 → BitVec 64 → Unit
-axiom extern_i64ToF64 : BitVec 3 → BitVec 64 → Unit
-axiom extern_ui64ToF64 : BitVec 3 → BitVec 64 → Unit
-axiom extern_f16ToF32 : BitVec 3 → BitVec 16 → Unit
-axiom extern_f16ToF64 : BitVec 3 → BitVec 16 → Unit
-axiom extern_f32ToF64 : BitVec 3 → BitVec 32 → Unit
-axiom extern_f32ToF16 : BitVec 3 → BitVec 32 → Unit
-axiom extern_f64ToF16 : BitVec 3 → BitVec 64 → Unit
-axiom extern_f64ToF32 : BitVec 3 → BitVec 64 → Unit
-axiom extern_f32ToBF16 : BitVec 3 → BitVec 32 → Unit
-axiom extern_f16Lt : BitVec 16 → BitVec 16 → Unit
-axiom extern_f16Lt_quiet : BitVec 16 → BitVec 16 → Unit
-axiom extern_f16Le : BitVec 16 → BitVec 16 → Unit
-axiom extern_f16Le_quiet : BitVec 16 → BitVec 16 → Unit
-axiom extern_f16Eq : BitVec 16 → BitVec 16 → Unit
-axiom extern_f32Lt : BitVec 32 → BitVec 32 → Unit
-axiom extern_f32Lt_quiet : BitVec 32 → BitVec 32 → Unit
-axiom extern_f32Le : BitVec 32 → BitVec 32 → Unit
-axiom extern_f32Le_quiet : BitVec 32 → BitVec 32 → Unit
-axiom extern_f32Eq : BitVec 32 → BitVec 32 → Unit
-axiom extern_f64Lt : BitVec 64 → BitVec 64 → Unit
-axiom extern_f64Lt_quiet : BitVec 64 → BitVec 64 → Unit
-axiom extern_f64Le : BitVec 64 → BitVec 64 → Unit
-axiom extern_f64Le_quiet : BitVec 64 → BitVec 64 → Unit
-axiom extern_f64Eq : BitVec 64 → BitVec 64 → Unit
-axiom extern_f16roundToInt : BitVec 3 → BitVec 16 → Bool → Unit
-axiom extern_f32roundToInt : BitVec 3 → BitVec 32 → Bool → Unit
-axiom extern_f64roundToInt : BitVec 3 → BitVec 64 → Bool → Unit
+axiom riscv_f16Add : BitVec 3 → BitVec 16 → BitVec 16 → (BitVec 5 × BitVec 16)
+axiom riscv_f16Sub : BitVec 3 → BitVec 16 → BitVec 16 → (BitVec 5 × BitVec 16)
+axiom riscv_f16Mul : BitVec 3 → BitVec 16 → BitVec 16 → (BitVec 5 × BitVec 16)
+axiom riscv_f16Div : BitVec 3 → BitVec 16 → BitVec 16 → (BitVec 5 × BitVec 16)
+axiom riscv_f32Add : BitVec 3 → BitVec 32 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_f32Sub : BitVec 3 → BitVec 32 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_f32Mul : BitVec 3 → BitVec 32 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_f32Div : BitVec 3 → BitVec 32 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_f64Add : BitVec 3 → BitVec 64 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_f64Sub : BitVec 3 → BitVec 64 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_f64Mul : BitVec 3 → BitVec 64 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_f64Div : BitVec 3 → BitVec 64 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_f16MulAdd : BitVec 3 → BitVec 16 → BitVec 16 → BitVec 16 → (BitVec 5 × BitVec 16)
+axiom riscv_f32MulAdd : BitVec 3 → BitVec 32 → BitVec 32 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_f64MulAdd : BitVec 3 → BitVec 64 → BitVec 64 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_f16Sqrt : BitVec 3 → BitVec 16 → (BitVec 5 × BitVec 16)
+axiom riscv_f32Sqrt : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_f64Sqrt : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_f16ToI32 : BitVec 3 → BitVec 16 → (BitVec 5 × BitVec 32)
+axiom riscv_f16ToUi32 : BitVec 3 → BitVec 16 → (BitVec 5 × BitVec 32)
+axiom riscv_i32ToF16 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 16)
+axiom riscv_ui32ToF16 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 16)
+axiom riscv_f16ToI64 : BitVec 3 → BitVec 16 → (BitVec 5 × BitVec 64)
+axiom riscv_f16ToUi64 : BitVec 3 → BitVec 16 → (BitVec 5 × BitVec 64)
+axiom riscv_i64ToF16 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 16)
+axiom riscv_ui64ToF16 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 16)
+axiom riscv_f32ToI32 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_f32ToUi32 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_i32ToF32 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_ui32ToF32 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 32)
+axiom riscv_f32ToI64 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 64)
+axiom riscv_f32ToUi64 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 64)
+axiom riscv_i64ToF32 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 32)
+axiom riscv_ui64ToF32 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 32)
+axiom riscv_f64ToI32 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 32)
+axiom riscv_f64ToUi32 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 32)
+axiom riscv_i32ToF64 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 64)
+axiom riscv_ui32ToF64 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 64)
+axiom riscv_f64ToI64 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_f64ToUi64 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_i64ToF64 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_ui64ToF64 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 64)
+axiom riscv_f16ToF32 : BitVec 3 → BitVec 16 → (BitVec 5 × BitVec 32)
+axiom riscv_f16ToF64 : BitVec 3 → BitVec 16 → (BitVec 5 × BitVec 64)
+axiom riscv_f32ToF64 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 64)
+axiom riscv_f32ToF16 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 16)
+axiom riscv_f64ToF16 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 16)
+axiom riscv_f64ToF32 : BitVec 3 → BitVec 64 → (BitVec 5 × BitVec 32)
+axiom riscv_f32ToBF16 : BitVec 3 → BitVec 32 → (BitVec 5 × BitVec 16)
+axiom riscv_f16Lt : BitVec 16 → BitVec 16 → (BitVec 5 × Bool)
+axiom riscv_f16Lt_quiet : BitVec 16 → BitVec 16 → (BitVec 5 × Bool)
+axiom riscv_f16Le : BitVec 16 → BitVec 16 → (BitVec 5 × Bool)
+axiom riscv_f16Le_quiet : BitVec 16 → BitVec 16 → (BitVec 5 × Bool)
+axiom riscv_f16Eq : BitVec 16 → BitVec 16 → (BitVec 5 × Bool)
+axiom riscv_f32Lt : BitVec 32 → BitVec 32 → (BitVec 5 × Bool)
+axiom riscv_f32Lt_quiet : BitVec 32 → BitVec 32 → (BitVec 5 × Bool)
+axiom riscv_f32Le : BitVec 32 → BitVec 32 → (BitVec 5 × Bool)
+axiom riscv_f32Le_quiet : BitVec 32 → BitVec 32 → (BitVec 5 × Bool)
+axiom riscv_f32Eq : BitVec 32 → BitVec 32 → (BitVec 5 × Bool)
+axiom riscv_f64Lt : BitVec 64 → BitVec 64 → (BitVec 5 × Bool)
+axiom riscv_f64Lt_quiet : BitVec 64 → BitVec 64 → (BitVec 5 × Bool)
+axiom riscv_f64Le : BitVec 64 → BitVec 64 → (BitVec 5 × Bool)
+axiom riscv_f64Le_quiet : BitVec 64 → BitVec 64 → (BitVec 5 × Bool)
+axiom riscv_f64Eq : BitVec 64 → BitVec 64 → (BitVec 5 × Bool)
+axiom riscv_f16roundToInt : BitVec 3 → BitVec 16 → Bool → (BitVec 5 × BitVec 16)
+axiom riscv_f32roundToInt : BitVec 3 → BitVec 32 → Bool → (BitVec 5 × BitVec 32)
+axiom riscv_f64roundToInt : BitVec 3 → BitVec 64 → Bool → (BitVec 5 × BitVec 64)
 
 -- Termination of currentlyEnabled
 instance : SizeOf extension where

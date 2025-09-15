@@ -6,17 +6,6 @@
 #include "sail_config.h"
 #include "sail_riscv_model.h"
 
-// These should eventually be part of compiler-generated `model_init()`,
-// but are consolidated here pending compiler support.
-void init_sail_configured_types()
-{
-  sail_set_abstract_xlen();
-  sail_set_abstract_vlen_exp();
-  sail_set_abstract_ext_d_supported();
-  sail_set_abstract_elen_exp();
-  sail_set_abstract_base_E_enabled();
-}
-
 std::string keypath_to_str(const std::vector<const char *> &keypath)
 {
   std::string s;

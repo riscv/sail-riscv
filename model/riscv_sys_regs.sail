@@ -946,7 +946,7 @@ function clause write_CSR(0x7a0, value) = { tselect = value; Ok(tselect) }
 // read_seed_csr. Hence it appears here.
 val get_16_random_bits = impure {
     interpreter: "Platform.get_16_random_bits",
-    c: "plat_get_16_random_bits",
+    cpp: "plat_get_16_random_bits",
     lem: "plat_get_16_random_bits"
 } : unit -> bits(16)
 

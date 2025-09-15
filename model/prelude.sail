@@ -34,17 +34,17 @@ overload operator | = {or_vec}
 
 overload operator ^ = {xor_vec, concat_str}
 
-val sub_vec = pure {c: "sub_bits", lean: "_lean_sub", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
+val sub_vec = pure {cpp: "sub_bits", lean: "_lean_sub", _: "sub_vec"} : forall 'n. (bits('n), bits('n)) -> bits('n)
 
-val sub_vec_int = pure {c: "sub_bits_int", lean: "BitVec.subInt", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
+val sub_vec_int = pure {cpp: "sub_bits_int", lean: "BitVec.subInt", _: "sub_vec_int"} : forall 'n. (bits('n), int) -> bits('n)
 
 overload operator - = {sub_vec, sub_vec_int}
 
-val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", lean: "Int.tdiv", c: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
-val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", coq: "Z.quot", lean: "Int.tdiv"} : forall 'm, 'm != 0 . (int, int('m)) -> int
+val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", lean: "Int.tdiv", cpp: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
+val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", cpp: "tdiv_int", coq: "Z.quot", lean: "Int.tdiv"} : forall 'm, 'm != 0 . (int, int('m)) -> int
 
-val rem_positive_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(mod('n, 'm))
-val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : forall 'm, 'm != 0 . (int, int('m)) -> int
+val rem_positive_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", cpp: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(mod('n, 'm))
+val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", cpp: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : forall 'm, 'm != 0 . (int, int('m)) -> int
 
 // For working with division / modulus we require the divisor to be >= 1.
 // This type describes that.
@@ -56,19 +56,19 @@ overload max = {max_int}
 val print_string = pure "print_string" : (string, string) -> unit
 
 // Print to the --trace log file.
-val print_log = pure {interpreter: "print_endline", c: "print_log", lem: "print_dbg", _: "print_endline"} : string -> unit
+val print_log = pure {interpreter: "print_endline", cpp: "print_log", lem: "print_dbg", _: "print_endline"} : string -> unit
 // Print an instruction to the --trace log file. The second argument is PC which can be used for
 // symbolization. This is only supported by the C backend so other backends just do a normal print.
-val print_log_instr = pure {c: "print_log_instr"} : (string, bits(64)) -> unit
+val print_log_instr = pure {cpp: "print_log_instr"} : (string, bits(64)) -> unit
 function print_log_instr(message, pc) = print_log(message)
 
-val print_step = pure {c: "print_step"} : unit -> unit
+val print_step = pure {cpp: "print_step"} : unit -> unit
 function print_step() = ()
 
-val get_config_print_instr = pure {c:"get_config_print_instr"} : unit -> bool
-val get_config_print_platform = pure {c:"get_config_print_platform"} : unit -> bool
-val get_config_rvfi = pure {c:"get_config_rvfi"} : unit -> bool
-val get_config_use_abi_names = pure {c:"get_config_use_abi_names"} : unit -> bool
+val get_config_print_instr = pure {cpp: "get_config_print_instr"} : unit -> bool
+val get_config_print_platform = pure {cpp: "get_config_print_platform"} : unit -> bool
+val get_config_rvfi = pure {cpp: "get_config_rvfi"} : unit -> bool
+val get_config_use_abi_names = pure {cpp: "get_config_use_abi_names"} : unit -> bool
 // defaults for other backends
 function get_config_print_instr () = false
 function get_config_print_platform () = false

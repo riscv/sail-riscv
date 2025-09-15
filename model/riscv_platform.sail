@@ -273,8 +273,8 @@ function tick_clock() = {
 
 // Basic terminal character I/O.
 
-val plat_term_write = impure {c: "plat_term_write", lem: "plat_term_write"} : bits(8) -> unit
-val plat_term_read  = impure {c: "plat_term_read", lem: "plat_term_read"}  : unit -> bits(8)
+val plat_term_write = impure {cpp: "plat_term_write", lem: "plat_term_write"} : bits(8) -> unit
+val plat_term_read  = impure {cpp: "plat_term_read", lem: "plat_term_read"}  : unit -> bits(8)
 
 // Spike's HTIF device interface, which multiplexes the above MMIO devices.
 

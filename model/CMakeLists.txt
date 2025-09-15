@@ -45,7 +45,7 @@ separate_arguments(sail_srcs UNIX_COMMAND "${sail_list_files}")
 
 # Generate C code from Sail model
 set(c_model_no_ext "${CMAKE_BINARY_DIR}/sail_riscv_model")
-set(c_model "${c_model_no_ext}.c")
+set(c_model "${c_model_no_ext}.cpp")
 set(c_model_header "${c_model_no_ext}.h")
 # JSON schema for configuration file.
 set(schema_file "${CMAKE_BINARY_DIR}/sail_riscv_config_schema.json")
@@ -79,16 +79,16 @@ add_custom_command(
         -O --Oconstant-fold
         # Cache Z3 results in z3_problems file to speed up incremental compilation.
         --memo-z3
-        # Output C code.
-        -c
-        # Generate a C header too.
-        --c-generate-header
+        # Output C++ code.
+        --cpp
+        # Make the output Model class derive from a PlatformInterface class
+        # Its public members become protected in Model.
+        --cpp-derive-from "protected PlatformInterface"
         # Don't generate a main() function.
         --c-no-main
         # Extra #include's.
-        --c-include riscv_prelude.h
-        --c-include riscv_platform.h
-        --c-include riscv_callbacks.h
+        --c-header-include riscv_platform_if.h
+        --c-include riscv_softfloat.h
         # Don't dead-code eliminate these functions.
         --c-preserve init_model
         --c-preserve init_boot_requirements

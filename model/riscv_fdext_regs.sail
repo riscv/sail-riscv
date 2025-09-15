@@ -70,7 +70,7 @@ function fregidx_to_regidx (Fregidx(b) : fregidx) -> regidx =
 
 mapping encdec_freg : fregidx <-> bits(5) = { Fregidx(r) <-> r }
 
-val freg_write_callback = pure {c: "freg_write_callback"} : (fregidx, flenbits) -> unit
+val freg_write_callback = pure {cpp: "freg_write_callback"} : (fregidx, flenbits) -> unit
 function freg_write_callback(_) = ()
 
 register f0  : fregtype
