@@ -55,6 +55,10 @@ function clause hartSupports(Ext_D) = constraint(ext_d_supported) & hartSupports
 enum clause extension = Ext_B
 mapping clause extensionName = Ext_B <-> "b"
 function clause hartSupports(Ext_B) = config extensions.B.supported
+// Vector Operations
+enum clause extension = Ext_V
+mapping clause extensionName = Ext_V <-> "v"
+function clause hartSupports(Ext_V) = config extensions.V.supported
 // Supervisor
 enum clause extension = Ext_S
 mapping clause extensionName = Ext_S <-> "s"
@@ -292,7 +296,7 @@ mapping clause extensionName = Ext_Zve32f <-> "zve32f"
 function clause hartSupports(Ext_Zve32f) = sizeof(elen_exp) >= 5 & config extensions.V.f.supported
 enum clause extension = Ext_Zve32x
 mapping clause extensionName = Ext_Zve32x <-> "zve32x"
-function clause hartSupports(Ext_Zve32x) = sizeof(elen_exp) >= 5
+function clause hartSupports(Ext_Zve32x) = sizeof(elen_exp) >= 5 & config extensions.V.x.supported
 enum clause extension = Ext_Zve64d
 mapping clause extensionName = Ext_Zve64d <-> "zve64d"
 function clause hartSupports(Ext_Zve64d) = sizeof(elen_exp) >= 6 & config extensions.V.d.supported
@@ -301,7 +305,7 @@ mapping clause extensionName = Ext_Zve64f <-> "zve64f"
 function clause hartSupports(Ext_Zve64f) = sizeof(elen_exp) >= 6 & config extensions.V.f.supported
 enum clause extension = Ext_Zve64x
 mapping clause extensionName = Ext_Zve64x <-> "zve64x"
-function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6
+function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & config extensions.V.x.supported
 // Vector Extension for Half-Precision Floating-Point
 enum clause extension = Ext_Zvfh
 mapping clause extensionName = Ext_Zvfh <-> "zvfh"
@@ -310,10 +314,6 @@ function clause hartSupports(Ext_Zvfh) = config extensions.Zvfh.supported
 enum clause extension = Ext_Zvfhmin
 mapping clause extensionName = Ext_Zvfhmin <-> "zvfhmin"
 function clause hartSupports(Ext_Zvfhmin) = config extensions.Zvfhmin.supported
-// Vector Operations
-enum clause extension = Ext_V
-mapping clause extensionName = Ext_V <-> "v"
-function clause hartSupports(Ext_V) = hartSupports(Ext_Zvl128b) & hartSupports(Ext_Zve64d)
 
 // Vector Basic Bit-manipulation
 enum clause extension = Ext_Zvbb
