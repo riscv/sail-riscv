@@ -8,19 +8,13 @@
 
 // ***************************************************************
 // This file lists all the external Berkeley softfloat functions
-// invoked from the SAIL spec for RISC-V F and D extensions
-// (in:    riscv_insts_fdext.sail)
+// invoked from the Sail spec for RISC-V floating point extensions.
 //
 // Each of these functions corresponds to one in 'SoftFloat.hs'
 // in    https://github.com/GaloisInc/softfloat-hs.git
 // written by Ben Selfridge,
 // which is a set of pure-functional Haskell wrappers on the
 // Berkely softfloat C library written by John Hauser.
-
-// For now, the bodies of all these functions are placeholders
-// while we develop    riscv_insts_fdext.sail
-// They should be replaced with external calls to Berkeley softfloat
-// functions in a similar manner to the Haskell softfloat wrappers.
 
 // ***************************************************************
 // All arguments and results have one of these types
