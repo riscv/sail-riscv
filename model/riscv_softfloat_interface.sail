@@ -8,7 +8,7 @@
 
 // ***************************************************************
 // This file lists all the external Berkeley softfloat functions
-// invoked from the SAIL spec for RISC-V floating point extensions
+// invoked from the Sail spec for RISC-V floating point extensions.
 //
 // Each of these functions corresponds to one in 'SoftFloat.hs'
 // in    https://github.com/GaloisInc/softfloat-hs.git
