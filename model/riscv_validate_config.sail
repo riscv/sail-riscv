@@ -132,13 +132,24 @@ function check_pmp() -> bool = {
   valid
 }
 
-function check_bfloat16() -> bool = {
-  var valid : bool = true;
+function check_extension_dependencies() -> bool = {
   if hartSupports(Ext_Zfbfmin) & not(hartSupports(Ext_F)) then {
-    valid = false;
-    print_endline("Zfbfmin extension requires F extension");
+    print_endline("Zfbfmin depends on F");
+    return false;
   };
-  valid
+  if hartSupports(Ext_Ziccid) & not(hartSupports(Ext_Ziccif)) then {
+    print_endline("Ziccid depends on Ziccif");
+    return false;
+  };
+  if hartSupports(Ext_Zabha) & not(hartSupports(Ext_Zaamo)) & not(hartSupports(Ext_A)) then {
+    print_endline("Zabha depends on Zaamo");
+    return false;
+  };
+  if hartSupports(Ext_Zacas) & not(hartSupports(Ext_Zaamo)) & not(hartSupports(Ext_A)) then {
+    print_endline("Zacas depends on Zaamo");
+    return false;
+  };
+  true
 }
 
 function config_is_valid() -> bool = {
@@ -147,5 +158,5 @@ function config_is_valid() -> bool = {
   & check_mem_layout()
   & check_vlen_elen()
   & check_pmp()
-  & check_bfloat16()
+  & check_extension_dependencies()
 }
