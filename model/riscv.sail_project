@@ -390,7 +390,7 @@ extensions {
     }
     Zvfbfmin {
       requires riscv, FD, V, bfloat16_core
-      files riscv_insts_zvfbfmin.sail
+      files extensions/bfloat16/zvfbfmin_insts.sail
     }
   }
 
