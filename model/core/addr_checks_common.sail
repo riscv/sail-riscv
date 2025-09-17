@@ -10,7 +10,7 @@
 // addresses used to access memory and perhaps modify them.  This file
 // defines the return values used by functions that perform this interposition.
 //
-// The model defines defaults for these functions in riscv_addr_checks.sail;
+// The model defines defaults for these functions in addr_checks.sail;
 // extensions would need to define their own functions to override them.
 
 union Ext_DataAddr_Check ('a : Type) = {

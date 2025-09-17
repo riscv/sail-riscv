@@ -940,7 +940,7 @@ function clause write_CSR(0x7a0, value) = { tselect = value; Ok(tselect) }
 
 //
 // Entropy Source - Platform access to random bits.
-// NOTE: This would be better placed in riscv_platform.sail, but that file
+// NOTE: This would be better placed in platform.sail, but that file
 // appears _after_ this one in the compile order meaning the valspec
 // for this function is unavailable when it's first encountered in
 // read_seed_csr. Hence it appears here.

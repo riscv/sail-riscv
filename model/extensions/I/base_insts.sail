@@ -94,7 +94,7 @@ mapping clause encdec = JALR(imm, rs1, rd)
 mapping clause assembly = JALR(imm, rs1, rd)
   <-> "jalr" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_12(imm) ^ "(" ^ reg_name(rs1) ^ ")"
 
-// see riscv_jalr_seq.sail or riscv_jalr_rmem.sail for the execute clause.
+// see jalr_seq.sail or jalr_rmem.sail for the execute clause.
 
 // *****************************************************************
 union clause instruction = BTYPE : (bits(13), regidx, regidx, bop)

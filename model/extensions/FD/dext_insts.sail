@@ -16,8 +16,8 @@
 
 // ***************************************************************
 // IMPORTANT!
-// The files 'riscv_insts_fext.sail', 'riscv_insts_dext.sail' and
-// 'riscv_insts_zfh.sail' define the F, D and Zfh extensions,
+// The files 'fext_insts.sail', 'dext_insts.sail' and
+// 'zfh_insts.sail' define the F, D and Zfh extensions,
 // respectively.
 // The texts follow each other very closely; please try to maintain
 // this correspondence as the files are maintained for bug-fixes,
@@ -25,7 +25,7 @@
 
 // ***************************************************************
 // Note: Rounding Modes and Floating point accrued exception flags
-// are defined in riscv_insts_fext.sail.
+// are defined in fext_insts.sail.
 // In RISC-V, the D extension requires the F extension, so that
 // should have been processed before this one.
 
@@ -242,11 +242,11 @@ function validDoubleRegs(n, regs) = {
 
 // *****************************************************************
 // Floating-point loads
-// These are defined in: riscv_insts_fext.sail
+// These are defined in: fext_insts.sail
 
 // *****************************************************************
 // Floating-point stores
-// These are defined in: riscv_insts_fext.sail
+// These are defined in: fext_insts.sail
 
 // *****************************************************************
 // Fused multiply-add

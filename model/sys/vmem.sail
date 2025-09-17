@@ -26,7 +26,7 @@
 // (1) we can meaningfully test SFENCE.VMA which is a no-op without TLBs;
 // (2) we can greatly speed up simulation speed
 //     (e.g., from 10s of minutes to few minutes for Linux boot)
-// The TLB implementation is in a separate file: riscv_vmem_tlb.sail
+// The TLB implementation is in a separate file: vmem_tlb.sail
 // The code in this file is structured and commented so you can easily
 // ignore TLB functionality at first reading.
 
@@ -159,7 +159,7 @@ function pt_walk(
 // ****************************************************************
 // Architectural SATP CSR
 
-// PUBLIC: see also riscv_insts_zicsr.sail and other CSR-related files
+// PUBLIC: see also zicsr_insts.sail and other CSR-related files
 register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
 function clause is_CSR_accessible(0x180, priv, _) = currentlyEnabled(Ext_S) & not(priv == Supervisor & mstatus[TVM] == 0b1)
@@ -241,7 +241,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
       match update_PTE_Bits(pte, ac) {
         None()     => Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
         Some(pte') =>
-          // Step 9 of VATP. See riscv_platform.sail.
+          // Step 9 of VATP. See platform.sail.
           if not(plat_enable_dirty_update) then
             // pte needs dirty/accessed update but that is not enabled
             Err(PTW_PTE_Update(), ext_ptw)
@@ -289,7 +289,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
           Ok(ppn, ext_ptw)
         },
         Some(pte) =>
-          // Step 9 of VATP. See riscv_platform.sail.
+          // Step 9 of VATP. See platform.sail.
           if not(plat_enable_dirty_update) then
             // pte needs dirty/accessed update but that is not enabled
             Err(PTW_PTE_Update(), ext_ptw)
@@ -359,7 +359,7 @@ function translateAddr(
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
-  // See riscv_sys_regs.sail for effectivePrivilege() and cur_privilege
+  // See sys_regs.sail for effectivePrivilege() and cur_privilege
   let effPriv = effectivePrivilege(ac, mstatus, cur_privilege);
 
   let mode = translationMode(effPriv);

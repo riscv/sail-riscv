@@ -37,7 +37,7 @@ specification.
 ## Registering and configuring the extension
 
 An enum clause for the extension needs to be added to
-[riscv_extensions.sail](../model/core/extensions.sail) at an
+[extensions.sail](../model/core/extensions.sail) at an
 appropriate location according to the canonical ordering described
 there. The extension should also be added to the
 `extensions_ordered_for_isa_string` array.
@@ -55,7 +55,7 @@ fields of this entry.
 
 The value of `"supported"` in the JSON config file is used to define
 the `hartSupports` clause for the extension in
-[riscv_extensions.sail](../model/core/extensions.sail) using the
+[extensions.sail](../model/core/extensions.sail) using the
 `config extensions.<ext_name>.supported` construct.
 
 A definition for the `currentlyEnabled` clause for the extension
@@ -66,13 +66,13 @@ should be provided in one of the files implementing the extension.
 Each new set of instructions can be specified in a separate
 self-contained file, with their instruction encodings, assembly
 language specifications and the corresponding encoders and decoders,
-and execution semantics. The various `riscv_insts_*.sail` files can be
+and execution semantics. The various `<ext_name>_insts.sail` files can be
 examined for examples on how this can be done. Care should be taken when
 defining the assembly clauses to ensure they are consistent with the
 format expected by assemblers in standard toolchains.
 
 Instructions that interact with virtual memory can use the functions
-defined in [riscv_vmem_utils.sail](../model/sys/vmem_utils.sail).
+defined in [vmem_utils.sail](../model/sys/vmem_utils.sail).
 
 ## Adding new CSRs
 

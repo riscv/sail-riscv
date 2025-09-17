@@ -116,7 +116,7 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
   let pte_W = bits_to_bool(pte_flags[W]);
   let pte_X = bits_to_bool(pte_flags[X]);
 
-  // Steps 6 and 8 of VATP, roughly (see riscv_vmem.sail).
+  // Steps 6 and 8 of VATP, roughly (see vmem.sail).
   // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
   let access_ok : bool = match ac {
     Read(_)             => pte_R | (pte_X & mxr),
