@@ -432,7 +432,7 @@ termination {
 
   files
     if $TERMINATION_FILE then
-      termination.sail
+      termination/termination.sail
     else []
 }
 
@@ -450,5 +450,5 @@ main {
   after unit_tests
   requires core, riscv, exceptions, postlude
 
-  files main.sail
+  files main/main.sail
 }
