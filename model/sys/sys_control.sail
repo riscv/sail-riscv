@@ -34,7 +34,7 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
-  let idx   = num_of_ExceptionType(e);
+  let idx = unsigned(exceptionType_bits(e));
   let super = bit_to_bool(medeleg.bits[idx]);
   // TODO: check VS/VU-mode if hypervisor extension enabled
   let deleg = if currentlyEnabled(Ext_S) & super then Supervisor else Machine;
@@ -219,7 +219,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
-      trap_handler(del_priv, false, exceptionType_to_bits(e.trap), pc, e.excinfo, e.ext)
+      trap_handler(del_priv, false, exceptionType_bits(e.trap), pc, e.excinfo, e.ext)
     },
     CTL_MRET()  => {
       let prev_priv = cur_privilege;
@@ -280,7 +280,7 @@ function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
 }
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
+  set_next_pc(trap_handler(del_priv, true, interruptType_bits(i), PC, None(), None()))
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {

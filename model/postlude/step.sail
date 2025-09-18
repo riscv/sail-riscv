@@ -179,7 +179,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   match step_val {
     Step_Pending_Interrupt(intr, priv) => {
       if   get_config_print_instr()
-      then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
+      then print_bits("Handling interrupt: ", interruptType_bits(intr));
       handle_interrupt(intr, priv)
     },
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),

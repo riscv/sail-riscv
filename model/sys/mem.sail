@@ -146,7 +146,7 @@ function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
     };
   match result {
     Ok(value, _) => mem_read_callback(to_str(typ), bits_of(paddr), width, value),
-    Err(e) => mem_exception_callback(bits_of(paddr), num_of_ExceptionType(e)),
+    Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
   };
   result
 }
@@ -210,7 +210,7 @@ function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl
     let result = checked_mem_write(paddr, width, value, typ, priv, meta, aq, rl, con);
     match result {
       Ok(_) => mem_write_callback(to_str(typ), bits_of(paddr), width, value),
-      Err(e) => mem_exception_callback(bits_of(paddr), num_of_ExceptionType(e)),
+      Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
     };
     result
   }
