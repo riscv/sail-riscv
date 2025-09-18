@@ -21,11 +21,11 @@ modules. The RISC-V specification consists of a few core modules and
 several extension modules. Within a module, the later files in the
 module usually depend on the earlier ones.
 
-The `riscv_core`, `riscv` and `riscv_postlude` modules are the primary
+The `core`, `riscv` and `postlude` modules are the primary
 core modules, with most of the other modules being submodules of the
 `extensions` module.
 
-### The `riscv_core` module
+### The `core` module
 
 This module provide the types and functions that the rest of the
 modules depend on.
@@ -61,7 +61,7 @@ allowing the model to be used with testing tools such as
 [TestRIG](https://github.com/CTSRD-CHERI/TestRIG). These files can be
 ignored on a first reading.
 
-`riscv_types*.sail` and `*types.sail` contain important types
+`types_*.sail` and `*_types.sail` contain important types
 that are used in the rest of the specification.
 [types.sail](../model/core/types.sail) contains some basic
 RISC-V definitions. This file should be read early since these
@@ -104,7 +104,7 @@ The floating point arithmetic in the model is implemented by a wrapper
 around the Berkeley Softfloat library; this wrapper is implemented in
 [softfloat_interface.sail](../model/core/softfloat_interface.sail).
 
-### The `riscv_exceptions` and `pmp` modules
+### The `exceptions` and `pmp` modules
 
 The handling of the addresses involved in exception handling are
 specified by the functions in
@@ -113,7 +113,7 @@ while
 [sync_exception.sail](../model/exceptions/sync_exception.sail)
 defines a structure that is used to capture the architectural
 information for an exception. These files constitute the
-`riscv_exceptions` module.
+`exceptions` module.
 
 The `pmp` module implements physical memory protection
 (PMP). [pmp_regs.sail](../model/pmp/pmp_regs.sail) defines
@@ -166,7 +166,7 @@ account.
 
 [insts_begin.sail](../model/sys/insts_begin.sail) sets up
 the infrastructure for the definition of instructions in the rest of
-the model. Files matching `insts_*.sail` capture the
+the model. Files matching `<ext_name>_insts.sail` capture the
 instruction definitions and their assembly language formats. Each file
 contains the instructions for an extension. Each instruction is
 represented as a variant clause of the `instruction` type, and its
@@ -177,7 +177,7 @@ language formats. Though the assembly mappings are defined
 bidirectionally, only the disassembler direction (i.e., binary
 encoding to assembler) is used.
 
-### The `riscv_postlude` module
+### The `postlude` module
 
 This module essentially completes the specification by providing
 implementations of the instruction fetcher and the driving function
@@ -187,7 +187,7 @@ for the fetch-decode-execute cycle.
 [csr_end.sail](../model/postlude/csr_end.sail) terminate the
 scattered definitions begun in the `insts_begin.sail` file in
 the `riscv` module and the `csr_begin.sail` file in the
-`riscv_core` module respectively.
+`core` module respectively.
 
 Definitions for the instruction stepper are in
 [step_common.sail](../model/postlude/step_common.sail), while
@@ -236,7 +236,7 @@ Vector (`V`) and cryptography (`Zk*`) extensions.
 
 ### Other modules
 
-The `riscv_termination` module specifies
+The `termination` module specifies
 [functions](../model/termination.sail) that are used to prove
 loop termination for theorem prover backends of Sail. The
 `unit_tests` module collects Sail unit tests for the specification.

@@ -30,7 +30,7 @@ execute_process(
         ${SAIL_BIN}
         ${project_file}
         --require-version ${SAIL_REQUIRED_VER}
-        # include riscv_termination.sail in the list of dependencies
+        # include termination.sail in the list of dependencies
         --variable "TERMINATION_FILE = true"
         --all-modules
         --list-files

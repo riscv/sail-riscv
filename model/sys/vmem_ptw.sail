@@ -10,7 +10,7 @@
 // PTW exceptions
 
 // 'ext_ptw' supports (non-standard) extensions to the default addr-translation and PTW.
-// See riscv_types_ext.sail for definitions.
+// See types_ext.sail for definitions.
 
 // Failure modes for address-translation/page-table-walks
 // PRIVATE

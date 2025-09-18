@@ -26,7 +26,7 @@ val encdec_compressed : instruction <-> bits(16)
 scattered mapping encdec_compressed
 
 // We declare the ILLEGAL/C_ILLEGAL instruction clauses here instead of in
-// riscv_insts_end, so that model extensions can make use of them.
+// insts_end, so that model extensions can make use of them.
 // However, the encdec mapping must come last to ensure that all
 // unmatched encodings decode to an illegal instruction.
 union clause instruction = ILLEGAL : word

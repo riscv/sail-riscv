@@ -79,10 +79,10 @@ function tlb_hash forall 'v, is_sv_mode('v) . (
 ) -> tlb_index_range =
   unsigned(vpn[5 .. 0])
 
-// PUBLIC: invoked in reset_vmem() [riscv_vmem.sail]
+// PUBLIC: invoked in reset_vmem() [vmem.sail]
 function reset_TLB() -> unit = tlb = vector_init(None())
 
-// PUBLIC: invoked in translate_TLB_hit() [riscv_vmem.sail]
+// PUBLIC: invoked in translate_TLB_hit() [vmem.sail]
 function write_TLB(index : tlb_index_range, entry : TLB_Entry) -> unit =
   tlb[index] = Some(entry)
 
@@ -112,7 +112,7 @@ function flush_TLB_Entry(ent   : TLB_Entry,
   asid_matches & addr_matches
 }
 
-// PUBLIC: invoked in translate() [riscv_vmem.sail]
+// PUBLIC: invoked in translate() [vmem.sail]
 function lookup_TLB forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
@@ -127,7 +127,7 @@ function lookup_TLB forall 'v, is_sv_mode('v) . (
   }
 }
 
-// PUBLIC: invoked in translate_TLB_miss() [riscv_vmem.sail]
+// PUBLIC: invoked in translate_TLB_miss() [vmem.sail]
 function add_to_TLB forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
@@ -161,7 +161,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 }
 
 // Top-level TLB flush function
-// PUBLIC: invoked from SFENCE_VMA [riscv_insts_base.sail]
+// PUBLIC: invoked from SFENCE_VMA [insts_base.sail]
 function flush_TLB(asid : option(asidbits),
                    addr : option(xlenbits)) -> unit = {
   foreach (i from 0 to (length(tlb) - 1)) {
