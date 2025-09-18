@@ -125,19 +125,17 @@ enum InterruptType = {
   I_M_External
 }
 
-val interruptType_to_bits : InterruptType -> exc_code
-function interruptType_to_bits (i) =
-  match (i) {
-    I_U_Software => 0x00,
-    I_S_Software => 0x01,
-    I_M_Software => 0x03,
-    I_U_Timer    => 0x04,
-    I_S_Timer    => 0x05,
-    I_M_Timer    => 0x07,
-    I_U_External => 0x08,
-    I_S_External => 0x09,
-    I_M_External => 0x0b
-  }
+mapping interruptType_bits : InterruptType <-> exc_code = {
+  I_U_Software <-> 0b000000, // 0
+  I_S_Software <-> 0b000001, // 1
+  I_M_Software <-> 0b000011, // 3
+  I_U_Timer    <-> 0b000100, // 4
+  I_S_Timer    <-> 0b000101, // 5
+  I_M_Timer    <-> 0b000111, // 7
+  I_U_External <-> 0b001000, // 8
+  I_S_External <-> 0b001001, // 9
+  I_M_External <-> 0b001011, // 11
+}
 
 // architectural exception definitions
 
@@ -163,54 +161,27 @@ union ExceptionType = {
   E_Extension          : ext_exc_type
 }
 
-val exceptionType_to_bits : ExceptionType -> exc_code
-function exceptionType_to_bits(e) =
-  match (e) {
-    E_Fetch_Addr_Align()   => 0x00,
-    E_Fetch_Access_Fault() => 0x01,
-    E_Illegal_Instr()      => 0x02,
-    E_Breakpoint()         => 0x03,
-    E_Load_Addr_Align()    => 0x04,
-    E_Load_Access_Fault()  => 0x05,
-    E_SAMO_Addr_Align()    => 0x06,
-    E_SAMO_Access_Fault()  => 0x07,
-    E_U_EnvCall()          => 0x08,
-    E_S_EnvCall()          => 0x09,
-    E_Reserved_10()        => 0x0a,
-    E_M_EnvCall()          => 0x0b,
-    E_Fetch_Page_Fault()   => 0x0c,
-    E_Load_Page_Fault()    => 0x0d,
-    E_Reserved_14()        => 0x0e,
-    E_SAMO_Page_Fault()    => 0x0f,
+mapping exceptionType_bits : ExceptionType <-> exc_code = {
+  E_Fetch_Addr_Align()   <-> 0b000000, // 0
+  E_Fetch_Access_Fault() <-> 0b000001, // 1
+  E_Illegal_Instr()      <-> 0b000010, // 2
+  E_Breakpoint()         <-> 0b000011, // 3
+  E_Load_Addr_Align()    <-> 0b000100, // 4
+  E_Load_Access_Fault()  <-> 0b000101, // 5
+  E_SAMO_Addr_Align()    <-> 0b000110, // 6
+  E_SAMO_Access_Fault()  <-> 0b000111, // 7
+  E_U_EnvCall()          <-> 0b001000, // 8
+  E_S_EnvCall()          <-> 0b001001, // 9
+  E_Reserved_10()        <-> 0b001010, // 10
+  E_M_EnvCall()          <-> 0b001011, // 11
+  E_Fetch_Page_Fault()   <-> 0b001100, // 12
+  E_Load_Page_Fault()    <-> 0b001101, // 13
+  E_Reserved_14()        <-> 0b001110, // 14
+  E_SAMO_Page_Fault()    <-> 0b001111, // 15
 
-    // extensions
-    E_Extension(e)         => ext_exc_type_to_bits(e)
-  }
-
-val num_of_ExceptionType : ExceptionType -> {'n, (0 <= 'n < xlen). int('n)}
-function num_of_ExceptionType(e) =
-  match (e) {
-    E_Fetch_Addr_Align()   => 0,
-    E_Fetch_Access_Fault() => 1,
-    E_Illegal_Instr()      => 2,
-    E_Breakpoint()         => 3,
-    E_Load_Addr_Align()    => 4,
-    E_Load_Access_Fault()  => 5,
-    E_SAMO_Addr_Align()    => 6,
-    E_SAMO_Access_Fault()  => 7,
-    E_U_EnvCall()          => 8,
-    E_S_EnvCall()          => 9,
-    E_Reserved_10()        => 10,
-    E_M_EnvCall()          => 11,
-    E_Fetch_Page_Fault()   => 12,
-    E_Load_Page_Fault()    => 13,
-    E_Reserved_14()        => 14,
-    E_SAMO_Page_Fault()    => 15,
-
-    // extensions
-    E_Extension(e)         => num_of_ext_exc_type(e)
-
-  }
+  // extensions
+  E_Extension(e)         <-> ext_exc_type_bits(e)
+}
 
 val exceptionType_to_str : ExceptionType -> string
 function exceptionType_to_str(e) =
