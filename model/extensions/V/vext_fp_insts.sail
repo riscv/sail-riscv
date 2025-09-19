@@ -821,7 +821,7 @@ function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
                             accrue_fflags(fflags);
                             elem
                           },
-        FVV_VCLASS     => fp_class(vs2_val[i])
+        FVV_VCLASS     => zero_extend(float_point_class_bits(float_classify(vs2_val[i]))),
       }
     }
   };
