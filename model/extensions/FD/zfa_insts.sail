@@ -14,7 +14,7 @@ union clause instruction = FLI_H : (bits(5), fregidx)
 
 mapping clause encdec = FLI_H(constantidx, rd)
   <-> 0b111_1010 @ 0b00001 @ constantidx @ 0b000 @ encdec_freg(rd) @ 0b101_0011
-  when currentlyEnabled(Ext_Zfh) & currentlyEnabled(Ext_Zfa)
+  when (currentlyEnabled(Ext_Zfh) | currentlyEnabled(Ext_Zvfh)) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = FLI_H(constantidx, rd)
   <-> "fli.h" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)

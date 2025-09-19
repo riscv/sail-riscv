@@ -13,7 +13,7 @@ union clause instruction = VANDN_VV : (bits(1), vregidx, vregidx, vregidx)
 
 mapping clause encdec = VANDN_VV(vm, vs1, vs2, vd)
   <-> 0b000001 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VANDN_VV(vm, vs1, vs2, vd)
   <-> "vandn.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
@@ -50,7 +50,7 @@ union clause instruction = VANDN_VX : (bits(1), vregidx, regidx, vregidx)
 
 mapping clause encdec = VANDN_VX(vm, vs2, rs1, vd)
   <-> 0b000001 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VANDN_VX(vm, vs2, rs1, vd)
   <-> "vandn.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
@@ -87,7 +87,7 @@ union clause instruction = VBREV_V : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VBREV_V(vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01010 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvbb)
+  when currentlyEnabled(Ext_Zvbb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VBREV_V(vm, vs2, vd)
   <-> "vbrev.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
@@ -127,7 +127,7 @@ union clause instruction = VBREV8_V : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VBREV8_V(vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01000 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VBREV8_V(vm, vs2, vd)
   <-> "vbrev8.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
@@ -164,7 +164,7 @@ union clause instruction = VREV8_V : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VREV8_V(vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VREV8_V(vm, vs2, vd)
   <-> "vrev8.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
@@ -201,7 +201,7 @@ union clause instruction = VCLZ_V : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VCLZ_V (vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01100 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvbb)
+  when currentlyEnabled(Ext_Zvbb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VCLZ_V (vm, vs2, vd)
   <-> "vclz.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
@@ -239,7 +239,7 @@ union clause instruction = VCTZ_V : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VCTZ_V (vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01101 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvbb)
+  when currentlyEnabled(Ext_Zvbb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VCTZ_V (vm, vs2, vd)
   <-> "vctz.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
@@ -277,7 +277,7 @@ union clause instruction = VCPOP_V : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VCPOP_V (vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01110 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvbb)
+  when currentlyEnabled(Ext_Zvbb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VCPOP_V (vm, vs2, vd)
   <-> "vcpop.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
@@ -318,7 +318,7 @@ union clause instruction = VROL_VV : (bits(1), vregidx, vregidx, vregidx)
 
 mapping clause encdec = VROL_VV(vm, vs1, vs2, vd)
   <-> 0b010101 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VROL_VV(vm, vs1, vs2, vd)
  <-> "vrol.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
@@ -356,7 +356,7 @@ union clause instruction = VROL_VX : (bits(1), vregidx, regidx, vregidx)
 
 mapping clause encdec = VROL_VX(vm, vs2, rs1, vd)
   <-> 0b010101 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VROL_VX(vm, vs2, rs1, vd)
  <-> "vrol.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
@@ -394,7 +394,7 @@ union clause instruction = VROR_VV : (bits(1), vregidx, vregidx, vregidx)
 
 mapping clause encdec = VROR_VV(vm, vs1, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VROR_VV(vm, vs1, vs2, vd)
  <-> "vror.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
@@ -432,7 +432,7 @@ union clause instruction = VROR_VX : (bits(1), vregidx, regidx, vregidx)
 
 mapping clause encdec = VROR_VX(vm, vs2, rs1, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VROR_VX(vm, vs2, rs1, vd)
  <-> "vror.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1)^ maybe_vmask(vm)
@@ -470,7 +470,7 @@ union clause instruction = VROR_VI : (bits(1), vregidx, bits(6), vregidx)
 
 mapping clause encdec = VROR_VI(vm, vs2, uimm5 @ uimm40, vd)
   <-> 0b01010 @ uimm5 @ vm @ encdec_vreg(vs2) @ uimm40 : bits(5) @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvkb)
+  when currentlyEnabled(Ext_Zvkb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VROR_VI(vm, vs2, uimm, vd)
  <-> "vror.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_6(uimm) ^ maybe_vmask(vm)
@@ -508,7 +508,7 @@ union clause instruction = VWSLL_VV : (bits(1), vregidx, vregidx, vregidx)
 
 mapping clause encdec = VWSLL_VV (vm, vs2, vs1, vd)
   <-> 0b110101 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvbb)
+  when currentlyEnabled(Ext_Zvbb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VWSLL_VV (vm, vs2, vs1, vd)
   <-> "vwsll.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
@@ -559,7 +559,7 @@ union clause instruction = VWSLL_VX : (bits(1), vregidx, regidx, vregidx)
 
 mapping clause encdec = VWSLL_VX (vm, vs2, rs1, vd)
   <-> 0b110101 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvbb)
+  when currentlyEnabled(Ext_Zvbb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VWSLL_VX (vm, vs2, rs1, vd)
   <-> "vwsll.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
@@ -608,7 +608,7 @@ union clause instruction = VWSLL_VI : (bits(1), vregidx, bits(5), vregidx)
 
 mapping clause encdec = VWSLL_VI (vm, vs2, uimm, vd)
   <-> 0b110101 @ vm @ encdec_vreg(vs2) @ uimm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvbb)
+  when currentlyEnabled(Ext_Zvbb) & (get_sew() == 8 | get_sew() == 16 | get_sew() == 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VWSLL_VI (vm, vs2, uimm, vd)
   <-> "vwsll.vi" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ hex_bits_5(uimm) ^ maybe_vmask(vm)
