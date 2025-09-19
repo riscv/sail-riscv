@@ -185,7 +185,7 @@ function satp_to_ppn(satp_val) =
 function translationMode(priv : Privilege) -> SATPMode = {
   if priv == Machine then Bare
   else {
-    let arch = architecture(get_mstatus_SXL(mstatus));
+    let arch = if xlen == 32 then RV32 else architecture(mstatus[SXL]);
     let mbits : satp_mode = match arch {
       RV64 => {
         // Can't have an effective architecture of RV64 on RV32.
