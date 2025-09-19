@@ -518,11 +518,10 @@ int inner_main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  // long_options_offset() is a local addition, so when updating CLI11,
-  // see how https://github.com/CLIUtils/CLI11/pull/1185 ended up,
-  // and possibly implement the upstream solution.
-  app.get_formatter()->long_options_offset(6);
-  app.get_formatter()->column_width(45);
+  std::size_t column_width = 45;
+  app.get_formatter()->column_width(column_width);
+  app.get_formatter()->long_option_alignment_ratio(
+      6.f / static_cast<float>(column_width));
 
   try {
     app.parse(argc, argv);
