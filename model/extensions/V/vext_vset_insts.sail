@@ -65,19 +65,16 @@ function handle_illegal_vtype() = {
 
 let vl_use_ceil : bool = config extensions.V.vl_use_ceil
 
-function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
+function calculate_new_vl(AVL : xlenbits, VLMAX : range(1, vlen)) -> range(0, vlen) = {
+  let AVL = unsigned(AVL);
   // See "Constraints on Setting vl" in the vector spec.
-  let new_vl =
-    if AVL <= VLMAX then AVL
-    else if AVL < 2 * VLMAX then {
-      // If VLMAX < AVL < 2 * VLMAX then we can use any value
-      // such that ceil(AVL / 2) <= vl <= VLMAX. Here we provide
-      // two options: ceil(AVL / 2) or VLMAX.
-      if vl_use_ceil then (AVL + 1) / 2 else VLMAX
-    }
-    else VLMAX;
-
-  to_bits_unsafe(xlen, new_vl)
+  if AVL <= VLMAX then AVL
+  else if AVL < 2 * VLMAX then {
+    // If VLMAX < AVL < 2 * VLMAX then we can use any value
+    // such that ceil(AVL / 2) <= vl <= VLMAX. Here we provide
+    // two options: ceil(AVL / 2) or VLMAX.
+    if vl_use_ceil then (AVL + 1) / 2 else VLMAX
+  } else VLMAX
 }
 
 // ********************************** vsetvli ***********************************
@@ -103,16 +100,17 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
-  // set vl according to VLMAX and AVL
-  if (rs1 != zreg) then { // normal stripmining
-    let rs1_val = X(rs1);
-    let AVL = unsigned(rs1_val);
-    vl = calculate_new_vl(AVL, VLMAX);
+  // Set vl according to VLMAX and AVL.
+  if rs1 != zreg then {
+    // Normal stripmining.
+    vl = to_bits(calculate_new_vl(X(rs1), VLMAX));
     X(rd) = vl;
-  } else if (rd != zreg) then { // set vl to VLMAX
-    vl = to_bits_unsafe(xlen, VLMAX);
+  } else if rd != zreg then {
+    // Set vl to VLMAX.
+    vl = to_bits(xlen, VLMAX);
     X(rd) = vl;
-  } else { // keep existing vl if it is compatible and vtype.ill is valid
+  } else {
+    // Keep existing vl if it is compatible and vtype.ill is valid.
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
     let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
     if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
@@ -167,16 +165,17 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
-  // set vl according to VLMAX and AVL
-  if (rs1 != zreg) then { // normal stripmining
-    let rs1_val = X(rs1);
-    let AVL = unsigned(rs1_val);
-    vl = calculate_new_vl(AVL, VLMAX);
+  // Set vl according to VLMAX and AVL.
+  if rs1 != zreg then {
+    // Normal stripmining.
+    vl = to_bits(calculate_new_vl(X(rs1), VLMAX));
     X(rd) = vl;
-  } else if (rd != zreg) then { // set vl to VLMAX
-    vl = to_bits_unsafe(xlen, VLMAX);
+  } else if rd != zreg then {
+    // Set vl to VLMAX.
+    vl = to_bits(xlen, VLMAX);
     X(rd) = vl;
-  } else { // keep existing vl if it is compatible and vtype.ill is valid
+  } else {
+    // Keep existing vl if it is compatible and vtype.ill is valid.
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
     let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
     if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
@@ -218,8 +217,8 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
   let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
   // set vl according to VLMAX and AVL
-  let AVL = unsigned(uimm); // AVL is encoded as 5-bit zero-extended imm in the rs1 field
-  vl = calculate_new_vl(AVL, VLMAX);
+  // AVL is encoded as 5-bit zero-extended imm in the rs1 field
+  vl = to_bits(calculate_new_vl(zero_extend(uimm), VLMAX));
   X(rd) = vl;
 
   // set vtype
