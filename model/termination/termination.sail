@@ -81,6 +81,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zcmop => 3,
     Ext_Zfhmin => 3,
     Ext_Zhinx => 3,
+    Ext_Zicfilp => 3,
     Ext_Zvkb => 3,
     Ext_Sscofpmf => 3,
     Ext_Svrsw60t59b => 3,
@@ -90,6 +91,9 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
 termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
 termination_measure virtual_memory_supported(_) = 3
+
+// get_xLPE() and currentlyEnabled() are mutually recursive
+termination_measure get_xLPE(_) = 2
 
 function hartSupports_measure(ext : extension) -> int =
   match ext {

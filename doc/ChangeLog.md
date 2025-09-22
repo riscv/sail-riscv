@@ -9,6 +9,7 @@
 
   - Zfbfmin
   - Zicbop
+  - Zicfilp
   - Zihintntl
   - Zihintpause
   - Svrsw60t59b
