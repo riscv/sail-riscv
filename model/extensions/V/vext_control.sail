@@ -13,7 +13,7 @@ function clause currentlyEnabled(Ext_Zvl256b) = hartSupports(Ext_Zvl256b)
 function clause currentlyEnabled(Ext_Zvl512b) = hartSupports(Ext_Zvl512b)
 function clause currentlyEnabled(Ext_Zvl1024b) = hartSupports(Ext_Zvl1024b)
 
-function clause currentlyEnabled(Ext_Zve32x) = hartSupports(Ext_Zve32x) & currentlyEnabled(Ext_Zvl32b) & (mstatus[VS] != 0b00) & (not(hartSupports(Ext_V)) | misa[V] == 0b1) & currentlyEnabled(Ext_Zicsr)
+function clause currentlyEnabled(Ext_Zve32x) = hartSupports(Ext_Zve32x) & currentlyEnabled(Ext_Zvl32b) & (mstatus[VS] != 0b00) & currentlyEnabled(Ext_Zicsr)
 function clause currentlyEnabled(Ext_Zve32f) = hartSupports(Ext_Zve32f) & currentlyEnabled(Ext_Zve32x) & currentlyEnabled(Ext_F)
 function clause currentlyEnabled(Ext_Zve64x) = hartSupports(Ext_Zve64x) & currentlyEnabled(Ext_Zvl64b) & currentlyEnabled(Ext_Zve32x)
 function clause currentlyEnabled(Ext_Zve64f) = hartSupports(Ext_Zve64f) & currentlyEnabled(Ext_Zve64x) & currentlyEnabled(Ext_Zve32f)
