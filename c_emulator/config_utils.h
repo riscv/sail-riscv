@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <string>
 
 void init_sail_configured_types();
 
@@ -10,3 +11,8 @@ void init_sail_configured_types();
 // Integers over 64 bits are currently silently truncated, and the sign
 // is ignored (-3 will be read as 3).
 uint64_t get_config_uint64(const std::vector<const char *> &keypath);
+
+const char *get_default_config();
+const char *get_default_config_schema();
+
+void validate_config_schema(const std::string &conf_file);
