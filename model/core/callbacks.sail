@@ -13,7 +13,7 @@ function mem_write_callback(_) = ()
 val mem_read_callback = pure {c: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_read_callback(_) = ()
 
-val mem_exception_callback = pure {c: "mem_exception_callback"} : forall 'n, 0 <= 'n < xlen . (/* addr */ physaddrbits, /* num_of_ExceptionType */ int('n)) -> unit
+val mem_exception_callback = pure {c: "mem_exception_callback"} : (/* addr */ physaddrbits, /* exception code */ exc_code) -> unit
 function mem_exception_callback(_) = ()
 
 val pc_write_callback = pure {c: "pc_write_callback"} : xlenbits -> unit
