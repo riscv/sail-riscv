@@ -302,6 +302,7 @@ foreach (xlen IN ITEMS 32 64)
             --config ${config_file}
             # Input files.
             --all-modules
+            --variable "RMEM = true"
             ${project_file}
     )
     add_custom_command(
@@ -322,6 +323,7 @@ foreach (xlen IN ITEMS 32 64)
             --config ${config_file}
             # Input files.
             --all-modules
+            --variable "RMEM = true"
             ${project_file}
     )
     add_custom_command(
@@ -339,6 +341,7 @@ foreach (xlen IN ITEMS 32 64)
             --config ${config_file}
             # Input files.
             --all-modules
+            --variable "RMEM = true"
             ${project_file}
     )
 
