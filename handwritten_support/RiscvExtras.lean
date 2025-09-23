@@ -38,6 +38,11 @@ axiom valid_reservation : Unit → Bool
 axiom get_16_random_bits : Unit → SailM (BitVec 16)
 axiom sys_enable_experimental_extensions : Unit → Bool
 
+-- Semihosting
+axiom sys_enable_semihosting : Unit → Bool
+axiom is_semihosting : Unit → SailM Bool
+axiom semihosting_call : Unit → SailM Unit
+
 end Effectful
 
 -- Floats

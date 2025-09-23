@@ -49,6 +49,11 @@ bool get_config_rvfi(unit)
   return config_enable_rvfi;
 }
 
+bool get_config_semihosting(unit)
+{
+  return rv_enable_semihosting;
+}
+
 bool get_config_use_abi_names(unit)
 {
   return config_use_abi_names;

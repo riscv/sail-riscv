@@ -38,6 +38,11 @@ def valid_reservation : Unit → Bool := λ _ => false
 def get_16_random_bits : Unit → SailM (BitVec 16) := λ _ => panic "TODO"
 def sys_enable_experimental_extensions : Unit → Bool := λ _ => false
 
+-- Semihosting
+def sys_enable_semihosting : Unit → Bool := λ _ => false
+def is_semihosting : Unit → SailM Bool := λ _ => false
+def semihosting_call : Unit → SailM Unit := λ _ => panic "TODO"
+
 end Effectful
 
 -- Floats
