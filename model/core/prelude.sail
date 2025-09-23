@@ -255,6 +255,7 @@ type mem_access_width = range(1, max_mem_access)
 
 // Enable unratified extensions
 val sys_enable_experimental_extensions = pure "sys_enable_experimental_extensions" : unit -> bool
+val sys_enable_semihosting = pure "sys_enable_semihosting" : unit -> bool
 
 // Print a bit vector in hex. If it is not a multiple of 4
 // bits in length zero extend it so it is (bits_str() prints

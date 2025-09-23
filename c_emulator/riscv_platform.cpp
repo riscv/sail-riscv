@@ -74,6 +74,11 @@ bool sys_enable_experimental_extensions(unit)
   return rv_enable_experimental_extensions;
 }
 
+bool sys_enable_semihosting(unit)
+{
+  return rv_enable_semihosting;
+}
+
 unit memea(mach_bits, sail_int)
 {
   return UNIT;
