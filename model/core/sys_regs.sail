@@ -196,18 +196,6 @@ bitfield Mstatus : bits(64) = {
   SIE  : 1,
 }
 
-function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
-  if   xlen == 32
-  then architecture(RV32)
-  else m[SXL]
-}
-
-function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
-  if   xlen == 32
-  then architecture(RV32)
-  else m[UXL]
-}
-
 function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   // Populate all defined fields using the bits of v, stripping anything
   // that does not have a matching bitfield entry. The SD bits are handled
@@ -288,15 +276,16 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 // architecture and extension checks
 
 function cur_architecture() -> Architecture = {
-  let a : arch_xlen =
-    match cur_privilege {
-      Machine           => misa[MXL],
-      Supervisor        => get_mstatus_SXL(mstatus),
-      User              => get_mstatus_UXL(mstatus),
-      VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-      VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    };
-  architecture(a)
+  if   xlen == 32
+  then return RV32;
+
+  architecture(match cur_privilege {
+    Machine           => misa[MXL],
+    Supervisor        => mstatus[SXL],
+    User              => mstatus[UXL],
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  })
 }
 
 function in32BitMode() -> bool = {
