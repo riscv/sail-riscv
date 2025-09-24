@@ -26,7 +26,7 @@
   build and release artifacts.
 
 - Support for specifying arbitrary memory regions and some basic
-  basic status PMAs (Physical Memory Attributes) has been added.
+  static PMAs (Physical Memory Attributes) has been added.
 
 # Release notes for the 0.8 release
 
