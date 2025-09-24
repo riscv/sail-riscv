@@ -54,7 +54,7 @@ let sp   : regidx = Regidx(zero_extend(0b10)) // x2, stack pointer
 enum Architecture = {RV32, RV64, RV128}
 type arch_xlen = bits(2)
 
-mapping architecture : Architecture <-> arch_xlen = {
+mapping architecture_bits : Architecture <-> arch_xlen = {
   RV32  <-> 0b01,
   RV64  <-> 0b10,
   RV128 <-> 0b11,

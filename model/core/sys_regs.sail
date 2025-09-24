@@ -78,7 +78,7 @@ bitfield Misa : xlenbits = {
 register misa : Misa =
   [ Mk_Misa(zeros()) with
     // MXL is a read-only field that specifies the native XLEN.
-    MXL = architecture(if xlen == 32 then RV32 else RV64),
+    MXL = architecture_bits(if xlen == 32 then RV32 else RV64),
   ]
 
 // whether misa is R/W
@@ -251,7 +251,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
 
 register mstatus : Mstatus = {
   // Initialise SXL and UXL.
-  let mxl = architecture(if xlen == 32 then RV32 else RV64);
+  let mxl = architecture_bits(if xlen == 32 then RV32 else RV64);
   [ Mk_Mstatus(zeros()) with
     // These fields do not exist on RV32 and are read-only zero
     // if the corresponding mode is not supported.
@@ -275,11 +275,11 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 
 // architecture and extension checks
 
-function cur_architecture() -> Architecture = {
+function architecture(priv : Privilege) -> Architecture = {
   if   xlen == 32
   then return RV32;
 
-  architecture(match cur_privilege {
+  architecture_bits(match priv {
     Machine           => misa[MXL],
     Supervisor        => mstatus[SXL],
     User              => mstatus[UXL],
@@ -289,7 +289,7 @@ function cur_architecture() -> Architecture = {
 }
 
 function in32BitMode() -> bool = {
-  cur_architecture() == RV32
+  architecture(cur_privilege) == RV32
 }
 
 bitfield Seccfg : bits(64) = {
