@@ -164,7 +164,7 @@ register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
 function clause is_CSR_accessible(0x180, priv, _) = currentlyEnabled(Ext_S) & not(priv == Supervisor & mstatus[TVM] == 0b1)
 function clause read_CSR(0x180) = satp
-function clause write_CSR(0x180, value) = { satp = legalize_satp(cur_architecture(), satp, value); Ok(satp) }
+function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(cur_privilege), satp, value); Ok(satp) }
 
 // ----------------
 // Fields of SATP
@@ -185,7 +185,7 @@ function satp_to_ppn(satp_val) =
 function translationMode(priv : Privilege) -> SATPMode = {
   if priv == Machine then Bare
   else {
-    let arch = if xlen == 32 then RV32 else architecture(mstatus[SXL]);
+    let arch = architecture(Supervisor);
     let mbits : satp_mode = match arch {
       RV64 => {
         // Can't have an effective architecture of RV64 on RV32.
