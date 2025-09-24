@@ -28,7 +28,7 @@
       "napot_supported": true
     },
     // This controls global support for misaligned access so it is
-    // checked before address translation. "misalignedFault" in
+    // checked before address translation. "misaligned_fault" in
     // "regions" is checked after address translation.
     "misaligned": {
       "supported": true,
@@ -61,12 +61,12 @@
           "executable": true,
           "readable": true,
           "writable": false,
-          "readIdempotent": true,
-          "writeIdempotent": true,
-          "misalignedFault": "NoFault",
-          "atomicSupport": "AMONone",
+          "read_idempotent": true,
+          "write_idempotent": true,
+          "misaligned_fault": "NoFault",
+          "atomic_support": "AMONone",
           "reservability": "RsrvNone",
-          "supportsCboZero": false
+          "supports_cbo_zero": false
         }
       },
       // RAM
@@ -85,12 +85,12 @@
           "executable": true,
           "readable": true,
           "writable": true,
-          "readIdempotent": true,
-          "writeIdempotent": true,
-          "misalignedFault": "NoFault",
-          "atomicSupport": "AMOArithmetic",
+          "read_idempotent": true,
+          "write_idempotent": true,
+          "misaligned_fault": "NoFault",
+          "atomic_support": "AMOArithmetic",
           "reservability": "RsrvEventual",
-          "supportsCboZero": true
+          "supports_cbo_zero": true
         }
       }
     ]

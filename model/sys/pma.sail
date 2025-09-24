@@ -54,9 +54,9 @@ overload to_str = {reservability_str}
 // Do misaligned accesses (of any kind) to this region cause
 // a fault, and if so which kind. This is for regions that
 // only support aligned accesses.
-enum MisalignedFault = { NoFault, AccessFault, AlignmentFault }
+enum misaligned_fault = { NoFault, AccessFault, AlignmentFault }
 
-mapping misaligned_fault_str : MisalignedFault <-> string = {
+mapping misaligned_fault_str : misaligned_fault <-> string = {
   NoFault        <-> "NoFault",
   AccessFault    <-> "AccessFault",
   AlignmentFault <-> "AlignmentFault",
@@ -67,26 +67,26 @@ overload to_str = {misaligned_fault_str}
 struct PMA = {
   // These have no effect on the model currently but they are affected
   // by PBMT so they need to be here if the resulting PMA is verified.
-  cacheable       : bool,
-  coherent        : bool,
+  cacheable        : bool,
+  coherent         : bool,
   // If false then attempting to access this PMA during instruction fetch
   // will cause a fetch access fault.
-  executable      : bool,
+  executable       : bool,
   // If false when reading/writing for data access then this will cause
   // an access fault.
-  readable        : bool,
-  writable        : bool,
-  readIdempotent  : bool,
-  writeIdempotent : bool,
+  readable         : bool,
+  writable         : bool,
+  read_idempotent  : bool,
+  write_idempotent : bool,
   // Optionally cause an access/alignment fault on misaligned access.
-  misalignedFault : MisalignedFault,
+  misaligned_fault : misaligned_fault,
   // TODO: Implement atomicity PMA. This is not supported yet because
   // the AccessType needs to be extended to indicate the AMO type.
-  // atomicSupport   : AtomicSupport,
-  reservability   : Reservability,
+  // atomic_support   : AtomicSupport,
+  reservability    : Reservability,
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
   // have this set.
-  supportsCboZero : bool,
+  supports_cbo_zero : bool,
 }
 
 // A region of memory and its Physical Memory Attributes.
@@ -116,13 +116,13 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.executable then " executable" else "") ^
   (if attr.readable then " readable" else "") ^
   (if attr.writable then " writable" else "") ^
-  (if attr.readIdempotent then " read-idempotent" else "") ^
-  (if attr.writeIdempotent then " write-idempotent" else "") ^
-  " MisalignedFault:" ^ to_str(attr.misalignedFault) ^
+  (if attr.read_idempotent then " read-idempotent" else "") ^
+  (if attr.write_idempotent then " write-idempotent" else "") ^
+  " misaligned_fault:" ^ to_str(attr.misaligned_fault) ^
   // TODO: Atomicity PMA.
-  // " " ^ to_str(attr.atomicSupport) ^
+  // " " ^ to_str(attr.atomic_support) ^
   " " ^ to_str(attr.reservability) ^
-  (if attr.supportsCboZero then " supportsCboZero" else "")
+  (if attr.supports_cbo_zero then " supports_cbo_zero" else "")
 
 function pma_region_to_str(region : PMA_Region) -> string =
   "base: " ^ bits_str(region.base) ^ " size: " ^ bits_str(region.size)
