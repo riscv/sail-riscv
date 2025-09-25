@@ -103,7 +103,7 @@ function generate_dts_memories(pmas : list(PMA_Region)) -> string =
   match pmas {
     [||] => "",
     pma :: rest => {
-      if pma.attributes.include_in_device_tree then {
+      if pma.include_in_device_tree then {
         let base_hi = unsigned(pma.base >> 32);
         let base_lo = unsigned(pma.base[31 .. 0]);
         let size_hi = unsigned(pma.size >> 32);

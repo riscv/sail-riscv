@@ -89,11 +89,6 @@ struct PMA = {
   supports_cbo_zero : bool,
   // TODO: Misaligned Atomicity Granule PMA
   // TODO: Memory Ordering PMA
-
-  // If set to `false` this will be excluded from the generated device tree.
-  // This doesn't affect Sail's execution at all; it's just a convenience
-  // for generating a device tree that matches the PMAs.
-  include_in_device_tree : bool,
 }
 
 // A region of memory and its Physical Memory Attributes.
@@ -103,6 +98,10 @@ struct PMA_Region = {
   base       : bits(64),
   size       : bits(64),
   attributes : PMA,
+  // If set to `false` this will be excluded from the generated device tree.
+  // This doesn't affect Sail's execution at all; it's just a convenience
+  // for generating a device tree that matches the PMAs.
+  include_in_device_tree : bool,
 }
 
 // Get the first PMA that matches a given address range.
