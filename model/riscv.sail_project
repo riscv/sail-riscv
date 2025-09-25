@@ -1,4 +1,5 @@
 variable TERMINATION_FILE = false
+variable RMEM = false
 
 core {
   files
@@ -80,7 +81,10 @@ extensions {
       files
         extensions/I/base_insts.sail,
         extensions/I/reserved_fence_insts.sail,
-        extensions/I/jalr_seq.sail
+        if $RMEM then
+          extensions/I/jalr_rmem.sail
+        else
+          extensions/I/jalr_seq.sail
     }
   }
 
@@ -388,6 +392,14 @@ extensions {
       requires riscv, FD, bfloat16_core
       files extensions/bfloat16/zfbfmin_insts.sail
     }
+  }
+
+  rmem {
+    requires riscv
+    files
+      if $RMEM then
+        extensions/rmem/insts_rmem.sail
+      else []
   }
 
 }

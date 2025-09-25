@@ -78,7 +78,7 @@ bitfield Misa : xlenbits = {
 register misa : Misa =
   [ Mk_Misa(zeros()) with
     // MXL is a read-only field that specifies the native XLEN.
-    MXL = architecture(if xlen == 32 then RV32 else RV64),
+    MXL = architecture_bits(if xlen == 32 then RV32 else RV64),
   ]
 
 // whether misa is R/W
@@ -196,18 +196,6 @@ bitfield Mstatus : bits(64) = {
   SIE  : 1,
 }
 
-function get_mstatus_SXL(m : Mstatus) -> arch_xlen = {
-  if   xlen == 32
-  then architecture(RV32)
-  else m[SXL]
-}
-
-function get_mstatus_UXL(m : Mstatus) -> arch_xlen = {
-  if   xlen == 32
-  then architecture(RV32)
-  else m[UXL]
-}
-
 function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   // Populate all defined fields using the bits of v, stripping anything
   // that does not have a matching bitfield entry. The SD bits are handled
@@ -263,7 +251,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
 
 register mstatus : Mstatus = {
   // Initialise SXL and UXL.
-  let mxl = architecture(if xlen == 32 then RV32 else RV64);
+  let mxl = architecture_bits(if xlen == 32 then RV32 else RV64);
   [ Mk_Mstatus(zeros()) with
     // These fields do not exist on RV32 and are read-only zero
     // if the corresponding mode is not supported.
@@ -287,20 +275,21 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 
 // architecture and extension checks
 
-function cur_architecture() -> Architecture = {
-  let a : arch_xlen =
-    match cur_privilege {
-      Machine           => misa[MXL],
-      Supervisor        => get_mstatus_SXL(mstatus),
-      User              => get_mstatus_UXL(mstatus),
-      VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-      VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    };
-  architecture(a)
+function architecture(priv : Privilege) -> Architecture = {
+  if   xlen == 32
+  then return RV32;
+
+  architecture_bits(match priv {
+    Machine           => misa[MXL],
+    Supervisor        => mstatus[SXL],
+    User              => mstatus[UXL],
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  })
 }
 
 function in32BitMode() -> bool = {
-  cur_architecture() == RV32
+  architecture(cur_privilege) == RV32
 }
 
 bitfield Seccfg : bits(64) = {
