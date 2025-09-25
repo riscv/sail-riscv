@@ -16,6 +16,7 @@ bool valid_reservation(unit);
 unit plat_term_write(mach_bits);
 
 bool sys_enable_experimental_extensions(unit);
+bool sys_enable_semihosting(unit);
 
 unit memea(mach_bits, sail_int);
 

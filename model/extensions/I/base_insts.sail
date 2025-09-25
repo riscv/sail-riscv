@@ -583,8 +583,15 @@ union clause instruction = EBREAK : unit
 mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
-function clause execute EBREAK() =
-  Memory_Exception(Virtaddr(PC), E_Breakpoint())
+
+function clause execute EBREAK() = {
+  if sys_enable_semihosting() & is_semihosting() then {
+    semihosting_call();
+    RETIRE_SUCCESS
+  } else {
+    Memory_Exception(Virtaddr(PC), E_Breakpoint())
+  }
+}
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
