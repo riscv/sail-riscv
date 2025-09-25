@@ -77,14 +77,14 @@ function calculate_new_vl(AVL : xlenbits, VLMAX : range(1, vlen)) -> range(0, vl
   } else VLMAX
 }
 
-// ********************************** vsetvli ***********************************
-union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
-
-mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
-
-function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
+function execute_vsetvli(
+  ma : bits(1),
+  ta : bits(1),
+  sew : bits(3),
+  lmul : bits(3),
+  rs1 : regidx,
+  rd : regidx,
+) -> ExecutionResult = {
   let LMUL_pow_ori  = get_lmul_pow();
   let SEW_pow_ori   = get_sew_pow();
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
@@ -129,6 +129,15 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   RETIRE_SUCCESS
 }
 
+// ********************************** vsetvli ***********************************
+union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
+
+mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
+  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
+  when currentlyEnabled(Ext_Zve32x)
+
+function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = execute_vsetvli(ma, ta, sew, lmul, rs1, rd)
+
 mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
   <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul)
 
@@ -140,17 +149,12 @@ mapping clause encdec = VSETVL(rs2, rs1, rd)
   when currentlyEnabled(Ext_Zve32x)
 
 function clause execute VSETVL(rs2, rs1, rd) = {
-  let vtype_new = Mk_Vtype(X(rs2));
+  let vt = Mk_Vtype(X(rs2));
 
-  if   vtype_new[vill] == 0b1 | vtype_new[reserved] != zeros()
+  if vt[vill] == 0b1 | vt[reserved] != zeros()
   then { handle_illegal_vtype(); return RETIRE_SUCCESS };
 
-  let ma   = vtype_new[vma];
-  let ta   = vtype_new[vta];
-  let sew  = vtype_new[vsew];
-  let lmul = vtype_new[vlmul];
-
-  execute(VSETVLI(ma, ta, sew, lmul, rs1, rd))
+  execute_vsetvli(vt[vma], vt[vta], vt[vsew], vt[vlmul], rs1, rd)
 }
 
 mapping clause assembly = VSETVL(rs2, rs1, rd)
