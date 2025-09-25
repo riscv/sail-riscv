@@ -55,6 +55,7 @@
       "base": 33554432,
       "size": 786432
     },
+    "nmi_handler_address": 0,
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
     "wfi_is_nop": true

@@ -27,6 +27,7 @@ core {
     core/regs.sail,
     core/pc_access.sail,
     core/sys_regs.sail,
+    core/nmi.sail,
     core/ext_regs.sail,
     core/addr_checks_common.sail,
     core/addr_checks.sail,
