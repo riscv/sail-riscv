@@ -10,7 +10,7 @@
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_bits(m[MPP], bitzero) // TODO: use m[MPV] if hypervisor enabled
+  then privLevel_bits(m[MPP], 0b0) // TODO: use m[MPV] if hypervisor enabled
   else priv
 
 // CSR access control
@@ -36,8 +36,13 @@ function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx = unsigned(exceptionType_bits(e));
   let super = bit_to_bool(medeleg.bits[idx]);
-  // TODO: check VS/VU-mode if hypervisor extension enabled
-  let deleg = if currentlyEnabled(Ext_S) & super then Supervisor else Machine;
+  let virtual_super = bit_to_bool(hedeleg.bits[idx]);
+  let deleg = if currentlyEnabled(Ext_S) & super then
+                if currentlyEnabled(Ext_H) &
+                   privLevel_is_virtual(p) & virtual_super then
+                  VirtualSupervisor
+                else Supervisor
+              else Machine;
   // We cannot transition to a less-privileged mode.
   if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
   then p else deleg
@@ -168,6 +173,7 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
       mstatus[MPIE] = mstatus[MIE];
       mstatus[MIE]  = 0b0;
       mstatus[MPP]  = privLevel_to_bits(cur_privilege);
+      mstatus[MPV]  = if currentlyEnabled(Ext_H) & privLevel_is_virtual(cur_privilege) then 0b1 else 0b0;
       mtval         = tval(info);
       mepc          = pc;
 
@@ -191,9 +197,12 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
         User              => 0b0,
         Supervisor        => 0b1,
         Machine           => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap"),
-        VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-        VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+        VirtualUser       => 0b0,
+        VirtualSupervisor => 0b1,
       };
+      hstatus[SPV]    = if currentlyEnabled(Ext_H) & privLevel_is_virtual(cur_privilege) then 0b1 else 0b0;
+      hstatus[SPVP]   = if currentlyEnabled(Ext_H) & privLevel_is_virtual(cur_privilege) then mstatus[SPP] else hstatus[SPVP];
+      hstatus[GVA]    = if currentlyEnabled(Ext_H) & is_trap_write_GVA(c) then 0b1 else 0b0;
       stval           = tval(info);
       sepc            = pc;
 
@@ -205,9 +214,31 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
 
       prepare_trap_vector(del_priv, scause)
     },
+    VirtualSupervisor => {
+      assert (currentlyEnabled(Ext_H), "Hypervisor extension not supported");
+      vscause[IsInterrupt] = bool_to_bits(intr);
+      vscause[Cause]       = zero_extend(c);
+
+      vsstatus[SPIE] = vsstatus[SIE];
+      vsstatus[SIE]  = 0b0;
+      vsstatus[SPP]  = match cur_privilege {
+        User              => 0b0,
+        Supervisor        => 0b1,
+        Machine           => internal_error(__FILE__, __LINE__, "invalid privilege for vs-mode trap"),
+        VirtualUser       => 0b0,
+        VirtualSupervisor => 0b1,
+      };
+      vstval         = tval(info);
+      vsepc          = pc;
+
+      cur_privilege  = del_priv;
+
+      handle_trap_extension(del_priv, pc, ext);
+      track_trap(del_priv);
+      prepare_trap_vector(del_priv, vscause)
+    },
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
   };
 }
 
@@ -225,7 +256,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
-      cur_privilege = privLevel_bits(mstatus[MPP], bitzero); // TODO: use mstatus[MPV] if hypervisor enabled
+      cur_privilege = privLevel_bits(mstatus[MPP], if currentlyEnabled(Ext_H) then mstatus[MPV] else 0b0);
       mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
@@ -241,8 +272,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv = cur_privilege;
       mstatus[SIE]  = mstatus[SPIE];
       mstatus[SPIE] = 0b1;
-      cur_privilege = if mstatus[SPP] == 0b1 then Supervisor else User;
+      cur_privilege = privLevel_bits(0b0 @ mstatus[SPP], if currentlyEnabled(Ext_H) & privLevel_is_virtual(cur_privilege) then hstatus[SPV] else 0b0);
       mstatus[SPP]  = 0b0;
+      hstatus[SPV]  = 0b0;
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 

@@ -51,7 +51,7 @@ pmp {
 }
 
 riscv {
-  requires core, exceptions, pmp, V_core, Smcntrpmf
+  requires core, exceptions, pmp, V_core, Smcntrpmf, H_core
 
   files
     sys/sys_reservation.sail,
@@ -153,8 +153,13 @@ extensions {
 
   // Hypervisor
   H {
-    files
-      extensions/H/hext_insts.sail
+    H_core {
+      requires exceptions, core
+      before riscv
+      files
+        extensions/H/hext_regs.sail,
+        extensions/H/hext_control.sail,
+    }
   }
 
   // Floating point (F and D extensions)
