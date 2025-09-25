@@ -25,6 +25,9 @@
 - A tarfile of the HTML-rendered Sail sources was added to the
   build and release artifacts.
 
+- Support for specifying arbitrary memory regions and some basic
+  static PMAs (Physical Memory Attributes) has been added.
+
 # Release notes for the 0.8 release
 
 This is a major release with some backwards-incompatible changes.
