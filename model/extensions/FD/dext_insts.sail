@@ -855,22 +855,8 @@ mapping clause encdec = F_UN_F_TYPE_D(rs1, rd, FMV_D_X)
 // Execution semantics ================================
 
 function clause execute (F_UN_X_TYPE_D(rs1, rd, FCLASS_D)) = {
-  let rs1_val_D = F_or_X_D(rs1);
-
-  let rd_val_10b : bits (10) =
-    if      f_is_neg_inf_D     (rs1_val_D) then 0b_00_0000_0001
-    else if f_is_neg_norm_D    (rs1_val_D) then 0b_00_0000_0010
-    else if f_is_neg_subnorm_D (rs1_val_D) then 0b_00_0000_0100
-    else if f_is_neg_zero_D    (rs1_val_D) then 0b_00_0000_1000
-    else if f_is_pos_zero_D    (rs1_val_D) then 0b_00_0001_0000
-    else if f_is_pos_subnorm_D (rs1_val_D) then 0b_00_0010_0000
-    else if f_is_pos_norm_D    (rs1_val_D) then 0b_00_0100_0000
-    else if f_is_pos_inf_D     (rs1_val_D) then 0b_00_1000_0000
-    else if f_is_SNaN_D        (rs1_val_D) then 0b_01_0000_0000
-    else if f_is_QNaN_D        (rs1_val_D) then 0b_10_0000_0000
-    else zeros();
-
-  X(rd) = zero_extend (rd_val_10b);
+  let rs1_val = F_or_X_D(rs1);
+  X(rd) = zero_extend(float_point_class_bits(float_classify(rs1_val)));
   RETIRE_SUCCESS
 }
 

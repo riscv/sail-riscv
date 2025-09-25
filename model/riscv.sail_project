@@ -12,6 +12,7 @@ core {
     core/prelude_mem_metadata.sail,
     core/prelude_mem.sail,
     core/arithmetic.sail,
+    core/float_classify.sail,
     core/rvfi_dii.sail,
     core/rvfi_dii_v1.sail,
     core/rvfi_dii_v2.sail,
