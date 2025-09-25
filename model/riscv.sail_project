@@ -51,7 +51,7 @@ pmp {
 }
 
 riscv {
-  requires core, exceptions, pmp, V_core, Smcntrpmf
+  requires core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs
 
   files
     sys/sys_reservation.sail,
@@ -76,7 +76,7 @@ extensions {
       files extensions/I/base_types.sail
     }
     I_insts {
-      requires exceptions, riscv, I_types
+      requires exceptions, riscv, I_types, Zicfilp_regs
 
       files
         extensions/I/base_insts.sail,
@@ -383,6 +383,23 @@ extensions {
     files extensions/Zihintpause/zihintpause_insts.sail
   }
 
+  CFI {
+    CFI_types {
+      before riscv
+      files extensions/cfi/cfi_types.sail
+    }
+    Zicfilp {
+      Zicfilp_regs {
+        files extensions/cfi/zicfilp_regs.sail
+      }
+      Zicfilp_insts {
+        requires riscv, exceptions, CFI_types, Zicfilp_regs
+        before I_insts // LPAD overrides AUIPC
+        files extensions/cfi/zicfilp_insts.sail
+      }
+    }
+  }
+
   bfloat16 {
     bfloat16_core {
       requires riscv, FD
@@ -422,7 +439,7 @@ mops {
 postlude {
   after extensions, mops
 
-  requires core, riscv, exceptions, Smcntrpmf, pmp
+  requires core, riscv, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
 
   files
     postlude/insts_end.sail,

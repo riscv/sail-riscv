@@ -162,7 +162,7 @@ bitfield Mstatus : bits(64) = {
   SD   : xlen - 1,
 
   //MDT  : 42,
-  //MPELP: 41,
+  MPELP: 41,
 
   //MPV  : 39,
   //GVA  : 38,
@@ -174,7 +174,7 @@ bitfield Mstatus : bits(64) = {
   UXL  : 33 .. 32,
 
   //SDT  : 24,
-  //SPELP: 23,
+  SPELP: 23,
   TSR  : 22,
   TW   : 21,
   TVM  : 20,
@@ -204,7 +204,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
 
   let o = [o with
     // MDT = v[MDT],
-    // MPELP = v[MPELP],
+    MPELP = if hartSupports(Ext_Zicfilp) then v[MPELP] else 0b0,
     // MPV = v[MPV],
     // GVA = v[GVA],
     // We don't currently support changing MBE and SBE.
@@ -214,7 +214,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
     // SDT = v[SDT],
-    // SPELP = v[SPELP],
+    SPELP = if hartSupports(Ext_Zicfilp) then v[SPELP] else 0b0,
     TSR = if currentlyEnabled(Ext_S) then v[TSR] else 0b0,
     TW = if currentlyEnabled(Ext_U) then v[TW] else 0b0,
     TVM = if currentlyEnabled(Ext_S) then v[TVM] else 0b0,
@@ -293,6 +293,8 @@ function in32BitMode() -> bool = {
 }
 
 bitfield Seccfg : bits(64) = {
+  // Enable Zicfilp in M-mode
+  MLPE   : 10,
   // Enable access to SEED in S-mode
   SSEED  : 9,
   // Enable access to SEED in U-mode
@@ -311,6 +313,7 @@ function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
 
   let v = Mk_Seccfg(v);
   [o with
+    MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
     USEED = if useed_read_only_zero then 0b0 else v[USEED],
   ]
@@ -322,8 +325,8 @@ mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) // mseccfg
-function clause is_CSR_accessible(0x757, _, _) = currentlyEnabled(Ext_Zkr) & xlen == 32 // mseccfgh
+function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) // mseccfg
+function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32 // mseccfgh
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
@@ -348,16 +351,14 @@ bitfield MEnvcfg : bits(64) = {
   STCE   : 63,
   // Page Based Memory Types Extension
   PBMTE  : 62,
-  // Reserved WPRI bits.
-  wpri_1 : 61 .. 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
+  // Landing Pad Enable
+  LPE    : 2,
   // Fence of I/O implies Memory
   FIOM   : 0,
 }
@@ -369,8 +370,8 @@ bitfield SEnvcfg : xlenbits = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
+  // Landing Pad Enable
+  LPE    : 2,
   // Fence of I/O implies Memory
   FIOM   : 0,
 }
@@ -379,6 +380,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
+    LPE  = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
@@ -391,6 +393,7 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
+    LPE = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
@@ -711,7 +714,7 @@ bitfield Sstatus : bits(64) = {
 
   UXL   : 33 .. 32,
 //  SDT   : 24,
-//  SPELP : 23,
+  SPELP : 23,
   MXR   : 19,
   SUM   : 18,
   XS    : 16 .. 15,
@@ -730,7 +733,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
     SD = m[SD],
     UXL = m[UXL],
     //SDT = m[SDT],
-    //SPELP = m[SPELP],
+    SPELP = m[SPELP],
     MXR = m[MXR],
     SUM = m[SUM],
     XS = m[XS],
@@ -750,7 +753,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
     SD = bool_to_bits(dirty),
     UXL = s[UXL],
     //SDT = s[SDT],
-    //SPELP = s[SPELP],
+    SPELP = s[SPELP],
     MXR = s[MXR],
     SUM = s[SUM],
     XS = s[XS],

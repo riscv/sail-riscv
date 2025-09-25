@@ -14,6 +14,8 @@ function reset() -> unit = {
   reset_sys();
   reset_vmem();
 
+  reset_elp(); // initialize Zicfilp expected landing pad
+
   // To allow model extensions (code outside this repo) to perform additional reset.
   ext_reset();
 }

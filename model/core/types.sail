@@ -156,6 +156,9 @@ union ExceptionType = {
   E_Load_Page_Fault    : unit,
   E_Reserved_14        : unit,
   E_SAMO_Page_Fault    : unit,
+  E_Reserved_16        : unit,
+  E_Reserved_17        : unit,
+  E_Software_Check     : unit,
 
   // extensions
   E_Extension          : ext_exc_type
@@ -178,6 +181,9 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Load_Page_Fault()    <-> 0b001101, // 13
   E_Reserved_14()        <-> 0b001110, // 14
   E_SAMO_Page_Fault()    <-> 0b001111, // 15
+  E_Reserved_16()        <-> 0b010000, // 16
+  E_Reserved_17()        <-> 0b010001, // 17
+  E_Software_Check()     <-> 0b010010, // 18
 
   // extensions
   E_Extension(e)         <-> ext_exc_type_bits(e)
@@ -202,12 +208,23 @@ function exceptionType_to_str(e) =
     E_Load_Page_Fault()    => "load-page-fault",
     E_Reserved_14()        => "reserved-1",
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
+    E_Reserved_16()        => "reserved-2",
+    E_Reserved_17()        => "reserved-3",
+    E_Software_Check()     => "software-check-fault",
 
     // extensions
     E_Extension(e)         => ext_exc_type_to_str(e)
   }
 
 overload to_str = {exceptionType_to_str}
+
+// SW check exception codes
+enum SWCheckCodes = {LANDING_PAD_FAULT}
+
+function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
+  match (c) {
+    LANDING_PAD_FAULT  => zero_extend(0b010),
+  }
 
 // trap modes
 
@@ -221,6 +238,10 @@ function trapVectorMode_of_bits (m) =
     0b01 => TV_Vector,
     _    => TV_Reserved
   }
+
+// xRET types
+// (capitalized versions conflict with the instructions themselves)
+enum xRET_type = {mRET, sRET}
 
 // extension context status
 

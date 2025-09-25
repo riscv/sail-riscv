@@ -132,11 +132,15 @@ function check_pmp() -> bool = {
   valid
 }
 
-function check_bfloat16() -> bool = {
+function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
   if hartSupports(Ext_Zfbfmin) & not(hartSupports(Ext_F)) then {
     valid = false;
-    print_endline("Zfbfmin extension requires F extension");
+    print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
+  };
+  if hartSupports(Ext_Zicfilp) & not(hartSupports(Ext_Zicsr)) then {
+    valid = false;
+    print_endline("The Zicfilp extension is enabled but Zicsr is disabled: supporting Zicfilp requires Zicsr.");
   };
   valid
 }
@@ -147,5 +151,5 @@ function config_is_valid() -> bool = {
   & check_mem_layout()
   & check_vlen_elen()
   & check_pmp()
-  & check_bfloat16()
+  & check_misc_extension_dependencies()
 }
