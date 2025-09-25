@@ -430,7 +430,12 @@ function read_vreg_seg(num_elem, SEW, LMUL_pow, nf, vrid) = {
 // Shift amounts
 val get_shift_amount : forall 'n, 0 <= 'n . (bits('n), sew_bitsize) -> nat
 function get_shift_amount(bit_val, SEW) = {
-  let lowlog2bits = log2(SEW);
+  let lowlog2bits : range(3, 6) = match SEW {
+    8  => 3,
+    16 => 4,
+    32 => 5,
+    64 => 6,
+  };
   assert(0 < lowlog2bits & lowlog2bits < 'n);
   unsigned(bit_val[lowlog2bits - 1 .. 0]);
 }

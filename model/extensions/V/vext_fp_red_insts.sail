@@ -27,7 +27,7 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
-val process_rfvv_single : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, nat1, sew_bitsize, range(-3, 3)) -> ExecutionResult
+val process_rfvv_single : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, range(1, vlen), sew_bitsize, LMUL_pow) -> ExecutionResult
 function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
@@ -70,7 +70,7 @@ function process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_po
   RETIRE_SUCCESS
 }
 
-val process_rfvv_widening_reduction : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, nat1, sew_bitsize, range(-3, 3)) -> ExecutionResult
+val process_rfvv_widening_reduction : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx, range(1, vlen), sew_bitsize, LMUL_pow) -> ExecutionResult
 function process_rfvv_widening_reduction(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b          = fcsr[FRM];
   let SEW_widen      = SEW * 2;
