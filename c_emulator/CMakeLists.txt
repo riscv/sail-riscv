@@ -61,6 +61,9 @@ target_link_libraries(riscv_model
 )
 
 add_dependencies(riscv_model generated_sail_riscv_model)
+if (ENABLE_BUILD_TIME_SCHEMA_VALIDATION)
+  add_dependencies(riscv_model validate_configs)
+endif()
 
 ## A binary that can load an ELF file into the model and run it.
 
