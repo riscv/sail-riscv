@@ -21,6 +21,7 @@ foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
 endforeach()
 
 file(READ "${CMAKE_CURRENT_BINARY_DIR}/rv64d_v256_e64.json" DEFAULT_JSON)
+file(READ "${CMAKE_BINARY_DIR}/sail_riscv_config_schema.json" JSON_SCHEMA)
 configure_file("default_config.h.in" "default_config.h" @ONLY)
 
 add_library(default_config INTERFACE
