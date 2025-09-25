@@ -9,7 +9,7 @@
 #include "sail_config.h"
 #include "sail_riscv_model.h"
 #include "default_config.h"
-#include "default_config_schema.h"
+#include "config_schema.h"
 
 // These should eventually be part of compiler-generated `model_init()`,
 // but are consolidated here pending compiler support.
@@ -81,9 +81,9 @@ const char *get_default_config()
   return DEFAULT_JSON;
 }
 
-const char *get_default_config_schema()
+const char *get_config_schema()
 {
-  return DEFAULT_CONFIG_SCHEMA;
+  return CONFIG_SCHEMA;
 }
 
 using jsoncons::json;
@@ -92,7 +92,7 @@ namespace jsonschema = jsoncons::jsonschema;
 void validate_config_schema(const std::string &conf_file)
 {
   // Compile the schema.
-  json schema = json::parse(get_default_config_schema());
+  json schema = json::parse(get_config_schema());
   auto options = jsonschema::evaluation_options {}.default_version(
       jsonschema::schema_version::draft202012());
   // Throws schema_error if compilation fails.

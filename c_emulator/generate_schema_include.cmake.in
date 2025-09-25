@@ -1,2 +1,2 @@
 file(READ @schema_file@ CONFIG_SCHEMA)
-configure_file(@gen_default_schema_input@ default_config_schema.h @ONLY)
+configure_file(@gen_schema_input@ config_schema.h @ONLY)

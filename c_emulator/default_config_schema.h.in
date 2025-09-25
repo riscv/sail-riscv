@@ -1,3 +1,0 @@
-#pragma once
-
-const char *DEFAULT_CONFIG_SCHEMA = R"##(@CONFIG_SCHEMA@)##";

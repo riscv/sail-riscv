@@ -40,7 +40,7 @@ bool do_show_times = false;
 bool do_print_version = false;
 bool do_print_build_info = false;
 bool do_print_default_config = false;
-bool do_print_default_config_schema = false;
+bool do_print_config_schema = false;
 bool do_print_dts = false;
 bool do_validate_config = false;
 bool do_print_isa = false;
@@ -139,8 +139,8 @@ static void setup_options(CLI::App &app)
   app.add_flag("--build-info", do_print_build_info, "Print build information");
   app.add_flag("--print-default-config", do_print_default_config,
                "Print default configuration");
-  app.add_flag("--print-default-config-schema", do_print_default_config_schema,
-               "Print default configuration schema");
+  app.add_flag("--print-config-schema", do_print_config_schema,
+               "Print configuration schema");
   app.add_flag("--validate-config", do_validate_config,
                "Validate configuration");
   app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
@@ -546,8 +546,8 @@ int inner_main(int argc, char **argv)
     printf("%s", get_default_config());
     exit(EXIT_SUCCESS);
   }
-  if (do_print_default_config_schema) {
-    printf("%s", get_default_config_schema());
+  if (do_print_config_schema) {
+    printf("%s", get_config_schema());
     exit(EXIT_SUCCESS);
   }
   if (rvfi_dii_port != 0) {
