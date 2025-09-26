@@ -1,0 +1,96 @@
+name: "sail-riscv CI setup"
+description: "Composite action to install packages, setup CMake, and install/build Sail"
+inputs:
+  cmake-version:
+    description: "CMake version to install"
+    required: false
+    default: latest
+  sail-version:
+    description: 'Sail version to install (use "latest" to build from source)'
+    required: false
+    default: 0.19.1
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install packages (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
+
+    - name: Install packages (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        brew install opam llvm lld
+        echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+    - name: Install CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: ${{ inputs.cmake-version }}
+
+    - name: Restore cached opam (macOS or latest Sail)
+      if: runner.os == 'macOS' || inputs.sail-version == 'latest'
+      id: cache-opam-restore
+      uses: actions/cache/restore@v4
+      with:
+        path: ~/.opam
+        key: ${{ runner.os }}-cmake-${{ inputs.cmake-version }}-sail-${{ inputs.sail-version }}-opam
+
+    - name: Install Sail (Linux binary)
+      if: runner.os == 'Linux' && inputs.sail-version != 'latest'
+      shell: bash
+      run: |
+        sudo mkdir -p /usr/local
+        curl --location https://github.com/rems-project/sail/releases/download/${{ inputs.sail-version }}-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+
+    - name: Install Sail (macOS opam)
+      if: runner.os == 'macOS' && steps.cache-opam-restore.outputs.cache-hit != 'true' && inputs.sail-version != 'latest'
+      shell: bash
+      run: |
+        opam init --auto-setup --bare
+        opam switch create default 5.3.0
+        eval $(opam env)
+        opam update
+        opam install -y sail.${{ inputs.sail-version }}
+
+    - name: Install opam (latest Sail)
+      if: inputs.sail-version == 'latest'
+      shell: bash
+      run: |
+        if [ "${{ runner.os }}" = "Linux" ]; then
+          sudo apt install -y --no-install-recommends opam z3
+        elif [ "${{ runner.os }}" = "macOS" ]; then
+          brew install z3
+        fi
+
+    - name: Setup opam (latest Sail)
+      if: inputs.sail-version == 'latest' && steps.cache-opam-restore.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        opam init --yes --no-setup --shell=sh --compiler=5.3.0
+        opam install dune
+
+    - name: Install Sail (latest Sail)
+      if: inputs.sail-version == 'latest'
+      shell: bash
+      run: |
+        git clone https://github.com/rems-project/sail.git
+        eval $(opam env)
+        (cd sail; opam install sail --deps-only --yes)
+        (cd sail; make install)
+
+    - name: Save cached opam (macOS or latest Sail)
+      if: runner.os == 'macOS' || inputs.sail-version == 'latest'
+      id: cache-opam-save
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.opam
+        key: ${{ steps.cache-opam-restore.outputs.cache-primary-key }}
+
+    - name: Load OPAM environment (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: echo "$HOME/.opam/default/bin" >> $GITHUB_PATH

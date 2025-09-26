@@ -14,8 +14,6 @@ jobs:
           - os: ubuntu-22.04
             cmake_version: latest
             run_all_steps: true
-    env:
-      SAIL_VERSION: "0.19.1"
 
     steps:
       - name: Check out repository code
@@ -24,67 +22,24 @@ jobs:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
 
-      - name: Install packages (Linux)
-        if: startsWith(matrix.os, 'ubuntu-')
-        run: |
-          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
-
-      - name: Install packages (macOS)
-        if: startsWith(matrix.os, 'macos-')
-        run: |
-          brew install opam llvm lld
-          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
-
-      - name: Install CMake
-        uses: jwlawson/actions-setup-cmake@v2
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
         with:
           cmake-version: "${{ matrix.cmake_version }}"
-
-      - name: Install Sail (Linux)
-        if: startsWith(matrix.os, 'ubuntu-')
-        run: |
-          sudo mkdir -p /usr/local
-          curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
-
-      - name: Restore cached opam (macOS)
-        if: startsWith(matrix.os, 'macos-')
-        id: cache-opam-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.opam
-          key: ${{ matrix.os }}-${{ matrix.cmake_version }}-${{ env.SAIL_VERSION }}-opam
-
-      - name: Install Sail (macOS)
-        if: steps.cache-opam-restore.outputs.cache-hit != 'true' && startsWith(matrix.os, 'macos-')
-        run: |
-          opam init --auto-setup --bare
-          opam switch create default 5.3.0
-          eval $(opam env)
-          opam update
-          opam install -y sail.$SAIL_VERSION
-
-      - name: Save cached opam (macOS)
-        if: startsWith(matrix.os, 'macos-')
-        id: cache-opam-save
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.opam
-          key: ${{ steps.cache-opam-restore.outputs.cache-primary-key }}
-
-      - name: Load OPAM environment (macOS)
-        if: startsWith(matrix.os, 'macos-' )
-        run: echo "$HOME/.opam/default/bin" >> $GITHUB_PATH
 
       - name: Ensure pre-commit checks pass
         if: ${{ matrix.run_all_steps}}
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
 
-      - name: Build and test simulators
+      - name: Build simulators
         run: |
           # Ninja is used because the CMake Makefile generator doesn't
           # build top-level targets in parallel unfortunately.
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFIRST_PARTY_TESTS=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
           ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
+
+      - name: Run tests
+        run: |
           ctest --test-dir build --output-junit tests.xml --output-on-failure
 
       - name: Upload test results
