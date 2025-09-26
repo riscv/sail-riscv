@@ -8,7 +8,7 @@ set(JSONCONS_BUILD_TESTS OFF)
 FetchContent_Declare(
   jsoncons
   URL https://github.com/danielaparker/jsoncons/archive/refs/tags/v${use_jsoncons_version}.tar.gz
-  URL_HASH MD5=c750ec0db8ad11e84bdc9a3e01780f95
+  URL_HASH SHA3_224=728c12d82be9a60991581236489708321b301373bda7cea41170a195
 )
 
 FetchContent_MakeAvailable(jsoncons)
