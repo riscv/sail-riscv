@@ -20,6 +20,16 @@ message(STATUS "CXX compiler version: ${cxx_compiler_version}")
 # make version available to emulator
 configure_file(sail_riscv_version.cpp.in sail_riscv_version.cpp @ONLY)
 
+# Generate the schema populator script.
+set(gen_schema_input "${CMAKE_CURRENT_SOURCE_DIR}/config_schema.h.in")
+configure_file(generate_schema_include.cmake.in generate_schema_include.cmake @ONLY)
+add_custom_command(
+    OUTPUT config_schema.h
+    COMMAND cmake -P generate_schema_include.cmake
+    DEPENDS generated_sail_riscv_model
+)
+add_custom_target(generated_config_schema DEPENDS config_schema.h)
+
 ## A library that contains the C model and support code.
 
 add_library(riscv_model
@@ -43,6 +53,7 @@ add_library(riscv_model
     symbol_table.cpp
     symbol_table.h
     sail_riscv_version.h
+    "${CMAKE_CURRENT_BINARY_DIR}/config_schema.h"
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
@@ -54,13 +65,15 @@ target_include_directories(riscv_model
         "${CMAKE_CURRENT_SOURCE_DIR}"
         # So `riscv_sail.h` can find `sail_riscv_model.h`.
         "${CMAKE_BINARY_DIR}"
+        # So `config_utils.cpp` can find `config_schema.h`
+        "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
 target_link_libraries(riscv_model
-    PUBLIC elfio softfloat sail_runtime
+    PUBLIC elfio softfloat sail_runtime jsoncons default_config
 )
 
-add_dependencies(riscv_model generated_sail_riscv_model)
+add_dependencies(riscv_model generated_sail_riscv_model generated_config_schema)
 
 ## A binary that can load an ELF file into the model and run it.
 
@@ -89,7 +102,7 @@ set_source_files_properties(
 add_dependencies(sail_riscv_sim generated_sail_riscv_model)
 
 target_link_libraries(sail_riscv_sim
-    PRIVATE CLI11 riscv_model default_config
+    PRIVATE CLI11 riscv_model
 )
 
 # TODO: Enable warnings when we use the #include trick

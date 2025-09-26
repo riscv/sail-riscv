@@ -24,6 +24,10 @@ install(FILES "${CMAKE_SOURCE_DIR}/dependencies/elfio/LICENSE.txt"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
     RENAME "ELFIO-LICENSE.txt"
 )
+install(FILES "${CMAKE_SOURCE_DIR}/dependencies/jsoncons/LICENSE"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
+    RENAME "JSONCONS-LICENSE.txt"
+)
 
 # `file(ARCHIVE_CREATE COMPRESSION Gzip)` creates files with
 # timestamps without a way of turning them off.  Instead, just use

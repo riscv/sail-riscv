@@ -1,7 +1,6 @@
 #include <sail.h>
 #include <sail_config.h>
 
-#include "default_config.h"
 #include "config_utils.h"
 
 // Generated in the model C code. This is a simple test runner that just
@@ -23,7 +22,7 @@ int main()
 {
   trace_log = stdout;
 
-  sail_config_set_string(DEFAULT_JSON);
+  sail_config_set_string(get_default_config());
   init_sail_configured_types();
   model_test();
 }
