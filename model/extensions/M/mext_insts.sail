@@ -16,10 +16,10 @@ function clause currentlyEnabled(Ext_Zmmul) = hartSupports(Ext_Zmmul) | currentl
 union clause instruction = MUL : (regidx, regidx, regidx, mul_op)
 
 mapping encdec_mul_op : mul_op <-> bits(3) = {
-  struct { high = false, signed_rs1 = true,  signed_rs2 = true  } <-> 0b000,
-  struct { high = true,  signed_rs1 = true,  signed_rs2 = true  } <-> 0b001,
-  struct { high = true,  signed_rs1 = true,  signed_rs2 = false } <-> 0b010,
-  struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> 0b011,
+  struct { result_part = Low,  signed_rs1 = Signed,   signed_rs2 = Signed   } <-> 0b000,
+  struct { result_part = High, signed_rs1 = Signed,   signed_rs2 = Signed   } <-> 0b001,
+  struct { result_part = High, signed_rs1 = Signed,   signed_rs2 = Unsigned } <-> 0b010,
+  struct { result_part = High, signed_rs1 = Unsigned, signed_rs2 = Unsigned } <-> 0b011,
 }
 
 mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
@@ -29,21 +29,15 @@ mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
 function clause execute MUL(rs2, rs1, rd, mul_op) = {
   let rs1_bits = X(rs1);
   let rs2_bits = X(rs2);
-  let rs1_int = if mul_op.signed_rs1 then signed(rs1_bits) else unsigned(rs1_bits);
-  let rs2_int = if mul_op.signed_rs2 then signed(rs2_bits) else unsigned(rs2_bits);
-
-  let result_wide = to_bits_truncate(2 * xlen, rs1_int * rs2_int);
-  X(rd) = if   mul_op.high
-          then result_wide[(2 * xlen - 1) .. xlen]
-          else result_wide[(xlen - 1) .. 0];
+  X(rd) = mult_to_bits_half(xlen, mul_op.signed_rs1, mul_op.signed_rs2, rs1_bits, rs2_bits, mul_op.result_part);
   RETIRE_SUCCESS
 }
 
 mapping mul_mnemonic : mul_op <-> string = {
-  struct { high = false, signed_rs1 = true,  signed_rs2 = true  } <-> "mul",
-  struct { high = true,  signed_rs1 = true,  signed_rs2 = true  } <-> "mulh",
-  struct { high = true,  signed_rs1 = true,  signed_rs2 = false } <-> "mulhsu",
-  struct { high = true,  signed_rs1 = false, signed_rs2 = false } <-> "mulhu",
+  struct { result_part = Low,  signed_rs1 = Signed,   signed_rs2 = Signed   } <-> "mul",
+  struct { result_part = High, signed_rs1 = Signed,   signed_rs2 = Signed   } <-> "mulh",
+  struct { result_part = High, signed_rs1 = Signed,   signed_rs2 = Unsigned } <-> "mulhsu",
+  struct { result_part = High, signed_rs1 = Unsigned, signed_rs2 = Unsigned } <-> "mulhu",
 }
 
 mapping clause assembly = MUL(rs2, rs1, rd, mul_op)

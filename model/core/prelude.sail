@@ -139,6 +139,9 @@ function to_bits_truncate(l, n) = get_slice_int(l, n, 0)
 val to_bits_unsafe : forall 'l, 'l >= 0 . (implicit('l), int) -> bits('l)
 function to_bits_unsafe(l, n) = get_slice_int(l, n, 0)
 
+enum Signedness = { Signed, Unsigned }
+enum VectorHalf = { High, Low }
+
 infix 4 <_s
 infix 4 >_s
 infix 4 <=_s

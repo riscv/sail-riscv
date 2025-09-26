@@ -220,5 +220,5 @@ mapping clause assembly = C_MUL(rsdc, rsc2) <->
 function clause execute C_MUL(rsdc, rsc2) = {
   let rd = creg2reg_idx(rsdc);
   let rs = creg2reg_idx(rsc2);
-  execute(MUL(rs, rd, rd, struct { high = false, signed_rs1 = true, signed_rs2 = true }))
+  execute(MUL(rs, rd, rd, struct { result_part = Low, signed_rs1 = Signed, signed_rs2 = Signed }))
 }
