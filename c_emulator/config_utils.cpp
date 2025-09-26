@@ -86,11 +86,11 @@ const char *get_config_schema()
   return CONFIG_SCHEMA;
 }
 
-using jsoncons::json;
-namespace jsonschema = jsoncons::jsonschema;
-
 void validate_config_schema(const std::string &conf_file)
 {
+  using jsoncons::json;
+  namespace jsonschema = jsoncons::jsonschema;
+
   // Compile the schema.
   json schema = json::parse(get_config_schema());
   auto options = jsonschema::evaluation_options {}.default_version(
