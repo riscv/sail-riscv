@@ -7,7 +7,7 @@
 // =======================================================================================
 
 struct mul_op = {
-  high       : bool,
-  signed_rs1 : bool,
-  signed_rs2 : bool
+  result_part : VectorHalf,
+  signed_rs1  : Signedness,
+  signed_rs2  : Signedness
 }
