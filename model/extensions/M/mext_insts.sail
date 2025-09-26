@@ -29,13 +29,7 @@ mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
 function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
   let rs1_bits = X(rs1);
   let rs2_bits = X(rs2);
-  let rs1_int = if mul_op.signed_rs1 then signed(rs1_bits) else unsigned(rs1_bits);
-  let rs2_int = if mul_op.signed_rs2 then signed(rs2_bits) else unsigned(rs2_bits);
-
-  let result_wide = to_bits_truncate(2 * xlen, rs1_int * rs2_int);
-  X(rd) = if   mul_op.high
-          then result_wide[(2 * xlen - 1) .. xlen]
-          else result_wide[(xlen - 1) .. 0];
+  X(rd) = mult_to_bits(xlen, mul_op.signed_rs1, mul_op.signed_rs2, rs1_bits, rs2_bits, mul_op.high);
   RETIRE_SUCCESS
 }
 
