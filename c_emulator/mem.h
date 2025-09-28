@@ -7,6 +7,15 @@
 
 class mem {
 public:
+  // Set target endian, default is little endian
+  static void set_target_endian(bool is_little)
+  {
+    target_is_little_endian = is_little;
+  }
+
+  // Read from sail mem, start from addr, len = len
+  // This function will read bytes in reverse order if host endian and target
+  // endian are different
   static void read(uint64_t addr, void *dst, size_t len);
 
   // start from addr, len = sizeof(T)
@@ -51,4 +60,18 @@ public:
 
   static std::string read_string(const char *ptr, size_t len);
 
+private:
+  static bool target_is_little_endian;
+  static bool host_is_little_endian()
+  {
+    union {
+      uint16_t u16;
+      uint8_t u8[2];
+    } test = {.u16 = 0x0001};
+    return test.u8[0] == 0x01;
+  }
+  static bool same_endian()
+  {
+    return host_is_little_endian() == target_is_little_endian;
+  }
 };
