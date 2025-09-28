@@ -103,8 +103,14 @@ function run_hart_active(step_no: nat) -> Step = {
         then {
           print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
         };
+        // When ELP is set to LP_EXPECTED, the next instruction needs to be
+        // the non-RVC `LPAD` instruction.
+        if is_landing_pad_expected() then {
+          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+          Step_Execute(r, instbits)
+        }
         // check for RVC once here instead of every RVC execute clause.
-        if currentlyEnabled(Ext_Zca) then {
+        else if currentlyEnabled(Ext_Zca) then {
           nextPC = PC + 2;
           let r = execute(instruction);
           Step_Execute(r, instbits)
@@ -120,9 +126,17 @@ function run_hart_active(step_no: nat) -> Step = {
         then {
           print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
         };
-        nextPC = PC + 4;
-        let r = execute(instruction);
-        Step_Execute(r, instbits)
+        // When ELP is set to LP_EXPECTED, if the next instruction in
+        // the instruction stream is not LPAD, then a software check
+        // exception with a landing pad fault code is thrown.
+        if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
+          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+          Step_Execute(r, instbits)
+        } else {
+          nextPC = PC + 4;
+          let r = execute(instruction);
+          Step_Execute(r, instbits)
+        }
       }
     }
   }
