@@ -123,10 +123,12 @@ add_custom_command(
         ${project_file}
 )
 
-add_custom_target(generated_sail_riscv_model DEPENDS ${c_model} ${c_model_header})
+add_custom_target(generated_sail_riscv_model DEPENDS ${c_model} ${c_model_header} ${schema_file})
 install(FILES ${schema_file}
     DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
 )
+# Make schema location visible to c_emulator build.
+set(schema_file "${schema_file}" PARENT_SCOPE)
 
 ############# JSON #############
 

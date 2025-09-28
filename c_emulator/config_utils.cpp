@@ -1,10 +1,15 @@
 #include "config_utils.h"
 
 #include <stdexcept>
+#include <fstream>
+#include <jsoncons/json.hpp>
+#include <jsoncons_ext/jsonschema/jsonschema.hpp>
 
 #include "sail.h"
 #include "sail_config.h"
 #include "sail_riscv_model.h"
+#include "default_config.h"
+#include "config_schema.h"
 
 // These should eventually be part of compiler-generated `model_init()`,
 // but are consolidated here pending compiler support.
@@ -69,4 +74,56 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath)
 
   throw std::runtime_error("Configuration option '" + keypath_to_str(keypath)
                            + "' could not be parsed as an integer.\n");
+}
+
+const char *get_default_config()
+{
+  return DEFAULT_JSON;
+}
+
+const char *get_config_schema()
+{
+  return CONFIG_SCHEMA;
+}
+
+void validate_config_schema(const std::string &conf_file)
+{
+  using jsoncons::json;
+  namespace jsonschema = jsoncons::jsonschema;
+
+  // Compile the schema.
+  json schema = json::parse(get_config_schema());
+  auto options = jsonschema::evaluation_options {}.default_version(
+      jsonschema::schema_version::draft202012());
+  // Throws schema_error if compilation fails.
+  jsonschema::json_schema<json> compiled
+      = jsonschema::make_json_schema(std::move(schema), options);
+
+  // Parse the config.
+  json config;
+  std::string source;
+
+  if (conf_file.empty()) {
+    config = json::parse(get_default_config());
+    source = "default configuration";
+  } else {
+    std::ifstream is(conf_file);
+    config = json::parse(is);
+    source = "configuration in " + conf_file;
+  }
+
+  // Validate.
+  bool is_valid = true;
+  auto report = [&is_valid](const jsonschema::validation_message &msg)
+      -> jsonschema::walk_result {
+    is_valid = false;
+    std::cerr << msg.instance_location().string() << ": " << msg.message()
+              << std::endl;
+    return jsonschema::walk_result::advance;
+  };
+  compiled.validate(config, report);
+  if (!is_valid) {
+    throw std::runtime_error("Schema conformance check failed for the " + source
+                             + ".");
+  }
 }
