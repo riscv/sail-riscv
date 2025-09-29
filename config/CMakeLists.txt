@@ -1,3 +1,5 @@
+set(generated_config_filenames)
+
 # Create a variety of configuration files for different XLEN/ELEN/VLENs.
 foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
     foreach(CONFIG__V__ELEN_EXP RANGE 5 6)
@@ -16,10 +18,16 @@ foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
             install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${config_filename}
                 DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/config
             )
+
+            list(APPEND generated_config_filenames "${CMAKE_CURRENT_BINARY_DIR}/${config_filename}")
         endforeach()
     endforeach()
 endforeach()
 
+# Make list of config files visible to c_emulator build.
+set(generated_config_filenames "${generated_config_filenames}" PARENT_SCOPE)
+
+# Embed the default config in a C header.
 file(READ "${CMAKE_CURRENT_BINARY_DIR}/rv64d_v256_e64.json" DEFAULT_JSON)
 configure_file("default_config.h.in" "default_config.h" @ONLY)
 
