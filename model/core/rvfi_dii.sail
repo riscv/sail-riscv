@@ -45,47 +45,47 @@ function print_instr_packet(bs) = {
 
 
 bitfield RVFI_DII_Execution_Packet_InstMetaData : bits(192) = {
-  /// The rvfi_order field must be set to the instruction index. No indices
-  /// must be used twice and there must be no gaps. Instructions may be
-  /// retired in a reordered fashion, as long as causality is preserved
-  /// (register and memory write operations must be retired before the read
-  /// operations that depend on them).
+  // The rvfi_order field must be set to the instruction index. No indices
+  // must be used twice and there must be no gaps. Instructions may be
+  // retired in a reordered fashion, as long as causality is preserved
+  // (register and memory write operations must be retired before the read
+  // operations that depend on them).
   rvfi_order  : 63 .. 0,
-  /// rvfi_insn is the instruction word for the retired instruction. In case
-  /// of an instruction with fewer than ILEN bits, the upper bits of this
-  /// output must be all zero. For compressed instructions the compressed
-  /// instruction word must be output on this port. For fused instructions the
-  /// complete fused instruction sequence must be output.
+  // rvfi_insn is the instruction word for the retired instruction. In case
+  // of an instruction with fewer than ILEN bits, the upper bits of this
+  // output must be all zero. For compressed instructions the compressed
+  // instruction word must be output on this port. For fused instructions the
+  // complete fused instruction sequence must be output.
   rvfi_insn  : 127 ..  64,
-  /// rvfi_trap must be set for an instruction that cannot be decoded as a
-  /// legal instruction, such as 0x00000000.
-  /// In addition, rvfi_trap must be set for a misaligned memory read or
-  /// write in PMAs that don't allow misaligned access, or other memory
-  /// access violations. rvfi_trap must also be set for a jump instruction
-  /// that jumps to a misaligned instruction.
+  // rvfi_trap must be set for an instruction that cannot be decoded as a
+  // legal instruction, such as 0x00000000.
+  // In addition, rvfi_trap must be set for a misaligned memory read or
+  // write in PMAs that don't allow misaligned access, or other memory
+  // access violations. rvfi_trap must also be set for a jump instruction
+  // that jumps to a misaligned instruction.
   rvfi_trap  : 135 ..  128,
-  /// The signal rvfi_halt must be set when the instruction is the last
-  /// instruction that the core retires before halting execution. It should not
-  /// be set for an instruction that triggers a trap condition if the CPU
-  /// reacts to the trap by executing a trap handler. This signal enables
-  /// verification of liveness properties.
+  // The signal rvfi_halt must be set when the instruction is the last
+  // instruction that the core retires before halting execution. It should not
+  // be set for an instruction that triggers a trap condition if the CPU
+  // reacts to the trap by executing a trap handler. This signal enables
+  // verification of liveness properties.
   rvfi_halt  : 143 ..  136,
-  /// rvfi_intr must be set for the first instruction that is part of a trap
-  /// handler, i.e. an instruction that has a rvfi_pc_rdata that does not
-  /// match the rvfi_pc_wdata of the previous instruction.
+  // rvfi_intr must be set for the first instruction that is part of a trap
+  // handler, i.e. an instruction that has a rvfi_pc_rdata that does not
+  // match the rvfi_pc_wdata of the previous instruction.
   rvfi_intr  : 151 ..  144,
-  /// rvfi_mode must be set to the current privilege level, using the following
-  /// encoding: 0=U-Mode, 1=S-Mode, 2=Reserved, 3=M-Mode
+  // rvfi_mode must be set to the current privilege level, using the following
+  // encoding: 0=U-Mode, 1=S-Mode, 2=Reserved, 3=M-Mode
   rvfi_mode  : 159 ..  152,
-  /// rvfi_ixl must be set to the value of MXL/SXL/UXL in the current privilege level,
-  /// using the following encoding: 1=32, 2=64
+  // rvfi_ixl must be set to the value of MXL/SXL/UXL in the current privilege level,
+  // using the following encoding: 1=32, 2=64
   rvfi_ixl  : 167 ..  160,
 
-  /// When the core retires an instruction, it asserts the rvfi_valid signal
-  /// and uses the signals described below to output the details of the
-  /// retired instruction. The signals below are only valid during such a
-  /// cycle and can be driven to arbitrary values in a cycle in which
-  /// rvfi_valid is not asserted.
+  // When the core retires an instruction, it asserts the rvfi_valid signal
+  // and uses the signals described below to output the details of the
+  // retired instruction. The signals below are only valid during such a
+  // cycle and can be driven to arbitrary values in a cycle in which
+  // rvfi_valid is not asserted.
   rvfi_valid  : 175 ..  168,
   // Note: since we only send these packets in the valid state, we could
   // omit the valid signal, but we need 3 bytes of padding after ixl anyway
@@ -94,32 +94,32 @@ bitfield RVFI_DII_Execution_Packet_InstMetaData : bits(192) = {
 }
 
 bitfield RVFI_DII_Execution_Packet_PC : bits(128) = {
-  /// This is the program counter (pc) before (rvfi_pc_rdata) and after
-  /// (rvfi_pc_wdata) execution of this instruction. I.e. this is the address
-  /// of the retired instruction and the address of the next instruction.
+  // This is the program counter (pc) before (rvfi_pc_rdata) and after
+  // (rvfi_pc_wdata) execution of this instruction. I.e. this is the address
+  // of the retired instruction and the address of the next instruction.
   rvfi_pc_rdata  : 63 .. 0,
   rvfi_pc_wdata  : 127 ..  64,
 }
 
 bitfield RVFI_DII_Execution_Packet_Ext_Integer : bits(320) = {
   magic : 63 .. 0, // must be "int-data"
-  /// rvfi_rd_wdata is the value of the x register addressed by rd after
-  /// execution of this instruction. This output must be zero when rd is zero.
+  // rvfi_rd_wdata is the value of the x register addressed by rd after
+  // execution of this instruction. This output must be zero when rd is zero.
   rvfi_rd_wdata  : 127 ..  64,
-  /// rvfi_rs1_rdata/rvfi_rs2_rdata is the value of the x register addressed
-  /// by rs1/rs2 before execution of this instruction. This output must be
-  /// zero when rs1/rs2 is zero.
+  // rvfi_rs1_rdata/rvfi_rs2_rdata is the value of the x register addressed
+  // by rs1/rs2 before execution of this instruction. This output must be
+  // zero when rs1/rs2 is zero.
   rvfi_rs1_rdata  : 191 .. 128,
   rvfi_rs2_rdata  : 255 .. 192,
-  /// rvfi_rd_addr is the decoded rd register address for the retired
-  /// instruction. For an instruction that writes no rd register, this output
-  /// must always be zero.
+  // rvfi_rd_addr is the decoded rd register address for the retired
+  // instruction. For an instruction that writes no rd register, this output
+  // must always be zero.
   rvfi_rd_addr      : 263 .. 256,
-  /// rvfi_rs1_addr and rvfi_rs2_addr are the decoded rs1 and rs1 register
-  /// addresses for the retired instruction. For an instruction that reads no
-  /// rs1/rs2 register, this output can have an arbitrary value. However, if
-  /// this output is nonzero then rvfi_rs1_rdata must carry the value stored
-  /// in that register in the pre-state.
+  // rvfi_rs1_addr and rvfi_rs2_addr are the decoded rs1 and rs1 register
+  // addresses for the retired instruction. For an instruction that reads no
+  // rs1/rs2 register, this output can have an arbitrary value. However, if
+  // this output is nonzero then rvfi_rs1_rdata must carry the value stored
+  // in that register in the pre-state.
   rvfi_rs1_addr  : 271 .. 264,
   rvfi_rs2_addr  : 279 .. 272,
   padding  : 319 .. 280,
@@ -127,25 +127,25 @@ bitfield RVFI_DII_Execution_Packet_Ext_Integer : bits(320) = {
 
 bitfield RVFI_DII_Execution_Packet_Ext_MemAccess : bits(704) = {
   magic : 63 .. 0, // must be "mem-data"
-  /// rvfi_mem_rdata is the pre-state data read from rvfi_mem_addr.
-  /// rvfi_mem_rmask specifies which bytes are valid.
-  /// CHERI-extension: widened to 32 bytes to allow reporting 129 bits
+  // rvfi_mem_rdata is the pre-state data read from rvfi_mem_addr.
+  // rvfi_mem_rmask specifies which bytes are valid.
+  // CHERI-extension: widened to 32 bytes to allow reporting 129 bits
   rvfi_mem_rdata : 319 ..  64,
-  /// rvfi_mem_wdata is the post-state data written to rvfi_mem_addr.
-  /// rvfi_mem_wmask specifies which bytes are valid.
-  /// CHERI-extension: widened to 32 bytes to allow reporting 129 bits
+  // rvfi_mem_wdata is the post-state data written to rvfi_mem_addr.
+  // rvfi_mem_wmask specifies which bytes are valid.
+  // CHERI-extension: widened to 32 bytes to allow reporting 129 bits
   rvfi_mem_wdata : 575 .. 320,
-  /// rvfi_mem_rmask is a bitmask that specifies which bytes in rvfi_mem_rdata
-  /// contain valid read data from rvfi_mem_addr.
-  /// CHERI-extension: we extend rmask+wmask to 32 bits to allow reporting the
-  /// mask for CHERI/RV128 accesses here.
+  // rvfi_mem_rmask is a bitmask that specifies which bytes in rvfi_mem_rdata
+  // contain valid read data from rvfi_mem_addr.
+  // CHERI-extension: we extend rmask+wmask to 32 bits to allow reporting the
+  // mask for CHERI/RV128 accesses here.
   rvfi_mem_rmask      : 607 .. 576,
-  /// rvfi_mem_wmask is a bitmask that specifies which bytes in rvfi_mem_wdata
-  /// contain valid data that is written to rvfi_mem_addr.
-  /// CHERI-extension: widened to 32 bits
+  // rvfi_mem_wmask is a bitmask that specifies which bytes in rvfi_mem_wdata
+  // contain valid data that is written to rvfi_mem_addr.
+  // CHERI-extension: widened to 32 bits
   rvfi_mem_wmask      : 639 .. 608,
-  /// For memory operations (rvfi_mem_rmask and/or rvfi_mem_wmask are
-  /// non-zero), rvfi_mem_addr holds the accessed memory location.
+  // For memory operations (rvfi_mem_rmask and/or rvfi_mem_wmask are
+  // non-zero), rvfi_mem_addr holds the accessed memory location.
   rvfi_mem_addr : 703 .. 640,
 }
 
