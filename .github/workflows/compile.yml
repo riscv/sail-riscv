@@ -27,7 +27,7 @@ jobs:
       - name: Install packages (Linux)
         if: startsWith(matrix.os, 'ubuntu-')
         run: |
-          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
+          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build tree meson gcc-riscv64-unknown-elf
 
       - name: Install packages (macOS)
         if: startsWith(matrix.os, 'macos-')
@@ -80,6 +80,16 @@ jobs:
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
 
       - name: Build and test simulators
+        if: startsWith(matrix.os, 'ubuntu-')
+        run: |
+          # Ninja is used because the CMake Makefile generator doesn't
+          # build top-level targets in parallel unfortunately.
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFIRST_PARTY_TESTS=TRUE -DDOWNLOAD_PICOLIBC=TRUE -DSEMIHOSTING_TESTS=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
+          ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
+          ctest --test-dir build --output-junit tests.xml --output-on-failure
+
+      - name: Build and test simulators
+        if: startsWith(matrix.os, 'macos-')
         run: |
           # Ninja is used because the CMake Makefile generator doesn't
           # build top-level targets in parallel unfortunately.

@@ -35,6 +35,7 @@
 #include "riscv_callbacks_if.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
+#include "semihosting.h"
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -81,6 +82,8 @@ uint64_t insn_limit = 0;
 #ifdef SAILCOV
 char *sailcov_file = NULL;
 #endif
+
+semihosting::elfinfo current_elf_info;
 
 static void validate_config(const std::string &conf_file)
 {
@@ -172,11 +175,18 @@ static void setup_options(CLI::App &app)
       ->option_text("<int> (within [1 - 65535])");
   app.add_option("--inst-limit", insn_limit, "Instruction limit")
       ->option_text("<uint>");
+  app.add_option_function<std::string>(
+         "--elf-args",
+         [](std::string args) { current_elf_info.arguments = args; },
+         "ELF arguments")
+      ->option_text("<string>");
 #ifdef SAILCOV
   app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")
       ->option_text("<file>");
 #endif
 
+  app.add_flag("--enable-semihosting", rv_enable_semihosting,
+               "Enable semihosting");
   app.add_flag("--trace-instr", config_print_instr,
                "Enable trace output for instruction execution");
   app.add_flag("--trace-reg", config_print_reg,
@@ -244,6 +254,18 @@ uint64_t load_sail(const std::string &filename, bool main_file)
 
   // Load the entire symbol table.
   const auto symbols = elf.symbols();
+  if (rv_enable_semihosting) {
+    current_elf_info.name = filename;
+    // prepare stack/heap info for semihosting
+    current_elf_info.stack_base
+        = get_config_uint64({"platform", "ram", "base"});
+    current_elf_info.stack_size
+        = get_config_uint64({"platform", "ram", "size"});
+    current_elf_info.heap_base = symbols.at("__heap_end");
+    current_elf_info.heap_size
+        = current_elf_info.heap_base - symbols.at("_end");
+    semihosting::register_elf_info(current_elf_info);
+  }
 
   // Save reversed symbol table for log symbolization.
   // If multiple symbols from different ELF files have the same value the first

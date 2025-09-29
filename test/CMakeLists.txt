@@ -122,5 +122,9 @@ option(FIRST_PARTY_TESTS "Compile & run first party tests (requires Clang or RIS
 if (FIRST_PARTY_TESTS)
     add_subdirectory("first_party")
 endif()
+option(SEMIHOSTING_TESTS "Compile & run semihosting tests (requires RISC-V GCC and Picolibc).")
+if (SEMIHOSTING_TESTS)
+    add_subdirectory("semihosting")
+endif()
 
 add_subdirectory("unit_tests")

@@ -52,6 +52,11 @@ add_library(riscv_model
     config_utils.h
     symbol_table.cpp
     symbol_table.h
+    mem.cpp
+    mem.h
+    log.h
+    semihosting.cpp
+    semihosting.h
     sail_riscv_version.h
     "${CMAKE_CURRENT_BINARY_DIR}/config_schema.h"
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
