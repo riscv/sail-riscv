@@ -105,6 +105,18 @@ target_link_libraries(sail_riscv_sim
     PRIVATE CLI11 riscv_model
 )
 
+# After the emulator is built, use it to validate the generated config files.
+foreach (config_filename IN LISTS generated_config_filenames)
+    add_custom_command(
+        TARGET sail_riscv_sim
+        POST_BUILD
+        COMMAND $<TARGET_FILE:sail_riscv_sim>
+                    --validate-config
+                    --config ${config_filename}
+        VERBATIM
+    )
+endforeach()
+
 # TODO: Enable warnings when we use the #include trick
 # to include the generated Sail code. Currently it
 # generates too many warnings to turn these on globally.

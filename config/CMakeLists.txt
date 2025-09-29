@@ -1,4 +1,4 @@
-set(config_validation_files)
+set(generated_config_filenames)
 
 # Create a variety of configuration files for different XLEN/ELEN/VLENs.
 foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
@@ -19,27 +19,13 @@ foreach (CONFIG__BASE__XLEN IN ITEMS 32 64)
                 DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}/config
             )
 
-            # After the emulator is built, run it to verify this config is valid.
-            add_custom_command(
-                DEPENDS sail_riscv_sim
-                OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${config_filename}.valid"
-                COMMAND $<TARGET_FILE:sail_riscv_sim>
-                            --validate-config
-                            --config ${CMAKE_CURRENT_BINARY_DIR}/${config_filename}
-                            > "${config_filename}.out"
-                # Only if successful, move the .out to .valid (otherwise
-                # things will go wrong when it fails but still generates the .out file).
-                COMMAND cmake -E rename "${config_filename}.out" "${config_filename}.valid"
-                COMMENT "Validating config file ${config_filename}"
-                VERBATIM
-            )
-            list(APPEND config_validation_files "${CMAKE_CURRENT_BINARY_DIR}/${config_filename}.valid")
+            list(APPEND generated_config_filenames "${CMAKE_CURRENT_BINARY_DIR}/${config_filename}")
         endforeach()
     endforeach()
 endforeach()
 
-# This target runs the C emulator to validate all of the configs generated here.
-add_custom_target(config_validation ALL DEPENDS ${config_validation_files})
+# Make list of config files visible to c_emulator build.
+set(generated_config_filenames "${generated_config_filenames}" PARENT_SCOPE)
 
 # Embed the default config in a C header.
 file(READ "${CMAKE_CURRENT_BINARY_DIR}/rv64d_v256_e64.json" DEFAULT_JSON)
