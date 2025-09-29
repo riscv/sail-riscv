@@ -73,19 +73,10 @@
       "supported": true
     },
     "V": {
-      "supported": @CONFIG_ELEN_IS_64@,
+      "support_level": "@CONFIG__V__SUPPORT@",
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
-      "vl_use_ceil": false,
-      "x": {
-        "supported": true
-      },
-      "f": {
-        "supported": true
-      },
-      "d": {
-        "supported": @CONFIG_ELEN_IS_64@
-      }
+      "vl_use_ceil": false
     },
     "B": {
       "supported": true
