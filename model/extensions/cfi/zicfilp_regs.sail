@@ -36,7 +36,6 @@ function clause currentlyEnabled(Ext_Zicfilp) =
   currentlyEnabled(Ext_Zicsr) & hartSupports(Ext_Zicfilp) & get_xLPE(cur_privilege)
 
 /// Architectural state for the Zicfilp extension.
-
 enum landing_pad_expectation = { NO_LP_EXPECTED, LP_EXPECTED }
 
 // Expected Landing Pad
@@ -60,7 +59,7 @@ function is_landing_pad_expected() -> bool =
 function reset_elp() -> unit =
   elp = landing_pad_bits(NO_LP_EXPECTED)
 
-/// Interaction with system registers.
+// Interaction with system registers.
 
 // When a trap is taken into privilege mode x, the xPELP is set
 // to ELP and ELP is set to NO_LP_EXPECTED.
