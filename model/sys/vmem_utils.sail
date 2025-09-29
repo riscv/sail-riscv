@@ -233,7 +233,7 @@ val vmem_read : forall 'width, is_mem_width('width).
 
 function vmem_read(rs, offset, width, acc, aq, rl, res) = {
   // Get the address, X(rs1) + offset.
-  // Some extensions perform additional checks on address validity.
+  // Extensions might perform additional checks on address validity.
   let vaddr : virtaddr = match ext_data_get_addr(rs, offset, acc, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
@@ -247,7 +247,7 @@ val vmem_write : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write(rs_addr, offset, width, data, acc, aq, rl, res) = {
-  // Get the address, X(rs_addr) (no offset).
+  // Get the address, X(rs_addr) + offset.
   // Extensions might perform additional checks on address validity.
   let vaddr : virtaddr = match ext_data_get_addr(rs_addr, offset, acc, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
