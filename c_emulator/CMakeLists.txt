@@ -125,3 +125,9 @@ endif()
 install(TARGETS sail_riscv_sim
     RUNTIME DESTINATION "bin"
 )
+
+add_custom_target(run_tests
+  COMMAND ${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_sim --config ${CMAKE_BINARY_DIR}/config/rv64d_v256_e64.json --print-isa-string
+  COMMENT "Pass default config to simulator to validate itself"
+  DEPENDS sail_riscv_sim
+)
