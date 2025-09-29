@@ -11,9 +11,6 @@ on:
       - reopened
       - labeled
       - unlabeled
-env:
-  SAIL_VERSION: "0.19.1"
-  CMAKE_VERSION: "3.20"
 jobs:
   run-full-tests:
     # If triggered by a PR event, only run if the 'run-full-tests' label is present
@@ -35,20 +32,15 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install packages (Linux)
-        run: |
-          sudo apt update
-          sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
-      - name: Install CMake
-        uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: "${{ env.CMAKE_VERSION }}"
-      - name: Install Sail (Linux)
-        run: |
-          sudo mkdir -p /usr/local
-          curl --location https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
-      - name: Build and test simulator
+          # Git history is needed for `git describe` in the build to work.
+          fetch-depth: 0
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+      - name: Build simulator
         run: |
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_${{ matrix.TEST_SUITE }}=TRUE
           ninja -C build all
+      - name: Run tests
+        run: |
           ctest --test-dir build --output-on-failure

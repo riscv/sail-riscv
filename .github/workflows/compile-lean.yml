@@ -9,45 +9,26 @@ jobs:
   build:
     strategy:
       matrix:
-        version: [5.2.1]
         os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          # Git history is needed for `git describe` in the build to work.
+          fetch-depth: 0
 
       - name: System dependencies (ubuntu)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          sudo apt install build-essential libgmp-dev z3 cvc4 opam
+          sudo apt install cvc4
 
-      - name: Restore cached opam
-        id: cache-opam-restore
-        uses: actions/cache/restore@v4
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
         with:
-          path: ~/.opam
-          key: ${{ matrix.os }}-${{ matrix.version }}-opam
-
-      - name: Setup opam
-        if: steps.cache-opam-restore.outputs.cache-hit != 'true'
-        run: |
-          opam init --yes --no-setup --shell=sh --compiler=${{ matrix.version }}
-          opam install dune
-
-      - name: Install Sail
-        run: |
-          git clone https://github.com/rems-project/sail.git
-          eval $(opam env)
-          (cd sail; opam install sail --deps-only --yes)
-          (cd sail; make install)
-
-      - name: Save cached opam
-        id: cache-opam-save
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.opam
-          key: ${{ steps.cache-opam-restore.outputs.cache-primary-key }}
+          sail-version: "latest"
 
       - name: Install Lean
         run: |
@@ -67,7 +48,7 @@ jobs:
           path: |
             build/model/Lean_RV64D/.lake
             build/model/Lean_RV64D_executable/.lake
-          key: ${{ matrix.os }}-${{ matrix.version }}-lake
+          key: ${{ matrix.os }}-lake
 
       - name: Use Lean to build the model and report errors
         run: |
