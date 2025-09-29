@@ -82,17 +82,6 @@ uint64_t insn_limit = 0;
 char *sailcov_file = nullptr;
 #endif
 
-static void validate_config(const std::string &conf_file)
-{
-  const char *s = zconfig_is_valid(UNIT) ? "valid" : "invalid";
-  if (!conf_file.empty()) {
-    fprintf(stdout, "Configuration in %s is %s.\n", conf_file.c_str(), s);
-  } else {
-    fprintf(stdout, "Default configuration is %s.\n", s);
-  }
-  exit(EXIT_SUCCESS);
-}
-
 static void print_dts(void)
 {
   char *dts = nullptr;
@@ -142,7 +131,7 @@ static void setup_options(CLI::App &app)
   app.add_flag("--print-config-schema", do_print_config_schema,
                "Print configuration schema");
   app.add_flag("--validate-config", do_validate_config,
-               "Validate configuration");
+               "Exit after config validation (it is always validated)");
   app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
   app.add_flag("--enable-experimental-extensions",
@@ -564,7 +553,6 @@ int inner_main(int argc, char **argv)
     fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
   }
 
-  // Always validate the schema conformance of the config.
   validate_config_schema(config_file);
 
   // Initialize the model.
@@ -577,9 +565,16 @@ int inner_main(int argc, char **argv)
   init_sail_configured_types();
   model_init();
 
-  if (do_validate_config) {
-    validate_config(config_file);
+  // Always validate the schema conformance of the config.
+  if (!zconfig_is_valid(UNIT)) {
+    fprintf(stderr, "Fatal Error: validate_config failed.\n");
+    exit(EXIT_FAILURE);
   }
+  if (do_validate_config) {
+    fprintf(stderr, "Config passed validations.\n");
+    exit(EXIT_SUCCESS);
+  }
+
   if (do_print_dts) {
     print_dts();
   }
