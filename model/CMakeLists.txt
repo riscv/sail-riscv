@@ -157,6 +157,9 @@ add_custom_command(
         # Actually embed the code snippets in the JSON as plain text rather
         # than referencing them. The other option is base64.
         --doc-embed plain
+        # Also embed the file:line locations for code. This allows hyperlinking
+        # identifiers to their source code.
+        --doc-embed-with-location
         # The directory that the JSON will be saved in.
         -o ${CMAKE_CURRENT_BINARY_DIR}
         # The name of the JSON file.
