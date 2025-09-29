@@ -160,7 +160,7 @@ function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
 
 // External API
 
-function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
+function check_misaligned(vaddr : virtaddr, width : word_width_wide) -> bool = {
   if plat_enable_misaligned_access then {
     false
   } else {

@@ -44,15 +44,7 @@ function is_aligned_paddr(Physaddr(addr) : physaddr, width : nat1) -> bool =
 function is_aligned_vaddr(Virtaddr(addr) : virtaddr, width : nat1) -> bool =
   unsigned(addr) % width == 0
 
-function is_aligned_bits(vaddr : xlenbits, width : word_width) -> bool =
-  match width {
-    1 => true,
-    2 => vaddr[0..0] == zeros(),
-    4 => vaddr[1..0] == zeros(),
-    8 => vaddr[2..0] == zeros(),
-  }
-
-overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr, is_aligned_bits}
+overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr}
 
 function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_kind) =
   match (aq, rl, res) {
