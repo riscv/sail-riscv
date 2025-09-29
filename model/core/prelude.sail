@@ -133,6 +133,17 @@ function to_bits_truncate(l, n) = get_slice_int(l, n, 0)
 val to_bits_unsafe : forall 'l, 'l >= 0 . (implicit('l), int) -> bits('l)
 function to_bits_unsafe(l, n) = get_slice_int(l, n, 0)
 
+val mult_to_bits : forall 'l, 'l > 0 . (implicit('l), bool, bool, bits('l), bits('l), bool) -> bits('l)
+function mult_to_bits(l, sign1, sign2, rs1_bits, rs2_bits, high) = {
+  let rs1_int : int = if sign1 then signed(rs1_bits) else unsigned(rs1_bits);
+  let rs2_int : int = if sign2 then signed(rs2_bits) else unsigned(rs2_bits);
+
+  let result_wide = to_bits_truncate(2 * l, rs1_int * rs2_int);
+  if high
+  then result_wide[(2 * l - 1) .. l]
+  else result_wide[(l - 1) .. 0];
+}
+
 infix 4 <_s
 infix 4 >_s
 infix 4 <=_s
