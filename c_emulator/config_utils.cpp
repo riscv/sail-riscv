@@ -99,17 +99,20 @@ void validate_config_schema(const std::string &conf_file)
   jsonschema::json_schema<json> compiled
       = jsonschema::make_json_schema(std::move(schema), options);
 
+  std::string source = conf_file.empty() ? "default configuration"
+                                         : "configuration in " + conf_file;
+
   // Parse the config.
   json config;
-  std::string source;
-
-  if (conf_file.empty()) {
-    config = json::parse(get_default_config());
-    source = "default configuration";
-  } else {
-    std::ifstream is(conf_file);
-    config = json::parse(is);
-    source = "configuration in " + conf_file;
+  try {
+    if (conf_file.empty()) {
+      config = json::parse(get_default_config());
+    } else {
+      std::ifstream is(conf_file);
+      config = json::parse(is);
+    }
+  } catch (const std::exception &ex) {
+    throw std::runtime_error("Cannot parse " + source + ": " + ex.what() + ".");
   }
 
   // Validate.

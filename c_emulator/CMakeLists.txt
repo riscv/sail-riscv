@@ -26,7 +26,7 @@ configure_file(generate_schema_include.cmake.in generate_schema_include.cmake @O
 add_custom_command(
     OUTPUT config_schema.h
     COMMAND cmake -P generate_schema_include.cmake
-    DEPENDS generated_sail_riscv_model
+    DEPENDS generated_sail_riscv_model ${schema_file}
 )
 add_custom_target(generated_config_schema DEPENDS config_schema.h)
 
