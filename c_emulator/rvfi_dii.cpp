@@ -133,10 +133,12 @@ void rvfi_handler::send_trace(bool config_print)
     get_and_send_packet(zrvfi_get_exec_packet_v1, config_print);
   } else if (trace_version == 2) {
     get_and_send_packet(zrvfi_get_exec_packet_v2, config_print);
-    if (zrvfi_int_data_present)
+    if (zrvfi_int_data_present) {
       get_and_send_packet(zrvfi_get_int_data, config_print);
-    if (zrvfi_mem_data_present)
+    }
+    if (zrvfi_mem_data_present) {
       get_and_send_packet(zrvfi_get_mem_data, config_print);
+    }
   } else {
     fprintf(stderr, "Sending v%d packets not implemented yet!\n",
             trace_version);

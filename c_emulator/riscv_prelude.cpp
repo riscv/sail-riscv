@@ -29,8 +29,9 @@ unit print_log_instr(const_sail_string s, uint64_t pc)
 
 unit print_step(unit)
 {
-  if (config_print_step)
+  if (config_print_step) {
     fprintf(trace_log, "\n");
+  }
   return UNIT;
 }
 

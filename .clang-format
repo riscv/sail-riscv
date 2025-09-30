@@ -10,3 +10,4 @@ PointerAlignment: Right
 SortIncludes: Never
 AlignTrailingComments: true
 AccessModifierOffset: -2
+InsertBraces: true
