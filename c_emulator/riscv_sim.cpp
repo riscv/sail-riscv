@@ -359,8 +359,9 @@ void close_logs(void)
 
 void finish(int ec)
 {
-  if (!sig_file.empty())
+  if (!sig_file.empty()) {
     write_signature(sig_file.c_str());
+  }
 
   model_fini();
   if (gettimeofday(&run_end, NULL) < 0) {
@@ -428,8 +429,9 @@ void run_sail(void)
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
       is_waiting = ztry_step(sail_step, exit_wait);
-      if (have_exception)
+      if (have_exception) {
         goto step_exception;
+      }
       flush_logs();
       KILL(sail_int)(&sail_step);
       if (rvfi) {
@@ -614,8 +616,9 @@ int inner_main(int argc, char **argv)
   }
 
   if (rvfi) {
-    if (!rvfi->setup_socket(config_print_rvfi))
+    if (!rvfi->setup_socket(config_print_rvfi)) {
       return 1;
+    }
     register_callback(&rvfi_cbs);
   }
 
