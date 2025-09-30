@@ -520,24 +520,22 @@ let extensions_ordered_for_isa_string = [
   Ext_Zksh,
   Ext_Zkt,
 
-  // Zvl, Zve and Zvfh
-  Ext_Zvl32b,
-  Ext_Zvl64b,
-  Ext_Zvl128b,
-  Ext_Zvl256b,
-  Ext_Zvl512b,
-  Ext_Zvl1024b,
+  // Zvb
+  Ext_Zvbb,
+  Ext_Zvbc,
+
+  // Zve
   Ext_Zve32f,
   Ext_Zve32x,
   Ext_Zve64d,
   Ext_Zve64f,
   Ext_Zve64x,
+
+  // Zvf
   Ext_Zvfh,
   Ext_Zvfhmin,
 
-  // Zv
-  Ext_Zvbb,
-  Ext_Zvbc,
+  // Zvk
   Ext_Zvkb,
   Ext_Zvkg,
   Ext_Zvkn,
@@ -552,6 +550,14 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvksg,
   Ext_Zvksh,
   Ext_Zvkt,
+
+  // Zvl
+  Ext_Zvl32b,
+  Ext_Zvl64b,
+  Ext_Zvl128b,
+  Ext_Zvl256b,
+  Ext_Zvl512b,
+  Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,
