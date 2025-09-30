@@ -95,15 +95,9 @@ function check_vext_config() -> bool = {
     valid = false;
     print_endline("Zve*x is enabled but ELEN is 2^" ^ dec_str(elen_exp) ^ ": ELEN must be >= 2^5");
   };
-  if vector_support_config_level() >= vector_support_level(Float_single) then {
-    if (elen_exp : nat) < 5 then {
-      valid = false;
-      print_endline("Zve*f is enabled but ELEN is 2^" ^ dec_str(elen_exp) ^ ": ELEN must be >= 2^5");
-    };
-    if not(hartSupports(Ext_F)) then {
-      valid = false;
-      print_endline("Zve*f is enabled but F is disabled: supporting Zve*f requires F.");
-    };
+  if vector_support_config_level() >= vector_support_level(Float_single) & not(hartSupports(Ext_F)) then {
+    valid = false;
+    print_endline("Zve*f is enabled but F is disabled: supporting Zve*f requires F.");
   };
   if vector_support_config_level() >= vector_support_level(Float_double) then {
     if (elen_exp : nat) < 6 then {
