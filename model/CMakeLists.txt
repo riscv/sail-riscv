@@ -20,6 +20,7 @@ set(sail_common
 )
 
 set(project_file "riscv.sail_project")
+set(executable_project_file "riscv_executable.sail_project")
 
 # Reconfigure if the project file changes.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${project_file})
@@ -445,7 +446,7 @@ foreach (xlen IN ITEMS 32 64)
     add_custom_command(
         DEPENDS
             ${sail_srcs}
-            ${project_file}
+            ${executable_project_file}
             ${config_file}
             ${CMAKE_SOURCE_DIR}/handwritten_support/RiscvExtrasExecutable.lean
         VERBATIM
@@ -459,7 +460,7 @@ foreach (xlen IN ITEMS 32 64)
             ${lean_sail_executable}
             --all-modules
             --variable "TERMINATION_FILE = true"
-            ${project_file}
+            ${executable_project_file}
     )
 
     add_custom_target(generated_lean_${arch} DEPENDS "Lean_${arch_uppercase}/Lean${arch_uppercase}.lean")

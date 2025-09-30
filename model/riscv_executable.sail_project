@@ -1,0 +1,309 @@
+variable TERMINATION_FILE = false
+variable RMEM = false
+
+core {
+  files
+    core/prelude.sail,
+    core/errors.sail,
+    core/xlen.sail,
+    core/flen.sail,
+    core/vlen.sail,
+    core/prelude_mem_addrtype.sail,
+    core/prelude_mem_metadata.sail,
+    core/prelude_mem.sail,
+    core/arithmetic.sail,
+    core/rvfi_dii.sail,
+    core/rvfi_dii_v1.sail,
+    core/rvfi_dii_v2.sail,
+    core/extensions.sail,
+    core/types_common.sail,
+    core/types_ext.sail,
+    core/types.sail,
+    core/vmem_types.sail,
+    core/vext_types.sail,
+    core/csr_begin.sail,
+    core/callbacks.sail,
+    core/reg_type.sail,
+    core/regs.sail,
+    core/pc_access.sail,
+    core/sys_regs.sail,
+    core/ext_regs.sail,
+    core/addr_checks_common.sail,
+    core/addr_checks.sail,
+    core/misa_ext.sail,
+}
+
+exceptions {
+  requires core
+
+  files
+    exceptions/sys_exceptions.sail,
+    exceptions/sync_exception.sail,
+}
+
+pmp {
+  requires core
+
+  files
+    pmp/pmp_regs.sail,
+    pmp/pmp_control.sail,
+}
+
+riscv {
+  requires core, exceptions, pmp, V_core, Smcntrpmf
+
+  files
+    sys/sys_reservation.sail,
+    sys/sys_control.sail,
+    sys/platform.sail,
+    sys/mem.sail,
+    sys/inst_retire.sail,
+    sys/vmem_pte.sail,
+    sys/vmem_ptw.sail,
+    sys/vmem_tlb.sail,
+    sys/vmem.sail,
+    sys/vmem_utils.sail,
+    sys/insts_begin.sail,
+}
+
+extensions {
+  requires core
+
+  I {
+    I_types {
+      before riscv
+      files extensions/I/base_types.sail
+    }
+    I_insts {
+      requires exceptions, riscv, I_types
+
+      files
+        extensions/I/base_insts.sail,
+        extensions/I/reserved_fence_insts.sail,
+        if $RMEM then
+          extensions/I/jalr_rmem.sail
+        else
+          extensions/I/jalr_seq.sail
+    }
+  }
+
+  A {
+    A_types {
+      before riscv
+      files extensions/A/aext_types.sail
+    }
+    Zaamo {
+      requires riscv, A_types
+      files extensions/A/zaamo_insts.sail
+    }
+    Zalrsc {
+      requires riscv, A_types
+      files extensions/A/zalrsc_insts.sail
+    }
+  }
+
+  M {
+    M_types {
+      before riscv
+      files extensions/M/mext_types.sail
+    }
+    M_insts {
+      requires riscv, I, M_types
+      files extensions/M/mext_insts.sail
+    }
+  }
+
+  // Compressed instructions
+  C {
+    Zca {
+      requires exceptions, riscv, I
+      files extensions/C/zca_insts.sail
+    }
+  }
+
+  // Hypervisor
+  H {
+    files
+      extensions/H/hext_insts.sail
+  }
+
+  // Floating point (F and D extensions)
+  FD {
+    FD_core {
+      before riscv
+      files
+        extensions/FD/freg_type.sail,
+    }
+  }
+
+  // RISC-V vector extension
+  V {
+    V_core {
+      requires FD_core
+      files
+        extensions/V/vreg_type.sail,
+        extensions/V/vext_regs.sail,
+        extensions/V/vext_control.sail,
+    }
+
+    V_instructions {
+      requires riscv, I, FD, V_core
+      files
+        extensions/V/vext_utils_insts.sail,
+     }
+  }
+
+  // RISC-V Cryptography Extension
+  K {
+    K_core {
+      files extensions/K/types_kext.sail
+    }
+    Zks {
+      requires riscv, K_core
+      files extensions/K/zks_insts.sail
+    }
+    Zkr {
+      requires riscv, K_core
+      files extensions/K/zkr_control.sail
+    }
+  }
+
+  vector_crypto {
+    Zvk_core {
+      requires V_core, K_core
+      before riscv
+      files extensions/vector_crypto/zvk_utils.sail
+    }
+
+    Zvbb {
+      requires riscv, V, K, Zvk_core
+      files extensions/vector_crypto/zvbb_insts.sail
+    }
+    Zvbc {
+      requires riscv, V, K, Zvk_core
+      files extensions/vector_crypto/zvbc_insts.sail
+    }
+    Zvksed {
+      requires riscv, V, K, Zvk_core
+      files extensions/vector_crypto/zvksed_insts.sail
+    }
+    Zvksh {
+      requires riscv, V, K, Zvk_core
+      files extensions/vector_crypto/zvksh_insts.sail
+    }
+  }
+
+  // Control and Status Register (CSR) Instructions
+  Zicsr {
+    Zicsr_types {
+      before riscv
+      files extensions/Zicsr/zicsr_types.sail
+    }
+    Zicsr_insts {
+      requires riscv, exceptions, pmp, V_core, Zicsr_types
+      files extensions/Zicsr/zicsr_insts.sail
+    }
+  }
+
+  Zihpm {
+    files extensions/Zihpm/zihpm.sail
+  }
+
+  Smcntrpmf {
+    files extensions/Smcntrpmf/smcntrpmf.sail
+  }
+
+  Sscofpmf {
+    requires Zihpm
+    files extensions/Sscofpmf/sscofpmf.sail
+  }
+
+  Sstc {
+    requires riscv
+    files extensions/Sstc/sstc.sail
+  }
+
+  Zicntr {
+    files extensions/Zicntr/zicntr_control.sail
+  }
+
+  Zicbop {
+    Zicbop_types {
+      before riscv
+      files extensions/Zicbop/zicbop_types.sail
+    }
+    Zicbop_insts {
+      // PREFETCH.{I,R,W} instructions override ORI hints (rd=0)
+      before I_insts
+      requires riscv, Zicbop_types
+      files extensions/Zicbop/zicbop_insts.sail
+    }
+  }
+
+  Zifenci {
+    requires riscv
+    files extensions/Zifenci/zifencei_insts.sail
+  }
+
+  rmem {
+    requires riscv
+    files
+      if $RMEM then
+        extensions/rmem/insts_rmem.sail
+      else []
+  }
+
+}
+
+// May-be-operations (MOPS) defined after extensions so they can be
+// overridden by earlier extensions
+mops {
+  after extensions
+  requires core, riscv
+
+  Zimop {
+    files mops/Zimop/zimop_insts.sail
+  }
+
+  Zcmop {
+    files mops/Zcmop/zcmop_insts.sail
+  }
+}
+
+postlude {
+  after extensions, mops
+
+  requires core, riscv, exceptions, Smcntrpmf, pmp
+
+  files
+    postlude/insts_end.sail,
+    postlude/csr_end.sail,
+    postlude/step_common.sail,
+    postlude/step_ext.sail,
+    postlude/decode_ext.sail,
+    postlude/fetch_rvfi.sail,
+    postlude/fetch.sail,
+    postlude/step.sail,
+    postlude/validate_config.sail,
+    postlude/device_tree.sail,
+    postlude/model.sail
+}
+
+termination {
+  after postlude
+  requires core, riscv, extensions
+
+  files
+    if $TERMINATION_FILE then
+      termination/termination.sail
+    else []
+}
+
+unit_tests {
+  after termination
+  requires core, riscv, exceptions, postlude
+
+  files
+    unit_tests/test_mstatus.sail,
+}
+
