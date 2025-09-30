@@ -82,15 +82,16 @@ uint64_t insn_limit = 0;
 char *sailcov_file = NULL;
 #endif
 
-static void validate_config(const std::string &conf_file)
+static bool validate_config(const std::string &conf_file)
 {
-  const char *s = zconfig_is_valid(UNIT) ? "valid" : "invalid";
-  if (!conf_file.empty()) {
-    fprintf(stdout, "Configuration in %s is %s.\n", conf_file.c_str(), s);
-  } else {
-    fprintf(stdout, "Default configuration is %s.\n", s);
-  }
-  exit(EXIT_SUCCESS);
+  return zconfig_is_valid(UNIT);
+  // const char *s = zconfig_is_valid(UNIT) ? "valid" : "invalid";
+  // if (!conf_file.empty()) {
+  //   fprintf(stdout, "Configuration in %s is %s.\n", conf_file.c_str(), s);
+  // } else {
+  //   fprintf(stdout, "Default configuration is %s.\n", s);
+  // }
+  // exit(EXIT_SUCCESS);
 }
 
 static void print_dts(void)
@@ -142,7 +143,7 @@ static void setup_options(CLI::App &app)
   app.add_flag("--print-config-schema", do_print_config_schema,
                "Print configuration schema");
   app.add_flag("--validate-config", do_validate_config,
-               "Validate configuration");
+               "Exit after config validation (it is always validated)");
   app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
   app.add_flag("--enable-experimental-extensions",
@@ -576,22 +577,33 @@ int inner_main(int argc, char **argv)
     fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
   }
 
-  // Always validate the schema conformance of the config.
-  validate_config_schema(config_file);
-
   // Initialize the model.
   if (!config_file.empty()) {
+    // Always validate the schema conformance of the config.
+    validate_config_schema(config_file);
     sail_config_set_file(config_file.c_str());
+
   } else {
+    // Do not check default config
     sail_config_set_string(get_default_config());
+    if (do_validate_config) {
+      fprintf(stderr, "Default Config had passed validations when building.\n");
+    }
   }
 
   init_sail_configured_types();
   model_init();
 
-  if (do_validate_config) {
-    validate_config(config_file);
+  if (!validate_config(config_file)) {
+    fprintf(stderr, "Fatal Error: validate_config failed.\n");
+    exit(EXIT_FAILURE);
+  } else {
+    fprintf(stderr, "Config passed validations.\n");
   }
+  if (do_validate_config) {
+    exit(EXIT_SUCCESS);
+  }
+
   if (do_print_dts) {
     print_dts();
   }
