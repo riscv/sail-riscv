@@ -73,6 +73,17 @@
       "supported": true
     },
     "V": {
+      // `support_level` should be one of the below strings:
+      // . "Disabled" for no vector extension support
+      // . "Integer" for Zve*x support
+      // . "Float_single" for Zve*f support
+      // . "Float_double" for Zve*d support
+      // . "Full" for the full V extension
+      // Note that `support_level` requires compatible
+      // values for `vlen_exp` and `elen_exp` below.
+      // For e.g. Zve32x and Zve32f require `elen_exp` >= 5,
+      // Zve64x, Zve64f, and Zve64d require `elen_exp` >= 6,
+      // and V requires `elen_exp` >= 6 and `vlen_exp` >= 7.
       "support_level": "@CONFIG__V__SUPPORT@",
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
