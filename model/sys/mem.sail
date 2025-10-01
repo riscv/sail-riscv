@@ -107,9 +107,9 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
     Some(struct { attributes, _ }) => {
       let misaligned = not(is_aligned_addr(paddr, width));
       // Check if we need to raise an exception for misalignment.
-      match attributes.misalignedFault {
+      match attributes.misaligned_fault {
         AccessFault if misaligned => return Some(accessFaultFromAccessType(accTy)),
-        MisalignedFault if misaligned => return Some(alignmentFaultFromAccessType(accTy)),
+        misaligned_fault if misaligned => return Some(alignmentFaultFromAccessType(accTy)),
         _ => {
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match accTy {
@@ -120,7 +120,7 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             // supports all AMO operations.
             ReadWrite(_, _)    => attributes.readable & attributes.writable,
             // TODO: Extend AccessType with a Cache() option. See https://github.com/riscv/sail-riscv/pull/792
-            // Cache(Zero)     => attributes.writable & attributes.supportsCboZero,
+            // Cache(Zero)     => attributes.writable & attributes.supports_cbo_zero,
             // Cache(_)        => internal_error(__FILE__, __LINE__,
             //                                   "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
           };
