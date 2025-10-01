@@ -31,6 +31,8 @@
   the configuration can be printed using the `--print-config-schema`
   option.
 
+- Linux boot is now tested in CI.
+
 # Release notes for the 0.8 release
 
 This is a major release with some backwards-incompatible changes.
