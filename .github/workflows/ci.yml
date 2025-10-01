@@ -57,12 +57,57 @@ jobs:
           name: event.json
           path: ${{ github.event_path }}
 
+  linux:
+    name: "Linux boot"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages
+        run: sudo apt-get install -y --no-install-recommends device-tree-compiler
+
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          cmake-version: latest
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build
+
+      - name: Restore cache (linux image)
+        uses: actions/cache/restore@v4
+        id: linux-cache-restore
+        with:
+          path: os-boot/linux/build/fw_payload.elf
+          key: linux-image-${{ hashFiles('os-boot/linux/*.url', 'os-boot/linux/Makefile') }}
+
+      - name: Build Linux image
+        if: steps.linux-cache-restore.outputs.cache-hit != 'true'
+        run: make -C os-boot/linux --jobs=$(nproc)
+
+      - name: Cache Linux image
+        if: steps.linux-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: os-boot/linux/build/fw_payload.elf
+          key: ${{ steps.linux-cache-restore.outputs.cache-primary-key }}
+
+      - name: Linux boot
+        run: |
+          make -C os-boot/linux build/sail.dtb
+          ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 20000000 --device-tree-blob os-boot/linux/build/sail.dtb os-boot/linux/build/fw_payload.elf 2>&1 | tee linux-boot.log
+          grep "Initmem setup node" linux-boot.log
+          grep "Instructions:     20000000" linux-boot.log
+
   # This is here so that the "Status checks that are required" Github
   # option doesn't need to list all of the matrix jobs (it doesn't seem
   # to work if you just specify the job ID of the matrix itself).
   ci_pass:
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, linux]
     steps:
       - name: Dummy
         run: echo 'Jobs need at least one step.'
