@@ -18,15 +18,12 @@ $include <generic_equality.sail>
 $include <hex_bits.sail>
 $include <hex_bits_signed.sail>
 $include <dec_bits.sail>
+$include <float/interface.sail>
 
 val not_bit : bit -> bit
 function not_bit(b) = if b == bitone then bitzero else bitone
 
 overload ~ = {not_bool, not_vec, not_bit}
-
-// not_bool alias.
-val not : forall ('p : Bool). bool('p) -> bool(not('p))
-function not(b) = not_bool(b)
 
 overload operator & = {and_vec}
 
