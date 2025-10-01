@@ -64,7 +64,6 @@
           "read_idempotent": true,
           "write_idempotent": true,
           "misaligned_fault": "NoFault",
-          "atomic_support": "AMONone",
           "reservability": "RsrvNone",
           "supports_cbo_zero": false
         },
@@ -89,7 +88,6 @@
           "read_idempotent": true,
           "write_idempotent": true,
           "misaligned_fault": "NoFault",
-          "atomic_support": "AMOArithmetic",
           "reservability": "RsrvEventual",
           "supports_cbo_zero": true
         },
