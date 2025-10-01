@@ -98,6 +98,7 @@ jobs:
       - name: Linux boot
         run: |
           make -C os-boot/linux build/sail.dtb
+          # The Makefile target to boot Linux on the simulator cannot be used with caching in CI due to the dependency chain
           ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 20000000 --device-tree-blob os-boot/linux/build/sail.dtb os-boot/linux/build/fw_payload.elf 2>&1 | tee linux-boot.log
           grep "Initmem setup node" linux-boot.log
           grep "Instructions:     20000000" linux-boot.log
