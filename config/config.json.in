@@ -66,9 +66,9 @@
           "misaligned_fault": "NoFault",
           "atomic_support": "AMONone",
           "reservability": "RsrvNone",
-          "supports_cbo_zero": false,
-          "include_in_device_tree": false
-        }
+          "supports_cbo_zero": false
+        },
+        "include_in_device_tree": false
       },
       // RAM
       {
@@ -91,9 +91,9 @@
           "misaligned_fault": "NoFault",
           "atomic_support": "AMOArithmetic",
           "reservability": "RsrvEventual",
-          "supports_cbo_zero": true,
-          "include_in_device_tree": true
-        }
+          "supports_cbo_zero": true
+        },
+        "include_in_device_tree": true
       }
     ]
   },
