@@ -36,5 +36,5 @@ function init_model(config_filename : string) -> unit = {
 // See https://github.com/torvalds/linux/blob/master/Documentation/arch/riscv/boot.rst
 function init_boot_requirements() -> unit = {
   X(Regno(10)) = mhartid;
-  X(Regno(11)) = to_bits_checked(config platform.rom.base : int);
+  X(Regno(11)) = trunc(config memory.dtb_address : bits(64));
 }
