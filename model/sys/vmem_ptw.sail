@@ -13,8 +13,7 @@
 // See types_ext.sail for definitions.
 
 // Failure modes for address-translation/page-table-walks
-// PRIVATE
-union PTW_Error = {
+private union PTW_Error = {
   PTW_Invalid_Addr     : unit,          // invalid source address
   PTW_No_Access        : unit,          // physical memory access error for a PTE
   PTW_Invalid_PTE      : unit,
@@ -24,8 +23,7 @@ union PTW_Error = {
   PTW_Ext_Error        : ext_ptw_error  // parameterized for errors from extensions
 }
 
-// PRIVATE: only 'to_str' overload is public
-function ptw_error_to_str(e : PTW_Error) -> string = {
+private function ptw_error_to_str(e : PTW_Error) -> string = {
   match e {
     PTW_Invalid_Addr()     => "invalid-source-addr",
     PTW_No_Access()        => "mem-access-error",
@@ -37,15 +35,13 @@ function ptw_error_to_str(e : PTW_Error) -> string = {
   }
 }
 
-// PUBLIC
 overload to_str = {ptw_error_to_str}
 
 // hook for (non-standard) extensions to customize errors reported by page-table
 // walks during address translation; it typically works in conjunction
 // with any customization to check_PTE_permission().
 
-// PRIVATE
-function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
+private function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
   match failure {
     PTE_No_Permission() => PTW_No_Permission(),
     PTE_Ext_Failure(_)  => PTW_No_Permission(),

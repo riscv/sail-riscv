@@ -19,10 +19,9 @@ let  tlb_vpn_bits = sizeof(tlb_vpn_bits)
 type tlb_ppn_bits : Int = 44
 let  tlb_ppn_bits = sizeof(tlb_ppn_bits)
 
-// PRIVATE
 // We use a single TLB for all virtual memory modes, so it can store up to
 // Sv57-sized entries.
-struct TLB_Entry = {
+private struct TLB_Entry = {
   asid       : asidbits,           // address-space id
   global     : bool,               // global translation
   vpn        : bits(tlb_vpn_bits), // Virtual Page Number. SvXX - 12 bits.
@@ -71,8 +70,7 @@ let  num_tlb_entries_exp = sizeof(num_tlb_entries_exp)
 type num_tlb_entries : Int = 2 ^ num_tlb_entries_exp
 type tlb_index_range = range(0, num_tlb_entries - 1)
 
-// PRIVATE
-register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
+private register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
 // Indexed by the lowest bits of the VPN.
 function tlb_hash forall 'v, is_sv_mode('v) . (
@@ -88,18 +86,18 @@ function reset_TLB() -> unit = tlb = vector_init(None())
 function write_TLB(index : tlb_index_range, entry : TLB_Entry) -> unit =
   tlb[index] = Some(entry)
 
-// PRIVATE
-function match_TLB_Entry(
+private function match_TLB_Entry(
   ent  : TLB_Entry,
   asid : asidbits,
   vpn  : bits(tlb_vpn_bits),
 ) -> bool =
   (ent.global | (ent.asid == asid)) & (ent.vpn == (vpn & ~(ent.levelMask)))
 
-// PRIVATE
-function flush_TLB_Entry(ent   : TLB_Entry,
-                         asid  : option(asidbits),
-                         vaddr : option(xlenbits)) -> bool = {
+private function flush_TLB_Entry(
+  ent   : TLB_Entry,
+  asid  : option(asidbits),
+  vaddr : option(xlenbits),
+) -> bool = {
   let asid_matches : bool = match asid {
     Some(asid) => ent.asid == asid & not(ent.global),
     None() => true,
