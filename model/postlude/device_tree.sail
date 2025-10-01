@@ -103,17 +103,19 @@ function generate_dts_memories(pmas : list(PMA_Region)) -> string =
   match pmas {
     [||] => "",
     pma :: rest => {
-      let base_hi = unsigned(pma.base >> 32);
-      let base_lo = unsigned(pma.base[31 .. 0]);
-      let size_hi = unsigned(pma.size >> 32);
-      let size_lo = unsigned(pma.size[31 .. 0]);
+      if pma.attributes.include_in_device_tree then {
+        let base_hi = unsigned(pma.base >> 32);
+        let base_lo = unsigned(pma.base[31 .. 0]);
+        let size_hi = unsigned(pma.size >> 32);
+        let size_lo = unsigned(pma.size[31 .. 0]);
 
-        "  memory@" ^ string_drop(hex_str(unsigned(pma.base)), 2) ^ " {\n"
-      ^ "    device_type = \"memory\";\n"
-      ^ "    reg = <" ^ hex_str(base_hi) ^ " " ^ hex_str(base_lo)
-      ^ " " ^ hex_str(size_hi) ^ " " ^ hex_str(size_lo) ^ ">;\n"
-      ^ "  };\n"
-      ^ generate_dts_memories(rest)
+          "  memory@" ^ string_drop(hex_str(unsigned(pma.base)), 2) ^ " {\n"
+        ^ "    device_type = \"memory\";\n"
+        ^ "    reg = <" ^ hex_str(base_hi) ^ " " ^ hex_str(base_lo)
+        ^ " " ^ hex_str(size_hi) ^ " " ^ hex_str(size_lo) ^ ">;\n"
+        ^ "  };\n"
+        ^ generate_dts_memories(rest)
+      } else generate_dts_memories(rest)
     }
   }
 
