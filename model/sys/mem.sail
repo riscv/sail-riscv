@@ -161,7 +161,6 @@ function alignmentOrAccessFaultPriority(exc : ExceptionType) -> range(0, 1) = {
   }
 }
 
-val highestPriorityAlignmentOrAccessFault : (ExceptionType, ExceptionType) -> ExceptionType
 function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : ExceptionType) -> ExceptionType =
   if alignmentOrAccessFaultPriority(l) > alignmentOrAccessFaultPriority(r) then l else r
 
