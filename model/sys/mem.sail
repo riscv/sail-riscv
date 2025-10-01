@@ -93,6 +93,20 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
   }
 }
 
+function accessFaultFromAccessType(accTy : AccessType(ext_access_type)) -> ExceptionType =
+  match accTy {
+    InstructionFetch() => E_Fetch_Access_Fault(),
+    Read(Data)         => E_Load_Access_Fault(),
+    _                  => E_SAMO_Access_Fault(),
+  }
+
+function alignmentFaultFromAccessType(accTy : AccessType(ext_access_type)) -> ExceptionType =
+  match accTy {
+    InstructionFetch() => E_Fetch_Addr_Align(),
+    Read(Data)         => E_Load_Addr_Align(),
+    _                  => E_SAMO_Addr_Align(),
+  }
+
 function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 (
   paddr      : physaddr,

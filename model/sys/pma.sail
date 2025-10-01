@@ -138,17 +138,3 @@ overload to_str = {pma_attributes_to_str, pma_region_to_str}
 
 // The list of PMAs. These must be sorted and cannot overlap.
 register pma_regions : list(PMA_Region) = config memory.regions
-
-function accessFaultFromAccessType(accTy : AccessType(ext_access_type)) -> ExceptionType =
-  match accTy {
-    InstructionFetch() => E_Fetch_Access_Fault(),
-    Read(Data)         => E_Load_Access_Fault(),
-    _                  => E_SAMO_Access_Fault(),
-  }
-
-function alignmentFaultFromAccessType(accTy : AccessType(ext_access_type)) -> ExceptionType =
-  match accTy {
-    InstructionFetch() => E_Fetch_Addr_Align(),
-    Read(Data)         => E_Load_Addr_Align(),
-    _                  => E_SAMO_Addr_Align(),
-  }
