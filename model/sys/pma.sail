@@ -80,13 +80,15 @@ struct PMA = {
   write_idempotent : bool,
   // Optionally cause an access/alignment fault on misaligned access.
   misaligned_fault : misaligned_fault,
-  // TODO: Implement atomicity PMA. This is not supported yet because
+  // TODO: Atomicity PMA. This is not supported yet because
   // the AccessType needs to be extended to indicate the AMO type.
   // atomic_support   : AtomicSupport,
   reservability    : Reservability,
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
   // have this set.
   supports_cbo_zero : bool,
+  // TODO: Misaligned Atomicity Granule PMA
+  // TODO: Memory Ordering PMA
 }
 
 // A region of memory and its Physical Memory Attributes.
