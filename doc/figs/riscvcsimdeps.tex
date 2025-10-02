@@ -5,7 +5,7 @@
 
 \begin{document}
 \begin{tikzpicture}[
-    % these two lines are needed for the svg to receive a white background.
+    % these two lines are needed for the svg to receive a filled background.
     background rectangle/.style={rounded corners,fill=gray!20},
     framed,
     % general settings
@@ -17,9 +17,12 @@
     sail/.style={base, fill=cyan!40},
     c/.style={base},
     csail/.style={base,fill=cyan!20},
+    cfg/.style={base,double=teal!50, double distance=0.25em},
+    schema/.style={base,fill=violet!20},
     % arrows
     dep/.style={black, very thick},
-    gen/.style={blue, very thick}
+    gen/.style={blue, very thick},
+    valid/.style={purple, very thick},
   ]
 
   \pgfdeclarelayer{background}
@@ -42,15 +45,22 @@
                                                          state-change callbacks\\
                                                          logging};
 
-  \coordinate (smloc) at ($(csim)!2!(csim -| cmodel)$);
+  \coordinate (smloc) at ($(csim -| cmodel)$);
   \node (sailmodel)  [sail] at (smloc)               {\textbf{Sail model}\\
                                                          \texttt{*.sail}};
 
   \node (plat)       [c, below right=of cmodel]      {\textbf{C platform interface}\\
                                                          \texttt{riscv\_platform}\\
+                                                         \textsc{lr/sc} reservation};
+
+  \node (cfg)        [cfg, above=of plat]            {\textbf{Model configuration}\\
                                                          ISA options\\
                                                          memory map\\
-                                                         \textsc{lr/sc} reservation};
+                                                         enabled extensions};
+
+  \coordinate (schemaloc) at ($(csim -| cfg)$);
+  \node (schema)     [schema, above=of cfg]          {\textbf{Configuration Schema}\\
+                                                         legal configuration values};
 
   \node (platimpl)   [c, below=of plat]              {\textbf{C platform implementation}\\
                                                          \texttt{riscv\_platform\_impl}};
@@ -65,11 +75,15 @@
 
   \pgfonlayer{arrows}
 
-  \draw[->,gen]  (sailmodel) edge                    (cmodel);
+  \draw[->,gen]  (sailmodel) edge                    (cmodel)
+                             edge                    (schema);
+
+  \draw[->,valid] (schema)   edge                    (cfg);
 
   \draw[->,dep]  (cmodel)    edge                    (plat)
                              edge                    (csail)
-                             edge                    (callbacks);
+                             edge                    (callbacks)
+                             edge                    (cfg);
 
   \draw[->,dep]  (plat)      edge                    (platimpl);
 
