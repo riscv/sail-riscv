@@ -283,7 +283,10 @@ The model is configured by a file in JSON format that specifies
 various ISA options (e.g. RV32 or RV64, number of PMP entries), the
 memory map and whether various extensions are enabled. Users of the
 model can provide their own configuration file based on the [sample
-template](../config/config.json.in). The Sail compiler generates a
-JSON schema for the configuration in `sail_riscv_config_schema.json`;
-this schema file is used to validate the user-provided configuration
-(as indicated by the purple arrow).
+template](../config/config.json.in) or on the configurations generated
+during the build process under the `config` subdirectory of the build
+directory.
+
+The Sail compiler generates a JSON schema for the configuration in
+`sail_riscv_config_schema.json`; this schema file is used to validate
+the user-provided configuration (as indicated by the purple arrow).
