@@ -429,7 +429,7 @@ void run_sail(void)
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
       is_waiting = ztry_step(sail_step, exit_wait);
       if (have_exception) {
-        goto step_exception;
+        break;
       }
       flush_logs();
       KILL(sail_int)(&sail_step);
@@ -475,12 +475,9 @@ void run_sail(void)
     }
   }
 
-dump_state:
+  // This is reached if there is a Sail exception, HTIF has indicated
+  // successful completion, or the instruction limit has been reached.
   finish(false);
-
-step_exception:
-  fprintf(stderr, "Sail exception!");
-  goto dump_state;
 }
 
 void init_logs()
@@ -644,6 +641,7 @@ int inner_main(int argc, char **argv)
 
   do {
     run_sail();
+    // `run_sail` only returns in the case of rvfi.
     if (rvfi) {
       /* Reset for next test */
       reinit_sail(entry, config_file.c_str());
