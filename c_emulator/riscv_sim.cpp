@@ -357,7 +357,7 @@ void close_logs(void)
   }
 }
 
-void finish(int ec)
+void finish()
 {
   if (!sig_file.empty()) {
     write_signature(sig_file.c_str());
@@ -380,7 +380,7 @@ void finish(int ec)
     fprintf(stderr, "Perf:             %.3f Kips\n", Kips);
   }
   close_logs();
-  exit(ec);
+  exit(EXIT_SUCCESS);
 }
 
 void flush_logs(void)
@@ -477,7 +477,7 @@ void run_sail(void)
 
   // This is reached if there is a Sail exception, HTIF has indicated
   // successful completion, or the instruction limit has been reached.
-  finish(false);
+  finish();
 }
 
 void init_logs()
