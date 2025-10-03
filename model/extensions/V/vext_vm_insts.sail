@@ -24,7 +24,7 @@ mapping encdec_vvmfunct6 : vvmfunct6 <-> bits(6) = {
 
 mapping clause encdec = VVMTYPE(funct6, vs2, vs1, vd)
   <-> encdec_vvmfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VVMTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -83,7 +83,7 @@ mapping encdec_vvmcfunct6 : vvmcfunct6 <-> bits(6) = {
 
 mapping clause encdec = VVMCTYPE(funct6, vs2, vs1, vd)
   <-> encdec_vvmcfunct6(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VVMCTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -141,7 +141,7 @@ mapping encdec_vvmsfunct6 : vvmsfunct6 <-> bits(6) = {
 
 mapping clause encdec = VVMSTYPE(funct6, vs2, vs1, vd)
   <-> encdec_vvmsfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VVMSTYPE(funct6, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -204,7 +204,7 @@ mapping encdec_vvcmpfunct6 : vvcmpfunct6 <-> bits(6) = {
 
 mapping clause encdec = VVCMPTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_vvcmpfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VVCMPTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -271,7 +271,7 @@ mapping encdec_vxmfunct6 : vxmfunct6 <-> bits(6) = {
 
 mapping clause encdec = VXMTYPE(funct6, vs2, rs1, vd)
   <-> encdec_vxmfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VXMTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -330,7 +330,7 @@ mapping encdec_vxmcfunct6 : vxmcfunct6 <-> bits(6) = {
 
 mapping clause encdec = VXMCTYPE(funct6, vs2, rs1, vd)
   <-> encdec_vxmcfunct6(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VXMCTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -388,7 +388,7 @@ mapping encdec_vxmsfunct6 : vxmsfunct6 <-> bits(6) = {
 
 mapping clause encdec = VXMSTYPE(funct6, vs2, rs1, vd)
   <-> encdec_vxmsfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VXMSTYPE(funct6, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -453,7 +453,7 @@ mapping encdec_vxcmpfunct6 : vxcmpfunct6 <-> bits(6) = {
 
 mapping clause encdec = VXCMPTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_vxcmpfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VXCMPTYPE(funct6, vm, vs2, rs1, vd)) = {
   let SEW      = get_sew();
@@ -523,7 +523,7 @@ mapping encdec_vimfunct6 : vimfunct6 <-> bits(6) = {
 
 mapping clause encdec = VIMTYPE(funct6, vs2, simm, vd)
   <-> encdec_vimfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VIMTYPE(funct6, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -579,7 +579,7 @@ mapping encdec_vimcfunct6 : vimcfunct6 <-> bits(6) = {
 
 mapping clause encdec = VIMCTYPE(funct6, vs2, simm, vd)
   <-> encdec_vimcfunct6(funct6) @ 0b1 @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VIMCTYPE(funct6, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -634,7 +634,7 @@ mapping encdec_vimsfunct6 : vimsfunct6 <-> bits(6) = {
 
 mapping clause encdec = VIMSTYPE(funct6, vs2, simm, vd)
   <-> encdec_vimsfunct6(funct6) @ 0b0 @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VIMSTYPE(funct6, vs2, simm, vd)) = {
   let SEW      = get_sew();
@@ -695,7 +695,7 @@ mapping encdec_vicmpfunct6 : vicmpfunct6 <-> bits(6) = {
 
 mapping clause encdec = VICMPTYPE(funct6, vm, vs2, simm, vd)
   <-> encdec_vicmpfunct6(funct6) @ vm @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VICMPTYPE(funct6, vm, vs2, simm, vd)) = {
   let SEW      = get_sew();

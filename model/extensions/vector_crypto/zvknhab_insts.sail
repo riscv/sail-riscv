@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function clause currentlyEnabled(Ext_Zvknha) = hartSupports(Ext_Zvknha) & currentlyEnabled(Ext_V)
-function clause currentlyEnabled(Ext_Zvknhb) = hartSupports(Ext_Zvknhb) & currentlyEnabled(Ext_V)
+function clause currentlyEnabled(Ext_Zvknha) = hartSupports(Ext_Zvknha) & currentlyEnabled(Ext_Zve32x)
+function clause currentlyEnabled(Ext_Zvknhb) = hartSupports(Ext_Zvknhb) & currentlyEnabled(Ext_Zve64x)
 
 union clause instruction = VSHA2MS_VV : (vregidx, vregidx, vregidx)
 

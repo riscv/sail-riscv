@@ -58,7 +58,7 @@ function clause hartSupports(Ext_B) = config extensions.B.supported
 // Vector Operations
 enum clause extension = Ext_V
 mapping clause extensionName = Ext_V <-> "v"
-function clause hartSupports(Ext_V) = config extensions.V.supported
+function clause hartSupports(Ext_V) = sizeof(vlen_exp) >= 7 & vector_support_config_level() >= vector_support_level(Full)
 // Supervisor
 enum clause extension = Ext_S
 mapping clause extensionName = Ext_S <-> "s"
@@ -270,6 +270,51 @@ enum clause extension = Ext_Zhinxmin
 mapping clause extensionName = Ext_Zhinxmin <-> "zhinxmin"
 function clause hartSupports(Ext_Zhinxmin) = config extensions.Zhinxmin.supported
 
+// Standard Vector Extensions
+// Minimum Vector Length Standard Extensions
+enum clause extension = Ext_Zvl32b
+mapping clause extensionName = Ext_Zvl32b <-> "zvl32b"
+function clause hartSupports(Ext_Zvl32b) = sizeof(vlen_exp) >= 5
+enum clause extension = Ext_Zvl64b
+mapping clause extensionName = Ext_Zvl64b <-> "zvl64b"
+function clause hartSupports(Ext_Zvl64b) = sizeof(vlen_exp) >= 6
+enum clause extension = Ext_Zvl128b
+mapping clause extensionName = Ext_Zvl128b <-> "zvl128b"
+function clause hartSupports(Ext_Zvl128b) = sizeof(vlen_exp) >= 7
+enum clause extension = Ext_Zvl256b
+mapping clause extensionName = Ext_Zvl256b <-> "zvl256b"
+function clause hartSupports(Ext_Zvl256b) = sizeof(vlen_exp) >= 8
+enum clause extension = Ext_Zvl512b
+mapping clause extensionName = Ext_Zvl512b <-> "zvl512b"
+function clause hartSupports(Ext_Zvl512b) = sizeof(vlen_exp) >= 9
+enum clause extension = Ext_Zvl1024b
+mapping clause extensionName = Ext_Zvl1024b <-> "zvl1024b"
+function clause hartSupports(Ext_Zvl1024b) = sizeof(vlen_exp) >= 10
+// Vector Extensions for Embedded Processors
+enum clause extension = Ext_Zve32f
+mapping clause extensionName = Ext_Zve32f <-> "zve32f"
+function clause hartSupports(Ext_Zve32f) = sizeof(elen_exp) >= 5 & vector_support_config_level() >= vector_support_level(Float_single)
+enum clause extension = Ext_Zve32x
+mapping clause extensionName = Ext_Zve32x <-> "zve32x"
+function clause hartSupports(Ext_Zve32x) = sizeof(elen_exp) >= 5 & vector_support_config_level() >= vector_support_level(Integer)
+enum clause extension = Ext_Zve64d
+mapping clause extensionName = Ext_Zve64d <-> "zve64d"
+function clause hartSupports(Ext_Zve64d) = sizeof(elen_exp) >= 6 & vector_support_config_level() >= vector_support_level(Float_double)
+enum clause extension = Ext_Zve64f
+mapping clause extensionName = Ext_Zve64f <-> "zve64f"
+function clause hartSupports(Ext_Zve64f) = sizeof(elen_exp) >= 6 & vector_support_config_level() >= vector_support_level(Float_single)
+enum clause extension = Ext_Zve64x
+mapping clause extensionName = Ext_Zve64x <-> "zve64x"
+function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & vector_support_config_level() >= vector_support_level(Integer)
+// Vector Extension for Half-Precision Floating-Point
+enum clause extension = Ext_Zvfh
+mapping clause extensionName = Ext_Zvfh <-> "zvfh"
+function clause hartSupports(Ext_Zvfh) = config extensions.Zvfh.supported
+// Vector Extension for Minimal Half-Precision Floating-Point
+enum clause extension = Ext_Zvfhmin
+mapping clause extensionName = Ext_Zvfhmin <-> "zvfhmin"
+function clause hartSupports(Ext_Zvfhmin) = config extensions.Zvfhmin.supported
+
 // Vector Basic Bit-manipulation
 enum clause extension = Ext_Zvbb
 mapping clause extensionName = Ext_Zvbb <-> "zvbb"
@@ -475,9 +520,22 @@ let extensions_ordered_for_isa_string = [
   Ext_Zksh,
   Ext_Zkt,
 
-  // Zv
+  // Zvb
   Ext_Zvbb,
   Ext_Zvbc,
+
+  // Zve
+  Ext_Zve32f,
+  Ext_Zve32x,
+  Ext_Zve64d,
+  Ext_Zve64f,
+  Ext_Zve64x,
+
+  // Zvf
+  Ext_Zvfh,
+  Ext_Zvfhmin,
+
+  // Zvk
   Ext_Zvkb,
   Ext_Zvkg,
   Ext_Zvkn,
@@ -492,6 +550,14 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvksg,
   Ext_Zvksh,
   Ext_Zvkt,
+
+  // Zvl
+  Ext_Zvl32b,
+  Ext_Zvl64b,
+  Ext_Zvl128b,
+  Ext_Zvl256b,
+  Ext_Zvl512b,
+  Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,

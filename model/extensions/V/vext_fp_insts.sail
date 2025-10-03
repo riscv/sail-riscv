@@ -12,6 +12,10 @@
 // Chapter 16: Vector Permutation Instructions (floating-point part)
 // ******************************************************************************
 
+// FIXME: The instructions are enabled for Zve32f which however does
+// not support EEW=64.  Executions requiring EEW=64 should check for Zve64f, and those
+// requiring D should check for Zve64d.
+
 // ****************************** OPFVV (VVTYPE) ********************************
 union clause instruction = FVVTYPE : (fvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
@@ -29,7 +33,7 @@ mapping encdec_fvvfunct6 : fvvfunct6 <-> bits(6) = {
 
 mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -107,7 +111,7 @@ mapping encdec_fvvmafunct6 : fvvmafunct6 <-> bits(6) = {
 
 mapping clause encdec = FVVMATYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fvvmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -177,7 +181,7 @@ mapping encdec_fwvvfunct6 : fwvvfunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fwvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -245,7 +249,7 @@ mapping encdec_fwvvmafunct6 : fwvvmafunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVVMATYPE(funct6, vm, vs1, vs2, vd)
   <-> encdec_fwvvmafunct6(funct6) @ vm @ encdec_vreg(vs1) @ encdec_vreg(vs2) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -312,7 +316,7 @@ mapping encdec_fwvfunct6 : fwvfunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fwvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -378,7 +382,7 @@ mapping encdec_vfunary0_vs1 : vfunary0 <-> bits(5) = {
 
 mapping clause encdec = VFUNARY0(vm, vs2, vfunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfunary0_vs1(vfunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -495,7 +499,7 @@ mapping encdec_vfwunary0_vs1 : vfwunary0 <-> bits(5) = {
 
 mapping clause encdec = VFWUNARY0(vm, vs2, vfwunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfwunary0_vs1(vfwunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -628,7 +632,7 @@ mapping encdec_vfnunary0_vs1 : vfnunary0 <-> bits(5) = {
 
 mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -767,7 +771,7 @@ mapping encdec_vfunary1_vs1 : vfunary1 <-> bits(5) = {
 
 mapping clause encdec = VFUNARY1(vm, vs2, vfunary1, vd)
   <-> 0b010011 @ vm @ encdec_vreg(vs2) @ encdec_vfunary1_vs1(vfunary1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -846,7 +850,7 @@ union clause instruction = VFMVFS : (vregidx, fregidx)
 
 mapping clause encdec = VFMVFS(vs2, rd)
   <-> 0b010000 @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b001 @ encdec_freg(rd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFMVFS(vs2, rd)) = {
   let rm_3b    = fcsr[FRM];
@@ -895,7 +899,7 @@ mapping encdec_fvffunct6 : fvffunct6 <-> bits(6) = {
 
 mapping clause encdec = FVFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -988,7 +992,7 @@ mapping encdec_fvfmafunct6 : fvfmafunct6 <-> bits(6) = {
 
 mapping clause encdec = FVFMATYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1058,7 +1062,7 @@ mapping encdec_fwvffunct6 : fwvffunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fwvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1125,7 +1129,7 @@ mapping encdec_fwvfmafunct6 : fwvfmafunct6 <-> bits(6) = {
 
 mapping clause encdec = FWVFMATYPE(funct6, vm, rs1, vs2, vd)
   <-> encdec_fwvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1191,7 +1195,7 @@ mapping encdec_fwffunct6 : fwffunct6 <-> bits(6) = {
 
 mapping clause encdec = FWFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fwffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1248,7 +1252,7 @@ union clause instruction = VFMERGE : (vregidx, fregidx, vregidx)
 
 mapping clause encdec = VFMERGE(vs2, rs1, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFMERGE(vs2, rs1, vd)) = {
   let rm_3b         = fcsr[FRM];
@@ -1303,7 +1307,7 @@ union clause instruction = VFMV : (fregidx, vregidx)
 
 mapping clause encdec = VFMV(rs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFMV(rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -1343,7 +1347,7 @@ union clause instruction = VFMVSF : (fregidx, vregidx)
 
 mapping clause encdec = VFMVSF(rs1, vd)
   <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32f)
 
 function clause execute(VFMVSF(rs1, vd)) = {
   let rm_3b    = fcsr[FRM];

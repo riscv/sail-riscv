@@ -6,6 +6,28 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
+enum vector_support = {
+  Disabled,
+  Integer,
+  Float_single,
+  Float_double,
+  Full,
+}
+
+mapping vector_support_level : vector_support <-> nat = {
+  Disabled     <-> 0,
+  Integer      <-> 1,
+  Float_single <-> 2,
+  Float_double <-> 3,
+  Full         <-> 4,
+}
+
+let vector_support_config = config extensions.V.support_level : vector_support
+// TODO: This requires the next Sail compiler release (> 0.19.1)
+//let vector_support_config_level = vector_support_level(vector_support_config)
+function vector_support_config_level() -> nat =
+  vector_support_level(vector_support_config)
+
 type vlen_exp : Int = config extensions.V.vlen_exp
 constraint 3 <= vlen_exp <= 16
 

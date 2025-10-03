@@ -58,7 +58,7 @@ termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 // When adding a new extension X, we need to make sure that if X being enabled
 // depends on Y being enabled, then the value associated to X is _greater_ than
 // the value associated to Y. The default value is 2, so that if it does not
-// depend on anything or only on extensions A, B, C, D, F, M, S, V, or Zicsr,
+// depend on anything or only on extensions A, B, C, D, F, M, S, Zve32x, Zvl* or Zicsr,
 // nothing needs to be done.
 function currentlyEnabled_measure(ext : extension) -> int =
   match ext {
@@ -70,7 +70,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_F => 1,
     Ext_M => 1,
     Ext_S => 1,
-    Ext_V => 1,
+    Ext_V => 5,
     Ext_H => 4,
     Ext_Smcntrpmf => 3,
     Ext_Zabha => 3,
@@ -82,7 +82,26 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zfhmin => 3,
     Ext_Zhinx => 3,
     Ext_Zicfilp => 3,
-    Ext_Zvkb => 3,
+    Ext_Zvl32b => 0,
+    Ext_Zvl64b => 0,
+    Ext_Zvl128b => 0,
+    Ext_Zvl256b => 0,
+    Ext_Zvl512b => 0,
+    Ext_Zvl1024b => 0,
+    Ext_Zve32x => 1,
+    Ext_Zve64f => 3,
+    Ext_Zve64d => 4,
+    Ext_Zvfh => 4,
+    Ext_Zvfhmin => 5,
+    Ext_Zvbb => 6,
+    Ext_Zvbc => 6,
+    Ext_Zvkb => 7,
+    Ext_Zvkg => 6,
+    Ext_Zvkned => 6,
+    Ext_Zvknha => 6,
+    Ext_Zvknhb => 6,
+    Ext_Zvksed => 6,
+    Ext_Zvksh => 6,
     Ext_Sscofpmf => 3,
     Ext_Svrsw60t59b => 3,
     Ext_Zhinxmin => 4,
@@ -98,6 +117,7 @@ termination_measure get_xLPE(_) = 2
 function hartSupports_measure(ext : extension) -> int =
   match ext {
     Ext_D => 1,
+    Ext_V => 1,
     Ext_Zvkn => 1,
     Ext_Zvks => 1,
     Ext_C => 2,

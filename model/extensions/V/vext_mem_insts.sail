@@ -37,7 +37,7 @@ union clause instruction = VLSEGTYPE : (nfields, bits(1), regidx, vlewidth, vreg
 
 mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vlseg : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
 function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -98,7 +98,7 @@ union clause instruction = VLSEGFFTYPE : (nfields, bits(1), regidx, vlewidth, vr
 
 mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vlsegff : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
 function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -176,7 +176,7 @@ union clause instruction = VSSEGTYPE : (nfields, bits(1), regidx, vlewidth, vreg
 
 mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vsseg : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
 function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
@@ -234,7 +234,7 @@ union clause instruction = VLSSEGTYPE : (nfields, bits(1), regidx, regidx, vlewi
 
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vlsseg : (nfields, bits(1), vregidx, word_width, regidx, regidx, int, nat1) -> ExecutionResult
 function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
@@ -296,7 +296,7 @@ union clause instruction = VSSSEGTYPE : (nfields, bits(1), regidx, regidx, vlewi
 
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vssseg : (nfields, bits(1), vregidx, word_width, regidx, regidx, int, nat1) -> ExecutionResult
 function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
@@ -355,7 +355,7 @@ union clause instruction = VLUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vle
 
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vlxseg : (nfields, bits(1), vregidx, word_width, word_width, int, int, regidx, vregidx, nat1, int) -> ExecutionResult
 function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
@@ -419,7 +419,7 @@ union clause instruction = VLOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vle
 
 mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
   let EEW_index_pow = vlewidth_pow(width);
@@ -446,7 +446,7 @@ union clause instruction = VSUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vle
 
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vsxseg : (nfields, bits(1), vregidx, word_width, word_width, int, int, regidx, vregidx, nat1, int) -> ExecutionResult
 function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
@@ -507,7 +507,7 @@ union clause instruction = VSOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vle
 
 mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
   let EEW_index_pow = vlewidth_pow(width);
@@ -534,7 +534,7 @@ union clause instruction = VLRETYPE : (nfields_pow2, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
   <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vlre : (nfields_pow2, vregidx, word_width, regidx, nat) -> ExecutionResult
 function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
@@ -595,7 +595,7 @@ union clause instruction = VSRETYPE : (nfields_pow2, regidx, vregidx)
 
 mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vsre : (nfields_pow2, word_width, regidx, vregidx, nat) -> ExecutionResult
 function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
@@ -665,7 +665,7 @@ mapping encdec_lsop : vmlsop <-> bits(7) = {
 
 mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op)
   <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vd_or_vs3) @ encdec_lsop(op)
-  when currentlyEnabled(Ext_V)
+  when currentlyEnabled(Ext_Zve32x)
 
 val process_vm : (vregidx, regidx, nat, nat, vmlsop) -> ExecutionResult
 function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
