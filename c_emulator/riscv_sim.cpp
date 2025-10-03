@@ -395,7 +395,6 @@ void run_sail(void)
 {
   bool is_waiting;
   bool exit_wait = true;
-  bool diverged = false;
 
   /* initialize the step number */
   mach_int step_no = 0;
@@ -477,10 +476,7 @@ void run_sail(void)
   }
 
 dump_state:
-  if (diverged) {
-    /* TODO */
-  }
-  finish(diverged);
+  finish(false);
 
 step_exception:
   fprintf(stderr, "Sail exception!");
