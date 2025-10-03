@@ -359,16 +359,18 @@ void close_logs(void)
 
 void finish()
 {
+  // `model_fini()` exits with failure if there was a Sail exception.
+  model_fini();
+
   if (!sig_file.empty()) {
     write_signature(sig_file.c_str());
   }
 
-  model_fini();
-  if (gettimeofday(&run_end, NULL) < 0) {
-    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
   if (do_show_times) {
+    if (gettimeofday(&run_end, NULL) < 0) {
+      fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
     int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000
         + (init_end.tv_usec - init_start.tv_usec) / 1000;
     int exec_msecs = (run_end.tv_sec - init_end.tv_sec) * 1000
