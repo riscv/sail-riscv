@@ -235,6 +235,9 @@
     "Zvbc": {
       "supported": true
     },
+    "Zvfbfmin": {
+      "supported": true
+    },
     "Zvkb": {
       "supported": false
     },
