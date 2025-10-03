@@ -359,12 +359,13 @@ void close_logs(void)
 
 void finish()
 {
-  // `model_fini()` exits with failure if there was a Sail exception.
-  model_fini();
-
-  if (!sig_file.empty()) {
+  // Don't write a signature if there was an internal Sail exception.
+  if (!have_exception && !sig_file.empty()) {
     write_signature(sig_file.c_str());
   }
+
+  // `model_fini()` exits with failure if there was a Sail exception.
+  model_fini();
 
   if (do_show_times) {
     if (gettimeofday(&run_end, NULL) < 0) {
