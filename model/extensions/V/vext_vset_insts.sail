@@ -103,7 +103,7 @@ function execute_vsetvl_type(
   //
   // Also some cases require that VLMAX doesn't change (i.e. LMUL/SEW is constant).
   if SEW_pow_new > (LMUL_pow_new + elen_exp) |
-     (requires_fixed_vlmax & (lmul_sew_ratio != lmul_sew_ratio_new | not(valid_vtype())) then {
+     (requires_fixed_vlmax & (lmul_sew_ratio != lmul_sew_ratio_new | not(valid_vtype()))) then {
     handle_illegal_vtype();
     return RETIRE_SUCCESS;
   };
