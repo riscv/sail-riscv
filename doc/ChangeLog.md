@@ -12,6 +12,9 @@
   - Zicfilp
   - Zihintntl
   - Zihintpause
+  - Zve32x, Zve32f, Zve64x, Zve64f, and Zve64d
+  - Zvl32b, Zvl64b, Zvl128b, Zvl256b, Zvl512b, and Zvl1024b
+  - Zvfh and Zvfhmin
   - Svrsw60t59b
 
 - Switch to ELFIO for ELF parsing, and add symbolization in the
