@@ -177,39 +177,27 @@ function check_vext_config() -> bool = {
   valid;
 }
 
-function has_overlap(a_lo : nat, a_hi : nat, b_lo : nat, b_hi : nat) -> bool = {
-  not((a_lo < b_lo & a_hi < b_lo) | (b_lo < a_lo & b_hi < a_lo))
-}
+// Return true if a list of PMA regions are sorted and don't overlap.
+function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64)) -> bool =
+  match pmas {
+    [||] => true,
+    pma :: rest => {
+      if pma.base <_u prev_base + prev_size then {
+        print_endline("Memory region starting at " ^ bits_str(pma.base) ^
+                      " is not above the end of the previous region starting at " ^
+                      bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
+        return false;
+      };
+      check_pma_regions(rest, pma.base, pma.size)
+    },
+  }
 
-// This will change when we have a more general memory layout.
-function check_mem_layout() -> bool = {
-  var valid : bool = true;
-  // Memory regions should not overlap. There are currently only three: ram, rom and clint.
-  let ram_lo = unsigned(plat_ram_base);
-  let ram_hi = unsigned(plat_ram_base) + unsigned(plat_ram_size);
-  let rom_lo = unsigned(plat_rom_base);
-  let rom_hi = unsigned(plat_rom_base) + unsigned(plat_rom_size);
-  let clint_lo = unsigned(plat_clint_base);
-  let clint_hi = unsigned(plat_clint_base) + unsigned(plat_clint_size);
-  if has_overlap(rom_lo, rom_hi, ram_lo, ram_hi)
-  then {
-    valid = false;
-    print_endline("The RAM and ROM regions overlap.");
-  };
-  if has_overlap(clint_lo, clint_hi, rom_lo, rom_hi)
-  then {
-    valid = false;
-    print_endline("The Clint and ROM regions overlap.");
-  };
-  if has_overlap(clint_lo, clint_hi, ram_lo, ram_hi)
-  then {
-    valid = false;
-    print_endline("The Clint and RAM regions overlap.");
-  };
-
-  // Should memory regions also be 4K aligned?
-  valid
-}
+// Check that all memory regions are sorted and don't overlap.
+function check_mem_layout() -> bool =
+  if pma_regions == [||] then {
+    print_endline("No memory regions specified.");
+    false
+  } else check_pma_regions(pma_regions, zeros(), zeros())
 
 function check_pmp() -> bool = {
   var valid : bool = true;

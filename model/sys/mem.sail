@@ -85,12 +85,93 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
   }
 }
 
+function accessFaultFromAccessType(accTy : AccessType(ext_access_type)) -> ExceptionType =
+  match accTy {
+    InstructionFetch() => E_Fetch_Access_Fault(),
+    Read(Data)         => E_Load_Access_Fault(),
+    _                  => E_SAMO_Access_Fault(),
+  }
+
+function alignmentFaultFromAccessType(accTy : AccessType(ext_access_type)) -> ExceptionType =
+  match accTy {
+    InstructionFetch() => E_Fetch_Addr_Align(),
+    Read(Data)         => E_Load_Addr_Align(),
+    _                  => E_SAMO_Addr_Align(),
+  }
+
+function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
+(
+  paddr      : physaddr,
+  width      : int('n),
+  accTy      : AccessType(ext_access_type),
+  res_or_con : bool,
+)  -> option(ExceptionType) = {
+  match matching_pma(pma_regions, paddr, width) {
+    None() => {
+      Some(accessFaultFromAccessType(accTy))
+    },
+    Some(struct { attributes, _ }) => {
+      let misaligned = not(is_aligned_addr(paddr, width));
+      // Check if we need to raise an exception for misalignment.
+      match attributes.misaligned_fault {
+        AccessFault if misaligned => return Some(accessFaultFromAccessType(accTy)),
+        misaligned_fault if misaligned => return Some(alignmentFaultFromAccessType(accTy)),
+        _ => {
+          // Check read/write/execute permissions and PMAs.
+          let canAccess : bool = match accTy {
+            InstructionFetch() => attributes.executable,
+            Read(_)            => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
+            Write(_)           => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+            // TODO: Extend AccessType with the specific type of AMO operation. For now we assume all memory
+            // supports all AMO operations.
+            ReadWrite(_, _)    => attributes.readable & attributes.writable,
+            // TODO: Extend AccessType with a Cache() option. See https://github.com/riscv/sail-riscv/pull/792
+            // Cache(Zero)     => attributes.writable & attributes.supports_cbo_zero,
+            // Cache(_)        => internal_error(__FILE__, __LINE__,
+            //                                   "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
+          };
+
+          if get_config_print_platform() & not(canAccess)
+          then print_endline("PMA check failed for " ^ hex_bits_str(bits_of(paddr)) ^ " PMA " ^ to_str(attributes));
+
+          if canAccess then None() else Some(accessFaultFromAccessType(accTy))
+        },
+      }
+    }
+  }
+}
+
+function alignmentOrAccessFaultPriority(exc : ExceptionType) -> range(0, 1) = {
+  match exc {
+    E_Fetch_Access_Fault() => 1,
+    E_Load_Access_Fault()  => 1,
+    E_SAMO_Access_Fault()  => 1,
+    E_Fetch_Addr_Align()   => 0,
+    E_Load_Addr_Align()    => 0,
+    E_SAMO_Addr_Align()    => 0,
+    _ => internal_error(__FILE__, __LINE__, "Invalid exception: " ^ to_str(exc))
+  }
+}
+
+function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : ExceptionType) -> ExceptionType =
+  if alignmentOrAccessFaultPriority(l) > alignmentOrAccessFaultPriority(r) then l else r
+
 // Check if access is permitted according to PMPs and PMAs.
-val phys_access_check : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, physaddr, int('n)) -> option(ExceptionType)
-function phys_access_check (t, p, paddr, width) = {
-  let pmpError : option(ExceptionType) = if sys_pmp_count == 0 then None() else pmpCheck(paddr, width, t, p);
-  // TODO: Also check PMAs and select the highest priority fault.
-  pmpError
+function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
+  typ : AccessType(ext_access_type),
+  priv : Privilege,
+  paddr : physaddr,
+  width : int('n),
+  res_or_con : bool,
+) -> option(ExceptionType) = {
+  let pmpError : option(ExceptionType) = if sys_pmp_count == 0 then None() else pmpCheck(paddr, width, typ, priv);
+  let pmaError : option(ExceptionType) = pmaCheck(paddr, width, typ, res_or_con);
+  match (pmpError, pmaError) {
+    (None(), None())     => None(),
+    (Some(e), None())    => Some(e),
+    (None(), Some(e))    => Some(e),
+    (Some(e0), Some(e1)) => Some(highestPriorityAlignmentOrAccessFault(e0, e1)),
+  }
 }
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
@@ -104,18 +185,12 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   res: bool,
   meta : bool,
 ) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  match phys_access_check(t, priv, paddr, width) {
+  match phys_access_check(t, priv, paddr, width, res) {
     Some(e) => Err(e),
     None() => {
       if   within_mmio_readable(paddr, width)
       then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
-      else if within_phys_mem(paddr, width)
-      then phys_mem_read(t, paddr, width, aq, rl, res, meta)
-      else match t {
-        InstructionFetch() => Err(E_Fetch_Access_Fault()),
-        Read(Data) => Err(E_Load_Access_Fault()),
-        _          => Err(E_SAMO_Access_Fault())
-      }
+      else phys_mem_read(t, paddr, width, aq, rl, res, meta)
     }
   }
 
@@ -176,16 +251,15 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   rl : bool,
   con : bool,
 ) -> MemoryOpResult(bool) =
-  match phys_access_check(typ, priv, paddr, width) {
+  match phys_access_check(typ, priv, paddr, width, con) {
     Some(e) => Err(e),
     None() => {
       if   within_mmio_writable(paddr, width)
       then mmio_write(paddr, width, data)
-      else if within_phys_mem(paddr, width)
-      then {
+      else {
         let wk = write_kind_of_flags(aq, rl, con);
         phys_mem_write(wk, paddr, width, data, meta)
-      } else Err(E_SAMO_Access_Fault())
+      }
     }
   }
 
