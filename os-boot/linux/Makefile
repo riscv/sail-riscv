@@ -67,12 +67,12 @@ distclean:
 # is no 'init' available, so it will crash at that point. It takes about
 # 200 million instructions to get to that point. Execution speed is around
 # 300 kIPS so it takes around 10 minutes. Spike and QEMU are much faster.
-LIMIT_INSTRUCTIONS := 20000000
+INSTRUCTION_LIMIT := 20000000
 
 # Run with the Sail emulator from this repo.
 .PHONY: sail
 sail: build/sail.dtb $(elf) $(SAIL_SIM)
-	$(SAIL_SIM) --show-times --inst-limit $(LIMIT_INSTRUCTIONS) --device-tree-blob build/sail.dtb $(elf)
+	$(SAIL_SIM) --show-times --inst-limit $(INSTRUCTION_LIMIT) --device-tree-blob build/sail.dtb $(elf)
 
 # Run the profiler. This requires gperftools and pprof:
 #
@@ -90,13 +90,13 @@ sail: build/sail.dtb $(elf) $(SAIL_SIM)
 .PHONY: sail_profile
 sail_profile: build/sail.dtb $(elf) $(SAIL_SIM)
 	rm -f build/prof.out
-	CPUPROFILE=build/prof.out LD_PRELOAD=/usr/local/lib/libtcmalloc_and_profiler.so $(SAIL_SIM) --show-times --inst-limit $(LIMIT_INSTRUCTIONS) --device-tree-blob build/sail.dtb $(elf)
+	CPUPROFILE=build/prof.out LD_PRELOAD=/usr/local/lib/libtcmalloc_and_profiler.so $(SAIL_SIM) --show-times --inst-limit $(INSTRUCTION_LIMIT) --device-tree-blob build/sail.dtb $(elf)
 	pprof -http : build/prof.out
 
 # Run with Spike: https://github.com/riscv-software-src/riscv-isa-sim
 .PHONY: spike
 spike: $(elf)
-	spike --instructions=$(LIMIT_INSTRUCTIONS) $(elf)
+	spike --instructions=$(INSTRUCTION_LIMIT) $(elf)
 
 # Run with QEMU.
 .PHONY: qemu
