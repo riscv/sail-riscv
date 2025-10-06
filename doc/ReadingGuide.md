@@ -21,8 +21,8 @@ modules. The RISC-V specification consists of a few core modules and
 several extension modules. Within a module, the later files in the
 module usually depend on the earlier ones.
 
-The `core`, `riscv` and `postlude` modules are the primary
-core modules, with most of the other modules being submodules of the
+The `core`, `sys` and `postlude` modules are the primary
+modules, with most of the other modules being submodules of the
 `extensions` module.
 
 ### The `core` module
@@ -121,7 +121,7 @@ the PMP registers and their read and write accessors while
 [pmp_control.sail](../model/pmp/pmp_control.sail)
 implements the PMP permission checks and matching priority.
 
-### The `riscv` module
+### The `sys` module
 
 This core module deals with the hart's reservation state, physical and
 virtual memory, the platform memory map, and interrupt and exception
@@ -186,7 +186,7 @@ for the fetch-decode-execute cycle.
 [insts_end.sail](../model/postlude/insts_end.sail) and
 [csr_end.sail](../model/postlude/csr_end.sail) terminate the
 scattered definitions begun in the `insts_begin.sail` file in
-the `riscv` module and the `csr_begin.sail` file in the
+the `sys` module and the `csr_begin.sail` file in the
 `core` module respectively.
 
 Definitions for the instruction stepper are in
