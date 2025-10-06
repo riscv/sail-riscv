@@ -357,18 +357,21 @@ void close_logs(void)
   }
 }
 
-void finish(int ec)
+void finish()
 {
-  if (!sig_file.empty()) {
+  // Don't write a signature if there was an internal Sail exception.
+  if (!have_exception && !sig_file.empty()) {
     write_signature(sig_file.c_str());
   }
 
+  // `model_fini()` exits with failure if there was a Sail exception.
   model_fini();
-  if (gettimeofday(&run_end, NULL) < 0) {
-    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+
   if (do_show_times) {
+    if (gettimeofday(&run_end, NULL) < 0) {
+      fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
     int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000
         + (init_end.tv_usec - init_start.tv_usec) / 1000;
     int exec_msecs = (run_end.tv_sec - init_end.tv_sec) * 1000
@@ -380,7 +383,7 @@ void finish(int ec)
     fprintf(stderr, "Perf:             %.3f Kips\n", Kips);
   }
   close_logs();
-  exit(ec);
+  exit(EXIT_SUCCESS);
 }
 
 void flush_logs(void)
@@ -395,7 +398,6 @@ void run_sail(void)
 {
   bool is_waiting;
   bool exit_wait = true;
-  bool diverged = false;
 
   /* initialize the step number */
   mach_int step_no = 0;
@@ -430,7 +432,7 @@ void run_sail(void)
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
       is_waiting = ztry_step(sail_step, exit_wait);
       if (have_exception) {
-        goto step_exception;
+        break;
       }
       flush_logs();
       KILL(sail_int)(&sail_step);
@@ -476,15 +478,9 @@ void run_sail(void)
     }
   }
 
-dump_state:
-  if (diverged) {
-    /* TODO */
-  }
-  finish(diverged);
-
-step_exception:
-  fprintf(stderr, "Sail exception!");
-  goto dump_state;
+  // This is reached if there is a Sail exception, HTIF has indicated
+  // successful completion, or the instruction limit has been reached.
+  finish();
 }
 
 void init_logs()
@@ -648,6 +644,7 @@ int inner_main(int argc, char **argv)
 
   do {
     run_sail();
+    // `run_sail` only returns in the case of rvfi.
     if (rvfi) {
       /* Reset for next test */
       reinit_sail(entry, config_file.c_str());
