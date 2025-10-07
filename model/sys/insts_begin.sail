@@ -25,6 +25,11 @@ scattered mapping encdec
 val encdec_compressed : instruction <-> bits(16)
 scattered mapping encdec_compressed
 
+val compressed_measure : instruction -> int
+scattered function compressed_measure
+
+termination_measure execute(i) = compressed_measure(i)
+
 // We declare the ILLEGAL/C_ILLEGAL instruction clauses here instead of in
 // insts_end, so that model extensions can make use of them.
 // However, the encdec mapping must come last to ensure that all

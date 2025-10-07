@@ -22,6 +22,8 @@ function clause execute C_FLDSP(uimm, rd) = {
 mapping clause assembly = C_FLDSP(uimm, rd)
   <-> "c.fldsp" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_9(uimm @ 0b000) ^ "(" ^ sp_reg_name() ^ ")"
 
+function clause compressed_measure(C_FLDSP(_, _)) = 1
+
 // *****************************************************************
 union clause instruction = C_FSDSP : (bits(6), fregidx)
 
@@ -36,6 +38,8 @@ function clause execute C_FSDSP(uimm, rs2) = {
 
 mapping clause assembly = C_FSDSP(uimm, rs2)
   <-> "c.fsdsp" ^ spc() ^ freg_name(rs2) ^ sep() ^ hex_bits_9(uimm @ 0b000) ^ "(" ^ sp_reg_name() ^ ")"
+
+function clause compressed_measure(C_FSDSP(_, _)) = 1
 
 // *****************************************************************
 union clause instruction = C_FLD : (bits(5), cregidx, cfregidx)
@@ -54,6 +58,8 @@ function clause execute C_FLD(uimm, rsc, rdc) = {
 mapping clause assembly = C_FLD(uimm, rsc, rdc)
   <-> "c.fld" ^ spc() ^ cfreg_name(rdc) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc) ^ ")"
 
+function clause compressed_measure(C_FLD(_, _, _)) = 1
+
 // *****************************************************************
 union clause instruction = C_FSD : (bits(5), cregidx, cfregidx)
 
@@ -70,3 +76,5 @@ function clause execute C_FSD(uimm, rsc1, rsc2) = {
 
 mapping clause assembly = C_FSD(uimm, rsc1, rsc2)
   <-> "c.fsd" ^ spc() ^ cfreg_name(rsc2) ^ sep() ^ hex_bits_8(uimm @ 0b000) ^ "(" ^ creg_name(rsc1) ^ ")"
+
+function clause compressed_measure(C_FSD(_, _, _)) = 1
