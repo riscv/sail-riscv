@@ -36,6 +36,9 @@
 
 - Linux boot is now tested in CI.
 
+- Support for specifying arbitrary memory regions and some basic
+  static PMAs (Physical Memory Attributes) has been added.
+
 # Release notes for the 0.8 release
 
 This is a major release with some backwards-incompatible changes.

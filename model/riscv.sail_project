@@ -12,6 +12,7 @@ core {
     core/prelude_mem_metadata.sail,
     core/prelude_mem.sail,
     core/arithmetic.sail,
+    core/range_util.sail,
     core/rvfi_dii.sail,
     core/rvfi_dii_v1.sail,
     core/rvfi_dii_v2.sail,
@@ -51,12 +52,13 @@ pmp {
 }
 
 sys {
-  requires core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs
+  requires core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types
 
   files
     sys/sys_reservation.sail,
     sys/sys_control.sail,
     sys/platform.sail,
+    sys/pma.sail,
     sys/mem.sail,
     sys/inst_retire.sail,
     sys/vmem_pte.sail,

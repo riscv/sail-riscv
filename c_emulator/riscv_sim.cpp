@@ -280,16 +280,7 @@ uint64_t load_sail(const std::string &filename, bool main_file)
 
 void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
 {
-  uint64_t rom_base = get_config_uint64({"platform", "rom", "base"});
-  uint64_t rom_size = get_config_uint64({"platform", "rom", "size"});
-
-  uint64_t addr = rom_base;
-
-  if (dtb.size() > rom_size) {
-    throw std::runtime_error("DTB (" + std::to_string(dtb.size())
-                             + " bytes) does not fit in platform.rom.size ("
-                             + std::to_string(rom_size) + " bytes).");
-  }
+  uint64_t addr = get_config_uint64({"memory", "dtb_address"});
 
   for (uint8_t d : dtb) {
     write_mem(addr++, d);

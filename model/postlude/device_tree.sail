@@ -99,12 +99,29 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
 
 // Generates the full Device-Tree configuration for the model.
 
+function generate_dts_memories(pmas : list(PMA_Region)) -> string =
+  match pmas {
+    [||] => "",
+    pma :: rest => {
+      if pma.include_in_device_tree then {
+        let base_hi = unsigned(pma.base >> 32);
+        let base_lo = unsigned(pma.base[31 .. 0]);
+        let size_hi = unsigned(pma.size >> 32);
+        let size_lo = unsigned(pma.size[31 .. 0]);
+
+          "  memory@" ^ string_drop(hex_str(unsigned(pma.base)), 2) ^ " {\n"
+        ^ "    device_type = \"memory\";\n"
+        ^ "    reg = <" ^ hex_str(base_hi) ^ " " ^ hex_str(base_lo)
+        ^ " " ^ hex_str(size_hi) ^ " " ^ hex_str(size_lo) ^ ">;\n"
+        ^ "  };\n"
+        ^ generate_dts_memories(rest)
+      } else generate_dts_memories(rest)
+    }
+  }
+
 function generate_dts() -> string = {
   let clock_freq : nat = config platform.clock_frequency;
-  let ram_base_hi = unsigned(plat_ram_base >> 32);
-  let ram_base_lo = unsigned(plat_ram_base[31 .. 0]);
-  let ram_size_hi = unsigned(plat_ram_size >> 32);
-  let ram_size_lo = unsigned(plat_ram_size[31 .. 0]);
+
   let clint_base_hi = unsigned(plat_clint_base >> 32);
   let clint_base_lo = unsigned(plat_clint_base[31 .. 0]);
   let clint_size_hi = unsigned(plat_clint_size >> 32);
@@ -148,11 +165,8 @@ function generate_dts() -> string = {
 ^ "      };\n"
 ^ "    };\n"
 ^ "  };\n"
-^ "  memory@" ^ string_drop(hex_str(unsigned(plat_ram_base)), 2) ^ " {\n"
-^ "    device_type = \"memory\";\n"
-^ "    reg = <" ^ hex_str(ram_base_hi) ^ " " ^ hex_str(ram_base_lo)
-^ " " ^ hex_str(ram_size_hi) ^ " " ^ hex_str(ram_size_lo) ^ ">;\n"
-^ "  };\n"
+^ generate_dts_memories(pma_regions)
+
 ^ "  soc {\n"
 ^ "    #address-cells = <2>;\n"
 ^ "    #size-cells = <2>;\n"

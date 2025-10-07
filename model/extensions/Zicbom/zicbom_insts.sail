@@ -98,8 +98,8 @@ function process_clean_inval(rs1, cbop) = {
           // the proper Cache access type when it is available. See
           // https://github.com/riscv/sail-riscv/pull/792
           let ep = effectivePrivilege(Read(Data), mstatus, cur_privilege);
-          let exc_read = phys_access_check(Read(Data), ep, paddr, cache_block_size);
-          let exc_write = phys_access_check(Write(Data), ep, paddr, cache_block_size);
+          let exc_read = phys_access_check(Read(Data), ep, paddr, cache_block_size, false);
+          let exc_write = phys_access_check(Write(Data), ep, paddr, cache_block_size, false);
           match (exc_read, exc_write) {
             // Access is permitted if read OR write are allowed. If neither
             // are allowed then we always report a store exception.
