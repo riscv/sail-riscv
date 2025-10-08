@@ -6,8 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-val zvk_valid_reg_overlap : (vregidx, vregidx, int) -> bool
-function zvk_valid_reg_overlap(rs, rd, emul_pow) = {
+function zvk_valid_reg_overlap(rs : vregidx, rd : vregidx, emul_pow : int) -> bool = {
   let reg_group_size = if emul_pow > 0 then 2 ^ emul_pow else 1;
   let rs_int = unsigned(vregidx_bits(rs));
   let rd_int = unsigned(vregidx_bits(rd));
@@ -74,11 +73,11 @@ function zvk_maj(x, y, z) = (x & y) ^ (x & z) ^ (y & z)
 
 enum zvk_vsm4r_funct6 = {ZVK_VSM4R_VV, ZVK_VSM4R_VS}
 
-val zvk_round_key : (bits(32), bits(32)) -> bits(32)
-function zvk_round_key(X, S) = X ^ (S ^ (S <<< 13) ^ (S <<< 23))
+function zvk_round_key(X : bits(32), S : bits(32)) -> bits(32) = X ^ (S ^ (S <<< 13) ^ (S <<< 23))
 
 val zvk_sm4_round : (bits(32), bits(32)) -> bits(32)
-function zvk_sm4_round(X, S) = X ^ (S ^ (S <<< 2) ^ (S <<< 10) ^ (S <<< 18) ^ (S <<< 24))
+function zvk_sm4_round(X : bits(32), S : bits(32)) -> bits(32) =
+  X ^ (S ^ (S <<< 2) ^ (S <<< 10) ^ (S <<< 18) ^ (S <<< 24))
 
 // SM4 Constant Key (CK)
 let zvksed_ck : vector(32, bits(32)) = [
@@ -92,16 +91,13 @@ let zvksed_ck : vector(32, bits(32)) = [
   0x10171E25, 0x2C333A41, 0x484F565D, 0x646B7279,
 ]
 
-val zvksed_box_lookup : (bits(5), vector(32, bits(32))) -> bits(32)
-function zvksed_box_lookup(x, table) = {
+function zvksed_box_lookup(x : bits(5), table : vector(32, bits(32))) -> bits(32) = {
   table[31 - unsigned(x)]
 }
 
-val zvk_sm4_sbox : (bits(5)) -> bits(32)
-function zvk_sm4_sbox(x) = zvksed_box_lookup(x, zvksed_ck)
+function zvk_sm4_sbox(x : bits(5)) -> bits(32) = zvksed_box_lookup(x, zvksed_ck)
 
-val zvk_sm4_subword : bits(32) -> bits(32)
-function zvk_sm4_subword(x) = {
+function zvk_sm4_subword(x : bits(32)) -> bits(32) = {
   sm4_sbox(x[31..24]) @
   sm4_sbox(x[23..16]) @
   sm4_sbox(x[15.. 8]) @
@@ -111,35 +107,33 @@ function zvk_sm4_subword(x) = {
 // Utility functions for Zvksh
 // ----------------------------------------------------------------------
 
-val zvk_p0 : bits(32) -> bits(32)
-function zvk_p0(X) = X ^ (X <<<  9) ^ (X <<< 17)
+function zvk_p0(X : bits(32)) -> bits(32) = X ^ (X <<<  9) ^ (X <<< 17)
 
-val zvk_p1 : bits(32) -> bits(32)
-function zvk_p1(X) = X ^ (X <<< 15) ^ (X <<< 23)
+function zvk_p1(X : bits(32)) -> bits(32) = X ^ (X <<< 15) ^ (X <<< 23)
 
-val zvk_sh_w : (bits(32), bits(32), bits(32), bits(32), bits(32)) -> bits(32)
-function zvk_sh_w(A, B, C, D, E) = zvk_p1(A ^ B ^ (C <<< 15)) ^ (D <<< 7) ^ E
+function zvk_sh_w(A : bits(32), B : bits(32), C : bits(32), D : bits(32), E : bits(32)) -> bits(32) =
+  zvk_p1(A ^ B ^ (C <<< 15)) ^ (D <<< 7) ^ E
 
-val zvk_ff1 : (bits(32), bits(32), bits(32)) -> bits(32)
-function zvk_ff1(X, Y, Z) = X ^ Y ^ Z
+function zvk_ff1(X : bits(32), Y : bits(32), Z : bits(32)) -> bits(32) =
+  X ^ Y ^ Z
 
-val zvk_ff2 : (bits(32), bits(32), bits(32)) -> bits(32)
-function zvk_ff2(X, Y, Z) = (X & Y) | (X & Z) | (Y & Z)
+function zvk_ff2(X : bits(32), Y : bits(32), Z : bits(32)) -> bits(32) =
+  (X & Y) | (X & Z) | (Y & Z)
 
-val zvk_ff_j : (bits(32), bits(32), bits(32), nat) -> bits(32)
-function zvk_ff_j(X, Y, Z, J) = if J <= 15 then zvk_ff1(X, Y, Z) else zvk_ff2(X, Y, Z)
+function zvk_ff_j(X : bits(32), Y : bits(32), Z : bits(32), J : nat) -> bits(32) =
+  if J <= 15 then zvk_ff1(X, Y, Z) else zvk_ff2(X, Y, Z)
 
-val zvk_gg1 : (bits(32), bits(32), bits(32)) -> bits(32)
-function zvk_gg1(X, Y, Z) = X ^ Y ^ Z
+function zvk_gg1(X : bits(32), Y : bits(32), Z : bits(32)) -> bits(32) =
+  X ^ Y ^ Z
 
-val zvk_gg2 : (bits(32), bits(32), bits(32)) -> bits(32)
-function zvk_gg2(X, Y, Z) = (X & Y) | (~(X) & Z)
+function zvk_gg2(X : bits(32), Y : bits(32), Z : bits(32)) -> bits(32) =
+  (X & Y) | (~(X) & Z)
 
-val zvk_gg_j : (bits(32), bits(32), bits(32), nat) -> bits(32)
-function zvk_gg_j(X, Y, Z, J) = if J <= 15 then zvk_gg1(X, Y, Z) else zvk_gg2(X, Y, Z)
+function zvk_gg_j(X : bits(32), Y : bits(32), Z : bits(32), J : nat) -> bits(32) =
+  if J <= 15 then zvk_gg1(X, Y, Z) else zvk_gg2(X, Y, Z)
 
-val zvk_t_j : nat -> bits(32)
-function zvk_t_j(J) = if J <= 15 then 0x79CC4519 else 0x7A879D8A
+function zvk_t_j(J : nat) -> bits(32) =
+  if J <= 15 then 0x79CC4519 else 0x7A879D8A
 
 function zvk_sm3_round(A_H : vector(8, bits(32)), w : bits(32), x : bits(32), j : nat) -> vector(8, bits(32)) = {
   let t_j = zvk_t_j(j) <<< (j % 32);
