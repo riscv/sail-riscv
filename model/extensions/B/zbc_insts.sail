@@ -19,7 +19,7 @@ mapping clause encdec = CLMUL(rs2, rs1, rd)
 mapping clause assembly = CLMUL(rs2, rs1, rd)
   <-> "clmul" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (CLMUL(rs2, rs1, rd)) = {
+function clause execute CLMUL(rs2, rs1, rd) = {
   let prod = carryless_mul(X(rs1), X(rs2));
   X(rd) = prod[xlen - 1 .. 0];
   RETIRE_SUCCESS
@@ -35,7 +35,7 @@ mapping clause encdec = CLMULH(rs2, rs1, rd)
 mapping clause assembly = CLMULH(rs2, rs1, rd)
   <-> "clmulh" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (CLMULH(rs2, rs1, rd)) = {
+function clause execute CLMULH(rs2, rs1, rd) = {
   let prod = carryless_mul(X(rs1), X(rs2));
   X(rd) = prod[2 * xlen - 1 .. xlen];
   RETIRE_SUCCESS
@@ -51,7 +51,7 @@ mapping clause encdec = CLMULR(rs2, rs1, rd)
 mapping clause assembly = CLMULR(rs2, rs1, rd)
   <-> "clmulr" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (CLMULR(rs2, rs1, rd)) = {
+function clause execute CLMULR(rs2, rs1, rd) = {
   X(rd) = carryless_mulr(X(rs1), X(rs2));
   RETIRE_SUCCESS
 }

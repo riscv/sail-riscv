@@ -18,7 +18,7 @@ mapping clause encdec = XPERM8(rs2, rs1, rd)
 mapping clause assembly = XPERM8(rs2, rs1, rd)
   <-> "xperm8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (XPERM8(rs2, rs1, rd)) = {
+function clause execute XPERM8(rs2, rs1, rd) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   var result : xlenbits = zeros();
@@ -42,7 +42,7 @@ mapping clause encdec = XPERM4(rs2, rs1, rd)
 mapping clause assembly = XPERM4(rs2, rs1, rd)
   <-> "xperm4" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (XPERM4(rs2, rs1, rd)) = {
+function clause execute XPERM4(rs2, rs1, rd) = {
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
   var result : xlenbits = zeros();

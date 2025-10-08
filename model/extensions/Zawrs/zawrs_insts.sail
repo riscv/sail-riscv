@@ -22,10 +22,10 @@ mapping clause encdec = WRS(op)
   <-> encdec_wrsop(op) @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
   when currentlyEnabled(Ext_Zawrs)
 
-function clause execute (WRS(WRS_STO)) =
+function clause execute WRS(WRS_STO) =
   Enter_Wait(WAIT_WRS_STO)
 
-function clause execute (WRS(WRS_NTO)) =
+function clause execute WRS(WRS_NTO) =
   Enter_Wait(WAIT_WRS_NTO)
 
 mapping clause assembly = WRS(WRS_STO) <-> "wrs.sto"

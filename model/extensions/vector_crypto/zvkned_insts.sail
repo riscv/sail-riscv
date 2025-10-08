@@ -20,7 +20,7 @@ mapping clause encdec = VAESDF(funct6, vs2, vd)
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESDF_VV |
   zvk_valid_reg_overlap(vs2, vd, get_lmul_pow()))
 
-function clause execute (VAESDF(funct6, vs2, vd)) = {
+function clause execute VAESDF(funct6, vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -72,7 +72,7 @@ mapping clause encdec = VAESDM(funct6, vs2, vd)
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESDM_VV |
   zvk_valid_reg_overlap(vs2, vd, get_lmul_pow()))
 
-function clause execute (VAESDM(funct6, vs2, vd)) = {
+function clause execute VAESDM(funct6, vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -125,7 +125,7 @@ mapping clause encdec = VAESEF(funct6, vs2, vd)
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESEF_VV |
   zvk_valid_reg_overlap(vs2, vd, get_lmul_pow()))
 
-function clause execute (VAESEF(funct6, vs2, vd)) = {
+function clause execute VAESEF(funct6, vs2, vd) = {
   let SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -177,7 +177,7 @@ mapping clause encdec = VAESEM(funct6, vs2, vd)
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESEM_VV |
   zvk_valid_reg_overlap(vs2, vd, get_lmul_pow()))
 
-function clause execute (VAESEM(funct6, vs2, vd)) = {
+function clause execute VAESEM(funct6, vs2, vd) = {
   let SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -224,7 +224,7 @@ mapping clause encdec = VAESKF1_VI(vs2, rnd, vd)
   <-> 0b1000101 @ encdec_vreg(vs2) @ rnd @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
-function clause execute (VAESKF1_VI(vs2, rnd, vd)) = {
+function clause execute VAESKF1_VI(vs2, rnd, vd) = {
   let SEW = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -273,7 +273,7 @@ mapping clause encdec = VAESKF2_VI(vs2, rnd, vd)
   <-> 0b1010101 @ encdec_vreg(vs2) @ rnd @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
-function clause execute (VAESKF2_VI(vs2, rnd, vd)) = {
+function clause execute VAESKF2_VI(vs2, rnd, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -323,7 +323,7 @@ mapping clause encdec = VAESZ_VS(vs2, vd)
   <-> 0b1010011 @ encdec_vreg(vs2) @ 0b00111 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
 
-function clause execute (VAESZ_VS(vs2, vd)) = {
+function clause execute VAESZ_VS(vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);

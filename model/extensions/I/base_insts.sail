@@ -72,7 +72,7 @@ union clause instruction = JAL : (bits(21), regidx)
 mapping clause encdec = JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
   <-> imm_19 : bits(1) @ imm_18_13 : bits(6) @ imm_12_9 : bits(4) @ imm_8 : bits(1) @ imm_7_0 : bits(8) @ encdec_reg(rd) @ 0b1101111
 
-function clause execute (JAL(imm, rd)) = {
+function clause execute JAL(imm, rd) = {
   let link_address = get_next_pc();
   match jump_to(PC + sign_extend(imm)) {
     Retire_Success() => { X(rd) = link_address; Retire_Success() },
@@ -280,7 +280,7 @@ mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, width)
   <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ width_enc(width) @ encdec_reg(rd) @ 0b0000011
   when valid_load_encdec(width, is_unsigned)
 
-function clause execute (LOAD(imm, rs1, rd, is_unsigned, width)) = {
+function clause execute LOAD(imm, rs1, rd, is_unsigned, width) = {
   let offset : xlenbits = sign_extend(imm);
 
   // This is checked during decoding.
@@ -310,7 +310,7 @@ mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width)
   <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ imm5 : bits(5) @ 0b0100011
   when width <= xlen_bytes
 
-function clause execute (STORE(imm, rs2, rs1, width)) = {
+function clause execute STORE(imm, rs2, rs1, width) = {
   let offset : xlenbits = sign_extend(imm);
 
   // This is checked during decoding.
@@ -333,7 +333,7 @@ mapping clause encdec = ADDIW(imm, rs1, rd)
   <-> imm @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0011011
   when xlen == 64
 
-function clause execute (ADDIW(imm, rs1, rd)) = {
+function clause execute ADDIW(imm, rs1, rd) = {
   let result = X(rs1) + sign_extend(imm);
   X(rd) = sign_extend(result[31..0]);
   RETIRE_SUCCESS
@@ -437,7 +437,7 @@ function effective_fence_set(set : bits(4), fiom : bool) -> bits(4) = {
   } else set
 }
 
-function clause execute (FENCE(pred, succ)) = {
+function clause execute FENCE(pred, succ) = {
   // If the FIOM bit in menvcfg/senvcfg is set then the I/O bits can imply R/W.
   let fiom = is_fiom_active();
   let pred = effective_fence_set(pred, fiom);
@@ -500,7 +500,7 @@ union clause instruction = FENCE_TSO : unit
 mapping clause encdec = FENCE_TSO()
   <-> 0b1000 @ 0b0011 @ 0b0011 @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
 
-function clause execute (FENCE_TSO()) = {
+function clause execute FENCE_TSO() = {
   sail_barrier(Barrier_RISCV_tso);
   RETIRE_SUCCESS
 }

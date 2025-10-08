@@ -19,7 +19,7 @@ mapping clause encdec = SLLIUW(shamt, rs1, rd)
 mapping clause assembly = SLLIUW(shamt, rs1, rd)
   <-> "slli.uw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
 
-function clause execute (SLLIUW(shamt, rs1, rd)) = {
+function clause execute SLLIUW(shamt, rs1, rd) = {
   X(rd) = zero_extend(X(rs1)[31..0]) << shamt;
   RETIRE_SUCCESS
 }
@@ -47,7 +47,7 @@ mapping zba_rtypeuw_mnemonic : shamt_zba <-> string = {
 mapping clause assembly = ZBA_RTYPEUW(rs2, rs1, rd, shamt)
   <-> zba_rtypeuw_mnemonic(shamt) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (ZBA_RTYPEUW(rs2, rs1, rd, shamt)) = {
+function clause execute ZBA_RTYPEUW(rs2, rs1, rd, shamt) = {
   X(rd) = (zero_extend(X(rs1)[31..0]) << shamt) + X(rs2);
   RETIRE_SUCCESS
 }
@@ -68,7 +68,7 @@ mapping zba_rtype_mnemonic : shamt_zba <-> string = {
 mapping clause assembly = ZBA_RTYPE(rs2, rs1, rd, shamt)
   <-> zba_rtype_mnemonic(shamt) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (ZBA_RTYPE(rs2, rs1, rd, shamt)) = {
+function clause execute ZBA_RTYPE(rs2, rs1, rd, shamt) = {
   X(rd) = (X(rs1) << shamt) + X(rs2);
   RETIRE_SUCCESS
 }

@@ -19,7 +19,7 @@ mapping clause encdec = RORIW(shamt, rs1, rd)
 mapping clause assembly = RORIW(shamt, rs1, rd)
   <-> "roriw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(shamt)
 
-function clause execute (RORIW(shamt, rs1, rd)) = {
+function clause execute RORIW(shamt, rs1, rd) = {
   X(rd) = sign_extend(X(rs1)[31..0] >>> shamt);
   RETIRE_SUCCESS
 }
@@ -34,7 +34,7 @@ mapping clause encdec = RORI(shamt, rs1, rd)
 mapping clause assembly = RORI(shamt, rs1, rd)
   <-> "rori" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)
 
-function clause execute (RORI(shamt, rs1, rd)) = {
+function clause execute RORI(shamt, rs1, rd) = {
   let shamt = shamt[log2_xlen - 1 .. 0];
   X(rd) = X(rs1) >>> shamt;
   RETIRE_SUCCESS
@@ -198,7 +198,7 @@ mapping clause encdec = REV8(rs1, rd)
 mapping clause assembly = REV8(rs1, rd)
   <-> "rev8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (REV8(rs1, rd)) = {
+function clause execute REV8(rs1, rd) = {
   X(rd) = rev8(X(rs1));
   RETIRE_SUCCESS
 }
@@ -213,7 +213,7 @@ mapping clause encdec = ORCB(rs1, rd)
 mapping clause assembly = ORCB(rs1, rd)
   <-> "orc.b" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (ORCB(rs1, rd)) = {
+function clause execute ORCB(rs1, rd) = {
   let rs1_val = X(rs1);
   var result : xlenbits = zeros();
   foreach (i from 0 to (xlen - 8) by 8)
@@ -234,7 +234,7 @@ mapping clause encdec = CPOP(rs1, rd)
 mapping clause assembly = CPOP(rs1, rd)
   <-> "cpop" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (CPOP(rs1, rd)) = {
+function clause execute CPOP(rs1, rd) = {
   X(rd) = to_bits(count_ones(X(rs1)));
   RETIRE_SUCCESS
 }
@@ -249,7 +249,7 @@ mapping clause encdec = CPOPW(rs1, rd)
 mapping clause assembly = CPOPW(rs1, rd)
   <-> "cpopw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (CPOPW(rs1, rd)) = {
+function clause execute CPOPW(rs1, rd) = {
   X(rd) = to_bits(count_ones(X(rs1)[31 .. 0]));
   RETIRE_SUCCESS
 }
@@ -264,7 +264,7 @@ mapping clause encdec = CLZ(rs1, rd)
 mapping clause assembly = CLZ(rs1, rd)
   <-> "clz" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (CLZ(rs1, rd)) = {
+function clause execute CLZ(rs1, rd) = {
   X(rd) = to_bits(count_leading_zeros(X(rs1)));
   RETIRE_SUCCESS
 }
@@ -279,7 +279,7 @@ mapping clause encdec = CLZW(rs1, rd)
 mapping clause assembly = CLZW(rs1, rd)
   <-> "clzw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (CLZW(rs1, rd)) = {
+function clause execute CLZW(rs1, rd) = {
   X(rd) = to_bits(count_leading_zeros(X(rs1)[31 .. 0]));
   RETIRE_SUCCESS
 }
@@ -294,7 +294,7 @@ mapping clause encdec = CTZ(rs1, rd)
 mapping clause assembly = CTZ(rs1, rd)
   <-> "ctz" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (CTZ(rs1, rd)) = {
+function clause execute CTZ(rs1, rd) = {
   X(rd) = to_bits(count_trailing_zeros(X(rs1)));
   RETIRE_SUCCESS
 }
@@ -309,7 +309,7 @@ mapping clause encdec = CTZW(rs1, rd)
 mapping clause assembly = CTZW(rs1, rd)
   <-> "ctzw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (CTZW(rs1, rd)) = {
+function clause execute CTZW(rs1, rd) = {
   X(rd) = to_bits(count_trailing_zeros(X(rs1)[31 .. 0]));
   RETIRE_SUCCESS
 }

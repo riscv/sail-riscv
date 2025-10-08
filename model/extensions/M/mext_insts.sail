@@ -26,7 +26,7 @@ mapping clause encdec = MUL(rs2, rs1, rd, mul_op)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_mul_op(mul_op) @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_M) | currentlyEnabled(Ext_Zmmul)
 
-function clause execute (MUL(rs2, rs1, rd, mul_op)) = {
+function clause execute MUL(rs2, rs1, rd, mul_op) = {
   let rs1_bits = X(rs1);
   let rs2_bits = X(rs2);
   let rs1_int = if mul_op.signed_rs1 then signed(rs1_bits) else unsigned(rs1_bits);
@@ -56,7 +56,7 @@ mapping clause encdec = DIV(rs2, rs1, rd, is_unsigned)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_M)
 
-function clause execute (DIV(rs2, rs1, rd, is_unsigned)) = {
+function clause execute DIV(rs2, rs1, rd, is_unsigned) = {
   let rs1_bits = X(rs1);
   let rs2_bits = X(rs2);
   let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
@@ -79,7 +79,7 @@ mapping clause encdec = REM(rs2, rs1, rd, is_unsigned)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_M)
 
-function clause execute (REM(rs2, rs1, rd, is_unsigned)) = {
+function clause execute REM(rs2, rs1, rd, is_unsigned) = {
   let rs1_bits = X(rs1);
   let rs2_bits = X(rs2);
   let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
@@ -101,7 +101,7 @@ mapping clause encdec = MULW(rs2, rs1, rd)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0111011
   when xlen == 64 & (currentlyEnabled(Ext_M) | currentlyEnabled(Ext_Zmmul))
 
-function clause execute (MULW(rs2, rs1, rd)) = {
+function clause execute MULW(rs2, rs1, rd) = {
   let rs1_bits = X(rs1)[31..0];
   let rs2_bits = X(rs2)[31..0];
   let rs1_int = signed(rs1_bits);
@@ -123,7 +123,7 @@ mapping clause encdec = DIVW(rs2, rs1, rd, is_unsigned)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0111011
   when xlen == 64 & currentlyEnabled(Ext_M)
 
-function clause execute (DIVW(rs2, rs1, rd, is_unsigned)) = {
+function clause execute DIVW(rs2, rs1, rd, is_unsigned) = {
   let rs1_bits = X(rs1)[31..0];
   let rs2_bits = X(rs2)[31..0];
   let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);
@@ -147,7 +147,7 @@ mapping clause encdec = REMW(rs2, rs1, rd, is_unsigned)
   <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0111011
   when xlen == 64 & currentlyEnabled(Ext_M)
 
-function clause execute (REMW(rs2, rs1, rd, is_unsigned)) = {
+function clause execute REMW(rs2, rs1, rd, is_unsigned) = {
   let rs1_bits = X(rs1)[31..0];
   let rs2_bits = X(rs2)[31..0];
   let rs1_int = if is_unsigned then unsigned(rs1_bits) else signed(rs1_bits);

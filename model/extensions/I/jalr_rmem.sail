@@ -8,7 +8,7 @@
 
 // The definition for the memory model.
 
-function clause execute (JALR(imm, rs1, rd)) = {
+function clause execute JALR(imm, rs1, rd) = {
   // FIXME: this does not check for a misaligned target address. See jalr_seq.sail.
   // write rd before anything else to prevent unintended strength
   X(rd) = nextPC; // compatible with JALR, C.JR and C.JALR

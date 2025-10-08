@@ -35,7 +35,7 @@ mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute FVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -113,7 +113,7 @@ mapping clause encdec = FVVMATYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fvvmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FVVMATYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute FVVMATYPE(funct6, vm, vs2, vs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -183,7 +183,7 @@ mapping clause encdec = FWVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fwvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute FWVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -251,7 +251,7 @@ mapping clause encdec = FWVVMATYPE(funct6, vm, vs1, vs2, vd)
   <-> encdec_fwvvmafunct6(funct6) @ vm @ encdec_vreg(vs1) @ encdec_vreg(vs2) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
+function clause execute FWVVMATYPE(funct6, vm, vs1, vs2, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -318,7 +318,7 @@ mapping clause encdec = FWVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fwvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute FWVTYPE(funct6, vm, vs2, vs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -384,7 +384,7 @@ mapping clause encdec = VFUNARY0(vm, vs2, vfunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfunary0_vs1(vfunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(VFUNARY0(vm, vs2, vfunary0, vd)) = {
+function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -501,7 +501,7 @@ mapping clause encdec = VFWUNARY0(vm, vs2, vfwunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfwunary0_vs1(vfwunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
+function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -634,7 +634,7 @@ mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(VFNUNARY0(vm, vs2, vfnunary0, vd)) = {
+function clause execute VFNUNARY0(vm, vs2, vfnunary0, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -773,7 +773,7 @@ mapping clause encdec = VFUNARY1(vm, vs2, vfunary1, vd)
   <-> 0b010011 @ vm @ encdec_vreg(vs2) @ encdec_vfunary1_vs1(vfunary1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(VFUNARY1(vm, vs2, vfunary1, vd)) = {
+function clause execute VFUNARY1(vm, vs2, vfunary1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -852,7 +852,7 @@ mapping clause encdec = VFMVFS(vs2, rd)
   <-> 0b010000 @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b001 @ encdec_freg(rd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(VFMVFS(vs2, rd)) = {
+function clause execute VFMVFS(vs2, rd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
@@ -901,7 +901,7 @@ mapping clause encdec = FVFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FVFTYPE(funct6, vm, vs2, rs1, vd)) = {
+function clause execute FVFTYPE(funct6, vm, vs2, rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -994,7 +994,7 @@ mapping clause encdec = FVFMATYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FVFMATYPE(funct6, vm, vs2, rs1, vd)) = {
+function clause execute FVFMATYPE(funct6, vm, vs2, rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -1064,7 +1064,7 @@ mapping clause encdec = FWVFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fwvffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
+function clause execute FWVFTYPE(funct6, vm, vs2, rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -1131,7 +1131,7 @@ mapping clause encdec = FWVFMATYPE(funct6, vm, rs1, vs2, vd)
   <-> encdec_fwvfmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
+function clause execute FWVFMATYPE(funct6, vm, rs1, vs2, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -1197,7 +1197,7 @@ mapping clause encdec = FWFTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fwffunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
+function clause execute FWFTYPE(funct6, vm, vs2, rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -1254,7 +1254,7 @@ mapping clause encdec = VFMERGE(vs2, rs1, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(VFMERGE(vs2, rs1, vd)) = {
+function clause execute VFMERGE(vs2, rs1, vd) = {
   let rm_3b         = fcsr[FRM];
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
@@ -1309,7 +1309,7 @@ mapping clause encdec = VFMV(rs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(VFMV(rs1, vd)) = {
+function clause execute VFMV(rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -1349,7 +1349,7 @@ mapping clause encdec = VFMVSF(rs1, vd)
   <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(VFMVSF(rs1, vd)) = {
+function clause execute VFMVSF(rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
