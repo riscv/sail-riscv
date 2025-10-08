@@ -38,8 +38,7 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
 // set_xepc:            used to write a value of the xret target   (no control flow transfer)
 // prepare_xret_target: used to get the value for control transfer to the xret target
 
-val get_xepc : Privilege -> xlenbits
-function get_xepc(p) =
+function get_xepc(p : Privilege) -> xlenbits =
   match p {
     Machine           => align_pc(mepc),
     Supervisor        => align_pc(sepc),
@@ -48,8 +47,7 @@ function get_xepc(p) =
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 
-val set_xepc : (Privilege, xlenbits) -> xlenbits
-function set_xepc(p, value) = {
+function set_xepc(p : Privilege, value : xlenbits) -> xlenbits = {
   let target = legalize_xepc(value);
   match p {
     Machine           => mepc = target,
@@ -61,8 +59,7 @@ function set_xepc(p, value) = {
   target
 }
 
-val prepare_xret_target : (Privilege) -> xlenbits
-function prepare_xret_target(p) =
+function prepare_xret_target(p : Privilege) -> xlenbits =
   get_xepc(p)
 
 // other trap-related CSRs

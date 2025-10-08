@@ -66,8 +66,7 @@ function cbop_priv_check(p: Privilege) -> checked_cbop = {
   }
 }
 
-val process_clean_inval : (regidx, cbop_zicbom) -> ExecutionResult
-function process_clean_inval(rs1, cbop) = {
+function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResult = {
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
 

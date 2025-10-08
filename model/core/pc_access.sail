@@ -15,20 +15,16 @@
   The value in the PC register is the absolute virtual address of the instruction
   to fetch.
  */
-val get_arch_pc : unit -> xlenbits
-function get_arch_pc() = PC
+function get_arch_pc() -> xlenbits = PC
 
-val get_next_pc : unit -> xlenbits
-function get_next_pc() = nextPC
+function get_next_pc() -> xlenbits = nextPC
 
-val set_next_pc : xlenbits -> unit
-function set_next_pc(pc) = {
+function set_next_pc(pc : xlenbits) -> unit = {
   sail_branch_announce(xlen, pc);
   nextPC = pc
 }
 
-val tick_pc : unit -> unit
-function tick_pc() = {
+function tick_pc() -> unit = {
   PC = nextPC;
   pc_write_callback(PC);
 }

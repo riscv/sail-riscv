@@ -49,8 +49,7 @@ mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
   hex_bits_8(ma @ ta @ sew @ lmul)  <-> (ma, ta, sew, lmul),
 }
 
-val handle_illegal_vtype : unit -> unit
-function handle_illegal_vtype() = {
+function handle_illegal_vtype() -> unit = {
   // Note: Implementations can set vill or trap with an illegal
   // instruction if the vtype setting is not supported.
   // TODO: configuration support for both solutions.

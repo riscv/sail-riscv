@@ -190,8 +190,7 @@ function wV_bits(i: vregidx, data: vlenbits) -> unit = {
 
 overload V = {rV_bits, wV_bits, rV, wV}
 
-val init_vregs : unit -> unit
-function init_vregs () = {
+function init_vregs() -> unit = {
   let zero_vreg : vlenbits = zeros();
   vr0  = zero_vreg;
   vr1  = zero_vreg;
@@ -292,27 +291,23 @@ function get_sew_bytes() -> {1, 2, 4, 8} =
 
 // the vector register group multiplier (LMUL)
 // this returns the power of 2 for LMUL
-val get_lmul_pow : unit -> LMUL_pow
-function get_lmul_pow() = {
+function get_lmul_pow() -> LMUL_pow = {
   let lmul_pow = vtype[vlmul];
   lmul_pow_val(lmul_pow)
 }
 
 enum agtype = { UNDISTURBED, AGNOSTIC }
 
-val decode_agtype : bits(1) -> agtype
-function decode_agtype(ag) = {
+function decode_agtype(ag : bits(1)) -> agtype = {
   match ag {
     0b0 => UNDISTURBED,
     0b1 => AGNOSTIC
   }
 }
 
-val get_vtype_vma : unit -> agtype
-function get_vtype_vma() = decode_agtype(vtype[vma])
+function get_vtype_vma() -> agtype = decode_agtype(vtype[vma])
 
-val get_vtype_vta : unit -> agtype
-function get_vtype_vta() = decode_agtype(vtype[vta])
+function get_vtype_vta() -> agtype = decode_agtype(vtype[vta])
 
 bitfield Vcsr : bits(3) = {
   vxrm  : 2 .. 1,
@@ -353,8 +348,7 @@ function set_vstart(value : bits(16)) -> unit = {
   csr_write_callback("vstart", vstart);
 }
 
-val ext_write_vcsr : (bits(2), bits(1)) -> unit
-function ext_write_vcsr (vxrm_val, vxsat_val) = {
+function ext_write_vcsr(vxrm_val : bits(2), vxsat_val : bits(1)) -> unit = {
   vcsr[vxrm]  = vxrm_val; // Note: frm can be an illegal value, 101, 110, 111
   vcsr[vxsat] = vxsat_val;
   dirty_v_context()

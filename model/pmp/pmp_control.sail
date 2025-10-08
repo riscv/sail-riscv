@@ -9,8 +9,7 @@
 
 // permission checks
 
-val pmpCheckRWX: (Pmpcfg_ent, AccessType(ext_access_type)) -> bool
-function pmpCheckRWX(ent, acc) =
+function pmpCheckRWX(ent : Pmpcfg_ent, acc : AccessType(ext_access_type)) -> bool =
   match acc {
     Read(_)      => ent[R] == 0b1,
     Write(_)     => ent[W] == 0b1,

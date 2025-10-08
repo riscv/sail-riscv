@@ -22,8 +22,7 @@ bitfield RVFI_DII_Execution_PacketV2 : bits(512) = {
   unused_data_available_fields : 511 .. 455, // To be used for additional RVFI_DII_Execution_Packet_Ext_* structs
 }
 
-val rvfi_get_v2_support_packet : unit -> bits(704)
-function rvfi_get_v2_support_packet () = {
+function rvfi_get_v2_support_packet() -> bits(704) = {
   let rvfi_exec = Mk_RVFI_DII_Execution_Packet_V1(zeros());
   // Returning 0x3 (using the unused high bits) in halt instead of 0x1 means
   // that we support the version 2 wire format. This is required to keep
@@ -33,16 +32,14 @@ function rvfi_get_v2_support_packet () = {
   return rvfi_exec.bits;
 }
 
-val rvfi_get_v2_trace_size : unit -> bits(64)
-function rvfi_get_v2_trace_size () = {
+function rvfi_get_v2_trace_size() -> bits(64) = {
   let trace_size : bits(64) = to_bits(512);
   let trace_size = if (rvfi_int_data_present) then trace_size + 320 else trace_size;
   let trace_size = if (rvfi_mem_data_present) then trace_size + 704 else trace_size;
   return trace_size >> 3; // we have to return bytes not bits
 }
 
-val rvfi_get_exec_packet_v2 : unit -> bits(512)
-function rvfi_get_exec_packet_v2 () = {
+function rvfi_get_exec_packet_v2() -> bits(512) = {
   // TODO: add the other data
   // TODO: find a way to return a variable-length bitvector
   let packet = Mk_RVFI_DII_Execution_PacketV2(zeros());

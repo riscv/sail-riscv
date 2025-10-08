@@ -62,9 +62,7 @@ struct RISCV_strong_access = {
 // sail_mem_write/read interface. This conversion is necessary because
 // the memory interface only supports 32-bit or 64-bit physical
 // addresses regardless of the actual physical address width.
-val physaddrbits_zero_extend : physaddrbits -> bits(64)
-
-function physaddrbits_zero_extend xs = zero_extend(xs)
+function physaddrbits_zero_extend(xs : physaddrbits) -> bits(64) = zero_extend(xs)
 
 instantiation sail_mem_write with
   'pa = physaddrbits,

@@ -22,27 +22,18 @@ bitfield RVFI_DII_Instruction_Packet : bits(64) = {
 
 register rvfi_instruction : RVFI_DII_Instruction_Packet
 
-val rvfi_set_instr_packet : bits(64) -> unit
-
-function rvfi_set_instr_packet(p) =
+function rvfi_set_instr_packet(p : bits(64)) -> unit =
   rvfi_instruction = Mk_RVFI_DII_Instruction_Packet(p)
 
-val rvfi_get_cmd : unit -> bits(8)
+function rvfi_get_cmd() -> bits(8) = rvfi_instruction[rvfi_cmd]
 
-function rvfi_get_cmd () = rvfi_instruction[rvfi_cmd]
+function rvfi_get_insn() -> bits(32) = rvfi_instruction[rvfi_insn]
 
-val rvfi_get_insn : unit -> bits(32)
-
-function rvfi_get_insn () = rvfi_instruction[rvfi_insn]
-
-val print_instr_packet : bits(64) -> unit
-
-function print_instr_packet(bs) = {
+function print_instr_packet(bs : bits(64)) -> unit = {
   let p = Mk_RVFI_DII_Instruction_Packet(bs);
   print_bits("command ", p[rvfi_cmd]);
   print_bits("instruction ", p[rvfi_insn])
 }
-
 
 bitfield RVFI_DII_Execution_Packet_InstMetaData : bits(192) = {
   // The rvfi_order field must be set to the instruction index. No indices
@@ -157,9 +148,7 @@ register rvfi_mem_data : RVFI_DII_Execution_Packet_Ext_MemAccess
 register rvfi_mem_data_present : bool
 
 // Reset the trace
-val rvfi_zero_exec_packet : unit -> unit
-
-function rvfi_zero_exec_packet () = {
+function rvfi_zero_exec_packet() -> unit = {
   rvfi_inst_data = Mk_RVFI_DII_Execution_Packet_InstMetaData(zeros());
   rvfi_pc_data = Mk_RVFI_DII_Execution_Packet_PC(zeros());
   rvfi_int_data = Mk_RVFI_DII_Execution_Packet_Ext_Integer(zeros());
@@ -174,31 +163,24 @@ function rvfi_zero_exec_packet () = {
 
 // FIXME: most of these will no longer be necessary once we use the c2 sail backend.
 
-val rvfi_halt_exec_packet : unit -> unit
-
-function rvfi_halt_exec_packet () =
+function rvfi_halt_exec_packet() -> unit =
   rvfi_inst_data[rvfi_halt] = 0x01
 
-val rvfi_get_int_data : unit -> bits(320)
-function rvfi_get_int_data () = {
+function rvfi_get_int_data() -> bits(320) = {
   assert(rvfi_int_data_present, "reading uninitialized data");
   return rvfi_int_data.bits;
 }
 
-val rvfi_get_mem_data : unit -> bits(704)
-function rvfi_get_mem_data () = {
+function rvfi_get_mem_data() -> bits(704) = {
   assert(rvfi_mem_data_present, "reading uninitialized data");
   return rvfi_mem_data.bits;
 }
 
 val rvfi_encode_width_mask : forall 'n, 0 < 'n <= 32. int('n) -> bits(32)
-
 function rvfi_encode_width_mask(width) =
   (0xFFFFFFFF >> (32 - width))
 
-val print_rvfi_exec : unit -> unit
-
-function print_rvfi_exec () = {
+function print_rvfi_exec() -> unit = {
   print_bits("rvfi_intr     : ", rvfi_inst_data[rvfi_intr]);
   print_bits("rvfi_halt     : ", rvfi_inst_data[rvfi_halt]);
   print_bits("rvfi_trap     : ", rvfi_inst_data[rvfi_trap]);
@@ -246,8 +228,7 @@ function rvfi_read (paddr, width, value) = {
   };
 }
 
-val rvfi_mem_exception : xlenbits -> unit
-function rvfi_mem_exception (paddr) = {
+function rvfi_mem_exception(paddr : xlenbits) -> unit = {
   // Log only the memory address (without the value) if the write fails.
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(paddr);
   rvfi_mem_data_present = true;
@@ -260,6 +241,5 @@ function rvfi_wX (r,v) = {
   rvfi_int_data_present = true;
 }
 
-val rvfi_trap : unit -> unit
-function rvfi_trap () =
+function rvfi_trap() -> unit =
   rvfi_inst_data[rvfi_trap] = 0x01

@@ -14,12 +14,10 @@
 THIS(csrno, priv, isWrite) allows an extension to block access to csrno,
 at Privilege level priv. It should return true if the access is allowed.
 */
-val ext_check_CSR : (csreg, Privilege, bool) -> bool
-function ext_check_CSR (csrno, p, isWrite) = true
+function ext_check_CSR(csrno : csreg, p : Privilege, isWrite : bool) -> bool = true
 
 /*!
 THIS is called if ext_check_CSR returns false. It should
 cause an appropriate RISCV exception.
  */
-val ext_check_CSR_fail : unit->unit
-function ext_check_CSR_fail () = ()
+function ext_check_CSR_fail() -> unit = ()
