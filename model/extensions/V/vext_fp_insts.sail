@@ -195,7 +195,9 @@ function clause execute(FWVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
+
   assert(SEW >= 16 & SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -263,7 +265,9 @@ function clause execute(FWVVMATYPE(funct6, vm, vs1, vs2, vd)) = {
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
+
   assert(SEW >= 16 & SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -329,7 +333,9 @@ function clause execute(FWVTYPE(funct6, vm, vs2, vs1, vd)) = {
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
+
   assert(SEW >= 16 & SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -512,7 +518,9 @@ function clause execute(VFWUNARY0(vm, vs2, vfwunary0, vd)) = {
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
+
   assert(SEW >= 8 & SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1075,7 +1083,9 @@ function clause execute(FWVFTYPE(funct6, vm, vs2, rs1, vd)) = {
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
+
   assert(SEW >= 16 & SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1142,7 +1152,9 @@ function clause execute(FWVFMATYPE(funct6, vm, rs1, vs2, vd)) = {
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
+
   assert(SEW >= 16 & SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1207,7 +1219,9 @@ function clause execute(FWFTYPE(funct6, vm, vs2, rs1, vd)) = {
 
   if illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen)
   then return Illegal_Instruction();
+
   assert(SEW >= 16 & SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
