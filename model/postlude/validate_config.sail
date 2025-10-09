@@ -211,13 +211,17 @@ function check_pmp() -> bool = {
 
 function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
+  if hartSupports(Ext_Zicfilp) & not(hartSupports(Ext_Zicsr)) then {
+    valid = false;
+    print_endline("The Zicfilp extension is enabled but Zicsr is disabled: supporting Zicfilp requires Zicsr.");
+  };
   if hartSupports(Ext_Zfbfmin) & not(hartSupports(Ext_F)) then {
     valid = false;
     print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
   };
-  if hartSupports(Ext_Zicfilp) & not(hartSupports(Ext_Zicsr)) then {
+  if hartSupports(Ext_Zvfbfmin) & not(hartSupports(Ext_Zve32f)) then {
     valid = false;
-    print_endline("The Zicfilp extension is enabled but Zicsr is disabled: supporting Zicfilp requires Zicsr.");
+    print_endline("The Zvfbfmin extension is enabled but Zve32f is disabled: supporting Zvfbfmin requires Zve32f.")
   };
   valid
 }

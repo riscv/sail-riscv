@@ -315,6 +315,9 @@
     "Zhinxmin": {
       "supported": false
     },
+    "Zvfbfmin": {
+      "supported": true
+    },
     "Zvfh": {
       "supported": true
     },
