@@ -32,4 +32,4 @@ mapping prefetch_mnemonic : cbop_zicbop <-> string = {
 mapping clause assembly = ZICBOP(cbop, rs1, offset)
   <-> prefetch_mnemonic(cbop) ^ spc() ^ hex_bits_12(offset) ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
-function clause execute(ZICBOP(cbop, rs1, offset)) = RETIRE_SUCCESS
+function clause execute ZICBOP(cbop, rs1, offset) = RETIRE_SUCCESS

@@ -108,7 +108,7 @@ function process_rfvv_widening_reduction(funct6 : rfvvfunct6, vm : bits(1), vs2 
   RETIRE_SUCCESS
 }
 
-function clause execute(RFVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);

@@ -28,14 +28,14 @@ mapping clause assembly = SM3P0 (rs1, rd) <->
 mapping clause assembly = SM3P1 (rs1, rd) <->
   "sm3p1" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (SM3P0(rs1, rd)) = {
+function clause execute SM3P0(rs1, rd) = {
   let r1     : bits(32) = X(rs1)[31..0];
   let result : bits(32) =  r1 ^ (r1 <<< 9) ^ (r1 <<< 17);
   X(rd) = sign_extend(result);
   RETIRE_SUCCESS
 }
 
-function clause execute (SM3P1(rs1, rd)) = {
+function clause execute SM3P1(rs1, rd) = {
   let r1     : bits(32) = X(rs1)[31..0];
   let result : bits(32) =  r1 ^ (r1 <<< 15) ^ (r1 <<< 23);
   X(rd) = sign_extend(result);
@@ -64,7 +64,7 @@ mapping clause assembly = SM4ED (bs, rs2, rs1, rd) <->
 mapping clause assembly = SM4KS (bs, rs2, rs1, rd) <->
     "sm4ks" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2) ^ sep() ^ hex_bits_2(bs)
 
-function clause execute (SM4ED (bs, rs2, rs1, rd)) = {
+function clause execute SM4ED (bs, rs2, rs1, rd) = {
   let shamt : bits(5)  = bs @ 0b000; // shamt = bs*8
   let sb_in : bits(8)  = (X(rs2)[31..0] >> shamt)[7..0];
   let x     : bits(32) = 0x000000 @ sm4_sbox(sb_in);
@@ -77,7 +77,7 @@ function clause execute (SM4ED (bs, rs2, rs1, rd)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (SM4KS (bs, rs2, rs1, rd)) = {
+function clause execute SM4KS (bs, rs2, rs1, rd) = {
   let shamt : bits(5)  = (bs @ 0b000); // shamt = bs*8
   let sb_in : bits(8)  = (X(rs2)[31..0] >> shamt)[7..0];
   let x     : bits(32) = 0x000000 @ sm4_sbox(sb_in);

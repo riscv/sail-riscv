@@ -23,7 +23,7 @@ mapping clause encdec = RIVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_rivvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute(RIVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute RIVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let SEW_widen = SEW * 2;
@@ -94,7 +94,7 @@ mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_rmvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute(RMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute RMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);

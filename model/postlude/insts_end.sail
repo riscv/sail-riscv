@@ -12,7 +12,7 @@
 
 mapping clause encdec = ILLEGAL(s) <-> s
 
-function clause execute (ILLEGAL(s)) = Illegal_Instruction()
+function clause execute ILLEGAL(s) = Illegal_Instruction()
 
 mapping clause assembly = ILLEGAL(s) <-> "illegal" ^ spc() ^ hex_bits_32(s)
 

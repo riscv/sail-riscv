@@ -339,7 +339,7 @@ mapping clause encdec = F_BIN_X_TYPE_H(rs2, rs1, rd, FLE_H)
 
 // Execution semantics ================================
 
-function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJ_H)) = {
+function clause execute F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJ_H) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
   let (s1, e1, m1) = fsplit_H (rs1_val_H);
@@ -350,7 +350,7 @@ function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJ_H)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJN_H)) = {
+function clause execute F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJN_H) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
   let (s1, e1, m1) = fsplit_H (rs1_val_H);
@@ -361,7 +361,7 @@ function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJN_H)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJX_H)) = {
+function clause execute F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJX_H) = {
   let rs1_val_H    = F_or_X_H(rs1);
   let rs2_val_H    = F_or_X_H(rs2);
   let (s1, e1, m1) = fsplit_H (rs1_val_H);
@@ -372,7 +372,7 @@ function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FSGNJX_H)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FMIN_H)) = {
+function clause execute F_BIN_F_TYPE_H(rs2, rs1, rd, FMIN_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   let rs2_val_H = F_or_X_H(rs2);
 
@@ -392,7 +392,7 @@ function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FMIN_H)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FMAX_H)) = {
+function clause execute F_BIN_F_TYPE_H(rs2, rs1, rd, FMAX_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   let rs2_val_H = F_or_X_H(rs2);
 
@@ -412,7 +412,7 @@ function clause execute (F_BIN_F_TYPE_H(rs2, rs1, rd, FMAX_H)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_X_TYPE_H(rs2, rs1, rd, FEQ_H)) = {
+function clause execute F_BIN_X_TYPE_H(rs2, rs1, rd, FEQ_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   let rs2_val_H = F_or_X_H(rs2);
 
@@ -424,7 +424,7 @@ function clause execute (F_BIN_X_TYPE_H(rs2, rs1, rd, FEQ_H)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_X_TYPE_H(rs2, rs1, rd, FLT_H)) = {
+function clause execute F_BIN_X_TYPE_H(rs2, rs1, rd, FLT_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   let rs2_val_H = F_or_X_H(rs2);
 
@@ -436,7 +436,7 @@ function clause execute (F_BIN_X_TYPE_H(rs2, rs1, rd, FLT_H)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_BIN_X_TYPE_H(rs2, rs1, rd, FLE_H)) = {
+function clause execute F_BIN_X_TYPE_H(rs2, rs1, rd, FLE_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   let rs2_val_H = F_or_X_H(rs2);
 
@@ -546,7 +546,7 @@ mapping clause encdec = F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_LU)
 
 // Execution semantics ================================
 
-function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FSQRT_H)) = {
+function clause execute F_UN_RM_FF_TYPE_H(rs1, rm, rd, FSQRT_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -561,7 +561,7 @@ function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FSQRT_H)) = {
   }
 }
 
-function clause execute (F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_W_H)) = {
+function clause execute F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_W_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -576,7 +576,7 @@ function clause execute (F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_W_H)) = {
   }
 }
 
-function clause execute (F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_WU_H)) = {
+function clause execute F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_WU_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -591,7 +591,7 @@ function clause execute (F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_WU_H)) = {
   }
 }
 
-function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_W)) = {
+function clause execute F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_W) = {
   let rs1_val_W = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -606,7 +606,7 @@ function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_W)) = {
   }
 }
 
-function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_WU)) = {
+function clause execute F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_WU) = {
   let rs1_val_WU = X(rs1) [31..0];
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -621,7 +621,7 @@ function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_WU)) = {
   }
 }
 
-function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_S)) = {
+function clause execute F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_S) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -636,7 +636,7 @@ function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_S)) = {
   }
 }
 
-function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
+function clause execute F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_D) = {
   let rs1_val_D = F_or_X_D(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -651,7 +651,7 @@ function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_H_D)) = {
   }
 }
 
-function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
+function clause execute F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_S_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -666,7 +666,7 @@ function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_S_H)) = {
   }
 }
 
-function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
+function clause execute F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_D_H) = {
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
     None() => Illegal_Instruction(),
@@ -681,7 +681,7 @@ function clause execute (F_UN_RM_FF_TYPE_H(rs1, rm, rd, FCVT_D_H)) = {
   }
 }
 
-function clause execute (F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
+function clause execute F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_L_H) = {
   assert(xlen >= 64);
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
@@ -697,7 +697,7 @@ function clause execute (F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_L_H)) = {
   }
 }
 
-function clause execute (F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_LU_H)) = {
+function clause execute F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_LU_H) = {
   assert(xlen >= 64);
   let rs1_val_H = F_or_X_H(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
@@ -713,7 +713,7 @@ function clause execute (F_UN_RM_FX_TYPE_H(rs1, rm, rd, FCVT_LU_H)) = {
   }
 }
 
-function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_L)) = {
+function clause execute F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_L) = {
   assert(xlen >= 64);
   let rs1_val_L = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
@@ -729,7 +729,7 @@ function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_L)) = {
   }
 }
 
-function clause execute (F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_LU)) = {
+function clause execute F_UN_RM_XF_TYPE_H(rs1, rm, rd, FCVT_H_LU) = {
   assert(xlen >= 64);
   let rs1_val_LU = X(rs1)[63..0];
   match (select_instr_or_fcsr_rm (rm)) {
@@ -809,7 +809,7 @@ mapping clause encdec = F_UN_F_TYPE_H(rs1, rd, FMV_H_X)
 
 // Execution semantics ================================
 
-function clause execute (F_UN_X_TYPE_H(rs1, rd, FCLASS_H)) = {
+function clause execute F_UN_X_TYPE_H(rs1, rd, FCLASS_H) = {
   let rs1_val_H = F_or_X_H(rs1);
 
   let rd_val_10b : bits (10) =
@@ -829,14 +829,14 @@ function clause execute (F_UN_X_TYPE_H(rs1, rd, FCLASS_H)) = {
   RETIRE_SUCCESS
 }
 
-function clause execute (F_UN_X_TYPE_H(rs1, rd, FMV_X_H)) = {
+function clause execute F_UN_X_TYPE_H(rs1, rd, FMV_X_H) = {
   let rs1_val_H            = F(rs1)[15..0];
   let rd_val_X  : xlenbits = sign_extend(rs1_val_H);
   X(rd) = rd_val_X;
   RETIRE_SUCCESS
 }
 
-function clause execute (F_UN_F_TYPE_H(rs1, rd, FMV_H_X)) = {
+function clause execute F_UN_F_TYPE_H(rs1, rd, FMV_H_X) = {
   let rs1_val_X            = X(rs1);
   let rd_val_H             = rs1_val_X [15..0];
   F(rd) = nan_box (rd_val_H);

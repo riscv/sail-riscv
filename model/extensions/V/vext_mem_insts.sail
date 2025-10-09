@@ -73,7 +73,7 @@ function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_byte
   RETIRE_SUCCESS
 }
 
-function clause execute(VLSEGTYPE(nf, vm, rs1, width, vd)) = {
+function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
   let EEW = 2 ^ EEW_pow;
@@ -150,7 +150,7 @@ function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_width_by
   RETIRE_SUCCESS
 }
 
-function clause execute(VLSEGFFTYPE(nf, vm, rs1, width, vd)) = {
+function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
   let EEW = 2 ^ EEW_pow;
@@ -207,7 +207,7 @@ function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_byt
   RETIRE_SUCCESS
 }
 
-function clause execute(VSSEGTYPE(nf, vm, rs1, width, vs3)) = {
+function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
   let EEW = 2 ^ EEW_pow;
@@ -268,7 +268,7 @@ function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_byt
   RETIRE_SUCCESS
 }
 
-function clause execute(VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)) = {
+function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
   let EEW = 2 ^ EEW_pow;
@@ -326,7 +326,7 @@ function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_by
   RETIRE_SUCCESS
 }
 
-function clause execute(VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)) = {
+function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
   let EEW_pow = vlewidth_pow(width);
   let EEW = 2 ^ EEW_pow;
   let load_width_bytes = 2 ^ (EEW_pow - 3);
@@ -388,7 +388,7 @@ function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_byte
   RETIRE_SUCCESS
 }
 
-function clause execute(VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
+function clause execute VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd) = {
   let EEW_index_pow = vlewidth_pow(width);
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
@@ -415,7 +415,7 @@ mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute(VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)) = {
+function clause execute VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd) = {
   let EEW_index_pow = vlewidth_pow(width);
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
@@ -475,7 +475,7 @@ function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_byt
   RETIRE_SUCCESS
 }
 
-function clause execute(VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
+function clause execute VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3) = {
   let EEW_index_pow = vlewidth_pow(width);
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
@@ -502,7 +502,7 @@ mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute(VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)) = {
+function clause execute VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3) = {
   let EEW_index_pow = vlewidth_pow(width);
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
@@ -568,7 +568,7 @@ function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : word_width,
   RETIRE_SUCCESS
 }
 
-function clause execute(VLRETYPE(nf, rs1, width, vd)) = {
+function clause execute VLRETYPE(nf, rs1, width, vd) = {
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
   let EEW = 2 ^ EEW_pow;
@@ -633,7 +633,7 @@ function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 : regidx,
   RETIRE_SUCCESS
 }
 
-function clause execute(VSRETYPE(nf, rs1, vs3)) = {
+function clause execute VSRETYPE(nf, rs1, vs3) = {
   let load_width_bytes = 1;
   let EEW = 8;
   let elem_per_reg = vlen / EEW;
@@ -693,7 +693,7 @@ function process_vm(vd_or_vs3 : vregidx, rs1 : regidx, num_elem : nat, evl : nat
   RETIRE_SUCCESS
 }
 
-function clause execute(VMTYPE(rs1, vd_or_vs3, op)) = {
+function clause execute VMTYPE(rs1, vd_or_vs3, op) = {
   let EEW = 8;
   let EMUL_pow = 0;
   let vl_val = unsigned(vl);

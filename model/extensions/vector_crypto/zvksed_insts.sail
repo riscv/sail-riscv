@@ -14,7 +14,7 @@ mapping clause encdec = VSM4K_VI(vs2, uimm, vd)
   <-> 0b1000011 @ encdec_vreg(vs2) @ uimm @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
-function clause execute (VSM4K_VI(vs2, uimm, vd)) = {
+function clause execute VSM4K_VI(vs2, uimm, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -71,7 +71,7 @@ mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4R_VS, vs2, vd)
   <-> 0b1010011 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
 
-function clause execute (ZVKSM4RTYPE(funct6, vs2, vd)) = {
+function clause execute ZVKSM4RTYPE(funct6, vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);

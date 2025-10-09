@@ -47,7 +47,7 @@ mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd)
 mapping clause assembly = ZBKB_PACKW(rs2, rs1, rd)
   <-> "packw" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute (ZBKB_PACKW(rs2, rs1, rd)) = {
+function clause execute ZBKB_PACKW(rs2, rs1, rd) = {
   assert(xlen == 64);
   let rs1_val = X(rs1);
   let rs2_val = X(rs2);
@@ -66,7 +66,7 @@ mapping clause encdec = ZIP(rs1, rd)
 mapping clause assembly = ZIP(rs1, rd)
   <-> "zip" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (ZIP(rs1, rd)) = {
+function clause execute ZIP(rs1, rd) = {
   assert(xlen == 32);
   let rs1_val = X(rs1);
   var result : xlenbits = zeros();
@@ -88,7 +88,7 @@ mapping clause encdec = UNZIP(rs1, rd)
 mapping clause assembly = UNZIP(rs1, rd)
   <-> "unzip" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (UNZIP(rs1, rd)) = {
+function clause execute UNZIP(rs1, rd) = {
   assert(xlen == 32);
   let rs1_val = X(rs1);
   var result : xlenbits = zeros();
@@ -110,7 +110,7 @@ mapping clause encdec = BREV8(rs1, rd)
 mapping clause assembly = BREV8(rs1, rd)
   <-> "brev8" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 
-function clause execute (BREV8(rs1, rd)) = {
+function clause execute BREV8(rs1, rd) = {
   X(rd) = brev8(X(rs1));
   RETIRE_SUCCESS
 }

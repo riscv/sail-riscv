@@ -19,7 +19,7 @@ mapping clause encdec = FLI_H(constantidx, rd)
 mapping clause assembly = FLI_H(constantidx, rd)
   <-> "fli.h" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
 
-function clause execute (FLI_H(constantidx, rd)) = {
+function clause execute FLI_H(constantidx, rd) = {
   let bits : bits(16) = match constantidx {
     0b00000 => { 0xbc00 },  // -1.0
     0b00001 => { 0x0400 },  // minimum positive normal
@@ -69,7 +69,7 @@ mapping clause encdec = FLI_S(constantidx, rd)
 mapping clause assembly = FLI_S(constantidx, rd)
   <-> "fli.s" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
 
-function clause execute (FLI_S(constantidx, rd)) = {
+function clause execute FLI_S(constantidx, rd) = {
   let bits : bits(32) = match constantidx {
     0b00000 => { 0xbf800000 },  // -1.0
     0b00001 => { 0x00800000 },  // minimum positive normal
@@ -119,7 +119,7 @@ mapping clause encdec = FLI_D(constantidx, rd)
 mapping clause assembly = FLI_D(constantidx, rd)
   <-> "fli.d" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
 
-function clause execute (FLI_D(constantidx, rd)) = {
+function clause execute FLI_D(constantidx, rd) = {
   let bits : bits(64) = match constantidx {
     0b00000 => { 0xbff0000000000000 },  // -1.0
     0b00001 => { 0x0010000000000000 },  // minimum positive normal
@@ -171,7 +171,7 @@ mapping clause assembly = FMINM_H(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs1)
                 ^ sep() ^ freg_name(rs2)
 
-function clause execute (FMINM_H(rs2, rs1, rd)) = {
+function clause execute FMINM_H(rs2, rs1, rd) = {
   let rs1_val_H = F_H(rs1);
   let rs2_val_H = F_H(rs2);
 
@@ -202,7 +202,7 @@ mapping clause assembly = FMAXM_H(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs1)
                 ^ sep() ^ freg_name(rs2)
 
-function clause execute (FMAXM_H(rs2, rs1, rd)) = {
+function clause execute FMAXM_H(rs2, rs1, rd) = {
   let rs1_val_H = F_H(rs1);
   let rs2_val_H = F_H(rs2);
 
@@ -233,7 +233,7 @@ mapping clause assembly = FMINM_S(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs1)
                 ^ sep() ^ freg_name(rs2)
 
-function clause execute (FMINM_S(rs2, rs1, rd)) = {
+function clause execute FMINM_S(rs2, rs1, rd) = {
   let rs1_val_S = F_S(rs1);
   let rs2_val_S = F_S(rs2);
 
@@ -264,7 +264,7 @@ mapping clause assembly = FMAXM_S(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs1)
                 ^ sep() ^ freg_name(rs2)
 
-function clause execute (FMAXM_S(rs2, rs1, rd)) = {
+function clause execute FMAXM_S(rs2, rs1, rd) = {
   let rs1_val_S = F_S(rs1);
   let rs2_val_S = F_S(rs2);
 
@@ -295,7 +295,7 @@ mapping clause assembly = FMINM_D(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs1)
                 ^ sep() ^ freg_name(rs2)
 
-function clause execute (FMINM_D(rs2, rs1, rd)) = {
+function clause execute FMINM_D(rs2, rs1, rd) = {
   let rs1_val_D = F_D(rs1);
   let rs2_val_D = F_D(rs2);
 
@@ -326,7 +326,7 @@ mapping clause assembly = FMAXM_D(rs2, rs1, rd)
                 ^ sep() ^ freg_name(rs1)
                 ^ sep() ^ freg_name(rs2)
 
-function clause execute (FMAXM_D(rs2, rs1, rd)) = {
+function clause execute FMAXM_D(rs2, rs1, rd) = {
   let rs1_val_D = F_D(rs1);
   let rs2_val_D = F_D(rs2);
 
@@ -357,7 +357,7 @@ mapping clause assembly = FROUND_H(rs1, rm, rd)
                  ^ sep() ^ freg_name(rs1)
                  ^ sep() ^ frm_mnemonic(rm)
 
-function clause execute (FROUND_H(rs1, rm, rd)) = {
+function clause execute FROUND_H(rs1, rm, rd) = {
   let rs1_val_H = F_H(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -386,7 +386,7 @@ mapping clause assembly = FROUNDNX_H(rs1, rm, rd)
                    ^ sep() ^ freg_name(rs1)
                    ^ sep() ^ frm_mnemonic(rm)
 
-function clause execute (FROUNDNX_H(rs1, rm, rd)) = {
+function clause execute FROUNDNX_H(rs1, rm, rd) = {
   let rs1_val_H = F_H(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -415,7 +415,7 @@ mapping clause assembly = FROUND_S(rs1, rm, rd)
                  ^ sep() ^ freg_name(rs1)
                  ^ sep() ^ frm_mnemonic(rm)
 
-function clause execute (FROUND_S(rs1, rm, rd)) = {
+function clause execute FROUND_S(rs1, rm, rd) = {
   let rs1_val_S = F_S(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -444,7 +444,7 @@ mapping clause assembly = FROUNDNX_S(rs1, rm, rd)
                    ^ sep() ^ freg_name(rs1)
                    ^ sep() ^ frm_mnemonic(rm)
 
-function clause execute (FROUNDNX_S(rs1, rm, rd)) = {
+function clause execute FROUNDNX_S(rs1, rm, rd) = {
   let rs1_val_S = F_S(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -473,7 +473,7 @@ mapping clause assembly = FROUND_D(rs1, rm, rd)
                  ^ sep() ^ freg_name(rs1)
                  ^ sep() ^ frm_mnemonic(rm)
 
-function clause execute (FROUND_D(rs1, rm, rd)) = {
+function clause execute FROUND_D(rs1, rm, rd) = {
   let rs1_val_D = F_D(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -502,7 +502,7 @@ mapping clause assembly = FROUNDNX_D(rs1, rm, rd)
                    ^ sep() ^ freg_name(rs1)
                    ^ sep() ^ frm_mnemonic(rm)
 
-function clause execute (FROUNDNX_D(rs1, rm, rd)) = {
+function clause execute FROUNDNX_D(rs1, rm, rd) = {
   let rs1_val_D = F_D(rs1);
 
   match (select_instr_or_fcsr_rm(rm)) {
@@ -530,7 +530,7 @@ mapping clause assembly = FMVH_X_D(rs1, rd)
   <-> "fmvh.x.d" ^ spc() ^ reg_name(rd)
                  ^ sep() ^ freg_name(rs1)
 
-function clause execute (FMVH_X_D(rs1, rd)) = {
+function clause execute FMVH_X_D(rs1, rd) = {
   let rs1_val_D           = F_D(rs1)[63..32];
   let rd_val_X : xlenbits = sign_extend(rs1_val_D);
   X(rd)                   = rd_val_X;
@@ -550,7 +550,7 @@ mapping clause assembly = FMVP_D_X(rs2, rs1, rd)
                  ^ sep() ^ reg_name(rs1)
                  ^ sep() ^ reg_name(rs2)
 
-function clause execute (FMVP_D_X(rs2, rs1, rd)) = {
+function clause execute FMVP_D_X(rs2, rs1, rd) = {
   let rs1_val_X     = X(rs1)[31..0];
   let rs2_val_X     = X(rs2)[31..0];
 
@@ -578,7 +578,7 @@ mapping clause assembly = FLEQ_H(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs1)
                ^ sep() ^ freg_name(rs2)
 
-function clause execute(FLEQ_H(rs2, rs1, rd)) = {
+function clause execute FLEQ_H(rs2, rs1, rd) = {
   let rs1_val_H = F_H(rs1);
   let rs2_val_H = F_H(rs2);
 
@@ -603,7 +603,7 @@ mapping clause assembly = FLTQ_H(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs1)
                ^ sep() ^ freg_name(rs2)
 
-function clause execute(FLTQ_H(rs2, rs1, rd)) = {
+function clause execute FLTQ_H(rs2, rs1, rd) = {
   let rs1_val_H = F_H(rs1);
   let rs2_val_H = F_H(rs2);
 
@@ -628,7 +628,7 @@ mapping clause assembly = FLEQ_S(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs1)
                ^ sep() ^ freg_name(rs2)
 
-function clause execute(FLEQ_S(rs2, rs1, rd)) = {
+function clause execute FLEQ_S(rs2, rs1, rd) = {
   let rs1_val_S = F_S(rs1);
   let rs2_val_S = F_S(rs2);
 
@@ -653,7 +653,7 @@ mapping clause assembly = FLTQ_S(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs1)
                ^ sep() ^ freg_name(rs2)
 
-function clause execute(FLTQ_S(rs2, rs1, rd)) = {
+function clause execute FLTQ_S(rs2, rs1, rd) = {
   let rs1_val_S = F_S(rs1);
   let rs2_val_S = F_S(rs2);
 
@@ -679,7 +679,7 @@ mapping clause assembly = FLEQ_D(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs1)
                ^ sep() ^ freg_name(rs2)
 
-function clause execute(FLEQ_D(rs2, rs1, rd)) = {
+function clause execute FLEQ_D(rs2, rs1, rd) = {
   let rs1_val_D = F_D(rs1);
   let rs2_val_D = F_D(rs2);
 
@@ -704,7 +704,7 @@ mapping clause assembly = FLTQ_D(rs2, rs1, rd)
                ^ sep() ^ freg_name(rs1)
                ^ sep() ^ freg_name(rs2)
 
-function clause execute(FLTQ_D(rs2, rs1, rd)) = {
+function clause execute FLTQ_D(rs2, rs1, rd) = {
   let rs1_val_D = F_D(rs1);
   let rs2_val_D = F_D(rs2);
 
@@ -785,7 +785,7 @@ mapping clause encdec = FCVTMOD_W_D(rs1, rd)
 mapping clause assembly = FCVTMOD_W_D(rs1, rd)
   <-> "fcvtmod.w.d" ^ spc() ^ reg_name(rd) ^ sep() ^ freg_name(rs1) ^ sep() ^ "rtz"
 
-function clause execute(FCVTMOD_W_D(rs1, rd)) = {
+function clause execute FCVTMOD_W_D(rs1, rd) = {
   let rs1_val_D = F_D(rs1);
   let (fflags, rd_val) = fcvtmod_helper(rs1_val_D);
   accrue_fflags(fflags);

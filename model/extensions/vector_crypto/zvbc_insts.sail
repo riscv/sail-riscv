@@ -17,7 +17,7 @@ mapping clause encdec = VCLMUL_VV (vm, vs2, vs1, vd)
 mapping clause assembly = VCLMUL_VV (vm, vs2, vs1, vd)
   <-> "vclmul.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-function clause execute (VCLMUL_VV(vm, vs2, vs1, vd)) = {
+function clause execute VCLMUL_VV(vm, vs2, vs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
 
@@ -55,7 +55,7 @@ mapping clause encdec = VCLMUL_VX (vm, vs2, rs1, vd)
 mapping clause assembly = VCLMUL_VX (vm, vs2, rs1, vd)
   <-> "vclmul.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
-function clause execute (VCLMUL_VX(vm, vs2, rs1, vd)) = {
+function clause execute VCLMUL_VX(vm, vs2, rs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
 
@@ -94,7 +94,7 @@ mapping clause encdec = VCLMULH_VV (vm, vs2, vs1, vd)
 mapping clause assembly = VCLMULH_VV (vm, vs2, vs1, vd)
   <-> "vclmulh.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-function clause execute (VCLMULH_VV(vm, vs2, vs1, vd)) = {
+function clause execute VCLMULH_VV(vm, vs2, vs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
 
@@ -132,7 +132,7 @@ mapping clause encdec = VCLMULH_VX (vm, vs2, rs1, vd)
 mapping clause assembly = VCLMULH_VX (vm, vs2, rs1, vd)
   <-> "vclmulh.vx" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
 
-function clause execute (VCLMULH_VX(vm, vs2, rs1, vd)) = {
+function clause execute VCLMULH_VX(vm, vs2, rs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
 

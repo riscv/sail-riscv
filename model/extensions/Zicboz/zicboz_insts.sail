@@ -22,7 +22,7 @@ mapping clause encdec = ZICBOZ(rs1)
 mapping clause assembly = ZICBOZ(rs1)
   <-> "cbo.zero" ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
-function clause execute(ZICBOZ(rs1)) = {
+function clause execute ZICBOZ(rs1) = {
   if cbo_zero_enabled(cur_privilege) then {
     let rs1_val = X(rs1);
     let cache_block_size = 2 ^ plat_cache_block_size_exp;

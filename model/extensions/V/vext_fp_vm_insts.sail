@@ -26,7 +26,7 @@ mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fvvmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute FVVMTYPE(funct6, vm, vs2, vs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -93,7 +93,7 @@ mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fvfmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32f)
 
-function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
+function clause execute FVFMTYPE(funct6, vm, vs2, rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();

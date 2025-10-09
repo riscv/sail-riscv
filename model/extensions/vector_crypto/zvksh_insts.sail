@@ -14,7 +14,7 @@ mapping clause encdec = VSM3ME_VV(vs2, vs1, vd)
   <-> 0b1000001 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
    when currentlyEnabled(Ext_Zvksh) & get_sew() == 32 & zvk_check_encdec(256, 8) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
 
-function clause execute (VSM3ME_VV(vs2, vs1, vd)) = {
+function clause execute VSM3ME_VV(vs2, vs1, vd) = {
   let 'SEW     = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -57,7 +57,7 @@ mapping clause encdec = VSM3C_VI(vs2, uimm, vd)
   <-> 0b1010111 @ encdec_vreg(vs2) @ uimm @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvksh) & get_sew() == 32 & zvk_check_encdec(256, 8) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
 
-function clause execute (VSM3C_VI(vs2, uimm, vd)) = {
+function clause execute VSM3C_VI(vs2, uimm, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);

@@ -34,7 +34,7 @@ mapping clause encdec = LOADRES(aq, rl, rs1, width, rd)
 // requires cancelling the reservation in some additional places, e.g. xRET, and
 // that will break comparison with a DUT that doesn't require cancellation there.
 
-function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
+function clause execute LOADRES(aq, rl, rs1, width, rd) = {
   // This is checked during decoding.
   assert(width <= xlen_bytes);
 
@@ -59,7 +59,7 @@ mapping clause encdec = STORECON(aq, rl, rs2, rs1, width, rd)
   when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(width)
 
 // NOTE: Currently, we only EA if address translation is successful. This may need revisiting.
-function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
+function clause execute STORECON(aq, rl, rs2, rs1, width, rd) = {
   // This is checked during decoding.
   assert(width <= xlen_bytes);
 

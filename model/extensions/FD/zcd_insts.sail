@@ -14,7 +14,7 @@ mapping clause encdec_compressed = C_FLDSP(ui86 @ ui5 @ ui43, rd)
   <-> 0b001 @ ui5 : bits(1) @ encdec_freg(rd) @ ui43 : bits(2) @ ui86 : bits(3) @ 0b10
   when currentlyEnabled(Ext_Zcd)
 
-function clause execute (C_FLDSP(uimm, rd)) = {
+function clause execute C_FLDSP(uimm, rd) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
   execute(LOAD_FP(imm, sp, rd, 8))
 }
@@ -29,7 +29,7 @@ mapping clause encdec_compressed = C_FSDSP(ui86 @ ui53, rs2)
   <-> 0b101 @ ui53 : bits(3) @ ui86 : bits(3) @ encdec_freg(rs2) @ 0b10
   when currentlyEnabled(Ext_Zcd)
 
-function clause execute (C_FSDSP(uimm, rs2)) = {
+function clause execute C_FSDSP(uimm, rs2) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
   execute(STORE_FP(imm, rs2, sp, 8))
 }
@@ -44,7 +44,7 @@ mapping clause encdec_compressed = C_FLD(ui76 @ ui53, rs1, rd)
   <-> 0b001 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui76 : bits(2) @ encdec_cfreg(rd) @ 0b00
   when currentlyEnabled(Ext_Zcd)
 
-function clause execute (C_FLD(uimm, rsc, rdc)) = {
+function clause execute C_FLD(uimm, rsc, rdc) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
   let rd = cfregidx_to_fregidx(rdc);
   let rs = creg2reg_idx(rsc);
@@ -61,7 +61,7 @@ mapping clause encdec_compressed = C_FSD(ui76 @ ui53, rs1, rs2)
   <-> 0b101 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui76 : bits(2) @ encdec_cfreg(rs2) @ 0b00
   when currentlyEnabled(Ext_Zcd)
 
-function clause execute (C_FSD(uimm, rsc1, rsc2)) = {
+function clause execute C_FSD(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = cfregidx_to_fregidx(rsc2);
