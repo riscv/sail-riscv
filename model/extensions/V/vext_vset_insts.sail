@@ -76,47 +76,50 @@ function calculate_new_vl(AVL : xlenbits, VLMAX : range(1, vlen)) -> range(0, vl
   } else VLMAX
 }
 
-// ********************************** vsetvli ***********************************
-union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
-
-mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
-
-function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
-  let LMUL_pow_ori  = get_lmul_pow();
-  let SEW_pow_ori   = get_sew_pow();
-  let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
-
-  // check new SEW and LMUL are legal and calculate VLMAX
+// Execute vsetvl, vsetvli, or vsetivli.
+function execute_vsetvl_type(
+  ma : bits(1),
+  ta : bits(1),
+  sew : bits(3),
+  lmul : bits(3),
+  avl : xlenbits,
+  requires_fixed_vlmax : bool,
+  rd : regidx,
+) -> ExecutionResult = {
+  // Check new SEW and LMUL have legal encodings. There are some reserved values.
   if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype();
-    return RETIRE_SUCCESS
+    return RETIRE_SUCCESS;
   };
+
   let LMUL_pow_new = lmul_pow_val(lmul);
   let SEW_pow_new = sew_pow_val(sew);
 
-  if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
-  let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
+  let lmul_sew_ratio = get_lmul_pow() - get_sew_pow();
+  let lmul_sew_ratio_new = LMUL_pow_new - SEW_pow_new;
 
-  // Set vl according to VLMAX and AVL.
-  if rs1 != zreg then {
-    // Normal stripmining.
-    vl = to_bits(calculate_new_vl(X(rs1), VLMAX));
-    X(rd) = vl;
-  } else if rd != zreg then {
-    // Set vl to VLMAX.
-    vl = to_bits(xlen, VLMAX);
-    X(rd) = vl;
-  } else {
-    // Keep existing vl if it is compatible and vtype.ill is valid.
-    let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
-    let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
-    if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
+  // "For a given supported fractional LMUL setting, implementations must
+  // support SEW settings between SEWMIN and LMUL * ELEN, inclusive."
+  //
+  // Also some cases require that VLMAX doesn't change (i.e. LMUL/SEW is constant).
+  if SEW_pow_new > (LMUL_pow_new + elen_exp) |
+     (requires_fixed_vlmax & (lmul_sew_ratio != lmul_sew_ratio_new | not(valid_vtype()))) then {
+    handle_illegal_vtype();
+    return RETIRE_SUCCESS;
   };
 
-  // set vtype
-  vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
+  let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
+
+  vl = to_bits(calculate_new_vl(avl, VLMAX));
+  X(rd) = vl;
+
+  vtype = [Mk_Vtype(zeros()) with
+    vill = 0b0,
+    vma = ma,
+    vta = ta,
+    vsew = sew,
+    vlmul = lmul,
+  ];
 
   // reset vstart to 0
   set_vstart(zeros());
@@ -126,6 +129,24 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   csr_write_callback("vstart", vstart);
 
   RETIRE_SUCCESS
+}
+
+// ********************************** vsetvli ***********************************
+union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
+
+mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
+  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
+  when currentlyEnabled(Ext_Zve32x)
+
+function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
+  let avl =
+    if rs1 != zreg then X(rs1)
+    else if rd != zreg then ones()
+    else vl;
+
+  let requires_fixed_vlmax = rd == zreg & rs1 == zreg;
+
+  execute_vsetvl_type(ma, ta, sew, lmul, avl, requires_fixed_vlmax, rd)
 }
 
 mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
@@ -139,58 +160,19 @@ mapping clause encdec = VSETVL(rs2, rs1, rd)
   when currentlyEnabled(Ext_Zve32x)
 
 function clause execute VSETVL(rs2, rs1, rd) = {
-  let LMUL_pow_ori  = get_lmul_pow();
-  let SEW_pow_ori   = get_sew_pow();
-  let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
+  let vt = Mk_Vtype(X(rs2));
 
-  let vtype_new = Mk_Vtype(X(rs2));
-
-  if   vtype_new[vill] == 0b1 | vtype_new[reserved] != zeros()
+  if vt[vill] == 0b1 | vt[reserved] != zeros()
   then { handle_illegal_vtype(); return RETIRE_SUCCESS };
 
-  let ma   = vtype_new[vma];
-  let ta   = vtype_new[vta];
-  let sew  = vtype_new[vsew];
-  let lmul = vtype_new[vlmul];
+  let avl =
+    if rs1 != zreg then X(rs1)
+    else if rd != zreg then ones()
+    else vl;
 
-  // check new SEW and LMUL are legal and calculate VLMAX
-  if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
-    handle_illegal_vtype();
-    return RETIRE_SUCCESS
-  };
-  let LMUL_pow_new = lmul_pow_val(lmul);
-  let SEW_pow_new = sew_pow_val(sew);
+  let requires_fixed_vlmax = rd == zreg & rs1 == zreg;
 
-  if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
-  let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
-
-  // Set vl according to VLMAX and AVL.
-  if rs1 != zreg then {
-    // Normal stripmining.
-    vl = to_bits(calculate_new_vl(X(rs1), VLMAX));
-    X(rd) = vl;
-  } else if rd != zreg then {
-    // Set vl to VLMAX.
-    vl = to_bits(xlen, VLMAX);
-    X(rd) = vl;
-  } else {
-    // Keep existing vl if it is compatible and vtype.ill is valid.
-    let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
-    let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
-    if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
-  };
-
-  // set vtype
-  vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
-
-  // reset vstart to 0
-  set_vstart(zeros());
-
-  csr_write_callback("vtype", vtype.bits);
-  csr_write_callback("vl", vl);
-  csr_write_callback("vstart", vstart);
-
-  RETIRE_SUCCESS
+  execute_vsetvl_type(vt[vma], vt[vta], vt[vsew], vt[vlmul], avl, requires_fixed_vlmax, rd)
 }
 
 mapping clause assembly = VSETVL(rs2, rs1, rd)
@@ -204,33 +186,8 @@ mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
   when currentlyEnabled(Ext_Zve32x)
 
 function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
-  // check new SEW and LMUL are legal and calculate VLMAX
-  if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
-    handle_illegal_vtype();
-    return RETIRE_SUCCESS
-  };
-  let LMUL_pow_new = lmul_pow_val(lmul);
-  let SEW_pow_new = sew_pow_val(sew);
-
-  if SEW_pow_new > (LMUL_pow_new + elen_exp) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
-  let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
-
-  // set vl according to VLMAX and AVL
-  // AVL is encoded as 5-bit zero-extended imm in the rs1 field
-  vl = to_bits(calculate_new_vl(zero_extend(uimm), VLMAX));
-  X(rd) = vl;
-
-  // set vtype
-  vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
-
-  // reset vstart to 0
-  set_vstart(zeros());
-
-  csr_write_callback("vtype", vtype.bits);
-  csr_write_callback("vl", vl);
-  csr_write_callback("vstart", vstart);
-
-  RETIRE_SUCCESS
+  let avl : xlenbits = zero_extend(uimm);
+  execute_vsetvl_type(ma, ta, sew, lmul, avl, false, rd)
 }
 
 mapping clause assembly = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
