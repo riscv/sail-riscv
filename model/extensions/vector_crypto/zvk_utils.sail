@@ -13,7 +13,7 @@ function zvk_valid_reg_overlap(rs : vregidx, rd : vregidx, emul_pow : int) -> bo
   (rs_int + reg_group_size <= rd_int) | (rd_int + reg_group_size <= rs_int)
 }
 
-function zvk_check_encdec(EGW: nat, EGS: nat1) -> bool = {
+function zvk_check_encdec(EGW : nat, EGS : nat1) -> bool = {
   let LMUL_pow = get_lmul_pow();
   let LMUL_times_VLEN = if LMUL_pow < 0 then vlen / (2 ^ abs_int(LMUL_pow)) else (2 ^ LMUL_pow) * vlen in
   (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & LMUL_times_VLEN >= EGW
@@ -24,7 +24,7 @@ function zvk_check_encdec(EGW: nat, EGS: nat1) -> bool = {
 
 enum zvk_vsha2_funct6 = {ZVK_VSHA2CH_VV, ZVK_VSHA2CL_VV}
 
-function zvknhab_check_encdec(vs2: vregidx, vs1: vregidx, vd: vregidx) -> bool = {
+function zvknhab_check_encdec(vs2 : vregidx, vs1 : vregidx, vd: vregidx) -> bool = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   zvk_check_encdec(SEW, 4) & zvk_valid_reg_overlap(vs1, vd, LMUL_pow) & zvk_valid_reg_overlap(vs2, vd, LMUL_pow);
@@ -75,7 +75,6 @@ enum zvk_vsm4r_funct6 = {ZVK_VSM4R_VV, ZVK_VSM4R_VS}
 
 function zvk_round_key(X : bits(32), S : bits(32)) -> bits(32) = X ^ (S ^ (S <<< 13) ^ (S <<< 23))
 
-val zvk_sm4_round : (bits(32), bits(32)) -> bits(32)
 function zvk_sm4_round(X : bits(32), S : bits(32)) -> bits(32) =
   X ^ (S ^ (S <<< 2) ^ (S <<< 10) ^ (S <<< 18) ^ (S <<< 24))
 

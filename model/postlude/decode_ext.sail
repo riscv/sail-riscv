@@ -10,8 +10,6 @@
 // based on other machine state. This is supported via decode instruction
 // hooks, the default implementation of which is provided below.
 
-val ext_decode_compressed : bits(16) -> instruction
-function ext_decode_compressed(bv) = encdec_compressed(bv)
+function ext_decode_compressed(bv : bits(16)) -> instruction = encdec_compressed(bv)
 
-val ext_decode : bits(32) -> instruction
-function ext_decode(bv) = encdec(bv)
+function ext_decode(bv : bits(32)) -> instruction = encdec(bv)

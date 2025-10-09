@@ -13,8 +13,7 @@
 // Check for valid floating-point operation types
 // 1. Valid element width of floating-point numbers
 // 2. Valid floating-point rounding mode
-val valid_fp_op : (sew_bitsize, bits(3)) -> bool
-function valid_fp_op(SEW, rm_3b) = {
+function valid_fp_op(SEW : sew_bitsize, rm_3b : bits(3)) -> bool = {
   // 128-bit floating-point values will be supported in future extensions
   let valid_sew = (SEW >= 16 & SEW <= 128);
   let valid_rm = not(rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111);
@@ -22,39 +21,33 @@ function valid_fp_op(SEW, rm_3b) = {
 }
 
 // a. Normal check for floating-point instructions
-val illegal_fp_normal : (vregidx, bits(1), sew_bitsize, bits(3)) -> bool
-function illegal_fp_normal(vd, vm, SEW, rm_3b) = {
+function illegal_fp_normal(vd : vregidx, vm : bits(1), SEW : sew_bitsize, rm_3b : bits(3)) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 // b. Masked check for floating-point instructions encoded with vm = 0
-val illegal_fp_vd_masked : (vregidx, sew_bitsize, bits(3)) -> bool
-function illegal_fp_vd_masked(vd, SEW, rm_3b) = {
+function illegal_fp_vd_masked(vd : vregidx, SEW : sew_bitsize, rm_3b : bits(3)) -> bool = {
   not(valid_vtype()) | vd == zvreg | not(valid_fp_op(SEW, rm_3b))
 }
 
 // c. Unmasked check for floating-point instructions encoded with vm = 1
-val illegal_fp_vd_unmasked : (sew_bitsize, bits(3)) -> bool
-function illegal_fp_vd_unmasked(SEW, rm_3b) = {
+function illegal_fp_vd_unmasked(SEW : sew_bitsize, rm_3b : bits(3)) -> bool = {
   not(valid_vtype()) | not(valid_fp_op(SEW, rm_3b))
 }
 
 // d. Variable width check for floating-point widening/narrowing instructions
-val illegal_fp_variable_width : (vregidx, bits(1), sew_bitsize, bits(3), int, int) -> bool
-function illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_new, LMUL_pow_new) = {
+function illegal_fp_variable_width(vd : vregidx, vm : bits(1), SEW : sew_bitsize, rm_3b : bits(3), SEW_new : int, LMUL_pow_new : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
 // e. Normal check for floating-point reduction instructions
-val illegal_fp_reduction : (sew_bitsize, bits(3)) -> bool
-function illegal_fp_reduction(SEW, rm_3b) = {
+function illegal_fp_reduction(SEW : sew_bitsize, rm_3b : bits(3)) -> bool = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b))
 }
 
 // f. Variable width check for floating-point widening reduction instructions
-val illegal_fp_widening_reduction : (sew_bitsize, bits(3), int) -> bool
-function illegal_fp_widening_reduction(SEW, rm_3b, EEW) = {
+function illegal_fp_widening_reduction(SEW : sew_bitsize, rm_3b : bits(3), EEW : int) -> bool = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
   not(EEW >= 8 & EEW <= elen)
 }
@@ -171,8 +164,7 @@ function get_scalar_fp(rs1, SEW) = {
 }
 
 // Get the floating point rounding mode from csr fcsr
-val get_fp_rounding_mode : unit -> rounding_mode
-function get_fp_rounding_mode() = encdec_rounding_mode(fcsr[FRM])
+function get_fp_rounding_mode() -> rounding_mode = encdec_rounding_mode(fcsr[FRM])
 
 // Negate a floating point number
 val negate_fp : forall 'm, 'm in {16, 32, 64}. bits('m) -> bits('m)
@@ -402,46 +394,40 @@ function fp_widen(nval) = {
 }
 
 // Floating point functions without softfloat support
-val riscv_f16ToI16 : (bits_rm, bits_H) -> (bits_fflags, bits(16))
-function riscv_f16ToI16 (rm, v) = {
+function riscv_f16ToI16(rm : bits_rm, v : bits_H) -> (bits_fflags, bits(16)) = {
   let (flag, sig32) = riscv_f16ToI32(rm, v);
   if signed(sig32) > signed(0b0 @ ones(15)) then (nvFlag(), 0b0 @ ones(15))
   else if signed(sig32) < signed(0b1 @ zeros(15)) then (nvFlag(), 0b1 @ zeros(15))
   else (flag, sig32[15 .. 0]);
 }
 
-val riscv_f16ToI8 : (bits_rm, bits_H) -> (bits_fflags, bits(8))
-function riscv_f16ToI8 (rm, v) = {
+function riscv_f16ToI8(rm : bits_rm, v : bits_H) -> (bits_fflags, bits(8)) = {
   let (flag, sig32) = riscv_f16ToI32(rm, v);
   if signed(sig32) > signed(0b0 @ ones(7)) then (nvFlag(), 0b0 @ ones(7))
   else if signed(sig32) < signed(0b1 @ zeros(7)) then (nvFlag(), 0b1 @ zeros(7))
   else (flag, sig32[7 .. 0]);
 }
 
-val riscv_f32ToI16 : (bits_rm, bits_S) -> (bits_fflags, bits(16))
-function riscv_f32ToI16 (rm, v) = {
+function riscv_f32ToI16(rm : bits_rm, v : bits_S) -> (bits_fflags, bits(16)) = {
   let (flag, sig32) = riscv_f32ToI32(rm, v);
   if signed(sig32) > signed(0b0 @ ones(15)) then (nvFlag(), 0b0 @ ones(15))
   else if signed(sig32) < signed(0b1 @ zeros(15)) then (nvFlag(), 0b1 @ zeros(15))
   else (flag, sig32[15 .. 0]);
 }
 
-val riscv_f16ToUi16 : (bits_rm, bits_H) -> (bits_fflags, bits(16))
-function riscv_f16ToUi16 (rm, v) = {
+function riscv_f16ToUi16(rm : bits_rm, v : bits_H) -> (bits_fflags, bits(16)) = {
   let (flag, sig32) = riscv_f16ToUi32(rm, v);
   if unsigned(sig32) > unsigned(ones(16)) then (nvFlag(), ones(16))
   else (flag, sig32[15 .. 0]);
 }
 
-val riscv_f16ToUi8 : (bits_rm, bits_H) -> (bits_fflags, bits(8))
-function riscv_f16ToUi8 (rm, v) = {
+function riscv_f16ToUi8(rm : bits_rm, v : bits_H) -> (bits_fflags, bits(8)) = {
   let (flag, sig32) = riscv_f16ToUi32(rm, v);
   if unsigned(sig32) > unsigned(ones(8)) then (nvFlag(), ones(8))
   else (flag, sig32[7 .. 0]);
 }
 
-val riscv_f32ToUi16 : (bits_rm, bits_S) -> (bits_fflags, bits(16))
-function riscv_f32ToUi16 (rm, v) = {
+function riscv_f32ToUi16(rm : bits_rm, v : bits_S) -> (bits_fflags, bits(16)) = {
   let (flag, sig32) = riscv_f32ToUi32(rm, v);
   if unsigned(sig32) > unsigned(ones(16)) then (nvFlag(), ones(16))
   else (flag, sig32[15 .. 0]);
@@ -492,8 +478,7 @@ function rsqrt7 (v, sub) = {
   zero_extend(64, sign @ out_exp @ out_sig)
 }
 
-val riscv_f16Rsqrte7 : (bits_rm, bits_H) -> (bits_fflags, bits_H)
-function riscv_f16Rsqrte7 (rm, v) = {
+function riscv_f16Rsqrte7(rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = {
   match fp_class(v) {
     0x0001 => (nvFlag(), 0x7e00),
     0x0002 => (nvFlag(), 0x7e00),
@@ -508,8 +493,7 @@ function riscv_f16Rsqrte7 (rm, v) = {
   }
 }
 
-val riscv_f32Rsqrte7 : (bits_rm, bits_S) -> (bits_fflags, bits_S)
-function riscv_f32Rsqrte7 (rm, v) = {
+function riscv_f32Rsqrte7(rm : bits_rm, v : bits_S) -> (bits_fflags, bits_S) = {
   match fp_class(v)[15 .. 0] {
     0x0001 => (nvFlag(), 0x7fc00000),
     0x0002 => (nvFlag(), 0x7fc00000),
@@ -524,8 +508,7 @@ function riscv_f32Rsqrte7 (rm, v) = {
   }
 }
 
-val riscv_f64Rsqrte7 : (bits_rm, bits_D) -> (bits_fflags, bits_D)
-function riscv_f64Rsqrte7 (rm, v) = {
+function riscv_f64Rsqrte7(rm : bits_rm, v : bits_D) -> (bits_fflags, bits_D) = {
   match fp_class(v)[15 .. 0] {
     0x0001 => (nvFlag(), 0x7ff8000000000000),
     0x0002 => (nvFlag(), 0x7ff8000000000000),
@@ -598,8 +581,7 @@ function recip7 (v, rm_3b, sub) = {
     } else (false, zero_extend(64, sign @ out_exp @ out_sig))
 }
 
-val riscv_f16Recip7 : (bits_rm, bits_H) -> (bits_fflags, bits_H)
-function riscv_f16Recip7 (rm, v) = {
+function riscv_f16Recip7(rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = {
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
   match fp_class(v) {
@@ -615,8 +597,7 @@ function riscv_f16Recip7 (rm, v) = {
   }
 }
 
-val riscv_f32Recip7 : (bits_rm, bits_S) -> (bits_fflags, bits_S)
-function riscv_f32Recip7 (rm, v) = {
+function riscv_f32Recip7(rm : bits_rm, v : bits_S) -> (bits_fflags, bits_S) = {
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
   match fp_class(v)[15 .. 0] {
@@ -632,8 +613,7 @@ function riscv_f32Recip7 (rm, v) = {
   }
 }
 
-val riscv_f64Recip7 : (bits_rm, bits_D) -> (bits_fflags, bits_D)
-function riscv_f64Recip7 (rm, v) = {
+function riscv_f64Recip7(rm : bits_rm, v : bits_D) ->  (bits_fflags, bits_D) = {
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
   match fp_class(v)[15 .. 0] {

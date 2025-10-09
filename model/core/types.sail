@@ -189,8 +189,7 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Extension(e)         <-> ext_exc_type_bits(e)
 }
 
-val exceptionType_to_str : ExceptionType -> string
-function exceptionType_to_str(e) =
+function exceptionType_to_str(e : ExceptionType) -> string =
   match (e) {
     E_Fetch_Addr_Align()   => "misaligned-fetch",
     E_Fetch_Access_Fault() => "fetch-access-fault",
@@ -231,8 +230,7 @@ function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
 type tv_mode = bits(2)
 enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
 
-val trapVectorMode_of_bits : tv_mode -> TrapVectorMode
-function trapVectorMode_of_bits (m) =
+function trapVectorMode_of_bits(m : tv_mode) -> TrapVectorMode =
   match (m) {
     0b00 => TV_Direct,
     0b01 => TV_Vector,

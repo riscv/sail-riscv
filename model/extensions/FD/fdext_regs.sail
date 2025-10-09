@@ -209,53 +209,45 @@ function wF_bits(Fregidx(i) : fregidx, data: flenbits) -> unit = {
 
 overload F = {rF_bits, wF_bits, rF, wF}
 
-val rF_BF16 : fregidx -> bits(16)
-function rF_BF16(i) = {
+function rF_BF16(i : fregidx) -> bits(16) = {
   nan_unbox(F(i))
 }
 
-val wF_BF16 : (fregidx, bits(16)) -> unit
-function wF_BF16(i, data) = {
+function wF_BF16(i : fregidx, data : bits(16)) -> unit = {
   F(i) = nan_box(data)
 }
 
-val rF_H : fregidx -> bits(16)
-function rF_H(i) = {
+function rF_H(i : fregidx) -> bits(16) = {
   assert(flen >= 16);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   nan_unbox(F(i))
 }
 
-val wF_H : (fregidx, bits(16)) -> unit
-function wF_H(i, data) = {
+function wF_H(i : fregidx, data : bits(16)) -> unit = {
   assert(flen >= 16);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i) = nan_box(data)
 }
 
-val rF_S : fregidx -> bits(32)
-function rF_S(i) = {
+function rF_S(i : fregidx) -> bits(32) = {
   assert(flen >= 32);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   nan_unbox(F(i))
 }
 
-val wF_S : (fregidx, bits(32)) -> unit
-function wF_S(i, data) = {
+function wF_S(i : fregidx, data : bits(32)) -> unit = {
   assert(flen >= 32);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i) = nan_box(data)
 }
 
-val rF_D : fregidx -> bits(64)
-function rF_D(i) = {
+function rF_D(i : fregidx) -> bits(64) = {
   assert(flen >= 64);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i)
 }
 
-val wF_D : (fregidx, bits(64)) -> unit
-function wF_D(i, data) = {
+function wF_D(i : fregidx, data : bits(64)) -> unit = {
   assert(flen >= 64);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i) = data
@@ -266,8 +258,7 @@ overload F_H = { rF_H, wF_H }
 overload F_S = { rF_S, wF_S }
 overload F_D = { rF_D, wF_D }
 
-val rF_or_X_H : fregidx -> bits(16)
-function rF_or_X_H(i) = {
+function rF_or_X_H(i : fregidx) -> bits(16) = {
   assert(flen >= 16);
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
@@ -275,8 +266,7 @@ function rF_or_X_H(i) = {
   else X(fregidx_to_regidx(i))[15..0]
 }
 
-val rF_or_X_S : fregidx -> bits(32)
-function rF_or_X_S(i) = {
+function rF_or_X_S(i : fregidx) -> bits(32) = {
   assert(flen >= 32);
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
@@ -284,8 +274,7 @@ function rF_or_X_S(i) = {
   else X(fregidx_to_regidx(i))[31..0]
 }
 
-val rF_or_X_D : fregidx -> bits(64)
-function rF_or_X_D(i) = {
+function rF_or_X_D(i : fregidx) -> bits(64) = {
   assert(flen >= 64);
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
@@ -299,8 +288,7 @@ function rF_or_X_D(i) = {
   }
 }
 
-val wF_or_X_H : (fregidx, bits(16)) -> unit
-function wF_or_X_H(i, data) = {
+function wF_or_X_H(i : fregidx, data : bits(16)) -> unit = {
   assert(flen >= 16);
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
@@ -308,8 +296,7 @@ function wF_or_X_H(i, data) = {
   else X(fregidx_to_regidx(i)) = sign_extend(data)
 }
 
-val wF_or_X_S : (fregidx, bits(32)) -> unit
-function wF_or_X_S(i, data) = {
+function wF_or_X_S(i : fregidx, data : bits(32)) -> unit = {
   assert(flen >= 32);
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
@@ -317,8 +304,7 @@ function wF_or_X_S(i, data) = {
   else X(fregidx_to_regidx(i)) = sign_extend(data)
 }
 
-val wF_or_X_D : (fregidx, bits(64)) -> unit
-function wF_or_X_D(i, data) = {
+function wF_or_X_D(i : fregidx, data : bits(64)) -> unit = {
   assert (flen >= 64);
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
@@ -438,16 +424,14 @@ bitfield Fcsr : bits(32) = {
 
 register fcsr : Fcsr
 
-val write_fcsr : (bits(3), bits(5)) -> unit
-function write_fcsr (frm, fflags) = {
+function write_fcsr(frm : bits(3), fflags : bits(5)) -> unit = {
   fcsr[FRM]    = frm;      // Note: frm can be an illegal value, 101, 110, 111
   fcsr[FFLAGS] = fflags;
   dirty_fd_context_if_present();
 }
 
 // OR flags into the fflags register.
-val accrue_fflags : (bits(5)) -> unit
-function accrue_fflags(flags) = {
+function accrue_fflags(flags : bits(5)) -> unit = {
   let f = fcsr[FFLAGS] | flags;
   if  fcsr[FFLAGS] != f
   then {

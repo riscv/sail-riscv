@@ -721,8 +721,7 @@ function clause execute(FLTQ_D(rs2, rs1, rd)) = {
 //
 // Implement float64 to int32 conversion without saturation, the
 // result is supplied modulo 2^32.
-val      fcvtmod_helper : bits(64) -> (bits(5), bits(32))
-function fcvtmod_helper(x64) = {
+function fcvtmod_helper(x64 : bits(64)) -> (bits(5), bits(32)) = {
   let (sign, exp, mant) = fsplit_D(x64);
 
   // Detect the non-normal cases

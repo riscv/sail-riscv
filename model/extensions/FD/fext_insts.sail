@@ -46,11 +46,9 @@ mapping frm_mnemonic : rounding_mode <-> string = {
   RM_DYN <-> "dyn"
 }
 
-val      valid_rounding_mode : bits(3) -> bool
-function valid_rounding_mode rm = (rm != 0b101 & rm != 0b110)
+function valid_rounding_mode(rm : bits(3)) -> bool = (rm != 0b101 & rm != 0b110)
 
-val      select_instr_or_fcsr_rm : rounding_mode -> option(rounding_mode)
-function select_instr_or_fcsr_rm instr_rm =
+function select_instr_or_fcsr_rm(instr_rm : rounding_mode) -> option(rounding_mode) =
   if (instr_rm == RM_DYN)
   then {
     let fcsr_rm = fcsr[FRM];
@@ -72,96 +70,85 @@ function nvFlag() -> bits(5) = 0b_10000
 // S and D value structure (sign, exponent, mantissa)
 
 // TODO: this should be a 'mapping'
-val      fsplit_S : bits(32) -> (bits(1), bits(8), bits(23))
-function fsplit_S   x32 = (x32[31..31], x32[30..23], x32[22..0])
+function fsplit_S(x32 : bits(32)) -> (bits(1), bits(8), bits(23)) =
+  (x32[31..31], x32[30..23], x32[22..0])
 
-val      fmake_S  : (bits(1), bits(8), bits(23)) -> bits(32)
-function fmake_S (sign, exp, mant) = sign @ exp @ mant
+function fmake_S(sign: bits(1), exp : bits(8), mant : bits(23)) -> bits(32) =
+  sign @ exp @ mant
 
 // ---- Structure tests
 
-val      f_is_neg_inf_S : bits(32) -> bool
-function f_is_neg_inf_S   x32 = {
+function f_is_neg_inf_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (sign == 0b1)
    & (exp  == ones())
    & (mant == zeros()))
 }
 
-val      f_is_neg_norm_S : bits(32) -> bool
-function f_is_neg_norm_S   x32 = {
+function f_is_neg_norm_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (sign == 0b1)
    & (exp  != zeros())
    & (exp  != ones()))
 }
 
-val      f_is_neg_subnorm_S : bits(32) -> bool
-function f_is_neg_subnorm_S   x32 = {
+function f_is_neg_subnorm_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (sign == 0b1)
    & (exp  == zeros())
    & (mant != zeros()))
 }
 
-val      f_is_neg_zero_S : bits(32) -> bool
-function f_is_neg_zero_S   x32 = {
+function f_is_neg_zero_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (sign == ones())
    & (exp  == zeros())
    & (mant == zeros()))
 }
 
-val      f_is_pos_zero_S : bits(32) -> bool
-function f_is_pos_zero_S   x32 = {
+function f_is_pos_zero_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant == zeros()))
 }
 
-val      f_is_pos_subnorm_S : bits(32) -> bool
-function f_is_pos_subnorm_S   x32 = {
+function f_is_pos_subnorm_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant != zeros()))
 }
 
-val      f_is_pos_norm_S : bits(32) -> bool
-function f_is_pos_norm_S   x32 = {
+function f_is_pos_norm_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (sign == zeros())
    & (exp  != zeros())
    & (exp  != ones()))
 }
 
-val      f_is_pos_inf_S : bits(32) -> bool
-function f_is_pos_inf_S   x32 = {
+function f_is_pos_inf_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (sign == zeros())
    & (exp  == ones())
    & (mant == zeros()))
 }
 
-val      f_is_SNaN_S : bits(32) -> bool
-function f_is_SNaN_S   x32 = {
+function f_is_SNaN_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (exp == ones())
    & (mant [22] == bitzero)
    & (mant != zeros()))
 }
 
-val      f_is_QNaN_S : bits(32) -> bool
-function f_is_QNaN_S   x32 = {
+function f_is_QNaN_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (exp == ones())
    & (mant [22] == bitone))
 }
 
 // Either QNaN or SNan
-val      f_is_NaN_S : bits(32) -> bool
-function f_is_NaN_S   x32 = {
+function f_is_NaN_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (exp == ones())
    & (mant != zeros()))
@@ -170,15 +157,13 @@ function f_is_NaN_S   x32 = {
 // ***************************************************************
 // Help functions used in the semantic functions
 
-val      negate_S : bits(32) -> bits(32)
-function negate_S (x32) = {
+function negate_S(x32: bits(32)) -> bits(32) = {
   let (sign, exp, mant) = fsplit_S (x32);
   let new_sign = if (sign == 0b0) then 0b1 else 0b0;
   fmake_S (new_sign, exp, mant)
 }
 
-val      feq_quiet_S : (bits(32), bits (32)) -> (bool, bits(5))
-function feq_quiet_S   (v1,       v2) = {
+function feq_quiet_S(v1 : bits(32), v2 : bits(32)) -> (bool, bits(5)) = {
   let (s1, e1, m1) = fsplit_S (v1);
   let (s2, e2, m2) = fsplit_S (v2);
 
@@ -194,8 +179,7 @@ function feq_quiet_S   (v1,       v2) = {
   (result, fflags)
 }
 
-val      flt_S : (bits(32), bits (32), bool) -> (bool, bits(5))
-function flt_S   (v1,       v2,        is_quiet) = {
+function flt_S(v1 : bits(32), v2 : bits(32), is_quiet : bool) -> (bool, bits(5)) = {
   let (s1, e1, m1) = fsplit_S (v1);
   let (s2, e2, m2) = fsplit_S (v2);
 
@@ -225,8 +209,7 @@ function flt_S   (v1,       v2,        is_quiet) = {
   (result, fflags)
 }
 
-val      fle_S : (bits(32), bits (32), bool) -> (bool, bits(5))
-function fle_S   (v1,       v2,        is_quiet) = {
+function fle_S(v1 : bits(32), v2 : bits(32), is_quiet : bool) -> (bool, bits(5)) = {
   let (s1, e1, m1) = fsplit_S (v1);
   let (s2, e2, m2) = fsplit_S (v2);
 

@@ -39,8 +39,7 @@ mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vlseg : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
-function process_vlseg (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
+function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -100,8 +99,7 @@ mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vlsegff : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
-function process_vlsegff (nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem) = {
+function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -178,8 +176,7 @@ mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b00000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vsseg : (nfields, bits(1), vregidx, word_width, regidx, int, nat1) -> ExecutionResult
-function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) = {
+function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
@@ -236,8 +233,7 @@ mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vlsseg : (nfields, bits(1), vregidx, word_width, regidx, regidx, int, nat1) -> ExecutionResult
-function process_vlsseg (nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
+function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val  = read_vmask(num_elem, vm, zvreg);
   let vd_seg  = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -298,8 +294,7 @@ mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b10 @ vm @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vssseg : (nfields, bits(1), vregidx, word_width, regidx, regidx, int, nat1) -> ExecutionResult
-function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem) = {
+function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
@@ -357,8 +352,7 @@ mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vlxseg : (nfields, bits(1), vregidx, word_width, word_width, int, int, regidx, vregidx, nat1, int) -> ExecutionResult
-function process_vlxseg (nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
+function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : nat1, mop : int) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
@@ -448,8 +442,7 @@ mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vsxseg : (nfields, bits(1), vregidx, word_width, word_width, int, int, regidx, vregidx, nat1, int) -> ExecutionResult
-function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop) = {
+function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : nat1, mop : int) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
@@ -536,8 +529,7 @@ mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
   <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vlre : (nfields_pow2, vregidx, word_width, regidx, nat) -> ExecutionResult
-function process_vlre (nf, vd, load_width_bytes, rs1, elem_per_reg) = {
+function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : word_width, rs1 : regidx, elem_per_reg : nat) -> ExecutionResult = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -597,8 +589,7 @@ mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vsre : (nfields_pow2, word_width, regidx, vregidx, nat) -> ExecutionResult
-function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
+function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 : regidx, vs3 : vregidx, elem_per_reg : nat) -> ExecutionResult = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -667,8 +658,7 @@ mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op)
   <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vd_or_vs3) @ encdec_lsop(op)
   when currentlyEnabled(Ext_Zve32x)
 
-val process_vm : (vregidx, regidx, nat, nat, vmlsop) -> ExecutionResult
-function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
+function process_vm(vd_or_vs3 : vregidx, rs1 : regidx, num_elem : nat, evl : nat, op : vmlsop) -> ExecutionResult = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()

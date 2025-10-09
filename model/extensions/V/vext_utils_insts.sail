@@ -20,8 +20,7 @@ mapping maybe_vmask : string <-> bits(1) = {
 //
 // 1. vector widening/narrowing instructions
 // 2. vector load/store instructions
-val valid_eew_emul : (int, int) -> bool
-function valid_eew_emul(EEW, EMUL_pow) = {
+function valid_eew_emul(EEW : int, EMUL_pow : int) -> bool = {
   EEW >= 8 & EEW <= elen & EMUL_pow >= -3 & EMUL_pow <= 3
 }
 
@@ -29,14 +28,12 @@ function valid_eew_emul(EEW, EMUL_pow) = {
 //
 // 1. If the vill bit is set, then any attempt to execute a vector instruction that depends upon vtype will raise an illegal instruction exception.
 // 2. vset{i}vl{i} and whole-register loads, stores, and moves do not depend upon vtype.
-val valid_vtype : unit -> bool
-function valid_vtype() = {
+function valid_vtype() -> bool = {
   vtype[vill] == 0b0
 }
 
 // Check for vstart value
-val assert_vstart : int -> bool
-function assert_vstart(i) = {
+function assert_vstart(i : int) -> bool = {
   unsigned(vstart) == i
 }
 
@@ -45,8 +42,7 @@ function assert_vstart(i) = {
 // cannot overlap the source mask register (v0),
 // unless the destination vector register is being written with a mask value (e.g., compares)
 // or the scalar result of a reduction.
-val valid_rd_mask : (vregidx, bits(1)) -> bool
-function valid_rd_mask(rd, vm) = {
+function valid_rd_mask(rd : vregidx, vm : bits(1)) -> bool = {
   vm != 0b0 | rd != zvreg
 }
 
@@ -55,8 +51,7 @@ function valid_rd_mask(rd, vm) = {
 // of the destination register group, and the source EMUL is at least 1.
 // In a narrowing instruction, the overlap is valid only in the lowest-numbered part
 // of the source register group.
-val valid_reg_overlap : (vregidx, vregidx, int, int) -> bool
-function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
+function valid_reg_overlap(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_pow_rd : int) -> bool = {
   let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
   let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
   let rs_int = unsigned(vregidx_bits(rs));
@@ -72,8 +67,7 @@ function valid_reg_overlap(rs, rd, EMUL_pow_rs, EMUL_pow_rd) = {
 // Check for valid register grouping in vector segment load/store instructions:
 // The EMUL of load vd or store vs3 times the number of fields per segment
 // must not be larger than 8. (EMUL * NFIELDS <= 8)
-val valid_segment : (nfields, int) -> bool
-function valid_segment(nf, EMUL_pow) = {
+function valid_segment(nf : nfields, EMUL_pow : int) -> bool = {
   if EMUL_pow < 0 then nf / (2 ^ (0 - EMUL_pow)) <= 8
   else nf * 2 ^ EMUL_pow <= 8
 }
@@ -83,14 +77,12 @@ function valid_segment(nf, EMUL_pow) = {
 // ******************************************************************************
 
 // a. Normal check including vtype.vill field and vd/v0 overlap if vm = 0
-val illegal_normal : (vregidx, bits(1)) -> bool
-function illegal_normal(vd, vm) = {
+function illegal_normal(vd : vregidx, vm : bits(1)) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm))
 }
 
 // b. Masked check for instructions encoded with vm = 0
-val illegal_vd_masked : vregidx -> bool
-function illegal_vd_masked(vd) = {
+function illegal_vd_masked(vd : vregidx) -> bool = {
   not(valid_vtype()) | vd == zvreg
 }
 
@@ -99,8 +91,7 @@ function illegal_vd_masked(vd) = {
 //   2. instructions with scalar rd: vcpop.m, vfirst.m
 //   3. vd as mask register (eew = 1):
 //      vmadc.vvm/vxm/vim, vmsbc.vvm/vxm, mask logical, integer compare, vlm.v, vsm.v
-val illegal_vd_unmasked : unit -> bool
-function illegal_vd_unmasked() = {
+function illegal_vd_unmasked() -> bool = {
   not(valid_vtype())
 }
 
@@ -108,48 +99,41 @@ function illegal_vd_unmasked() = {
 //   1. integer/fixed-point widening/narrowing instructions
 //   2. vector integer extension: vzext, vsext
 //   3. vector crypto extension: zvbb
-val illegal_variable_width : (vregidx, bits(1), int, int) -> bool
-function illegal_variable_width(vd, vm, SEW_new, LMUL_pow_new) = {
+function illegal_variable_width(vd : vregidx, vm : bits(1), SEW_new : int, LMUL_pow_new : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
 // e. Normal check for reduction instructions:
 //  The destination vector register can overlap the source operands, including the mask register.
 //  Vector reduction operations raise an illegal instruction exception if vstart is non-zero.
-val illegal_reduction : unit -> bool
-function illegal_reduction() = {
+function illegal_reduction() -> bool = {
   not(valid_vtype()) | not(assert_vstart(0))
 }
 
 // f. Variable width check for widening reduction instructions
-val illegal_widening_reduction : (int) -> bool
-function illegal_widening_reduction(EEW) = {
+function illegal_widening_reduction(EEW : int) -> bool = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(EEW >= 8 & EEW <= elen)
 }
 
 // g. Non-indexed load instruction check
-val illegal_load : (vregidx, bits(1), nfields, int, int) -> bool
-function illegal_load(vd, vm, nf, EEW, EMUL_pow) = {
+function illegal_load(vd : vregidx, vm : bits(1), nf : nfields, EEW : int, EMUL_pow : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 // h. Non-indexed store instruction check (with vs3 rather than vd)
-val illegal_store : (nfields, int, int) -> bool
-function illegal_store(nf, EEW, EMUL_pow) = {
+function illegal_store(nf : nfields, EEW : int, EMUL_pow : int) -> bool = {
   not(valid_vtype()) | not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 // i. Indexed load instruction check
-val illegal_indexed_load : (vregidx, bits(1), nfields, int, int, int) -> bool
-function illegal_indexed_load(vd, vm, nf, EEW_index, EMUL_pow_index, EMUL_pow_data) = {
+function illegal_indexed_load(vd : vregidx, vm : bits(1), nf : nfields, EEW_index : int, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW_index, EMUL_pow_index)) | not(valid_segment(nf, EMUL_pow_data))
 }
 
 // j. Indexed store instruction check (with vs3 rather than vd)
-val illegal_indexed_store : (nfields, int, int, int) -> bool
-function illegal_indexed_store(nf, EEW_index, EMUL_pow_index, EMUL_pow_data) = {
+function illegal_indexed_store(nf : nfields, EEW_index : int, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
   not(valid_vtype()) | not(valid_eew_emul(EEW_index, EMUL_pow_index)) |
   not(valid_segment(nf, EMUL_pow_data))
 }
@@ -205,8 +189,7 @@ function write_velem_quad_vec(vd, SEW, input, i) = {
 }
 
 // Get the starting element index from csr vtype
-val get_start_element : unit -> result(nat, unit)
-function get_start_element() = {
+function get_start_element() -> result(nat, unit) = {
   let start_element = unsigned(vstart);
   let SEW_pow = get_sew_pow();
   // The use of vstart values greater than the largest element
@@ -220,8 +203,7 @@ function get_start_element() = {
 }
 
 // Get the ending element index from csr vl
-val get_end_element : unit -> int
-function get_end_element() = unsigned(vl) - 1
+function get_end_element() -> int = unsigned(vl) - 1
 
 // Mask handling; creates a pre-masked result vector for vstart, vl, vta/vma, and vm
 // vm should be baked into vm_val from doing read_vmask

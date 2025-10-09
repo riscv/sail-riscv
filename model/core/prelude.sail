@@ -19,8 +19,7 @@ $include <hex_bits.sail>
 $include <hex_bits_signed.sail>
 $include <dec_bits.sail>
 
-val not_bit : bit -> bit
-function not_bit(b) = if b == bitone then bitzero else bitone
+function not_bit(b : bit) -> bit = if b == bitone then bitzero else bitone
 
 overload ~ = {not_bool, not_vec, not_bit}
 

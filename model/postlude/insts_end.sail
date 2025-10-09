@@ -37,7 +37,6 @@ end assembly
 end encdec
 end encdec_compressed
 
-val print_insn : instruction -> string
-function print_insn insn = assembly(insn)
+function print_insn(insn : instruction) -> string = assembly(insn)
 
 overload to_str = {print_insn}

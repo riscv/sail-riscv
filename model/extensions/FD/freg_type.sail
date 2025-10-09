@@ -15,16 +15,13 @@ type fregtype = flenbits
 let zero_freg : fregtype = zeros()
 
 // default register printer
-val FRegStr : fregtype -> string
-function FRegStr(r) = bits_str(r)
+function FRegStr(r : fregtype) -> string = bits_str(r)
 
 // conversions
 
-val fregval_from_freg : fregtype -> flenbits
-function fregval_from_freg(r) = r
+function fregval_from_freg(r : fregtype) -> flenbits = r
 
-val fregval_into_freg : flenbits -> fregtype
-function fregval_into_freg(v) = v
+function fregval_into_freg(v : flenbits) -> fregtype = v
 
 enum f_madd_op_H = {FMADD_H, FMSUB_H, FNMSUB_H, FNMADD_H}
 

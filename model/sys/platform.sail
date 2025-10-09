@@ -219,8 +219,7 @@ function should_inc_mcycle(priv : Privilege) -> bool =
 function should_inc_minstret(priv : Privilege) -> bool =
   mcountinhibit[IR] == 0b0 & counter_priv_filter_bit(minstretcfg, priv) == 0b0
 
-val tick_clock : unit -> unit
-function tick_clock() = {
+function tick_clock() -> unit = {
   if   should_inc_mcycle(cur_privilege)
   then mcycle = mcycle + 1;
 

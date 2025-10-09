@@ -31,8 +31,7 @@ bitfield RVFI_DII_Execution_Packet_V1 : bits(704) = {
    rvfi_order     :  63 ..   0, // [00 - 07] Instruction number:      INSTRET value after completion.
 }
 
-val rvfi_get_exec_packet_v1 : unit -> bits(704)
-function rvfi_get_exec_packet_v1 () = {
+function rvfi_get_exec_packet_v1() -> bits(704) = {
   let v1_packet = Mk_RVFI_DII_Execution_Packet_V1(zeros());
   // Convert the v2 packet to a v1 packet
   let v1_packet = update_rvfi_intr(v1_packet, rvfi_inst_data[rvfi_intr]);

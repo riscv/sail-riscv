@@ -61,5 +61,4 @@ mapping ext_exc_type_bits : ext_exc_type <-> exc_code = {
 }
 
 // Default conversion of extension exceptions to strings
-val ext_exc_type_to_str : ext_exc_type -> string
-function ext_exc_type_to_str(e) = "extension-exception"
+function ext_exc_type_to_str(e : ext_exc_type) -> string = "extension-exception"

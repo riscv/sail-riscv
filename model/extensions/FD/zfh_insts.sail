@@ -28,108 +28,95 @@ function clause currentlyEnabled(Ext_Zhinxmin) = (hartSupports(Ext_Zhinxmin) & c
 
 // ***************************************************************
 
-val      fsplit_H : bits(16) -> (bits(1), bits(5), bits(10))
-function fsplit_H   (xf16) = (xf16[15..15], xf16[14..10], xf16[9..0])
+function fsplit_H(xf16 : bits(16)) -> (bits(1), bits(5), bits(10)) =
+  (xf16[15..15], xf16[14..10], xf16[9..0])
 
-val      fmake_H  : (bits(1), bits(5), bits(10)) -> bits(16)
-function fmake_H (sign, exp, mant) = sign @ exp @ mant
+function fmake_H(sign : bits(1), exp : bits(5), mant : bits(10)) -> bits(16) =
+  sign @ exp @ mant
 
-val      negate_H : bits(16) -> bits(16)
-function negate_H (xf16) = {
+function negate_H(xf16 : bits(16)) -> bits(16) = {
   let (sign, exp, mant) = fsplit_H (xf16);
   let new_sign = if (sign == 0b0) then 0b1 else 0b0;
   fmake_H (new_sign, exp, mant)
 }
 
-val      f_is_neg_inf_H : bits(16) -> bool
-function f_is_neg_inf_H   xf16 = {
+function f_is_neg_inf_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (sign == 0b1)
    & (exp  == ones())
    & (mant == zeros()))
 }
 
-val      f_is_neg_norm_H : bits(16) -> bool
-function f_is_neg_norm_H   xf16 = {
+function f_is_neg_norm_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (sign == 0b1)
    & (exp  != zeros())
    & (exp  != ones()))
 }
 
-val      f_is_neg_subnorm_H : bits(16) -> bool
-function f_is_neg_subnorm_H   xf16 = {
+function f_is_neg_subnorm_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (sign == 0b1)
    & (exp  == zeros())
    & (mant != zeros()))
 }
 
-val      f_is_pos_subnorm_H : bits(16) -> bool
-function f_is_pos_subnorm_H   xf16 = {
+function f_is_pos_subnorm_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant != zeros()))
 }
 
-val      f_is_pos_norm_H : bits(16) -> bool
-function f_is_pos_norm_H   xf16 = {
+function f_is_pos_norm_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (sign == zeros())
    & (exp  != zeros())
    & (exp  != ones()))
 }
 
-val      f_is_pos_inf_H : bits(16) -> bool
-function f_is_pos_inf_H   xf16 = {
+function f_is_pos_inf_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (sign == zeros())
    & (exp  == ones())
    & (mant == zeros()))
 }
 
-val      f_is_neg_zero_H : bits(16) -> bool
-function f_is_neg_zero_H   xf16 = {
+function f_is_neg_zero_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (sign == ones())
    & (exp  == zeros())
    & (mant == zeros()))
 }
 
-val      f_is_pos_zero_H : bits(16) -> bool
-function f_is_pos_zero_H   xf16 = {
+function f_is_pos_zero_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (sign == zeros())
    & (exp  == zeros())
    & (mant == zeros()))
 }
 
-val      f_is_SNaN_H : bits(16) -> bool
-function f_is_SNaN_H   xf16 = {
+function f_is_SNaN_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (exp == ones())
    & (mant [9] == bitzero)
    & (mant != zeros()))
 }
 
-val      f_is_QNaN_H : bits(16) -> bool
-function f_is_QNaN_H   xf16 = {
+function f_is_QNaN_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (exp == ones())
    & (mant [9] == bitone))
 }
 
 // Either QNaN or SNan
-val      f_is_NaN_H : bits(16) -> bool
-function f_is_NaN_H   xf16 = {
+function f_is_NaN_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (exp == ones())
    & (mant != zeros()))
 }
 
-val      fle_H : (bits(16), bits (16), bool) -> (bool, bits(5))
-function fle_H   (v1,       v2,        is_quiet) = {
+function fle_H(v1 : bits(16), v2 : bits(16), is_quiet : bool) -> (bool, bits(5)) = {
   let (s1, e1, m1) = fsplit_H (v1);
   let (s2, e2, m2) = fsplit_H (v2);
 
