@@ -172,6 +172,8 @@ function vmem_read_addr(vaddr, offset, width, acc, aq, rl, res) = {
   Ok(data)
 }
 
+termination_measure vmem_read_addr repeat n
+
 val vmem_write_addr : forall 'width, is_mem_width('width).
   (virtaddr, int('width), bits(8 * 'width), AccessType(ext_access_type), bool, bool, bool)
   -> result(bool, ExecutionResult)
@@ -226,6 +228,8 @@ function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
 
   Ok(write_success)
 }
+
+termination_measure vmem_write_addr repeat n
 
 val vmem_read : forall 'width, is_mem_width('width).
   (regidx, xlenbits, int('width), AccessType(ext_access_type), bool, bool, bool)

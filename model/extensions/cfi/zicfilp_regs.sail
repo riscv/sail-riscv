@@ -32,6 +32,8 @@ function get_xLPE(p : Privilege) -> bool =
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 
+termination_measure get_xLPE(_) = 2
+
 function clause currentlyEnabled(Ext_Zicfilp) =
   currentlyEnabled(Ext_Zicsr) & hartSupports(Ext_Zicfilp) & get_xLPE(cur_privilege)
 

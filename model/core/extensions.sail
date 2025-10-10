@@ -19,14 +19,28 @@ scattered mapping extensionName
 val hartSupports : extension -> bool
 scattered function hartSupports
 
+function hartSupports_measure(ext : extension) -> int =
+  match ext {
+    Ext_D => 1,
+    Ext_V => 1,
+    Ext_Zvkn => 1,
+    Ext_Zvks => 1,
+    Ext_C => 2,
+    Ext_Zvknc => 2,
+    Ext_Zvkng => 2,
+    Ext_Zvksc => 2,
+    Ext_Zvksg => 2,
+    _ => 0,
+  }
+
+termination_measure hartSupports(ext) = hartSupports_measure(ext)
+
 // Function used to determine if an extension is currently enabled in the model.
 // This means an extension is supported, *and* any necessary bits are set in the
 // relevant CSRs (misa, mstatus, etc.) to enable its use. It is possible for some
 // extensions to be supported in hardware, but temporarily disabled via a CSR, in
 // which case this function should return false.
-// Note: when adding a new extension, adjust the associated termination measure
-// in the file termination.sail, as explained in the comment in
-// that file.
+// Note: when adding a new extension, adjust the `currentlyEnabled_measure` below.
 val currentlyEnabled : extension -> bool
 scattered function currentlyEnabled
 
@@ -473,20 +487,50 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_F => 1,
     Ext_M => 1,
     Ext_S => 1,
-    Ext_V => 1,
-    Ext_H => 4,
-    Ext_Smcntrpmf => 3,
-    Ext_Zabha => 3,
-    Ext_Zacas => 3,
-    Ext_Zcb => 3,
-    Ext_Zcd => 3,
-    Ext_Zcf => 3,
-    Ext_Zcmop => 3,
-    Ext_Zfhmin => 3,
-    Ext_Zhinx => 3,
-    Ext_Zvkb => 3,
-    Ext_Sscofpmf => 3,
-    Ext_Zhinxmin => 4,
+
+    // 3
+    Ext_Smcntrpmf => 3, // > Ext_Zicntr
+    Ext_Sscofpmf => 3, // > Ext_Zihpm
+    Ext_Svrsw60t59b => 3, // > Ext_Sv39
+    Ext_Zabha => 3, // > Ext_Zaamo
+    Ext_Zacas => 3, // > Ext_Zaamo
+    Ext_Zcb => 3, // > Ext_Zca
+    Ext_Zcd => 3, // > Ext_Zca
+    Ext_Zcf => 3, // > Ext_Zca
+    Ext_Zcmop => 3, // > Ext_Zca
+    Ext_Zfhmin => 3, // > Ext_Zfh
+    Ext_Zhinx => 3, // > Ext_Zfinx
+    Ext_Zve32x => 3, // > Ext_Zvl32b
+    Ext_Zicfilp => 3, // > 2
+
+    // 4
+    Ext_H => 4, // > 3
+    Ext_Zhinxmin => 4, // > Ext_Zhinx
+    Ext_Zvbb => 4, // > Ext_Zve32x
+    Ext_Zve32f => 4, // > Ext_Zve32x
+    Ext_Zve64x => 4, // > Ext_Zvl32x
+    Ext_Zvkg => 4, // > Ext_Zve32x
+    Ext_Zvkned => 4, // > Ext_Zve32x
+    Ext_Zvksed => 4, // > Ext_Zve32x
+    Ext_Zvknha => 4, // > Ext_Zve32x
+    Ext_Zvksh => 4, // > Ext_Zve32x
+
+    // 5
+    Ext_Zvbc => 5, // > Ext_Zve64x
+    Ext_Zve64f => 5, // > Ext_Zvl64x
+    Ext_Zvfh => 5, // > Ext_Zve32f
+    Ext_Zvkb => 5, // > Ext_Zvbb
+    Ext_Zvknhb => 5, // > Ext_Zve64x
+    Ext_Zvfbfmin => 5, // > Ext_Zve32f
+
+    // 6
+    Ext_Zve64d => 6, // > Ext_Zvl64f
+    Ext_Zvfhmin => 6, // > Ext_Zvfh
+    Ext_Zvfbfwma => 6, // > Ext_Zvfbfmin
+
+    // 7
+    Ext_V => 7, // > Ext_Zve64d
+
     _ => 2
   }
 

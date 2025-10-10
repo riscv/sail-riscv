@@ -1,4 +1,3 @@
-variable TERMINATION_FILE = false
 variable RMEM = false
 
 core {
@@ -466,18 +465,8 @@ postlude {
     postlude/model.sail
 }
 
-termination {
-  after postlude
-  requires core, sys, Zca, FD
-
-  files
-    if $TERMINATION_FILE then
-      termination/termination.sail
-    else []
-}
-
 unit_tests {
-  after termination
+  after postlude
   requires core, sys, exceptions, postlude
 
   files
