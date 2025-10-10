@@ -12,7 +12,7 @@ jobs:
     if: github.event.workflow_run.conclusion != 'skipped'
     steps:
       - name: Download artifacts
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             var fs = require('fs');
