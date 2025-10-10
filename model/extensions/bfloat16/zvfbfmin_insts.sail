@@ -94,9 +94,7 @@ function clause execute (VFWCVTBF16_F_F_V(vm, vs2, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      let (fflags, elem) = bf16_to_f32(vs2_val[i]);
-      accrue_fflags(fflags);
-      result[i] = elem;
+      result[i] = bf16_widen(vs2_val[i]);
     }
   };
 

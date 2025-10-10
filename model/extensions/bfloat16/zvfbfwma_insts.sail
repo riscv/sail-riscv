@@ -14,7 +14,7 @@ mapping clause encdec = VFWMACCBF16_VV(vm, vs2, vs1, vd)
   <-> 0b111011 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvfbfwma) & get_sew() == 16
 
-function clause execute (VFWMACCBF16_VV(vm, vs2, vs1, vd)) = {
+function clause execute VFWMACCBF16_VV(vm, vs2, vs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -46,11 +46,7 @@ function clause execute (VFWMACCBF16_VV(vm, vs2, vs1, vd)) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      let (fflags1, val1_S) = bf16_to_f32(vs1_val[i]);
-      let (fflags2, val2_S) = bf16_to_f32(vs2_val[i]);
-      accrue_fflags(fflags1);
-      accrue_fflags(fflags2);
-      result[i] = fp_muladd(rm_3b, val2_S, val1_S, vd_val[i]);
+      result[i] = fp_muladd(rm_3b, bf16_widen(vs2_val[i]), bf16_widen(vs1_val[i]), vd_val[i]);
     }
   };
 
@@ -60,7 +56,7 @@ function clause execute (VFWMACCBF16_VV(vm, vs2, vs1, vd)) = {
 }
 
 mapping clause assembly = VFWMACCBF16_VV(vm, vs2, vs1, vd)
-  <-> "vfwmaccbf16.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs1) ^ spc() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vfwmaccbf16.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs1) ^ spc() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 union clause instruction = VFWMACCBF16_VF : (bits(1), vregidx, fregidx, vregidx)
 
@@ -68,7 +64,7 @@ mapping clause encdec = VFWMACCBF16_VF(vm, vs2, rs1, vd)
   <-> 0b111011 @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvfbfwma) & get_sew() == 16
 
-function clause execute (VFWMACCBF16_VF(vm, vs2, rs1, vd)) = {
+function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -96,13 +92,11 @@ function clause execute (VFWMACCBF16_VF(vm, vs2, rs1, vd)) = {
   };
   var result = initial_result;
 
+  let rs1_val = bf16_widen(F_BF16(rs1));
+
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      let (fflags1, val1_S) = bf16_to_f32(F_BF16(rs1));
-      let (fflags2, val2_S) = bf16_to_f32(vs2_val[i]);
-      accrue_fflags(fflags1);
-      accrue_fflags(fflags2);
-      result[i] = fp_muladd(rm_3b, val2_S, val1_S, vd_val[i]);
+      result[i] = fp_muladd(rm_3b, bf16_widen(vs2_val[i]), rs1_val, vd_val[i]);
     }
   };
 
@@ -112,4 +106,4 @@ function clause execute (VFWMACCBF16_VF(vm, vs2, rs1, vd)) = {
 }
 
 mapping clause assembly = VFWMACCBF16_VF(vm, vs2, vs1, vd)
-  <-> "vfwmaccbf16.vf" ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(vs1) ^ spc() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vfwmaccbf16.vf" ^ spc() ^ vreg_name(vd) ^ sep() ^ freg_name(vs1) ^ spc() ^ vreg_name(vs2) ^ maybe_vmask(vm)
