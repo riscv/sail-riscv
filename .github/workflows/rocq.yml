@@ -14,7 +14,7 @@ jobs:
       options: --user root
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
