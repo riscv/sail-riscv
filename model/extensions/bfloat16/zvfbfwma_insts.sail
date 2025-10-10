@@ -46,7 +46,7 @@ function clause execute VFWMACCBF16_VV(vm, vs2, vs1, vd) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      result[i] = fp_muladd(rm_3b, bf16_widen(vs2_val[i]), bf16_widen(vs1_val[i]), vd_val[i]);
+      result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), bf16_to_f32_set_flags(vs1_val[i]), vd_val[i]);
     }
   };
 
@@ -92,11 +92,11 @@ function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   };
   var result = initial_result;
 
-  let rs1_val = bf16_widen(F_BF16(rs1));
+  let rs1_val = bf16_to_f32_set_flags(F_BF16(rs1));
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
-      result[i] = fp_muladd(rm_3b, bf16_widen(vs2_val[i]), rs1_val, vd_val[i]);
+      result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), rs1_val, vd_val[i]);
     }
   };
 

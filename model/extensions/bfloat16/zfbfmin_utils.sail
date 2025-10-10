@@ -24,8 +24,7 @@ function bf16_to_f32 (v : bits(16)) -> (bits_fflags, bits(32)) = {
   (fflags, value)
 }
 
-val bf16_widen : forall 'm, 'm in {16}. bits('m) -> bits('m * 2)
-function bf16_widen(nval) = {
+function bf16_to_f32_set_flags(nval : bits(16)) -> bits(32) = {
   let (fflags, wval) = bf16_to_f32(nval);
   accrue_fflags(fflags);
   wval
