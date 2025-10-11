@@ -415,6 +415,10 @@ extensions {
       requires sys, FD, V, bfloat16_core
       files extensions/bfloat16/zvfbfmin_insts.sail
     }
+    Zvfbfwma {
+      requires sys, FD, V, bfloat16_core
+      files extensions/bfloat16/zvfbfwma_insts.sail
+    }
   }
 
   rmem {
