@@ -27,7 +27,7 @@ mapping encdec_mmfunct6 : mmfunct6 <-> bits(6) = {
 
 mapping clause encdec = MMTYPE(funct6, vs2, vs1, vd)
   <-> encdec_mmfunct6(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MMTYPE(funct6, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -88,7 +88,7 @@ union clause instruction = VCPOP_M : (bits(1), vregidx, regidx)
 
 mapping clause encdec = VCPOP_M(vm, vs2, rd)
   <-> 0b010000 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_reg(rd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VCPOP_M(vm, vs2, rd) = {
   let SEW      = get_sew();
@@ -126,7 +126,7 @@ union clause instruction = VFIRST_M : (bits(1), vregidx, regidx)
 
 mapping clause encdec = VFIRST_M(vm, vs2, rd)
   <-> 0b010000 @ vm @ encdec_vreg(vs2) @ 0b10001 @ 0b010 @ encdec_reg(rd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VFIRST_M(vm, vs2, rd) = {
   let SEW      = get_sew();
@@ -166,7 +166,7 @@ union clause instruction = VMSBF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSBF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VMSBF_M(vm, vs2, vd) = {
   let SEW      = get_sew();
@@ -210,7 +210,7 @@ union clause instruction = VMSIF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSIF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00011 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VMSIF_M(vm, vs2, vd) = {
   let SEW      = get_sew();
@@ -254,7 +254,7 @@ union clause instruction = VMSOF_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VMSOF_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b00010 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VMSOF_M(vm, vs2, vd) = {
   let SEW      = get_sew();
@@ -302,7 +302,7 @@ union clause instruction = VIOTA_M : (bits(1), vregidx, vregidx)
 
 mapping clause encdec = VIOTA_M(vm, vs2, vd)
   <-> 0b010100 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VIOTA_M(vm, vs2, vd) = {
   let SEW      = get_sew();
@@ -346,7 +346,7 @@ union clause instruction = VID_V : (bits(1), vregidx)
 
 mapping clause encdec = VID_V(vm, vd)
   <-> 0b010100 @ vm @ 0b00000 @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VID_V(vm, vd) = {
   let SEW      = get_sew();
