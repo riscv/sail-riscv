@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-latest]
+        os: [ubuntu-22.04, ubuntu-24.04-arm, macos-latest]
         cmake_version: ["3.20", latest]
         include:
           - os: ubuntu-22.04
