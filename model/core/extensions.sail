@@ -310,6 +310,10 @@ function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & vector_suppor
 enum clause extension = Ext_Zvfbfmin
 mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"
 function clause hartSupports(Ext_Zvfbfmin) = config extensions.Zvfbfmin.supported
+// Vector BF16 widening mul-add
+enum clause extension = Ext_Zvfbfwma
+mapping clause extensionName = Ext_Zvfbfwma <-> "zvfbfwma"
+function clause hartSupports(Ext_Zvfbfwma) = config extensions.Zvfbfwma.supported
 // Vector Extension for Half-Precision Floating-Point
 enum clause extension = Ext_Zvfh
 mapping clause extensionName = Ext_Zvfh <-> "zvfh"
@@ -537,6 +541,7 @@ let extensions_ordered_for_isa_string = [
 
   // Zvfbf
   Ext_Zvfbfmin,
+  Ext_Zvfbfwma,
 
   // Zvfh
   Ext_Zvfh,

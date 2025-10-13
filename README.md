@@ -107,6 +107,7 @@ For booting operating system images, see the information under the
 - Zve32x, Zve32f, Zve64x, Zve64f, and Zve64d extensions for vector operations on embedded processors, v1.0
 - Zvl32b, Zvl64b, Zvl128b, Zvl256b, Zvl512b, and Zvl1024b extensions for minimum vector length, v1.0
 - Zvfbfmin extension for vector BF16 Converts, v1.0
+- Zvfbfwma extension for Vector BF16 widening mul-add, v1.0
 - Zvfh and Zvfhmin extensions for vector half-precision floating-point operations, v1.0
 - Zvbb extension for vector basic bit-manipulation, v1.0
 - Zvbc extension for vector carryless multiplication, v1.0
