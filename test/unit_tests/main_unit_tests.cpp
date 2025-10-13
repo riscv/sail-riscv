@@ -16,7 +16,7 @@ bool config_print_platform = false;
 bool config_enable_rvfi = false;
 bool config_use_abi_names = false;
 
-FILE *trace_log = NULL;
+FILE *trace_log = nullptr;
 
 int main()
 {
