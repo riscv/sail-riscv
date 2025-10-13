@@ -48,7 +48,7 @@ bool do_print_isa = false;
 std::string config_file;
 std::string term_log;
 std::string trace_log_path;
-FILE *trace_log = NULL;
+FILE *trace_log = nullptr;
 std::string dtb_file;
 int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
@@ -79,7 +79,7 @@ struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
 uint64_t insn_limit = 0;
 #ifdef SAILCOV
-char *sailcov_file = NULL;
+char *sailcov_file = nullptr;
 #endif
 
 static void validate_config(const std::string &conf_file)
@@ -95,7 +95,7 @@ static void validate_config(const std::string &conf_file)
 
 static void print_dts(void)
 {
-  char *dts = NULL;
+  char *dts = nullptr;
   zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
@@ -104,7 +104,7 @@ static void print_dts(void)
 
 static void print_isa(void)
 {
-  char *isa = NULL;
+  char *isa = nullptr;
   zgenerate_canonical_isa_string(&isa, UNIT);
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
@@ -359,7 +359,7 @@ void finish()
   model_fini();
 
   if (do_show_times) {
-    if (gettimeofday(&run_end, NULL) < 0) {
+    if (gettimeofday(&run_end, nullptr) < 0) {
       fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
@@ -398,7 +398,7 @@ void run_sail(void)
       = get_config_uint64({"platform", "instructions_per_tick"});
 
   struct timeval interval_start;
-  if (gettimeofday(&interval_start, NULL) < 0) {
+  if (gettimeofday(&interval_start, nullptr) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
@@ -443,7 +443,7 @@ void run_sail(void)
     if (do_show_times && (total_insns & 0xfffff) == 0) {
       uint64_t start_us = 1000000 * ((uint64_t)interval_start.tv_sec)
           + ((uint64_t)interval_start.tv_usec);
-      if (gettimeofday(&interval_start, NULL) < 0) {
+      if (gettimeofday(&interval_start, nullptr) < 0) {
         fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
       }
@@ -487,14 +487,14 @@ void init_logs()
 
   if (trace_log_path.empty()) {
     trace_log = stdout;
-  } else if ((trace_log = fopen(trace_log_path.c_str(), "w+")) == NULL) {
+  } else if ((trace_log = fopen(trace_log_path.c_str(), "w+")) == nullptr) {
     fprintf(stderr, "Cannot create trace log '%s': %s\n",
             trace_log_path.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
 
 #ifdef SAILCOV
-  if (sailcov_file != NULL) {
+  if (sailcov_file != nullptr) {
     sail_set_coverage_file(sailcov_file);
   }
 #endif
@@ -597,7 +597,7 @@ int inner_main(int argc, char **argv)
                         config_use_abi_names, trace_log);
   register_callback(&log_cbs);
 
-  if (gettimeofday(&init_start, NULL) < 0) {
+  if (gettimeofday(&init_start, nullptr) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
@@ -628,7 +628,7 @@ int inner_main(int argc, char **argv)
 
   init_sail(entry, config_file.c_str());
 
-  if (gettimeofday(&init_end, NULL) < 0) {
+  if (gettimeofday(&init_end, nullptr) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
