@@ -92,8 +92,8 @@ function execute_vsetvl_type(
     return RETIRE_SUCCESS;
   };
 
-  let LMUL_pow_new = lmul_pow_val(lmul);
-  let SEW_pow_new = sew_pow_val(sew);
+  let LMUL_pow_new = signed(lmul);
+  let SEW_pow_new = unsigned(sew) + 3;
 
   let lmul_sew_ratio = get_lmul_pow() - get_sew_pow();
   let lmul_sew_ratio_new = LMUL_pow_new - SEW_pow_new;
