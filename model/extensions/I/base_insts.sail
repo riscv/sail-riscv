@@ -429,10 +429,25 @@ mapping clause assembly = SHIFTIWOP(shamt, rs1, rd, op)
   when xlen == 64
 
 // *****************************************************************
-union clause instruction = FENCE : (bits(4), bits(4))
+union clause instruction = FENCE_TSO : unit
 
-mapping clause encdec = FENCE(pred, succ)
-  <-> 0b0000 @ pred @ succ @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
+mapping clause encdec = FENCE_TSO()
+  <-> 0b1000 @ 0b0011 @ 0b0011 @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
+
+function clause execute FENCE_TSO() = {
+  sail_barrier(Barrier_RISCV_tso);
+  RETIRE_SUCCESS
+}
+
+mapping clause assembly = FENCE_TSO()
+  <-> "fence.tso"
+
+// *****************************************************************
+union clause instruction = FENCE : (bits(4), bits(4), bits(4), regidx, regidx)
+
+// Note: FENCE_TSO and PAUSE are encoded as FENCE so they must come first.
+mapping clause encdec = FENCE(fm, pred, succ, rs, rd)
+  <-> fm : bits(4) @ pred : bits(4) @ succ : bits(4) @ encdec_reg(rs) @ 0b000 @ encdec_reg(rd) @ 0b0001111
 
 function effective_fence_set(set : bits(4), fiom : bool) -> bits(4) = {
   // The bits are IORW. If FIOM is set then I implies R and O implies W.
@@ -441,28 +456,33 @@ function effective_fence_set(set : bits(4), fiom : bool) -> bits(4) = {
   } else set
 }
 
-function clause execute FENCE(pred, succ) = {
+function clause execute FENCE(fm, pred, succ, rs, rd) = {
+  // "The unused fields in the FENCE instructions - rs1 and rd - are reserved for
+  // finer-grain fences in future extensions. For forward compatibility, base
+  // implementations shall ignore these fields. Likewise, many fm and
+  // predecessor/successor set settings are also reserved for future use.
+  // Base implementations shall treat all such reserved configurations as FENCE
+  // instructions (with fm=0000)."
+
   // If the FIOM bit in menvcfg/senvcfg is set then the I/O bits can imply R/W.
   let fiom = is_fiom_active();
   let pred = effective_fence_set(pred, fiom);
   let succ = effective_fence_set(succ, fiom);
 
-  match (pred, succ) {
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_rw_rw),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_r_rw),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_r_r),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_rw_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_w_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b11) => sail_barrier(Barrier_RISCV_w_rw),
-    (_ : bits(2) @ 0b11, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_rw_r),
-    (_ : bits(2) @ 0b10, _ : bits(2) @ 0b01) => sail_barrier(Barrier_RISCV_r_w),
-    (_ : bits(2) @ 0b01, _ : bits(2) @ 0b10) => sail_barrier(Barrier_RISCV_w_r),
+  // Ignore I/O bits.
+  match (pred[1 .. 0], succ[1 .. 0]) {
+    (0b11, 0b11) => sail_barrier(Barrier_RISCV_rw_rw),
+    (0b10, 0b11) => sail_barrier(Barrier_RISCV_r_rw),
+    (0b10, 0b10) => sail_barrier(Barrier_RISCV_r_r),
+    (0b11, 0b01) => sail_barrier(Barrier_RISCV_rw_w),
+    (0b01, 0b01) => sail_barrier(Barrier_RISCV_w_w),
+    (0b01, 0b11) => sail_barrier(Barrier_RISCV_w_rw),
+    (0b11, 0b10) => sail_barrier(Barrier_RISCV_rw_r),
+    (0b10, 0b01) => sail_barrier(Barrier_RISCV_r_w),
+    (0b01, 0b10) => sail_barrier(Barrier_RISCV_w_r),
 
-    (_ : bits(4)       , _ : bits(2) @ 0b00) => (),
-    (_ : bits(2) @ 0b00, _ : bits(4)       ) => (),
-
-    _ => { print("FIXME: unsupported fence");
-           () }
+    (_   , 0b00) => (),
+    (0b00, _   ) => (),
   };
   RETIRE_SUCCESS
 }
@@ -495,22 +515,15 @@ mapping fence_bits : bits(4) <-> string = {
   i : bits(1) @ o : bits(1) @ r : bits(1) @ w : bits(1) <-> bit_maybe_i(i) ^ bit_maybe_o(o) ^ bit_maybe_r(r) ^ bit_maybe_w(w),
 }
 
-mapping clause assembly = FENCE(pred, succ)
-  <-> "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
+// There's no assembly that encodes reserved fences as far as I know.
+// Unfortunately we need to split forwards and backwards because there's
+// no way to write a zero regidx as a literal.
+mapping clause assembly =
+  forwards FENCE(0b0000, pred, succ, rs, rd) => "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
+    when rs == zreg & rd == zreg
 
-// *****************************************************************
-union clause instruction = FENCE_TSO : unit
-
-mapping clause encdec = FENCE_TSO()
-  <-> 0b1000 @ 0b0011 @ 0b0011 @ 0b00000 @ 0b000 @ 0b00000 @ 0b0001111
-
-function clause execute FENCE_TSO() = {
-  sail_barrier(Barrier_RISCV_tso);
-  RETIRE_SUCCESS
-}
-
-mapping clause assembly = FENCE_TSO()
-  <-> "fence.tso"
+mapping clause assembly =
+  backwards "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ) => FENCE(0b0000, pred, succ, zreg, zreg)
 
 // *****************************************************************
 union clause instruction = ECALL : unit
