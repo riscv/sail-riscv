@@ -265,6 +265,24 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   }
 }
 
+// Non-Maskable Interrupt handler address. This is not required
+// to be static. If a non-static value is needed this can be
+// replaced with a callback function.
+let nmi_handler_address : xlenbits = to_bits_checked(config platform.nmi_handler_address : int)
+
+function nmi_handler(cause : nmi_cause, pc : xlenbits) -> xlenbits = {
+  cur_privilege = Machine;
+
+  mcause[Cause] = cause;
+  mcause[IsInterrupt] = 0b1;
+  mepc = pc;
+
+  csr_write_callback("mcause", mcause.bits);
+  csr_write_callback("mepc", mepc);
+
+  nmi_handler_address
+}
+
 // Compute the value to write to mtval on a trap.
 function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
@@ -289,6 +307,9 @@ function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, true, interruptType_bits(i), PC, None(), None()))
+
+function handle_nmi(cause : nmi_cause) -> unit =
+  set_next_pc(nmi_handler(cause, PC))
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
