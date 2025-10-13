@@ -229,23 +229,6 @@ overload operator * = {mult_atom, mult_int}
 overload operator / = {quot_positive_round_zero}
 overload operator % = {rem_positive_round_zero}
 
-// helper for vector extension
-// 1. EEW between 8 and 64
-// 2. EMUL in vmv<nr>r.v instructions between 1 and 8
-val log2 : forall 'n, 'n in {1, 2, 4, 8, 16, 32, 64}. int('n) -> int
-function log2(n) = {
-  let result : int = match n {
-    1    => 0,
-    2    => 1,
-    4    => 2,
-    8    => 3,
-    16   => 4,
-    32   => 5,
-    64   => 6
-  };
-  result
-}
-
 // This is a slightly arbitrary limit on the maximum number of bytes
 // in a memory access.  It helps to generate slightly better C code
 // because it means width argument can be fast native integer. It
@@ -271,3 +254,15 @@ val sys_enable_experimental_extensions = pure "sys_enable_experimental_extension
 // bit vectors that aren't a multiple of 4 bits in binary).
 function hex_bits_str forall 'n, 'n >= 0 . (x : bits('n)) -> string =
   bits_str(zero_extend((3 - (('n + 3) % 4)) + 'n, x))
+
+// This can be called to type check that a boolean will always be true.
+// This can be used to verify a fact that the type checker already knows
+// to be true, so in a sense it is redundant. However it is useful for
+// documentation purposes, checking assumptions, and providing nicer errors
+// when editing.
+//
+// It can also be used to narrow down "could not resolve quantifiers" error
+// messages - if you get a list of properties, Sail is saying that *one*
+// of them can't be proven but it doesn't say which. If that happens you can
+// add static_assert() calls for each property to find out which one it is.
+function static_assert forall ('b : Bool), 'b . (_ : bool('b)) -> unit = ()

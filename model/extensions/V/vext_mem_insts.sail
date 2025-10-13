@@ -40,7 +40,7 @@ mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
+function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -81,6 +81,8 @@ function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
+  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
   let num_elem = get_num_elem(EMUL_pow, EEW); // # of element of each register group
 
   assert(num_elem > 0);
@@ -101,7 +103,7 @@ mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
+function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -159,6 +161,8 @@ function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
+  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
   assert(num_elem > 0);
@@ -179,7 +183,7 @@ mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
+function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
@@ -217,6 +221,8 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
+  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
   assert(num_elem > 0);
@@ -237,7 +243,7 @@ mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
+function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val  = read_vmask(num_elem, vm, zvreg);
   let vd_seg  = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -279,6 +285,8 @@ function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
+  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
   assert(num_elem > 0);
@@ -299,7 +307,7 @@ mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : nat1) -> ExecutionResult = {
+function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
@@ -338,6 +346,8 @@ function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
+  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
   assert(num_elem > 0);
@@ -359,7 +369,7 @@ mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
 
-function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : nat1, mop : int) -> ExecutionResult = {
+function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), mop : int) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
@@ -453,7 +463,7 @@ mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
 
-function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : nat1, mop : int) -> ExecutionResult = {
+function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), mop : int) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
