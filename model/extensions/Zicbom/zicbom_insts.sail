@@ -21,6 +21,7 @@ mapping encdec_cbop : cbop_zicbom <-> bits(12) = {
   CBO_INVAL <-> 0b000000000000,
 }
 
+$[wavedrom "CBO-OP base CBO _ MISC-MEM"]
 mapping clause encdec = ZICBOM(cbop, rs1)
   <-> encdec_cbop(cbop) @ encdec_reg(rs1) @ 0b010 @ 0b00000 @ 0b0001111
   when currentlyEnabled(Ext_Zicbom)

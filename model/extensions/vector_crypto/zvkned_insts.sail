@@ -15,6 +15,7 @@ mapping encdec_vaesdf : zvk_vaesdf_funct6 <-> bits(6) = {
   ZVK_VAESDF_VS <-> 0b101001,
 }
 
+$[wavedrom "VAESDF.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESDF(funct6, vs2, vd)
   <-> encdec_vaesdf(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b00001 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESDF_VV |
@@ -67,6 +68,7 @@ mapping encdec_vaesdm : zvk_vaesdm_funct6 <-> bits(6) = {
   ZVK_VAESDM_VS <-> 0b101001,
 }
 
+$[wavedrom "VAESDM.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESDM(funct6, vs2, vd)
   <-> encdec_vaesdm(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESDM_VV |
@@ -120,6 +122,7 @@ mapping encdec_vaesef : zvk_vaesef_funct6 <-> bits(6) = {
   ZVK_VAESEF_VS <-> 0b101001,
 }
 
+$[wavedrom "VAESEF.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESEF(funct6, vs2, vd)
   <-> encdec_vaesef(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b00011 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESEF_VV |
@@ -172,6 +175,7 @@ mapping encdec_vaesem : zvk_vaesem_funct6 <-> bits(6) = {
   ZVK_VAESEM_VS <-> 0b101001,
 }
 
+$[wavedrom "VAESEM.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESEM(funct6, vs2, vd)
   <-> encdec_vaesem(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b00010 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESEM_VV |
@@ -220,6 +224,7 @@ mapping clause assembly = VAESEM(funct6, vs2, vd)
 
 union clause instruction = VAESKF1_VI : (vregidx, bits(5), vregidx)
 
+$[wavedrom "_ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESKF1_VI(vs2, rnd, vd)
   <-> 0b1000101 @ encdec_vreg(vs2) @ rnd @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
@@ -269,8 +274,9 @@ mapping clause assembly = VAESKF1_VI(vs2, rnd, vd)
 
 union clause instruction = VAESKF2_VI : (vregidx, bits(5), vregidx)
 
+$[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESKF2_VI(vs2, rnd, vd)
-  <-> 0b1010101 @ encdec_vreg(vs2) @ rnd @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  <-> 0b101010 @ 0b1 @ encdec_vreg(vs2) @ rnd @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
 function clause execute VAESKF2_VI(vs2, rnd, vd) = {
@@ -319,8 +325,9 @@ mapping clause assembly = VAESKF2_VI(vs2, rnd, vd)
 
 union clause instruction = VAESZ_VS : (vregidx, vregidx)
 
+$[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESZ_VS(vs2, vd)
-  <-> 0b1010011 @ encdec_vreg(vs2) @ 0b00111 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  <-> 0b101001 @ 0b1 @ encdec_vreg(vs2) @ 0b00111 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
 
 function clause execute VAESZ_VS(vs2, vd) = {

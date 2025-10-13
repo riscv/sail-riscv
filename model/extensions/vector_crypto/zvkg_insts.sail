@@ -10,6 +10,7 @@ function clause currentlyEnabled(Ext_Zvkg) = hartSupports(Ext_Zvkg) & currentlyE
 
 union clause instruction = VGHSH_VV : (vregidx, vregidx, vregidx)
 
+$[wavedrom "_ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VGHSH_VV(vs2, vs1, vd)
   <-> 0b1011001 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkg) & get_sew() == 32 & zvk_check_encdec(128, 4)
@@ -58,6 +59,7 @@ mapping clause assembly = VGHSH_VV(vs2, vs1, vd)
 
 union clause instruction = VGMUL_VV : (vregidx, vregidx)
 
+$[wavedrom "_ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VGMUL_VV(vs2, vd)
   <-> 0b1010001 @ encdec_vreg(vs2) @ 0b10001 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvkg) & get_sew() == 32 & zvk_check_encdec(128, 4)

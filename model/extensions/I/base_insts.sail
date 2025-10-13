@@ -69,8 +69,9 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
 // *****************************************************************
 union clause instruction = JAL : (bits(21), regidx)
 
-mapping clause encdec = JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_13 @ imm_12_9 @ 0b0, rd)
-  <-> imm_19 : bits(1) @ imm_18_13 : bits(6) @ imm_12_9 : bits(4) @ imm_8 : bits(1) @ imm_7_0 : bits(8) @ encdec_reg(rd) @ 0b1101111
+$[wavedrom "_ offset[20:1] _ _ dest JAL"]
+mapping clause encdec = JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_9 @ 0b0, rd)
+  <-> imm_19 : bits(1) @ imm_18_9 : bits(10) @ imm_8 : bits(1) @ imm_7_0 : bits(8) @ encdec_reg(rd) @ 0b1101111
 
 function clause execute JAL(imm, rd) = {
   let link_address = get_next_pc();
@@ -88,6 +89,7 @@ mapping clause assembly = JAL(imm, rd)
 // *****************************************************************
 union clause instruction = JALR : (bits(12), regidx, regidx)
 
+$[wavedrom "offset[11:0] base 0 dest JALR"]
 mapping clause encdec = JALR(imm, rs1, rd)
   <-> imm @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b1100111
 
@@ -276,6 +278,7 @@ function valid_load_encdec(width : word_width, is_unsigned : bool) -> bool =
 val extend_value : forall 'n, 0 < 'n <= xlen. (bool, bits('n)) -> xlenbits
 function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(value) else sign_extend(value)
 
+$[wavedrom "offset[11:0] base _ width dest LOAD"]
 mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, width)
   <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ width_enc(width) @ encdec_reg(rd) @ 0b0000011
   when valid_load_encdec(width, is_unsigned)
@@ -306,6 +309,7 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width)
 // *****************************************************************
 union clause instruction = STORE : (bits(12), regidx, regidx, word_width)
 
+$[wavedrom "offset[11:5] src base _ width offset[4:0] STORE"]
 mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width)
   <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ imm5 : bits(5) @ 0b0100011
   when width <= xlen_bytes
@@ -329,6 +333,7 @@ mapping clause assembly = STORE(imm, rs2, rs1, width)
 // *****************************************************************
 union clause instruction = ADDIW : (bits(12), regidx, regidx)
 
+$[wavedrom "I-immediate[11:0] src ADDIW dest OP-IMM-32"]
 mapping clause encdec = ADDIW(imm, rs1, rd)
   <-> imm @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0011011
   when xlen == 64

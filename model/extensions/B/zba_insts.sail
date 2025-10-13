@@ -12,6 +12,7 @@ function clause currentlyEnabled(Ext_Zba) = hartSupports(Ext_Zba) | currentlyEna
 // *****************************************************************
 union clause instruction = SLLIUW : (bits(6), regidx, regidx)
 
+$[wavedrom "SLLI.UW _ _ SLLI.UW _ OP-IMM-32"]
 mapping clause encdec = SLLIUW(shamt, rs1, rd)
   <-> 0b000010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
   when currentlyEnabled(Ext_Zba) & xlen == 64
@@ -28,6 +29,8 @@ function clause execute SLLIUW(shamt, rs1, rd) = {
 union clause instruction = ZBA_RTYPEUW : (regidx, regidx, regidx, shamt_zba)
 
 // add.uw
+
+$[wavedrom "ADD.UW _ _ ADD.UW _ _ OP-32"]
 mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, 0b00)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b00 @ 0b0 @ encdec_reg(rd) @ 0b0111011
   when currentlyEnabled(Ext_Zba) & xlen == 64

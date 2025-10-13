@@ -19,6 +19,7 @@ mapping encdec_cbop_zicbop : cbop_zicbop <-> bits(5) = {
   PREFETCH_W <-> 0b00011,
 }
 
+$[wavedrom "offset[11:5] PREFETCH-OP base ORI offset[4:0] OP-IMM"]
 mapping clause encdec = ZICBOP(cbop, rs1, offset11_5 @ 0b00000)
   <-> offset11_5 @ encdec_cbop_zicbop(cbop) @ encdec_reg(rs1) @ 0b110 @ 0b00000 @ 0b0010011
   when currentlyEnabled(Ext_Zicbop)
