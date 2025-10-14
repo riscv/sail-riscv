@@ -29,32 +29,27 @@ install(FILES "${CMAKE_SOURCE_DIR}/dependencies/jsoncons/LICENSE"
     RENAME "JSONCONS-LICENSE.txt"
 )
 
-# `file(ARCHIVE_CREATE COMPRESSION Gzip)` creates files with
-# timestamps without a way of turning them off.  Instead, just use
-# gzip directly to pass -n.
-
+# Debian requires compressed changelogs.
 # https://lintian.debian.org/tags/changelog-file-not-compressed
+#
+# It also requires the timestamp to be 0 for reproducible builds.
+# https://lintian.debian.org/tags/package-contains-timestamped-gzip.html
+#
+# To achieve that with CMake we need to `export SOURCE_DATE_EPOCH=0`.
+# See https://gitlab.kitware.com/cmake/cmake/-/issues/23418#note_1714128
 set(src_changelog "${CMAKE_SOURCE_DIR}/doc/ChangeLog.md")
 set(gzip_changelog "${CMAKE_BINARY_DIR}/changelog.gz")
-add_custom_command(
-    DEPENDS ${src_changelog}
+
+file(ARCHIVE_CREATE
     OUTPUT ${gzip_changelog}
-    VERBATIM
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND
-        gzip
-        # https://lintian.debian.org/tags/package-contains-timestamped-gzip
-        -n
-        # Write to stdout
-        -c
-        # https://lintian.debian.org/tags/changelog-not-compressed-with-max-compression
-        -9
-        ${src_changelog} > ${gzip_changelog}
+    FORMAT raw
+    COMPRESSION GZip
+    COMPRESSION_LEVEL 9
+    PATHS ${src_changelog}
 )
-add_custom_target(compressed_changelog DEPENDS ${gzip_changelog})
 
 # https://lintian.debian.org/tags/no-changelog
-install(FILES "${CMAKE_BINARY_DIR}/changelog.gz"
+install(FILES ${gzip_changelog}
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}")
 
 # RPM doesn't need a compressed changelog.
@@ -70,6 +65,7 @@ if (NOT CPACK_GENERATOR)
         set(CPACK_GENERATOR "TGZ")
     endif()
 endif()
+
 if (DARWIN)
     # ${CMAKE_SYSTEM_NAME} is unfortunately "Darwin", but we want "Mac".
     set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-Mac-${CMAKE_HOST_SYSTEM_PROCESSOR}")

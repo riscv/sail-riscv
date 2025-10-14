@@ -38,6 +38,10 @@ jobs:
 
     env:
       SAIL_VERSION: "0.19.1"
+      # This helps with reproducible builds by not embedding variable timestamps in files.
+      # This is needed in particular for the Debian package's compressed changelog.
+      # See the comments in `cmake/packaging.cmake`.
+      SOURCE_DATE_EPOCH: "0"
 
     steps:
       # This must be before checkout otherwise Github will use a zip of the
@@ -73,7 +77,7 @@ jobs:
           git config --global --add safe.directory '*'
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
           cd build
-          ninja all generated_sail_riscv_docs compressed_changelog
+          ninja all generated_sail_riscv_docs
           ctest
           cpack
 
