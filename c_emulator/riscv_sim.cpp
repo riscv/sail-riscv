@@ -48,7 +48,7 @@ bool do_print_isa = false;
 std::string config_file;
 std::string term_log;
 std::string trace_log_path;
-FILE *trace_log = nullptr;
+FILE *trace_log = stdout;
 std::string dtb_file;
 int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
@@ -485,12 +485,13 @@ void init_logs()
     exit(EXIT_FAILURE);
   }
 
-  if (trace_log_path.empty()) {
-    trace_log = stdout;
-  } else if ((trace_log = fopen(trace_log_path.c_str(), "w+")) == nullptr) {
-    fprintf(stderr, "Cannot create trace log '%s': %s\n",
-            trace_log_path.c_str(), strerror(errno));
-    exit(EXIT_FAILURE);
+  if (!trace_log_path.empty()) {
+    trace_log = fopen(trace_log_path.c_str(), "w+");
+    if (trace_log == nullptr) {
+      fprintf(stderr, "Cannot create trace log '%s': %s\n",
+              trace_log_path.c_str(), strerror(errno));
+      exit(EXIT_FAILURE);
+    }
   }
 
 #ifdef SAILCOV

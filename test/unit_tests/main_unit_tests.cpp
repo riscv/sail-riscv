@@ -16,12 +16,10 @@ bool config_print_platform = false;
 bool config_enable_rvfi = false;
 bool config_use_abi_names = false;
 
-FILE *trace_log = nullptr;
+FILE *trace_log = stdout;
 
 int main()
 {
-  trace_log = stdout;
-
   sail_config_set_string(get_default_config());
   init_sail_configured_types();
   model_test();
