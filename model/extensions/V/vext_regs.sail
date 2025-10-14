@@ -244,25 +244,7 @@ bitfield Vtype  : xlenbits = {
 register vtype : Vtype
 
 type SEW_pow = range(3, 6)
-
-mapping sew_pow_val : bits(3) <-> SEW_pow = {
-  0b000 <-> 3,
-  0b001 <-> 4,
-  0b010 <-> 5,
-  0b011 <-> 6,
-}
-
 type LMUL_pow = range(-3, 3)
-
-mapping lmul_pow_val : bits(3) <-> LMUL_pow = {
-  0b101 <-> -3,
-  0b110 <-> -2,
-  0b111 <-> -1,
-  0b000 <-> 0,
-  0b001 <-> 1,
-  0b010 <-> 2,
-  0b011 <-> 3,
-}
 
 function is_invalid_sew_pow(v : bits(3)) -> bool =
   v >_u 0b011
@@ -270,11 +252,12 @@ function is_invalid_sew_pow(v : bits(3)) -> bool =
 function is_invalid_lmul_pow(v : bits(3)) -> bool =
   v == 0b100
 
-// the dynamic selected element width (SEW)
-// this returns the power of 2 for SEW
+// The dynamic selected element width (SEW).
+// This returns the power of 2 exponent in *bits* (hence the + 3).
 function get_sew_pow() -> SEW_pow = {
-  let sew_pow = vtype[vsew];
-  sew_pow_val(sew_pow)
+  let sew_pow = unsigned(vtype[vsew]);
+  assert(sew_pow < 4, "Reserved SEW stored in vtype register. This should be impossible.");
+  sew_pow + 3
 }
 
 // Valid SEW sizes in bits.
@@ -289,11 +272,12 @@ function get_sew() -> sew_bitsize =
 function get_sew_bytes() -> {1, 2, 4, 8} =
   get_sew() / 8
 
-// the vector register group multiplier (LMUL)
-// this returns the power of 2 for LMUL
+// The vector register group multiplier (LMUL).
+// This returns the power of 2 exponent.
 function get_lmul_pow() -> LMUL_pow = {
-  let lmul_pow = vtype[vlmul];
-  lmul_pow_val(lmul_pow)
+  let lmul_pow = signed(vtype[vlmul]);
+  assert(lmul_pow > -4, "Reserved LMUL stored in vtype register. This should be impossible.");
+  lmul_pow
 }
 
 enum agtype = { UNDISTURBED, AGNOSTIC }
