@@ -7,6 +7,7 @@
 
 - The following extensions have been added:
 
+  - Zvfbfwma
   - Zvfbfmin
   - Zfbfmin
   - Zicbop

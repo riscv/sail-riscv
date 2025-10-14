@@ -64,7 +64,7 @@ bool rvfi_handler::setup_socket(bool config_print)
     return false;
   }
   printf("Waiting for connection on port %d.\n", ntohs(addr.sin_port));
-  dii_sock = accept(listen_sock, NULL, NULL);
+  dii_sock = accept(listen_sock, nullptr, nullptr);
   if (dii_sock == -1) {
     fprintf(stderr, "Unable to accept connection on socket: %s\n",
             strerror(errno));
@@ -112,7 +112,7 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
   }
   /* mpz_export might not write all of the null bytes */
   std::vector<unsigned char> bytes(send_size, 0);
-  mpz_export(bytes.data(), NULL, -1, 1, 0, 0, *(packet.bits));
+  mpz_export(bytes.data(), nullptr, -1, 1, 0, 0, *(packet.bits));
   /* Ensure that we can send a full packet */
   if (write(dii_sock, bytes.data(), send_size) != send_size) {
     fprintf(stderr, "Writing RVFI DII trace failed: %s\n", strerror(errno));

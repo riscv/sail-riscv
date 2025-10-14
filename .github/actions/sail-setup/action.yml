@@ -83,8 +83,8 @@ runs:
         (cd sail; make install)
 
     - name: Save cached opam (macOS or latest Sail)
-      # Save cache when using Opam only when not run as part of the merge queue
-      if: (runner.os == 'macOS' || inputs.sail-version == 'latest') && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue')
+      # Update cache only on the master branch
+      if: (runner.os == 'macOS' || inputs.sail-version == 'latest') && github.ref == 'refs/heads/master'
       id: cache-opam-save
       uses: actions/cache/save@v4
       with:

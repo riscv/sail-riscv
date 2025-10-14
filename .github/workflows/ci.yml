@@ -89,8 +89,8 @@ jobs:
         run: make -C os-boot/linux --jobs=$(nproc)
 
       - name: Cache Linux image
-        # Update cache only when not run as part of the merge queue
-        if: steps.linux-cache-restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue')
+        # Update cache only on the master branch
+        if: steps.linux-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master'
         uses: actions/cache/save@v4
         with:
           path: os-boot/linux/build/fw_payload.elf
