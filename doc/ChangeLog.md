@@ -1,4 +1,4 @@
-# Notes since the last release
+# Release notes for version 0.9
 
 - Support for the RV32E and RV64E base ISAs has been added. These
   are enabled by setting `base.E` to `true` in `config/rv32d.json`
@@ -42,6 +42,12 @@
 - Linux boot is now tested in CI.
 
 - The model now requires the Sail 0.20 compiler version.
+
+- The release now includes a binary for Linux Arm AArch64. This
+  enables using the emulator on Apple Silicon Macs using a Linux
+  Docker image.
+
+  The release artifacts are now also attested.
 
 # Release notes for the 0.8 release
 
