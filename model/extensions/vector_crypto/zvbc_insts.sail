@@ -10,6 +10,7 @@ function clause currentlyEnabled(Ext_Zvbc) = hartSupports(Ext_Zvbc) & currentlyE
 
 union clause instruction = VCLMUL_VV : (bits(1), vregidx, vregidx, vregidx)
 
+$[wavedrom "_ _ _ _ OPMVV _ OP-V"]
 mapping clause encdec = VCLMUL_VV (vm, vs2, vs1, vd)
   <-> 0b001100 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvbc) & get_sew() == 64
@@ -48,6 +49,7 @@ function clause execute VCLMUL_VV(vm, vs2, vs1, vd) = {
 
 union clause instruction = VCLMUL_VX : (bits(1), vregidx, regidx, vregidx)
 
+$[wavedrom "_ _ _ _ OPMVX _ OP-V"]
 mapping clause encdec = VCLMUL_VX (vm, vs2, rs1, vd)
   <-> 0b001100 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvbc) & get_sew() == 64
@@ -87,6 +89,7 @@ function clause execute VCLMUL_VX(vm, vs2, rs1, vd) = {
 
 union clause instruction = VCLMULH_VV : (bits(1), vregidx, vregidx, vregidx)
 
+$[wavedrom "_ _ _ _ OPMVV _ OP-V"]
 mapping clause encdec = VCLMULH_VV (vm, vs2, vs1, vd)
   <-> 0b001101 @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvbc) & get_sew() == 64
@@ -125,6 +128,7 @@ function clause execute VCLMULH_VV(vm, vs2, vs1, vd) = {
 
 union clause instruction = VCLMULH_VX : (bits(1), vregidx, regidx, vregidx)
 
+$[wavedrom "_ _ _ _ OPMVX _ OP-V"]
 mapping clause encdec = VCLMULH_VX (vm, vs2, rs1, vd)
   <-> 0b001101 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvbc) & get_sew() == 64

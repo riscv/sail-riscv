@@ -10,6 +10,7 @@ function clause currentlyEnabled(Ext_Zvfbfmin) = hartSupports(Ext_Zvfbfmin) & cu
 
 union clause instruction = VFNCVTBF16_F_F_W : (bits(1), vregidx, vregidx)
 
+$[wavedrom "VFUNARY0 _ _ vfncvtbf16 OPFVV _ OP-V"]
 mapping clause encdec = VFNCVTBF16_F_F_W(vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b11101 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvfbfmin) & get_sew() == 16
@@ -60,6 +61,7 @@ mapping clause assembly = VFNCVTBF16_F_F_W(vm, vs2, vd)
 
 union clause instruction = VFWCVTBF16_F_F_V : (bits(1), vregidx, vregidx)
 
+$[wavedrom "VFUNARY0 _ _ vfwcvtbf16 OPFVV _ OP-V"]
 mapping clause encdec = VFWCVTBF16_F_F_V(vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01101 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvfbfmin) & get_sew() == 16

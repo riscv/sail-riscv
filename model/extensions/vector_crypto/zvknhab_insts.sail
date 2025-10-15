@@ -11,8 +11,9 @@ function clause currentlyEnabled(Ext_Zvknhb) = hartSupports(Ext_Zvknhb) & curren
 
 union clause instruction = VSHA2MS_VV : (vregidx, vregidx, vregidx)
 
+$[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VSHA2MS_VV(vs2, vs1, vd)
-  <-> 0b1011011 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  <-> 0b101101 @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when (currentlyEnabled(Ext_Zvknha) & get_sew() == 32) | (currentlyEnabled(Ext_Zvknhb) & (get_sew() == 32 | get_sew() == 64)) & zvknhab_check_encdec(vs2, vs1, vd)
 
 mapping clause assembly = VSHA2MS_VV(vs2, vs1, vd)
@@ -73,6 +74,7 @@ mapping encdec_vsha2 : zvk_vsha2_funct6 <-> bits(6) = {
   ZVK_VSHA2CL_VV <-> 0b101111,
 }
 
+$[wavedrom "VSHA2C.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = ZVKSHA2TYPE(funct6, vs2, vs1, vd)
   <-> encdec_vsha2(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when (currentlyEnabled(Ext_Zvknha) & get_sew() == 32) | (currentlyEnabled(Ext_Zvknhb) & (get_sew() == 32 | get_sew() == 64)) & zvknhab_check_encdec(vs2, vs1, vd)

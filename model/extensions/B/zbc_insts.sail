@@ -12,6 +12,7 @@ function clause currentlyEnabled(Ext_Zbkc) = hartSupports(Ext_Zbkc)
 // *****************************************************************
 union clause instruction = CLMUL : (regidx, regidx, regidx)
 
+$[wavedrom "MINMAX/CLMUL _ _ CLMUL _ OP"]
 mapping clause encdec = CLMUL(rs2, rs1, rd)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbc) | currentlyEnabled(Ext_Zbkc)
@@ -28,6 +29,7 @@ function clause execute CLMUL(rs2, rs1, rd) = {
 // *****************************************************************
 union clause instruction = CLMULH : (regidx, regidx, regidx)
 
+$[wavedrom "MINMAX/CLMUL _ _ CLMULH _ OP"]
 mapping clause encdec = CLMULH(rs2, rs1, rd)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbc) | currentlyEnabled(Ext_Zbkc)
@@ -44,6 +46,7 @@ function clause execute CLMULH(rs2, rs1, rd) = {
 // *****************************************************************
 union clause instruction = CLMULR : (regidx, regidx, regidx)
 
+$[wavedrom "MINMAX/CLMUL _ _ CLMULR _ OP"]
 mapping clause encdec = CLMULR(rs2, rs1, rd)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbc)

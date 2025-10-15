@@ -15,6 +15,7 @@ function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, m
 // *****************************************************************
 union clause instruction = ZICBOZ : (regidx)
 
+$[wavedrom "CBO.ZERO base CBO _ MISC-MEM"]
 mapping clause encdec = ZICBOZ(rs1)
   <-> 0b000000000100 @ encdec_reg(rs1) @ 0b010 @ 0b00000 @ 0b0001111
   when currentlyEnabled(Ext_Zicboz)

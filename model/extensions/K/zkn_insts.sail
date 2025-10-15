@@ -17,18 +17,22 @@ union clause instruction = SHA256SIG1 : (regidx, regidx)
 union clause instruction = SHA256SUM0 : (regidx, regidx)
 union clause instruction = SHA256SUM1 : (regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA256SUM0 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknh)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA256SUM1 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknh)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA256SIG0 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00010 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknh)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA256SIG1 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00011 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknh)
@@ -80,6 +84,7 @@ function clause currentlyEnabled(Ext_Zkne) = hartSupports(Ext_Zkne)
 
 union clause instruction = AES32ESMI : (bits(2), regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES32ESMI (bs, rs2, rs1, rd)
   <-> bs @ 0b10011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zkne) & xlen == 32
@@ -99,6 +104,7 @@ function clause execute AES32ESMI (bs, rs2, rs1, rd) = {
 
 union clause instruction = AES32ESI : (bits(2), regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES32ESI (bs, rs2, rs1, rd)
   <-> bs @ 0b10001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zkne) & xlen == 32
@@ -122,6 +128,7 @@ function clause currentlyEnabled(Ext_Zknd) = hartSupports(Ext_Zknd)
 
 union clause instruction = AES32DSMI : (bits(2), regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES32DSMI (bs, rs2, rs1, rd)
   <-> bs @ 0b10111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknd) & xlen == 32
@@ -141,6 +148,7 @@ function clause execute AES32DSMI (bs, rs2, rs1, rd) = {
 
 union clause instruction = AES32DSI  : (bits(2), regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES32DSI (bs, rs2, rs1, rd)
   <-> bs @ 0b10101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknd) & xlen == 32
@@ -167,26 +175,32 @@ union clause instruction = SHA512SIG1H : (regidx, regidx, regidx)
 union clause instruction = SHA512SUM0R : (regidx, regidx, regidx)
 union clause instruction = SHA512SUM1R : (regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SUM0R (rs2, rs1, rd)
   <-> 0b01 @ 0b01000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknh) & xlen == 32
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SUM1R (rs2, rs1, rd)
   <-> 0b01 @ 0b01001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknh) & xlen == 32
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SIG0L (rs2, rs1, rd)
   <-> 0b01 @ 0b01010 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknh) & xlen == 32
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SIG0H (rs2, rs1, rd)
   <-> 0b01 @ 0b01110 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknh) & xlen == 32
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SIG1L (rs2, rs1, rd)
   <-> 0b01 @ 0b01011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknh) & xlen == 32
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SIG1H (rs2, rs1, rd)
   <-> 0b01 @ 0b01111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknh) & xlen == 32
@@ -256,30 +270,37 @@ union clause instruction = AES64ES   : (regidx, regidx, regidx)
 union clause instruction = AES64DSM  : (regidx, regidx, regidx)
 union clause instruction = AES64DS   : (regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ _ _ _"]
 mapping clause encdec = AES64KS1I (rnum, rs1, rd)
   <-> 0b00 @ 0b11000 @ 0b1 @ rnum @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when (currentlyEnabled(Ext_Zkne) | currentlyEnabled(Ext_Zknd)) & (xlen == 64) & (rnum <_u 0xB)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES64IM (rs1, rd)
   <-> 0b00 @ 0b11000 @ 0b00000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknd) & xlen == 64
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES64KS2 (rs2, rs1, rd)
   <-> 0b01 @ 0b11111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when (currentlyEnabled(Ext_Zkne) | currentlyEnabled(Ext_Zknd)) & xlen == 64
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES64ESM (rs2, rs1, rd)
   <-> 0b00 @ 0b11011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zkne) & xlen == 64
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES64ES (rs2, rs1, rd)
   <-> 0b00 @ 0b11001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zkne) & xlen == 64
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES64DSM (rs2, rs1, rd)
   <-> 0b00 @ 0b11111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknd) & xlen == 64
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = AES64DS (rs2, rs1, rd)
   <-> 0b00 @ 0b11101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zknd) & xlen == 64
@@ -376,18 +397,22 @@ union clause instruction = SHA512SIG1 : (regidx, regidx)
 union clause instruction = SHA512SUM0 : (regidx, regidx)
 union clause instruction = SHA512SUM1 : (regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SUM0 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00100 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknh) & xlen == 64
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SUM1 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00101 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknh) & xlen == 64
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SIG0 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00110 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknh) & xlen == 64
 
+$[wavedrom "_ _ _ _ _ _ _"]
 mapping clause encdec = SHA512SIG1 (rs1, rd)
   <-> 0b00 @ 0b01000 @ 0b00111 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zknh) & xlen == 64

@@ -15,6 +15,7 @@ mapping encdec_zicondop : zicondop <-> bits(3) = {
   CZERO_NEZ <-> 0b111,
 }
 
+$[wavedrom "CZERO condition value CZERO.OP _ OP"]
 mapping clause encdec = ZICOND_RTYPE(rs2, rs1, rd, op)
   <-> 0b0000111 @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_zicondop(op) @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zicond)
