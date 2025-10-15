@@ -24,8 +24,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: linux-amd64
+          - name: Linux-x86_64
             os: ubuntu-latest
+            container: rockylinux:8.9.20231119
+
+          - name: Linux-aarch64
+            os: ubuntu-24.04-arm
             container: rockylinux:8.9.20231119
 
           # TODO: Mac. We need a Mac binary release of the Sail compiler first.
@@ -61,7 +65,7 @@ jobs:
               gcc-c++ \
               cmake \
               ninja-build
-          curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz
+          curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail-$(uname)-$(arch).tar.gz
           tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
 
       # TODO: Mac
@@ -104,9 +108,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-linux-amd64/sail-riscv-Linux-x86_64.tar.gz
-            release-linux-amd64/model/sail_riscv_model.json
-            release-linux-amd64/model/sail_riscv_html.tgz
+            release-Linux-x86_64/sail-riscv-Linux-x86_64.tar.gz
+            release-Linux-aarch64/sail-riscv-Linux-aarch64.tar.gz
+            release-Linux-x86_64/model/sail_riscv_model.json
+            release-Linux-x86_64/model/sail_riscv_html.tgz
           fail_on_unmatched_files: true
           tag_name: ${{ inputs.version }}
           body: ${{ inputs.notes }}
