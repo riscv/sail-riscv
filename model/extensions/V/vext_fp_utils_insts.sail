@@ -459,20 +459,23 @@ function rsqrt7 (v, is_subnormal) = {
 
   let v = float_decompose(v);
 
-  let (normalized_exp, normalized_mant) =
+  let 'e = length(v.exp);
+
+  let (normalized_exp, normalized_mant_top_5_bits) =
       if is_subnormal then {
         let nr_leadingzeros = count_leading_zeros(v.mantissa);
-        (zeros() - nr_leadingzeros, zero_extend(64, v.mantissa @ zeros(1 + nr_leadingzeros)))
+        let mant = v.mantissa @ zeros(1 + nr_leadingzeros);
+        let f : bits(5) = mant[length(mant) - 1 .. length(mant) - 5];
+        (zeros('e) - nr_leadingzeros, f)
       } else {
-        (v.exp, v.mantissa)
+        let f : bits(5) = v.mantissa[length(v.mantissa) - 1 .. length(v.mantissa) - 5];
+        (v.exp, f)
       };
-
-  let normalized_mant_top_5_bits = normalized_mant[length(normalised_mant) - 1 .. length(normalised_mant) - 5];
 
   let idx = unsigned(normalized_exp[0..0] @ normalized_mant_top_5_bits);
 
   float_compose(struct {
-    sign = sign,
+    sign = v.sign,
     exp = to_bits(e, quot_round_zero(3 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp), 2)),
     // Note the 127 - idx is because the table was written out in little endian order
     // but Sail is configured for big endian array literals.
