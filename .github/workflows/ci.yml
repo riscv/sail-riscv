@@ -69,8 +69,6 @@ jobs:
 
       - name: Common setup
         uses: ./.github/actions/sail-setup
-        with:
-          cmake-version: latest
 
       - name: Build simulator
         run: |
