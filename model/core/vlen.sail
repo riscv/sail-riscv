@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
+// The order of vector_support is significant - each level implies all of the previous levels.
 enum vector_support = {
   Disabled,
   Integer,
@@ -14,16 +15,17 @@ enum vector_support = {
   Full,
 }
 
-mapping vector_support_level : vector_support <-> nat = {
-  Disabled     <-> 0,
-  Integer      <-> 1,
-  Float_single <-> 2,
-  Float_double <-> 3,
-  Full         <-> 4,
-}
+let vector_support_level : vector_support = config extensions.V.support_level
 
-let vector_support_config = config extensions.V.support_level : vector_support
-let vector_support_config_level = vector_support_level(vector_support_config)
+function vector_support_lt(x : vector_support, y : vector_support) -> bool = num_of_vector_support(x) < num_of_vector_support(y)
+function vector_support_gt(x : vector_support, y : vector_support) -> bool = num_of_vector_support(x) > num_of_vector_support(y)
+function vector_support_le(x : vector_support, y : vector_support) -> bool = num_of_vector_support(x) <= num_of_vector_support(y)
+function vector_support_ge(x : vector_support, y : vector_support) -> bool = num_of_vector_support(x) >= num_of_vector_support(y)
+
+overload operator < = {vector_support_lt}
+overload operator > = {vector_support_gt}
+overload operator <= = {vector_support_le}
+overload operator >= = {vector_support_ge}
 
 type vlen_exp : Int = config extensions.V.vlen_exp
 constraint 3 <= vlen_exp <= 16
