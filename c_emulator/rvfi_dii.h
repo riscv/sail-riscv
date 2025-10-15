@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sail.h"
+#include "sail_riscv_model.h"
 
 enum rvfi_prestep_t {
   RVFI_prestep_continue,  // continue loop
@@ -9,11 +10,11 @@ enum rvfi_prestep_t {
   RVFI_prestep_ok,        // Ready for step
 };
 
-typedef void (*packet_reader_fn)(lbits *rop, unit);
+using packet_reader_fn = void (model::Model::*)(lbits *rop, unit);
 
 class rvfi_handler {
 public:
-  explicit rvfi_handler(int port);
+  explicit rvfi_handler(int port, model::Model &model);
 
   bool setup_socket(bool config_print);
   uint64_t get_entry();
@@ -26,4 +27,6 @@ private:
   unsigned trace_version = 1;
   int dii_port = -1;
   int dii_sock = -1;
+
+  model::Model &m_model;
 };
