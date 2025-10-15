@@ -58,7 +58,7 @@ function clause hartSupports(Ext_B) = config extensions.B.supported
 // Vector Operations
 enum clause extension = Ext_V
 mapping clause extensionName = Ext_V <-> "v"
-function clause hartSupports(Ext_V) = sizeof(vlen_exp) >= 7 & vector_support_config_level() >= vector_support_level(Full)
+function clause hartSupports(Ext_V) = sizeof(vlen_exp) >= 7 & vector_support_config_level >= vector_support_level(Full)
 // Supervisor
 enum clause extension = Ext_S
 mapping clause extensionName = Ext_S <-> "s"
@@ -293,19 +293,19 @@ function clause hartSupports(Ext_Zvl1024b) = sizeof(vlen_exp) >= 10
 // Vector Extensions for Embedded Processors
 enum clause extension = Ext_Zve32f
 mapping clause extensionName = Ext_Zve32f <-> "zve32f"
-function clause hartSupports(Ext_Zve32f) = sizeof(elen_exp) >= 5 & vector_support_config_level() >= vector_support_level(Float_single)
+function clause hartSupports(Ext_Zve32f) = sizeof(elen_exp) >= 5 & vector_support_config_level >= vector_support_level(Float_single)
 enum clause extension = Ext_Zve32x
 mapping clause extensionName = Ext_Zve32x <-> "zve32x"
-function clause hartSupports(Ext_Zve32x) = sizeof(elen_exp) >= 5 & vector_support_config_level() >= vector_support_level(Integer)
+function clause hartSupports(Ext_Zve32x) = sizeof(elen_exp) >= 5 & vector_support_config_level >= vector_support_level(Integer)
 enum clause extension = Ext_Zve64d
 mapping clause extensionName = Ext_Zve64d <-> "zve64d"
-function clause hartSupports(Ext_Zve64d) = sizeof(elen_exp) >= 6 & vector_support_config_level() >= vector_support_level(Float_double)
+function clause hartSupports(Ext_Zve64d) = sizeof(elen_exp) >= 6 & vector_support_config_level >= vector_support_level(Float_double)
 enum clause extension = Ext_Zve64f
 mapping clause extensionName = Ext_Zve64f <-> "zve64f"
-function clause hartSupports(Ext_Zve64f) = sizeof(elen_exp) >= 6 & vector_support_config_level() >= vector_support_level(Float_single)
+function clause hartSupports(Ext_Zve64f) = sizeof(elen_exp) >= 6 & vector_support_config_level >= vector_support_level(Float_single)
 enum clause extension = Ext_Zve64x
 mapping clause extensionName = Ext_Zve64x <-> "zve64x"
-function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & vector_support_config_level() >= vector_support_level(Integer)
+function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & vector_support_config_level >= vector_support_level(Integer)
 // Vector BF16 Converts
 enum clause extension = Ext_Zvfbfmin
 mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"

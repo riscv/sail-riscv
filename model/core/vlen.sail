@@ -23,10 +23,7 @@ mapping vector_support_level : vector_support <-> nat = {
 }
 
 let vector_support_config = config extensions.V.support_level : vector_support
-// TODO: This requires the next Sail compiler release (> 0.19.1)
-//let vector_support_config_level = vector_support_level(vector_support_config)
-function vector_support_config_level() -> nat =
-  vector_support_level(vector_support_config)
+let vector_support_config_level = vector_support_level(vector_support_config)
 
 type vlen_exp : Int = config extensions.V.vlen_exp
 constraint 3 <= vlen_exp <= 16

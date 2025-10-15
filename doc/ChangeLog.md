@@ -19,6 +19,9 @@
   - Zvfh and Zvfhmin
   - Svrsw60t59b
 
+- Support for specifying arbitrary memory regions and some basic
+  static PMAs (Physical Memory Attributes) has been added.
+
 - Switch to ELFIO for ELF parsing, and add symbolization in the
   instruction log output. Each instruction will print
   `<symbol>+<offset>` at the end of the line, e.g. `_start+4`.
@@ -38,8 +41,7 @@
 
 - Linux boot is now tested in CI.
 
-- Support for specifying arbitrary memory regions and some basic
-  static PMAs (Physical Memory Attributes) has been added.
+- The model now requires the Sail 0.20 compiler version.
 
 # Release notes for the 0.8 release
 
