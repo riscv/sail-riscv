@@ -13,6 +13,7 @@ foreach(CONFIG__BASE__XLEN IN ITEMS 32 64)
             set(CONFIG_XLEN_IS_64 "false")
             set(CONFIG_XLEN_IS_${CONFIG__BASE__XLEN} "true")
 
+            set(CONFIG_ELEN_IS_32 "false")
             set(CONFIG_ELEN_IS_64 "false")
             set(CONFIG_ELEN_IS_${elen} "true")
 
