@@ -4,7 +4,7 @@ inputs:
   cmake-version:
     description: "CMake version to install"
     required: false
-    default: latest
+    default: "4.1.2"
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
     required: false
@@ -27,17 +27,16 @@ runs:
         echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
     - name: Install CMake
-      uses: jwlawson/actions-setup-cmake@v2
-      with:
-        cmake-version: ${{ inputs.cmake-version }}
-
+      shell: bash
+      run: |
+        curl --location https://github.com/Kitware/CMake/releases/download/v${{ inputs.cmake-version }}/cmake-${{ inputs.cmake-version }}-${{ runner.os }}-$(arch).tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
     - name: Restore cached opam (macOS or latest Sail)
       if: runner.os == 'macOS' || inputs.sail-version == 'latest'
       id: cache-opam-restore
       uses: actions/cache/restore@v4
       with:
         path: ~/.opam
-        key: ${{ runner.os }}-cmake-${{ inputs.cmake-version }}-sail-${{ inputs.sail-version }}-opam
+        key: ${{ runner.os }}-${{ runner.arch }}-cmake-${{ inputs.cmake-version }}-sail-${{ inputs.sail-version }}-opam
 
     - name: Install Sail (Linux binary)
       if: runner.os == 'Linux' && inputs.sail-version != 'latest'
