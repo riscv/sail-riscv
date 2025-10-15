@@ -19,6 +19,10 @@ on:
         required: false
         type: boolean
 
+permissions:
+  id-token: write
+  attestations: write
+
 jobs:
   build:
     strategy:
@@ -84,6 +88,22 @@ jobs:
           ninja all generated_sail_riscv_docs
           ctest
           cpack
+
+      - name: "Generate attestations ${{ matrix.os }}"
+        if: matrix.name == 'Linux-x86_64'
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            build/sail-riscv-*
+            build/model/sail_riscv_model.json
+            build/model/sail_riscv_html.tgz
+
+      - name: "Generate attestations ${{ matrix.os }}"
+        if: matrix.name == 'Linux-aarch64'
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            build/sail-riscv-*
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
