@@ -30,7 +30,7 @@ constraint 3 <= vlen_exp <= 16
 
 // Note: ELEN=32 requires a different encoding of the CSR vtype.
 // The current version of vtype implementation corresponds to the ELEN=64 configuration.
-// TODO: the configurarion of ELEN and its corresponding vtype implementations.
+// TODO: the configuration of ELEN and its corresponding vtype implementations.
 type elen_exp : Int = config extensions.V.elen_exp
 constraint 3 <= elen_exp <= 16 & elen_exp <= vlen_exp
 
