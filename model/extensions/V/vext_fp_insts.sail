@@ -634,7 +634,7 @@ mapping encdec_vfnunary0_vs1 : vfnunary0 <-> bits(5) = {
 
 mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when 
+  when
     match vfnunary0 {
       FNV_CVT_F_F     => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
       FNV_CVT_ROD_F_F => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
