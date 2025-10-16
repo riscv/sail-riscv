@@ -26,10 +26,8 @@ let plat_enable_dirty_update : bool = config memory.translation.dirty_update
 let plat_enable_misaligned_access : bool = config memory.misaligned.supported
 
 // Location of clock-interface, which should match with the spec in the DTB
-// Use `register` instead of `let` since `to_bits_checked` is not a pure initializer
-// due to its use of `assert`.
-register plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
-register plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
+let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
+let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
 // Location of HTIF (Host Target InterFace) tohost port. None if not enabled.
 // This is used for console output and signalling the end of tests.
