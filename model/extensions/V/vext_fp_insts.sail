@@ -486,25 +486,22 @@ union clause instruction = VFWUNARY0 : (bits(1), vregidx, vfwunary0, vregidx)
 mapping encdec_vfwunary0_vs1 : vfwunary0 <-> bits(5) = {
   FWV_CVT_XU_F      <-> 0b01000,
   FWV_CVT_X_F       <-> 0b01001,
+  FWV_CVT_F_XU      <-> 0b01010,
+  FWV_CVT_F_X       <-> 0b01011,
+  FWV_CVT_F_F       <-> 0b01100,
   FWV_CVT_RTZ_XU_F  <-> 0b01110,
   FWV_CVT_RTZ_X_F   <-> 0b01111
 }
 
 mapping clause encdec = VFWUNARY0(vm, vs2, vfwunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfwunary0_vs1(vfwunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32)
-
-mapping clause encdec = VFWUNARY0(vm, vs2, FWV_CVT_F_F, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01100 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
-
-mapping clause encdec = VFWUNARY0(vm, vs2, FWV_CVT_F_XU, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01010 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
-
-mapping clause encdec = VFWUNARY0(vm, vs2, FWV_CVT_F_X, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b01011 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+  when
+    match vfwunary0 {
+      FWV_CVT_F_F  => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
+      FWV_CVT_F_XU => (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
+      FWV_CVT_F_X  => (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
+      _ => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32)
+    }
 
 function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
   let rm_3b    = fcsr[FRM];
@@ -627,29 +624,24 @@ union clause instruction = VFNUNARY0 : (bits(1), vregidx, vfnunary0, vregidx)
 mapping encdec_vfnunary0_vs1 : vfnunary0 <-> bits(5) = {
   FNV_CVT_XU_F      <-> 0b10000,
   FNV_CVT_X_F       <-> 0b10001,
+  FNV_CVT_F_XU      <-> 0b10010,
+  FNV_CVT_F_X       <-> 0b10011,
+  FNV_CVT_F_F       <-> 0b10100,
+  FNV_CVT_ROD_F_F   <-> 0b10101,
   FNV_CVT_RTZ_XU_F  <-> 0b10110,
   FNV_CVT_RTZ_X_F   <-> 0b10111
 }
 
 mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
-
-mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_F_F, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10100 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
-
-mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_ROD_F_F, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10101 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
-
-mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_F_XU, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10010 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32)
-
-mapping clause encdec = VFNUNARY0(vm, vs2, FNV_CVT_F_X, vd)
-  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10011 @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32)
+  when 
+    match vfnunary0 {
+      FNV_CVT_F_F     => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
+      FNV_CVT_ROD_F_F => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
+      FNV_CVT_F_XU    => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32),
+      FNV_CVT_F_X     => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32),
+      _ => (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+    }
 
 function clause execute VFNUNARY0(vm, vs2, vfnunary0, vd) = {
   let rm_3b    = fcsr[FRM];
