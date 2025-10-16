@@ -11,18 +11,22 @@ function clause currentlyEnabled(Ext_Zbs) = hartSupports(Ext_Zbs) | currentlyEna
 // *****************************************************************
 union clause instruction = ZBS_IOP : (bits(6), regidx, regidx, biop_zbs)
 
+$[wavedrom "BEXTI/BCLRI _ _ BCLRI _ OP-IMM"]
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BCLRI)
   <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
+$[wavedrom "BEXTI/BCLRI _ _ BEXTI _ OP-IMM"]
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BEXTI)
   <-> 0b010010 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
+$[wavedrom "BINVI _ _ BINVI _ OP-IMM"]
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BINVI)
   <-> 0b011010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
 
+$[wavedrom "BSETI _ _ BSETI _ OP-IMM"]
 mapping clause encdec = ZBS_IOP(shamt, rs1, rd, BSETI)
   <-> 0b001010 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbs) & (xlen == 64 | shamt[5] == bitzero)
@@ -56,18 +60,22 @@ function clause execute ZBS_IOP(shamt, rs1, rd, op) = {
 // *****************************************************************
 union clause instruction = ZBS_RTYPE : (regidx, regidx, regidx, brop_zbs)
 
+$[wavedrom "BCLR/BEXT _ _ BCLR _ OP"]
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BCLR)
   <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbs)
 
+$[wavedrom "BCLR/BEXT _ _ BEXT _ OP"]
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BEXT)
   <-> 0b0100100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbs)
 
+$[wavedrom "BINV _ _ BINV _ OP"]
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BINV)
   <-> 0b0110100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbs)
 
+$[wavedrom "BSET _ _ BSET _ OP"]
 mapping clause encdec = ZBS_RTYPE(rs2, rs1, rd, BSET)
   <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbs)

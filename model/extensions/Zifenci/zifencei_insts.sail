@@ -15,6 +15,7 @@ function clause currentlyEnabled(Ext_Zifencei) = hartSupports(Ext_Zifencei)
 
 union clause instruction = FENCEI : unit
 
+$[wavedrom "0 0 FENCE.I 0 MISC-MEM"]
 mapping clause encdec = FENCEI()
   <-> 0b000000000000 @ 0b00000 @ 0b001 @ 0b00000 @ 0b0001111
   when currentlyEnabled(Ext_Zifencei)

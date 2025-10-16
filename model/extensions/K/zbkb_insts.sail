@@ -9,10 +9,12 @@
 // *****************************************************************
 union clause instruction = ZBKB_RTYPE : (regidx, regidx, regidx, brop_zbkb)
 
+$[wavedrom "PACK _ _ PACK _ OP"]
 mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, PACK)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbkb)
 
+$[wavedrom "PACKH _ _ PACKH _ OP"]
 mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, PACKH)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbkb)
@@ -40,6 +42,7 @@ function clause execute ZBKB_RTYPE(rs2, rs1, rd, op) = {
 // *****************************************************************
 union clause instruction = ZBKB_PACKW : (regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ OP-32"]
 mapping clause encdec = ZBKB_PACKW(rs2, rs1, rd)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0111011
   when currentlyEnabled(Ext_Zbkb) & xlen == 64
@@ -59,6 +62,7 @@ function clause execute ZBKB_PACKW(rs2, rs1, rd) = {
 // *****************************************************************
 union clause instruction = ZIP : (regidx, regidx)
 
+$[wavedrom "_ _ _ _ OP-IMM"]
 mapping clause encdec = ZIP(rs1, rd)
   <-> 0b000010001111 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbkb) & xlen == 32
@@ -81,6 +85,7 @@ function clause execute ZIP(rs1, rd) = {
 // *****************************************************************
 union clause instruction = UNZIP : (regidx, regidx)
 
+$[wavedrom "_ _ _ _ OP-IMM"]
 mapping clause encdec = UNZIP(rs1, rd)
   <-> 0b000010001111 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbkb) & xlen == 32
@@ -103,6 +108,7 @@ function clause execute UNZIP(rs1, rd) = {
 // *****************************************************************
 union clause instruction = BREV8 : (regidx, regidx)
 
+$[wavedrom "_ _ _ _ OP-IMM"]
 mapping clause encdec = BREV8(rs1, rd)
   <-> 0b011010000111 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbkb)

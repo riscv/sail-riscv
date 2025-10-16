@@ -8,11 +8,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-latest]
-        cmake_version: ["3.20", latest]
+        os: [ubuntu-22.04, ubuntu-24.04-arm, macos-latest]
+        cmake_version: ["3.20.0", "4.1.2"]
         include:
           - os: ubuntu-22.04
-            cmake_version: latest
+            cmake_version: "4.1.2"
             run_all_steps: true
 
     steps:
@@ -69,8 +69,6 @@ jobs:
 
       - name: Common setup
         uses: ./.github/actions/sail-setup
-        with:
-          cmake-version: latest
 
       - name: Build simulator
         run: |

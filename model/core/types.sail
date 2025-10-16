@@ -117,25 +117,52 @@ enum InterruptType = {
   I_U_Software,
   I_S_Software,
   I_M_Software,
+  // I_VS_Software,
   I_U_Timer,
   I_S_Timer,
+  // I_VS_Timer,
   I_M_Timer,
   I_U_External,
   I_S_External,
-  I_M_External
+  // I_VS_External,
+  I_M_External,
+  // I_G_External,
 }
 
 mapping interruptType_bits : InterruptType <-> exc_code = {
   I_U_Software <-> 0b000000, // 0
   I_S_Software <-> 0b000001, // 1
+  // I_VS_Software <-> 0b00010, // 2
   I_M_Software <-> 0b000011, // 3
   I_U_Timer    <-> 0b000100, // 4
   I_S_Timer    <-> 0b000101, // 5
+  // I_VS_Timer    <-> 0b00110, // 6
   I_M_Timer    <-> 0b000111, // 7
   I_U_External <-> 0b001000, // 8
   I_S_External <-> 0b001001, // 9
+  // I_VS_External <-> 0b001010, // 10
   I_M_External <-> 0b001011, // 11
+  // I_G_External  <-> 0b001100, // 12
 }
+
+function interruptType_to_str(i : InterruptType) -> string =
+  match (i) {
+    I_U_Software  => "user-software-interrupt",
+    I_S_Software  => "supervisor-software-interrupt",
+    // I_VS_Software => "virtual-supervisor-software-interrupt",
+    I_M_Software  => "machine-software-interrupt",
+    I_U_Timer     => "user-timer-interrupt",
+    I_S_Timer     => "supervisor-timer-interrupt",
+    // I_VS_Timer    => "virtual-supervisor-timer-interrupt",
+    I_M_Timer     => "machine-timer-interrupt",
+    I_U_External  => "user-external-interrupt",
+    I_S_External  => "supervisor-external-interrupt",
+    // I_VS_External => "virtual-supervisor-external-interrupt",
+    I_M_External  => "machine-external-interrupt",
+    // I_G_External  => "guest-external-interrupt"
+  }
+
+overload to_str = {interruptType_to_str}
 
 // architectural exception definitions
 
@@ -224,6 +251,30 @@ function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
   match (c) {
     LANDING_PAD_FAULT  => zero_extend(0b010),
   }
+
+// An architectural trap can be caused by either an interrupt or an exception
+
+union TrapCause = {
+  Interrupt : InterruptType,
+  Exception : ExceptionType,
+}
+
+mapping trapCause_bits : TrapCause <-> exc_code = {
+  Interrupt(i) <-> interruptType_bits(i),
+  Exception(e) <-> exceptionType_bits(e),
+}
+
+function trapCause_is_interrupt(t : TrapCause) -> bool = match t {
+  Interrupt(_) => true,
+  Exception(_) => false,
+}
+
+function trapCause_to_str(t : TrapCause) -> string = match t {
+  Interrupt(i) => "int#" ^ interruptType_to_str(i),
+  Exception(e) => "exc#" ^ exceptionType_to_str(e),
+}
+
+overload to_str = {trapCause_to_str}
 
 // trap modes
 

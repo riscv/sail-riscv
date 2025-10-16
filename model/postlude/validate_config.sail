@@ -91,15 +91,15 @@ function check_vlen_elen() -> bool = {
 function check_vext_config() -> bool = {
   var valid : bool = true;
   // Standard Vector Extensions
-  if vector_support_config_level() >= vector_support_level(Integer) & (elen_exp : nat) < 5 then {
+  if vector_support_config_level >= vector_support_level(Integer) & (elen_exp : nat) < 5 then {
     valid = false;
     print_endline("Zve*x is enabled but ELEN is 2^" ^ dec_str(elen_exp) ^ ": ELEN must be >= 2^5");
   };
-  if vector_support_config_level() >= vector_support_level(Float_single) & not(hartSupports(Ext_F)) then {
+  if vector_support_config_level >= vector_support_level(Float_single) & not(hartSupports(Ext_F)) then {
     valid = false;
     print_endline("Zve*f is enabled but F is disabled: supporting Zve*f requires F.");
   };
-  if vector_support_config_level() >= vector_support_level(Float_double) then {
+  if vector_support_config_level >= vector_support_level(Float_double) then {
     if (elen_exp : nat) < 6 then {
       valid = false;
       print_endline("Zve*d is enabled but ELEN is 2^" ^ dec_str(elen_exp) ^ ": ELEN must be >= 2^6");
@@ -121,7 +121,7 @@ function check_vext_config() -> bool = {
     valid = false;
     print_endline("VLEN (set to 2^" ^ dec_str(vlen_exp) ^ ") is below the minimum required for Zve64x (need Zvl64b).");
   };
-  if vector_support_config_level() >= vector_support_level(Full) & not(hartSupports(Ext_Zvl128b)) then {
+  if vector_support_config_level >= vector_support_level(Full) & not(hartSupports(Ext_Zvl128b)) then {
     valid = false;
     print_endline("VLEN (set to 2^" ^ dec_str(vlen_exp) ^ ") is below the minimum required for V (need Zvl128b).");
   };

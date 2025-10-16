@@ -10,6 +10,7 @@ function clause currentlyEnabled(Ext_Zcb) = hartSupports(Ext_Zcb) & currentlyEna
 
 union clause instruction = C_LBU : (bits(2), cregidx, cregidx)
 
+$[wavedrom "FUNCT3 _ _ _ _ _ C0"]
 mapping clause encdec_compressed = C_LBU(uimm1 @ uimm0, rdc, rsc1)
   <-> 0b100 @ 0b000 @ encdec_creg(rsc1) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
   when currentlyEnabled(Ext_Zcb)
@@ -28,6 +29,7 @@ function clause execute C_LBU(uimm, rdc, rsc1) = {
 
 union clause instruction = C_LHU : (bits(2), cregidx, cregidx)
 
+$[wavedrom "FUNCT3 _ _ _ _ _ C0"]
 mapping clause encdec_compressed = C_LHU(uimm1 @ 0b0, rdc, rsc1)
   <-> 0b100 @ 0b001 @ encdec_creg(rsc1) @ 0b0 @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
   when currentlyEnabled(Ext_Zcb)
@@ -46,6 +48,7 @@ function clause execute C_LHU(uimm, rdc, rsc1) = {
 
 union clause instruction = C_LH : (bits(2), cregidx, cregidx)
 
+$[wavedrom "FUNCT3 _ _ _ _ _ C0"]
 mapping clause encdec_compressed = C_LH(uimm1 @ 0b0, rdc, rsc1)
   <-> 0b100 @ 0b001 @ encdec_creg(rsc1) @ 0b1 @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
   when currentlyEnabled(Ext_Zcb)
@@ -64,6 +67,7 @@ function clause execute C_LH(uimm, rdc, rsc1) = {
 
 union clause instruction = C_SB : (bits(2), cregidx, cregidx)
 
+$[wavedrom "FUNCT3 _ _ _ _ _ C0"]
 mapping clause encdec_compressed = C_SB(uimm1 @ uimm0, rsc1, rsc2)
   <-> 0b100 @ 0b010 @ encdec_creg(rsc1) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rsc2) @ 0b00
   when currentlyEnabled(Ext_Zcb)
@@ -82,6 +86,7 @@ function clause execute C_SB(uimm, rsc1, rsc2) = {
 
 union clause instruction = C_SH : (bits(2), cregidx, cregidx)
 
+$[wavedrom "FUNCT3 _ _ _ _ _ C0"]
 mapping clause encdec_compressed = C_SH(uimm1 @ 0b0, rsc1, rsc2)
   <-> 0b100 @ 0b011 @ encdec_creg(rsc1) @ 0b0 @ uimm1 : bits(1) @ encdec_creg(rsc2) @ 0b00
   when currentlyEnabled(Ext_Zcb)
@@ -100,6 +105,7 @@ function clause execute C_SH(uimm, rsc1, rsc2) = {
 
 union clause instruction = C_ZEXT_B : (cregidx)
 
+$[wavedrom "FUNCT3 _ SRCDST FUNCT2 C.ZEXT.B C1"]
 mapping clause encdec_compressed = C_ZEXT_B(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b000 @ 0b01
   when currentlyEnabled(Ext_Zcb)
@@ -117,6 +123,7 @@ function clause execute C_ZEXT_B(rsdc) = {
 
 union clause instruction = C_SEXT_B : (cregidx)
 
+$[wavedrom "FUNCT3 _ SRCDST FUNCT2 C.SEXT.B C1"]
 mapping clause encdec_compressed = C_SEXT_B(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b001 @ 0b01
   when currentlyEnabled(Ext_Zcb) & currentlyEnabled(Ext_Zbb)
@@ -133,6 +140,7 @@ function clause execute C_SEXT_B(rsdc) = {
 
 union clause instruction = C_ZEXT_H : (cregidx)
 
+$[wavedrom "FUNCT3 _ SRCDST FUNCT2 C.ZEXT.H C1"]
 mapping clause encdec_compressed = C_ZEXT_H(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b010 @ 0b01
   when currentlyEnabled(Ext_Zcb) & currentlyEnabled(Ext_Zbb)
@@ -149,6 +157,7 @@ function clause execute C_ZEXT_H(rsdc) = {
 
 union clause instruction = C_SEXT_H : (cregidx)
 
+$[wavedrom "FUNCT3 _ SRCDST FUNCT2 C.SEXT.H C1"]
 mapping clause encdec_compressed = C_SEXT_H(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b011 @ 0b01
   when currentlyEnabled(Ext_Zcb) & currentlyEnabled(Ext_Zbb)
@@ -165,6 +174,7 @@ function clause execute C_SEXT_H(rsdc) = {
 
 union clause instruction = C_ZEXT_W : (cregidx)
 
+$[wavedrom "FUNCT3 _ SRCDST FUNCT2 C.ZEXT.W C1"]
 mapping clause encdec_compressed = C_ZEXT_W(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b100 @ 0b01
   when currentlyEnabled(Ext_Zcb) & currentlyEnabled(Ext_Zba) & xlen == 64
@@ -181,6 +191,7 @@ function clause execute C_ZEXT_W(rsdc) = {
 
 union clause instruction = C_NOT : (cregidx)
 
+$[wavedrom "FUNCT3 _ SRCDST FUNCT2 C.NOT C1"]
 mapping clause encdec_compressed = C_NOT(rsdc)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b11 @ 0b101 @ 0b01
   when currentlyEnabled(Ext_Zcb)
@@ -198,6 +209,7 @@ function clause execute C_NOT(rsdc) = {
 
 union clause instruction = C_MUL : (cregidx, cregidx)
 
+$[wavedrom "FUNCT3 _ SRCDST FUNCT2 SRC2 C1"]
 mapping clause encdec_compressed = C_MUL(rsdc, rsc2)
   <-> 0b100 @ 0b111 @ encdec_creg(rsdc) @ 0b10 @ encdec_creg(rsc2) @ 0b01
   when currentlyEnabled(Ext_Zcb) & (currentlyEnabled(Ext_M) | currentlyEnabled(Ext_Zmmul))

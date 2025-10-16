@@ -4,11 +4,11 @@ inputs:
   cmake-version:
     description: "CMake version to install"
     required: false
-    default: latest
+    default: "4.1.2"
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
     required: false
-    default: 0.19.1
+    default: "0.20"
 
 runs:
   using: "composite"
@@ -27,24 +27,28 @@ runs:
         echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
     - name: Install CMake
-      uses: jwlawson/actions-setup-cmake@v2
-      with:
-        cmake-version: ${{ inputs.cmake-version }}
-
+      shell: bash
+      run: |
+        if [ "${{ runner.os }}" = "Linux" ]; then
+          cmake_suffix=$(arch)
+        elif [ "${{ runner.os }}" = "macOS" ]; then
+          cmake_suffix="universal"
+        fi
+        curl --location https://github.com/Kitware/CMake/releases/download/v${{ inputs.cmake-version }}/cmake-${{ inputs.cmake-version }}-${{ runner.os }}-$cmake_suffix.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
     - name: Restore cached opam (macOS or latest Sail)
       if: runner.os == 'macOS' || inputs.sail-version == 'latest'
       id: cache-opam-restore
       uses: actions/cache/restore@v4
       with:
         path: ~/.opam
-        key: ${{ runner.os }}-cmake-${{ inputs.cmake-version }}-sail-${{ inputs.sail-version }}-opam
+        key: ${{ runner.os }}-${{ runner.arch }}-cmake-${{ inputs.cmake-version }}-sail-${{ inputs.sail-version }}-opam
 
     - name: Install Sail (Linux binary)
       if: runner.os == 'Linux' && inputs.sail-version != 'latest'
       shell: bash
       run: |
         sudo mkdir -p /usr/local
-        curl --location https://github.com/rems-project/sail/releases/download/${{ inputs.sail-version }}-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+        curl --location https://github.com/rems-project/sail/releases/download/${{ inputs.sail-version }}-linux-binary/sail-$(uname)-$(arch).tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
     - name: Install Sail (macOS opam)
       if: runner.os == 'macOS' && steps.cache-opam-restore.outputs.cache-hit != 'true' && inputs.sail-version != 'latest'

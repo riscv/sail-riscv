@@ -81,8 +81,6 @@ add_custom_command(
         --memo-z3
         # Output C code.
         -c
-        # Generate a C header too.
-        --c-generate-header
         # Don't generate a main() function.
         --c-no-main
         # Extra #include's.
@@ -183,11 +181,6 @@ add_custom_command(
     VERBATIM
     COMMENT "Building HTML from Sail model"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    # Ensure the output directory exists to work around
-    # a bug in Sail 0.19.1 that got fixed in
-    # https://github.com/rems-project/sail/commit/cbd2c49b8953378685cb135306ed4a3bcde07824
-    COMMAND
-        cmake -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${model_html_out}"
     COMMAND
         ${SAIL_BIN}
         ${sail_common}

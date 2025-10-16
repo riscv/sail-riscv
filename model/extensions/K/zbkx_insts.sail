@@ -11,6 +11,7 @@ function clause currentlyEnabled(Ext_Zbkx) = hartSupports(Ext_Zbkx)
 // *****************************************************************
 union clause instruction = XPERM8 : (regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ OP"]
 mapping clause encdec = XPERM8(rs2, rs1, rd)
   <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbkx)
@@ -35,6 +36,7 @@ function clause execute XPERM8(rs2, rs1, rd) = {
 // *****************************************************************
 union clause instruction = XPERM4 : (regidx, regidx, regidx)
 
+$[wavedrom "_ _ _ _ _ OP"]
 mapping clause encdec = XPERM4(rs2, rs1, rd)
   <-> 0b0010100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbkx)

@@ -32,6 +32,7 @@ mapping clause assembly = C_NOP(imm)
 // *****************************************************************
 union clause instruction = C_ADDI4SPN : (cregidx, bits(8))
 
+$[wavedrom "C.ADDI4SPN _ _ _ _ dest C0"]
 mapping clause encdec_compressed = C_ADDI4SPN(rd, nz96 @ nz54 @ nz3 @ nz2)
   <-> 0b000 @ nz54 : bits(2) @ nz96 : bits(4) @ nz2 : bits(1) @ nz3 : bits(1) @ encdec_creg(rd) @ 0b00
   when nz96 @ nz54 @ nz3 @ nz2 != 0b00000000 & currentlyEnabled(Ext_Zca)
@@ -251,6 +252,7 @@ mapping clause assembly = C_SRAI(shamt, rsd)
 // *****************************************************************
 union clause instruction = C_ANDI : (bits(6), cregidx)
 
+$[wavedrom "C.ANDI imm[5] C.ANDI dest imm[4:0] C1"]
 mapping clause encdec_compressed = C_ANDI(i5 @ i40, rsd)
   <-> 0b100 @ i5 : bits(1) @ 0b10 @ encdec_creg(rsd) @ i40 : bits(5) @ 0b01
   when currentlyEnabled(Ext_Zca)
@@ -404,6 +406,7 @@ mapping clause assembly = C_BNEZ(imm, rs)
 union clause instruction = C_SLLI : (bits(6), regidx)
 
 // c.slli with shamt=0 or rsd=x0 are hints.
+$[wavedrom "C.SLLI shamt[5] dest!=0 shamt[4:0] C2"]
 mapping clause encdec_compressed = C_SLLI(shamt5 @ shamt40, rsd)
   <-> 0b000 @ shamt5 : bits(1) @ encdec_reg(rsd) @ shamt40 : bits(5) @ 0b10
   when (xlen == 64 | shamt5 == 0b0) & currentlyEnabled(Ext_Zca)
@@ -524,8 +527,9 @@ mapping clause assembly = C_MV(rd, rs2)
 // *****************************************************************
 union clause instruction = C_EBREAK : unit
 
+$[wavedrom "C.EBREAK 0 C2"]
 mapping clause encdec_compressed = C_EBREAK()
-  <-> 0b100 @ 0b1 @ 0b00000 @ 0b00000 @ 0b10
+  <-> 0b1001 @ 0b0000000000 @ 0b10
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_EBREAK() =

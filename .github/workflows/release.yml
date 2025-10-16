@@ -19,13 +19,21 @@ on:
         required: false
         type: boolean
 
+permissions:
+  id-token: write
+  attestations: write
+
 jobs:
   build:
     strategy:
       matrix:
         include:
-          - name: linux-amd64
+          - name: Linux-x86_64
             os: ubuntu-latest
+            container: rockylinux:8.9.20231119
+
+          - name: Linux-aarch64
+            os: ubuntu-24.04-arm
             container: rockylinux:8.9.20231119
 
           # TODO: Mac. We need a Mac binary release of the Sail compiler first.
@@ -37,7 +45,7 @@ jobs:
     container: ${{ matrix.container }}
 
     env:
-      SAIL_VERSION: "0.19.1"
+      SAIL_VERSION: "0.20"
       # This helps with reproducible builds by not embedding variable timestamps in files.
       # This is needed in particular for the Debian package's compressed changelog.
       # See the comments in `cmake/packaging.cmake`.
@@ -61,7 +69,7 @@ jobs:
               gcc-c++ \
               cmake \
               ninja-build
-          curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail.tar.gz
+          curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail-$(uname)-$(arch).tar.gz
           tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
 
       # TODO: Mac
@@ -72,14 +80,36 @@ jobs:
 
       - uses: actions/checkout@v5
 
-      - name: Build simulators, JSON and HTML
+      - name: Build simulator
         run: |
           git config --global --add safe.directory '*'
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
           cd build
-          ninja all generated_sail_riscv_docs
+          ninja all
           ctest
           cpack
+
+      - name: Build JSON and HTML
+        if: matrix.name == 'Linux-x86_64'
+        run: |
+          cd build
+          ninja generated_sail_riscv_docs
+
+      - name: "Generate attestations (Linux-x86_64)"
+        if: matrix.name == 'Linux-x86_64'
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            build/sail-riscv-*
+            build/model/sail_riscv_model.json
+            build/model/sail_riscv_html.tgz
+
+      - name: "Generate attestations (Linux-aarch64)"
+        if: matrix.name == 'Linux-aarch64'
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            build/sail-riscv-*
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -104,9 +134,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-linux-amd64/sail-riscv-Linux-x86_64.tar.gz
-            release-linux-amd64/model/sail_riscv_model.json
-            release-linux-amd64/model/sail_riscv_html.tgz
+            release-Linux-x86_64/sail-riscv-Linux-x86_64.tar.gz
+            release-Linux-aarch64/sail-riscv-Linux-aarch64.tar.gz
+            release-Linux-x86_64/model/sail_riscv_model.json
+            release-Linux-x86_64/model/sail_riscv_html.tgz
           fail_on_unmatched_files: true
           tag_name: ${{ inputs.version }}
           body: ${{ inputs.notes }}

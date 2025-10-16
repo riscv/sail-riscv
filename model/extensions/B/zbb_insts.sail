@@ -12,6 +12,7 @@ function clause currentlyEnabled(Ext_Zbkb) = hartSupports(Ext_Zbkb)
 // *****************************************************************
 union clause instruction = RORIW : (bits(5), regidx, regidx)
 
+$[wavedrom "RORIW _ _ RORIW _ OP-IMM-32"]
 mapping clause encdec = RORIW(shamt, rs1, rd)
   <-> 0b0110000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0011011
   when (currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)) & xlen == 64
@@ -27,6 +28,7 @@ function clause execute RORIW(shamt, rs1, rd) = {
 // *****************************************************************
 union clause instruction = RORI : (bits(6), regidx, regidx)
 
+$[wavedrom "RORI _ _ RORI _ OP-IMM"]
 mapping clause encdec = RORI(shamt, rs1, rd)
   <-> 0b011000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
   when (currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)) & (xlen == 64 | shamt[5] == bitzero)
@@ -43,10 +45,12 @@ function clause execute RORI(shamt, rs1, rd) = {
 // *****************************************************************
 union clause instruction = ZBB_RTYPEW : (regidx, regidx, regidx, bropw_zbb)
 
+$[wavedrom "ROLW _ _ ROLW _ OP-32"]
 mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, ROLW)
   <-> 0b0110000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0111011
   when (currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)) & xlen == 64
 
+$[wavedrom "RORW _ _ RORW _ OP-32"]
 mapping clause encdec = ZBB_RTYPEW(rs2, rs1, rd, RORW)
   <-> 0b0110000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0111011
   when (currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)) & xlen == 64
@@ -74,38 +78,47 @@ function clause execute ZBB_RTYPEW(rs2, rs1, rd, op) = {
 // *****************************************************************
 union clause instruction = ZBB_RTYPE : (regidx, regidx, regidx, brop_zbb)
 
+$[wavedrom "ANDN _ _ ANDN _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, ANDN)
   <-> 0b0100000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)
 
+$[wavedrom "ORN _ _ ORN _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, ORN)
   <-> 0b0100000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)
 
+$[wavedrom "XNOR _ _ XNOR _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, XNOR)
   <-> 0b0100000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)
 
+$[wavedrom "MINMAX/CLMUL _ _ MAX _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, MAX)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb)
 
+$[wavedrom "MINMAX/CLMUL _ _ MAXU _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, MAXU)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb)
 
+$[wavedrom "MINMAX/CLMUL _ _ MIN _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, MIN)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb)
 
+$[wavedrom "MINMAX/CLMUL _ _ MINU _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, MINU)
   <-> 0b0000101 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb)
 
+$[wavedrom "ROL _ _ ROL _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, ROL)
   <-> 0b0110000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)
 
+$[wavedrom "ROR _ _ ROR _ OP"]
 mapping clause encdec = ZBB_RTYPE(rs2, rs1, rd, ROR)
   <-> 0b0110000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)
@@ -147,18 +160,22 @@ function clause execute ZBB_RTYPE(rs2, rs1, rd, op) = {
 // *****************************************************************
 union clause instruction = ZBB_EXTOP : (regidx, regidx, extop_zbb)
 
+$[wavedrom "_ SEXT.B _ SEXT.B/SEXT.H _ OP-IMM"]
 mapping clause encdec = ZBB_EXTOP(rs1, rd, SEXTB)
   <-> 0b0110000 @ 0b00100 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbb)
 
+$[wavedrom "_ SEXT.H _ SEXT.B/SEXT.H _ OP-IMM"]
 mapping clause encdec = ZBB_EXTOP(rs1, rd, SEXTH)
   <-> 0b0110000 @ 0b00101 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbb)
 
+$[wavedrom "_ _ _ ZEXT.H _ OP"]
 mapping clause encdec = ZBB_EXTOP(rs1, rd, ZEXTH)
   <-> 0b0000100 @ 0b00000 @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_Zbb) & xlen == 32
 
+$[wavedrom "_ _ _ ZEXT.H _ OP-32"]
 mapping clause encdec = ZBB_EXTOP(rs1, rd, ZEXTH)
   <-> 0b0000100 @ 0b00000 @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0111011
   when currentlyEnabled(Ext_Zbb) & xlen == 64
@@ -187,6 +204,7 @@ function clause execute ZBB_EXTOP(rs1, rd, op) = {
 // *****************************************************************
 union clause instruction = REV8 : (regidx, regidx)
 
+$[wavedrom "_ _ _ _ OP-IMM"]
 mapping clause encdec = REV8(rs1, rd)
   <-> 0b011010011000 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
   when (currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)) & xlen == 32
@@ -206,6 +224,7 @@ function clause execute REV8(rs1, rd) = {
 // *****************************************************************
 union clause instruction = ORCB : (regidx, regidx)
 
+$[wavedrom "_ _ _ _ OP-IMM"]
 mapping clause encdec = ORCB(rs1, rd)
   <-> 0b001010000111 @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbb)
@@ -227,8 +246,9 @@ function clause execute ORCB(rs1, rd) = {
 // *****************************************************************
 union clause instruction = CPOP : (regidx, regidx)
 
+$[wavedrom "CPOP CPOP _ CPOP _ OP-IMM"]
 mapping clause encdec = CPOP(rs1, rd)
-  <-> 0b011000000010 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
+  <-> 0b0110000 @ 0b00010 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbb)
 
 mapping clause assembly = CPOP(rs1, rd)
@@ -242,8 +262,9 @@ function clause execute CPOP(rs1, rd) = {
 // *****************************************************************
 union clause instruction = CPOPW : (regidx, regidx)
 
+$[wavedrom "CPOPW CPOPW _ CPOPW _ OP-IMM-32"]
 mapping clause encdec = CPOPW(rs1, rd)
-  <-> 0b011000000010 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
+  <-> 0b0110000 @ 0b00010 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
   when currentlyEnabled(Ext_Zbb) & xlen == 64
 
 mapping clause assembly = CPOPW(rs1, rd)
@@ -257,8 +278,9 @@ function clause execute CPOPW(rs1, rd) = {
 // *****************************************************************
 union clause instruction = CLZ : (regidx, regidx)
 
+$[wavedrom "CLZ CLZ _ CLZ _ OP-IMM"]
 mapping clause encdec = CLZ(rs1, rd)
-  <-> 0b011000000000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
+  <-> 0b0110000 @ 0b00000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbb)
 
 mapping clause assembly = CLZ(rs1, rd)
@@ -272,8 +294,9 @@ function clause execute CLZ(rs1, rd) = {
 // *****************************************************************
 union clause instruction = CLZW : (regidx, regidx)
 
+$[wavedrom "CLZW CLZW _ CLZW _ OP-IMM-32"]
 mapping clause encdec = CLZW(rs1, rd)
-  <-> 0b011000000000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
+  <-> 0b0110000 @ 0b00000 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
   when currentlyEnabled(Ext_Zbb) & xlen == 64
 
 mapping clause assembly = CLZW(rs1, rd)
@@ -287,8 +310,9 @@ function clause execute CLZW(rs1, rd) = {
 // *****************************************************************
 union clause instruction = CTZ : (regidx, regidx)
 
+$[wavedrom "CTZ/CTZW CTZ/CTZW _ CTZ/CTZW _ OP-IMM"]
 mapping clause encdec = CTZ(rs1, rd)
-  <-> 0b011000000001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
+  <-> 0b0110000 @ 0b00001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
   when currentlyEnabled(Ext_Zbb)
 
 mapping clause assembly = CTZ(rs1, rd)
@@ -302,8 +326,9 @@ function clause execute CTZ(rs1, rd) = {
 // *****************************************************************
 union clause instruction = CTZW : (regidx, regidx)
 
+$[wavedrom "CTZ/CTZW CTZ/CTZW _ CTZ/CTZW _ OP-IMM-32"]
 mapping clause encdec = CTZW(rs1, rd)
-  <-> 0b011000000001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
+  <-> 0b0110000 @ 0b00001 @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0011011
   when currentlyEnabled(Ext_Zbb) & xlen == 64
 
 mapping clause assembly = CTZW(rs1, rd)

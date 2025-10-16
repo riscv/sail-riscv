@@ -12,6 +12,7 @@ function clause currentlyEnabled(Ext_Zfbfmin) = hartSupports(Ext_Zfbfmin) & curr
 
 union clause instruction = FCVT_BF16_S : (fregidx, rounding_mode, fregidx)
 
+$[wavedrom "fcvt h bf16.s _ _ _ OP-FP"]
 mapping clause encdec = FCVT_BF16_S(rs1, rm, rd)
   <-> 0b01000 @ 0b10 @ 0b01000 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011
   when currentlyEnabled(Ext_Zfbfmin)
@@ -36,6 +37,7 @@ mapping clause assembly = FCVT_BF16_S(rs1, rm, rd)
 
 union clause instruction = FCVT_S_BF16 : (fregidx, rounding_mode, fregidx)
 
+$[wavedrom "fcvt s bf16.s _ _ _ OP-FP"]
 mapping clause encdec = FCVT_S_BF16(rs1, rm, rd)
   <-> 0b01000 @ 0b00 @ 0b00110 @ encdec_freg(rs1) @ encdec_rounding_mode(rm) @ encdec_freg(rd) @ 0b1010011
   when currentlyEnabled(Ext_Zfbfmin)

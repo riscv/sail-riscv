@@ -10,8 +10,9 @@ function clause currentlyEnabled(Ext_Zvksed) = hartSupports(Ext_Zvksed) & curren
 
 union clause instruction = VSM4K_VI : (vregidx, bits(5), vregidx)
 
+$[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VSM4K_VI(vs2, uimm, vd)
-  <-> 0b1000011 @ encdec_vreg(vs2) @ uimm @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  <-> 0b100001 @ 0b1 @ encdec_vreg(vs2) @ uimm @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
 function clause execute VSM4K_VI(vs2, uimm, vd) = {
@@ -63,12 +64,14 @@ mapping clause assembly = VSM4K_VI(vs2, uimm, vd)
 
 union clause instruction = ZVKSM4RTYPE : (zvk_vsm4r_funct6, vregidx, vregidx)
 
+$[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4R_VV, vs2, vd)
-  <-> 0b1010001 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  <-> 0b101000 @ 0b1 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
+$[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4R_VS, vs2, vd)
-  <-> 0b1010011 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
+  <-> 0b101001 @ 0b1 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
   when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
 
 function clause execute ZVKSM4RTYPE(funct6, vs2, vd) = {

@@ -152,20 +152,24 @@ function track_trap(p : Privilege) -> unit = {
 }
 
 // handle exceptional ctl flow by updating nextPC and operating privilege
-function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
+function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
   trap_callback();
+
   if   get_config_print_platform()
-  then print_log("handling " ^ (if intr then "int#" else "exc#")
-                      ^ bits_str(c) ^ " at priv " ^ to_str(del_priv)
+  then print_log("handling " ^ to_str(c)
+                      ^ " at priv " ^ to_str(del_priv)
                       ^ " with tval " ^ bits_str(tval(info)));
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
+  let is_interrupt = bool_to_bits(trapCause_is_interrupt(c));
+  let cause        = zero_extend(xlen - 1, trapCause_bits(c));
+
   match (del_priv) {
     Machine => {
-      mcause[IsInterrupt] = bool_to_bits(intr);
-      mcause[Cause]       = zero_extend(c);
+      mcause[IsInterrupt] = is_interrupt;
+      mcause[Cause]       = cause;
 
       mstatus[MPIE] = mstatus[MIE];
       mstatus[MIE]  = 0b0;
@@ -184,8 +188,8 @@ function trap_handler(del_priv : Privilege, intr : bool, c : exc_code, pc : xlen
     Supervisor => {
       assert (currentlyEnabled(Ext_S), "no supervisor mode present for delegation");
 
-      scause[IsInterrupt] = bool_to_bits(intr);
-      scause[Cause]       = zero_extend(c);
+      scause[IsInterrupt] = is_interrupt;
+      scause[Cause]       = cause;
 
       mstatus[SPIE] = mstatus[SIE];
       mstatus[SIE]  = 0b0;
@@ -221,7 +225,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
-      trap_handler(del_priv, false, exceptionType_bits(e.trap), pc, e.excinfo, e.ext)
+      trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext)
     },
     CTL_MRET()  => {
       let prev_priv = cur_privilege;
@@ -288,7 +292,7 @@ function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
 }
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, true, interruptType_bits(i), PC, None(), None()))
+  set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None()))
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
