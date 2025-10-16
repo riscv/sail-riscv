@@ -40,14 +40,10 @@ mapping encdec_vvfunct6 : vvfunct6 <-> bits(6) = {
   VV_VSSRA         <-> 0b101011
 }
 
-// vsmul.vx is not included in EEW=64 in Zve64*.
 mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_vvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when
-    match funct6 {
-      VV_VSMUL => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64x) & get_sew() <= 64),
-      _ => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
-    }
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64 & valid_wide_vvtype(funct6))
 
 function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW_pow  = get_sew_pow();
@@ -433,14 +429,10 @@ mapping encdec_vxfunct6 : vxfunct6 <-> bits(6) = {
   VX_VSSRA      <-> 0b101011
 }
 
-// vsmul.vx is not included in EEW=64 in Zve64*.
 mapping clause encdec = VXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_vxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when
-    match funct6 {
-      VX_VSMUL => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64x) & get_sew() <= 64),
-      _ => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
-    }
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64 & valid_wide_vxtype(funct6))
 
 function clause execute VXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
@@ -1341,16 +1333,10 @@ mapping encdec_mvvfunct6 : mvvfunct6 <-> bits(6) = {
   MVV_VREM        <-> 0b100011
 }
 
-// vmulh.vv, vmulhu.vv and vmulhsu.vv are not included for EEW=64 in Zve64*.
 mapping clause encdec = MVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_mvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when
-    match funct6 {
-      MVV_VMULH   => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64x) & get_sew() <= 64),
-      MVV_VMULHU  => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64x) & get_sew() <= 64),
-      MVV_VMULHSU => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64x) & get_sew() <= 64),
-      _ => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
-    }
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64 & valid_wide_mvvtype(funct6))
 
 function clause execute MVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -1926,13 +1912,8 @@ mapping encdec_mvxfunct6 : mvxfunct6 <-> bits(6) = {
 // vmulh.vx, vmulhu.vx and vmulhsu.vx are not included for EEW=64 in Zve64*.
 mapping clause encdec = MVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_mvxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
-  when
-    match funct6 {
-      MVX_VMULH   => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64x) & get_sew() <= 64),
-      MVX_VMULHU  => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64x) & get_sew() <= 64),
-      MVX_VMULHSU => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b) & currentlyEnabled(Ext_Zve64x) & get_sew() <= 64),
-      _ => (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
-    }
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64 & valid_wide_mvxtype(funct6))
 
 function clause execute MVXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
