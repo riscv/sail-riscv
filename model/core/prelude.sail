@@ -102,6 +102,12 @@ mapping bool_bits : bool <-> bits(1) = {
   false  <-> 0b0,
 }
 
+// Useful for some proofs where you want to assert that exactly one bool is true.
+mapping bool_int : bool <-> {0, 1} = {
+  false <-> 0,
+  true <-> 1,
+}
+
 // These aliases make the conversion direction a bit clearer.
 function bool_to_bit(x : bool) -> bit = bool_bit(x)
 function bit_to_bool(x : bit) -> bool = bool_bit(x)

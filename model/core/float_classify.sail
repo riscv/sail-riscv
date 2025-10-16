@@ -20,9 +20,6 @@ mapping float_class_onehot_bits : float_class <-> bits(10) = {
   float_class_qnan               <-> 0b1000000000,
 }
 
-// Helper function for proofs.
-function bool_int(b : bool) -> {0, 1} = if b then 1 else 0
-
 // Prove that the float is in one broad class.
 $[property]
 function float_in_one_broad_class(f : bits(16)) -> bool =
