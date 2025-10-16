@@ -14,8 +14,8 @@
 // 1. Valid element width of floating-point numbers
 // 2. Valid floating-point rounding mode
 function valid_fp_op(SEW : sew_bitsize, rm_3b : bits(3)) -> bool = {
-  /* SEW=8 is valid for conversions between INT8 and FP16(vfncvt[.rtz].x[u].f.w, etc.)
-     128-bit floating-point values will be supported in future extensions */
+  // SEW=8 is valid for conversions between INT8 and FP16(vfncvt[.rtz].x[u].f.w, etc.)
+  // 128-bit floating-point values will be supported in future extensions.
   let valid_sew = (SEW >= 8 & SEW <= 128);
   let valid_rm = not(rm_3b == 0b101 | rm_3b == 0b110 | rm_3b == 0b111);
   valid_sew & valid_rm
