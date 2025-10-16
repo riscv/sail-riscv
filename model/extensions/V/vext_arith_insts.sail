@@ -181,7 +181,8 @@ mapping encdec_nvsfunct6 : nvsfunct6 <-> bits(6) = {
 
 mapping clause encdec = NVSTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_nvsfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute NVSTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -252,7 +253,8 @@ mapping encdec_nvfunct6 : nvfunct6 <-> bits(6) = {
 
 mapping clause encdec = NVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_nvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute NVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -318,7 +320,8 @@ union clause instruction = MASKTYPEV : (vregidx, vregidx, vregidx)
 
 mapping clause encdec = MASKTYPEV (vs2, vs1,  vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MASKTYPEV(vs2, vs1, vd) = {
   let start_element : nat = match get_start_element() {
@@ -370,7 +373,8 @@ union clause instruction = MOVETYPEV : (vregidx, vregidx)
 
 mapping clause encdec = MOVETYPEV (vs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MOVETYPEV(vs1, vd) = {
   let SEW      = get_sew();
@@ -551,7 +555,8 @@ mapping encdec_nxsfunct6 : nxsfunct6 <-> bits(6) = {
 
 mapping clause encdec = NXSTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_nxsfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute NXSTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
@@ -622,7 +627,8 @@ mapping encdec_nxfunct6 : nxfunct6 <-> bits(6) = {
 
 mapping clause encdec = NXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_nxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute NXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
@@ -695,7 +701,8 @@ mapping encdec_vxsgfunct6 : vxsgfunct6 <-> bits(6) = {
 
 mapping clause encdec = VXSG(funct6, vm, vs2, rs1, vd)
   <-> encdec_vxsgfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VXSG(funct6, vm, vs2, rs1, vd) = {
   let SEW_pow  = get_sew_pow();
@@ -762,7 +769,8 @@ union clause instruction = MASKTYPEX : (vregidx, regidx, vregidx)
 
 mapping clause encdec = MASKTYPEX(vs2, rs1, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MASKTYPEX(vs2, rs1, vd) = {
   let start_element : nat = match get_start_element() {
@@ -814,7 +822,8 @@ union clause instruction = MOVETYPEX : (regidx, vregidx)
 
 mapping clause encdec = MOVETYPEX (rs1, vd)
   <-> 0b010111 @ 0b1 @ 0b00000 @ encdec_reg(rs1) @ 0b100 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MOVETYPEX(rs1, vd) = {
   let SEW      = get_sew();
@@ -867,7 +876,8 @@ mapping encdec_vifunct6 : vifunct6 <-> bits(6) = {
 
 mapping clause encdec = VITYPE(funct6, vm, vs2, simm, vd)
   <-> encdec_vifunct6(funct6) @ vm @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VITYPE(funct6, vm, vs2, simm, vd) = {
   let SEW      = get_sew();
@@ -962,7 +972,8 @@ mapping encdec_nisfunct6 : nisfunct6 <-> bits(6) = {
 
 mapping clause encdec = NISTYPE(funct6, vm, vs2, uimm, vd)
   <-> encdec_nisfunct6(funct6) @ vm @ encdec_vreg(vs2) @ uimm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute NISTYPE(funct6, vm, vs2, uimm, vd) = {
   let SEW      = get_sew();
@@ -1033,7 +1044,8 @@ mapping encdec_nifunct6 : nifunct6 <-> bits(6) = {
 
 mapping clause encdec = NITYPE(funct6, vm, vs2, uimm, vd)
   <-> encdec_nifunct6(funct6) @ vm @ encdec_vreg(vs2) @ uimm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute NITYPE(funct6, vm, vs2, uimm, vd) = {
   let SEW      = get_sew();
@@ -1106,7 +1118,8 @@ mapping encdec_visgfunct6 : visgfunct6 <-> bits(6) = {
 
 mapping clause encdec = VISG(funct6, vm, vs2, simm, vd)
   <-> encdec_visgfunct6(funct6) @ vm @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VISG(funct6, vm, vs2, simm, vd) = {
   let SEW_pow  = get_sew_pow();
@@ -1173,7 +1186,8 @@ union clause instruction = MASKTYPEI : (vregidx, bits(5), vregidx)
 
 mapping clause encdec = MASKTYPEI(vs2, simm, vd)
   <-> 0b010111 @ 0b0 @ encdec_vreg(vs2) @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MASKTYPEI(vs2, simm, vd) = {
   let start_element : nat = match get_start_element() {
@@ -1225,7 +1239,8 @@ union clause instruction = MOVETYPEI : (vregidx, bits(5))
 
 mapping clause encdec = MOVETYPEI (vd, simm)
   <-> 0b010111 @ 0b1 @ 0b00000 @ simm @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MOVETYPEI(vd, simm) = {
   let SEW      = get_sew();
@@ -1276,7 +1291,8 @@ mapping encdec_nreg : bits(5) <-> {1, 2, 4, 8} = {
 
 mapping clause encdec = VMVRTYPE(vs2, nreg, vd)
   <-> 0b100111 @ 0b1 @ encdec_vreg(vs2) @ encdec_nreg(nreg) @ 0b011 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VMVRTYPE(vs2, nreg, vd) = {
   let start_element : nat = match get_start_element() {
@@ -1456,7 +1472,8 @@ mapping encdec_mvvmafunct6 : mvvmafunct6 <-> bits(6) = {
 
 mapping clause encdec = MVVMATYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_mvvmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MVVMATYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -1519,7 +1536,8 @@ mapping encdec_wvvfunct6 : wvvfunct6 <-> bits(6) = {
 
 mapping clause encdec = WVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_wvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute WVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -1594,7 +1612,8 @@ mapping encdec_wvfunct6 : wvfunct6 <-> bits(6) = {
 
 mapping clause encdec = WVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_wvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute WVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -1662,7 +1681,8 @@ mapping encdec_wmvvfunct6 : wmvvfunct6 <-> bits(6) = {
 
 mapping clause encdec =  WMVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_wmvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute WMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -1732,7 +1752,8 @@ mapping vext_vs1 : vextfunct6 <-> bits(5) = {
 
 mapping clause encdec = VEXTTYPE(funct6, vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ vext_vs1(funct6) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VEXTTYPE(funct6, vm, vs2, vd) = {
   let SEW = get_sew();
@@ -1804,7 +1825,8 @@ union clause instruction = VMVXS : (vregidx, regidx)
 
 mapping clause encdec = VMVXS(vs2, rd)
   <-> 0b010000 @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b010 @ encdec_reg(rd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VMVXS(vs2, rd) = {
   let SEW      = get_sew();
@@ -1833,7 +1855,8 @@ union clause instruction = MVVCOMPRESS : (vregidx, vregidx, vregidx)
 
 mapping clause encdec = MVVCOMPRESS(vs2, vs1, vd)
   <-> 0b010111 @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MVVCOMPRESS(vs2, vs1, vd) = {
   let start_element : nat = match get_start_element() {
@@ -2044,7 +2067,8 @@ mapping encdec_mvxmafunct6 : mvxmafunct6 <-> bits(6) = {
 
 mapping clause encdec = MVXMATYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_mvxmafunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute MVXMATYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
@@ -2108,7 +2132,8 @@ mapping encdec_wvxfunct6 : wvxfunct6 <-> bits(6) = {
 
 mapping clause encdec = WVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_wvxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute WVXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
@@ -2182,7 +2207,8 @@ mapping encdec_wxfunct6 : wxfunct6 <-> bits(6) = {
 
 mapping clause encdec = WXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_wxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute WXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
@@ -2250,7 +2276,8 @@ mapping encdec_wmvxfunct6 : wmvxfunct6 <-> bits(6) = {
 
 mapping clause encdec = WMVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_wmvxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 16)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 32)
 
 function clause execute WMVXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
@@ -2311,7 +2338,8 @@ union clause instruction = VMVSX : (regidx, vregidx)
 
 mapping clause encdec = VMVSX(rs1, vd)
   <-> 0b010000 @ 0b1 @ 0b00000 @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
+  when (currentlyEnabled(Ext_Zve32x) & get_sew() <= 32)
+     | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VMVSX(rs1, vd) = {
   let SEW      = get_sew();

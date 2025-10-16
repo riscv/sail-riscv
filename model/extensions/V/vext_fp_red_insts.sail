@@ -23,7 +23,9 @@ mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
 
 mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
+  when (currentlyEnabled(Ext_Zvfh)   & get_sew() == 16)
+     | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32)
+     | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -90,7 +92,8 @@ mapping encdec_rfwvvfunct6 : rfwvvfunct6 <-> bits(6) = {
 
 mapping clause encdec = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_rfwvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+  when (currentlyEnabled(Ext_Zvfh)   & get_sew() == 16)
+     | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
 function clause execute RFWVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
