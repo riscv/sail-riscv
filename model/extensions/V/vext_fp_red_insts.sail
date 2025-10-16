@@ -18,7 +18,7 @@ mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
   FVV_VFREDOSUM   <-> 0b000011,
   FVV_VFREDUSUM   <-> 0b000001,
   FVV_VFREDMAX    <-> 0b000111,
-  FVV_VFREDMIN    <-> 0b000101
+  FVV_VFREDMIN    <-> 0b000101,
 }
 
 mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
@@ -59,7 +59,7 @@ function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
         FVV_VFREDOSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDUSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDMAX    => fp_max(sum, vs2_val[i]),
-        FVV_VFREDMIN    => fp_min(sum, vs2_val[i])
+        FVV_VFREDMIN    => fp_min(sum, vs2_val[i]),
       }
     }
   };
@@ -75,7 +75,7 @@ mapping rfvvtype_mnemonic : rfvvfunct6 <-> string = {
   FVV_VFREDOSUM   <-> "vfredosum.vs",
   FVV_VFREDUSUM   <-> "vfredusum.vs",
   FVV_VFREDMAX    <-> "vfredmax.vs",
-  FVV_VFREDMIN    <-> "vfredmin.vs"
+  FVV_VFREDMIN    <-> "vfredmin.vs",
 }
 
 mapping clause assembly = RFVVTYPE(funct6, vm, vs2, vs1, vd)
@@ -87,7 +87,7 @@ union clause instruction = RFWVVTYPE : (rfwvvfunct6, bits(1), vregidx, vregidx, 
 
 mapping encdec_rfwvvfunct6 : rfwvvfunct6 <-> bits(6) = {
   FVV_VFWREDOSUM  <-> 0b110011,
-  FVV_VFWREDUSUM  <-> 0b110001
+  FVV_VFWREDUSUM  <-> 0b110001,
 }
 
 mapping clause encdec = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
@@ -99,8 +99,8 @@ function clause execute RFWVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
-  let rm_3b          = fcsr[FRM];
-  let SEW_widen      = SEW * 2;
+  let rm_3b       = fcsr[FRM];
+  let SEW_widen   = SEW * 2;
 
   if illegal_fp_widening_reduction(SEW, rm_3b, SEW_widen) then return Illegal_Instruction();
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -139,7 +139,7 @@ function clause execute RFWVVTYPE(funct6, vm, vs2, vs1, vd) = {
 
 mapping rfwvvtype_mnemonic : rfwvvfunct6 <-> string = {
   FVV_VFWREDOSUM  <-> "vfwredosum.vs",
-  FVV_VFWREDUSUM  <-> "vfwredusum.vs"
+  FVV_VFWREDUSUM  <-> "vfwredusum.vs",
 }
 
 mapping clause assembly = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
