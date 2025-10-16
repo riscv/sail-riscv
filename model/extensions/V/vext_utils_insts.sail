@@ -103,6 +103,37 @@ function valid_wide_mvxtype(mvxtype : mvxfunct6) -> bool =
     _           => true,
   }
 
+// Check vector floating-point conversions.
+function valid_widening_fp_conversion(cvt : vfwunary0) -> bool =
+  match cvt {
+    FWV_CVT_F_F  => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16)
+                  | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    FWV_CVT_F_XU => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 8)
+                  | (currentlyEnabled(Ext_Zve32f)  & get_sew() == 16)
+                  | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    FWV_CVT_F_X  => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 8)
+                  | (currentlyEnabled(Ext_Zve32f)  & get_sew() == 16)
+                  | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    _            => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 16)
+                  | (currentlyEnabled(Ext_Zve64f)  & get_sew() == 32)
+  }
+
+function valid_narrowing_fp_conversion(cvt : vfnunary0) -> bool =
+  match cvt {
+    FNV_CVT_F_F     => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    FNV_CVT_ROD_F_F => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    FNV_CVT_F_XU    => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64f)  & get_sew() == 32),
+    FNV_CVT_F_X     => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64f)  & get_sew() == 32),
+    _               => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 8)
+                     | (currentlyEnabled(Ext_Zve32f)  & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+  }
+
 // ******************************************************************************
 // The following functions summarize patterns of illegal instruction check.
 // ******************************************************************************

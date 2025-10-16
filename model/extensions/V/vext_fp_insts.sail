@@ -495,13 +495,7 @@ mapping encdec_vfwunary0_vs1 : vfwunary0 <-> bits(5) = {
 
 mapping clause encdec = VFWUNARY0(vm, vs2, vfwunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfwunary0_vs1(vfwunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when
-    match vfwunary0 {
-      FWV_CVT_F_F  => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
-      FWV_CVT_F_XU => (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
-      FWV_CVT_F_X  => (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
-      _ => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32)
-    }
+  when valid_widening_fp_conversion(vfwunary0)
 
 function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
   let rm_3b    = fcsr[FRM];
@@ -634,14 +628,7 @@ mapping encdec_vfnunary0_vs1 : vfnunary0 <-> bits(5) = {
 
 mapping clause encdec = VFNUNARY0(vm, vs2, vfnunary0, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ encdec_vfnunary0_vs1(vfnunary0) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when
-    match vfnunary0 {
-      FNV_CVT_F_F     => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
-      FNV_CVT_ROD_F_F => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32),
-      FNV_CVT_F_XU    => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32),
-      FNV_CVT_F_X     => (currentlyEnabled(Ext_Zvfh) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64f) & get_sew() == 32),
-      _ => (currentlyEnabled(Ext_Zvfh) & get_sew() == 8) | (currentlyEnabled(Ext_Zve32f) & get_sew() == 16) | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
-    }
+  when valid_narrowing_fp_conversion(vfnunary0)
 
 function clause execute VFNUNARY0(vm, vs2, vfnunary0, vd) = {
   let rm_3b    = fcsr[FRM];
