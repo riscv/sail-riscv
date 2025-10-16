@@ -75,14 +75,12 @@ function valid_segment(nf : nfields, EMUL_pow : int) -> bool = {
 /// "VSMUL.VX and VSMUL.VV are not included in EEW=64 in Zve64*."
 function valid_wide_vvtype(vvtype : vvfunct6) -> bool =
   match vvtype {
-    VV_VSMUL => hartSupports(Ext_V) & (misa[V] == 0b1)
-                & currentlyEnabled(Ext_Zvl128b),
+    VV_VSMUL => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
     _        => true,
   }
 function valid_wide_vxtype(vxtype : vxfunct6) -> bool =
   match vxtype {
-    VX_VSMUL => hartSupports(Ext_V) & (misa[V] == 0b1)
-                & currentlyEnabled(Ext_Zvl128b),
+    VX_VSMUL => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
     _        => true,
   }
 
@@ -130,7 +128,7 @@ function valid_narrowing_fp_conversion(cvt : vfnunary0) -> bool =
                      | (currentlyEnabled(Ext_Zve64f)  & get_sew() == 32),
     _               => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 8)
                      | (currentlyEnabled(Ext_Zve32f)  & get_sew() == 16)
-                     | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+                     | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32)
 
   }
 
