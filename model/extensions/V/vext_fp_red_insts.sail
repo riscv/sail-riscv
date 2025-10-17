@@ -65,7 +65,7 @@ function process_rfvv_single(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, v
   write_single_element(SEW, 0, vd, sum);
   // other elements in vd are treated as tail elements, currently remain unchanged
   // TODO: configuration support for agnostic behavior
-  set_vstart(zeros());
+  // illegal_fp_reduction checks vstart == 0, and raises illegal-instruction otherwise.
   RETIRE_SUCCESS
 }
 
@@ -104,7 +104,7 @@ function process_rfvv_widening_reduction(funct6 : rfvvfunct6, vm : bits(1), vs2 
   write_single_element(SEW_widen, 0, vd, sum);
   // other elements in vd are treated as tail elements, currently remain unchanged
   // TODO: configuration support for agnostic behavior
-  set_vstart(zeros());
+  // illegal_fp_widening_reduction checks vstart == 0, and raises illegal-instruction otherwise.
   RETIRE_SUCCESS
 }
 
