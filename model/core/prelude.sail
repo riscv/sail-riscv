@@ -18,6 +18,7 @@ $include <generic_equality.sail>
 $include <hex_bits.sail>
 $include <hex_bits_signed.sail>
 $include <dec_bits.sail>
+$include <float/interface.sail>
 
 function not_bit(b : bit) -> bit = if b == bitone then bitzero else bitone
 
