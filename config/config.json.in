@@ -182,6 +182,9 @@
     "Zicboz": {
       "supported": true
     },
+    // This extension just asserts that the cache block size is 64 bytes.
+    // If you enable this you also need to ensure platform.cache_block_size_exp
+    // is 6, otherwise you will get a config validation error.
     "Zic64b": {
       "supported": true
     },

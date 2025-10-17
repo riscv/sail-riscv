@@ -1,3 +1,9 @@
+# Release notes for the next version
+
+- The following extensions have been added:
+
+  - Zic64b
+
 # Release notes for version 0.9
 
 - Support for the RV32E and RV64E base ISAs has been added. These
