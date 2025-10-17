@@ -351,6 +351,7 @@ mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> "vss" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
 // ************************ Vector Load Indexed Unordered Normal & Segment (mop=0b01) *************************
+// Note: Zve64* extensions do not support EEW=64 for index values when XLEN=32.
 union clause instruction = VLUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
@@ -415,6 +416,7 @@ mapping clause assembly = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> "vlux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 // ************************* Vector Load Indexed Ordered Normal & Segment (mop=0b11) **************************
+// Note: Zve64* extensions do not support EEW=64 for index values when XLEN=32.
 union clause instruction = VLOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
@@ -443,6 +445,7 @@ mapping clause assembly = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   <-> "vlox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 // *********************** Vector Store Indexed Unordered Normal & Segment (mop=0b01) *************************
+// Note: Zve64* extensions do not support EEW=64 for index values when XLEN=32.
 union clause instruction = VSUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
@@ -504,6 +507,7 @@ mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   <-> "vsux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 // ************************ Vector Store Indexed Ordered Normal & Segment (mop=0b11) **************************
+// Note: Zve64* extensions do not support EEW=64 for index values when XLEN=32.
 union clause instruction = VSOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
