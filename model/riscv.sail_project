@@ -5,6 +5,7 @@ core {
   files
     core/prelude.sail,
     core/errors.sail,
+    core/spec_version.sail,
     core/xlen.sail,
     core/flen.sail,
     core/vlen.sail,
