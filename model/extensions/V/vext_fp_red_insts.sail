@@ -11,7 +11,7 @@
 // Chapter 14: Vector Reduction Instructions
 // ******************************************************************************
 
-// ********************* OPFVV (Floating-Point Reduction) ***********************
+// ********************* OPFVV (Single-Width Floating-Point Reduction) ***********************
 union clause instruction = RFVVTYPE : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
@@ -19,15 +19,18 @@ mapping encdec_rfvvfunct6 : rfvvfunct6 <-> bits(6) = {
   FVV_VFREDUSUM   <-> 0b000001,
   FVV_VFREDMAX    <-> 0b000111,
   FVV_VFREDMIN    <-> 0b000101,
-  FVV_VFWREDOSUM  <-> 0b110011,
-  FVV_VFWREDUSUM  <-> 0b110001
 }
 
 mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zve32x)
+  when (currentlyEnabled(Ext_Zvfh)   & get_sew() == 16)
+     | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32)
+     | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
-function process_rfvv_single(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, vs1 : vregidx, vd : vregidx, num_elem_vs : nat1, SEW : sew_bitsize, LMUL_pow : range(-3, 3)) -> ExecutionResult = {
+function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let rm_3b = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
 
@@ -57,7 +60,6 @@ function process_rfvv_single(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, v
         FVV_VFREDUSUM   => fp_add(rm_3b, sum, vs2_val[i]),
         FVV_VFREDMAX    => fp_max(sum, vs2_val[i]),
         FVV_VFREDMIN    => fp_min(sum, vs2_val[i]),
-        _               => internal_error(__FILE__, __LINE__, "Widening op unexpected")
       }
     }
   };
@@ -69,9 +71,36 @@ function process_rfvv_single(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, v
   RETIRE_SUCCESS
 }
 
-function process_rfvv_widening_reduction(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, vs1 : vregidx, vd : vregidx, num_elem_vs : nat1, SEW : sew_bitsize, LMUL_pow : range(-3, 3)) -> ExecutionResult = {
-  let rm_3b          = fcsr[FRM];
-  let SEW_widen      = SEW * 2;
+mapping rfvvtype_mnemonic : rfvvfunct6 <-> string = {
+  FVV_VFREDOSUM   <-> "vfredosum.vs",
+  FVV_VFREDUSUM   <-> "vfredusum.vs",
+  FVV_VFREDMAX    <-> "vfredmax.vs",
+  FVV_VFREDMIN    <-> "vfredmin.vs",
+}
+
+mapping clause assembly = RFVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> rfvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+
+// ********************* OPFVV (Widening Floating-Point Reduction) ***********************
+
+union clause instruction = RFWVVTYPE : (rfwvvfunct6, bits(1), vregidx, vregidx, vregidx)
+
+mapping encdec_rfwvvfunct6 : rfwvvfunct6 <-> bits(6) = {
+  FVV_VFWREDOSUM  <-> 0b110011,
+  FVV_VFWREDUSUM  <-> 0b110001,
+}
+
+mapping clause encdec = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_rfwvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
+  when (currentlyEnabled(Ext_Zvfh)   & get_sew() == 16)
+     | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
+
+function clause execute RFWVVTYPE(funct6, vm, vs2, vs1, vd) = {
+  let SEW      = get_sew();
+  let LMUL_pow = get_lmul_pow();
+  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
+  let rm_3b       = fcsr[FRM];
+  let SEW_widen   = SEW * 2;
 
   if illegal_fp_widening_reduction(SEW, rm_3b, SEW_widen) then return Illegal_Instruction();
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -108,25 +137,10 @@ function process_rfvv_widening_reduction(funct6 : rfvvfunct6, vm : bits(1), vs2 
   RETIRE_SUCCESS
 }
 
-function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
-  let SEW      = get_sew();
-  let LMUL_pow = get_lmul_pow();
-  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
-
-  if funct6 == FVV_VFWREDOSUM | funct6 == FVV_VFWREDUSUM then
-    process_rfvv_widening_reduction(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow)
-  else
-    process_rfvv_single(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow)
-}
-
-mapping rfvvtype_mnemonic : rfvvfunct6 <-> string = {
-  FVV_VFREDOSUM   <-> "vfredosum.vs",
-  FVV_VFREDUSUM   <-> "vfredusum.vs",
-  FVV_VFREDMAX    <-> "vfredmax.vs",
-  FVV_VFREDMIN    <-> "vfredmin.vs",
+mapping rfwvvtype_mnemonic : rfwvvfunct6 <-> string = {
   FVV_VFWREDOSUM  <-> "vfwredosum.vs",
-  FVV_VFWREDUSUM  <-> "vfwredusum.vs"
+  FVV_VFWREDUSUM  <-> "vfwredusum.vs",
 }
 
-mapping clause assembly = RFVVTYPE(funct6, vm, vs2, vs1, vd)
-  <-> rfvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+mapping clause assembly = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> rfwvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)

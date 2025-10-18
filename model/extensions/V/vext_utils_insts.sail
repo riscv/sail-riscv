@@ -72,6 +72,66 @@ function valid_segment(nf : nfields, EMUL_pow : int) -> bool = {
   else nf * 2 ^ EMUL_pow <= 8
 }
 
+/// "VSMUL.VX and VSMUL.VV are not included in EEW=64 in Zve64*."
+function valid_wide_vvtype(vvtype : vvfunct6) -> bool =
+  match vvtype {
+    VV_VSMUL => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
+    _        => true,
+  }
+function valid_wide_vxtype(vxtype : vxfunct6) -> bool =
+  match vxtype {
+    VX_VSMUL => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
+    _        => true,
+  }
+
+/// The vmulh integer multiply variants that return the high word of the product (vmulh.vv, vmulh.vx, vmulhu.vv, vmulhu.vx,
+/// vmulhsu.vv, vmulhsu.vx) are not included for EEW=64 in Zve64*.
+function valid_wide_mvvtype(mvvtype : mvvfunct6) -> bool =
+  match mvvtype {
+    MVV_VMULH   => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
+    MVV_VMULHU  => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
+    MVV_VMULHSU => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
+    _           => true,
+  }
+function valid_wide_mvxtype(mvxtype : mvxfunct6) -> bool =
+  match mvxtype {
+    MVX_VMULH   => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
+    MVX_VMULHU  => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
+    MVX_VMULHSU => hartSupports(Ext_V) & (misa[V] == 0b1) & currentlyEnabled(Ext_Zvl128b),
+    _           => true,
+  }
+
+// Check vector floating-point conversions.
+function valid_widening_fp_conversion(cvt : vfwunary0) -> bool =
+  match cvt {
+    FWV_CVT_F_F  => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16)
+                  | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    FWV_CVT_F_XU => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 8)
+                  | (currentlyEnabled(Ext_Zve32f)  & get_sew() == 16)
+                  | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    FWV_CVT_F_X  => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 8)
+                  | (currentlyEnabled(Ext_Zve32f)  & get_sew() == 16)
+                  | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    _            => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 16)
+                  | (currentlyEnabled(Ext_Zve64f)  & get_sew() == 32)
+  }
+
+function valid_narrowing_fp_conversion(cvt : vfnunary0) -> bool =
+  match cvt {
+    FNV_CVT_F_F     => (currentlyEnabled(Ext_Zvfhmin) & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    FNV_CVT_ROD_F_F => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32),
+    FNV_CVT_F_XU    => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64f)  & get_sew() == 32),
+    FNV_CVT_F_X     => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64f)  & get_sew() == 32),
+    _               => (currentlyEnabled(Ext_Zvfh)    & get_sew() == 8)
+                     | (currentlyEnabled(Ext_Zve32f)  & get_sew() == 16)
+                     | (currentlyEnabled(Ext_Zve64d)  & get_sew() == 32)
+
+  }
+
 // ******************************************************************************
 // The following functions summarize patterns of illegal instruction check.
 // ******************************************************************************
