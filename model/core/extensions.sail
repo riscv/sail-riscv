@@ -72,6 +72,11 @@ enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
 function clause hartSupports(Ext_H) = false
 
+// Cache block size is 64 bytes
+enum clause extension = Ext_Zic64b
+mapping clause extensionName = Ext_Zic64b <-> "zic64b"
+function clause hartSupports(Ext_Zic64b) = config extensions.Zic64b.supported
+function clause currentlyEnabled(Ext_Zic64b) = hartSupports(Ext_Zic64b)
 // Cache-Block Management Instructions
 enum clause extension = Ext_Zicbom
 mapping clause extensionName = Ext_Zicbom <-> "zicbom"

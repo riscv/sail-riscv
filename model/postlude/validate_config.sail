@@ -230,6 +230,16 @@ function check_misc_extension_dependencies() -> bool = {
   valid
 }
 
+function check_extension_param_constraints() -> bool = {
+  var valid : bool = true;
+  if hartSupports(Ext_Zic64b) & (plat_cache_block_size_exp != 6)
+  then {
+    valid = false;
+    print_endline("The Zic64b extension is enabled but the cache block size is not 64 bytes.");
+  };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -238,4 +248,5 @@ function config_is_valid() -> bool = {
   & check_vext_config()
   & check_pmp()
   & check_misc_extension_dependencies()
+  & check_extension_param_constraints()
 }
