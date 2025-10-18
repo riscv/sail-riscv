@@ -18,6 +18,7 @@ $include <generic_equality.sail>
 $include <hex_bits.sail>
 $include <hex_bits_signed.sail>
 $include <dec_bits.sail>
+$include <float/interface.sail>
 
 function not_bit(b : bit) -> bit = if b == bitone then bitzero else bitone
 
@@ -99,6 +100,12 @@ mapping bool_bit : bool <-> bit = {
 mapping bool_bits : bool <-> bits(1) = {
   true   <-> 0b1,
   false  <-> 0b0,
+}
+
+// Useful for some proofs where you want to assert that exactly one bool is true.
+mapping bool_int : bool <-> {0, 1} = {
+  false <-> 0,
+  true <-> 1,
 }
 
 // These aliases make the conversion direction a bit clearer.

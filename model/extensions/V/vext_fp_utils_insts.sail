@@ -364,24 +364,6 @@ function fp_nmulsub(rm_3b, op1, op2, opsub) = {
   result_val
 }
 
-val fp_class : forall 'm, 'm in {16, 32, 64}. bits('m) -> bits('m)
-function fp_class(xf) = {
-  let result_val_10b : bits(10) =
-    if      f_is_neg_inf(xf)     then 0b_00_0000_0001
-    else if f_is_neg_norm(xf)    then 0b_00_0000_0010
-    else if f_is_neg_subnorm(xf) then 0b_00_0000_0100
-    else if f_is_neg_zero(xf)    then 0b_00_0000_1000
-    else if f_is_pos_zero(xf)    then 0b_00_0001_0000
-    else if f_is_pos_subnorm(xf) then 0b_00_0010_0000
-    else if f_is_pos_norm(xf)    then 0b_00_0100_0000
-    else if f_is_pos_inf(xf)     then 0b_00_1000_0000
-    else if f_is_SNaN(xf)        then 0b_01_0000_0000
-    else if f_is_QNaN(xf)        then 0b_10_0000_0000
-    else zeros();
-
-  zero_extend(result_val_10b)
-}
-
 val fp_widen : forall 'm, 'm in {16, 32}. bits('m) -> bits('m * 2)
 function fp_widen(nval) = {
   let rm_3b = fcsr[FRM];
@@ -479,47 +461,48 @@ function rsqrt7 (v, sub) = {
 }
 
 function riscv_f16Rsqrte7(rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = {
-  match fp_class(v) {
-    0x0001 => (nvFlag(), 0x7e00),
-    0x0002 => (nvFlag(), 0x7e00),
-    0x0004 => (nvFlag(), 0x7e00),
-    0x0100 => (nvFlag(), 0x7e00),
-    0x0200 => (zeros(5), 0x7e00),
-    0x0008 => (dzFlag(), 0xfc00),
-    0x0010 => (dzFlag(), 0x7c00),
-    0x0080 => (zeros(5), 0x0000),
-    0x0020 => (zeros(5), rsqrt7(v, true)[15 .. 0]),
-    _      => (zeros(5), rsqrt7(v, false)[15 .. 0])
+  // TODO: Replace magic numbers here with `canonical_NaN()` etc.
+  match float_classify(v) {
+    float_class_negative_inf       => (nvFlag(), 0x7e00),
+    float_class_negative_normal    => (nvFlag(), 0x7e00),
+    float_class_negative_subnormal => (nvFlag(), 0x7e00),
+    float_class_snan               => (nvFlag(), 0x7e00),
+    float_class_qnan               => (zeros(5), 0x7e00),
+    float_class_negative_zero      => (dzFlag(), 0xfc00),
+    float_class_positive_zero      => (dzFlag(), 0x7c00),
+    float_class_positive_inf       => (zeros(5), 0x0000),
+    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)[15 .. 0]),
+    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)[15 .. 0])
   }
 }
 
 function riscv_f32Rsqrte7(rm : bits_rm, v : bits_S) -> (bits_fflags, bits_S) = {
-  match fp_class(v)[15 .. 0] {
-    0x0001 => (nvFlag(), 0x7fc00000),
-    0x0002 => (nvFlag(), 0x7fc00000),
-    0x0004 => (nvFlag(), 0x7fc00000),
-    0x0100 => (nvFlag(), 0x7fc00000),
-    0x0200 => (zeros(5), 0x7fc00000),
-    0x0008 => (dzFlag(), 0xff800000),
-    0x0010 => (dzFlag(), 0x7f800000),
-    0x0080 => (zeros(5), 0x00000000),
-    0x0020 => (zeros(5), rsqrt7(v, true)[31 .. 0]),
-    _      => (zeros(5), rsqrt7(v, false)[31 .. 0])
+  match float_classify(v) {
+    float_class_negative_inf       => (nvFlag(), 0x7fc00000),
+    float_class_negative_normal    => (nvFlag(), 0x7fc00000),
+    float_class_negative_subnormal => (nvFlag(), 0x7fc00000),
+    float_class_snan               => (nvFlag(), 0x7fc00000),
+    float_class_qnan               => (zeros(5), 0x7fc00000),
+    float_class_negative_zero      => (dzFlag(), 0xff800000),
+    float_class_positive_zero      => (dzFlag(), 0x7f800000),
+    float_class_positive_inf       => (zeros(5), 0x00000000),
+    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)[31 .. 0]),
+    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)[31 .. 0])
   }
 }
 
 function riscv_f64Rsqrte7(rm : bits_rm, v : bits_D) -> (bits_fflags, bits_D) = {
-  match fp_class(v)[15 .. 0] {
-    0x0001 => (nvFlag(), 0x7ff8000000000000),
-    0x0002 => (nvFlag(), 0x7ff8000000000000),
-    0x0004 => (nvFlag(), 0x7ff8000000000000),
-    0x0100 => (nvFlag(), 0x7ff8000000000000),
-    0x0200 => (zeros(5), 0x7ff8000000000000),
-    0x0008 => (dzFlag(), 0xfff0000000000000),
-    0x0010 => (dzFlag(), 0x7ff0000000000000),
-    0x0080 => (zeros(5), zeros(64)),
-    0x0020 => (zeros(5), rsqrt7(v, true)[63 .. 0]),
-    _      => (zeros(5), rsqrt7(v, false)[63 .. 0])
+  match float_classify(v) {
+    float_class_negative_inf       => (nvFlag(), 0x7ff8000000000000),
+    float_class_negative_normal    => (nvFlag(), 0x7ff8000000000000),
+    float_class_negative_subnormal => (nvFlag(), 0x7ff8000000000000),
+    float_class_snan               => (nvFlag(), 0x7ff8000000000000),
+    float_class_qnan               => (zeros(5), 0x7ff8000000000000),
+    float_class_negative_zero      => (dzFlag(), 0xfff0000000000000),
+    float_class_positive_zero      => (dzFlag(), 0x7ff0000000000000),
+    float_class_positive_inf       => (zeros(5), zeros(64)),
+    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)[63 .. 0]),
+    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)[63 .. 0])
   }
 }
 
@@ -584,47 +567,47 @@ function recip7 (v, rm_3b, sub) = {
 function riscv_f16Recip7(rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = {
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
-  match fp_class(v) {
-    0x0001 => (zeros(5), 0x8000),
-    0x0080 => (zeros(5), 0x0000),
-    0x0008 => (dzFlag(), 0xfc00),
-    0x0010 => (dzFlag(), 0x7c00),
-    0x0100 => (nvFlag(), 0x7e00),
-    0x0200 => (zeros(5), 0x7e00),
-    0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
-    0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
-    _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[15 .. 0]) else (zeros(5), res_false[15 .. 0])
+  match float_classify(v) {
+    float_class_negative_inf       => (zeros(5), 0x8000),
+    float_class_positive_inf       => (zeros(5), 0x0000),
+    float_class_negative_zero      => (dzFlag(), 0xfc00),
+    float_class_positive_zero      => (dzFlag(), 0x7c00),
+    float_class_snan               => (nvFlag(), 0x7e00),
+    float_class_qnan               => (zeros(5), 0x7e00),
+    float_class_negative_subnormal => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
+    float_class_positive_subnormal => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[15 .. 0]) else (zeros(5), res_true[15 .. 0]),
+    _                              => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[15 .. 0]) else (zeros(5), res_false[15 .. 0])
   }
 }
 
 function riscv_f32Recip7(rm : bits_rm, v : bits_S) -> (bits_fflags, bits_S) = {
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
-  match fp_class(v)[15 .. 0] {
-    0x0001 => (zeros(5), 0x80000000),
-    0x0080 => (zeros(5), 0x00000000),
-    0x0008 => (dzFlag(), 0xff800000),
-    0x0010 => (dzFlag(), 0x7f800000),
-    0x0100 => (nvFlag(), 0x7fc00000),
-    0x0200 => (zeros(5), 0x7fc00000),
-    0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
-    0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
-    _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[31 .. 0]) else (zeros(5), res_false[31 .. 0])
+  match float_classify(v) {
+    float_class_negative_inf       => (zeros(5), 0x80000000),
+    float_class_positive_inf       => (zeros(5), 0x00000000),
+    float_class_negative_zero      => (dzFlag(), 0xff800000),
+    float_class_positive_zero      => (dzFlag(), 0x7f800000),
+    float_class_snan               => (nvFlag(), 0x7fc00000),
+    float_class_qnan               => (zeros(5), 0x7fc00000),
+    float_class_negative_subnormal => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
+    float_class_positive_subnormal => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[31 .. 0]) else (zeros(5), res_true[31 .. 0]),
+    _                              => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[31 .. 0]) else (zeros(5), res_false[31 .. 0])
   }
 }
 
 function riscv_f64Recip7(rm : bits_rm, v : bits_D) ->  (bits_fflags, bits_D) = {
   let (round_abnormal_true, res_true) = recip7(v, rm, true);
   let (round_abnormal_false, res_false) = recip7(v, rm, false);
-  match fp_class(v)[15 .. 0] {
-    0x0001 => (zeros(5), 0x8000000000000000),
-    0x0080 => (zeros(5), 0x0000000000000000),
-    0x0008 => (dzFlag(), 0xfff0000000000000),
-    0x0010 => (dzFlag(), 0x7ff0000000000000),
-    0x0100 => (nvFlag(), 0x7ff8000000000000),
-    0x0200 => (zeros(5), 0x7ff8000000000000),
-    0x0004 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
-    0x0020 => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
-    _      => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[63 .. 0]) else (zeros(5), res_false[63 .. 0])
+  match float_classify(v) {
+    float_class_negative_inf       => (zeros(5), 0x8000000000000000),
+    float_class_positive_inf       => (zeros(5), 0x0000000000000000),
+    float_class_negative_zero      => (dzFlag(), 0xfff0000000000000),
+    float_class_positive_zero      => (dzFlag(), 0x7ff0000000000000),
+    float_class_snan               => (nvFlag(), 0x7ff8000000000000),
+    float_class_qnan               => (zeros(5), 0x7ff8000000000000),
+    float_class_negative_subnormal => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
+    float_class_positive_subnormal => if round_abnormal_true then (nxFlag() | ofFlag(), res_true[63 .. 0]) else (zeros(5), res_true[63 .. 0]),
+    _                              => if round_abnormal_false then (nxFlag() | ofFlag(), res_false[63 .. 0]) else (zeros(5), res_false[63 .. 0])
   }
 }
