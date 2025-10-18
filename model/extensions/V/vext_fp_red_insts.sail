@@ -27,7 +27,7 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_rfvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32x)
 
-function process_rfvv_single(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, vs1 : vregidx, vd : vregidx, num_elem_vs : nat1, SEW : sew_bitsize, LMUL_pow : range(-3, 3)) -> ExecutionResult = {
+function process_rfvv_single(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, vs1 : vregidx, vd : vregidx, num_elem_vs : range(1, vlen), SEW : sew_bitsize, LMUL_pow : LMUL_pow) -> ExecutionResult = {
   let rm_3b = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
 
@@ -69,7 +69,7 @@ function process_rfvv_single(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, v
   RETIRE_SUCCESS
 }
 
-function process_rfvv_widening_reduction(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, vs1 : vregidx, vd : vregidx, num_elem_vs : nat1, SEW : sew_bitsize, LMUL_pow : range(-3, 3)) -> ExecutionResult = {
+function process_rfvv_widening_reduction(funct6 : rfvvfunct6, vm : bits(1), vs2 : vregidx, vs1 : vregidx, vd : vregidx, num_elem_vs : range(1, vlen), SEW : sew_bitsize, LMUL_pow : LMUL_pow) -> ExecutionResult = {
   let rm_3b          = fcsr[FRM];
   let SEW_widen      = SEW * 2;
 
