@@ -6,6 +6,10 @@ function(string_upper_initial s result)
     set("${result}" "${new}" PARENT_SCOPE)
 endfunction()
 
+if (NOT DEFINED SAIL_MODULES)
+  set(SAIL_MODULES "--all-modules")
+endif()
+
 # Common Sail flags for all commands.
 set(sail_common
     # Don't allow implicit var declaration (like Python). This is
@@ -436,7 +440,7 @@ foreach (xlen IN ITEMS 32 64)
             ${sail_common}
             ${lean_sail_common}
             ${lean_sail_default}
-            --all-modules
+            ${SAIL_MODULES}
             --variable "TERMINATION_FILE = true"
             ${project_file}
     )
@@ -455,7 +459,7 @@ foreach (xlen IN ITEMS 32 64)
             ${sail_common}
             ${lean_sail_common}
             ${lean_sail_executable}
-            --all-modules
+            ${SAIL_MODULES}
             --variable "TERMINATION_FILE = true"
             ${project_file}
     )
