@@ -1398,10 +1398,10 @@ function clause execute MVVTYPE(funct6, vm, vs2, vs1, vd) = {
                           let rounding_incr = get_fixed_rounding_incr(result_sub, 1);
                           (result_sub >> 1)['m - 1 .. 0] + zero_extend('m, rounding_incr)
                         },
-        MVV_VMUL     => get_slice_int(SEW, signed(vs2_val[i]) * signed(vs1_val[i]), 0),
-        MVV_VMULH    => get_slice_int(SEW, signed(vs2_val[i]) * signed(vs1_val[i]), SEW),
-        MVV_VMULHU   => get_slice_int(SEW, unsigned(vs2_val[i]) * unsigned(vs1_val[i]), SEW),
-        MVV_VMULHSU  => get_slice_int(SEW, signed(vs2_val[i]) * unsigned(vs1_val[i]), SEW),
+        MVV_VMUL     => mult_to_bits_half(SEW, Signed, Signed, vs2_val[i], vs1_val[i], Low),
+        MVV_VMULH    => mult_to_bits_half(SEW, Signed, Signed, vs2_val[i], vs1_val[i], High),
+        MVV_VMULHU   => mult_to_bits_half(SEW, Unsigned, Unsigned, vs2_val[i], vs1_val[i], High),
+        MVV_VMULHSU  => mult_to_bits_half(SEW, Signed, Unsigned, vs2_val[i], vs1_val[i], High),
         MVV_VDIVU    => {
                           let divisor = unsigned(vs1_val[i]);
                           let dividend = unsigned(vs2_val[i]);
@@ -1499,10 +1499,10 @@ function clause execute MVVMATYPE(funct6, vm, vs2, vs1, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        MVV_VMACC  => get_slice_int(SEW, signed(vs1_val[i]) * signed(vs2_val[i]), 0) + vd_val[i],
-        MVV_VNMSAC => vd_val[i] - get_slice_int(SEW, signed(vs1_val[i]) * signed(vs2_val[i]), 0),
-        MVV_VMADD  => get_slice_int(SEW, signed(vs1_val[i]) * signed(vd_val[i]), 0) + vs2_val[i],
-        MVV_VNMSUB => vs2_val[i] - get_slice_int(SEW, signed(vs1_val[i]) * signed(vd_val[i]), 0)
+        MVV_VMACC  => mult_to_bits_half(SEW, Signed, Signed, vs1_val[i], vs2_val[i], Low) + vd_val[i],
+        MVV_VNMSAC => vd_val[i] - mult_to_bits_half(SEW, Signed, Signed, vs1_val[i], vs2_val[i], Low),
+        MVV_VMADD  => mult_to_bits_half(SEW, Signed, Signed, vs1_val[i], vd_val[i], Low) + vs2_val[i],
+        MVV_VNMSUB => vs2_val[i] - mult_to_bits_half(SEW, Signed, Signed, vs1_val[i], vd_val[i], Low),
       }
     }
   };
@@ -1991,10 +1991,10 @@ function clause execute MVXTYPE(funct6, vm, vs2, rs1, vd) = {
                               assert(last_elem < num_elem);
                               if i < last_elem then vs2_val[i + 1] else rs1_val
                             },
-        MVX_VMUL         => get_slice_int(SEW, signed(vs2_val[i]) * signed(rs1_val), 0),
-        MVX_VMULH        => get_slice_int(SEW, signed(vs2_val[i]) * signed(rs1_val), SEW),
-        MVX_VMULHU       => get_slice_int(SEW, unsigned(vs2_val[i]) * unsigned(rs1_val), SEW),
-        MVX_VMULHSU      => get_slice_int(SEW, signed(vs2_val[i]) * unsigned(rs1_val), SEW),
+        MVX_VMUL         => mult_to_bits_half(SEW, Signed, Signed, vs2_val[i], rs1_val, Low),
+        MVX_VMULH        => mult_to_bits_half(SEW, Signed, Signed, vs2_val[i], rs1_val, High),
+        MVX_VMULHU       => mult_to_bits_half(SEW, Unsigned, Unsigned, vs2_val[i], rs1_val, High),
+        MVX_VMULHSU      => mult_to_bits_half(SEW, Signed, Unsigned, vs2_val[i], rs1_val, High),
         MVX_VDIVU        => {
                               let divisor = unsigned(rs1_val);
                               let dividend = unsigned(vs2_val[i]);
@@ -2094,10 +2094,10 @@ function clause execute MVXMATYPE(funct6, vm, vs2, rs1, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        MVX_VMACC  => get_slice_int(SEW, signed(rs1_val) * signed(vs2_val[i]), 0) + vd_val[i],
-        MVX_VNMSAC => vd_val[i] - get_slice_int(SEW, signed(rs1_val) * signed(vs2_val[i]), 0),
-        MVX_VMADD  => get_slice_int(SEW, signed(rs1_val) * signed(vd_val[i]), 0) + vs2_val[i],
-        MVX_VNMSUB => vs2_val[i] - get_slice_int(SEW, signed(rs1_val) * signed(vd_val[i]), 0)
+        MVX_VMACC  => mult_to_bits_half(SEW, Signed, Signed, rs1_val, vs2_val[i], Low) + vd_val[i],
+        MVX_VNMSAC => vd_val[i] - mult_to_bits_half(SEW, Signed, Signed, rs1_val, vs2_val[i], Low),
+        MVX_VMADD  => mult_to_bits_half(SEW, Signed, Signed, rs1_val, vd_val[i], Low) + vs2_val[i],
+        MVX_VNMSUB => vs2_val[i] - mult_to_bits_half(SEW, Signed, Signed, rs1_val, vd_val[i], Low)
       }
     }
   };
