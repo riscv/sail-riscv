@@ -46,44 +46,31 @@ function is_aligned_vaddr(Virtaddr(addr) : virtaddr, width : nat1) -> bool =
 
 overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr}
 
-function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> option(read_kind) =
+function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> read_kind =
   match (aq, rl, res) {
-    (false, false, false) => Some(Read_plain),
-    (true, false, false)  => Some(Read_RISCV_acquire),
-    (true, true, false)   => Some(Read_RISCV_strong_acquire),
-    (false, false, true)  => Some(Read_RISCV_reserved),
-    (true, false, true)   => Some(Read_RISCV_reserved_acquire),
-    (true, true, true)    => Some(Read_RISCV_reserved_strong_acquire),
-    (false, true, false)  => None(), // should these be instead throwing error_not_implemented as below?
-    (false, true, true)   => None()
+    (false, false, false) => Read_plain,
+    (true, false, false)  => internal_error(__FILE__, __LINE__, "Load with acquire semantics should be unreachable"),
+    (true, true, false)   => internal_error(__FILE__, __LINE__, "Load with acquire-release semantics should be unreachable"),
+    (false, false, true)  => Read_RISCV_reserved,
+    (true, false, true)   => Read_RISCV_reserved_acquire,
+    (true, true, true)    => Read_RISCV_reserved_strong_acquire,
+    // This is never called with rl=true and aq=false.
+    (false, true, false)  => internal_error(__FILE__, __LINE__, "Load with release semantics should be unreachable"),
+    (false, true, true)   => internal_error(__FILE__, __LINE__, "Load-reserved with release semantics should be unreachable"),
   }
 
 function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
   match (aq, rl, con) {
     (false, false, false) => Write_plain,
-    (false, true,  false) => Write_RISCV_release,
+    (false, true,  false) => internal_error(__FILE__, __LINE__, "Store with release semantics should be unreachable"),
     (false, false, true)  => Write_RISCV_conditional,
     (false, true , true)  => Write_RISCV_conditional_release,
-    (true,  true,  false) => Write_RISCV_strong_release,
+    (true,  true,  false) => internal_error(__FILE__, __LINE__, "Store with aquire-release semantics should be unreachable"),
     (true,  true , true)  => Write_RISCV_conditional_strong_release,
-    // throw an illegal instruction here?
-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
-    (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
+    // This is never called with aq=true and rl=false.
+    (true,  false, false) => internal_error(__FILE__, __LINE__, "Store with acquire semantics should be unreachable"),
+    (true,  false, true)  => internal_error(__FILE__, __LINE__, "Store-conditional with acquire semantics should be unreachable"),
   }
-
-// only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext_access_type), paddr : physaddr, width : int('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
-  let result = (match read_kind_of_flags(aq, rl, res) {
-    Some(rk) => Some(read_ram(rk, paddr, width, meta)),
-    None()   => None()
-  }) : option((bits(8 * 'n), mem_meta));
-  match (t, result) {
-    (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
-    (Read(Data), None()) => Err(E_Load_Access_Fault()),
-    (_,          None()) => Err(E_SAMO_Access_Fault()),
-    (_,      Some(v, m)) => Ok(v, m),
-  }
-}
 
 function accessFaultFromAccessType(accTy : AccessType(ext_access_type)) -> ExceptionType =
   match accTy {
@@ -190,7 +177,10 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
     None() => {
       if   within_mmio_readable(paddr, width)
       then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
-      else phys_mem_read(t, paddr, width, aq, rl, res, meta)
+      else {
+        let rk = read_kind_of_flags(aq, rl, res);
+        Ok(read_ram(rk, paddr, width, meta))
+      }
     }
   }
 
@@ -235,10 +225,6 @@ function mem_write_ea (addr, width, aq, rl, con) =
   then Err(E_SAMO_Addr_Align())
   else Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
 
-// only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) =
-  Ok(write_ram(wk, paddr, width, data, meta))
-
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   paddr : physaddr,
@@ -258,7 +244,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
       then mmio_write(paddr, width, data)
       else {
         let wk = write_kind_of_flags(aq, rl, con);
-        phys_mem_write(wk, paddr, width, data, meta)
+        Ok(write_ram(wk, paddr, width, data, meta))
       }
     }
   }
