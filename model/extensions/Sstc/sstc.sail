@@ -14,12 +14,14 @@ function sstc_CSRs_accessible(priv : Privilege) -> bool =
     priv == Machine | (priv == Supervisor & mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1)
 
 function clause is_CSR_accessible(0x14D, priv, _) =
-    currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) &
-    sstc_CSRs_accessible(priv)
+    if currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) then
+        if sstc_CSRs_accessible(priv) then CSRAccessSuccess else CSRAccessIllegal
+    else CSRNotExist
 
 function clause is_CSR_accessible(0x15D, priv, _) =
-    currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) & xlen == 32 &
-    sstc_CSRs_accessible(priv)
+    if currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) & xlen == 32 then
+        if sstc_CSRs_accessible(priv) then CSRAccessSuccess else CSRAccessIllegal
+    else CSRNotExist
 
 function clause read_CSR(0x14D) = stimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x15D if xlen == 32) = stimecmp[63 .. 32]
