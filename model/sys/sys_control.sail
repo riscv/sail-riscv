@@ -26,10 +26,10 @@ function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
 function check_CSR_access(csr : csreg, isWrite : bool) -> bool =
   not(isWrite & (csrAccess(csr) == 0b11))
 
-function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> CSRAccessResult =
-  if check_CSR_priv(csr, p) & check_CSR_access(csr, isWrite)
+function check_CSR(csr : csreg, p : Privilege, ac : CSRAccessType) -> CSRAccessResult =
+  if check_CSR_priv(csr, p) & check_CSR_access(csr, ac == CSRWrite)
   then CSRAccessIllegal
-  else is_CSR_accessible(csr, p, isWrite)
+  else is_CSR_accessible(csr, p, ac)
 
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.
