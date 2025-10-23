@@ -15,8 +15,6 @@ core {
     core/range_util.sail,
     core/float_classify.sail,
     core/rvfi_dii.sail,
-    core/rvfi_dii_v1.sail,
-    core/rvfi_dii_v2.sail,
     core/extensions.sail,
     core/types_common.sail,
     core/types_ext.sail,

@@ -243,9 +243,8 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       if retired & minstret_increment then minstret = minstret + 1;
 
       // Record the next PC for RVFI.
-      // TODO: Remove this and implement it in C.
       if get_config_rvfi() then {
-        rvfi_pc_data[rvfi_pc_wdata] = zero_extend(get_arch_pc())
+        rvfi_set_pc_data_wdata(zero_extend(get_arch_pc()))
       };
 
       // For step extensions

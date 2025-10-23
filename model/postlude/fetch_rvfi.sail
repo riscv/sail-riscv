@@ -7,10 +7,10 @@
 // =======================================================================================
 
 function rvfi_fetch() -> FetchResult = {
-  rvfi_inst_data[rvfi_order] = minstret;
-  rvfi_pc_data[rvfi_pc_rdata] = zero_extend(get_arch_pc());
-  rvfi_inst_data[rvfi_mode] = zero_extend(privLevel_to_bits(cur_privilege));
-  rvfi_inst_data[rvfi_ixl] = zero_extend(misa[MXL]);
+  rvfi_set_pc_data_rdata(zero_extend(get_arch_pc()));
+  rvfi_set_inst_data_order(minstret);
+  rvfi_set_inst_data_mode(zero_extend(privLevel_to_bits(cur_privilege)));
+  rvfi_set_inst_data_ixl(zero_extend(misa[MXL]));
 
   // First allow extensions to check pc
   match ext_fetch_check_pc(PC, PC) {
@@ -27,8 +27,8 @@ function rvfi_fetch() -> FetchResult = {
     Ok(_, _)  => (),
   };
 
-  let i = rvfi_instruction[rvfi_insn];
-  rvfi_inst_data[rvfi_insn]   = zero_extend(i);
+  let i = rvfi_get_insn();
+  rvfi_set_inst_data_insn(zero_extend(i));
   if   (i[1 .. 0] != 0b11)
   then return F_RVC(i[15 .. 0]);
 
