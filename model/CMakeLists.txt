@@ -364,7 +364,6 @@ foreach (xlen IN ITEMS 32 64)
             --dcoq-undef-axioms
             --coq
             --coq-lib riscv_extras
-            --coq-lib mem_metadata
             --coq-output-dir "${CMAKE_BINARY_DIR}/rocq"
             # The prefix of the output files.
             -o "${arch}"

@@ -21,13 +21,6 @@ Definition shift_bits_right {a b} (v : mword a) (n : mword b) : mword a :=
 Definition shift_bits_right_arith {a b} (v : mword a) (n : mword b) : mword a :=
   arith_shiftr v (int_of_mword false n).
 
-(* Use constants for undefined values for now *)
-Definition internal_pick {rv a e} (vs : list a) : monad rv a e :=
-match vs with
-| (h::_) => returnm h
-| _ => Fail "empty list in internal_pick"
-end.
-
 (*val get_time_ns : unit -> integer*)
 Definition get_time_ns (_:unit) : Z := 0.
 (*declare ocaml target_rep function get_time_ns := `(fun () -> Big_int.of_int (int_of_float (1e9 *. Unix.gettimeofday ())))`*)

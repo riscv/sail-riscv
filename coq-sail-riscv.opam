@@ -8,7 +8,7 @@ bug-reports: "https://github.com/riscv/sail-riscv/issues"
 license: "BSD-2-Clause"
 dev-repo: "git+https://github.com/riscv/sail-riscv.git"
 build: [
-  ["cmake" "-S" "." "-B" "build" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "-DDOWNLOAD_GMP=FALSE"]
+  ["cmake" "-S" "." "-B" "build" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "-DDOWNLOAD_GMP=FALSE" "-DFETCHCONTENT_FULLY_DISCONNECTED=ON"]
   ["cmake" "--build" "build" "--target" "build_rocq_rv64d" "build_rocq_rv32d"]
 ]
 install: [
@@ -17,6 +17,17 @@ install: [
 ]
 depends: [
   "sail" {>= "0.20"}
+  "sail_c_backend" {>= "0.20"}
+  "sail_coq_backend" {>= "0.20"}
+  "sail_doc_backend" {>= "0.20"}
+  "sail_latex_backend" {>= "0.20"}
+  "sail_lean_backend" {>= "0.20"}
+  "sail_lem_backend" {>= "0.20"}
+  "sail_smt_backend" {>= "0.20"}
+  "sail_sv_backend" {>= "0.20"}
+  "sail_ocaml_backend" {>= "0.20"}
+  "sail_output" {>= "0.20"}
+  "sail_manifest" {>= "0.20"}
   "coq-sail-stdpp" {>= "0.20"}
   "conf-cmake"
 ]

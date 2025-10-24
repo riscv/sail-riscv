@@ -136,7 +136,7 @@ termination_measure hartSupports(ext) = hartSupports_measure(ext)
 $iftarget coq
 
 termination_measure vmem_write_addr repeat n
-termination_measure vmem_read repeat n
+termination_measure vmem_read_addr repeat n
 
 // The top-level loop isn't terminating, but we put a limit so that it can still be included in the Coq output
 termination_measure loop while 100
