@@ -154,7 +154,10 @@ function track_trap(p : Privilege) -> unit = {
 // handle exceptional ctl flow by updating nextPC and operating privilege
 function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
                      -> xlenbits = {
-  trap_callback();
+  let is_interrupt = trapCause_is_interrupt(c);
+  let cause        = trapCause_bits(c);
+
+  trap_callback(is_interrupt, cause);
 
   if   get_config_print_platform()
   then print_log("handling " ^ to_str(c)
@@ -163,13 +166,10 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
-  let is_interrupt = bool_to_bits(trapCause_is_interrupt(c));
-  let cause        = zero_extend(xlen - 1, trapCause_bits(c));
-
   match (del_priv) {
     Machine => {
-      mcause[IsInterrupt] = is_interrupt;
-      mcause[Cause]       = cause;
+      mcause[IsInterrupt] = bool_to_bits(is_interrupt);
+      mcause[Cause]       = zero_extend(cause);
 
       mstatus[MPIE] = mstatus[MIE];
       mstatus[MIE]  = 0b0;
@@ -188,8 +188,8 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
     Supervisor => {
       assert (currentlyEnabled(Ext_S), "no supervisor mode present for delegation");
 
-      scause[IsInterrupt] = is_interrupt;
-      scause[Cause]       = cause;
+      scause[IsInterrupt] = bool_to_bits(is_interrupt);
+      scause[Cause]       = zero_extend(cause);
 
       mstatus[SPIE] = mstatus[SIE];
       mstatus[SIE]  = 0b0;

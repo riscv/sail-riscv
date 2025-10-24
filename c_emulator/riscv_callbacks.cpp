@@ -18,6 +18,14 @@ void remove_callback(callbacks_if *cb)
                   callbacks.end());
 }
 
+unit fetch_callback(sbits opcode)
+{
+  for (auto c : callbacks) {
+    c->fetch_callback(opcode);
+  }
+  return UNIT;
+}
+
 unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
                         lbits value)
 {
@@ -86,18 +94,26 @@ unit vreg_write_callback(unsigned reg, lbits value)
   return UNIT;
 }
 
-unit pc_write_callback(sbits value)
+unit pc_write_callback(sbits new_pc)
 {
   for (auto c : callbacks) {
-    c->pc_write_callback(value);
+    c->pc_write_callback(new_pc);
   }
   return UNIT;
 }
 
-unit trap_callback(unit)
+unit redirect_callback(sbits new_pc)
 {
   for (auto c : callbacks) {
-    c->trap_callback();
+    c->redirect_callback(new_pc);
+  }
+  return UNIT;
+}
+
+unit trap_callback(bool is_interrupt, fbits cause)
+{
+  for (auto c : callbacks) {
+    c->trap_callback(is_interrupt, cause);
   }
   return UNIT;
 }

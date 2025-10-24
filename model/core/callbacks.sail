@@ -7,6 +7,12 @@
 // =======================================================================================
 
 // Callbacks for state-changing events
+
+/// Called upon successful instruction fetch with the opcode.
+/// If there is a fetch error then this is not called (but trap_callback() will be).
+val fetch_callback = pure {c: "fetch_callback"} : forall 'n, 'n in {16, 32}. (bits('n)) -> unit
+function fetch_callback(_) = ()
+
 val mem_write_callback = pure {c: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_write_callback(_) = ()
 
@@ -16,7 +22,10 @@ function mem_read_callback(_) = ()
 val mem_exception_callback = pure {c: "mem_exception_callback"} : (/* addr */ physaddrbits, /* exception code */ exc_code) -> unit
 function mem_exception_callback(_) = ()
 
-val pc_write_callback = pure {c: "pc_write_callback"} : xlenbits -> unit
+/// Called at the end of every step when PC is advanced to the next
+/// instruction. This includes taken branches. It is not called when
+/// the hart is waiting in WFI/WRS. The parameter is the new PC.
+val pc_write_callback = pure {c: "pc_write_callback"} : (/* new_pc */ xlenbits) -> unit
 function pc_write_callback(_) = ()
 
 val xreg_full_write_callback = pure {c: "xreg_full_write_callback"} : (string, regidx, xlenbits) -> unit
@@ -28,7 +37,23 @@ function csr_full_write_callback(_) = ()
 val csr_full_read_callback = pure {c: "csr_full_read_callback"} : (string, csreg, xlenbits) -> unit
 function csr_full_read_callback(_) = ()
 
-val trap_callback = pure {c: "trap_callback"} : unit -> unit
+/// Called when control flow is redirected from just executing the next instruction.
+/// This includes:
+///
+///  * Unconditional jumps (jal, jalr)
+///  * Traps
+///  * Returning from trap handlers (mret, sret)
+///  * Conditional branches that are taken (even if the target is the same instruction that
+///    would have been executed if they were not taken).
+///
+/// The parameter is the new PC. pc_write_callback() will also be called after
+/// this with the same parameter.
+val redirect_callback = pure {c: "redirect_callback"} : (/* new_pc */ xlenbits) -> unit
+function redirect_callback(_) = ()
+
+/// Called on interrupts and exceptions. The exc_code does not include the 'interrupt' bit which is
+/// in a separate bool.
+val trap_callback = pure {c: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code) -> unit
 function trap_callback(_) = ()
 
 // Overloads for easier use of callbacks

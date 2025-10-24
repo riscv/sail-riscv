@@ -31,6 +31,11 @@ log_callbacks::log_callbacks(bool config_print_reg,
 // Implementations of default callbacks for trace printing.
 // The model assumes that these functions do not change the state of the model.
 
+void log_callbacks::fetch_callback(sbits opcode)
+{
+  (void)opcode;
+}
+
 void log_callbacks::mem_write_callback(const char *type, sbits paddr,
                                        uint64_t width, lbits value)
 {
@@ -104,6 +109,18 @@ void log_callbacks::vreg_write_callback(unsigned reg, lbits value)
   }
 }
 
-void log_callbacks::pc_write_callback(sbits) { }
+void log_callbacks::pc_write_callback(sbits new_pc)
+{
+  (void)new_pc;
+}
 
-void log_callbacks::trap_callback() { }
+void log_callbacks::redirect_callback(sbits new_pc)
+{
+  (void)new_pc;
+}
+
+void log_callbacks::trap_callback(bool is_interrupt, fbits cause)
+{
+  (void)is_interrupt;
+  (void)cause;
+}

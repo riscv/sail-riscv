@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+unit fetch_callback(sbits opcode);
 unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
                         lbits value);
 unit mem_read_callback(const char *type, sbits paddr, uint64_t width,
@@ -21,8 +22,9 @@ unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
 unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
                             sbits value);
 unit vreg_write_callback(unsigned reg, lbits value);
-unit pc_write_callback(sbits value);
-unit trap_callback(unit);
+unit pc_write_callback(sbits new_pc);
+unit redirect_callback(sbits new_pc);
+unit trap_callback(bool is_interrupt, fbits cause);
 
 #ifdef __cplusplus
 }

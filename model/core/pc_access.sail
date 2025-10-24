@@ -21,7 +21,8 @@ function get_next_pc() -> xlenbits = nextPC
 
 function set_next_pc(pc : xlenbits) -> unit = {
   sail_branch_announce(xlen, pc);
-  nextPC = pc
+  nextPC = pc;
+  redirect_callback(pc);
 }
 
 function tick_pc() -> unit = {
