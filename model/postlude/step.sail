@@ -12,6 +12,7 @@ register hart_state : HartState = HART_ACTIVE()
 
 union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
+  Step_Pending_NMI        : (nmi_cause),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : (virtaddr, ExceptionType),
   Step_Execute            : (ExecutionResult, instbits),
@@ -87,58 +88,60 @@ function run_hart_waiting(step_no : int, wr: WaitReason, instbits : instbits, ex
 }
 
 function run_hart_active(step_no: nat) -> Step = {
-  match dispatchInterrupt(cur_privilege) {
-    Some(intr, priv) => Step_Pending_Interrupt(intr, priv),
-    None() => match ext_fetch_hook(fetch()) {
-      // extension error
-      F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
-      // standard error
-      F_Error(e, addr) => Step_Fetch_Failure(Virtaddr(addr), e),
-      // non-error cases:
-      F_RVC(h) => {
-        sail_instr_announce(h);
-        let instbits : instbits = zero_extend(h);
-        let instruction = ext_decode_compressed(h);
-        if   get_config_print_instr()
-        then {
-          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
-        };
-        // When ELP is set to LP_EXPECTED, the next instruction needs to be
-        // the non-RVC `LPAD` instruction.
-        if is_landing_pad_expected() then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
-          Step_Execute(r, instbits)
-        }
-        // check for RVC once here instead of every RVC execute clause.
-        else if currentlyEnabled(Ext_Zca) then {
-          nextPC = PC + 2;
-          let r = execute(instruction);
-          Step_Execute(r, instbits)
-        } else {
-          Step_Execute(Illegal_Instruction(), instbits)
-        }
-      },
-      F_Base(w) => {
-        sail_instr_announce(w);
-        let instbits : instbits = zero_extend(w);
-        let instruction = ext_decode(w);
-        if   get_config_print_instr()
-        then {
-          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
-        };
-        // When ELP is set to LP_EXPECTED, if the next instruction in
-        // the instruction stream is not LPAD, then a software check
-        // exception with a landing pad fault code is thrown.
-        if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
-          Step_Execute(r, instbits)
-        } else {
-          nextPC = PC + 4;
-          let r = execute(instruction);
-          Step_Execute(r, instbits)
-        }
+  match pending_nmi {
+    Some(cause) => Step_Pending_NMI(cause),
+    None() => match dispatchInterrupt(cur_privilege) {
+      Some(intr, priv) => Step_Pending_Interrupt(intr, priv),
+      None() => match ext_fetch_hook(fetch()) {
+        // extension error
+        F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
+        // standard error
+        F_Error(e, addr) => Step_Fetch_Failure(Virtaddr(addr), e),
+        // non-error cases:
+        F_RVC(h) => {
+          sail_instr_announce(h);
+          let instbits : instbits = zero_extend(h);
+          let instruction = ext_decode_compressed(h);
+          if   get_config_print_instr()
+          then {
+            print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
+          };
+          // When ELP is set to LP_EXPECTED, the next instruction needs to be
+          // the non-RVC `LPAD` instruction.
+          if is_landing_pad_expected() then {
+            let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+            Step_Execute(r, instbits)
+          }
+          // check for RVC once here instead of every RVC execute clause.
+          else if currentlyEnabled(Ext_Zca) then {
+            nextPC = PC + 2;
+            let r = execute(instruction);
+            Step_Execute(r, instbits)
+          } else {
+            Step_Execute(Illegal_Instruction(), instbits)
+          }
+        },
+        F_Base(w) => {
+          sail_instr_announce(w);
+          let instbits : instbits = zero_extend(w);
+          let instruction = ext_decode(w);
+          if   get_config_print_instr()
+          then {
+            print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
+          };
+          // When ELP is set to LP_EXPECTED, if the next instruction in
+          // the instruction stream is not LPAD, then a software check
+          // exception with a landing pad fault code is thrown.
+          if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
+            let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+            Step_Execute(r, instbits)
+          } else {
+            nextPC = PC + 4;
+            let r = execute(instruction);
+            Step_Execute(r, instbits)
+          }
       }
-    }
+    },
   }
 }
 
@@ -195,6 +198,12 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       if   get_config_print_instr()
       then print_bits("Handling interrupt: ", interruptType_bits(intr));
       handle_interrupt(intr, priv)
+    },
+    Step_Pending_NMI(cause) => {
+      if   get_config_print_instr()
+      then print_endline("Handling non-maskable interrupt");
+      handle_nmi(cause);
+      pending_nmi = None();
     },
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
     Step_Fetch_Failure(vaddr, e) => handle_exception(bits_of(vaddr), e),
