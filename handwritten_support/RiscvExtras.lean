@@ -35,6 +35,15 @@ axiom match_reservation : Arch.pa → Bool
 axiom cancel_reservation : Unit → SailM Unit
 axiom valid_reservation : Unit → Bool
 
+-- RVFI
+axiom rvfi_get_insn : Unit → SailM (BitVec 32)
+axiom rvfi_set_inst_data_insn : BitVec 64 → SailM Unit
+axiom rvfi_set_inst_data_order : BitVec 64 → SailM Unit
+axiom rvfi_set_inst_data_mode : BitVec 8 → SailM Unit
+axiom rvfi_set_inst_data_ixl : BitVec 8 → SailM Unit
+axiom rvfi_set_pc_data_rdata : BitVec 64 → SailM Unit
+axiom rvfi_set_pc_data_wdata : BitVec 64 → SailM Unit
+
 axiom get_16_random_bits : Unit → SailM (BitVec 16)
 axiom sys_enable_experimental_extensions : Unit → Bool
 

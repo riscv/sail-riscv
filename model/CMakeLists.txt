@@ -87,6 +87,7 @@ add_custom_command(
         --c-include riscv_prelude.h
         --c-include riscv_platform.h
         --c-include riscv_callbacks.h
+        --c-include rvfi_dii_sail.h
         # Don't dead-code eliminate these functions.
         --c-preserve init_model
         --c-preserve init_boot_requirements
