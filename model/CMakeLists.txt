@@ -6,6 +6,8 @@ function(string_upper_initial s result)
     set("${result}" "${new}" PARENT_SCOPE)
 endfunction()
 
+set(SAIL_MODULES "--all-modules" CACHE STRING "List of modules to compile into the model (defaults to all)")
+
 # Common Sail flags for all commands.
 set(sail_common
     # Don't allow implicit var declaration (like Python). This is
@@ -117,7 +119,7 @@ add_custom_command(
         --c-preserve rvfi_wX
         --c-preserve rvfi_trap
         # Input files.
-        --all-modules
+        ${SAIL_MODULES}
         ${project_file}
 )
 
@@ -163,7 +165,7 @@ add_custom_command(
         # The name of the JSON file.
         --doc-bundle ${model_doc}
         # Input files.
-        --all-modules
+        ${SAIL_MODULES}
         ${project_file}
 )
 
@@ -188,7 +190,7 @@ add_custom_command(
         --html
         -o "${CMAKE_CURRENT_BINARY_DIR}/${model_html_out}"
         # Input files
-        --all-modules
+        ${SAIL_MODULES}
         ${project_file}
 )
 # Create tgz with the build directory as working directory.
@@ -236,7 +238,7 @@ foreach (xlen IN ITEMS 32 64)
             -o "${CMAKE_CURRENT_BINARY_DIR}/model"
             --config ${config_file}
             # Input files.
-            --all-modules
+            ${SAIL_MODULES}
             ${project_file}
         COMMAND ${CMAKE_COMMAND} -E touch ${smt_stamp_file}
     )
@@ -299,7 +301,7 @@ foreach (xlen IN ITEMS 32 64)
             -o "lem_${arch}"
             --config ${config_file}
             # Input files.
-            --all-modules
+            ${SAIL_MODULES}
             --variable "RMEM = true"
             ${project_file}
     )
@@ -320,7 +322,7 @@ foreach (xlen IN ITEMS 32 64)
             -o "rmem_${arch}"
             --config ${config_file}
             # Input files.
-            --all-modules
+            ${SAIL_MODULES}
             --variable "RMEM = true"
             ${project_file}
     )
@@ -338,7 +340,7 @@ foreach (xlen IN ITEMS 32 64)
             -o "rmem_${arch}"
             --config ${config_file}
             # Input files.
-            --all-modules
+            ${SAIL_MODULES}
             --variable "RMEM = true"
             ${project_file}
     )
@@ -369,7 +371,7 @@ foreach (xlen IN ITEMS 32 64)
             -o "${arch}"
             --config ${config_file}
             # Input files.
-            --all-modules
+            ${SAIL_MODULES}
             --variable "TERMINATION_FILE = true"
             ${project_file}
     )
@@ -435,7 +437,7 @@ foreach (xlen IN ITEMS 32 64)
             ${sail_common}
             ${lean_sail_common}
             ${lean_sail_default}
-            --all-modules
+            ${SAIL_MODULES}
             --variable "TERMINATION_FILE = true"
             ${project_file}
     )
@@ -454,7 +456,7 @@ foreach (xlen IN ITEMS 32 64)
             ${sail_common}
             ${lean_sail_common}
             ${lean_sail_executable}
-            --all-modules
+            ${SAIL_MODULES}
             --variable "TERMINATION_FILE = true"
             ${project_file}
     )
@@ -485,7 +487,7 @@ foreach (xlen IN ITEMS 32 64)
             -o "${arch}"
             --config ${config_file}
             # Input files.
-            --all-modules
+            ${SAIL_MODULES}
             ${project_file}
         COMMAND
             echo
