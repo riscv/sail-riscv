@@ -14,7 +14,7 @@ let sys_pmp_count : {0, 16, 64} = config memory.pmp.count
 // How many PMP entries are usable.  This must be less than or equal
 // to `memory.pmp.count`; entries higher than the usable count are
 // read-only-zero.
-let sys_pmp_usable_count : nat = config memory.pmp.usable_count
+let sys_pmp_usable_count : range(0, 64) = config memory.pmp.usable_count
 
 // G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
 // G=0 -> 4 bytes, G=10 -> 4096 bytes.
