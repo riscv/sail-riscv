@@ -10,6 +10,7 @@ public:
   virtual ~callbacks_if() = default;
 
   // TODO: finding ways to improve the format
+  virtual void fetch_callback(sbits opcode) = 0;
   virtual void mem_write_callback(const char *type, sbits paddr, uint64_t width,
                                   lbits value)
       = 0;
@@ -29,8 +30,9 @@ public:
                                       sbits value)
       = 0;
   virtual void vreg_write_callback(unsigned reg, lbits value) = 0;
-  virtual void pc_write_callback(sbits value) = 0;
-  virtual void trap_callback() = 0;
+  virtual void pc_write_callback(sbits new_pc) = 0;
+  virtual void redirect_callback(sbits new_pc) = 0;
+  virtual void trap_callback(bool is_interrupt, fbits cause) = 0;
 };
 
 void register_callback(callbacks_if *cb);
