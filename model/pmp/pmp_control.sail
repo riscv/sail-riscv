@@ -97,7 +97,10 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 
   let width : xlenbits = to_bits(width);
 
-  foreach (i from 0 to 63) {
+  // This is checked in validate_config:check_pmp().
+  assert(sys_pmp_usable_count <= sys_pmp_count);
+
+  foreach (i from 0 to sys_pmp_usable_count - 1) {
     let prev_pmpaddr = if i > 0 then pmpReadAddrReg(i - 1) else zeros();
     let cfg = pmpcfg_n[i];
 

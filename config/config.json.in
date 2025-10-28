@@ -22,7 +22,11 @@
   "memory": {
     "pmp": {
       "grain": 0,
+      // This specifies the number of PMP entries present.
       "count": 16,
+      // This specifies the number of usable PMP entries.
+      // Entries higher than this are read-only-zero.
+      "usable_count": 16,
       "tor_supported": true,
       "na4_supported": true,
       "napot_supported": true

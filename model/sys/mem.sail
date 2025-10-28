@@ -164,7 +164,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   width : int('n),
   res_or_con : bool,
 ) -> option(ExceptionType) = {
-  let pmpError : option(ExceptionType) = if sys_pmp_count == 0 then None() else pmpCheck(paddr, width, typ, priv);
+  let pmpError : option(ExceptionType) = if sys_pmp_usable_count == 0 then None() else pmpCheck(paddr, width, typ, priv);
   let pmaError : option(ExceptionType) = pmaCheck(paddr, width, typ, res_or_con);
   match (pmpError, pmaError) {
     (None(), None())     => None(),
