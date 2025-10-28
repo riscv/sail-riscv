@@ -481,8 +481,8 @@ function clause execute VROR_VX(vm, vs2, rs1, vd) = {
 union clause instruction = VROR_VI : (bits(1), vregidx, bits(6), vregidx)
 
 $[wavedrom "_ _ _ _ _ OPIVI _ OP-V"]
-mapping clause encdec = VROR_VI(vm, vs2, uimm5 @ uimm40, vd)
-  <-> 0b01010 @ uimm5 @ vm @ encdec_vreg(vs2) @ uimm40 : bits(5) @ 0b011 @ encdec_vreg(vd) @ 0b1010111
+mapping clause encdec = VROR_VI(vm, vs2, uimm, vd)
+  <-> 0b01010 @ uimm[5] @ vm @ encdec_vreg(vs2) @ uimm[4..0] : bits(5) @ 0b011 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvkb) & (get_sew() <= 32 | (get_sew() == 64 & currentlyEnabled(Ext_Zve64x)))
 
 mapping clause assembly = VROR_VI(vm, vs2, uimm, vd)

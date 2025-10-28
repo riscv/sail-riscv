@@ -10,8 +10,8 @@ function clause currentlyEnabled(Ext_Zcf) = hartSupports(Ext_Zcf) & currentlyEna
 
 union clause instruction = C_FLWSP : (bits(6), fregidx)
 
-mapping clause encdec_compressed = C_FLWSP(ui76 @ ui5 @ ui42, rd)
-  <-> 0b011 @ ui5 : bits(1) @ encdec_freg(rd) @ ui42 : bits(3) @ ui76 : bits(2) @ 0b10
+mapping clause encdec_compressed = C_FLWSP(uimm, rd)
+  <-> 0b011 @ uimm[3] : bits(1) @ encdec_freg(rd) @ uimm[2..0] : bits(3) @ uimm[5..4] : bits(2) @ 0b10
   when currentlyEnabled(Ext_Zcf)
 
 function clause execute C_FLWSP(imm, rd) = {
@@ -26,8 +26,8 @@ mapping clause assembly = C_FLWSP(imm, rd)
 // *****************************************************************
 union clause instruction = C_FSWSP : (bits(6), fregidx)
 
-mapping clause encdec_compressed = C_FSWSP(ui76 @ ui52, rs2)
-  <-> 0b111 @ ui52 : bits(4) @ ui76 : bits(2) @ encdec_freg(rs2) @ 0b10
+mapping clause encdec_compressed = C_FSWSP(uimm, rs2)
+  <-> 0b111 @ uimm[3..0] : bits(4) @ uimm[5..4] : bits(2) @ encdec_freg(rs2) @ 0b10
   when currentlyEnabled(Ext_Zcf)
 
 function clause execute C_FSWSP(uimm, rs2) = {
@@ -42,8 +42,8 @@ mapping clause assembly = C_FSWSP(uimm, rs2)
 // *****************************************************************
 union clause instruction = C_FLW : (bits(5), cregidx, cfregidx)
 
-mapping clause encdec_compressed = C_FLW(ui6 @ ui53 @ ui2, rs1, rd)
-  <-> 0b011 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui2 : bits(1) @ ui6 : bits(1) @ encdec_cfreg(rd) @ 0b00
+mapping clause encdec_compressed = C_FLW(uimm, rs1, rd)
+  <-> 0b011 @ uimm[3..1] : bits(3) @ encdec_creg(rs1) @ uimm[0] : bits(1) @ uimm[4] : bits(1) @ encdec_cfreg(rd) @ 0b00
   when currentlyEnabled(Ext_Zcf)
 
 function clause execute C_FLW(uimm, rsc, rdc) = {
@@ -60,8 +60,8 @@ mapping clause assembly = C_FLW(uimm, rsc, rdc)
 // *****************************************************************
 union clause instruction = C_FSW : (bits(5), cregidx, cfregidx)
 
-mapping clause encdec_compressed = C_FSW(ui6 @ ui53 @ ui2, rs1, rs2)
-  <-> 0b111 @ ui53 : bits(3) @ encdec_creg(rs1) @ ui2 : bits(1) @ ui6 : bits(1) @ encdec_cfreg(rs2) @ 0b00
+mapping clause encdec_compressed = C_FSW(uimm, rs1, rs2)
+  <-> 0b111 @ uimm[3..1] : bits(3) @ encdec_creg(rs1) @ uimm[0] : bits(1) @ uimm[4] : bits(1) @ encdec_cfreg(rs2) @ 0b00
   when currentlyEnabled(Ext_Zcf)
 
 function clause execute C_FSW(uimm, rsc1, rsc2) = {

@@ -11,8 +11,8 @@ function clause currentlyEnabled(Ext_Zcb) = hartSupports(Ext_Zcb) & currentlyEna
 union clause instruction = C_LBU : (bits(2), cregidx, cregidx)
 
 $[wavedrom "FUNCT3 _ _ _ _ _ C0"]
-mapping clause encdec_compressed = C_LBU(uimm1 @ uimm0, rdc, rsc1)
-  <-> 0b100 @ 0b000 @ encdec_creg(rsc1) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rdc) @ 0b00
+mapping clause encdec_compressed = C_LBU(uimm, rdc, rsc1)
+  <-> 0b100 @ 0b000 @ encdec_creg(rsc1) @ uimm[0] : bits(1) @ uimm[1] : bits(1) @ encdec_creg(rdc) @ 0b00
   when currentlyEnabled(Ext_Zcb)
 
 mapping clause assembly = C_LBU(uimm, rdc, rsc1) <->
@@ -68,8 +68,8 @@ function clause execute C_LH(uimm, rdc, rsc1) = {
 union clause instruction = C_SB : (bits(2), cregidx, cregidx)
 
 $[wavedrom "FUNCT3 _ _ _ _ _ C0"]
-mapping clause encdec_compressed = C_SB(uimm1 @ uimm0, rsc1, rsc2)
-  <-> 0b100 @ 0b010 @ encdec_creg(rsc1) @ uimm0 : bits(1) @ uimm1 : bits(1) @ encdec_creg(rsc2) @ 0b00
+mapping clause encdec_compressed = C_SB(uimm, rsc1, rsc2)
+  <-> 0b100 @ 0b010 @ encdec_creg(rsc1) @ uimm[0] : bits(1) @ uimm[1] : bits(1) @ encdec_creg(rsc2) @ 0b00
   when currentlyEnabled(Ext_Zcb)
 
 mapping clause assembly = C_SB(uimm, rsc1, rsc2) <->
