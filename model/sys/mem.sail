@@ -131,8 +131,8 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             //                                   "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
           };
 
-          if get_config_print_platform() & not(canAccess)
-          then print_endline("PMA check failed for " ^ hex_bits_str(bits_of(paddr)) ^ " PMA " ^ to_str(attributes));
+          if get_config_print_pma() & not(canAccess)
+          then print_log("PMA check failed for " ^ hex_bits_str(bits_of(paddr)) ^ " PMA " ^ to_str(attributes));
 
           if canAccess then None() else Some(accessFaultFromAccessType(accTy))
         },
