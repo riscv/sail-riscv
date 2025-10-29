@@ -16,7 +16,7 @@
 union clause instruction = C_NOP : (bits(6))
 
 mapping clause encdec_compressed = C_NOP(imm)
-  <-> 0b000 @ imm[5] : bits(1) @ 0b00000 @ imm[4..0] : bits(5) @ 0b01
+  <-> 0b000 @ imm[5] @ 0b00000 @ imm[4..0] @ 0b01
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_NOP(_) = RETIRE_SUCCESS
@@ -56,7 +56,7 @@ mapping clause assembly = C_ADDI4SPN(rdc, nzimm)
 union clause instruction = C_LW : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_LW(uimm, rs1, rd)
-  <-> 0b010 @ uimm[3..1] : bits(3) @ encdec_creg(rs1) @ uimm[0] : bits(1) @ uimm[4] : bits(1) @ encdec_creg(rd) @ 0b00
+  <-> 0b010 @ uimm[3..1] @ encdec_creg(rs1) @ uimm[0] @ uimm[4] @ encdec_creg(rd) @ 0b00
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_LW(uimm, rsc, rdc) = {
@@ -73,7 +73,7 @@ mapping clause assembly = C_LW(uimm, rsc, rdc)
 union clause instruction = C_LD : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_LD(uimm, rs1, rd)
-  <-> 0b011 @ uimm[2..0] : bits(3) @ encdec_creg(rs1) @ uimm[4..3] : bits(2) @ encdec_creg(rd) @ 0b00
+  <-> 0b011 @ uimm[2..0] @ encdec_creg(rs1) @ uimm[4..3] @ encdec_creg(rd) @ 0b00
   when xlen == 64 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_LD(uimm, rsc, rdc) = {
@@ -91,7 +91,7 @@ mapping clause assembly = C_LD(uimm, rsc, rdc)
 union clause instruction = C_SW : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_SW(uimm, rs1, rs2)
-  <-> 0b110 @ uimm[3..1] : bits(3) @ encdec_creg(rs1) @ uimm[0] : bits(1) @ uimm[4] : bits(1) @ encdec_creg(rs2) @ 0b00
+  <-> 0b110 @ uimm[3..1] @ encdec_creg(rs1) @ uimm[0] @ uimm[4] @ encdec_creg(rs2) @ 0b00
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_SW(uimm, rsc1, rsc2) = {
@@ -108,7 +108,7 @@ mapping clause assembly = C_SW(uimm, rsc1, rsc2)
 union clause instruction = C_SD : (bits(5), cregidx, cregidx)
 
 mapping clause encdec_compressed = C_SD(uimm, rs1, rs2)
-  <-> 0b111 @ uimm[2..0] : bits(3) @ encdec_creg(rs1) @ uimm[4..3] : bits(2) @ encdec_creg(rs2) @ 0b00
+  <-> 0b111 @ uimm[2..0] @ encdec_creg(rs1) @ uimm[4..3] @ encdec_creg(rs2) @ 0b00
   when xlen == 64 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SD(uimm, rsc1, rsc2) = {
@@ -128,7 +128,7 @@ union clause instruction = C_ADDI : (bits(6), regidx)
 // Code points with rsd=x0 are c.nop.
 // c.addi with imm=0 are hints.
 mapping clause encdec_compressed = C_ADDI(imm, rsd)
-  <-> 0b000 @ imm[5] : bits(1) @ encdec_reg(rsd) @ imm[4..0] : bits(5) @ 0b01
+  <-> 0b000 @ imm[5] @ encdec_reg(rsd) @ imm[4..0] @ 0b01
   when rsd != zreg & currentlyEnabled(Ext_Zca)
 
 function clause execute C_ADDI(imm, rsd) = {
@@ -144,7 +144,7 @@ mapping clause assembly = C_ADDI(imm, rsd)
 union clause instruction = C_JAL : (bits(11))
 
 mapping clause encdec_compressed = C_JAL(imm)
-  <-> 0b001 @ imm[10] : bits(1) @ imm[3] : bits(1) @ imm[8..7] : bits(2) @ imm[9] : bits(1) @ imm[5] : bits(1) @ imm[6] : bits(1) @ imm[2..0] : bits(3) @ imm[4] : bits(1) @ 0b01
+  <-> 0b001 @ imm[10] @ imm[3] @ imm[8..7] @ imm[9] @ imm[5] @ imm[6] @ imm[2..0] @ imm[4] @ 0b01
   when xlen == 32 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_JAL(imm) =
@@ -158,7 +158,7 @@ mapping clause assembly = C_JAL(imm)
 union clause instruction = C_ADDIW : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_ADDIW(imm, rsd)
-  <-> 0b001 @ imm[5] : bits(1) @ encdec_reg(rsd) @ imm[4..0] : bits(5) @ 0b01
+  <-> 0b001 @ imm[5] @ encdec_reg(rsd) @ imm[4..0] @ 0b01
   when rsd != zreg & xlen == 64 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_ADDIW(imm, rsd) =
@@ -173,7 +173,7 @@ union clause instruction = C_LI : (bits(6), regidx)
 
 // c.li with rd=x0 are hints.
 mapping clause encdec_compressed = C_LI(imm, rd)
-  <-> 0b010 @ imm[5] : bits(1) @ encdec_reg(rd) @ imm[4..0] : bits(5) @ 0b01
+  <-> 0b010 @ imm[5] @ encdec_reg(rd) @ imm[4..0] @ 0b01
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_LI(imm, rd) = {
@@ -276,7 +276,7 @@ union clause instruction = C_ANDI : (bits(6), cregidx)
 
 $[wavedrom "C.ANDI imm[5] C.ANDI dest imm[4:0] C1"]
 mapping clause encdec_compressed = C_ANDI(imm, rsd)
-  <-> 0b100 @ imm[5] : bits(1) @ 0b10 @ encdec_creg(rsd) @ imm[4..0] : bits(5) @ 0b01
+  <-> 0b100 @ imm[5] @ 0b10 @ encdec_creg(rsd) @ imm[4..0] @ 0b01
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_ANDI(imm, rsd) = {
@@ -389,7 +389,7 @@ mapping clause assembly = C_ADDW(rsd, rs2)
 union clause instruction = C_J : (bits(11))
 
 mapping clause encdec_compressed = C_J(imm)
-  <-> 0b101 @ imm[10] : bits(1) @ imm[3] : bits(1) @ imm[8..7] : bits(2) @ imm[9] : bits(1) @ imm[5] : bits(1) @ imm[6] : bits(1) @ imm[2..0] : bits(3) @ imm[4] : bits(1) @ 0b01
+  <-> 0b101 @ imm[10] @ imm[3] @ imm[8..7] @ imm[9] @ imm[5] @ imm[6] @ imm[2..0] @ imm[4] @ 0b01
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_J(imm) =
@@ -402,7 +402,7 @@ mapping clause assembly = C_J(imm)
 union clause instruction = C_BEQZ : (bits(8), cregidx)
 
 mapping clause encdec_compressed = C_BEQZ(imm, rs)
-  <-> 0b110 @ imm[7] : bits(1) @ imm[3..2] : bits(2) @ encdec_creg(rs) @ imm[6..5] : bits(2) @ imm[1..0] : bits(2) @ imm[4] : bits(1) @ 0b01
+  <-> 0b110 @ imm[7] @ imm[3..2] @ encdec_creg(rs) @ imm[6..5] @ imm[1..0] @ imm[4] @ 0b01
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_BEQZ(imm, rs) =
@@ -415,7 +415,7 @@ mapping clause assembly = C_BEQZ(imm, rs)
 union clause instruction = C_BNEZ : (bits(8), cregidx)
 
 mapping clause encdec_compressed = C_BNEZ(imm, rs)
-  <-> 0b111 @ imm[7] : bits(1) @ imm[3..2] : bits(2) @ encdec_creg(rs) @ imm[6..5] : bits(2) @ imm[1..0] : bits(2) @ imm[4] : bits(1) @ 0b01
+  <-> 0b111 @ imm[7] @ imm[3..2] @ encdec_creg(rs) @ imm[6..5] @ imm[1..0] @ imm[4] @ 0b01
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_BNEZ(imm, rs) =
@@ -448,7 +448,7 @@ mapping clause assembly = C_SLLI(shamt, rsd)
 union clause instruction = C_LWSP : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_LWSP(uimm, rd)
-  <-> 0b010 @ uimm[3] : bits(1) @ encdec_reg(rd) @ uimm[2..0] : bits(3) @ uimm[5..4] : bits(2) @ 0b10
+  <-> 0b010 @ uimm[3] @ encdec_reg(rd) @ uimm[2..0] @ uimm[5..4] @ 0b10
   when rd != zreg & currentlyEnabled(Ext_Zca)
 
 function clause execute C_LWSP(uimm, rd) = {
@@ -464,7 +464,7 @@ mapping clause assembly = C_LWSP(uimm, rd)
 union clause instruction = C_LDSP : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_LDSP(uimm, rd)
-  <-> 0b011 @ uimm[2] : bits(1) @ encdec_reg(rd) @ uimm[1..0] : bits(2) @ uimm[5..3] : bits(3) @ 0b10
+  <-> 0b011 @ uimm[2] @ encdec_reg(rd) @ uimm[1..0] @ uimm[5..3] @ 0b10
   when rd != zreg & xlen == 64 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_LDSP(uimm, rd) = {
@@ -480,7 +480,7 @@ mapping clause assembly = C_LDSP(uimm, rd)
 union clause instruction = C_SWSP : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_SWSP(uimm, rs2)
-  <-> 0b110 @ uimm[3..0] : bits(4) @ uimm[5..4] : bits(2) @ encdec_reg(rs2) @ 0b10
+  <-> 0b110 @ uimm[3..0] @ uimm[5..4] @ encdec_reg(rs2) @ 0b10
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_SWSP(uimm, rs2) = {
@@ -495,7 +495,7 @@ mapping clause assembly = C_SWSP(uimm, rs2)
 union clause instruction = C_SDSP : (bits(6), regidx)
 
 mapping clause encdec_compressed = C_SDSP(uimm, rs2)
-  <-> 0b111 @ uimm[2..0] : bits(3) @ uimm[5..3] : bits(3) @ encdec_reg(rs2) @ 0b10
+  <-> 0b111 @ uimm[2..0] @ uimm[5..3] @ encdec_reg(rs2) @ 0b10
   when xlen == 64 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SDSP(uimm, rs2) = {

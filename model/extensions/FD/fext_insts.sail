@@ -303,7 +303,7 @@ union clause instruction = STORE_FP : (bits(12), fregidx, regidx, word_width)
 
 $[wavedrom "offset[11:5] src base _ _ offset[4:0] STORE-FP"]
 mapping clause encdec = STORE_FP(imm, rs2, rs1, width)
-  <-> imm[11..5] : bits(7) @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ imm[4..0] : bits(5) @ 0b010_0111
+  <-> imm[11..5] @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ imm[4..0] @ 0b010_0111
   when float_load_store_width_supported(width)
 
 // Execution semantics ================================

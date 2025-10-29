@@ -11,7 +11,7 @@ function clause currentlyEnabled(Ext_Zcd) = hartSupports(Ext_Zcd) & currentlyEna
 union clause instruction = C_FLDSP : (bits(6), fregidx)
 
 mapping clause encdec_compressed = C_FLDSP(uimm, rd)
-  <-> 0b001 @ uimm[2] : bits(1) @ encdec_freg(rd) @ uimm[1..0] : bits(2) @ uimm[5..3] : bits(3) @ 0b10
+  <-> 0b001 @ uimm[2] @ encdec_freg(rd) @ uimm[1..0] @ uimm[5..3] @ 0b10
   when currentlyEnabled(Ext_Zcd)
 
 function clause execute C_FLDSP(uimm, rd) = {
@@ -26,7 +26,7 @@ mapping clause assembly = C_FLDSP(uimm, rd)
 union clause instruction = C_FSDSP : (bits(6), fregidx)
 
 mapping clause encdec_compressed = C_FSDSP(uimm, rs2)
-  <-> 0b101 @ uimm[2..0] : bits(3) @ uimm[5..3] : bits(3) @ encdec_freg(rs2) @ 0b10
+  <-> 0b101 @ uimm[2..0] @ uimm[5..3] @ encdec_freg(rs2) @ 0b10
   when currentlyEnabled(Ext_Zcd)
 
 function clause execute C_FSDSP(uimm, rs2) = {
@@ -41,7 +41,7 @@ mapping clause assembly = C_FSDSP(uimm, rs2)
 union clause instruction = C_FLD : (bits(5), cregidx, cfregidx)
 
 mapping clause encdec_compressed = C_FLD(uimm, rs1, rd)
-  <-> 0b001 @ uimm[2..0] : bits(3) @ encdec_creg(rs1) @ uimm[4..3] : bits(2) @ encdec_cfreg(rd) @ 0b00
+  <-> 0b001 @ uimm[2..0] @ encdec_creg(rs1) @ uimm[4..3] @ encdec_cfreg(rd) @ 0b00
   when currentlyEnabled(Ext_Zcd)
 
 function clause execute C_FLD(uimm, rsc, rdc) = {
@@ -58,7 +58,7 @@ mapping clause assembly = C_FLD(uimm, rsc, rdc)
 union clause instruction = C_FSD : (bits(5), cregidx, cfregidx)
 
 mapping clause encdec_compressed = C_FSD(uimm, rs1, rs2)
-  <-> 0b101 @ uimm[2..0] : bits(3) @ encdec_creg(rs1) @ uimm[4..3] : bits(2) @ encdec_cfreg(rs2) @ 0b00
+  <-> 0b101 @ uimm[2..0] @ encdec_creg(rs1) @ uimm[4..3] @ encdec_cfreg(rs2) @ 0b00
   when currentlyEnabled(Ext_Zcd)
 
 function clause execute C_FSD(uimm, rsc1, rsc2) = {
