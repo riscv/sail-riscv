@@ -66,12 +66,20 @@ val print_step = pure {c: "print_step"} : unit -> unit
 function print_step() = ()
 
 val get_config_print_instr = pure {c:"get_config_print_instr"} : unit -> bool
-val get_config_print_platform = pure {c:"get_config_print_platform"} : unit -> bool
+val get_config_print_clint = pure {c:"get_config_print_clint"} : unit -> bool
+val get_config_print_exception = pure {c:"get_config_print_exception"} : unit -> bool
+val get_config_print_interrupt = pure {c:"get_config_print_interrupt"} : unit -> bool
+val get_config_print_htif = pure {c:"get_config_print_htif"} : unit -> bool
+val get_config_print_pma = pure {c:"get_config_print_pma"} : unit -> bool
 val get_config_rvfi = pure {c:"get_config_rvfi"} : unit -> bool
 val get_config_use_abi_names = pure {c:"get_config_use_abi_names"} : unit -> bool
 // defaults for other backends
 function get_config_print_instr () = false
-function get_config_print_platform () = false
+function get_config_print_clint () = false
+function get_config_print_exception () = false
+function get_config_print_interrupt () = false
+function get_config_print_htif () = false
+function get_config_print_pma () = false
 function get_config_rvfi () = false
 function get_config_use_abi_names () = false
 

@@ -12,7 +12,11 @@ bool config_print_instr = false;
 bool config_print_step = false;
 bool config_print_reg = false;
 bool config_print_mem_access = false;
-bool config_print_platform = false;
+bool config_print_clint = false;
+bool config_print_exception = false;
+bool config_print_interrupt = false;
+bool config_print_htif = false;
+bool config_print_pma = false;
 bool config_enable_rvfi = false;
 bool config_use_abi_names = false;
 
