@@ -44,6 +44,24 @@ function carryless_mul_reversed(a, b) = {
   reverse_bits(prod['n - 1 .. 0])
 }
 
+val mult_to_bits_half : forall 'l, 'l > 0 . (implicit('l), Signedness, Signedness, bits('l), bits('l), VectorHalf) -> bits('l)
+function mult_to_bits_half(l, sign1, sign2, rs1_bits, rs2_bits, result_part) = {
+  let rs1_int : int = match sign1 {
+    Signed   => signed(rs1_bits),
+    Unsigned => unsigned(rs1_bits),
+  };
+  let rs2_int : int = match sign2 {
+    Signed   => signed(rs2_bits),
+    Unsigned => unsigned(rs2_bits),
+  };
+
+  let result_wide = to_bits_truncate(2 * l, rs1_int * rs2_int);
+  match result_part {
+    High => result_wide[(2 * l - 1) .. l],
+    Low  => result_wide[(l - 1) .. 0],
+  }
+}
+
 $[property]
 function cmulr_equivalence(a : bits(16), b : bits(16)) -> bool = {
   carryless_mul_reversed(a, b) == carryless_mulr(a, b)
