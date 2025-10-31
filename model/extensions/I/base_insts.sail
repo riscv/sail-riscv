@@ -68,10 +68,9 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
 
 // *****************************************************************
 union clause instruction = JAL : (bits(21), regidx)
-
 $[wavedrom "_ offset[20:1] _ _ dest JAL"]
-mapping clause encdec = JAL(imm_19 @ imm_7_0 @ imm_8 @ imm_18_9 @ 0b0, rd)
-  <-> imm_19 : bits(1) @ imm_18_9 : bits(10) @ imm_8 : bits(1) @ imm_7_0 : bits(8) @ encdec_reg(rd) @ 0b1101111
+mapping clause encdec = JAL(imm @ 0b0, rd)
+  <-> imm[19] @ imm[9..0] @ imm[10] @ imm[18..11] @ encdec_reg(rd) @ 0b1101111
 
 function clause execute JAL(imm, rd) = {
   let link_address = get_next_pc();
@@ -110,8 +109,8 @@ mapping encdec_bop : bop <-> bits(3) = {
   BGEU <-> 0b111
 }
 
-mapping clause encdec = BTYPE(imm7_6 @ imm5_0 @ imm7_5_0 @ imm5_4_1 @ 0b0, rs2, rs1, op)
-  <-> imm7_6 : bits(1) @ imm7_5_0 : bits(6) @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_bop(op) @ imm5_4_1 : bits(4) @ imm5_0 : bits(1) @ 0b1100011
+mapping clause encdec = BTYPE(imm @ 0b0, rs2, rs1, op)
+  <-> imm[11] @ imm[9..4] @ encdec_reg(rs2) @ encdec_reg(rs1) @ encdec_bop(op) @ imm[3..0] @ imm[10] @ 0b1100011
 
 $[split op]
 function clause execute BTYPE(imm, rs2, rs1, op) = {
@@ -310,8 +309,8 @@ mapping clause assembly = LOAD(imm, rs1, rd, is_unsigned, width)
 union clause instruction = STORE : (bits(12), regidx, regidx, word_width)
 
 $[wavedrom "offset[11:5] src base _ width offset[4:0] STORE"]
-mapping clause encdec = STORE(imm7 @ imm5, rs2, rs1, width)
-  <-> imm7 : bits(7) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ imm5 : bits(5) @ 0b0100011
+mapping clause encdec = STORE(imm, rs2, rs1, width)
+  <-> imm[11..5] @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ imm[4..0] @ 0b0100011
   when width <= xlen_bytes
 
 function clause execute STORE(imm, rs2, rs1, width) = {
