@@ -102,7 +102,7 @@ union PTE_Check = {
 }
 
 // PRIVATE
-function check_PTE_permission(ac        : AccessType(ext_access_type),
+function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
                               priv      : Privilege,
                               // Make eXecutable Readable
                               mxr       : bool,
@@ -119,10 +119,10 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
   // Steps 6 and 8 of VATP, roughly (see vmem.sail).
   // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
   let access_ok : bool = match ac {
-    Read(_)             => pte_R | (pte_X & mxr),
-    Write(_)            => pte_W,
-    ReadWrite(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
-    InstructionFetch(_) => pte_X,
+    MemoryRead(_)             => pte_R | (pte_X & mxr),
+    MemoryWrite(_)            => pte_W,
+    MemoryReadWrite(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
+    MemoryInstructionFetch(_) => pte_X,
   };
 
   let priv_ok : bool = match priv {
@@ -142,17 +142,17 @@ function check_PTE_permission(ac        : AccessType(ext_access_type),
 // PRIVATE
 function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   pte : bits('pte_size),
-  a   : AccessType(ext_access_type),
+  a   : MemoryAccessType(ext_access_type),
 ) -> option(bits('pte_size)) = {
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
-                             InstructionFetch() => false,
-                             Read(_)         => false,
-                             Write(_)        => true,
-                             ReadWrite(_, _) => true
+                             MemoryInstructionFetch() => false,
+                             MemoryRead(_)            => false,
+                             MemoryWrite(_)           => true,
+                             MemoryReadWrite(_, _)    => true
                            });
   // Update 'accessed'-bit?
   let update_a = (pte_flags[A] == 0b0);

@@ -81,7 +81,7 @@ struct PMA = {
   // Optionally cause an access/alignment fault on misaligned access.
   misaligned_fault : misaligned_fault,
   // TODO: Atomicity PMA. This is not supported yet because
-  // the AccessType needs to be extended to indicate the AMO type.
+  // the MemoryAccessType needs to be extended to indicate the AMO type.
   // atomic_support   : AtomicSupport,
   reservability    : Reservability,
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
