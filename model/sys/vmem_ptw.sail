@@ -49,18 +49,18 @@ function ext_get_ptw_error(eptwf : ext_ptw_fail) -> PTW_Error =
   PTW_No_Permission()
 
 // Convert translation/PTW failures into architectural exceptions
-function translationException(a : AccessType(ext_access_type),
+function translationException(a : MemoryAccessType(ext_access_type),
                               f : PTW_Error)
                              -> ExceptionType = {
   match (a, f) {
-    (_, PTW_Ext_Error(e))        => E_Extension(ext_translate_exception(e)),
-    (ReadWrite(_), PTW_Access()) => E_SAMO_Access_Fault(),
-    (ReadWrite(_), _)            => E_SAMO_Page_Fault(),
-    (Read(_), PTW_Access())      => E_Load_Access_Fault(),
-    (Read(_), _)                 => E_Load_Page_Fault(),
-    (Write(_), PTW_Access())     => E_SAMO_Access_Fault(),
-    (Write(_), _)                => E_SAMO_Page_Fault(),
-    (InstructionFetch(), PTW_Access()) => E_Fetch_Access_Fault(),
-    (InstructionFetch(), _)            => E_Fetch_Page_Fault()
+    (_, PTW_Ext_Error(e))                    => E_Extension(ext_translate_exception(e)),
+    (MemoryReadWrite(_), PTW_Access())       => E_SAMO_Access_Fault(),
+    (MemoryReadWrite(_), _)                  => E_SAMO_Page_Fault(),
+    (MemoryRead(_), PTW_Access())            => E_Load_Access_Fault(),
+    (MemoryRead(_), _)                       => E_Load_Page_Fault(),
+    (MemoryWrite(_), PTW_Access())           => E_SAMO_Access_Fault(),
+    (MemoryWrite(_), _)                      => E_SAMO_Page_Fault(),
+    (MemoryInstructionFetch(), PTW_Access()) => E_Fetch_Access_Fault(),
+    (MemoryInstructionFetch(), _)            => E_Fetch_Page_Fault()
   }
 }
