@@ -88,7 +88,6 @@ static void print_dts(void)
   zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
-  exit(EXIT_SUCCESS);
 }
 
 static void print_isa(void)
@@ -97,7 +96,6 @@ static void print_isa(void)
   zgenerate_canonical_isa_string(&isa, UNIT);
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
-  exit(EXIT_SUCCESS);
 }
 
 static void print_build_info(void)
@@ -553,6 +551,7 @@ int inner_main(int argc, char **argv)
     fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
   }
 
+  // Always validate the schema conformance of the config.
   validate_config_schema(config_file);
 
   // Initialize the model.
@@ -565,21 +564,30 @@ int inner_main(int argc, char **argv)
   init_sail_configured_types();
   model_init();
 
-  // Always validate the schema conformance of the config.
-  if (!zconfig_is_valid(UNIT)) {
-    fprintf(stderr, "Fatal Error: validate_config failed.\n");
-    exit(EXIT_FAILURE);
-  }
-  if (do_validate_config) {
-    fprintf(stderr, "Config passed validations.\n");
-    exit(EXIT_SUCCESS);
+  // Validate the configuration; exit if that's all we were asked to do
+  // or if the validation failed.
+  {
+    bool config_is_valid = zconfig_is_valid(UNIT);
+    const char *s = config_is_valid ? "valid" : "invalid";
+    if (!config_is_valid || do_validate_config) {
+      if (config_file.empty()) {
+	fprintf(stderr, "Default configuration is %s.\n", s);
+      } else {
+	fprintf(stderr, "Configuration in %s is %s.\n", config_file.c_str(), s);
+      }
+      exit(config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE);
+    }
   }
 
+  // Print a device tree or an ISA string only after the configuration
+  // is validated above.
   if (do_print_dts) {
     print_dts();
+    exit(EXIT_SUCCESS);
   }
   if (do_print_isa) {
     print_isa();
+    exit(EXIT_SUCCESS);
   }
 
   // If we get here, we need to have ELF files to run.
