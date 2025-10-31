@@ -28,6 +28,7 @@ function clause execute (VFNCVTBF16_F_F_W(vm, vs2, vd)) = {
   then return Illegal_Instruction();
 
   assert(SEW == 16);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -79,6 +80,7 @@ function clause execute (VFWCVTBF16_F_F_V(vm, vs2, vd)) = {
   then return Illegal_Instruction();
 
   assert(SEW == 16);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
