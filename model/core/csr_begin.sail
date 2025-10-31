@@ -15,8 +15,21 @@ scattered mapping csr_name_map
 function csr_name(csr : csreg) -> string = csr_name_map(csr)
 overload to_str = {csr_name}
 
+enum CSRAccessResult = {
+  CSRAccessSuccess,
+  CSRNotExist,
+  CSRAccessIllegal,
+  // CSRAccessVirtual,
+}
+
+enum CSRAccessType = {
+  CSRRead,
+  CSRWrite,
+  CSRReadWrite,
+}
+
 // returns whether a CSR exists
-val is_CSR_accessible : (csreg, Privilege, bool) -> bool
+val is_CSR_accessible : (csreg, Privilege, CSRAccessType) -> CSRAccessResult
 scattered function is_CSR_accessible
 
 // returns the value of the CSR if it is defined
