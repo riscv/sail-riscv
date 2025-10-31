@@ -100,6 +100,10 @@ union AccessType ('a : Type) = {
   InstructionFetch : unit
 }
 
+// CSR access types
+
+enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
+
 // Some features only affect loads/stores; not instruction fetch.
 function is_load_store forall ('a : Type) . (ac : AccessType('a)) -> bool =
   match ac {
