@@ -82,24 +82,12 @@ uint64_t insn_limit = 0;
 char *sailcov_file = nullptr;
 #endif
 
-static void validate_config(const std::string &conf_file)
-{
-  const char *s = zconfig_is_valid(UNIT) ? "valid" : "invalid";
-  if (!conf_file.empty()) {
-    fprintf(stdout, "Configuration in %s is %s.\n", conf_file.c_str(), s);
-  } else {
-    fprintf(stdout, "Default configuration is %s.\n", s);
-  }
-  exit(EXIT_SUCCESS);
-}
-
 static void print_dts(void)
 {
   char *dts = nullptr;
   zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
-  exit(EXIT_SUCCESS);
 }
 
 static void print_isa(void)
@@ -108,7 +96,6 @@ static void print_isa(void)
   zgenerate_canonical_isa_string(&isa, UNIT);
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
-  exit(EXIT_SUCCESS);
 }
 
 static void print_build_info(void)
@@ -142,7 +129,7 @@ static void setup_options(CLI::App &app)
   app.add_flag("--print-config-schema", do_print_config_schema,
                "Print configuration schema");
   app.add_flag("--validate-config", do_validate_config,
-               "Validate configuration");
+               "Exit after config validation (it is always validated)");
   app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
   app.add_flag("--enable-experimental-extensions",
@@ -577,14 +564,30 @@ int inner_main(int argc, char **argv)
   init_sail_configured_types();
   model_init();
 
-  if (do_validate_config) {
-    validate_config(config_file);
+  // Validate the configuration; exit if that's all we were asked to do
+  // or if the validation failed.
+  {
+    bool config_is_valid = zconfig_is_valid(UNIT);
+    const char *s = config_is_valid ? "valid" : "invalid";
+    if (!config_is_valid || do_validate_config) {
+      if (config_file.empty()) {
+        fprintf(stderr, "Default configuration is %s.\n", s);
+      } else {
+        fprintf(stderr, "Configuration in %s is %s.\n", config_file.c_str(), s);
+      }
+      exit(config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE);
+    }
   }
+
+  // Print a device tree or an ISA string only after the configuration
+  // is validated above.
   if (do_print_dts) {
     print_dts();
+    exit(EXIT_SUCCESS);
   }
   if (do_print_isa) {
     print_isa();
+    exit(EXIT_SUCCESS);
   }
 
   // If we get here, we need to have ELF files to run.
