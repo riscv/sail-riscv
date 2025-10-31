@@ -30,8 +30,8 @@ mapping clause encdec = CSRImm(csr, imm, rd, op)
 
 // Implements the table in the Zicsr specification determining whether
 // a CSR instruction reads or writes the specified CSR.
-function csr_access_type(op : csrop, is_zero_dest : bool, is_zero_arg : bool) -> CSRAccessType =
-  match (op, is_zero_dest, is_zero_arg) {
+function csr_access_type(op : csrop, discard_prev_value : bool, is_zero_arg : bool) -> CSRAccessType =
+  match (op, discard_prev_value, is_zero_arg) {
     (CSRRW, true, _)  => CSRWrite,
     (CSRRW, false, _) => CSRReadWrite,
     (CSRRS, _, true)  => CSRRead,
