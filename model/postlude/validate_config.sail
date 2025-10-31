@@ -206,6 +206,11 @@ function check_pmp() -> bool = {
     valid = false;
     print_endline("NA4 is not supported if the PMP grain G is non-zero.");
   };
+  if sys_pmp_usable_count > sys_pmp_count
+  then {
+    valid = false;
+    print_endline("The number of usable PMP entries cannot exceed the total number of PMP entries.");
+  };
   valid
 }
 
