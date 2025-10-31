@@ -571,9 +571,9 @@ int inner_main(int argc, char **argv)
     const char *s = config_is_valid ? "valid" : "invalid";
     if (!config_is_valid || do_validate_config) {
       if (config_file.empty()) {
-	fprintf(stderr, "Default configuration is %s.\n", s);
+        fprintf(stderr, "Default configuration is %s.\n", s);
       } else {
-	fprintf(stderr, "Configuration in %s is %s.\n", config_file.c_str(), s);
+        fprintf(stderr, "Configuration in %s is %s.\n", config_file.c_str(), s);
       }
       exit(config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE);
     }
