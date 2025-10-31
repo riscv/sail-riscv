@@ -28,16 +28,28 @@ mapping clause encdec = CSRImm(csr, imm, rd, op)
   <-> csr @ imm @ 0b1 @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
   when currentlyEnabled(Ext_Zicsr)
 
-function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_Write: bool) -> ExecutionResult = {
-  if not(check_CSR(csr, cur_privilege, is_CSR_Write))
+// Implements the table in the Zicsr specification determining whether
+// a CSR instruction reads or writes the specified CSR.
+function csr_access_type(op : csrop, is_zero_dest : bool, is_zero_arg : bool) -> CSRAccessType =
+  match (op, is_zero_dest, is_zero_arg) {
+    (CSRRW, true, _)  => CSRWrite,
+    (CSRRW, false, _) => CSRReadWrite,
+    (CSRRS, _, true)  => CSRRead,
+    (CSRRC, _, true)  => CSRRead,
+    (CSRRS, _, false) => CSRReadWrite,
+    (CSRRC, _, false) => CSRReadWrite,
+  }
+
+function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_zero_arg : bool) -> ExecutionResult = {
+  let ac = csr_access_type(op, rd == zreg, is_zero_arg);
+  if   not(check_CSR(csr, cur_privilege, ac))
   then Illegal_Instruction()
-  else if not(ext_check_CSR(csr, cur_privilege, is_CSR_Write))
+  else if not(ext_check_CSR(csr, cur_privilege, ac))
   then Ext_CSR_Check_Failure()
   else {
-    // CSRRW should not generate read side-effects if rd == 0
-    let is_CSR_Read = not(op == CSRRW & rd == zreg);
-    let csr_val : xlenbits = if is_CSR_Read then read_CSR(csr) else zeros();
-    if is_CSR_Write then {
+    // A pure write (i.e. CSRRW with rd == 0) should not generate read side-effects.
+    let csr_val : xlenbits = if ac != CSRWrite then read_CSR(csr) else zeros();
+    if ac == CSRWrite | ac == CSRReadWrite then {
       let new_val : xlenbits = match op {
         CSRRW => rs1_val,
         CSRRS => csr_val | rs1_val,
@@ -60,10 +72,10 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_CSR_
 }
 
 function clause execute CSRReg(csr, rs1, rd, op) =
-  doCSR(csr, X(rs1), rd, op, (op == CSRRW) | (rs1 != zreg))
+  doCSR(csr, X(rs1), rd, op, rs1 == zreg)
 
 function clause execute CSRImm(csr, imm, rd, op) =
-  doCSR(csr, zero_extend(imm), rd, op, (op == CSRRW) | (imm != zeros()))
+  doCSR(csr, zero_extend(imm), rd, op, imm == zeros())
 
 mapping csr_mnemonic : csrop <-> string = {
   CSRRW <-> "csrrw",
