@@ -27,6 +27,7 @@ public:
   void pc_write_callback(sbits new_pc) override;
   void redirect_callback(sbits new_pc) override;
   void trap_callback(bool is_interrupt, fbits cause) override;
+ void pt_walk_callback(sbits phy_address,const_sail_string pri,const_sail_string readtype,sbits satp )
 
 private:
   bool config_print_reg;
