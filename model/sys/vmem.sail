@@ -112,7 +112,8 @@ function pt_walk(
 
       if pte_is_invalid(pte_flags, pte_ext) then
         // Step 3 of VATP.
-        Err(PTW_Invalid_PTE(), ext_ptw)
+        {pt_walk_callback(pte_addr,priv,ac,satp);
+        Err(PTW_Invalid_PTE(), ext_ptw)}
       else {
         // Step 4 of VATP.
         let ppn = PPN_of_PTE(pte); // 22 or 44.

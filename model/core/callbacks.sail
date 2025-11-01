@@ -25,6 +25,7 @@ function mem_exception_callback(_) = ()
 /// Called at the end of every step when PC is advanced to the next
 /// instruction. This includes taken branches. It is not called when
 /// the hart is waiting in WFI/WRS. The parameter is the new PC.
+
 val pc_write_callback = pure {c: "pc_write_callback"} : (/* new_pc */ xlenbits) -> unit
 function pc_write_callback(_) = ()
 
@@ -81,4 +82,41 @@ function long_csr_write_callback(name : string, name_high : string, value : bits
   csr_write_callback(name, value[xlen - 1 .. 0]);
   if xlen == 32
   then csr_write_callback(name_high, value[63 .. 32]);
+}
+
+//pt walks
+
+// 在 callbacks.sail 中定义回调类型
+
+// type ptw_callback_info = struct {
+//   virtual_address : bits(64),
+//   privilege_level : privilege_level,
+//   read_write      : bool, // True for read, False for write
+//   instruction     : bool, // True if from instruction fetch
+//   satp            : bits(64), // SATP register value
+//   // 其他可能相关的上下文信息
+// }
+
+val pt_walk_log = pure {c: "pt_walk_log"} : (bits(64),string,string,xlenbits) -> unit
+function pt_walk_log(_) = ()
+
+
+
+function pt_walk_callback(vpn:bits(64),pr : Privilege,readtype: AccessType(ext_access_type),satp : xlenbits) -> unit = {
+  //  let access_str = match readtype {
+  //       Read       => "Read",
+  //       Write      => "Write",
+  //       ReadWrite    => "ReadWrite",
+  //       InstructionFetch => "InstructionFetch",
+  //       _          => "unknown"
+  //   };
+  pt_walk_log(vpn,to_str(pr),to_str(readtype),satp)
+        // println("[PTW ERROR] VA=" : hex(vpn) : 
+        //         " Failed at level " : string(pr) :
+        //         " Readtype: " : string(readtype));
+        
+        // println(" SATP: " : hex(satp) :
+        //         " MODE=" : decimal(extract_bits(satp, 63, 60)) :
+        //         " ASID=" : decimal(extract_bits(satp, 59, 44)) :
+        //         " PPN=" : hex(extract_bits(satp, 43, 0)));
 }

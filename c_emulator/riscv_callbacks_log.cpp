@@ -124,3 +124,15 @@ void log_callbacks::trap_callback(bool is_interrupt, fbits cause)
   (void)is_interrupt;
   (void)cause;
 }
+
+void log_callbacks::pt_walk_callback(sbits phy_address,const_sail_string pri,const_sail_string readtype,sbits satp )
+{
+  // println("[PTW ERROR] VA=" : hex(vpn) : 
+  //               " Failed at level " : string(pr) :
+  //               " Readtype: " : string(readtype));
+        
+  //       println(" SATP: " : hex(satp) :
+  //               " MODE=" : decimal(extract_bits(satp, 63, 60)) :
+  //               " ASID=" : decimal(extract_bits(satp, 59, 44)) :
+  //               " PPN=" : hex(extract_bits(satp, 43, 0)));
+}
