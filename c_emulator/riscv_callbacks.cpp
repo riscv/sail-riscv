@@ -117,3 +117,37 @@ unit trap_callback(bool is_interrupt, fbits cause)
   }
   return UNIT;
 }
+// Page table walk callback
+unit ptw_start_callback(uint64_t vpn, struct zMemoryAccessTypezIuzK access_type,
+                        enum zPrivilege privilege)
+{
+  for (auto c : callbacks) {
+    c->ptw_start_callback(vpn, access_type, privilege);
+  }
+  return UNIT;
+}
+
+unit ptw_step_callback(sail_int level, sbits pte_addr, uint64_t pte)
+{
+  for (auto c : callbacks) {
+    c->ptw_step_callback(level, pte_addr, pte);
+  }
+  return UNIT;
+}
+
+unit ptw_success_callback(uint64_t final_ppn, sail_int level)
+{
+  for (auto c : callbacks) {
+    c->ptw_success_callback(final_ppn, level);
+  }
+  return UNIT;
+}
+
+unit ptw_fail_callback(struct zPTW_Error error_type, sail_int level,
+                       sbits pte_addr)
+{
+  for (auto c : callbacks) {
+    c->ptw_fail_callback(error_type, level, pte_addr);
+  }
+  return UNIT;
+}

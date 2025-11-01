@@ -71,6 +71,7 @@ bool config_print_mem_access = false;
 bool config_print_platform = false;
 bool config_print_rvfi = false;
 bool config_print_step = false;
+bool config_print_ptw = false;
 
 bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
@@ -166,6 +167,8 @@ static void setup_options(CLI::App &app)
 
   app.add_flag("--trace-instr", config_print_instr,
                "Enable trace output for instruction execution");
+  app.add_flag("--trace-ptw", config_print_ptw,
+               "Enable trace output for Page Table walk");
   app.add_flag("--trace-reg", config_print_reg,
                "Enable trace output for register access");
   app.add_flag("--trace-mem", config_print_mem_access,
@@ -186,6 +189,7 @@ static void setup_options(CLI::App &app)
         config_print_rvfi = true;
         config_print_platform = true;
         config_print_step = true;
+        config_print_ptw = true;
       },
       "Enable all trace output");
 
@@ -598,7 +602,7 @@ int inner_main(int argc, char **argv)
 
   init_logs();
   log_callbacks log_cbs(config_print_reg, config_print_mem_access,
-                        config_use_abi_names, trace_log);
+                        config_print_ptw, config_use_abi_names, trace_log);
   register_callback(&log_cbs);
 
   if (gettimeofday(&init_start, nullptr) < 0) {

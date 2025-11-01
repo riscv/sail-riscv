@@ -64,6 +64,7 @@ sys {
     sys/inst_retire.sail,
     sys/vmem_pte.sail,
     sys/vmem_ptw.sail,
+    sys/callbacks.sail,
     sys/vmem_tlb.sail,
     sys/vmem.sail,
     sys/vmem_utils.sail,

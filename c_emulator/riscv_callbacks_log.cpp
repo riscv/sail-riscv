@@ -20,10 +20,12 @@ void print_lbits_hex(FILE *trace_log, lbits val, int length = 0)
 
 log_callbacks::log_callbacks(bool config_print_reg,
                              bool config_print_mem_access,
-                             bool config_use_abi_names, FILE *trace_log)
+                             bool config_print_ptw, bool config_use_abi_names,
+                             FILE *trace_log)
     : config_print_reg(config_print_reg)
     , config_print_mem_access(config_print_mem_access)
     , config_use_abi_names(config_use_abi_names)
+    , config_print_ptw(config_print_ptw)
     , trace_log(trace_log)
 {
 }
@@ -99,5 +101,50 @@ void log_callbacks::vreg_write_callback(unsigned reg, lbits value)
   if (trace_log != nullptr && config_print_reg) {
     fprintf(trace_log, "v%d <- 0x", reg);
     print_lbits_hex(trace_log, value);
+  }
+}
+
+// Page table walk callback
+void log_callbacks::ptw_start_callback(
+    uint64_t vpn, struct zMemoryAccessTypezIuzK access_type,
+    enum zPrivilege privilege)
+{
+  if (trace_log != nullptr && config_print_ptw) {
+    sail_string str_ac, str_pr;
+    CREATE(sail_string)(&str_ac);
+    CREATE(sail_string)(&str_pr);
+    zaccessType_to_str(&str_ac, access_type);
+    zprivLevel_to_str(&str_pr, privilege);
+    fprintf(trace_log, "PTW: Start, vpn=%ld, access_type=%s, privilege=%s", vpn,
+            str_ac, str_pr);
+  }
+}
+
+void log_callbacks::ptw_step_callback(sail_int /*level*/, sbits pte_addr,
+                                      uint64_t pte)
+{
+  if (trace_log != nullptr && config_print_ptw) {
+    fprintf(trace_log, "PTW: Step, pte=%ld, pte_addr=0x%" PRIX64 "\n", pte,
+            pte_addr.bits);
+  }
+}
+
+void log_callbacks::ptw_success_callback(uint64_t final_ppn, sail_int /*level*/)
+{
+  if (trace_log != nullptr && config_print_ptw) {
+    fprintf(trace_log, "PTW: Success, finalppn=%ld", final_ppn);
+  }
+}
+
+void log_callbacks::ptw_fail_callback(struct zPTW_Error error_type,
+                                      sail_int /*level*/, sbits pte_addr)
+{
+  // failed trace is always available
+  if (trace_log != nullptr) {
+    sail_string str_et;
+    CREATE(sail_string)(&str_et);
+    zptw_error_to_str(&str_et, error_type);
+    fprintf(trace_log, "PTW: failed, error=%s, pte_addr=0x%" PRIX64 "\n",
+            str_et, pte_addr.bits);
   }
 }
