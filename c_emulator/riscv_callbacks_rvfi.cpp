@@ -6,10 +6,10 @@
 
 // Implementations of default callbacks for RVFI.
 // The model assumes that these functions do not change the state of the model.
-void rvfi_callbacks::fetch_callback(sbits opcode)
-{
-  (void)opcode;
-}
+// void rvfi_callbacks::fetch_callback(sbits opcode)
+// {
+//   (void)opcode;
+// }
 
 void rvfi_callbacks::mem_write_callback(const char *, sbits paddr,
                                         uint64_t width, lbits value)
@@ -46,27 +46,29 @@ void rvfi_callbacks::xreg_full_write_callback(const_sail_string, sbits reg,
   }
 }
 
-void rvfi_callbacks::freg_write_callback(unsigned, sbits) { }
+// void rvfi_callbacks::freg_write_callback(unsigned, sbits) { }
 
-void rvfi_callbacks::csr_full_write_callback(const_sail_string, unsigned, sbits)
-{
-}
+// void rvfi_callbacks::csr_full_write_callback(const_sail_string, unsigned,
+// sbits)
+// {
+// }
 
-void rvfi_callbacks::csr_full_read_callback(const_sail_string, unsigned, sbits)
-{
-}
+// void rvfi_callbacks::csr_full_read_callback(const_sail_string, unsigned,
+// sbits)
+// {
+// }
 
-void rvfi_callbacks::vreg_write_callback(unsigned, lbits) { }
+// void rvfi_callbacks::vreg_write_callback(unsigned, lbits) { }
 
-void rvfi_callbacks::pc_write_callback(sbits new_pc)
-{
-  (void)new_pc;
-}
+// void rvfi_callbacks::pc_write_callback(sbits new_pc)
+// {
+//   (void)new_pc;
+// }
 
-void rvfi_callbacks::redirect_callback(sbits new_pc)
-{
-  (void)new_pc;
-}
+// void rvfi_callbacks::redirect_callback(sbits new_pc)
+// {
+//   (void)new_pc;
+// }
 
 void rvfi_callbacks::trap_callback(bool is_interrupt, fbits cause)
 {
