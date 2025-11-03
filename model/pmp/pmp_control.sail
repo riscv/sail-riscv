@@ -111,7 +111,7 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       ),
     };
   };
-  if priv == Machine then None() else Some(accessToFault(acc))
+  if sys_pmp_count == 0 | priv == Machine then None() else Some(accessToFault(acc))
 }
 
 function reset_pmp() -> unit = {
