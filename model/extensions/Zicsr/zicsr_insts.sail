@@ -30,10 +30,10 @@ mapping clause encdec = CSRImm(csr, imm, rd, op)
 
 // Implements the table in the Zicsr specification determining whether
 // a CSR instruction reads or writes the specified CSR.
-function csr_access_type(op : csrop, discard_prev_value : bool, is_zero_arg : bool) -> CSRAccessType =
-  match (op, discard_prev_value, is_zero_arg) {
-    (CSRRW, true, _)  => CSRWrite,
-    (CSRRW, false, _) => CSRReadWrite,
+function csr_access_type(op : csrop, return_prev_value : bool, is_zero_arg : bool) -> CSRAccessType =
+  match (op, return_prev_value, is_zero_arg) {
+    (CSRRW, false, _)  => CSRWrite,
+    (CSRRW, true, _) => CSRReadWrite,
     (CSRRS, _, true)  => CSRRead,
     (CSRRC, _, true)  => CSRRead,
     (CSRRS, _, false) => CSRReadWrite,
@@ -41,7 +41,7 @@ function csr_access_type(op : csrop, discard_prev_value : bool, is_zero_arg : bo
   }
 
 function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_zero_arg : bool) -> ExecutionResult = {
-  let ac = csr_access_type(op, rd == zreg, is_zero_arg);
+  let ac = csr_access_type(op, rd != zreg, is_zero_arg);
   if   not(check_CSR(csr, cur_privilege, ac))
   then Illegal_Instruction()
   else if not(ext_check_CSR(csr, cur_privilege, ac))
