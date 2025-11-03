@@ -49,7 +49,7 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_zero
   else {
     // A pure write (i.e. CSRRW with rd == 0) should not generate read side-effects.
     let csr_val : xlenbits = if ac != CSRWrite then read_CSR(csr) else zeros();
-    if ac == CSRWrite | ac == CSRReadWrite then {
+    if ac != CSRRead then {
       let new_val : xlenbits = match op {
         CSRRW => rs1_val,
         CSRRS => csr_val | rs1_val,
