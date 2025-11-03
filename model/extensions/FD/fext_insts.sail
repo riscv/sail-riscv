@@ -277,7 +277,7 @@ function clause execute LOAD_FP(imm, rs1, rd, width) = {
   assert(width <= flen_bytes);
 
   let offset : xlenbits = sign_extend(imm);
-  match vmem_read(rs1, offset, width, MemoryRead(Data), false, false, false) {
+  match vmem_read(rs1, offset, width, Load(Data), false, false, false) {
     Ok(result) => { F(rd) = nan_box(result); RETIRE_SUCCESS },
     Err(e)     => e,
   }
@@ -314,7 +314,7 @@ function clause execute STORE_FP(imm, rs2, rs1, width) = {
 
   let offset : xlenbits = sign_extend(imm);
   let data = F(rs2)[width * 8 - 1 ..  0];
-  match vmem_write(rs1, offset, width, data, MemoryWrite(Data), false, false, false) {
+  match vmem_write(rs1, offset, width, data, Store(Data), false, false, false) {
     Ok(true)  => RETIRE_SUCCESS,
     Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
     Err(e)    => e,

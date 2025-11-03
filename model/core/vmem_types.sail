@@ -39,10 +39,10 @@ let default_write_acc : ext_access_type = Data
 
 function accessType_to_str(a : MemoryAccessType(ext_access_type)) -> string =
   match (a) {
-    MemoryRead(_)            => "R",
-    MemoryWrite(_)           => "W",
-    MemoryReadWrite(_, _)    => "RW",
-    MemoryInstructionFetch() => "X",
+    Load(_)            => "R",
+    Store(_)           => "W",
+    LoadStore(_, _)    => "RW",
+    InstructionFetch() => "X",
   }
 
 overload to_str = {accessType_to_str}

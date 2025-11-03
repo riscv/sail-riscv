@@ -53,14 +53,14 @@ function translationException(a : MemoryAccessType(ext_access_type),
                               f : PTW_Error)
                              -> ExceptionType = {
   match (a, f) {
-    (_, PTW_Ext_Error(e))                    => E_Extension(ext_translate_exception(e)),
-    (MemoryReadWrite(_), PTW_Access())       => E_SAMO_Access_Fault(),
-    (MemoryReadWrite(_), _)                  => E_SAMO_Page_Fault(),
-    (MemoryRead(_), PTW_Access())            => E_Load_Access_Fault(),
-    (MemoryRead(_), _)                       => E_Load_Page_Fault(),
-    (MemoryWrite(_), PTW_Access())           => E_SAMO_Access_Fault(),
-    (MemoryWrite(_), _)                      => E_SAMO_Page_Fault(),
-    (MemoryInstructionFetch(), PTW_Access()) => E_Fetch_Access_Fault(),
-    (MemoryInstructionFetch(), _)            => E_Fetch_Page_Fault()
+    (_, PTW_Ext_Error(e))              => E_Extension(ext_translate_exception(e)),
+    (LoadStore(_), PTW_Access())       => E_SAMO_Access_Fault(),
+    (LoadStore(_), _)                  => E_SAMO_Page_Fault(),
+    (Load(_), PTW_Access())            => E_Load_Access_Fault(),
+    (Load(_), _)                       => E_Load_Page_Fault(),
+    (Store(_), PTW_Access())           => E_SAMO_Access_Fault(),
+    (Store(_), _)                      => E_SAMO_Page_Fault(),
+    (InstructionFetch(), PTW_Access()) => E_Fetch_Access_Fault(),
+    (InstructionFetch(), _)            => E_Fetch_Page_Fault()
   }
 }

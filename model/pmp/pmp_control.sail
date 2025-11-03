@@ -11,10 +11,10 @@
 
 function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(ext_access_type)) -> bool =
   match acc {
-    MemoryRead(_)            => ent[R] == 0b1,
-    MemoryWrite(_)           => ent[W] == 0b1,
-    MemoryReadWrite(_)       => ent[R] == 0b1 & ent[W] == 0b1,
-    MemoryInstructionFetch() => ent[X] == 0b1,
+    Load(_)            => ent[R] == 0b1,
+    Store(_)           => ent[W] == 0b1,
+    LoadStore(_)       => ent[R] == 0b1 & ent[W] == 0b1,
+    InstructionFetch() => ent[X] == 0b1,
   }
 
 
@@ -82,10 +82,10 @@ function pmpMatchAddr(
 
 function accessToFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match acc {
-    MemoryRead(_)            => E_Load_Access_Fault(),
-    MemoryWrite(_)           => E_SAMO_Access_Fault(),
-    MemoryReadWrite(_)       => E_SAMO_Access_Fault(),
-    MemoryInstructionFetch() => E_Fetch_Access_Fault(),
+    Load(_)            => E_Load_Access_Fault(),
+    Store(_)           => E_SAMO_Access_Fault(),
+    LoadStore(_)       => E_SAMO_Access_Fault(),
+    InstructionFetch() => E_Fetch_Access_Fault(),
   }
 
 function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (

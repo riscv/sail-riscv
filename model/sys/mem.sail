@@ -78,25 +78,25 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : MemoryAccessTy
     None()   => None()
   }) : option((bits(8 * 'n), mem_meta));
   match (t, result) {
-    (MemoryInstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
-    (MemoryRead(Data), None())         => Err(E_Load_Access_Fault()),
-    (_, None())                        => Err(E_SAMO_Access_Fault()),
-    (_, Some(v, m))                    => Ok(v, m),
+    (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
+    (Load(Data), None())         => Err(E_Load_Access_Fault()),
+    (_, None())                  => Err(E_SAMO_Access_Fault()),
+    (_, Some(v, m))              => Ok(v, m),
   }
 }
 
 function accessFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match accTy {
-    MemoryInstructionFetch() => E_Fetch_Access_Fault(),
-    MemoryRead(Data)         => E_Load_Access_Fault(),
-    _                        => E_SAMO_Access_Fault(),
+    InstructionFetch() => E_Fetch_Access_Fault(),
+    Load(Data)         => E_Load_Access_Fault(),
+    _                  => E_SAMO_Access_Fault(),
   }
 
 function alignmentFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match accTy {
-    MemoryInstructionFetch() => E_Fetch_Addr_Align(),
-    MemoryRead(Data)         => E_Load_Addr_Align(),
-    _                        => E_SAMO_Addr_Align(),
+    InstructionFetch() => E_Fetch_Addr_Align(),
+    Load(Data)         => E_Load_Addr_Align(),
+    _                  => E_SAMO_Addr_Align(),
   }
 
 function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
@@ -119,12 +119,12 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
         _ => {
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match accTy {
-            MemoryInstructionFetch() => attributes.executable,
-            MemoryRead(_)            => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
-            MemoryWrite(_)           => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+            InstructionFetch() => attributes.executable,
+            Load(_)            => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
+            Store(_)           => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
             // TODO: Extend MemoryAccessType with the specific type of AMO operation. For now we assume all memory
             // supports all AMO operations.
-            MemoryReadWrite(_, _)    => attributes.readable & attributes.writable,
+            LoadStore(_, _)    => attributes.readable & attributes.writable,
             // TODO: Extend MemoryAccessType with a Cache() option. See https://github.com/riscv/sail-riscv/pull/792
             // Cache(Zero)     => attributes.writable & attributes.supports_cbo_zero,
             // Cache(_)        => internal_error(__FILE__, __LINE__,
@@ -285,12 +285,12 @@ function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl
 // Memory write with explicit Privilege, implicit MemoryAccessType and metadata
 val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_priv (paddr, width, value, priv, aq, rl, con) =
-  mem_write_value_priv_meta(paddr, width, value, MemoryWrite(default_write_acc), priv, default_meta, aq, rl, con)
+  mem_write_value_priv_meta(paddr, width, value, Store(default_write_acc), priv, default_meta, aq, rl, con)
 
 // Memory write with explicit metadata and MemoryAccessType, implicit and Privilege
 val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), ext_access_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) = {
-  let typ = MemoryWrite(ext_acc);
+  let typ = Store(ext_acc);
   let ep = effectivePrivilege(typ, mstatus, cur_privilege);
   mem_write_value_priv_meta(paddr, width, value, typ, ep, meta, aq, rl, con)
 }

@@ -57,14 +57,14 @@ function read_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
   pte_size : int('n),
 ) -> MemoryOpResult(bits(8 * 'n)) =
-  mem_read_priv(MemoryRead(Data), Supervisor, paddr, pte_size, false, false, false)
+  mem_read_priv(Load(Data), Supervisor, paddr, pte_size, false, false, false)
 
 // PRIVATE
 // 'v is the virtual address size.
 val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  MemoryAccessType(ext_access_type),  // Memory Read/Write/ReadWrite/InstructionFetch
+  MemoryAccessType(ext_access_type),  // Memory Load/Store/LoadStore/InstructionFetch
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum

@@ -22,7 +22,7 @@ function rvfi_fetch() -> FetchResult = {
   if   (PC[0] != bitzero | (PC[1] != bitzero & not(currentlyEnabled(Ext_Zca))))
   then return F_Error(E_Fetch_Addr_Align(), PC);
 
-  match translateAddr(Virtaddr(PC), MemoryInstructionFetch()) {
+  match translateAddr(Virtaddr(PC), InstructionFetch()) {
     Err(e, _) => return F_Error(e, PC),
     Ok(_, _)  => (),
   };
@@ -39,7 +39,7 @@ function rvfi_fetch() -> FetchResult = {
     None()  => (),
   };
 
-  match translateAddr(Virtaddr(PC_hi), MemoryInstructionFetch()) {
+  match translateAddr(Virtaddr(PC_hi), InstructionFetch()) {
     Err(e, _) => F_Error(e, PC),
     Ok(_, _)  => F_Base(i)
   }

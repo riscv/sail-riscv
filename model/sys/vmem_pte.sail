@@ -119,10 +119,10 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
   // Steps 6 and 8 of VATP, roughly (see vmem.sail).
   // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
   let access_ok : bool = match ac {
-    MemoryRead(_)             => pte_R | (pte_X & mxr),
-    MemoryWrite(_)            => pte_W,
-    MemoryReadWrite(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
-    MemoryInstructionFetch(_) => pte_X,
+    Load(_)             => pte_R | (pte_X & mxr),
+    Store(_)            => pte_W,
+    LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
+    InstructionFetch(_) => pte_X,
   };
 
   let priv_ok : bool = match priv {
@@ -149,10 +149,10 @@ function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
-                             MemoryInstructionFetch() => false,
-                             MemoryRead(_)            => false,
-                             MemoryWrite(_)           => true,
-                             MemoryReadWrite(_, _)    => true
+                             InstructionFetch() => false,
+                             Load(_)            => false,
+                             Store(_)           => true,
+                             LoadStore(_, _)    => true
                            });
   // Update 'accessed'-bit?
   let update_a = (pte_flags[A] == 0b0);
