@@ -32,8 +32,8 @@ mapping clause encdec = CSRImm(csr, imm, rd, op)
 // a CSR instruction reads or writes the specified CSR.
 function csr_access_type(op : csrop, return_prev_value : bool, is_zero_arg : bool) -> CSRAccessType =
   match (op, return_prev_value, is_zero_arg) {
-    (CSRRW, false, _)  => CSRWrite,
-    (CSRRW, true, _) => CSRReadWrite,
+    (CSRRW, false, _) => CSRWrite,
+    (CSRRW, true, _)  => CSRReadWrite,
     (CSRRS, _, true)  => CSRRead,
     (CSRRC, _, true)  => CSRRead,
     (CSRRS, _, false) => CSRReadWrite,
