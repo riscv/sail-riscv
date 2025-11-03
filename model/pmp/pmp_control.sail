@@ -95,6 +95,8 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   priv : Privilege,
 ) -> option(ExceptionType) = {
 
+  if sys_pmp_count == 0 then return None();
+
   let width : xlenbits = to_bits(width);
 
   foreach (i from 0 to sys_pmp_count - 1) {
@@ -111,7 +113,7 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       ),
     };
   };
-  if sys_pmp_count == 0 | priv == Machine then None() else Some(accessToFault(acc))
+  if priv == Machine then None() else Some(accessToFault(acc))
 }
 
 function reset_pmp() -> unit = {
