@@ -572,6 +572,8 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   }
 }
 
+function clause currentlyEnabled(Ext_Sstvecd) = hartSupports(Ext_Sstvecd)
+
 // Exception PC
 
 register mepc : xlenbits
