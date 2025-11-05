@@ -16,10 +16,6 @@
 // Privileged Architecture specification.  Code locations
 // corresponding to these steps are marked in the comments.
 
-// STYLE NOTES:
-//   PRIVATE items are used only within this VM code.
-//   PUBLIC  items are invoked from other parts of sail-riscv.
-
 // TLB NOTE:
 // TLBs are not part of the RISC-V architecture specification.
 // However, we model a simple TLB so that
@@ -38,8 +34,7 @@ struct PTW_Output('v : Int), is_sv_mode('v) = {
   global  : bool,
 }
 
-// PRIVATE
-type PTW_Result('v : Int), is_sv_mode('v) = result((PTW_Output('v), ext_ptw), (PTW_Error, ext_ptw))
+private type PTW_Result('v : Int), is_sv_mode('v) = result((PTW_Output('v), ext_ptw), (PTW_Error, ext_ptw))
 
 // ****************************************************************
 // Page Table Walk (PTW)
@@ -59,9 +54,8 @@ function read_pte forall 'n, 'n in {4, 8} . (
 ) -> MemoryOpResult(bits(8 * 'n)) =
   mem_read_priv(Read(Data), Supervisor, paddr, pte_size, false, false, false)
 
-// PRIVATE
 // 'v is the virtual address size.
-val pt_walk : forall 'v, is_sv_mode('v) . (
+private val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
   AccessType(ext_access_type),  // Read/Write/ReadWrite/InstructionFetch
@@ -159,7 +153,6 @@ function pt_walk(
 // ****************************************************************
 // Architectural SATP CSR
 
-// PUBLIC: see also zicsr_insts.sail and other CSR-related files
 register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
 function clause is_CSR_accessible(0x180, priv, _) = currentlyEnabled(Ext_S) & not(priv == Supervisor & mstatus[TVM] == 0b1)
@@ -170,19 +163,16 @@ function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(cu
 // Fields of SATP
 
 // ASID is 9b in Sv32, 16b in Sv39/Sv48/Sv57
-// PRIVATE
-val satp_to_asid : forall 'n, 'n in {32, 64}. bits('n) -> bits(if 'n == 32 then 9 else 16)
+private val satp_to_asid : forall 'n, 'n in {32, 64}. bits('n) -> bits(if 'n == 32 then 9 else 16)
 function satp_to_asid(satp_val) =
   if 'n == 32 then Mk_Satp32(satp_val)[Asid] else Mk_Satp64(satp_val)[Asid]
 
-// PRIVATE
-val satp_to_ppn : forall 'n, 'n in {32, 64}. bits('n) -> bits(if 'n == 32 then 22 else 44)
+private val satp_to_ppn : forall 'n, 'n in {32, 64}. bits('n) -> bits(if 'n == 32 then 22 else 44)
 function satp_to_ppn(satp_val) =
   if 'n == 32 then Mk_Satp32(satp_val)[PPN] else Mk_Satp64(satp_val)[PPN]
 
 // Compute address translation mode from SATP register
-// PRIVATE
-function translationMode(priv : Privilege) -> SATPMode = {
+private function translationMode(priv : Privilege) -> SATPMode = {
   if priv == Machine then Bare
   else {
     let arch = architecture(Supervisor);
@@ -208,13 +198,12 @@ function translationMode(priv : Privilege) -> SATPMode = {
 
 // Result of address translation
 
-// PUBLIC
 type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, ext_ptw), ('failure, ext_ptw))
 
 // This function can be ignored on first reading since TLBs are not
 // part of RISC-V architecture spec (see TLB NOTE above).
-// PRIVATE: translate on TLB hit, and maintenance of PTE in TLB
-function translate_TLB_hit forall 'v, is_sv_mode('v) . (
+// Translate on TLB hit, and maintenance of PTE in TLB
+private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
   asid      : asidbits,
   vpn       : vpn_bits('v),
@@ -259,7 +248,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   }
 }
 
-// PRIVATE: translate on TLB miss (do a page-table walk)
+// Translate on TLB miss (do a page-table walk)
 function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
@@ -318,8 +307,7 @@ mapping satp_mode_width : SATPMode <-> {32, 39, 48, 57} = {
   Sv57 <-> 57,
 }
 
-// PRIVATE
-function translate forall 'v, is_sv_mode('v) . (
+private function translate forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
   base_ppn : ppn_bits('v),
