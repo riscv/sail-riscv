@@ -99,4 +99,7 @@ The [README.md](../README.md) contains instructions on
 
 If the added extension was experimental (i.e. unratified), the built
 simulator will need to be invoked with an additional
-`--enable-experimental-extensions` flag.
+`--enable-experimental-extensions` flag. The simulator will also need
+a configuration where the `Ssstrict` extension has been disabled.
+This is because experimental extensions are currently assumed to be
+non-conforming.
