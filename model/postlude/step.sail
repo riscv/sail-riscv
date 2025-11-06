@@ -113,10 +113,11 @@ function run_hart_active(step_no: nat) -> Step = {
         // check for RVC once here instead of every RVC execute clause.
         else if currentlyEnabled(Ext_Zca) then {
           nextPC = PC + 2;
-          match execute(instruction) {
-            ExecuteAs(inst) => Step_Execute(execute(inst), instbits),
-            r => Step_Execute(r, instbits),
-          }
+          let result : ExecutionResult = match execute(instruction) {
+            ExecuteAs(other_inst) => execute(other_inst),
+            result => result,
+          };
+          Step_Execute(result, instbits)
         } else {
           Step_Execute(Illegal_Instruction(), instbits)
         }
@@ -138,10 +139,11 @@ function run_hart_active(step_no: nat) -> Step = {
           Step_Execute(r, instbits)
         } else {
           nextPC = PC + 4;
-          match execute(instruction) {
-            ExecuteAs(inst) => Step_Execute(execute(inst), instbits),
-            r => Step_Execute(r, instbits),
-          }
+          let result : ExecutionResult = match execute(instruction) {
+            ExecuteAs(other_inst) => execute(other_inst),
+            result => result,
+          };
+          Step_Execute(result, instbits)
         }
       }
     }
