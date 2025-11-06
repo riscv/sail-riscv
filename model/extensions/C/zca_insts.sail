@@ -45,7 +45,7 @@ mapping clause encdec_compressed = C_ADDI4SPN(rd, nz96 @ nz54 @ nz3 @ nz2)
 function clause execute C_ADDI4SPN(rdc, nzimm) = {
   let imm : bits(12) = (0b00 @ nzimm @ 0b00);
   let rd = creg2reg_idx(rdc);
-  execute(ITYPE(imm, sp, rd, ADDI))
+  ExecuteAs(ITYPE(imm, sp, rd, ADDI))
 }
 
 mapping clause assembly = C_ADDI4SPN(rdc, nzimm)
@@ -63,7 +63,7 @@ function clause execute C_LW(uimm, rsc, rdc) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
   let rd = creg2reg_idx(rdc);
   let rs = creg2reg_idx(rsc);
-  execute(LOAD(imm, rs, rd, false, 4))
+  ExecuteAs(LOAD(imm, rs, rd, false, 4))
 }
 
 mapping clause assembly = C_LW(uimm, rsc, rdc)
@@ -80,7 +80,7 @@ function clause execute C_LD(uimm, rsc, rdc) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
   let rd = creg2reg_idx(rdc);
   let rs = creg2reg_idx(rsc);
-  execute(LOAD(imm, rs, rd, false, 8))
+  ExecuteAs(LOAD(imm, rs, rd, false, 8))
 }
 
 mapping clause assembly = C_LD(uimm, rsc, rdc)
@@ -98,7 +98,7 @@ function clause execute C_SW(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
-  execute(STORE(imm, rs2, rs1, 4))
+  ExecuteAs(STORE(imm, rs2, rs1, 4))
 }
 
 mapping clause assembly = C_SW(uimm, rsc1, rsc2)
@@ -115,7 +115,7 @@ function clause execute C_SD(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
-  execute(STORE(imm, rs2, rs1, 8))
+  ExecuteAs(STORE(imm, rs2, rs1, 8))
 }
 
 mapping clause assembly = C_SD(uimm, rsc1, rsc2)
@@ -133,7 +133,7 @@ mapping clause encdec_compressed = C_ADDI(imm, rsd)
 
 function clause execute C_ADDI(imm, rsd) = {
   let imm : bits(12) = sign_extend(imm);
-  execute(ITYPE(imm, rsd, rsd, ADDI))
+  ExecuteAs(ITYPE(imm, rsd, rsd, ADDI))
 }
 
 mapping clause assembly = C_ADDI(imm, rsd)
@@ -148,7 +148,7 @@ mapping clause encdec_compressed = C_JAL(imm)
   when xlen == 32 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_JAL(imm) =
-  execute(JAL(sign_extend(imm @ 0b0), ra))
+  ExecuteAs(JAL(sign_extend(imm @ 0b0), ra))
 
 mapping clause assembly = C_JAL(imm)
   <-> "c.jal" ^ spc() ^ hex_bits_signed_12(imm @ 0b0)
@@ -162,7 +162,7 @@ mapping clause encdec_compressed = C_ADDIW(imm, rsd)
   when rsd != zreg & xlen == 64 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_ADDIW(imm, rsd) =
-  execute(ADDIW(sign_extend(imm), rsd, rsd))
+  ExecuteAs(ADDIW(sign_extend(imm), rsd, rsd))
 
 mapping clause assembly = C_ADDIW(imm, rsd)
   <-> "c.addiw" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_signed_6(imm)
@@ -178,7 +178,7 @@ mapping clause encdec_compressed = C_LI(imm, rd)
 
 function clause execute C_LI(imm, rd) = {
   let imm : bits(12) = sign_extend(imm);
-  execute(ITYPE(imm, zreg, rd, ADDI))
+  ExecuteAs(ITYPE(imm, zreg, rd, ADDI))
 }
 
 mapping clause assembly = C_LI(imm, rd)
@@ -198,7 +198,7 @@ mapping clause encdec_compressed = C_ADDI16SP(nzi9 @ nzi87 @ nzi6 @ nzi5 @ nzi4)
 
 function clause execute C_ADDI16SP(imm) = {
   let imm : bits(12) = sign_extend(imm @ 0x0);
-  execute(ITYPE(imm, sp, sp, ADDI))
+  ExecuteAs(ITYPE(imm, sp, sp, ADDI))
 }
 
 mapping clause assembly = C_ADDI16SP(imm)
@@ -222,7 +222,7 @@ mapping clause encdec_compressed = C_LUI(imm17 @ imm1612, rd)
 
 function clause execute C_LUI(imm, rd) = {
   let res : bits(20) = sign_extend(imm);
-  execute(UTYPE(res, rd, LUI))
+  ExecuteAs(UTYPE(res, rd, LUI))
 }
 
 mapping clause assembly = C_LUI(imm, rd)
@@ -244,7 +244,7 @@ mapping clause encdec_compressed = C_SRLI(shamt5 @ shamt40, rsd)
 
 function clause execute C_SRLI(shamt, rsd) = {
   let rsd = creg2reg_idx(rsd);
-  execute(SHIFTIOP(shamt, rsd, rsd, SRLI))
+  ExecuteAs(SHIFTIOP(shamt, rsd, rsd, SRLI))
 }
 
 mapping clause assembly = C_SRLI(shamt, rsd)
@@ -265,7 +265,7 @@ mapping clause encdec_compressed = C_SRAI(shamt5 @ shamt40, rsd)
 
 function clause execute C_SRAI(shamt, rsd) = {
   let rsd = creg2reg_idx(rsd);
-  execute(SHIFTIOP(shamt, rsd, rsd, SRAI))
+  ExecuteAs(SHIFTIOP(shamt, rsd, rsd, SRAI))
 }
 
 mapping clause assembly = C_SRAI(shamt, rsd)
@@ -281,7 +281,7 @@ mapping clause encdec_compressed = C_ANDI(imm, rsd)
 
 function clause execute C_ANDI(imm, rsd) = {
   let rsd = creg2reg_idx(rsd);
-  execute(ITYPE(sign_extend(imm), rsd, rsd, ANDI))
+  ExecuteAs(ITYPE(sign_extend(imm), rsd, rsd, ANDI))
 }
 
 mapping clause assembly = C_ANDI(imm, rsd)
@@ -297,7 +297,7 @@ mapping clause encdec_compressed = C_SUB(rsd, rs2)
 function clause execute C_SUB(rsd, rs2) = {
   let rsd = creg2reg_idx(rsd);
   let rs2 = creg2reg_idx(rs2);
-  execute(RTYPE(rs2, rsd, rsd, SUB))
+  ExecuteAs(RTYPE(rs2, rsd, rsd, SUB))
 }
 
 mapping clause assembly = C_SUB(rsd, rs2)
@@ -313,7 +313,7 @@ mapping clause encdec_compressed = C_XOR(rsd, rs2)
 function clause execute C_XOR(rsd, rs2) = {
   let rsd = creg2reg_idx(rsd);
   let rs2 = creg2reg_idx(rs2);
-  execute(RTYPE(rs2, rsd, rsd, XOR))
+  ExecuteAs(RTYPE(rs2, rsd, rsd, XOR))
 }
 
 mapping clause assembly = C_XOR(rsd, rs2)
@@ -329,7 +329,7 @@ mapping clause encdec_compressed = C_OR(rsd, rs2)
 function clause execute C_OR(rsd, rs2) = {
   let rsd = creg2reg_idx(rsd);
   let rs2 = creg2reg_idx(rs2);
-  execute(RTYPE(rs2, rsd, rsd, OR))
+  ExecuteAs(RTYPE(rs2, rsd, rsd, OR))
 }
 
 mapping clause assembly = C_OR(rsd, rs2)
@@ -345,7 +345,7 @@ mapping clause encdec_compressed = C_AND(rsd, rs2)
 function clause execute C_AND(rsd, rs2) = {
   let rsd = creg2reg_idx(rsd);
   let rs2 = creg2reg_idx(rs2);
-  execute(RTYPE(rs2, rsd, rsd, AND))
+  ExecuteAs(RTYPE(rs2, rsd, rsd, AND))
 }
 
 mapping clause assembly = C_AND(rsd, rs2)
@@ -361,7 +361,7 @@ mapping clause encdec_compressed = C_SUBW(rsd, rs2)
 function clause execute C_SUBW(rsd, rs2) = {
   let rsd = creg2reg_idx(rsd);
   let rs2 = creg2reg_idx(rs2);
-  execute(RTYPEW(rs2, rsd, rsd, SUBW))
+  ExecuteAs(RTYPEW(rs2, rsd, rsd, SUBW))
 }
 
 mapping clause assembly = C_SUBW(rsd, rs2)
@@ -378,7 +378,7 @@ mapping clause encdec_compressed = C_ADDW(rsd, rs2)
 function clause execute C_ADDW(rsd, rs2) = {
   let rsd = creg2reg_idx(rsd);
   let rs2 = creg2reg_idx(rs2);
-  execute(RTYPEW(rs2, rsd, rsd, ADDW))
+  ExecuteAs(RTYPEW(rs2, rsd, rsd, ADDW))
 }
 
 mapping clause assembly = C_ADDW(rsd, rs2)
@@ -393,7 +393,7 @@ mapping clause encdec_compressed = C_J(imm)
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_J(imm) =
-  execute(JAL(sign_extend(imm @ 0b0), zreg))
+  ExecuteAs(JAL(sign_extend(imm @ 0b0), zreg))
 
 mapping clause assembly = C_J(imm)
   <-> "c.j" ^ spc() ^ hex_bits_signed_12(imm @ 0b0)
@@ -406,7 +406,7 @@ mapping clause encdec_compressed = C_BEQZ(imm, rs)
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_BEQZ(imm, rs) =
-  execute(BTYPE(sign_extend(imm @ 0b0), zreg, creg2reg_idx(rs), BEQ))
+  ExecuteAs(BTYPE(sign_extend(imm @ 0b0), zreg, creg2reg_idx(rs), BEQ))
 
 mapping clause assembly = C_BEQZ(imm, rs)
   <-> "c.beqz" ^ spc() ^ creg_name(rs) ^ sep() ^ hex_bits_signed_9(imm @ 0b0)
@@ -419,7 +419,7 @@ mapping clause encdec_compressed = C_BNEZ(imm, rs)
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_BNEZ(imm, rs) =
-  execute(BTYPE(sign_extend(imm @ 0b0), zreg, creg2reg_idx(rs), BNE))
+  ExecuteAs(BTYPE(sign_extend(imm @ 0b0), zreg, creg2reg_idx(rs), BNE))
 
 mapping clause assembly = C_BNEZ(imm, rs)
   <-> "c.bnez" ^ spc() ^ creg_name(rs) ^ sep() ^ hex_bits_signed_9(imm @ 0b0)
@@ -439,7 +439,7 @@ mapping clause encdec_compressed = C_SLLI(shamt5 @ shamt40, rsd)
 //  when (xlen == 64 | shamt[5] == 0b0) & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SLLI(shamt, rsd) =
-  execute(SHIFTIOP(shamt, rsd, rsd, SLLI))
+  ExecuteAs(SHIFTIOP(shamt, rsd, rsd, SLLI))
 
 mapping clause assembly = C_SLLI(shamt, rsd)
   <-> "c.slli" ^ spc() ^ reg_name(rsd) ^ sep() ^ hex_bits_6(shamt)
@@ -453,7 +453,7 @@ mapping clause encdec_compressed = C_LWSP(uimm, rd)
 
 function clause execute C_LWSP(uimm, rd) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
-  execute(LOAD(imm, sp, rd, false, 4))
+  ExecuteAs(LOAD(imm, sp, rd, false, 4))
 }
 
 mapping clause assembly = C_LWSP(uimm, rd)
@@ -469,7 +469,7 @@ mapping clause encdec_compressed = C_LDSP(uimm, rd)
 
 function clause execute C_LDSP(uimm, rd) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
-  execute(LOAD(imm, sp, rd, false, 8))
+  ExecuteAs(LOAD(imm, sp, rd, false, 8))
 }
 
 mapping clause assembly = C_LDSP(uimm, rd)
@@ -485,7 +485,7 @@ mapping clause encdec_compressed = C_SWSP(uimm, rs2)
 
 function clause execute C_SWSP(uimm, rs2) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
-  execute(STORE(imm, rs2, sp, 4))
+  ExecuteAs(STORE(imm, rs2, sp, 4))
 }
 
 mapping clause assembly = C_SWSP(uimm, rs2)
@@ -500,7 +500,7 @@ mapping clause encdec_compressed = C_SDSP(uimm, rs2)
 
 function clause execute C_SDSP(uimm, rs2) = {
   let imm : bits(12) = zero_extend(uimm @ 0b000);
-  execute(STORE(imm, rs2, sp, 8))
+  ExecuteAs(STORE(imm, rs2, sp, 8))
 }
 
 mapping clause assembly = C_SDSP(uimm, rs2)
@@ -515,7 +515,7 @@ mapping clause encdec_compressed = C_JR(rs1)
   when rs1 != zreg & currentlyEnabled(Ext_Zca)
 
 function clause execute C_JR(rs1) =
-  execute(JALR(zeros(), rs1, zreg))
+  ExecuteAs(JALR(zeros(), rs1, zreg))
 
 mapping clause assembly = C_JR(rs1)
   <-> "c.jr" ^ spc() ^ reg_name(rs1)
@@ -529,7 +529,7 @@ mapping clause encdec_compressed = C_JALR(rs1)
   when rs1 != zreg & currentlyEnabled(Ext_Zca)
 
 function clause execute C_JALR(rs1) =
-  execute(JALR(zeros(), rs1, ra))
+  ExecuteAs(JALR(zeros(), rs1, ra))
 
 mapping clause assembly = C_JALR(rs1)
   <-> "c.jalr" ^ spc() ^ reg_name(rs1)
@@ -545,7 +545,7 @@ mapping clause encdec_compressed = C_MV(rd, rs2)
   when rs2 != zreg & currentlyEnabled(Ext_Zca)
 
 function clause execute C_MV(rd, rs2) =
-  execute(RTYPE(rs2, zreg, rd, ADD))
+  ExecuteAs(RTYPE(rs2, zreg, rd, ADD))
 
 mapping clause assembly = C_MV(rd, rs2)
   <-> "c.mv" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2)
@@ -560,7 +560,7 @@ mapping clause encdec_compressed = C_EBREAK()
   when currentlyEnabled(Ext_Zca)
 
 function clause execute C_EBREAK() =
-  execute(EBREAK())
+  ExecuteAs(EBREAK())
 
 mapping clause assembly = C_EBREAK() <-> "c.ebreak"
 
@@ -574,7 +574,7 @@ mapping clause encdec_compressed = C_ADD(rsd, rs2)
   when rs2 != zreg & currentlyEnabled(Ext_Zca)
 
 function clause execute C_ADD(rsd, rs2) =
-  execute(RTYPE(rs2, rsd, rsd, ADD))
+  ExecuteAs(RTYPE(rs2, rsd, rsd, ADD))
 
 mapping clause assembly = C_ADD(rsd, rs2)
   <-> "c.add" ^ spc() ^ reg_name(rsd) ^ sep() ^ reg_name(rs2)

@@ -22,7 +22,7 @@ function clause execute C_LBU(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
   let rs1 = creg2reg_idx(rsc1);
-  execute(LOAD(imm, rs1, rd, true, 1))
+  ExecuteAs(LOAD(imm, rs1, rd, true, 1))
 }
 
 // *****************************************************************
@@ -41,7 +41,7 @@ function clause execute C_LHU(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
   let rs1 = creg2reg_idx(rsc1);
-  execute(LOAD(imm, rs1, rd, true, 2))
+  ExecuteAs(LOAD(imm, rs1, rd, true, 2))
 }
 
 // *****************************************************************
@@ -60,7 +60,7 @@ function clause execute C_LH(uimm, rdc, rsc1) = {
   let imm : bits(12) = zero_extend(uimm);
   let rd = creg2reg_idx(rdc);
   let rs1 = creg2reg_idx(rsc1);
-  execute(LOAD(imm, rs1, rd, false, 2))
+  ExecuteAs(LOAD(imm, rs1, rd, false, 2))
 }
 
 // *****************************************************************
@@ -79,7 +79,7 @@ function clause execute C_SB(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
-  execute(STORE(imm, rs2, rs1, 1))
+  ExecuteAs(STORE(imm, rs2, rs1, 1))
 }
 
 // *****************************************************************
@@ -98,7 +98,7 @@ function clause execute C_SH(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = creg2reg_idx(rsc2);
-  execute(STORE(imm, rs2, rs1, 2))
+  ExecuteAs(STORE(imm, rs2, rs1, 2))
 }
 
 // *****************************************************************
@@ -133,7 +133,7 @@ mapping clause assembly = C_SEXT_B(rsdc) <->
 
 function clause execute C_SEXT_B(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute(ZBB_EXTOP(rsd, rsd, SEXTB))
+  ExecuteAs(ZBB_EXTOP(rsd, rsd, SEXTB))
 }
 
 // *****************************************************************
@@ -150,7 +150,7 @@ mapping clause assembly = C_ZEXT_H(rsdc) <->
 
 function clause execute C_ZEXT_H(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute(ZBB_EXTOP(rsd, rsd, ZEXTH))
+  ExecuteAs(ZBB_EXTOP(rsd, rsd, ZEXTH))
 }
 
 // *****************************************************************
@@ -167,7 +167,7 @@ mapping clause assembly = C_SEXT_H(rsdc) <->
 
 function clause execute C_SEXT_H(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute(ZBB_EXTOP(rsd, rsd,  SEXTH))
+  ExecuteAs(ZBB_EXTOP(rsd, rsd,  SEXTH))
 }
 
 // *****************************************************************
@@ -184,7 +184,7 @@ mapping clause assembly = C_ZEXT_W(rsdc) <->
 
 function clause execute C_ZEXT_W(rsdc) = {
   let rsd = creg2reg_idx(rsdc);
-  execute (ZBA_RTYPEUW(zreg, rsd, rsd, 0b00))
+  ExecuteAs(ZBA_RTYPEUW(zreg, rsd, rsd, 0b00))
 }
 
 // *****************************************************************
@@ -220,5 +220,5 @@ mapping clause assembly = C_MUL(rsdc, rsc2) <->
 function clause execute C_MUL(rsdc, rsc2) = {
   let rd = creg2reg_idx(rsdc);
   let rs = creg2reg_idx(rsc2);
-  execute(MUL(rs, rd, rd, struct { result_part = Low, signed_rs1 = Signed, signed_rs2 = Signed }))
+  ExecuteAs(MUL(rs, rd, rd, struct { result_part = Low, signed_rs1 = Signed, signed_rs2 = Signed }))
 }

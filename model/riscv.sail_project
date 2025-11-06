@@ -61,13 +61,12 @@ sys {
     sys/platform.sail,
     sys/pma.sail,
     sys/mem.sail,
-    sys/inst_retire.sail,
     sys/vmem_pte.sail,
     sys/vmem_ptw.sail,
     sys/vmem_tlb.sail,
     sys/vmem.sail,
-    sys/vmem_utils.sail,
     sys/insts_begin.sail,
+    sys/vmem_utils.sail,
 }
 
 extensions {
