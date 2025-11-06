@@ -41,10 +41,10 @@ function write_seed_csr () -> xlenbits = zeros()
 
 // CSR mapping
 mapping clause csr_name_map = 0x015  <-> "seed"
-function clause is_CSR_accessible(0x015, priv, ac) =
+function clause is_CSR_accessible(0x015, priv, access_type) =
   currentlyEnabled(Ext_Zkr) &
   // Read-only access is not allowed.
-  (ac != CSRRead) &
+  (access_type != CSRRead) &
   (match priv {
     Machine => true,
     Supervisor => mseccfg[SSEED] == 0b1,
