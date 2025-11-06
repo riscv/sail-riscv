@@ -50,7 +50,7 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : ph
 function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
   match htif_tohost_base {
     None() => false,
-    Some(base) => (addr <_u base + htif_tohost_size) & (addr + width >=_u base)
+    Some(base) => (addr <_u base + htif_tohost_size) & (addr + width >_u base)
   }
 
 function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
