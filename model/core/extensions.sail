@@ -19,14 +19,28 @@ scattered mapping extensionName
 val hartSupports : extension -> bool
 scattered function hartSupports
 
+function hartSupports_measure(ext : extension) -> int =
+  match ext {
+    Ext_D => 1,
+    Ext_V => 1,
+    Ext_Zvkn => 1,
+    Ext_Zvks => 1,
+    Ext_C => 2,
+    Ext_Zvknc => 2,
+    Ext_Zvkng => 2,
+    Ext_Zvksc => 2,
+    Ext_Zvksg => 2,
+    _ => 0,
+  }
+
+termination_measure hartSupports(ext) = hartSupports_measure(ext)
+
 // Function used to determine if an extension is currently enabled in the model.
 // This means an extension is supported, *and* any necessary bits are set in the
 // relevant CSRs (misa, mstatus, etc.) to enable its use. It is possible for some
 // extensions to be supported in hardware, but temporarily disabled via a CSR, in
 // which case this function should return false.
-// Note: when adding a new extension, adjust the associated termination measure
-// in the file termination.sail, as explained in the comment in
-// that file.
+// Note: when adding a new extension, adjust the `currentlyEnabled_measure` below.
 val currentlyEnabled : extension -> bool
 scattered function currentlyEnabled
 
@@ -457,6 +471,70 @@ function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.su
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+
+// When adding a new extension X, we need to make sure that if X being enabled
+// depends on Y being enabled, then the value associated to X is _greater_ than
+// the value associated to Y. The default value is 2, so that if it does not
+// depend on anything or only on extensions A, B, C, D, F, M, S, V, or Zicsr,
+// nothing needs to be done.
+function currentlyEnabled_measure(ext : extension) -> int =
+  match ext {
+    Ext_Zicsr => 0,
+    Ext_A => 1,
+    Ext_B => 1,
+    Ext_C => 1,
+    Ext_D => 1,
+    Ext_F => 1,
+    Ext_M => 1,
+    Ext_S => 1,
+
+    // 3
+    Ext_Smcntrpmf => 3, // > Ext_Zicntr
+    Ext_Sscofpmf => 3, // > Ext_Zihpm
+    Ext_Svrsw60t59b => 3, // > Ext_Sv39
+    Ext_Zabha => 3, // > Ext_Zaamo
+    Ext_Zacas => 3, // > Ext_Zaamo
+    Ext_Zcb => 3, // > Ext_Zca
+    Ext_Zcd => 3, // > Ext_Zca
+    Ext_Zcf => 3, // > Ext_Zca
+    Ext_Zcmop => 3, // > Ext_Zca
+    Ext_Zfhmin => 3, // > Ext_Zfh
+    Ext_Zhinx => 3, // > Ext_Zfinx
+    Ext_Zve32x => 3, // > Ext_Zvl32b
+    Ext_Zicfilp => 3, // > 2
+
+    // 4
+    Ext_H => 4, // > 3
+    Ext_Zhinxmin => 4, // > Ext_Zhinx
+    Ext_Zvbb => 4, // > Ext_Zve32x
+    Ext_Zve32f => 4, // > Ext_Zve32x
+    Ext_Zve64x => 4, // > Ext_Zvl32x
+    Ext_Zvkg => 4, // > Ext_Zve32x
+    Ext_Zvkned => 4, // > Ext_Zve32x
+    Ext_Zvksed => 4, // > Ext_Zve32x
+    Ext_Zvknha => 4, // > Ext_Zve32x
+    Ext_Zvksh => 4, // > Ext_Zve32x
+
+    // 5
+    Ext_Zvbc => 5, // > Ext_Zve64x
+    Ext_Zve64f => 5, // > Ext_Zvl64x
+    Ext_Zvfh => 5, // > Ext_Zve32f
+    Ext_Zvkb => 5, // > Ext_Zvbb
+    Ext_Zvknhb => 5, // > Ext_Zve64x
+    Ext_Zvfbfmin => 5, // > Ext_Zve32f
+
+    // 6
+    Ext_Zve64d => 6, // > Ext_Zvl64f
+    Ext_Zvfhmin => 6, // > Ext_Zvfh
+    Ext_Zvfbfwma => 6, // > Ext_Zvfbfmin
+
+    // 7
+    Ext_V => 7, // > Ext_Zve64d
+
+    _ => 2
+  }
+
+termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
 
 let extensions_ordered_for_isa_string = [
   // Single letter extensions.

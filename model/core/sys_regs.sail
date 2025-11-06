@@ -144,6 +144,8 @@ function virtual_memory_supported() -> bool = {
   currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
 }
 
+termination_measure virtual_memory_supported(_) = 3
+
 //
 // Illegal values legalized to least privileged mode supported.
 // Note: the only valid combinations of supported modes are M, M+U, M+S+U.
