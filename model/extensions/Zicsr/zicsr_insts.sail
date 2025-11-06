@@ -30,18 +30,17 @@ mapping clause encdec = CSRImm(csr, imm, rd, op)
 
 // Implements the table in the Zicsr specification determining whether
 // a CSR instruction reads or writes the specified CSR.
-function csr_access_type(op : csrop, return_prev_value : bool, is_zero_arg : bool) -> CSRAccessType =
-  match (op, return_prev_value, is_zero_arg) {
-    (CSRRW, false, _) => CSRWrite,
-    (CSRRW, true, _)  => CSRReadWrite,
+function csr_access_type(op : csrop, rd_is_x0 : bool, rs1_imm_is_zero : bool) -> CSRAccessType =
+  match (op, rd_is_x0, rs1_imm_is_zero) {
+    (CSRRW, true, _)  => CSRWrite,
+    (CSRRW, false, _) => CSRReadWrite,
     (CSRRS, _, true)  => CSRRead,
     (CSRRC, _, true)  => CSRRead,
     (CSRRS, _, false) => CSRReadWrite,
     (CSRRC, _, false) => CSRReadWrite,
   }
 
-function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_zero_arg : bool) -> ExecutionResult = {
-  let ac = csr_access_type(op, rd != zreg, is_zero_arg);
+function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, ac : CSRAccessType) -> ExecutionResult = {
   if   not(check_CSR(csr, cur_privilege, ac))
   then Illegal_Instruction()
   else if not(ext_check_CSR(csr, cur_privilege, ac))
@@ -71,11 +70,15 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, is_zero
   }
 }
 
-function clause execute CSRReg(csr, rs1, rd, op) =
-  doCSR(csr, X(rs1), rd, op, rs1 == zreg)
+function clause execute CSRReg(csr, rs1, rd, op) = {
+  let access_type = csr_access_type(op, rd == zreg, rs1 == zreg);
+  doCSR(csr, X(rs1), rd, op, access_type)
+}
 
-function clause execute CSRImm(csr, imm, rd, op) =
-  doCSR(csr, zero_extend(imm), rd, op, imm == zeros())
+function clause execute CSRImm(csr, imm, rd, op) = {
+  let access_type = csr_access_type(op, rd == zreg, imm == zeros());
+  doCSR(csr, zero_extend(imm), rd, op, access_type)
+}
 
 mapping csr_mnemonic : csrop <-> string = {
   CSRRW <-> "csrrw",
