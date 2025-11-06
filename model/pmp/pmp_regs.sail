@@ -11,6 +11,11 @@
 // How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime).
 let sys_pmp_count : {0, 16, 64} = config memory.pmp.count
 
+// How many PMP entries are usable.  This must be less than or equal
+// to `memory.pmp.count`; entries higher than the usable count are
+// read-only-zero.
+let sys_pmp_usable_count : range(0, 64) = config memory.pmp.usable_count
+
 // G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
 // G=0 -> 4 bytes, G=10 -> 4096 bytes.
 let sys_pmp_grain : range(0, 63) = config memory.pmp.grain
@@ -126,14 +131,16 @@ function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
   then {
     foreach (i from 0 to 3) {
       let idx = n*4 + i;
-      pmpcfg_n[idx]  = pmpWriteCfg(idx,  pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
+      if idx < sys_pmp_usable_count then
+        pmpcfg_n[idx]  = pmpWriteCfg(idx,  pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
     }
   }
   else {
     assert(n % 2 == 0, "Unexpected pmp config reg write");
     foreach (i from 0 to 7) {
       let idx = n*4 + i;
-      pmpcfg_n[idx]  = pmpWriteCfg(idx,  pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
+      if idx < sys_pmp_usable_count then
+        pmpcfg_n[idx]  = pmpWriteCfg(idx,  pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
     }
   }
 }
@@ -144,12 +151,13 @@ function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits
   else { if (locked | tor_locked) then reg else zero_extend(v[53..0]) }
 
 function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
-  pmpaddr_n[n] = pmpWriteAddr(
-    pmpLocked(pmpcfg_n[n]),
-    if n + 1 < 64 then pmpTORLocked(pmpcfg_n[n + 1]) else false,
-    pmpaddr_n[n],
-    v,
-  );
+  if n < sys_pmp_usable_count then
+    pmpaddr_n[n] = pmpWriteAddr(
+      pmpLocked(pmpcfg_n[n]),
+      if n + 1 < 64 then pmpTORLocked(pmpcfg_n[n + 1]) else false,
+      pmpaddr_n[n],
+      v,
+    );
 }
 
 // PMP CSRs
