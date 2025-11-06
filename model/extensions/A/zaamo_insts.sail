@@ -63,12 +63,12 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
 
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
-  match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width) {
+  match ext_data_get_addr(rs1, zeros(), LoadStore(Data, Data), width) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       if not(is_aligned_addr(vaddr, width))
       then Memory_Exception(vaddr, E_SAMO_Addr_Align())
-      else match translateAddr(vaddr, ReadWrite(Data, Data)) {
+      else match translateAddr(vaddr, LoadStore(Data, Data)) {
         Err(e, _) => Memory_Exception(vaddr, e),
         Ok(addr, _) => {
           // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
@@ -78,7 +78,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
           match mem_write_ea(addr, width, aq & rl, rl, true) {
             Err(e) => Memory_Exception(vaddr, e),
             Ok(_) => {
-              match mem_read(ReadWrite(Data, Data), addr, width, aq, aq & rl, true) {
+              match mem_read(LoadStore(Data, Data), addr, width, aq, aq & rl, true) {
                 Err(e)     => Memory_Exception(vaddr, e),
                 Ok(loaded) => {
                   let result : bits('width * 8) =

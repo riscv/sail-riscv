@@ -57,14 +57,14 @@ function read_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
   pte_size : int('n),
 ) -> MemoryOpResult(bits(8 * 'n)) =
-  mem_read_priv(Read(Data), Supervisor, paddr, pte_size, false, false, false)
+  mem_read_priv(Load(Data), Supervisor, paddr, pte_size, false, false, false)
 
 // PRIVATE
 // 'v is the virtual address size.
 val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  AccessType(ext_access_type),  // Read/Write/ReadWrite/InstructionFetch
+  MemoryAccessType(ext_access_type),  // Memory Load/Store/LoadStore/InstructionFetch
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum
@@ -218,7 +218,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
   asid      : asidbits,
   vpn       : vpn_bits('v),
-  ac        : AccessType(ext_access_type),
+  ac        : MemoryAccessType(ext_access_type),
   priv      : Privilege,
   mxr       : bool,
   do_sum    : bool,
@@ -265,7 +265,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  ac       : AccessType(ext_access_type),
+  ac       : MemoryAccessType(ext_access_type),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -324,7 +324,7 @@ function translate forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  ac       : AccessType(ext_access_type),
+  ac       : MemoryAccessType(ext_access_type),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -355,7 +355,7 @@ function get_satp forall 'v, is_sv_mode('v). (
 // PUBLIC: invoked from instr-fetch and load/store/amo
 function translateAddr(
   vAddr : virtaddr,
-  ac    : AccessType(ext_access_type),
+  ac    : MemoryAccessType(ext_access_type),
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP

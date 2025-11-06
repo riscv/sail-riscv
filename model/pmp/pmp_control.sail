@@ -9,11 +9,11 @@
 
 // permission checks
 
-function pmpCheckRWX(ent : Pmpcfg_ent, acc : AccessType(ext_access_type)) -> bool =
+function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(ext_access_type)) -> bool =
   match acc {
-    Read(_)      => ent[R] == 0b1,
-    Write(_)     => ent[W] == 0b1,
-    ReadWrite(_) => ent[R] == 0b1 & ent[W] == 0b1,
+    Load(_)            => ent[R] == 0b1,
+    Store(_)           => ent[W] == 0b1,
+    LoadStore(_)       => ent[R] == 0b1 & ent[W] == 0b1,
     InstructionFetch() => ent[X] == 0b1,
   }
 
@@ -80,18 +80,18 @@ function pmpMatchAddr(
 
 // priority checks
 
-function accessToFault(acc : AccessType(ext_access_type)) -> ExceptionType =
+function accessToFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match acc {
-    Read(_)      => E_Load_Access_Fault(),
-    Write(_)     => E_SAMO_Access_Fault(),
-    ReadWrite(_) => E_SAMO_Access_Fault(),
+    Load(_)            => E_Load_Access_Fault(),
+    Store(_)           => E_SAMO_Access_Fault(),
+    LoadStore(_)       => E_SAMO_Access_Fault(),
     InstructionFetch() => E_Fetch_Access_Fault(),
   }
 
 function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   addr : physaddr,
   width : int('n),
-  acc : AccessType(ext_access_type),
+  acc : MemoryAccessType(ext_access_type),
   priv : Privilege,
 ) -> option(ExceptionType) = {
 

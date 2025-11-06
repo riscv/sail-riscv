@@ -78,10 +78,10 @@ function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResul
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match ext_data_get_addr(rs1, negative_offset, Read(Data), cache_block_size) {
+  match ext_data_get_addr(rs1, negative_offset, Load(Data), cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
+      let res : option(ExceptionType) = match translateAddr(vaddr, Load(Data)) {
         Ok(paddr, _) => {
           // "A cache-block management instruction is permitted to access the
           // specified cache block whenever a load instruction or store instruction
@@ -93,13 +93,13 @@ function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResul
           //
           // In this implementation we currently don't allow access for fetches.
 
-          // effectivePrivilege() only cares if access type is Execute or not
-          // so it doesn't matter that we use Read here. In future we will use
+          // effectivePrivilege() only cares if access type is InstructionFetch or not
+          // so it doesn't matter that we use Load here. In future we will use
           // the proper Cache access type when it is available. See
           // https://github.com/riscv/sail-riscv/pull/792
-          let ep = effectivePrivilege(Read(Data), mstatus, cur_privilege);
-          let exc_read = phys_access_check(Read(Data), ep, paddr, cache_block_size, false);
-          let exc_write = phys_access_check(Write(Data), ep, paddr, cache_block_size, false);
+          let ep = effectivePrivilege(Load(Data), mstatus, cur_privilege);
+          let exc_read = phys_access_check(Load(Data), ep, paddr, cache_block_size, false);
+          let exc_write = phys_access_check(Store(Data), ep, paddr, cache_block_size, false);
           match (exc_read, exc_write) {
             // Access is permitted if read OR write are allowed. If neither
             // are allowed then we always report a store exception.

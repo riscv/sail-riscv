@@ -93,19 +93,19 @@ overload to_str = {privLevel_to_str}
 
 // memory access types
 
-union AccessType ('a : Type) = {
-  Read      : 'a,
-  Write     : 'a,
-  ReadWrite : ('a, 'a),
+union MemoryAccessType ('a : Type) = {
+  Load             : 'a,
+  Store            : 'a,
+  LoadStore        : ('a, 'a),
   InstructionFetch : unit
 }
 
 // Some features only affect loads/stores; not instruction fetch.
-function is_load_store forall ('a : Type) . (ac : AccessType('a)) -> bool =
+function is_load_store forall ('a : Type) . (ac : MemoryAccessType('a)) -> bool =
   match ac {
-    Read(_) => true,
-    Write(_) => true,
-    ReadWrite(_) => true,
+    Load(_)             => true,
+    Store(_)            => true,
+    LoadStore(_)        => true,
     InstructionFetch(_) => false,
   }
 
