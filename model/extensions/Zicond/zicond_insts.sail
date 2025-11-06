@@ -32,7 +32,7 @@ $[split op]
 function clause execute ZICOND_RTYPE(rs2, rs1, rd, op) = {
   let condition : bool = match op {
     CZERO_EQZ => X(rs2) == zeros(),
-    CZERO_NEQ => X(rs2) != zeros(),
+    CZERO_NEZ => X(rs2) != zeros(),
   };
   X(rd) = if condition then zeros() else X(rs1);
   RETIRE_SUCCESS
