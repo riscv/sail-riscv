@@ -61,6 +61,14 @@ the `hartSupports` clause for the extension in
 A definition for the `currentlyEnabled` clause for the extension
 should be provided in one of the files implementing the extension.
 
+If the extension has accompanying configuration options, those options
+should be validated in
+[validate_config.sail](../model/postlude/validate_config.sail).
+
+If the extension has not been ratified, the
+`sys_enable_experimental_extensions()` guard should be added to the
+`hartSupports` clause for the extension.
+
 ## Adding new instructions
 
 Each new set of instructions can be specified in a separate
@@ -88,3 +96,7 @@ added for each CSR.
 The [README.md](../README.md) contains instructions on
 [building](../README.md#building-the-model) the model and on
 [testing](../README.md#executing-test-binaries) with test binaries.
+
+If the added extension was experimental (i.e. unratified), the built
+simulator will need to be invoked with an additional
+`--enable-experimental-extensions` flag.
