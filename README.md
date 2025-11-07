@@ -88,6 +88,8 @@ For booting operating system images, see the information under the
 - A extension for atomic instructions, v2.1
 - Zalrsc extension for load-reserved and store-conditional operations, v1.0
 - Zaamo extension for atomic memory operations, v1.0
+- Za64rs extension for reservation sets that are contiguous, naturally aligned, and a maximum of 64 bytes, v1.0
+- Za128rs extension for reservation sets that are contiguous, naturally aligned, and at most 128 bytes in size, v1.0
 - Zawrs extension for Wait-on-Reservation-Set instructions, v1.01
 - Zabha extension for byte and halfword atomic memory operations, v1.0
 - Zacas extension atomic Compare-and-Swap (CAS) instructions, v1.0.0
