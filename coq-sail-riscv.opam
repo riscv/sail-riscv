@@ -8,7 +8,8 @@ bug-reports: "https://github.com/riscv/sail-riscv/issues"
 license: "BSD-2-Clause"
 dev-repo: "git+https://github.com/riscv/sail-riscv.git"
 build: [
-  ["cmake" "-S" "." "-B" "build" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "-DDOWNLOAD_GMP=FALSE" "-DFETCHCONTENT_FULLY_DISCONNECTED=ON"]
+  # Turn off all downloads for sandboxing; they're not required for the Rocq build anyway
+  ["cmake" "-S" "." "-B" "build" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "-DDOWNLOAD_GMP=FALSE" "-DDOWNLOAD_JSONCONS=FALSE"]
   ["cmake" "--build" "build" "--target" "build_rocq_rv64d" "build_rocq_rv32d"]
 ]
 install: [
