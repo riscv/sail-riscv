@@ -27,8 +27,9 @@ mach_bits plat_get_16_random_bits(unit)
 // either directly in `load_reservation()` or by calling
 // `cancel_reservation()`.
 
-unit load_reservation(sbits addr)
+unit load_reservation(sbits addr, uint64_t width)
 {
+  (void) width;
   reservation = addr.bits;
   reservation_valid = true;
   RESERVATION_DBG("reservation <- %0" PRIx64 "\n", reservation);

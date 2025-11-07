@@ -154,7 +154,7 @@ function vmem_read_addr(vaddr, offset, width, acc, aq, rl, res) = {
 
         Ok(v) => {
           if res then {
-            load_reservation(bits_of(paddr))
+            load_reservation(bits_of(paddr), width)
           };
 
           data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes] = v
