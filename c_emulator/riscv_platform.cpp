@@ -1,16 +1,10 @@
+#include <stdio.h>
+#include <inttypes.h>
 #include <assert.h>
 #include "sail.h"
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
-
-#ifdef DEBUG_RESERVATION
-#include <stdio.h>
-#include <inttypes.h>
-#define RESERVATION_DBG(args...) fprintf(stderr, args)
-#else
-#define RESERVATION_DBG(args...)
-#endif
 
 /* This file contains the definitions of the C externs of Sail model. */
 
@@ -32,10 +26,18 @@ unit load_reservation(sbits addr, uint64_t width)
 {
   reservation = addr.bits & reservation_set_addr_mask;
   reservation_valid = true;
-  RESERVATION_DBG("reservation <- 0x%0" PRIx64 " (addr: 0x%0" PRIx64 ", width: %0" PRId64 ")\n",
-                  reservation, addr.bits, width);
+
   // Ensure the reservation set subsumes the reserved bytes.
-  assert((width > 0) && (((addr.bits + width - 1) & reservation_set_addr_mask) == reservation));
+  assert((width > 0)
+         && (((addr.bits + width - 1) & reservation_set_addr_mask)
+             == reservation));
+
+  if (trace_log != nullptr && config_print_reservation) {
+    fprintf(trace_log,
+            "reservation <- 0x%0" PRIx64 " (addr: 0x%0" PRIx64
+            ", width: %0" PRId64 ")\n",
+            reservation, addr.bits, width);
+  }
   return UNIT;
 }
 
@@ -48,16 +50,22 @@ bool match_reservation(sbits addr)
 {
   mach_bits mask = check_mask();
   bool ret = reservation_valid && (reservation & mask) == (addr.bits & mask);
-  RESERVATION_DBG("reservation(%c): 0x%0" PRIx64 ", key=0x%0" PRIx64 ": %s\n",
-                  reservation_valid ? 'v' : 'i', reservation, addr.bits,
-                  ret ? "ok" : "fail");
+
+  if (trace_log != nullptr && config_print_reservation) {
+    fprintf(trace_log,
+            "reservation(%c): 0x%0" PRIx64 ", key=0x%0" PRIx64 ": %s\n",
+            reservation_valid ? 'v' : 'i', reservation, addr.bits,
+            ret ? "ok" : "fail");
+  }
   return ret;
 }
 
 unit cancel_reservation(unit)
 {
-  RESERVATION_DBG("reservation <- none\n");
   reservation_valid = false;
+  if (trace_log != nullptr && config_print_reservation) {
+    fprintf(trace_log, "reservation <- none\n");
+  }
   return UNIT;
 }
 
