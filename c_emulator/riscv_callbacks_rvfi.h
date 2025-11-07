@@ -6,7 +6,6 @@ class rvfi_callbacks : public callbacks_if {
 
 public:
   // callbacks_if
-  // void fetch_callback(sbits opcode) override;
   void mem_write_callback(const char *type, sbits paddr, uint64_t width,
                           lbits value) override;
   void mem_read_callback(const char *type, sbits paddr, uint64_t width,
@@ -14,16 +13,6 @@ public:
   void mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
   void xreg_full_write_callback(const_sail_string abi_name, sbits reg,
                                 sbits value) override;
-  // void freg_write_callback(unsigned reg, sbits value) override;
-  // void csr_full_write_callback(const_sail_string csr_name, unsigned reg,sbits
-  // value) override;
-
-  // void csr_full_read_callback(const_sail_string csr_name, unsigned reg,sbits
-  // value) override;
-
-  // void vreg_write_callback(unsigned reg, lbits value) override;
-  // void pc_write_callback(sbits new_pc) override;
-  // void redirect_callback(sbits new_pc) override;
   void trap_callback(bool is_interrupt, fbits cause) override;
 };
 
