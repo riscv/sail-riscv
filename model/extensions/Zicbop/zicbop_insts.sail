@@ -37,10 +37,9 @@ mapping clause assembly = ZICBOP(cbop, rs1, offset)
 // even though prefetch instructions are hints that never cause exceptions.
 function clause execute ZICBOP(cbop, rs1, offset) = {
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
-  match ext_data_get_addr(rs1, sign_extend(offset), Load(Data), cache_block_size) {
+  match get_transformed_data_addr(rs1, sign_extend(offset), Load(Data), cache_block_size) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_effective_address(vaddr, Load(Data));
       RETIRE_SUCCESS
     },
   };

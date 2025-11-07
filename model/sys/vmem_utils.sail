@@ -155,6 +155,18 @@ function transform_effective_address(vaddr : virtaddr, typ : MemoryAccessType(ex
 
 /****    External API    ****/
 
+// Compute effective address with extension checks and apply pointer masking.
+function get_transformed_data_addr(base : regidx, offset : xlenbits, acc : MemoryAccessType(ext_access_type), width : mem_access_width)
+         -> Ext_DataAddr_Check(ext_data_addr_error) = {
+  match ext_data_get_addr(base, offset, acc, width) {
+    Ext_DataAddr_Error(e) => Ext_DataAddr_Error(e),
+    Ext_DataAddr_OK(vaddr) => {
+      let vaddr = transform_effective_address(vaddr, acc);
+      Ext_DataAddr_OK(vaddr)
+    }
+  }
+}
+
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
   if plat_enable_misaligned_access then {
     false
@@ -168,8 +180,6 @@ val vmem_read_addr : forall 'width, is_mem_width('width).
   -> result(bits(8 * 'width), ExecutionResult)
 
 function vmem_read_addr(vaddr, offset, width, acc, aq, rl, res) = {
-  // Apply pointer masking
-  let vaddr = transform_effective_address(vaddr, Load(Data));
   // TODO: Rationalize to use a single alignment definition if possible.
   if res then {
     // "LR faults like a normal load, even though it's in the AMO major opcode space."
@@ -226,9 +236,6 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
-  // Apply pointer masking
-  let vaddr = transform_effective_address(vaddr, Store(Data));
-
   if   check_misaligned(vaddr, width)
   then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
 
@@ -286,7 +293,7 @@ val vmem_read : forall 'width, is_mem_width('width).
 function vmem_read(rs, offset, width, acc, aq, rl, res) = {
   // Get the address, X(rs1) + offset.
   // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match ext_data_get_addr(rs, offset, acc, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs, offset, acc, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
@@ -301,7 +308,7 @@ val vmem_write : forall 'width, is_mem_width('width).
 function vmem_write(rs_addr, offset, width, data, acc, aq, rl, res) = {
   // Get the address, X(rs_addr) + offset.
   // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match ext_data_get_addr(rs_addr, offset, acc, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs_addr, offset, acc, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
