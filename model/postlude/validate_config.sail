@@ -232,6 +232,10 @@ function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zvfbfwma extension is enabled but either Zfbfmin or Zvfbfmin is disabled: supporting Zvfbfwma requires Zfbfmin and Zvfbfmin.")
   };
+  if (config extensions.Ssstrict.supported : bool) & sys_enable_experimental_extensions() then {
+    valid = false;
+    print_endline("The Ssstrict extension and --enable-experimental-extensions are both enabled: Ssstrict conflicts with experimental extensions.");
+  };
   valid
 }
 

@@ -568,13 +568,19 @@ int inner_main(int argc, char **argv)
   // or if the validation failed.
   {
     bool config_is_valid = zconfig_is_valid(UNIT);
-    const char *s = config_is_valid ? "valid" : "invalid";
     if (!config_is_valid || do_validate_config) {
       if (config_file.empty()) {
-        fprintf(stderr, "Default configuration is %s.\n", s);
+        std::cerr << "Default configuration is ";
       } else {
-        fprintf(stderr, "Configuration in %s is %s.\n", config_file.c_str(), s);
+        std::cerr << "Configuration in " << config_file << " is ";
       }
+      if (config_is_valid) {
+        std::cerr << "valid.";
+      } else {
+        std::cerr << "invalid, or an incompatible cli option (e.g. "
+                     "--enable-experimental-extensions) has been specified.";
+      }
+      std::cerr << std::endl;
       exit(config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE);
     }
   }

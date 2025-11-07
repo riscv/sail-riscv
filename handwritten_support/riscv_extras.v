@@ -12,6 +12,8 @@ Require Import Lia.
 Import List.ListNotations.
 Open Scope Z.
 
+Axiom sys_enable_experimental_extensions : unit -> bool.
+
 Definition shift_bits_left {a b} (v : mword a) (n : mword b) : mword a :=
   shiftl v (int_of_mword false n).
 
