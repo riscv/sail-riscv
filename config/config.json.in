@@ -130,7 +130,12 @@
     "archid": 0,
     "impid": 0,
     "hartid": 0,
+    // Cache block size, specified as a power of 2.
     "cache_block_size_exp": 6,
+    // This specifies both the size and alignment of the reservation set, specified as a power of 2.
+    // It should be at least 2 on RV32 and 3 on RV64 to support Zalrsc.  It should be not more than
+    // 6 for Za64rs, and not more than 7 for Za128rs.
+    "reservation_set_size_exp": 3,
     "clint": {
       // This must be in a suitable memory region (see memory.regions).
       "base": 33554432,
