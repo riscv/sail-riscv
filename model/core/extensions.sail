@@ -504,13 +504,13 @@ let extensions_ordered_for_isa_string = [
   Ext_Zmmul,
 
   // Za
+  Ext_Za128rs,
+  Ext_Za64rs,
   Ext_Zaamo,
   Ext_Zabha,
   Ext_Zacas,
   Ext_Zalrsc,
   Ext_Zawrs,
-  Ext_Za64rs,
-  Ext_Za128rs,
 
   // Zf, Zd, and Zq
   Ext_Zfa,
