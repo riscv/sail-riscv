@@ -40,7 +40,7 @@ public:
   virtual void pc_write_callback([[maybe_unused]] sbits new_pc) { };
   virtual void redirect_callback([[maybe_unused]] sbits new_pc) { };
   virtual void trap_callback([[maybe_unused]] bool is_interrupt,
-                             [[maybe_unused]] [[maybe_unused]] fbits cause) { };
+                             [[maybe_unused]] fbits cause) { };
 };
 
 void register_callback(callbacks_if *cb);
