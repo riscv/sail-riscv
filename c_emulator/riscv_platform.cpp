@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "sail.h"
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
@@ -33,6 +34,8 @@ unit load_reservation(sbits addr, uint64_t width)
   reservation_valid = true;
   RESERVATION_DBG("reservation <- 0x%0" PRIx64 " (addr: 0x%0" PRIx64 ", width: %0" PRId64 ")\n",
                   reservation, addr.bits, width);
+  // Ensure the reservation set subsumes the reserved bytes.
+  assert((width > 0) && (((addr.bits + width - 1) & reservation_set_addr_mask) == reservation));
   return UNIT;
 }
 
