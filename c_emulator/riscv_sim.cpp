@@ -274,6 +274,12 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
   }
 }
 
+void init_platform_constants()
+{
+  reservation_set_size_exp = get_config_uint64({"platform", "reservation_set_size_exp"});
+  reservation_set_addr_mask = ~((1 << reservation_set_size_exp) - 1);
+}
+
 void init_sail(uint64_t elf_entry, const char *config_file)
 {
   // zset_pc_reset_address must be called before zinit_model
@@ -560,6 +566,9 @@ int inner_main(int argc, char **argv)
   } else {
     sail_config_set_string(get_default_config());
   }
+
+  // Initialize platform.
+  init_platform_constants();
 
   init_sail_configured_types();
   model_init();
