@@ -29,24 +29,24 @@ mach_bits plat_get_16_random_bits(unit)
 
 unit load_reservation(sbits addr, uint64_t width)
 {
-  (void) width;
-  reservation = addr.bits;
+  reservation = addr.bits & reservation_set_addr_mask;
   reservation_valid = true;
-  RESERVATION_DBG("reservation <- %0" PRIx64 "\n", reservation);
+  RESERVATION_DBG("reservation <- 0x%0" PRIx64 " (addr: 0x%0" PRIx64 ", width: %0" PRId64 ")\n",
+                  reservation, addr.bits, width);
   return UNIT;
 }
 
 static mach_bits check_mask()
 {
-  return (zxlen == 32) ? 0x00000000FFFFFFFF : -1;
+  return ((zxlen == 32) ? 0x00000000FFFFFFFF : -1) & reservation_set_addr_mask;
 }
 
 bool match_reservation(sbits addr)
 {
   mach_bits mask = check_mask();
   bool ret = reservation_valid && (reservation & mask) == (addr.bits & mask);
-  RESERVATION_DBG("reservation(%c): %0" PRIx64 ", key=%0" PRIx64 ": %s\n",
-                  reservation_valid ? 'v' : 'i', reservation, addr,
+  RESERVATION_DBG("reservation(%c): 0x%0" PRIx64 ", key=0x%0" PRIx64 ": %s\n",
+                  reservation_valid ? 'v' : 'i', reservation, addr.bits,
                   ret ? "ok" : "fail");
   return ret;
 }
