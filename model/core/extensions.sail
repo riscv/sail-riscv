@@ -608,13 +608,13 @@ let extensions_ordered_for_isa_string = [
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,
+  Ext_Ssnpm,
   Ext_Sstc,
   Ext_Sstvecd,
   // Ext_Svade,
   // Ext_Svadu,
   Ext_Svinval,
   Ext_Svnapot,
-  Ext_Ssnpm,
   Ext_Svpbmt,
   Ext_Svrsw60t59b,
 

@@ -35,7 +35,7 @@ function clause execute ZICBOZ(rs1) = {
     match ext_data_get_addr(rs1, negative_offset, Store(Data), cache_block_size) {
       Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
       Ext_DataAddr_OK(vaddr) => {
-        let vaddr = transform_effective_address(vaddr, Write(Data));
+        let vaddr = transform_effective_address(vaddr, Store(Data));
         // "An implementation may update the bytes in any order and with any granularity
         //  and atomicity, including individual bytes."
         //

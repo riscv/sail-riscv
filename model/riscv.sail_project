@@ -28,6 +28,7 @@ core {
     core/reg_type.sail,
     core/regs.sail,
     core/pc_access.sail,
+    core/pointer_masking.sail,
     core/sys_regs.sail,
     core/ext_regs.sail,
     core/addr_checks_common.sail,

@@ -301,6 +301,8 @@ function in32BitMode() -> bool = {
 bitfield Seccfg : bits(64) = {
   // Pointer Masking Extension
   PMM   : 33 .. 32,
+  // Enable Zicfilp in M-mode
+  MLPE   : 10,
   // Enable Access to SEED in S-Mode
   SSEED : 9,
   // Enable Access to SEED in U-Mode
@@ -319,10 +321,11 @@ function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
 
   let v = Mk_Seccfg(v);
   [o with
-    PMM = if currentlyEnabled(Ext_Smmpm) & is_valid_pmm(PM_SMMPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    PMM   = if currentlyEnabled(Ext_Smmpm) & is_valid_pmm(PM_SMMPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
     USEED = if useed_read_only_zero then 0b0 else v[USEED],
-  ];
+  ]
 }
 
 register mseccfg : Seccfg = legalize_mseccfg(Mk_Seccfg(zeros()), zeros())
@@ -331,8 +334,8 @@ mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = (currentlyEnabled(Ext_Zkr) | currentlyEnabled(Ext_Smmpm)) // mseccfg
-function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | currentlyEnabled(Ext_Smmpm)) & (xlen == 32) // mseccfgh
+function clause is_CSR_accessible(0x747, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm)) // mseccfg
+function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm)) & (xlen == 32) // mseccfgh
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
@@ -353,60 +356,6 @@ function clause write_CSR((0x757, value) if xlen == 32) = {
 }
 
 // envcfg Registers
-bitfield Seccfg : bits(64) = {
-  // Enable Zicfilp in M-mode
-  MLPE   : 10,
-  // Enable access to SEED in S-mode
-  SSEED  : 9,
-  // Enable access to SEED in U-mode
-  USEED  : 8,
-}
-
-function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
-  let sseed_read_only_zero =
-      (config extensions.Zkr.sseed_read_only_zero : bool)
-    | not(currentlyEnabled(Ext_S))
-    | not(currentlyEnabled(Ext_Zkr));
-  let useed_read_only_zero =
-      (config extensions.Zkr.useed_read_only_zero : bool)
-    | not(currentlyEnabled(Ext_U))
-    | not(currentlyEnabled(Ext_Zkr));
-
-  let v = Mk_Seccfg(v);
-  [o with
-    MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
-    SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
-    USEED = if useed_read_only_zero then 0b0 else v[USEED],
-  ]
-}
-
-register mseccfg : Seccfg = legalize_mseccfg(Mk_Seccfg(zeros()), zeros())
-
-mapping clause csr_name_map = 0x747  <-> "mseccfg"
-mapping clause csr_name_map = 0x757  <-> "mseccfgh"
-
-// "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) // mseccfg
-function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32 // mseccfgh
-
-function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
-function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
-
-function clause write_CSR((0x747, value) if xlen == 32) = {
-  mseccfg = legalize_mseccfg(mseccfg, mseccfg.bits[63 .. 32] @ value);
-  Ok(mseccfg.bits[31 .. 0])
-}
-function clause write_CSR((0x747, value) if xlen == 64) = {
-  mseccfg = legalize_mseccfg(mseccfg, value);
-  Ok(mseccfg.bits)
-}
-function clause write_CSR((0x757, value) if xlen == 32) = {
-  mseccfg = legalize_mseccfg(mseccfg, value @ mseccfg.bits[31 .. 0]);
-  Ok(mseccfg.bits[63 .. 32])
-}
-
-
-// envcfg Resisters
 bitfield MEnvcfg : bits(64) = {
   // Supervisor TimeCmp Extension
   STCE   : 63,
@@ -437,8 +386,8 @@ bitfield SEnvcfg : bits(64) = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
-  // Reserved WPRI bits.
-  wpri_0 : 3 .. 1,
+  // Landing Pad Enable,
+  LPE    : 2,
   // Fence of I/O implies Memory
   FIOM   : 0,
 }
@@ -446,22 +395,12 @@ bitfield SEnvcfg : bits(64) = {
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
-<<<<<<< HEAD:model/core/sys_regs.sail
-<<<<<<< HEAD:model/core/sys_regs.sail
-<<<<<<< HEAD:model/core/sys_regs.sail
-    PMM   = if currentlyEnabled(Ext_Smnpm) & xlen != 32 & is_valid_smnpm_pmm(v[PMM]) then v[PMM] else o[PMM],
-=======
-    PMM   = if currentlyEnabled(Ext_Smnpm) & is_valid_smnpm_pmm(pmm_mode(v[PMM])) then v[PMM] else o[PMM],
->>>>>>> e52f98b (Multiple minor changes:):model/riscv_sys_regs.sail
-=======
-=======
     STCE  = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
->>>>>>> a90faa5 (Rebase):model/riscv_sys_regs.sail
     PMM   = if currentlyEnabled(Ext_Smnpm) & is_valid_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
->>>>>>> f3343ed (Multiple adjustments:):model/riscv_sys_regs.sail
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+    LPE   = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
     FIOM  = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
@@ -470,18 +409,11 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
 function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
-<<<<<<< HEAD:model/core/sys_regs.sail
-<<<<<<< HEAD:model/core/sys_regs.sail
-    PMM   = if currentlyEnabled(Ext_Ssnpm) & xlen != 32 & is_valid_ssnpm_pmm(v[PMM]) then v[PMM] else o[PMM],
-=======
-    PMM   = if currentlyEnabled(Ext_Ssnpm) & is_valid_ssnpm_pmm(pmm_mode(v[PMM])) then v[PMM] else o[PMM],
->>>>>>> e52f98b (Multiple minor changes:):model/riscv_sys_regs.sail
-=======
     PMM   = if currentlyEnabled(Ext_Ssnpm) & is_valid_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
->>>>>>> f3343ed (Multiple adjustments:):model/riscv_sys_regs.sail
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+    LPE   = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
     FIOM  = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]

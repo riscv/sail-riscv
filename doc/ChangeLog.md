@@ -4,6 +4,7 @@
 
   - Zic64b
   - Sstvecd
+  - Ssnpm, Smmpm, and Smnpm (Pointer Masking)
 
 # Release notes for version 0.9
 

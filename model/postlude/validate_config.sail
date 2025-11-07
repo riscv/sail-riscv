@@ -245,6 +245,14 @@ function check_extension_param_constraints() -> bool = {
   valid
 }
 
+function check_pointer_masking() -> bool = {
+  if (xlen == 32 & (hartSupports(Ext_Ssnpm) | hartSupports(Ext_Smmpm) | hartSupports(Ext_Smnpm))) then {
+    print_endline("Ssnmp, Smmpm or Smnpm (Pointer Masking) is enabled: these are not supported on RV32.");
+    return false;
+  };
+  true
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -254,4 +262,5 @@ function config_is_valid() -> bool = {
   & check_pmp()
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
+  & check_pointer_masking()
 }
