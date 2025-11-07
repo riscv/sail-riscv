@@ -272,14 +272,17 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 // Compute the value to write to mtval on a trap.
 function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
+    E_Illegal_Instr() => config base.xtval_nonzero.illegal_instruction,
     E_Breakpoint() => config base.xtval_nonzero.breakpoint,
     E_Load_Addr_Align() => config base.xtval_nonzero.load_address_misaligned,
     E_Load_Access_Fault() => config base.xtval_nonzero.load_access_fault,
+    E_Load_Page_Fault() => config base.xtval_nonzero.load_page_fault,
     E_SAMO_Addr_Align() => config base.xtval_nonzero.samo_address_misaligned,
     E_SAMO_Access_Fault() => config base.xtval_nonzero.samo_access_fault,
+    E_SAMO_Page_Fault() => config base.xtval_nonzero.samo_page_fault,
     E_Fetch_Addr_Align() => config base.xtval_nonzero.fetch_address_misaligned,
     E_Fetch_Access_Fault() => config base.xtval_nonzero.fetch_access_fault,
-    E_Illegal_Instr() => config base.xtval_nonzero.illegal_instruction,
+    E_Fetch_Page_Fault() => config base.xtval_nonzero.fetch_page_fault,
     _ => true
   } then Some(excinfo) else None()
 }
