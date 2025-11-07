@@ -126,6 +126,7 @@ function hartSupports_measure(ext : extension) -> int =
     Ext_Zvkng => 2,
     Ext_Zvksc => 2,
     Ext_Zvksg => 2,
+    Ext_Sstvecd => 1,
     _ => 0,
   }
 
