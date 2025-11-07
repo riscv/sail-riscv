@@ -8,8 +8,8 @@
 
 // Machine-mode and supervisor-mode functionality.
 
-function effectivePrivilege(t : MemoryAccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
-  if   t != InstructionFetch() & m[MPRV] == 0b1
+function effectivePrivilege(access_type : MemoryAccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
+  if   access_type != InstructionFetch() & m[MPRV] == 0b1
   then privLevel_bits(m[MPP], bitzero) // TODO: use m[MPV] if hypervisor enabled
   else priv
 
@@ -22,14 +22,14 @@ function csrPriv(csr : csreg) -> nom_priv_bits = csr[9..8]
 function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
   privLevel_to_bits(p) >=_u csrPriv(csr)
 
-// Check that the CSR access isn't a write and read-only.
-function check_CSR_access(csr : csreg, isWrite : bool) -> bool =
-  not(isWrite & (csrAccess(csr) == 0b11))
+// Check that the CSR access isn't a write to a read-only CSR.
+function check_CSR_access(csr : csreg, access_type : CSRAccessType) -> bool =
+  not((access_type == CSRWrite | access_type == CSRReadWrite) & (csrAccess(csr) == 0b11))
 
-function check_CSR(csr : csreg, p : Privilege, isWrite : bool) -> bool =
+function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> bool =
     check_CSR_priv(csr, p)
-  & check_CSR_access(csr, isWrite)
-  & is_CSR_accessible(csr, p, isWrite)
+  & check_CSR_access(csr, access_type)
+  & is_CSR_accessible(csr, p, access_type)
 
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.
