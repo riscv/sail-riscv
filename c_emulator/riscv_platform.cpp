@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <inttypes.h>
-#include <assert.h>
+#include <cstdio>
+#include <cinttypes>
+#include <cassert>
 #include "sail.h"
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
