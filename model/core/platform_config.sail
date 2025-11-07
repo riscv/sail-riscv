@@ -13,10 +13,17 @@
 // with cache blocks larger than a page is not clearly defined.
 let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_exp
 
-// Reservation set size is 2^reservation_set_size_exp. Max is `max_mem_access` (4096)
-// because sizes larger than a page size are unrealistic. Reservation sets are also
-// naturally aligned. Reservation sets need to subsume their LR operands (4 bytes for
-// LR.W, 8 bytes for LR.D).
+// Reservation set size is 2^reservation_set_size_exp.
+
+// The reservation set must lie completely within a 4KiB page on systems with
+// page-based virtual memory and the "A" extension.  Although reservation sets could
+// theoretically be larger on non-MMU systems, the probability of a successful LR/SC
+// increases if contended synchronization variables are placed in different
+// reservation sets, and practical systems will hence constrain the reservation set
+// size for performance reasons.  This motivates constraining the maximum to
+// `max_mem_access` (4096) because larger sizes are unrealistic.
+// Reservation sets are also naturally aligned. Reservation sets need to subsume
+// their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
 let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_set_size_exp
 
 // whether the MMU should update dirty bits in PTEs
