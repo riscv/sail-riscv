@@ -17,6 +17,7 @@ core {
     core/rvfi_dii.sail,
     core/rvfi_dii_v1.sail,
     core/rvfi_dii_v2.sail,
+    core/platform_config.sail,
     core/extensions.sail,
     core/types_common.sail,
     core/types_ext.sail,
