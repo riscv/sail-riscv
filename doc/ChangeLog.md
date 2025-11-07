@@ -4,6 +4,7 @@
 
   - Zic64b
   - Sstvecd
+  - Ssu64xl
 
 # Release notes for version 0.9
 
