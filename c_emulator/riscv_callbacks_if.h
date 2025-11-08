@@ -61,10 +61,26 @@ public:
   {
   }
   // Page table walk callbacks
-  virtual void ptw_start_callback([[maybe_unused]] uint64_t vpn,                                  [[maybe_unused]] struct zMemoryAccessTypezIuzK access_type,                                  [[maybe_unused]] enum zPrivilege privilege){}
-  virtual void ptw_step_callback([[maybe_unused]] sail_int level, [[maybe_unused]] sbits pte_addr,[[maybe_unused]]  uint64_t pte){}
-  virtual void ptw_success_callback([[maybe_unused]] uint64_t final_ppn, [[maybe_unused]] sail_int level){}
-  virtual void ptw_fail_callback([[maybe_unused]] struct zPTW_Error error_type, [[maybe_unused]] sail_int level,[[maybe_unused]] sbits pte_addr){}
+  virtual void
+  ptw_start_callback([[maybe_unused]] uint64_t vpn,
+                     [[maybe_unused]] struct zMemoryAccessTypezIuzK access_type,
+                     [[maybe_unused]] enum zPrivilege privilege)
+  {
+  }
+  virtual void ptw_step_callback([[maybe_unused]] sail_int level,
+                                 [[maybe_unused]] sbits pte_addr,
+                                 [[maybe_unused]] uint64_t pte)
+  {
+  }
+  virtual void ptw_success_callback([[maybe_unused]] uint64_t final_ppn,
+                                    [[maybe_unused]] sail_int level)
+  {
+  }
+  virtual void ptw_fail_callback([[maybe_unused]] struct zPTW_Error error_type,
+                                 [[maybe_unused]] sail_int level,
+                                 [[maybe_unused]] sbits pte_addr)
+  {
+  }
 };
 
 void register_callback(callbacks_if *cb);
