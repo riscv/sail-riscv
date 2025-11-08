@@ -117,6 +117,8 @@ void log_callbacks::ptw_start_callback(
     zprivLevel_to_str(&str_pr, privilege);
     fprintf(trace_log, "PTW: Start, vpn=%ld, access_type=%s, privilege=%s", vpn,
             str_ac, str_pr);
+    KILL(sail_string)(&str_ac);
+    KILL(sail_string)(&str_pr);
   }
 }
 
@@ -146,5 +148,6 @@ void log_callbacks::ptw_fail_callback(struct zPTW_Error error_type,
     zptw_error_to_str(&str_et, error_type);
     fprintf(trace_log, "PTW: failed, error=%s, pte_addr=0x%" PRIX64 "\n",
             str_et, pte_addr.bits);
+            KILL(sail_string)(&str_et);
   }
 }
