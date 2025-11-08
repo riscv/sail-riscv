@@ -47,6 +47,10 @@ various Sail backends.
 [prelude_mem_metadata.sail](../model/core/prelude_mem_metadata.sail)
 contain other low-level definitions related to memory.
 
+[platform_config.sail](../model/core/platform_config.sail) contains
+various configuration parameters for the platform, some of which can
+affect which extensions can be supported on the platform.
+
 [extensions.sail](../model/core/extensions.sail) sets up the
 basic infrastructure for the definition of modules implementing RISC-V
 extensions. The `hartSupports` function determines whether an
@@ -79,7 +83,7 @@ and indexed by the indices defined in
 infrastructure for the scattered definitions of CSRs and their access
 for read and write operations.
 
-[callback.sail](../model/core/callbacks.sail) contains
+[callbacks.sail](../model/core/callbacks.sail) contains
 definitions for callbacks that inform an external harness (such as the
 C++ emulator) about state-changing events.
 
