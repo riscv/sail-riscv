@@ -19,7 +19,8 @@
       "samo_page_fault": true,
       "fetch_address_misaligned": true,
       "fetch_access_fault": true,
-      "fetch_page_fault": true
+      "fetch_page_fault": true,
+      "other_exceptions": true
     }
   },
   "memory": {
