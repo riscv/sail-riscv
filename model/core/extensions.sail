@@ -476,7 +476,7 @@ mapping clause extensionName = Ext_Smnpm <-> "smnpm"
 function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported : bool & (xlen == 64)
 
 // Environment extensions
-// These extensions are neither defined in the device tree nor configurable via the config file
+// These extensions are not configurable via the config file
 // To avoid ordering issues, they are placed at the bottom
 
 // Indicates whether pointer masking support is available in supervisor mode
@@ -609,8 +609,10 @@ let extensions_ordered_for_isa_string = [
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,
   Ext_Ssnpm,
+  Ext_Sspm,
   Ext_Sstc,
   Ext_Sstvecd,
+  Ext_Supm,
   // Ext_Svade,
   // Ext_Svadu,
   Ext_Svinval,
