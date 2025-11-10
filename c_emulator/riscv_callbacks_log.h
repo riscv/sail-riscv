@@ -7,7 +7,8 @@ class log_callbacks : public callbacks_if {
 public:
   log_callbacks(bool config_print_reg = true,
                 bool config_print_mem_access = true,
-                bool config_use_abi_names = false, FILE *trace_log = nullptr);
+                bool config_print_ptw = true, bool config_use_abi_names = false,
+                FILE *trace_log = nullptr);
 
   // callbacks_if
   void mem_write_callback(const char *type, sbits paddr, uint64_t width,
@@ -22,10 +23,19 @@ public:
   void csr_full_read_callback(const_sail_string csr_name, unsigned reg,
                               sbits value) override;
   void vreg_write_callback(unsigned reg, lbits value) override;
+  // Page table walk callback
+  void ptw_start_callback(uint64_t vpn,
+                          struct zMemoryAccessTypezIuzK access_type,
+                          enum zPrivilege privilege) override;
+  void ptw_step_callback(sail_int level, sbits pte_addr, uint64_t pte) override;
+  void ptw_success_callback(uint64_t final_ppn, sail_int level) override;
+  void ptw_fail_callback(struct zPTW_Error error_type, sail_int /*level*/,
+                         sbits pte_addr) override;
 
 private:
   bool config_print_reg;
   bool config_print_mem_access;
   bool config_use_abi_names;
+  bool config_print_ptw;
   FILE *trace_log;
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include "sail.h"
+#include "sail_riscv_model.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +26,13 @@ unit vreg_write_callback(unsigned reg, lbits value);
 unit pc_write_callback(sbits new_pc);
 unit redirect_callback(sbits new_pc);
 unit trap_callback(bool is_interrupt, fbits cause);
+// Page table walk callbacks
+unit ptw_start_callback(uint64_t vpn, struct zMemoryAccessTypezIuzK access_type,
+                        enum zPrivilege privilege);
+unit ptw_step_callback(sail_int level, sbits pte_addr, uint64_t pte);
+unit ptw_success_callback(uint64_t final_ppn, sail_int level);
+unit ptw_fail_callback(struct zPTW_Error error_type, sail_int level,
+                       sbits pte_addr);
 
 #ifdef __cplusplus
 }
