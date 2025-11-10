@@ -38,9 +38,6 @@ mapping clause assembly = ZICBOP(cbop, rs1, offset)
 function clause execute ZICBOP(cbop, rs1, offset) = {
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
   match get_transformed_data_addr(rs1, sign_extend(offset), Load(Data), cache_block_size) {
-    Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
-      RETIRE_SUCCESS
-    },
-  };
+    _ => RETIRE_SUCCESS,
+  }
 }

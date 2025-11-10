@@ -303,9 +303,9 @@ bitfield Seccfg : bits(64) = {
   PMM   : 33 .. 32,
   // Enable Zicfilp in M-mode
   MLPE   : 10,
-  // Enable Access to SEED in S-Mode
+  // Enable access to SEED in S-mode
   SSEED : 9,
-  // Enable Access to SEED in U-Mode
+  // Enable access to SEED in U-mode
   USEED : 8,
 }
 
@@ -334,7 +334,7 @@ mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm)) // mseccfg
+function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm) // mseccfg
 function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm)) & (xlen == 32) // mseccfgh
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
@@ -375,7 +375,7 @@ bitfield MEnvcfg : bits(64) = {
   FIOM   : 0,
 }
 
-// NOTE: senvcfg is actual width is SXLEN, but this cannot currently be expressed in Sail,
+// NOTE: senvcfg's actual width is SXLEN, but this cannot currently be expressed in Sail,
 // as PMM occupies bits above 31 and conditional enable/disable of bits is not supported.
 bitfield SEnvcfg : bits(64) = {
   // Pointer Masking Extension
@@ -386,7 +386,7 @@ bitfield SEnvcfg : bits(64) = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
-  // Landing Pad Enable,
+  // Landing Pad Enable
   LPE    : 2,
   // Fence of I/O implies Memory
   FIOM   : 0,

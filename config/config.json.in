@@ -383,18 +383,18 @@
     },
     "Ssnpm": {
       "supported": @CONFIG_XLEN_IS_64@,
-      "supported_xlen_57": true,
-      "supported_xlen_48": true
+      "supported_pmlen_7": true,
+      "supported_pmlen_16": true
     },
     "Smnpm": {
       "supported": @CONFIG_XLEN_IS_64@,
-      "supported_xlen_57": true,
-      "supported_xlen_48": true
+      "supported_pmlen_7": true,
+      "supported_pmlen_16": true
     },
     "Smmpm": {
       "supported": @CONFIG_XLEN_IS_64@,
-      "supported_xlen_57": true,
-      "supported_xlen_48": true
+      "supported_pmlen_7": true,
+      "supported_pmlen_16": true
     },
     "Svrsw60t59b": {
       "supported": @CONFIG_XLEN_IS_64@

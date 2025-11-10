@@ -417,7 +417,7 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 // Supervisor-Level pointer masking for next lower privilege mode
 enum clause extension = Ext_Ssnpm
 mapping clause extensionName = Ext_Ssnpm <-> "ssnpm"
-function clause hartSupports(Ext_Ssnpm) = config extensions.Ssnpm.supported
+function clause hartSupports(Ext_Ssnpm) = config extensions.Ssnpm.supported : bool & (xlen == 64)
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -469,11 +469,11 @@ function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.suppor
 // Machine-Level pointer masking for machine mode
 enum clause extension = Ext_Smmpm
 mapping clause extensionName = Ext_Smmpm <-> "smmpm"
-function clause hartSupports(Ext_Smmpm) = config extensions.Smmpm.supported
+function clause hartSupports(Ext_Smmpm) = config extensions.Smmpm.supported : bool & (xlen == 64)
 // Machine-Level pointer masking for next lower privilege mode
 enum clause extension = Ext_Smnpm
 mapping clause extensionName = Ext_Smnpm <-> "smnpm"
-function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported
+function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported : bool & (xlen == 64)
 
 // Environment extensions
 // These extensions are neither defined in the device tree nor configurable via the config file
@@ -482,11 +482,11 @@ function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported
 // Indicates whether pointer masking support is available in supervisor mode
 enum clause extension = Ext_Sspm
 mapping clause extensionName = Ext_Sspm <-> "sspm"
-function clause hartSupports(Ext_Sspm) = hartSupports(Ext_Ssnpm) & hartSupports(Ext_S)
+function clause hartSupports(Ext_Sspm) = hartSupports(Ext_Smnpm) & hartSupports(Ext_S)
 // Indicates whether pointer masking support is available in user mode
 enum clause extension = Ext_Supm
 mapping clause extensionName = Ext_Supm <-> "supm"
-function clause hartSupports(Ext_Supm) = hartSupports(Ext_Smnpm) | (hartSupports(Ext_Ssnpm) & hartSupports(Ext_S))
+function clause hartSupports(Ext_Supm) = (hartSupports(Ext_Smnpm) & not(hartSupports(Ext_S))) | (hartSupports(Ext_Ssnpm) & hartSupports(Ext_S))
 
 let extensions_ordered_for_isa_string = [
   // Single letter extensions.
