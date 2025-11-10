@@ -20,6 +20,7 @@ set(sail_common
     # Minimum required Sail compiler version.
     --require-version ${SAIL_REQUIRED_VER}
     # Put Sail smt cache in /build directory since by default Sail will
+    # place it in its working directory which is ${CMAKE_CURRENT_SOURCE_DIR}.
     --memo-z3-path "${CMAKE_CURRENT_BINARY_DIR}/sail_smt_cache"
 )
 
