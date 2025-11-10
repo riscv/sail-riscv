@@ -302,7 +302,7 @@ bitfield Seccfg : bits(64) = {
   // Pointer Masking Extension
   PMM   : 33 .. 32,
   // Enable Zicfilp in M-mode
-  MLPE   : 10,
+  MLPE  : 10,
   // Enable access to SEED in S-mode
   SSEED : 9,
   // Enable access to SEED in U-mode
@@ -321,7 +321,7 @@ function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
 
   let v = Mk_Seccfg(v);
   [o with
-    PMM   = if currentlyEnabled(Ext_Smmpm) & is_valid_pmm(PM_SMMPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    PMM   = if currentlyEnabled(Ext_Smmpm) & is_supported_pmm(PM_SMMPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
     USEED = if useed_read_only_zero then 0b0 else v[USEED],
@@ -396,7 +396,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
     STCE  = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
-    PMM   = if currentlyEnabled(Ext_Smnpm) & is_valid_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    PMM   = if currentlyEnabled(Ext_Smnpm) & is_supported_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
@@ -409,7 +409,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
 function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
-    PMM   = if currentlyEnabled(Ext_Ssnpm) & is_valid_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    PMM   = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,

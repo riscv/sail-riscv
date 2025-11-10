@@ -37,7 +37,7 @@ function get_pmlen(typ : MemoryAccessType(ext_access_type), eff_privilege : Priv
 }
 
 // Transforms a virtual address by sign-extending the relevant upper bits.
-function transform_VA(Virtaddr(effective_address) : virtaddr, pmlen : {0, 7, 16}) -> virtaddr = Virtaddr(sign_extend(effective_address[xlen - pmlen - 1 .. 0]))
+function pm_transform_VA(Virtaddr(effective_address) : virtaddr, pmlen : {0, 7, 16}) -> virtaddr = Virtaddr(sign_extend(effective_address[xlen - pmlen - 1 .. 0]))
 
 // Transforms a physical address by zero-extending the relevant upper bits.
-function transform_PA(Virtaddr(effective_address) : virtaddr, pmlen : {0, 7, 16}) -> virtaddr = Virtaddr(zero_extend(effective_address[xlen - pmlen - 1 .. 0]))
+function pm_transform_PA(Virtaddr(effective_address) : virtaddr, pmlen : {0, 7, 16}) -> virtaddr = Virtaddr(zero_extend(effective_address[xlen - pmlen - 1 .. 0]))

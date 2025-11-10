@@ -21,7 +21,7 @@ core {
     core/types_common.sail,
     core/types_ext.sail,
     core/types.sail,
-    core/zpm_types.sail,
+    core/spm_types.sail,
     core/vmem_types.sail,
     core/vext_types.sail,
     core/csr_begin.sail,
@@ -54,7 +54,7 @@ pmp {
 }
 
 sys {
-  requires core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Zpm
+  requires core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Spm_utils
 
   files
     sys/sys_reservation.sail,
@@ -422,9 +422,11 @@ extensions {
     }
   }
 
-  Zpm {
-    requires core
-    files extensions/Zpm/zpm_utils.sail
+  Spm {
+    Spm_utils {
+      requires core
+      files extensions/Spm/spm_utils.sail
+    }
   }
 
   rmem {

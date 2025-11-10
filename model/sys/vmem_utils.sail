@@ -111,7 +111,7 @@ function transform_effective_address(vaddr : virtaddr, typ : MemoryAccessType(ex
   let eff_privilege = effectivePrivilege(typ, mstatus, cur_privilege);
   let pmlen = get_pmlen(typ, eff_privilege);
   let mode = translationMode(eff_privilege);
-  if mode == Bare then transform_PA(vaddr, pmlen) else transform_VA(vaddr, pmlen)
+  if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }
 
 /****    External API    ****/

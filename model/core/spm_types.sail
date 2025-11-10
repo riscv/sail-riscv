@@ -6,13 +6,6 @@
 //  SPDX-License-Identifier: BSD-2-Clause
 //=======================================================================================
 
-function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm) & currentlyEnabled(Ext_S)
-function clause currentlyEnabled(Ext_Smmpm) = hartSupports(Ext_Smmpm)
-function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm)
-
-function clause currentlyEnabled(Ext_Sspm) = hartSupports(Ext_Sspm) & currentlyEnabled(Ext_S)
-function clause currentlyEnabled(Ext_Supm) = hartSupports(Ext_Supm) & currentlyEnabled(Ext_U)
-
 enum PM_Ext = {PM_SSNPM, PM_SMNPM, PM_SMMPM}
 
 enum PointerMaskingMode = {
@@ -29,7 +22,7 @@ mapping pmm_mode : PointerMaskingMode <-> bits(2) = {
   PMM_PMLEN_16 <-> 0b11,
 }
 
-function is_valid_pmm(ext : PM_Ext, pmm : PointerMaskingMode) -> bool = match (ext, pmm) {
+function is_supported_pmm(ext : PM_Ext, pmm : PointerMaskingMode) -> bool = match (ext, pmm) {
   (_, PMM_Disabled) => true,
   (_, PMM_Reserved) => false,
   // SSNPM
