@@ -6,11 +6,45 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// Instruction definitions.
+// Instruction declarations.
 //
-// This includes decoding, execution, and assembly parsing and printing.
+// This includes scattered declarations for decoding, execution, and assembly parsing and printing.
+// This file also defines the execution result, i.e. the return value from the `execute()` function.
 
 scattered union instruction
+
+union ExecutionResult = {
+  // Successfully retired.
+  Retire_Success                 : unit,
+
+  // The instruction is a compressed instruction, and should be
+  // executed as an uncompressed instruction.
+  ExecuteAs                      : instruction,
+
+  // An instruction such as WFI, WRS.{STO,NTO}
+  // entered a wait state, which may or may not
+  // retire depending on the configuration.
+  Enter_Wait                     : WaitReason,
+
+  // Did not retire for a standard reason.
+  Illegal_Instruction            : unit,
+  Trap                           : (Privilege, ctl_result, xlenbits),
+  Memory_Exception               : (virtaddr, ExceptionType),
+
+  // Did not retire for custom reason.
+  Ext_CSR_Check_Failure          : unit,
+  Ext_ControlAddr_Check_Failure  : ext_control_addr_error,
+  Ext_DataAddr_Check_Failure     : ext_data_addr_error,
+  Ext_XRET_Priv_Failure          : unit,
+}
+
+// To ease the introduction of `ExecutionResult`, this global
+// definition is temporarily used instead of the previous
+// RETIRE_SUCCESS enum value so that we don't have to immediately
+// update all the places RETIRE_SUCCESS was used.
+
+let RETIRE_SUCCESS : ExecutionResult = Retire_Success()
+
 
 // returns whether an instruction was retired, used for computing minstret
 val execute : instruction -> ExecutionResult
