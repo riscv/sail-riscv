@@ -43,7 +43,9 @@ unit load_reservation(sbits addr, uint64_t width)
 
 bool match_reservation(sbits addr)
 {
-  bool ret = reservation_valid && (reservation & reservation_set_addr_mask) == (addr.bits & reservation_set_addr_mask);
+  bool ret = reservation_valid
+      && (reservation & reservation_set_addr_mask)
+          == (addr.bits & reservation_set_addr_mask);
 
   if (trace_log != nullptr && config_print_reservation) {
     fprintf(trace_log,
