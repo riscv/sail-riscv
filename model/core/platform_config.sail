@@ -14,7 +14,7 @@
 let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_exp
 
 // Reservation set size is 2^reservation_set_size_exp.
-
+//
 // The reservation set must lie completely within a 4KiB page on systems with
 // page-based virtual memory and the "A" extension.  Although reservation sets could
 // theoretically be larger on non-MMU systems, the probability of a successful LR/SC
