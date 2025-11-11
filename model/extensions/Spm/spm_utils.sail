@@ -22,9 +22,8 @@ function is_pmm_applicable(typ : MemoryAccessType(ext_access_type), eff_privileg
 
 // Get the effective PMLEN value
 function get_pmlen(typ : MemoryAccessType(ext_access_type), eff_privilege : Privilege) -> {0, 7, 16} = {
-  let pmm = get_pmm(eff_privilege);
   if is_pmm_applicable(typ, eff_privilege) then {
-    match pmm {
+    match get_pmm(eff_privilege) {
       PMM_Disabled => 0,
       PMM_PMLEN_7  => 7,
       PMM_PMLEN_16 => 16,
