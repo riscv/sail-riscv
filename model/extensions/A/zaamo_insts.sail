@@ -63,7 +63,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
 
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
-  match ext_data_get_addr(rs1, zeros(), LoadStore(Data, Data), width) {
+  match get_transformed_data_addr(rs1, zeros(), LoadStore(Data, Data), width) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       if not(is_aligned_addr(vaddr, width))

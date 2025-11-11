@@ -78,7 +78,7 @@ function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResul
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match ext_data_get_addr(rs1, negative_offset, Load(Data), cache_block_size) {
+  match get_transformed_data_addr(rs1, negative_offset, Load(Data), cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       let res : option(ExceptionType) = match translateAddr(vaddr, Load(Data)) {

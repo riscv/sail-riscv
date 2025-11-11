@@ -33,4 +33,11 @@ mapping prefetch_mnemonic : cbop_zicbop <-> string = {
 mapping clause assembly = ZICBOP(cbop, rs1, offset)
   <-> prefetch_mnemonic(cbop) ^ spc() ^ hex_bits_12(offset) ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
-function clause execute ZICBOP(cbop, rs1, offset) = RETIRE_SUCCESS
+// Pointer masking is applied to prefetch addresses as required by the PM spec,
+// even though prefetch instructions are hints that never cause exceptions.
+function clause execute ZICBOP(cbop, rs1, offset) = {
+  let cache_block_size = 2 ^ plat_cache_block_size_exp;
+  match get_transformed_data_addr(rs1, sign_extend(offset), Load(Data), cache_block_size) {
+    _ => RETIRE_SUCCESS,
+  }
+}

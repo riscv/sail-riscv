@@ -232,6 +232,10 @@ function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zvfbfwma extension is enabled but either Zfbfmin or Zvfbfmin is disabled: supporting Zvfbfwma requires Zfbfmin and Zvfbfmin.")
   };
+  if (xlen == 32 & (hartSupports(Ext_Ssnpm) | hartSupports(Ext_Smmpm) | hartSupports(Ext_Smnpm))) then {
+    valid = false;
+    print_endline("One or more Ssnmp, Smmpm or Smnpm (Pointer Masking) are enabled: these are not supported on RV32.");
+  };
   valid
 }
 
