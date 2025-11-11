@@ -283,7 +283,13 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
     E_Fetch_Addr_Align() => config base.xtval_nonzero.fetch_address_misaligned,
     E_Fetch_Access_Fault() => config base.xtval_nonzero.fetch_access_fault,
     E_Fetch_Page_Fault() => config base.xtval_nonzero.fetch_page_fault,
-    _ => config base.xtval_nonzero.other_exceptions,
+    E_Software_Check() => config base.xtval_nonzero.software_check,
+    E_U_EnvCall() => false,
+    E_S_EnvCall() => false,
+    E_M_EnvCall() => false,
+    E_Extension(_) => config base.xtval_nonzero.external_extensions,
+    // the rest are all reserved exceptions
+    _ => config base.xtval_nonzero.reserved_faults,
   } then Some(excinfo) else None()
 }
 
