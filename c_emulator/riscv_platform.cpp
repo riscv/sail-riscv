@@ -41,15 +41,9 @@ unit load_reservation(sbits addr, uint64_t width)
   return UNIT;
 }
 
-static mach_bits check_mask()
-{
-  return ((zxlen == 32) ? 0x00000000FFFFFFFF : -1) & reservation_set_addr_mask;
-}
-
 bool match_reservation(sbits addr)
 {
-  mach_bits mask = check_mask();
-  bool ret = reservation_valid && (reservation & mask) == (addr.bits & mask);
+  bool ret = reservation_valid && (reservation & reservation_set_addr_mask) == (addr.bits & reservation_set_addr_mask);
 
   if (trace_log != nullptr && config_print_reservation) {
     fprintf(trace_log,
