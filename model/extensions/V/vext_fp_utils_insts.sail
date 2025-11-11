@@ -416,7 +416,7 @@ function riscv_f32ToUi16(rm : bits_rm, v : bits_S) -> (bits_fflags, bits(16)) = 
 }
 
 // Calculate the inverse square root accurate to 7 bits.
-val rsqrt7 : forall 'm, 'm in {16, 32, 64}. (bits('m), bool) -> bits('m)
+val rsqrt7 : forall 'n, 'n in {16, 32, 64}. (bits('n), bool) -> bits('n)
 function rsqrt7 (v, is_subnormal) = {
   // sig_out from the "vfrsqrt7.v common-case lookup table contents" table in the spec.
   let sig_out_lut : vector(128, range(0, 127)) = [
@@ -441,6 +441,7 @@ function rsqrt7 (v, is_subnormal) = {
   let v = float_decompose(v);
 
   let 'e = length(v.exp);
+  let 'm = length(v.mantissa);
 
   let (normalized_exp, normalized_mant_top_5_bits) =
       if is_subnormal then {
@@ -457,11 +458,11 @@ function rsqrt7 (v, is_subnormal) = {
 
   float_compose(struct {
     sign = v.sign,
-    exp = to_bits(e, quot_round_zero(3 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp), 2)),
+    exp = to_bits_truncate('e, quot_round_zero(3 * (2 ^ ('e - 1) - 1) - 1 - signed(normalized_exp), 2)),
     // Note the 127 - idx is because the table was written out in little endian order
     // but Sail is configured for big endian array literals.
     // See https://github.com/rems-project/sail/issues/1519
-    mantissa = to_bits(s, sig_out_lut[127 - idx]) << (s - 7),
+    mantissa = to_bits(7, sig_out_lut[127 - idx]) @ zeros('m - 7),
   })
 }
 
