@@ -21,8 +21,7 @@
       "fetch_access_fault": true,
       "fetch_page_fault": true,
       "software_check": true,
-      "reserved_faults": false,
-      "external_extensions": false
+      "reserved_faults": false
     }
   },
   "memory": {
