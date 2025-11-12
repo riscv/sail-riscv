@@ -133,6 +133,8 @@ function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); O
 // you are technically allowed to have writable misa[U/S].
 function clause currentlyEnabled(Ext_U) = hartSupports(Ext_U) & misa[U] == 0b1 & currentlyEnabled(Ext_Zicsr)
 function clause currentlyEnabled(Ext_S) = hartSupports(Ext_S) & misa[S] == 0b1 & currentlyEnabled(Ext_Zicsr)
+// This will need adjusting for dynamic XLEN.
+function clause currentlyEnabled(Ext_Ssu64xl) = hartSupports(Ext_Ssu64xl) & currentlyEnabled(Ext_S)
 
 function clause currentlyEnabled(Ext_Svbare) = currentlyEnabled(Ext_S)
 function clause currentlyEnabled(Ext_Sv32) = hartSupports(Ext_Sv32) &  currentlyEnabled(Ext_S)
