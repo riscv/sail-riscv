@@ -289,7 +289,10 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
     E_M_EnvCall() => false,
     E_Extension(_) => true,
     // the rest are all reserved exceptions
-    _ => config base.xtval_nonzero.reserved_faults,
+    E_Reserved_10() => config base.xtval_nonzero.reserved_exceptions,
+    E_Reserved_14() => config base.xtval_nonzero.reserved_exceptions,
+    E_Reserved_16() => config base.xtval_nonzero.reserved_exceptions,
+    E_Reserved_17() => config base.xtval_nonzero.reserved_exceptions,
   } then Some(excinfo) else None()
 }
 
