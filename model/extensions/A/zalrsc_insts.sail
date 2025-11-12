@@ -7,6 +7,8 @@
 // =======================================================================================
 
 function clause currentlyEnabled(Ext_Zalrsc) = hartSupports(Ext_Zalrsc) | currentlyEnabled(Ext_A)
+function clause currentlyEnabled(Ext_Za64rs) = hartSupports(Ext_Za64rs) & currentlyEnabled(Ext_Zalrsc)
+function clause currentlyEnabled(Ext_Za128rs) = hartSupports(Ext_Za128rs) & currentlyEnabled(Ext_Zalrsc)
 
 // Zalrsc defines LR/SC for word and double
 function lrsc_width_valid(width : word_width) -> bool = {

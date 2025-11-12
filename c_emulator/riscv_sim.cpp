@@ -176,6 +176,8 @@ static void setup_options(CLI::App &app)
                "Enable trace output for privilege changes, MMIO, interrupts");
   app.add_flag("--trace-step", config_print_step,
                "Add a blank line between steps in the trace output");
+  app.add_flag("--trace-reservation", config_print_reservation,
+               "Enable trace output for LR/SC reservations.");
 
   app.add_flag_callback(
       "--trace-all",
@@ -186,6 +188,7 @@ static void setup_options(CLI::App &app)
         config_print_rvfi = true;
         config_print_platform = true;
         config_print_step = true;
+        config_print_reservation = true;
       },
       "Enable all trace output");
 
@@ -272,6 +275,13 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
   for (uint8_t d : dtb) {
     write_mem(addr++, d);
   }
+}
+
+void init_platform_constants()
+{
+  reservation_set_size_exp
+      = get_config_uint64({"platform", "reservation_set_size_exp"});
+  reservation_set_addr_mask = ~((1 << reservation_set_size_exp) - 1);
 }
 
 void init_sail(uint64_t elf_entry, const char *config_file)
@@ -560,6 +570,9 @@ int inner_main(int argc, char **argv)
   } else {
     sail_config_set_string(get_default_config());
   }
+
+  // Initialize platform.
+  init_platform_constants();
 
   init_sail_configured_types();
   model_init();

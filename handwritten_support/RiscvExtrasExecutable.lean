@@ -30,7 +30,7 @@ def plat_term_write {α} : α → SailM Unit := λ _ => panic "TODO"
 def plat_term_read : Unit → SailM String := λ _ => panic "TODO"
 
 -- Reservations
-def load_reservation : Arch.pa → SailM Unit := λ _ => panic "TODO"
+def load_reservation : Arch.pa → Nat → SailM Unit := λ _ => panic "TODO"
 def match_reservation : Arch.pa → Bool := λ _ => panic "TODO"
 def cancel_reservation : Unit → SailM Unit := λ _ => panic "TODO"
 def valid_reservation : Unit → Bool := λ _ => false

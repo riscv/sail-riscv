@@ -23,11 +23,11 @@
     "pmp": {
       "grain": 0,
       // This specifies the number of PMP entries present.
-      // The value should be 0, 16, or 64.
+      // The value must be one of 0, 16, or 64.
       "count": 16,
       // This specifies the number of usable PMP entries.
       // Entries higher than this are read-only-zero.
-      // The value should be less than `count`.
+      // The value must be less than or equal to `count`.
       "usable_count": 16,
       "tor_supported": true,
       "na4_supported": true,
@@ -130,7 +130,12 @@
     "archid": 0,
     "impid": 0,
     "hartid": 0,
+    // Cache block size, specified as a power of 2.
     "cache_block_size_exp": 6,
+    // This specifies both the size and alignment of the reservation set, specified as a power of 2.
+    // It must be at least 2 on RV32 and 3 on RV64 to support Zalrsc.  It must not be more than
+    // 6 for Za64rs and 7 for Za128rs.  In all cases, it must be less than or equal to 12.
+    "reservation_set_size_exp": 3,
     "clint": {
       // This must be in a suitable memory region (see memory.regions).
       "base": 33554432,
@@ -154,7 +159,7 @@
       "supported": true
     },
     "V": {
-      // `support_level` should be one of the below strings:
+      // `support_level` must be one of the below strings:
       // . "Disabled" for no vector extension support
       // . "Integer" for Zve*x support
       // . "Float_single" for Zve*f support

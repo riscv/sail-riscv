@@ -13,22 +13,6 @@
 // - it can access system register state, needed to manipulate interrupt bits
 // - it relies on externs to get platform address information and doesn't hardcode them
 
-// Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
-// because this model performs `cbo.zero` with a single write, and the behaviour
-// with cache blocks larger than a page is not clearly defined.
-let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_exp
-
-// whether the MMU should update dirty bits in PTEs
-let plat_enable_dirty_update : bool = config memory.translation.dirty_update
-
-// whether the platform supports misaligned accesses without trapping to M-mode. if false,
-// misaligned loads/stores are trapped to Machine mode.
-let plat_enable_misaligned_access : bool = config memory.misaligned.supported
-
-// Location of clock-interface, which should match with the spec in the DTB
-let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
-let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
-
 // Location of HTIF (Host Target InterFace) tohost port. None if not enabled.
 // This is used for console output and signalling the end of tests.
 register htif_tohost_base : option(physaddrbits) = None()
@@ -57,8 +41,6 @@ function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : phys
   within_htif_writable(addr, width)
 
 // CLINT (Core Local Interruptor), based on Spike.
-
-let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 
 // Each hart has a memory-mapped mtimecmp register. Typically these are
 // exposed as an array in CLINT. The CLINT implementation here is currently

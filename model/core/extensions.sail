@@ -151,6 +151,13 @@ function clause hartSupports(Ext_Zalrsc) = config extensions.Zalrsc.supported
 enum clause extension = Ext_Zawrs
 mapping clause extensionName = Ext_Zawrs <-> "zawrs"
 function clause hartSupports(Ext_Zawrs) = config extensions.Zawrs.supported
+// Maximum reservation set sizes
+enum clause extension = Ext_Za64rs
+mapping clause extensionName = Ext_Za64rs <-> "za64rs"
+function clause hartSupports(Ext_Za64rs) = plat_reservation_set_size_exp <= 6 & (config extensions.Zalrsc.supported : bool | config extensions.A.supported : bool)
+enum clause extension = Ext_Za128rs
+mapping clause extensionName = Ext_Za128rs <-> "za128rs"
+function clause hartSupports(Ext_Za128rs) = plat_reservation_set_size_exp <= 7 & (config extensions.Zalrsc.supported : bool | config extensions.A.supported : bool)
 
 // Additional Floating-Point Instructions
 enum clause extension = Ext_Zfa
@@ -497,6 +504,8 @@ let extensions_ordered_for_isa_string = [
   Ext_Zmmul,
 
   // Za
+  Ext_Za128rs,
+  Ext_Za64rs,
   Ext_Zaamo,
   Ext_Zabha,
   Ext_Zacas,
