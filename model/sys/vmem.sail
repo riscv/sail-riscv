@@ -156,6 +156,8 @@ function pt_walk(
   }
 }
 
+termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
+
 // ****************************************************************
 // Architectural SATP CSR
 

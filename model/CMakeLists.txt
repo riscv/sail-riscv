@@ -35,8 +35,6 @@ execute_process(
         ${SAIL_BIN}
         ${project_file}
         --require-version ${SAIL_REQUIRED_VER}
-        # include termination.sail in the list of dependencies
-        --variable "TERMINATION_FILE = true"
         --all-modules
         --list-files
     OUTPUT_VARIABLE sail_list_files
@@ -375,7 +373,6 @@ foreach (xlen IN ITEMS 32 64)
             --config ${config_file}
             # Input files.
             ${SAIL_MODULES}
-            --variable "TERMINATION_FILE = true"
             ${project_file}
     )
     add_custom_command(
@@ -443,7 +440,6 @@ foreach (xlen IN ITEMS 32 64)
             ${lean_sail_common}
             ${lean_sail_default}
             ${SAIL_MODULES}
-            --variable "TERMINATION_FILE = true"
             ${project_file}
     )
     add_custom_command(
@@ -462,7 +458,6 @@ foreach (xlen IN ITEMS 32 64)
             ${lean_sail_common}
             ${lean_sail_executable}
             ${SAIL_MODULES}
-            --variable "TERMINATION_FILE = true"
             ${project_file}
     )
 
