@@ -92,13 +92,19 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
 // ----------------
 // Check access permissions in PTE
 
+// TODO: Zicfiss will add PTE_No_Access here.
+union pte_check_failure = {
+  PTE_No_Permission : unit,
+  PTE_Ext_Failure : ext_ptw_fail
+}
+
 // For (non-standard) extensions: this function gets the extension-available bits
 // of the PTE in extPte, and the accumulated information of the page-table-walk
 // in ext_ptw. It should return the updated ext_ptw in both success and failure cases.
 
 union PTE_Check = {
   PTE_Check_Success : ext_ptw,
-  PTE_Check_Failure : (ext_ptw, ext_ptw_fail)
+  PTE_Check_Failure : (ext_ptw, pte_check_failure)
 }
 
 // PRIVATE
@@ -126,7 +132,7 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
     VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
-  if not(priv_ok) then return PTE_Check_Failure((), ());
+  if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
   // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
 
@@ -137,7 +143,7 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
     LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
     InstructionFetch(_) => pte_X,
   };
-  if not(access_ok) then PTE_Check_Failure((), ()) else PTE_Check_Success(());
+  if not(access_ok) then PTE_Check_Failure((), PTE_No_Permission()) else PTE_Check_Success(());
 }
 
 // Update PTE bits if needed; return new PTE if updated

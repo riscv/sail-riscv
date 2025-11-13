@@ -136,8 +136,8 @@ function pt_walk(
           };
           // Steps 6, 7 (TODO: shadow stack protection), 8 of VATP.
           match check_PTE_permission(ac, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
-            PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
-              Err(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
+            PTE_Check_Failure(ext_ptw, pte_failure) =>
+              Err(ext_get_ptw_error(pte_failure), ext_ptw),
             PTE_Check_Success(ext_ptw) => {
               let ppn = if level > 0 then {
                 // Compose final PA in superpage:
@@ -235,8 +235,8 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
                                        ext_pte, ext_ptw);
 
   match pte_check {
-    PTE_Check_Failure(ext_ptw, ext_ptw_fail) =>
-      Err(ext_get_ptw_error(ext_ptw_fail), ext_ptw),
+    PTE_Check_Failure(ext_ptw, pte_failure) =>
+      Err(ext_get_ptw_error(pte_failure), ext_ptw),
     PTE_Check_Success(ext_ptw) =>
       match update_PTE_Bits(pte, ac) {
         None()     => Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),

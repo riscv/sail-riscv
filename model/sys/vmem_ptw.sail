@@ -45,8 +45,12 @@ overload to_str = {ptw_error_to_str}
 // with any customization to check_PTE_permission().
 
 // PRIVATE
-function ext_get_ptw_error(eptwf : ext_ptw_fail) -> PTW_Error =
-  PTW_No_Permission()
+function ext_get_ptw_error(eptef : pte_check_failure) -> PTW_Error =
+  match eptef {
+    PTE_No_Permission() => PTW_No_Permission(),
+    PTE_Ext_Failure(_)  => PTW_No_Permission(),
+    // TODO: Zicfiss will map PTE_No_Access to PTW_Access
+  }
 
 // Convert translation/PTW failures into architectural exceptions
 function translationException(a : MemoryAccessType(ext_access_type),
