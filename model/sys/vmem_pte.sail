@@ -116,15 +116,7 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
   let pte_W = bits_to_bool(pte_flags[W]);
   let pte_X = bits_to_bool(pte_flags[X]);
 
-  // Steps 6 and 8 of VATP, roughly (see vmem.sail).
-  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
-  let access_ok : bool = match ac {
-    Load(_)             => pte_R | (pte_X & mxr),
-    Store(_)            => pte_W,
-    LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
-    InstructionFetch(_) => pte_X,
-  };
-
+  // Step 6 of VATP (see vmem.sail).
   let priv_ok : bool = match priv {
     User       => pte_U,
     // SUM allows supervisor mode to access U-mode pages, but only for
@@ -134,8 +126,18 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
     VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
+  if not(priv_ok) then return PTE_Check_Failure((), ());
 
-  if access_ok & priv_ok then PTE_Check_Success(()) else PTE_Check_Failure((), ())
+  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
+
+  // Step 8 of VATP (see vmem.sail).
+  let access_ok : bool = match ac {
+    Load(_)             => pte_R | (pte_X & mxr),
+    Store(_)            => pte_W,
+    LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
+    InstructionFetch(_) => pte_X,
+  };
+  if not(access_ok) then PTE_Check_Failure((), ()) else PTE_Check_Success(());
 }
 
 // Update PTE bits if needed; return new PTE if updated
