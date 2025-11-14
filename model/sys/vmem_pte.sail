@@ -143,7 +143,9 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
     LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
     InstructionFetch(_) => pte_X,
   };
-  if not(access_ok) then PTE_Check_Failure((), PTE_No_Permission()) else PTE_Check_Success(());
+  if not(access_ok) then return PTE_Check_Failure((), PTE_No_Permission());
+
+  PTE_Check_Success(())
 }
 
 // Update PTE bits if needed; return new PTE if updated
