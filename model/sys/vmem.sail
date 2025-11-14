@@ -105,7 +105,7 @@ function pt_walk(
 
   // Read this-level PTE from mem (Step 2 of VATP)
   match read_pte(pte_addr, 2 ^ log_pte_size_bytes) {
-    Err(_)  => Err(PTW_Access(), ext_ptw),
+    Err(_)  => Err(PTW_No_Access(), ext_ptw),
     Ok(pte) => {
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
       let pte_ext   = ext_bits_of_PTE(pte);
@@ -301,7 +301,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
                 Ok(ppn, ext_ptw)
               },
               Err(e) =>
-                Err(PTW_Access(), ext_ptw)
+                Err(PTW_No_Access(), ext_ptw)
             }
           }
         }

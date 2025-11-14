@@ -16,7 +16,7 @@
 // PRIVATE
 union PTW_Error = {
   PTW_Invalid_Addr  : unit,          // invalid source address
-  PTW_Access        : unit,          // physical memory access error for a PTE
+  PTW_No_Access     : unit,          // physical memory access error for a PTE
   PTW_Invalid_PTE   : unit,
   PTW_No_Permission : unit,
   PTW_Misaligned    : unit,          // misaligned superpage
@@ -28,7 +28,7 @@ union PTW_Error = {
 function ptw_error_to_str(e : PTW_Error) -> string = {
   match e {
     PTW_Invalid_Addr()   => "invalid-source-addr",
-    PTW_Access()         => "mem-access-error",
+    PTW_No_Access()      => "mem-access-error",
     PTW_Invalid_PTE()    => "invalid-pte",
     PTW_No_Permission()  => "no-permission",
     PTW_Misaligned()     => "misaligned-superpage",
@@ -53,14 +53,14 @@ function translationException(a : MemoryAccessType(ext_access_type),
                               f : PTW_Error)
                              -> ExceptionType = {
   match (a, f) {
-    (_, PTW_Ext_Error(e))              => E_Extension(ext_translate_exception(e)),
-    (LoadStore(_), PTW_Access())       => E_SAMO_Access_Fault(),
-    (LoadStore(_), _)                  => E_SAMO_Page_Fault(),
-    (Load(_), PTW_Access())            => E_Load_Access_Fault(),
-    (Load(_), _)                       => E_Load_Page_Fault(),
-    (Store(_), PTW_Access())           => E_SAMO_Access_Fault(),
-    (Store(_), _)                      => E_SAMO_Page_Fault(),
-    (InstructionFetch(), PTW_Access()) => E_Fetch_Access_Fault(),
-    (InstructionFetch(), _)            => E_Fetch_Page_Fault()
+    (_, PTW_Ext_Error(e))                 => E_Extension(ext_translate_exception(e)),
+    (LoadStore(_), PTW_No_Access())       => E_SAMO_Access_Fault(),
+    (LoadStore(_), _)                     => E_SAMO_Page_Fault(),
+    (Load(_), PTW_No_Access())            => E_Load_Access_Fault(),
+    (Load(_), _)                          => E_Load_Page_Fault(),
+    (Store(_), PTW_No_Access())           => E_SAMO_Access_Fault(),
+    (Store(_), _)                         => E_SAMO_Page_Fault(),
+    (InstructionFetch(), PTW_No_Access()) => E_Fetch_Access_Fault(),
+    (InstructionFetch(), _)               => E_Fetch_Page_Fault()
   }
 }
