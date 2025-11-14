@@ -15,25 +15,25 @@
 // Failure modes for address-translation/page-table-walks
 // PRIVATE
 union PTW_Error = {
-  PTW_Invalid_Addr  : unit,          // invalid source address
-  PTW_No_Access     : unit,          // physical memory access error for a PTE
-  PTW_Invalid_PTE   : unit,
-  PTW_No_Permission : unit,
-  PTW_Misaligned    : unit,          // misaligned superpage
-  PTW_PTE_Update    : unit,          // PTE update needed but not enabled
-  PTW_Ext_Error     : ext_ptw_error  // parameterized for errors from extensions
+  PTW_Invalid_Addr     : unit,          // invalid source address
+  PTW_No_Access        : unit,          // physical memory access error for a PTE
+  PTW_Invalid_PTE      : unit,
+  PTW_No_Permission    : unit,
+  PTW_Misaligned       : unit,          // misaligned superpage
+  PTW_PTE_Needs_Update : unit,          // PTE update needed but not enabled
+  PTW_Ext_Error        : ext_ptw_error  // parameterized for errors from extensions
 }
 
 // PRIVATE: only 'to_str' overload is public
 function ptw_error_to_str(e : PTW_Error) -> string = {
   match e {
-    PTW_Invalid_Addr()   => "invalid-source-addr",
-    PTW_No_Access()      => "mem-access-error",
-    PTW_Invalid_PTE()    => "invalid-pte",
-    PTW_No_Permission()  => "no-permission",
-    PTW_Misaligned()     => "misaligned-superpage",
-    PTW_PTE_Update()     => "pte-update-needed",
-    PTW_Ext_Error(e)     => "extension-error"
+    PTW_Invalid_Addr()     => "invalid-source-addr",
+    PTW_No_Access()        => "mem-access-error",
+    PTW_Invalid_PTE()      => "invalid-pte",
+    PTW_No_Permission()    => "no-permission",
+    PTW_Misaligned()       => "misaligned-superpage",
+    PTW_PTE_Needs_Update() => "pte-update-needed",
+    PTW_Ext_Error(e)       => "extension-error"
   }
 }
 

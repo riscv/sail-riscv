@@ -244,7 +244,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
           // Step 9 of VATP. See platform.sail.
           if not(plat_enable_dirty_update) then
             // pte needs dirty/accessed update but that is not enabled
-            Err(PTW_PTE_Update(), ext_ptw)
+            Err(PTW_PTE_Needs_Update(), ext_ptw)
           else {
             // Writeback the PTE (which has new A/D bits)
             write_TLB(tlb_index, tlb_set_pte(ent, pte'));
@@ -292,7 +292,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
           // Step 9 of VATP. See platform.sail.
           if not(plat_enable_dirty_update) then
             // pte needs dirty/accessed update but that is not enabled
-            Err(PTW_PTE_Update(), ext_ptw)
+            Err(PTW_PTE_Needs_Update(), ext_ptw)
           else {
             // Writeback the PTE (which has new A/D bits)
             match write_pte(pteAddr, pte_size, pte) {
