@@ -1,48 +1,42 @@
+#include <arpa/inet.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netinet/ip.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <netinet/ip.h>
-#include <fcntl.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <vector>
 
-#include "sail.h"
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
+#include "sail.h"
 
 #define UNUSED(var) (void)(var)
 
-rvfi_handler::rvfi_handler(int port)
-    : dii_port(port)
-{
+rvfi_handler::rvfi_handler(int port) : dii_port(port) {
   fprintf(stderr, "using %d as RVFI port.\n", port);
 }
 
-uint64_t rvfi_handler::get_entry()
-{
+uint64_t rvfi_handler::get_entry() {
   return 0x80000000;
 }
 
 // returns zero on success
-bool rvfi_handler::setup_socket(bool config_print)
-{
+bool rvfi_handler::setup_socket(bool config_print) {
   int listen_sock = socket(AF_INET, SOCK_STREAM, 0);
   if (listen_sock == -1) {
     fprintf(stderr, "Unable to create socket: %s\n", strerror(errno));
     return false;
   }
   int reuseaddr = 1;
-  if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &reuseaddr,
-                 sizeof(reuseaddr))
-      == -1) {
+  if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(reuseaddr)) == -1) {
     fprintf(stderr, "Unable to set reuseaddr on socket: %s\n", strerror(errno));
     return false;
   }
@@ -66,8 +60,7 @@ bool rvfi_handler::setup_socket(bool config_print)
   printf("Waiting for connection on port %d.\n", ntohs(addr.sin_port));
   dii_sock = accept(listen_sock, nullptr, nullptr);
   if (dii_sock == -1) {
-    fprintf(stderr, "Unable to accept connection on socket: %s\n",
-            strerror(errno));
+    fprintf(stderr, "Unable to accept connection on socket: %s\n", strerror(errno));
     return false;
   }
   close(listen_sock);
@@ -78,8 +71,7 @@ bool rvfi_handler::setup_socket(bool config_print)
     return false;
   }
   if (config_print) {
-    fprintf(stderr, "RVFI socket fd flags=%d, nonblocking=%d\n", fd_flags,
-            (fd_flags & O_NONBLOCK) != 0);
+    fprintf(stderr, "RVFI socket fd flags=%d, nonblocking=%d\n", fd_flags, (fd_flags & O_NONBLOCK) != 0);
   }
   if (fd_flags & O_NONBLOCK) {
     fprintf(stderr, "Socket was non-blocking, this will not work!\n");
@@ -89,16 +81,13 @@ bool rvfi_handler::setup_socket(bool config_print)
   return true;
 }
 
-void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
-                                       bool config_print)
-{
+void rvfi_handler::get_and_send_packet(packet_reader_fn reader, bool config_print) {
   lbits packet;
   CREATE(lbits)(&packet);
   reader(&packet, UNIT);
   /* Note: packet.len is the size in bits, not bytes. */
   if (packet.len % 8 != 0) {
-    fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n",
-            (int)packet.len);
+    fprintf(stderr, "RVFI-DII trace packet not byte aligned: %d\n", (int)packet.len);
     exit(EXIT_FAILURE);
   }
   const size_t send_size = packet.len / 8;
@@ -124,8 +113,7 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader,
   KILL(lbits)(&packet);
 }
 
-void rvfi_handler::send_trace(bool config_print)
-{
+void rvfi_handler::send_trace(bool config_print) {
   if (config_print) {
     fprintf(stderr, "Sending v%d trace response...\n", trace_version);
   }
@@ -140,14 +128,12 @@ void rvfi_handler::send_trace(bool config_print)
       get_and_send_packet(zrvfi_get_mem_data, config_print);
     }
   } else {
-    fprintf(stderr, "Sending v%d packets not implemented yet!\n",
-            trace_version);
+    fprintf(stderr, "Sending v%d packets not implemented yet!\n", trace_version);
     abort();
   }
 }
 
-rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
-{
+rvfi_prestep_t rvfi_handler::pre_step(bool config_print) {
   mach_bits instr_bits;
   if (config_print) {
     fprintf(stderr, "Waiting for cmd packet... ");
@@ -187,8 +173,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
        * we support version 2.
        */
       if (config_print) {
-        fprintf(stderr,
-                "EndOfTrace was actually a version negotiation packet.\n");
+        fprintf(stderr, "EndOfTrace was actually a version negotiation packet.\n");
       }
       get_and_send_packet(&zrvfi_get_v2_support_packet, config_print);
       return RVFI_prestep_continue;
@@ -210,8 +195,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     } else if (insn == 2) {
       fprintf(stderr, "Requested trace in v2 format!\n");
     } else {
-      fprintf(stderr, "Requested trace in unsupported format %jd!\n",
-              (intmax_t)insn);
+      fprintf(stderr, "Requested trace in unsupported format %jd!\n", (intmax_t)insn);
       exit(EXIT_FAILURE);
     }
     // From now on send traces in the requested format
@@ -219,12 +203,8 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     struct {
       char msg[8];
       uint64_t version;
-    } version_response = {
-        {'v', 'e', 'r', 's', 'i', 'o', 'n', '='},
-        trace_version
-    };
-    if (write(dii_sock, &version_response, sizeof(version_response))
-        != sizeof(version_response)) {
+    } version_response = {{'v', 'e', 'r', 's', 'i', 'o', 'n', '='}, trace_version};
+    if (write(dii_sock, &version_response, sizeof(version_response)) != sizeof(version_response)) {
       fprintf(stderr, "Sending version response failed: %s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }

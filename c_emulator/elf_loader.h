@@ -27,10 +27,8 @@ public:
 
   // Call `writer()` to load all of the loadable sections into memory (or you
   // can do anything else with them).
-  void
-  load(std::function<void(uint64_t /* address */, const uint8_t * /* data */,
-                          uint64_t /* length */)>
-           writer) const;
+  void load(std::function<void(uint64_t /* address */, const uint8_t * /* data */, uint64_t /* length */)> writer
+  ) const;
 
   // Load and return the symbol table. It isn't cached - every time you call
   // this the entire symbol table is loaded from disk. Note only STT_FUNC,
