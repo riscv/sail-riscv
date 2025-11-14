@@ -1,7 +1,7 @@
 #include "common/runtime.h"
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define PMPCFG_L (0b1 << 7)
 #define PMPCFG_NA4 (0b10 << 3)
@@ -15,8 +15,7 @@
 
 volatile unsigned GLOBAL = 1;
 
-int main()
-{
+int main() {
   printf("Testing 0xFF..FF PMP addresses\n");
 
   uint_xlen_t ones = UINT_XLEN_MAX;
