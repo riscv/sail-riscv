@@ -8,6 +8,13 @@
 class callbacks_if {
 public:
   virtual ~callbacks_if() = default;
+
+  //每条 step 之前的回调
+  virtual void pre_step([[maybe_unused]] bool is_waiting) { }
+
+  //每条 step 之后的回调
+  virtual void post_step([[maybe_unused]] bool is_waiting) { }
+
   // TODO: finding ways to improve the format
   virtual void fetch_callback([[maybe_unused]] sbits opcode) { }
   virtual void mem_write_callback([[maybe_unused]] const char *type,
@@ -63,3 +70,6 @@ public:
 
 void register_callback(callbacks_if *cb);
 void remove_callback(callbacks_if *cb);
+void callbacks_pre_step(bool is_waiting);
+void callbacks_post_step(bool is_waiting);
+

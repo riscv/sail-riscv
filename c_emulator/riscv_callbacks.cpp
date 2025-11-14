@@ -18,6 +18,22 @@ void remove_callback(callbacks_if *cb)
                   callbacks.end());
 }
 
+//step 之前调用所有回调对象的 pre_step
+void callbacks_pre_step(bool is_waiting)
+{
+  for (auto c : callbacks) {
+    c->pre_step(is_waiting);
+  }
+}
+
+//step 之后调用所有回调对象的 post_step
+void callbacks_post_step(bool is_waiting)
+{
+  for (auto c : callbacks) {
+    c->post_step(is_waiting);
+  }
+}
+
 unit fetch_callback(sbits opcode)
 {
   for (auto c : callbacks) {
