@@ -232,6 +232,61 @@ function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zvfbfwma extension is enabled but either Zfbfmin or Zvfbfmin is disabled: supporting Zvfbfwma requires Zfbfmin and Zvfbfmin.")
   };
+  if hartSupports(Ext_Sstvala) then {
+    // stval must be written with the faulting virtual address for load, store, and instruction page-fault,
+    // access-fault, and misaligned exceptions, and for breakpoint exceptions other than those caused by execution of
+    // the EBREAK or C.EBREAK instructions. For virtual-instruction and illegal-instruction exceptions, stval must be
+    // written with the faulting instruction.
+    // TODO: add validation for virtual-instruction exceptions.
+    if not(load_page_fault_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but load page-faults have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(load_access_fault_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but load access-faults have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(misaligned_load_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but misaligned load exceptions have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(samo_page_fault_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but store/AMO page-faults have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(samo_access_fault_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but store/AMO access-faults have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(misaligned_samo_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but misaligned store/AMO exceptions have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(fetch_page_fault_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but fetch page-faults have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(fetch_access_fault_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but fetch access-faults have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(misaligned_fetch_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but misaligned fetch exceptions have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if software_breakpoint_writes_xtval then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but software breakpoint exceptions have been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(hardware_breakpoint_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but hardware breakpoint exceptions have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+    if not(illegal_instruction_writes_xtval) then {
+      valid = false;
+      print_endline("The Sstvala extension is enabled but illegal instruction exceptions have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    };
+  };
   valid
 }
 

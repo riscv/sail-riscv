@@ -425,6 +425,16 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
 function clause hartSupports(Ext_Sstc) = config extensions.Sstc.supported
+// stval must be written with the faulting virtual address for load,
+// store, and instruction page-fault, access-fault, and misaligned
+// exceptions, and for breakpoint exceptions other than those caused
+// by execution of the EBREAK or C.EBREAK instructions. For
+// virtual-instruction and illegal-instruction exceptions, stval must
+// be written with the faulting instruction.
+enum clause extension = Ext_Sstvala
+mapping clause extensionName = Ext_Sstvala <-> "sstvala"
+function clause hartSupports(Ext_Sstvala) = config extensions.Sstvala.supported
+function clause currentlyEnabled(Ext_Sstvala) = hartSupports(Ext_Sstvala)
 // stvec.MODE supports Direct, and in that mode stvec.BASE must be
 // capable of holding any valid four-byte-aligned address.
 enum clause extension = Ext_Sstvecd
@@ -597,6 +607,7 @@ let extensions_ordered_for_isa_string = [
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,
   Ext_Sstc,
+  Ext_Sstvala,
   Ext_Sstvecd,
   Ext_Ssu64xl,
   // Ext_Svade,
