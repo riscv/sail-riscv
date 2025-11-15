@@ -18,7 +18,7 @@ void remove_callback(callbacks_if *cb)
                   callbacks.end());
 }
 
-//step 之前调用所有回调对象的 pre_step
+// Invoke pre_step on all registered callbacks before each step
 void callbacks_pre_step(bool is_waiting)
 {
   for (auto c : callbacks) {
@@ -26,7 +26,7 @@ void callbacks_pre_step(bool is_waiting)
   }
 }
 
-//step 之后调用所有回调对象的 post_step
+// Invoke post_step on all registered callbacks after each step
 void callbacks_post_step(bool is_waiting)
 {
   for (auto c : callbacks) {

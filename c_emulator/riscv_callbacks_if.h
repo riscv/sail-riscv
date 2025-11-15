@@ -9,10 +9,10 @@ class callbacks_if {
 public:
   virtual ~callbacks_if() = default;
 
-  //每条 step 之前的回调
+  // Callback invoked before each step
   virtual void pre_step([[maybe_unused]] bool is_waiting) { }
 
-  //每条 step 之后的回调
+  // Callback invoked after each step
   virtual void post_step([[maybe_unused]] bool is_waiting) { }
 
   // TODO: finding ways to improve the format
