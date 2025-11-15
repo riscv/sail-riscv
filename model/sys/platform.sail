@@ -75,51 +75,51 @@ function clint_load(t, Physaddr(addr), width) = {
   // FIXME: For now, only allow exact aligned access.
   if addr == MSIP_BASE & ('n == 8 | 'n == 4)
   then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mip[MSI]));
     Ok(zero_extend(sizeof(8 * 'n), mip[MSI]))
   }
   else if addr == MTIMECMP_BASE & ('n == 4)
   then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtimecmp[31..0]));
     // FIXME: Redundant zero_extend currently required by Lem backend
     Ok(zero_extend(32, mtimecmp[31..0]))
   }
   else if addr == MTIMECMP_BASE & ('n == 8)
   then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint<8>[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtimecmp));
     // FIXME: Redundant zero_extend currently required by Lem backend
     Ok(zero_extend(64, mtimecmp))
   }
   else if addr == MTIMECMP_BASE_HI & ('n == 4)
   then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint-hi<4>[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtimecmp[63..32]));
     // FIXME: Redundant zero_extend currently required by Lem backend
     Ok(zero_extend(32, mtimecmp[63..32]))
   }
   else if addr == MTIME_BASE & ('n == 4)
   then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtime));
     Ok(zero_extend(32, mtime[31..0]))
   }
   else if addr == MTIME_BASE & ('n == 8)
   then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtime));
     Ok(zero_extend(64, mtime))
   }
   else if addr == MTIME_BASE_HI & ('n == 4)
   then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtime));
     Ok(zero_extend(32, mtime[63..32]))
   }
   else {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> <not-mapped>");
     match t {
       InstructionFetch() => Err(E_Fetch_Access_Fault()),
@@ -134,7 +134,7 @@ function clint_dispatch() -> unit = {
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
     mip[STI] = bool_to_bits(stimecmp <=_u mtime);
   };
-  if get_config_print_platform()
+  if get_config_print_clint()
   then print_log("clint mtime " ^ bits_str(mtime) ^ " (mip.MTI <- " ^ bits_str(mip[MTI]) ^
     (if currentlyEnabled(Ext_Sstc) then ", mip.STI <- " ^ bits_str(mip[STI]) else "") ^ ")");
 }
@@ -143,49 +143,49 @@ val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryO
 function clint_store(Physaddr(addr), width, data) = {
   let addr = addr - plat_clint_base;
   if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mip.MSI <- " ^ bits_str(data[0..0]) ^ ")");
     mip[MSI] = [data[0]];
     clint_dispatch();
     Ok(true)
   } else if addr == MTIMECMP_BASE & 'n == 8 then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint<8>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = zero_extend(64, data); // FIXME: Redundant zero_extend currently required by Lem backend
     clint_dispatch();
     Ok(true)
   } else if addr == MTIMECMP_BASE & 'n == 4 then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = vector_update_subrange(mtimecmp, 31, 0, zero_extend(32, data));  // FIXME: Redundant zero_extend currently required by Lem backend
     clint_dispatch();
     Ok(true)
   } else if addr == MTIMECMP_BASE_HI & 'n == 4 then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = vector_update_subrange(mtimecmp, 63, 32, zero_extend(32, data)); // FIXME: Redundant zero_extend currently required by Lem backend
     clint_dispatch();
     Ok(true)
   } else if addr == MTIME_BASE & 'n == 8 then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint<8>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime = data;
     clint_dispatch();
     Ok(true)
   } else if addr == MTIME_BASE & 'n == 4 then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime[31 .. 0] = data;
     clint_dispatch();
     Ok(true)
   } else if addr == MTIME_BASE_HI & 'n == 4 then {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime[63 .. 32] = data;
     clint_dispatch();
     Ok(true)
   } else {
-    if   get_config_print_platform()
+    if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (<unmapped>)");
     Err(E_SAMO_Access_Fault())
   }
@@ -249,7 +249,7 @@ function reset_htif () -> unit = {
 
 val htif_load : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function htif_load(acc, Physaddr(paddr), width) = {
-  if   get_config_print_platform()
+  if   get_config_print_htif()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ bits_str(htif_tohost));
 
   let base : physaddrbits = match htif_tohost_base {
@@ -273,7 +273,7 @@ function htif_load(acc, Physaddr(paddr), width) = {
 
 val htif_store : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function htif_store(Physaddr(paddr), width, data) = {
-  if   get_config_print_platform()
+  if   get_config_print_htif()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] <- " ^ bits_str(data));
 
   let base : physaddrbits = match htif_tohost_base {
@@ -308,7 +308,7 @@ function htif_store(Physaddr(paddr), width, data) = {
     let cmd = Mk_htif_cmd(htif_tohost);
     match cmd[device] {
       0x00 => { // syscall-proxy
-        if   get_config_print_platform()
+        if   get_config_print_htif()
         then print_log("htif-syscall-proxy cmd: " ^ bits_str(cmd[payload]));
         if   cmd[payload][0] == bitone
         then {
@@ -318,7 +318,7 @@ function htif_store(Physaddr(paddr), width, data) = {
         else ()
       },
       0x01 => { // terminal
-        if   get_config_print_platform()
+        if   get_config_print_htif()
         then print_log("htif-term cmd: " ^ bits_str(cmd[payload]));
         match cmd[cmd] {
           0x00 => /* TODO: terminal input handling */ (),
