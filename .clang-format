@@ -13,7 +13,7 @@ PackConstructorInitializers: CurrentLine
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 
-# For consistency don't put functions on one line.
+# For consistency don't put functions or enums on one line.
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 
