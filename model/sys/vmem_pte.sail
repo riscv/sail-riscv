@@ -92,13 +92,19 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
 // ----------------
 // Check access permissions in PTE
 
+// TODO: Zicfiss will add PTE_No_Access here.
+union pte_check_failure = {
+  PTE_No_Permission : unit,
+  PTE_Ext_Failure : ext_ptw_fail
+}
+
 // For (non-standard) extensions: this function gets the extension-available bits
 // of the PTE in extPte, and the accumulated information of the page-table-walk
 // in ext_ptw. It should return the updated ext_ptw in both success and failure cases.
 
 union PTE_Check = {
   PTE_Check_Success : ext_ptw,
-  PTE_Check_Failure : (ext_ptw, ext_ptw_fail)
+  PTE_Check_Failure : (ext_ptw, pte_check_failure)
 }
 
 // PRIVATE
@@ -116,15 +122,7 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
   let pte_W = bits_to_bool(pte_flags[W]);
   let pte_X = bits_to_bool(pte_flags[X]);
 
-  // Steps 6 and 8 of VATP, roughly (see vmem.sail).
-  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
-  let access_ok : bool = match ac {
-    Load(_)             => pte_R | (pte_X & mxr),
-    Store(_)            => pte_W,
-    LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
-    InstructionFetch(_) => pte_X,
-  };
-
+  // Step 6 of VATP (see vmem.sail).
   let priv_ok : bool = match priv {
     User       => pte_U,
     // SUM allows supervisor mode to access U-mode pages, but only for
@@ -134,8 +132,20 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
     VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
+  if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
-  if access_ok & priv_ok then PTE_Check_Success(()) else PTE_Check_Failure((), ())
+  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
+
+  // Step 8 of VATP (see vmem.sail).
+  let access_ok : bool = match ac {
+    Load(_)             => pte_R | (pte_X & mxr),
+    Store(_)            => pte_W,
+    LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
+    InstructionFetch(_) => pte_X,
+  };
+  if not(access_ok) then return PTE_Check_Failure((), PTE_No_Permission());
+
+  PTE_Check_Success(())
 }
 
 // Update PTE bits if needed; return new PTE if updated
