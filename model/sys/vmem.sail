@@ -164,7 +164,7 @@ register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
 function clause is_CSR_accessible(0x180, priv, _) = currentlyEnabled(Ext_S) & not(priv == Supervisor & mstatus[TVM] == 0b1)
 function clause read_CSR(0x180) = satp
-function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(cur_privilege), satp, value); Ok(satp) }
+function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(Supervisor), satp, value); Ok(satp) }
 
 // ----------------
 // Fields of SATP
