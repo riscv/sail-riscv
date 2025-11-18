@@ -159,7 +159,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
   trap_callback(is_interrupt, cause);
 
-  if   get_config_print_platform()
+  if   get_config_print_exception() | get_config_print_interrupt()
   then print_log("handling " ^ to_str(c)
                       ^ " at priv " ^ to_str(del_priv)
                       ^ " with tval " ^ bits_str(tval(info)));
@@ -222,7 +222,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   match ctl {
     CTL_TRAP(e) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
-      if   get_config_print_platform()
+      if   get_config_print_exception()
       then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
       trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext)
@@ -241,7 +241,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
-      if   get_config_print_platform()
+      if   get_config_print_exception()
       then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       prepare_xret_target(Machine)
@@ -260,7 +260,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
-      if   get_config_print_platform()
+      if   get_config_print_exception()
       then print_log("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
 

@@ -14,7 +14,11 @@ unit print_log_instr(const_sail_string s, uint64_t pc);
 unit print_step(unit);
 
 bool get_config_print_instr(unit);
-bool get_config_print_platform(unit);
+bool get_config_print_clint(unit);
+bool get_config_print_exception(unit);
+bool get_config_print_interrupt(unit);
+bool get_config_print_htif(unit);
+bool get_config_print_pma(unit);
 bool get_config_rvfi(unit);
 bool get_config_use_abi_names(unit);
 

@@ -68,7 +68,11 @@ int signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
 bool config_print_instr = false;
 bool config_print_reg = false;
 bool config_print_mem_access = false;
-bool config_print_platform = false;
+bool config_print_clint = false;
+bool config_print_exception = false;
+bool config_print_interrupt = false;
+bool config_print_htif = false;
+bool config_print_pma = false;
 bool config_print_rvfi = false;
 bool config_print_step = false;
 
@@ -172,8 +176,27 @@ static void setup_options(CLI::App &app)
                "Enable trace output for memory accesses");
   app.add_flag("--trace-rvfi", config_print_rvfi,
                "Enable trace output for RVFI");
-  app.add_flag("--trace-platform", config_print_platform,
-               "Enable trace output for privilege changes, MMIO, interrupts");
+  app.add_flag("--trace-clint", config_print_clint,
+               "Enable trace output for CLINT memory accesses and status");
+  app.add_flag("--trace-exception", config_print_exception,
+               "Enable trace output for exceptions");
+  app.add_flag("--trace-interrupt", config_print_interrupt,
+               "Enable trace output for interrupts");
+  app.add_flag("--trace-htif", config_print_htif,
+               "Enable trace output for HTIF operations");
+  app.add_flag("--trace-pma", config_print_pma,
+               "Enable trace output for PMA checks");
+  app.add_flag_callback(
+      "--trace-platform",
+      [] {
+        config_print_clint = true;
+        config_print_exception = true;
+        config_print_interrupt = true;
+        config_print_htif = true;
+        config_print_pma = true;
+      },
+      "Enable trace output for platform-level events (MMIO, interrupts, "
+      "exceptions, CLINT, HTIF, PMA)");
   app.add_flag("--trace-step", config_print_step,
                "Add a blank line between steps in the trace output");
   app.add_flag("--trace-reservation", config_print_reservation,
@@ -186,7 +209,11 @@ static void setup_options(CLI::App &app)
         config_print_reg = true;
         config_print_mem_access = true;
         config_print_rvfi = true;
-        config_print_platform = true;
+        config_print_clint = true;
+        config_print_exception = true;
+        config_print_interrupt = true;
+        config_print_htif = true;
+        config_print_pma = true;
         config_print_step = true;
         config_print_reservation = true;
       },
