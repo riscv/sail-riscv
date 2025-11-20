@@ -20,16 +20,16 @@ function csrPriv(csr : csreg) -> nom_priv_bits = csr[9..8]
 
 // Check that the CSR access is made with sufficient privilege.
 function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
-  privLevel_to_bits(p) >=_u csrPriv(csr)
+  privLevel_to_bits(p) >=_u csrPriv(csr) & not(csrAccess(csr) == 0b11)
 
 // Check that the CSR access isn't a write to a read-only CSR.
 function check_CSR_access(csr : csreg, access_type : CSRAccessType) -> bool =
-  not((access_type == CSRWrite | access_type == CSRReadWrite) & (csrAccess(csr) == 0b11))
+  (access_type == CSRWrite | access_type == CSRReadWrite)
 
-function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> bool =
-    check_CSR_priv(csr, p)
-  & check_CSR_access(csr, access_type)
-  & is_CSR_accessible(csr, p, access_type)
+function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> CSRAccessResult =
+  if not(check_CSR_priv(csr, p)) then CSRAccessIllegal(CSRNotAccessible)
+  else if check_CSR_access(csr, access_type) then CSRAccessIllegal(CSRNotAccessible)
+  else is_CSR_accessible(csr, p, access_type)
 
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.
