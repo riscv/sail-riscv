@@ -72,4 +72,3 @@ void register_callback(callbacks_if *cb);
 void remove_callback(callbacks_if *cb);
 void callbacks_pre_step(bool is_waiting);
 void callbacks_post_step(bool is_waiting);
-

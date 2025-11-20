@@ -111,4 +111,3 @@ void log_callbacks::post_step(bool is_waiting)
 {
   // TODO: post-step logging or statistics
 }
-

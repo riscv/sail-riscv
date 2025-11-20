@@ -416,7 +416,7 @@ void run_sail(void)
     }
 
     callbacks_pre_step(is_waiting);
-    
+
     { /* run a Sail step */
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
@@ -682,4 +682,3 @@ int main(int argc, char **argv)
   }
   return 1;
 }
-
