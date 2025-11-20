@@ -33,14 +33,9 @@ mapping clause assembly = C_NOP(imm)
 union clause instruction = C_ADDI4SPN : (cregidx, bits(8))
 
 $[wavedrom "C.ADDI4SPN _ _ _ _ dest C0"]
-mapping clause encdec_compressed = C_ADDI4SPN(rd, nz96 @ nz54 @ nz3 @ nz2)
-  <-> 0b000 @ nz54 : bits(2) @ nz96 : bits(4) @ nz2 : bits(1) @ nz3 : bits(1) @ encdec_creg(rd) @ 0b00
-  when nz96 @ nz54 @ nz3 @ nz2 != 0b00000000 & currentlyEnabled(Ext_Zca)
-
-// See https://github.com/rems-project/sail/issues/1540
-//mapping clause encdec_compressed = C_ADDI4SPN(rd, nzimm)
-//  <-> 0b000 @ nzimm[3..2] : bits(2) @ nzimm[7..4] : bits(4) @ nzimm[0] : bits(1) @ nzimm[1] : bits(1) @ encdec_creg(rd) @ 0b00
-//  when (nzimm != 0b00000000) & currentlyEnabled(Ext_Zca)
+mapping clause encdec_compressed = C_ADDI4SPN(rd, nzimm)
+  <-> 0b000 @ nzimm[3..2] @ nzimm[7..4] @ nzimm[0] @ nzimm[1] @ encdec_creg(rd) @ 0b00
+  when (nzimm != 0b00000000) & currentlyEnabled(Ext_Zca)
 
 function clause execute C_ADDI4SPN(rdc, nzimm) = {
   let imm : bits(12) = (0b00 @ nzimm @ 0b00);
@@ -187,14 +182,9 @@ mapping clause assembly = C_LI(imm, rd)
 // *****************************************************************
 union clause instruction = C_ADDI16SP : (bits(6))
 
-mapping clause encdec_compressed = C_ADDI16SP(nzi9 @ nzi87 @ nzi6 @ nzi5 @ nzi4)
-  <-> 0b011 @ nzi9 : bits(1) @ /* x2 */ 0b00010 @ nzi4 : bits(1) @ nzi6 : bits(1) @ nzi87 : bits(2) @ nzi5 : bits(1) @ 0b01
-  when nzi9 @ nzi87 @ nzi6 @ nzi5 @ nzi4 != 0b000000 & currentlyEnabled(Ext_Zca)
-
-// See https://github.com/rems-project/sail/issues/1540
-//mapping clause encdec_compressed = C_ADDI16SP(nzimm)
-//  <-> 0b011 @ nzimm[5] : bits(1) @ /* x2 */ 0b00010 @ nzimm[0] : bits(1) @ nzimm[2] : bits(1) @ nzimm[4..3] : bits(2) @ nzimm[1] : bits(1) @ 0b01
-//  when nzimm != 0b000000 & currentlyEnabled(Ext_Zca)
+mapping clause encdec_compressed = C_ADDI16SP(nzimm)
+  <-> 0b011 @ nzimm[5] @ /* x2 */ 0b00010 @ nzimm[0] @ nzimm[2] @ nzimm[4..3] @ nzimm[1] @ 0b01
+  when nzimm != 0b000000 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_ADDI16SP(imm) = {
   let imm : bits(12) = sign_extend(imm @ 0x0);
@@ -211,14 +201,9 @@ union clause instruction = C_LUI : (bits(6), regidx)
 // c.lui with rd=x0 are hints.
 // Code points with rd=x2 are c.addi16sp.
 // Code points with imm=0 are reserved.
-mapping clause encdec_compressed = C_LUI(imm17 @ imm1612, rd)
-  <-> 0b011 @ imm17 : bits(1) @ encdec_reg(rd) @ imm1612 : bits(5) @ 0b01
-  when rd != sp & imm17 @ imm1612 != 0b000000 & currentlyEnabled(Ext_Zca)
-
-// See https://github.com/rems-project/sail/issues/1540
-//mapping clause encdec_compressed = C_LUI(imm, rd)
-//  <-> 0b011 @ imm[5] : bits(1) @ encdec_reg(rd) @ imm[4..0] : bits(5) @ 0b01
-//  when rd != sp & imm != 0b000000 & currentlyEnabled(Ext_Zca)
+mapping clause encdec_compressed = C_LUI(imm, rd)
+  <-> 0b011 @ imm[5] @ encdec_reg(rd) @ imm[4..0] @ 0b01
+  when rd != sp & imm != 0b000000 & currentlyEnabled(Ext_Zca)
 
 function clause execute C_LUI(imm, rd) = {
   let res : bits(20) = sign_extend(imm);
@@ -233,14 +218,9 @@ mapping clause assembly = C_LUI(imm, rd)
 union clause instruction = C_SRLI : (bits(6), cregidx)
 
 // c.srli with shamt=0 are hints.
-mapping clause encdec_compressed = C_SRLI(shamt5 @ shamt40, rsd)
-  <-> 0b100 @ shamt5 : bits(1) @ 0b00 @ encdec_creg(rsd) @ shamt40 : bits(5) @ 0b01
-  when (xlen == 64 | shamt5 == 0b0) & currentlyEnabled(Ext_Zca)
-
-// See https://github.com/rems-project/sail/issues/1540
-//mapping clause encdec_compressed = C_SRLI(shamt, rsd)
-//  <-> 0b100 @ shamt[5] : bits(1) @ 0b00 @ encdec_creg(rsd) @ shamt[4..0] : bits(5) @ 0b01
-//  when (xlen == 64 | shamt[5] == 0b0) & currentlyEnabled(Ext_Zca)
+mapping clause encdec_compressed = C_SRLI(shamt, rsd)
+  <-> 0b100 @ shamt[5] @ 0b00 @ encdec_creg(rsd) @ shamt[4..0] @ 0b01
+  when (xlen == 64 | shamt[5] == bitzero) & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SRLI(shamt, rsd) = {
   let rsd = creg2reg_idx(rsd);
@@ -254,14 +234,9 @@ mapping clause assembly = C_SRLI(shamt, rsd)
 union clause instruction = C_SRAI : (bits(6), cregidx)
 
 // c.srai with shamt=0 are hints.
-mapping clause encdec_compressed = C_SRAI(shamt5 @ shamt40, rsd)
-  <-> 0b100 @ shamt5 : bits(1) @ 0b01 @ encdec_creg(rsd) @ shamt40 : bits(5) @ 0b01
-  when (xlen == 64 | shamt5 == 0b0) & currentlyEnabled(Ext_Zca)
-
-// See https://github.com/rems-project/sail/issues/1540
-//mapping clause encdec_compressed = C_SRAI(shamt, rsd)
-//  <-> 0b100 @ shamt[5] : bits(1) @ 0b01 @ encdec_creg(rsd) @ shamt[4..0] : bits(5) @ 0b01
-//  when (xlen == 64 | shamt[5] == 0b0) & currentlyEnabled(Ext_Zca)
+mapping clause encdec_compressed = C_SRAI(shamt, rsd)
+  <-> 0b100 @ shamt[5] @ 0b01 @ encdec_creg(rsd) @ shamt[4..0] @ 0b01
+  when (xlen == 64 | shamt[5] == bitzero) & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SRAI(shamt, rsd) = {
   let rsd = creg2reg_idx(rsd);
@@ -429,14 +404,9 @@ union clause instruction = C_SLLI : (bits(6), regidx)
 
 // c.slli with shamt=0 or rsd=x0 are hints.
 $[wavedrom "C.SLLI shamt[5] dest!=0 shamt[4:0] C2"]
-mapping clause encdec_compressed = C_SLLI(shamt5 @ shamt40, rsd)
-  <-> 0b000 @ shamt5 : bits(1) @ encdec_reg(rsd) @ shamt40 : bits(5) @ 0b10
-  when (xlen == 64 | shamt5 == 0b0) & currentlyEnabled(Ext_Zca)
-
-// See https://github.com/rems-project/sail/issues/1540
-//mapping clause encdec_compressed = C_SLLI(shamt, rsd)
-//  <-> 0b000 @ shamt[5] : bits(1) @ encdec_reg(rsd) @ shamt[4..0] : bits(5) @ 0b10
-//  when (xlen == 64 | shamt[5] == 0b0) & currentlyEnabled(Ext_Zca)
+mapping clause encdec_compressed = C_SLLI(shamt, rsd)
+  <-> 0b000 @ shamt[5] @ encdec_reg(rsd) @ shamt[4..0] @ 0b10
+  when (xlen == 64 | shamt[5] == bitzero) & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SLLI(shamt, rsd) =
   ExecuteAs(SHIFTIOP(shamt, rsd, rsd, SLLI))
