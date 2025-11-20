@@ -170,11 +170,13 @@ overload to_str = {interruptType_to_str}
 
 // architectural exception definitions
 
+enum breakpoint_cause = {BRK_SOFTWARE, BRK_HARDWARE}
+
 union ExceptionType = {
   E_Fetch_Addr_Align   : unit,
   E_Fetch_Access_Fault : unit,
   E_Illegal_Instr      : unit,
-  E_Breakpoint         : unit,
+  E_Breakpoint         : breakpoint_cause,
   E_Load_Addr_Align    : unit,
   E_Load_Access_Fault  : unit,
   E_SAMO_Addr_Align    : unit,
@@ -199,7 +201,6 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Fetch_Addr_Align()   <-> 0b000000, // 0
   E_Fetch_Access_Fault() <-> 0b000001, // 1
   E_Illegal_Instr()      <-> 0b000010, // 2
-  E_Breakpoint()         <-> 0b000011, // 3
   E_Load_Addr_Align()    <-> 0b000100, // 4
   E_Load_Access_Fault()  <-> 0b000101, // 5
   E_SAMO_Addr_Align()    <-> 0b000110, // 6
@@ -216,6 +217,10 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Reserved_17()        <-> 0b010001, // 17
   E_Software_Check()     <-> 0b010010, // 18
 
+  // breakpoints
+  E_Breakpoint(BRK_SOFTWARE) <-> 0b000011, // 3
+  E_Breakpoint(BRK_HARDWARE) <-> 0b000011, // 3
+
   // extensions
   E_Extension(e)         <-> ext_exc_type_bits(e)
 }
@@ -225,7 +230,6 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_Fetch_Addr_Align()   => "misaligned-fetch",
     E_Fetch_Access_Fault() => "fetch-access-fault",
     E_Illegal_Instr()      => "illegal-instruction",
-    E_Breakpoint()         => "breakpoint",
     E_Load_Addr_Align()    => "misaligned-load",
     E_Load_Access_Fault()  => "load-access-fault",
     E_SAMO_Addr_Align()    => "misaligned-store/amo",
@@ -241,6 +245,10 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_Reserved_16()        => "reserved-2",
     E_Reserved_17()        => "reserved-3",
     E_Software_Check()     => "software-check-fault",
+
+    // breakpoints
+    E_Breakpoint(BRK_SOFTWARE) => "software-breakpoint",
+    E_Breakpoint(BRK_HARDWARE) => "hardware-breakpoint",
 
     // extensions
     E_Extension(e)         => ext_exc_type_to_str(e)
