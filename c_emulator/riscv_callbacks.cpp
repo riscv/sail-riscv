@@ -18,6 +18,22 @@ void remove_callback(callbacks_if *cb)
                   callbacks.end());
 }
 
+// Invoke pre_step on all registered callbacks before each step
+void callbacks_pre_step(bool is_waiting)
+{
+  for (auto c : callbacks) {
+    c->pre_step(is_waiting);
+  }
+}
+
+// Invoke post_step on all registered callbacks after each step
+void callbacks_post_step(bool is_waiting)
+{
+  for (auto c : callbacks) {
+    c->post_step(is_waiting);
+  }
+}
+
 unit fetch_callback(sbits opcode)
 {
   for (auto c : callbacks) {
