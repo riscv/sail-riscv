@@ -50,7 +50,7 @@ function write_pte forall 'n, 'n in {4, 8} . (
   pte_size : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, false, false, false)
+  mem_write_value_priv_meta(paddr, pte_size, pte, Store(Data), Supervisor, default_meta, false, false, false)
 
 // Read a Page Table Entry.
 function read_pte forall 'n, 'n in {4, 8} . (
@@ -64,7 +64,7 @@ function read_pte forall 'n, 'n in {4, 8} . (
 val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  MemoryAccessType(ext_access_type),  // Memory Load/Store/LoadStore/InstructionFetch
+  MemoryAccessType(mem_payload),// Memory Load/Store/AMO/InstructionFetch/CacheAccess
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum
@@ -218,7 +218,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
   asid      : asidbits,
   vpn       : vpn_bits('v),
-  ac        : MemoryAccessType(ext_access_type),
+  ac        : MemoryAccessType(mem_payload),
   priv      : Privilege,
   mxr       : bool,
   do_sum    : bool,
@@ -265,7 +265,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  ac       : MemoryAccessType(ext_access_type),
+  ac       : MemoryAccessType(mem_payload),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -324,7 +324,7 @@ function translate forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  ac       : MemoryAccessType(ext_access_type),
+  ac       : MemoryAccessType(mem_payload),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -355,7 +355,7 @@ function get_satp forall 'v, is_sv_mode('v). (
 // PUBLIC: invoked from instr-fetch and load/store/amo
 function translateAddr(
   vAddr : virtaddr,
-  ac    : MemoryAccessType(ext_access_type),
+  ac    : MemoryAccessType(mem_payload),
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP

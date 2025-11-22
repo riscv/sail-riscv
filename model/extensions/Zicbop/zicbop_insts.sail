@@ -30,7 +30,37 @@ mapping prefetch_mnemonic : cbop_zicbop <-> string = {
   PREFETCH_W <-> "prefetch.w"
 }
 
+// Placeholder for a cache prefetcher.
+function prefetch(op : cbop_zicbop, paddr : physaddr) -> unit = ()
+
 mapping clause assembly = ZICBOP(cbop, rs1, offset)
   <-> prefetch_mnemonic(cbop) ^ spc() ^ hex_bits_12(offset) ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
-function clause execute ZICBOP(cbop, rs1, offset) = RETIRE_SUCCESS
+function clause execute ZICBOP(cbop, rs1, offset) = {
+  let rs1_val = X(rs1);
+  let cache_block_size = 2 ^ plat_cache_block_size_exp;
+
+  let addr = rs1_val + sign_extend(offset);
+  let cache_block_addr = addr & ~(zero_extend(ones(plat_cache_block_size_exp)));
+  let offset = cache_block_addr - rs1_val;
+
+  // TODO: This is incorrect since CHERI only requires at least one byte
+  // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
+  // are in bounds. We will need to add a new function, parameter or access type.
+  match ext_data_get_addr(rs1, offset, CacheAccess(CB_prefetch(cbop)), cache_block_size) {
+    Ext_DataAddr_Error(e) => {
+      // No access to cache; no-op.
+      RETIRE_SUCCESS
+    },
+    Ext_DataAddr_OK(vaddr) => match translateAddr(vaddr, CacheAccess(CB_prefetch(cbop))) {
+      Ok(paddr, _) => {
+        prefetch(cbop, paddr);
+        RETIRE_SUCCESS
+      },
+      Err(_) => {
+        // No access to cache; no-op.
+        RETIRE_SUCCESS
+      },
+    }
+  }
+}

@@ -93,24 +93,43 @@ overload to_str = {privLevel_to_str}
 
 // memory access types
 
+union cacheop = {
+  CB_manage   : unit,
+  CB_zero     : unit,
+  CB_prefetch : cbop_zicbop,
+}
+
 union MemoryAccessType ('a : Type) = {
   Load             : 'a,
   Store            : 'a,
-  LoadStore        : ('a, 'a),
-  InstructionFetch : unit
+  Atomic           : (amoop, 'a, 'a),
+  InstructionFetch : unit,
+  CacheAccess      : cacheop,
 }
 
 // CSR access types
 
 enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
 
-// Some features only affect loads/stores; not instruction fetch.
-function is_load_store forall ('a : Type) . (ac : MemoryAccessType('a)) -> bool =
-  match ac {
+function is_load_store forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
+  match access {
     Load(_)             => true,
     Store(_)            => true,
-    LoadStore(_)        => true,
+    Atomic(_)           => true,
     InstructionFetch(_) => false,
+    CacheAccess(_)      => true,
+  }
+
+function is_cache_access forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
+  match access {
+    CacheAccess(_) => true,
+    _ => false,
+  }
+
+function is_prefetch_access forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
+  match access {
+    CacheAccess(CB_prefetch(_)) => true,
+    _ => false,
   }
 
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
