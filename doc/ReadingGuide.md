@@ -25,6 +25,13 @@ The `core`, `sys` and `postlude` modules are the primary
 modules, with most of the other modules being submodules of the
 `extensions` module.
 
+### The `prelude` module
+
+[prelude.sail](../model/prelude/prelude.sail) contains key type
+definitions and useful Sail library functions.
+[errors.sail](../model/prelude/errors.sail) defines model-internal
+errors and exceptions.
+
 ### The `core` module
 
 This module provide the types and functions that the rest of the
@@ -39,12 +46,11 @@ vector extensions (`vlen`) respectively. These widths are specified
 as `config` values, which means their value is derived from the
 configuration file for the model.
 
-[prelude.sail](../model/core/prelude.sail) contains useful Sail library
-functions. The lowest level memory access primitives are defined in
-[prelude_mem.sail](../model/core/prelude_mem.sail) and are implemented by the
+The lowest level memory access primitives are defined in
+[prelude_mem.sail](../model/core/physical_memory.sail) and are implemented by the
 various Sail backends.
-[prelude_mem_addrtype.sail](../model/core/prelude_mem_addrtype.sail) and
-[prelude_mem_metadata.sail](../model/core/prelude_mem_metadata.sail)
+[mem_addrtype.sail](../model/core/mem_addrtype.sail) and
+[mem_metadata.sail](../model/core/mem_metadata.sail)
 contain other low-level definitions related to memory.
 
 [platform_config.sail](../model/core/platform_config.sail) contains

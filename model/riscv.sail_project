@@ -1,16 +1,22 @@
 variable TERMINATION_FILE = false
 variable RMEM = false
 
-core {
+prelude {
   files
-    core/prelude.sail,
-    core/errors.sail,
+    prelude/prelude.sail,
+    prelude/errors.sail,
+}
+
+core {
+  requires prelude
+
+  files
     core/xlen.sail,
     core/flen.sail,
     core/vlen.sail,
-    core/prelude_mem_addrtype.sail,
-    core/prelude_mem_metadata.sail,
-    core/prelude_mem.sail,
+    core/mem_addrtype.sail,
+    core/mem_metadata.sail,
+    core/physical_memory.sail,
     core/arithmetic.sail,
     core/range_util.sail,
     core/float_classify.sail,
@@ -23,7 +29,6 @@ core {
     core/types_ext.sail,
     core/types.sail,
     core/vmem_types.sail,
-    core/vext_types.sail,
     core/csr_begin.sail,
     core/callbacks.sail,
     core/reg_type.sail,
@@ -38,7 +43,7 @@ core {
 }
 
 exceptions {
-  requires core
+  requires prelude, core
 
   files
     exceptions/sys_exceptions.sail,
@@ -46,7 +51,7 @@ exceptions {
 }
 
 pmp {
-  requires core
+  requires prelude, core
 
   files
     pmp/pmp_regs.sail,
@@ -54,7 +59,7 @@ pmp {
 }
 
 sys {
-  requires core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types
 
   files
     sys/sys_reservation.sail,
@@ -71,7 +76,7 @@ sys {
 }
 
 extensions {
-  requires core
+  requires prelude, core
 
   I {
     I_types {
@@ -184,6 +189,12 @@ extensions {
 
   // RISC-V vector extension
   V {
+    V_types {
+      before sys
+      files
+        extensions/V/vext_types.sail,
+    }
+
     V_core {
       requires FD_core
       files
@@ -193,7 +204,7 @@ extensions {
     }
 
     V_instructions {
-      requires sys, I, FD, V_core
+      requires sys, I, FD, V_types, V_core
       files
         extensions/V/vext_utils_insts.sail,
         extensions/V/vext_fp_utils_insts.sail,
@@ -436,7 +447,7 @@ extensions {
 // overridden by earlier extensions
 mops {
   after extensions
-  requires core, sys
+  requires prelude, core, sys
 
   Zimop {
     files mops/Zimop/zimop_insts.sail
@@ -450,7 +461,7 @@ mops {
 postlude {
   after extensions, mops
 
-  requires core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
 
   files
     postlude/insts_end.sail,
@@ -468,7 +479,7 @@ postlude {
 
 termination {
   after postlude
-  requires core, sys, extensions
+  requires prelude, core, sys, extensions
 
   files
     if $TERMINATION_FILE then
@@ -478,7 +489,7 @@ termination {
 
 unit_tests {
   after termination
-  requires core, sys, exceptions, postlude
+  requires prelude, core, sys, exceptions, postlude
 
   files
     unit_tests/test_mstatus.sail,
@@ -488,7 +499,7 @@ main {
   // Currently this must be the very last thing due to limitations
   // in the Sail compiler's Lean backend.
   after unit_tests
-  requires core, sys, exceptions, postlude
+  requires prelude, core, sys, exceptions, postlude
 
   files main/main.sail
 }
