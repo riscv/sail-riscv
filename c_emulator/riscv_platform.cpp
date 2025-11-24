@@ -1,10 +1,10 @@
-#include <cstdio>
-#include <cinttypes>
-#include <cassert>
-#include "sail.h"
 #include "riscv_platform.h"
 #include "riscv_platform_impl.h"
 #include "riscv_sail.h"
+#include "sail.h"
+#include <cassert>
+#include <cinttypes>
+#include <cstdio>
 
 /* This file contains the definitions of the C externs of Sail model. */
 
@@ -12,8 +12,7 @@ static mach_bits reservation = 0;
 static bool reservation_valid = false;
 
 // Provides entropy for the scalar cryptography extension.
-mach_bits plat_get_16_random_bits(unit)
-{
+mach_bits plat_get_16_random_bits(unit) {
   return rv_16_random_bits();
 }
 
@@ -22,8 +21,7 @@ mach_bits plat_get_16_random_bits(unit)
 // either directly in `load_reservation()` or by calling
 // `cancel_reservation()`.
 
-unit load_reservation(sbits addr, uint64_t width)
-{
+unit load_reservation(sbits addr, uint64_t width) {
   reservation = addr.bits & reservation_set_addr_mask;
   reservation_valid = true;
 
@@ -31,25 +29,34 @@ unit load_reservation(sbits addr, uint64_t width)
   assert((width > 0) && (((addr.bits + width - 1) & reservation_set_addr_mask) == reservation));
 
   if (trace_log != nullptr && config_print_reservation) {
-    fprintf(trace_log, "reservation <- 0x%0" PRIx64 " (addr: 0x%0" PRIx64 ", width: %0" PRId64 ")\n", reservation,
-            addr.bits, width);
+    fprintf(
+      trace_log,
+      "reservation <- 0x%0" PRIx64 " (addr: 0x%0" PRIx64 ", width: %0" PRId64 ")\n",
+      reservation,
+      addr.bits,
+      width
+    );
   }
   return UNIT;
 }
 
-bool match_reservation(sbits addr)
-{
+bool match_reservation(sbits addr) {
   bool ret = reservation_valid && (reservation & reservation_set_addr_mask) == (addr.bits & reservation_set_addr_mask);
 
   if (trace_log != nullptr && config_print_reservation) {
-    fprintf(trace_log, "reservation(%c): 0x%0" PRIx64 ", key=0x%0" PRIx64 ": %s\n", reservation_valid ? 'v' : 'i',
-            reservation, addr.bits, ret ? "ok" : "fail");
+    fprintf(
+      trace_log,
+      "reservation(%c): 0x%0" PRIx64 ", key=0x%0" PRIx64 ": %s\n",
+      reservation_valid ? 'v' : 'i',
+      reservation,
+      addr.bits,
+      ret ? "ok" : "fail"
+    );
   }
   return ret;
 }
 
-unit cancel_reservation(unit)
-{
+unit cancel_reservation(unit) {
   reservation_valid = false;
   if (trace_log != nullptr && config_print_reservation) {
     fprintf(trace_log, "reservation <- none\n");
@@ -57,24 +64,20 @@ unit cancel_reservation(unit)
   return UNIT;
 }
 
-bool valid_reservation(unit)
-{
+bool valid_reservation(unit) {
   return reservation_valid;
 }
 
-unit plat_term_write(mach_bits s)
-{
+unit plat_term_write(mach_bits s) {
   char c = s & 0xff;
   plat_term_write_impl(c);
   return UNIT;
 }
 
-bool sys_enable_experimental_extensions(unit)
-{
+bool sys_enable_experimental_extensions(unit) {
   return rv_enable_experimental_extensions;
 }
 
-unit memea(mach_bits, sail_int)
-{
+unit memea(mach_bits, sail_int) {
   return UNIT;
 }

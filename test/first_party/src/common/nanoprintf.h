@@ -71,9 +71,9 @@ NPF_VISIBILITY int npf_vpprintf(npf_putc pc, void *pc_ctx, char const *format, v
 #endif
 
 // Pick reasonable defaults if nothing's been configured.
-#if !defined(NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS) && !defined(NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS)     \
-    && !defined(NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS) && !defined(NANOPRINTF_USE_LARGE_FORMAT_SPECIFIERS)            \
-    && !defined(NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS) && !defined(NANOPRINTF_USE_WRITEBACK_FORMAT_SPECIFIERS)
+#if !defined(NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS) && !defined(NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS) &&  \
+  !defined(NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS) && !defined(NANOPRINTF_USE_LARGE_FORMAT_SPECIFIERS) &&              \
+  !defined(NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS) && !defined(NANOPRINTF_USE_WRITEBACK_FORMAT_SPECIFIERS)
 #define NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS 1
 #define NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS 1
 #define NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS 1
@@ -279,13 +279,11 @@ typedef ptrdiff_t npf_ssize_t;
 #include <intrin.h>
 #endif
 
-static int npf_max(int x, int y)
-{
+static int npf_max(int x, int y) {
   return (x > y) ? x : y;
 }
 
-static int npf_parse_format_spec(char const *format, npf_format_spec_t *out_spec)
-{
+static int npf_parse_format_spec(char const *format, npf_format_spec_t *out_spec) {
   char const *cur = format;
 
 #if NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS == 1
@@ -518,8 +516,7 @@ static int npf_parse_format_spec(char const *format, npf_format_spec_t *out_spec
   return (int)(cur - format);
 }
 
-static NPF_NOINLINE int npf_utoa_rev(npf_uint_t val, char *buf, uint_fast8_t base, char case_adj)
-{
+static NPF_NOINLINE int npf_utoa_rev(npf_uint_t val, char *buf, uint_fast8_t base, char case_adj) {
   uint_fast8_t n = 0;
   do {
     int_fast8_t const d = (int_fast8_t)(val % base);
@@ -578,8 +575,7 @@ enum {
    extended further by adding dynamic scaling and configurable integer width by
    Oskars Rubenis (https://github.com/Okarss). */
 
-static int npf_ftoa_rev(char *buf, npf_format_spec_t const *spec, double f)
-{
+static int npf_ftoa_rev(char *buf, npf_format_spec_t const *spec, double f) {
   char const *ret = NULL;
   npf_double_bin_t bin;
   { // Union-cast is UB pre-C11, compiler optimizes byte-copy loop.
@@ -674,9 +670,9 @@ static int npf_ftoa_rev(char *buf, npf_format_spec_t const *spec, double f)
       // This if-else statement can be completely optimized at compile time.
       if (NPF_DOUBLE_BIN_BITS > NPF_FTOA_MAN_BITS) {
         man_f = (npf_ftoa_man_t)(bin_f >> ((unsigned)(NPF_DOUBLE_BIN_BITS - NPF_FTOA_MAN_BITS) % NPF_DOUBLE_BIN_BITS));
-        carry
-            = (uint_fast8_t)((bin_f >> ((unsigned)(NPF_DOUBLE_BIN_BITS - NPF_FTOA_MAN_BITS - 1) % NPF_DOUBLE_BIN_BITS))
-                             & 0x1);
+        carry =
+          (uint_fast8_t)((bin_f >> ((unsigned)(NPF_DOUBLE_BIN_BITS - NPF_FTOA_MAN_BITS - 1) % NPF_DOUBLE_BIN_BITS)) &
+                         0x1);
       } else {
         man_f = (npf_ftoa_man_t)((npf_ftoa_man_t)bin_f
                                  << ((unsigned)(NPF_FTOA_MAN_BITS - NPF_DOUBLE_BIN_BITS) % NPF_FTOA_MAN_BITS));
@@ -755,8 +751,7 @@ exit:
 #endif // NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS
 
 #if NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS == 1
-static int npf_bin_len(npf_uint_t u)
-{
+static int npf_bin_len(npf_uint_t u) {
   // Return the length of the binary string format of 'u', preferring
   // intrinsics.
   if (!u) {
@@ -799,16 +794,14 @@ static int npf_bin_len(npf_uint_t u)
 }
 #endif
 
-static void npf_bufputc(int c, void *ctx)
-{
+static void npf_bufputc(int c, void *ctx) {
   npf_bufputc_ctx_t *bpc = (npf_bufputc_ctx_t *)ctx;
   if (bpc->cur < bpc->len) {
     bpc->dst[bpc->cur++] = (char)c;
   }
 }
 
-static void npf_bufputc_nop(int c, void *ctx)
-{
+static void npf_bufputc_nop(int c, void *ctx) {
   (void)c;
   (void)ctx;
 }
@@ -819,8 +812,7 @@ typedef struct npf_cnt_putc_ctx {
   int n;
 } npf_cnt_putc_ctx_t;
 
-static void npf_putc_cnt(int c, void *ctx)
-{
+static void npf_putc_cnt(int c, void *ctx) {
   npf_cnt_putc_ctx_t *pc_cnt = (npf_cnt_putc_ctx_t *)ctx;
   ++pc_cnt->n;
   pc_cnt->pc(c, pc_cnt->ctx); // sibling-call optimization
@@ -841,8 +833,7 @@ static void npf_putc_cnt(int c, void *ctx)
     *(va_arg(args, TYPE *)) = (TYPE)pc_cnt.n;                                                                          \
     break
 
-int npf_vpprintf(npf_putc pc, void *pc_ctx, char const *format, va_list args)
-{
+int npf_vpprintf(npf_putc pc, void *pc_ctx, char const *format, va_list args) {
   npf_format_spec_t fs;
   char const *cur = format;
   npf_cnt_putc_ctx_t pc_cnt;
@@ -993,15 +984,14 @@ int npf_vpprintf(npf_putc pc, void *pc_ctx, char const *format, va_list args)
       } else
 #endif
 #if NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS == 1
-          if (fs.conv_spec == NPF_FMT_SPEC_CONV_BINARY) {
+        if (fs.conv_spec == NPF_FMT_SPEC_CONV_BINARY) {
         cbuf_len = npf_bin_len(val);
         u.binval = val;
       } else
 #endif
       {
-        uint_fast8_t const base = (fs.conv_spec == NPF_FMT_SPEC_CONV_OCTAL)
-            ? 8u
-            : ((fs.conv_spec == NPF_FMT_SPEC_CONV_HEX_INT) ? 16u : 10u);
+        uint_fast8_t const base =
+          (fs.conv_spec == NPF_FMT_SPEC_CONV_OCTAL) ? 8u : ((fs.conv_spec == NPF_FMT_SPEC_CONV_HEX_INT) ? 16u : 10u);
         cbuf_len = npf_utoa_rev(val, cbuf, base, fs.case_adjust);
       }
 
@@ -1076,8 +1066,8 @@ int npf_vpprintf(npf_putc pc, void *pc_ctx, char const *format, va_list args)
     // Compute the field width pad character
     if (fs.field_width_opt != NPF_FMT_SPEC_OPT_NONE) {
       if (fs.leading_zero_pad) { // '0' flag is only legal with numeric types
-        if ((fs.conv_spec != NPF_FMT_SPEC_CONV_STRING) && (fs.conv_spec != NPF_FMT_SPEC_CONV_CHAR)
-            && (fs.conv_spec != NPF_FMT_SPEC_CONV_PERCENT)) {
+        if ((fs.conv_spec != NPF_FMT_SPEC_CONV_STRING) && (fs.conv_spec != NPF_FMT_SPEC_CONV_CHAR) &&
+            (fs.conv_spec != NPF_FMT_SPEC_CONV_PERCENT)) {
 #if NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS == 1
           if ((fs.prec_opt != NPF_FMT_SPEC_OPT_NONE) && !fs.prec && zero) {
             pad_c = ' ';
@@ -1098,8 +1088,8 @@ int npf_vpprintf(npf_putc pc, void *pc_ctx, char const *format, va_list args)
     if (fs.conv_spec != NPF_FMT_SPEC_CONV_STRING) {
 #if NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS == 1
       // float precision is after the decimal point
-      if ((fs.conv_spec != NPF_FMT_SPEC_CONV_FLOAT_DEC) && (fs.conv_spec != NPF_FMT_SPEC_CONV_FLOAT_SCI)
-          && (fs.conv_spec != NPF_FMT_SPEC_CONV_FLOAT_SHORTEST) && (fs.conv_spec != NPF_FMT_SPEC_CONV_FLOAT_HEX))
+      if ((fs.conv_spec != NPF_FMT_SPEC_CONV_FLOAT_DEC) && (fs.conv_spec != NPF_FMT_SPEC_CONV_FLOAT_SCI) &&
+          (fs.conv_spec != NPF_FMT_SPEC_CONV_FLOAT_SHORTEST) && (fs.conv_spec != NPF_FMT_SPEC_CONV_FLOAT_HEX))
 #endif
       {
         prec_pad = npf_max(0, fs.prec - cbuf_len);
@@ -1192,8 +1182,7 @@ int npf_vpprintf(npf_putc pc, void *pc_ctx, char const *format, va_list args)
 #undef NPF_EXTRACT
 #undef NPF_WRITEBACK
 
-int npf_pprintf(npf_putc pc, void *pc_ctx, char const *format, ...)
-{
+int npf_pprintf(npf_putc pc, void *pc_ctx, char const *format, ...) {
   va_list val;
   va_start(val, format);
   int const rv = npf_vpprintf(pc, pc_ctx, format, val);
@@ -1201,8 +1190,7 @@ int npf_pprintf(npf_putc pc, void *pc_ctx, char const *format, ...)
   return rv;
 }
 
-int npf_snprintf(char *buffer, size_t bufsz, const char *format, ...)
-{
+int npf_snprintf(char *buffer, size_t bufsz, const char *format, ...) {
   va_list val;
   va_start(val, format);
   int const rv = npf_vsnprintf(buffer, bufsz, format, val);
@@ -1210,8 +1198,7 @@ int npf_snprintf(char *buffer, size_t bufsz, const char *format, ...)
   return rv;
 }
 
-int npf_vsnprintf(char *buffer, size_t bufsz, char const *format, va_list vlist)
-{
+int npf_vsnprintf(char *buffer, size_t bufsz, char const *format, va_list vlist) {
   npf_bufputc_ctx_t bufputc_ctx;
   bufputc_ctx.dst = buffer;
   bufputc_ctx.len = bufsz;

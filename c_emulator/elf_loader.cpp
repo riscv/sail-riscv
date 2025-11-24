@@ -3,13 +3,10 @@
 
 #include <elfio/elfio.hpp>
 
-ELF::ELF(std::unique_ptr<ELFIO::elfio> reader)
-    : m_reader(std::move(reader))
-{
+ELF::ELF(std::unique_ptr<ELFIO::elfio> reader) : m_reader(std::move(reader)) {
 }
 
-ELF ELF::open(const std::string &filename)
-{
+ELF ELF::open(const std::string &filename) {
   auto reader = std::make_unique<ELFIO::elfio>();
 
   if (!reader->load(filename)) {
@@ -23,8 +20,7 @@ ELF ELF::open(const std::string &filename)
   return ELF(std::move(reader));
 }
 
-Architecture ELF::architecture() const
-{
+Architecture ELF::architecture() const {
   switch (m_reader->get_class()) {
   case ELFIO::ELFCLASS32:
     return Architecture::RV32;
@@ -36,20 +32,20 @@ Architecture ELF::architecture() const
 }
 
 // Entry point.
-uint64_t ELF::entry() const
-{
+uint64_t ELF::entry() const {
   return m_reader->get_entry();
 }
 
-void ELF::load(std::function<void(uint64_t, const uint8_t *, uint64_t)> writer) const
-{
+void ELF::load(std::function<void(uint64_t, const uint8_t *, uint64_t)> writer) const {
   for (const auto &seg : m_reader->segments) {
     if (seg->get_type() == ELFIO::PT_LOAD) {
       // It's a segment that we should load into memory.
       if (seg->get_file_size() > seg->get_memory_size()) {
         // File size must be <= memory size.
-        throw std::runtime_error("Invalid ELF segment: file size (" + std::to_string(seg->get_file_size())
-                                 + ") is greater than memory size (" + std::to_string(seg->get_memory_size()) + ")");
+        throw std::runtime_error(
+          "Invalid ELF segment: file size (" + std::to_string(seg->get_file_size()) +
+          ") is greater than memory size (" + std::to_string(seg->get_memory_size()) + ")"
+        );
       }
       // Write the data to memory.
       writer(seg->get_physical_address(), reinterpret_cast<const uint8_t *>(seg->get_data()), seg->get_file_size());
@@ -63,8 +59,7 @@ void ELF::load(std::function<void(uint64_t, const uint8_t *, uint64_t)> writer) 
   }
 }
 
-std::map<std::string, uint64_t> ELF::symbols() const
-{
+std::map<std::string, uint64_t> ELF::symbols() const {
   using namespace ELFIO;
 
   std::map<std::string, uint64_t> symbolMap;
@@ -82,8 +77,8 @@ std::map<std::string, uint64_t> ELF::symbols() const
     unsigned char other = '\x00';
 
     while (accessor.get_symbol(index, name, value, size, bind, type, section_index, other)) {
-      if ((type == STT_NOTYPE || type == STT_FUNC || type == STT_OBJECT || type == STT_COMMON)
-          && section_index != SHN_UNDEF) {
+      if ((type == STT_NOTYPE || type == STT_FUNC || type == STT_OBJECT || type == STT_COMMON) &&
+          section_index != SHN_UNDEF) {
         symbolMap[name] = value;
       }
       ++index;

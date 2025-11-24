@@ -5,8 +5,7 @@ extern "C" {
 #include "softfloat.h"
 }
 
-static uint_fast8_t uint8_of_rm(uint64_t rm)
-{
+static uint_fast8_t uint8_of_rm(uint64_t rm) {
   return static_cast<uint_fast8_t>(rm);
 }
 
@@ -16,8 +15,7 @@ static uint_fast8_t uint8_of_rm(uint64_t rm)
 
 extern "C" {
 
-bv5_bv16 softfloat_f16add(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv16 softfloat_f16add(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a, b, res;
@@ -28,8 +26,7 @@ bv5_bv16 softfloat_f16add(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_f16sub(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv16 softfloat_f16sub(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a, b, res;
@@ -40,8 +37,7 @@ bv5_bv16 softfloat_f16sub(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_f16mul(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv16 softfloat_f16mul(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a, b, res;
@@ -52,8 +48,7 @@ bv5_bv16 softfloat_f16mul(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_f16div(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv16 softfloat_f16div(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a, b, res;
@@ -64,8 +59,7 @@ bv5_bv16 softfloat_f16div(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32add(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv32 softfloat_f32add(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, b, res;
@@ -76,8 +70,7 @@ bv5_bv32 softfloat_f32add(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32sub(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv32 softfloat_f32sub(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, b, res;
@@ -88,8 +81,7 @@ bv5_bv32 softfloat_f32sub(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32mul(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv32 softfloat_f32mul(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, b, res;
@@ -100,8 +92,7 @@ bv5_bv32 softfloat_f32mul(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32div(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv32 softfloat_f32div(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, b, res;
@@ -112,8 +103,7 @@ bv5_bv32 softfloat_f32div(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64add(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv64 softfloat_f64add(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, b, res;
@@ -124,8 +114,7 @@ bv5_bv64 softfloat_f64add(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64sub(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv64 softfloat_f64sub(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, b, res;
@@ -136,8 +125,7 @@ bv5_bv64 softfloat_f64sub(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64mul(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv64 softfloat_f64mul(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, b, res;
@@ -148,8 +136,7 @@ bv5_bv64 softfloat_f64mul(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64div(uint64_t rm, uint64_t v1, uint64_t v2)
-{
+bv5_bv64 softfloat_f64div(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, b, res;
@@ -160,8 +147,7 @@ bv5_bv64 softfloat_f64div(uint64_t rm, uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_f16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3)
-{
+bv5_bv16 softfloat_f16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a, b, c, res;
@@ -173,8 +159,7 @@ bv5_bv16 softfloat_f16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3)
-{
+bv5_bv32 softfloat_f32muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, b, c, res;
@@ -186,8 +171,7 @@ bv5_bv32 softfloat_f32muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3)
-{
+bv5_bv64 softfloat_f64muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, b, c, res;
@@ -199,8 +183,7 @@ bv5_bv64 softfloat_f64muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_f16sqrt(uint64_t rm, uint64_t v)
-{
+bv5_bv16 softfloat_f16sqrt(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a, res;
@@ -210,8 +193,7 @@ bv5_bv16 softfloat_f16sqrt(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32sqrt(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f32sqrt(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, res;
@@ -221,8 +203,7 @@ bv5_bv32 softfloat_f32sqrt(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64sqrt(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f64sqrt(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, res;
@@ -235,8 +216,7 @@ bv5_bv64 softfloat_f64sqrt(uint64_t rm, uint64_t v)
 // The boolean 'true' argument in the conversion calls below selects
 // 'exact' conversion, which sets the Inexact exception flag if
 // needed.
-bv5_bv32 softfloat_f16toi32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f16toi32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a;
@@ -248,8 +228,7 @@ bv5_bv32 softfloat_f16toi32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f16toui32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f16toui32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a;
@@ -261,8 +240,7 @@ bv5_bv32 softfloat_f16toui32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f16toi64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f16toi64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a;
@@ -274,8 +252,7 @@ bv5_bv64 softfloat_f16toi64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f16toui64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f16toui64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a;
@@ -287,8 +264,7 @@ bv5_bv64 softfloat_f16toui64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32toi32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f32toi32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, res;
@@ -299,8 +275,7 @@ bv5_bv32 softfloat_f32toi32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32toui32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f32toui32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, res;
@@ -311,8 +286,7 @@ bv5_bv32 softfloat_f32toui32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f32toi64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f32toi64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a;
@@ -324,8 +298,7 @@ bv5_bv64 softfloat_f32toi64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f32toui64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f32toui64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a;
@@ -337,8 +310,7 @@ bv5_bv64 softfloat_f32toui64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f64toi32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f64toi32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a;
@@ -350,8 +322,7 @@ bv5_bv32 softfloat_f64toi32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f64toui32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f64toui32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a;
@@ -363,8 +334,7 @@ bv5_bv32 softfloat_f64toui32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64toi64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f64toi64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, res;
@@ -375,8 +345,7 @@ bv5_bv64 softfloat_f64toi64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64toui64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f64toui64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, res;
@@ -387,8 +356,7 @@ bv5_bv64 softfloat_f64toui64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_i32tof16(uint64_t rm, uint64_t v)
-{
+bv5_bv16 softfloat_i32tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t res;
@@ -397,8 +365,7 @@ bv5_bv16 softfloat_i32tof16(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_ui32tof16(uint64_t rm, uint64_t v)
-{
+bv5_bv16 softfloat_ui32tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t res;
@@ -407,8 +374,7 @@ bv5_bv16 softfloat_ui32tof16(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_i64tof16(uint64_t rm, uint64_t v)
-{
+bv5_bv16 softfloat_i64tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t res;
@@ -417,8 +383,7 @@ bv5_bv16 softfloat_i64tof16(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_ui64tof16(uint64_t rm, uint64_t v)
-{
+bv5_bv16 softfloat_ui64tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t res;
@@ -427,8 +392,7 @@ bv5_bv16 softfloat_ui64tof16(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_i32tof32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_i32tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t res;
@@ -437,8 +401,7 @@ bv5_bv32 softfloat_i32tof32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_ui32tof32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_ui32tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t res;
@@ -447,8 +410,7 @@ bv5_bv32 softfloat_ui32tof32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_i64tof32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_i64tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t res;
@@ -457,8 +419,7 @@ bv5_bv32 softfloat_i64tof32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_ui64tof32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_ui64tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t res;
@@ -467,8 +428,7 @@ bv5_bv32 softfloat_ui64tof32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_i32tof64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_i32tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t res;
@@ -477,8 +437,7 @@ bv5_bv64 softfloat_i32tof64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_ui32tof64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_ui32tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t res;
@@ -487,8 +446,7 @@ bv5_bv64 softfloat_ui32tof64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_i64tof64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_i64tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t res;
@@ -497,8 +455,7 @@ bv5_bv64 softfloat_i64tof64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_ui64tof64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_ui64tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t res;
@@ -507,8 +464,7 @@ bv5_bv64 softfloat_ui64tof64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f16tof32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f16tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a;
@@ -519,8 +475,7 @@ bv5_bv32 softfloat_f16tof32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f16tof64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f16tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a;
@@ -531,8 +486,7 @@ bv5_bv64 softfloat_f16tof64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f32tof64(uint64_t rm, uint64_t v)
-{
+bv5_bv64 softfloat_f32tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a;
@@ -543,8 +497,7 @@ bv5_bv64 softfloat_f32tof64(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_f32tof16(uint64_t rm, uint64_t v)
-{
+bv5_bv16 softfloat_f32tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a;
@@ -555,8 +508,7 @@ bv5_bv16 softfloat_f32tof16(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_f64tof16(uint64_t rm, uint64_t v)
-{
+bv5_bv16 softfloat_f64tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a;
@@ -567,8 +519,7 @@ bv5_bv16 softfloat_f64tof16(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f64tof32(uint64_t rm, uint64_t v)
-{
+bv5_bv32 softfloat_f64tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a;
@@ -579,8 +530,7 @@ bv5_bv32 softfloat_f64tof32(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv16 softfloat_f32tobf16(uint64_t rm, uint64_t v)
-{
+bv5_bv16 softfloat_f32tobf16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a;
@@ -591,8 +541,7 @@ bv5_bv16 softfloat_f32tobf16(uint64_t rm, uint64_t v)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bool softfloat_f16lt(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f16lt(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float16_t a, b;
@@ -603,8 +552,7 @@ bv5_bool softfloat_f16lt(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f16lt_quiet(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f16lt_quiet(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float16_t a, b;
@@ -615,8 +563,7 @@ bv5_bool softfloat_f16lt_quiet(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f16le(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f16le(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float16_t a, b;
@@ -627,8 +574,7 @@ bv5_bool softfloat_f16le(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f16le_quiet(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f16le_quiet(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float16_t a, b;
@@ -639,8 +585,7 @@ bv5_bool softfloat_f16le_quiet(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f16eq(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f16eq(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float16_t a, b;
@@ -651,8 +596,7 @@ bv5_bool softfloat_f16eq(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f32lt(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f32lt(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float32_t a, b;
@@ -663,8 +607,7 @@ bv5_bool softfloat_f32lt(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f32lt_quiet(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f32lt_quiet(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float32_t a, b;
@@ -675,8 +618,7 @@ bv5_bool softfloat_f32lt_quiet(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f32le(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f32le(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float32_t a, b;
@@ -687,8 +629,7 @@ bv5_bool softfloat_f32le(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f32le_quiet(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f32le_quiet(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float32_t a, b;
@@ -699,8 +640,7 @@ bv5_bool softfloat_f32le_quiet(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f32eq(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f32eq(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float32_t a, b;
@@ -711,8 +651,7 @@ bv5_bool softfloat_f32eq(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f64lt(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f64lt(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float64_t a, b;
@@ -723,8 +662,7 @@ bv5_bool softfloat_f64lt(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f64lt_quiet(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f64lt_quiet(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float64_t a, b;
@@ -735,8 +673,7 @@ bv5_bool softfloat_f64lt_quiet(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f64le(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f64le(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float64_t a, b;
@@ -747,8 +684,7 @@ bv5_bool softfloat_f64le(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f64le_quiet(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f64le_quiet(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float64_t a, b;
@@ -759,8 +695,7 @@ bv5_bool softfloat_f64le_quiet(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bool softfloat_f64eq(uint64_t v1, uint64_t v2)
-{
+bv5_bool softfloat_f64eq(uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(0);
 
   float64_t a, b;
@@ -771,8 +706,7 @@ bv5_bool softfloat_f64eq(uint64_t v1, uint64_t v2)
   return {softfloat_exceptionFlags, res};
 }
 
-bv5_bv16 softfloat_f16roundToInt(uint64_t rm, uint64_t v, bool exact)
-{
+bv5_bv16 softfloat_f16roundToInt(uint64_t rm, uint64_t v, bool exact) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t a, res;
@@ -783,8 +717,7 @@ bv5_bv16 softfloat_f16roundToInt(uint64_t rm, uint64_t v, bool exact)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv32 softfloat_f32roundToInt(uint64_t rm, uint64_t v, bool exact)
-{
+bv5_bv32 softfloat_f32roundToInt(uint64_t rm, uint64_t v, bool exact) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t a, res;
@@ -795,8 +728,7 @@ bv5_bv32 softfloat_f32roundToInt(uint64_t rm, uint64_t v, bool exact)
   return {softfloat_exceptionFlags, res.v};
 }
 
-bv5_bv64 softfloat_f64roundToInt(uint64_t rm, uint64_t v, bool exact)
-{
+bv5_bv64 softfloat_f64roundToInt(uint64_t rm, uint64_t v, bool exact) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t a, res;

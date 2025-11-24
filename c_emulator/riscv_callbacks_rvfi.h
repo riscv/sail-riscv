@@ -1,6 +1,6 @@
 #pragma once
-#include "sail.h"
 #include "riscv_callbacks_if.h"
+#include "sail.h"
 
 class rvfi_callbacks : public callbacks_if {
 

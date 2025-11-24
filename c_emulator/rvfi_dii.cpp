@@ -1,39 +1,35 @@
+#include <arpa/inet.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netinet/ip.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <netinet/ip.h>
-#include <fcntl.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <vector>
 
-#include "sail.h"
 #include "riscv_sail.h"
 #include "rvfi_dii.h"
+#include "sail.h"
 
 #define UNUSED(var) (void)(var)
 
-rvfi_handler::rvfi_handler(int port)
-    : dii_port(port)
-{
+rvfi_handler::rvfi_handler(int port) : dii_port(port) {
   fprintf(stderr, "using %d as RVFI port.\n", port);
 }
 
-uint64_t rvfi_handler::get_entry()
-{
+uint64_t rvfi_handler::get_entry() {
   return 0x80000000;
 }
 
 // returns zero on success
-bool rvfi_handler::setup_socket(bool config_print)
-{
+bool rvfi_handler::setup_socket(bool config_print) {
   int listen_sock = socket(AF_INET, SOCK_STREAM, 0);
   if (listen_sock == -1) {
     fprintf(stderr, "Unable to create socket: %s\n", strerror(errno));
@@ -85,8 +81,7 @@ bool rvfi_handler::setup_socket(bool config_print)
   return true;
 }
 
-void rvfi_handler::get_and_send_packet(packet_reader_fn reader, bool config_print)
-{
+void rvfi_handler::get_and_send_packet(packet_reader_fn reader, bool config_print) {
   lbits packet;
   CREATE(lbits)(&packet);
   reader(&packet, UNIT);
@@ -118,8 +113,7 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader, bool config_prin
   KILL(lbits)(&packet);
 }
 
-void rvfi_handler::send_trace(bool config_print)
-{
+void rvfi_handler::send_trace(bool config_print) {
   if (config_print) {
     fprintf(stderr, "Sending v%d trace response...\n", trace_version);
   }
@@ -139,8 +133,7 @@ void rvfi_handler::send_trace(bool config_print)
   }
 }
 
-rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
-{
+rvfi_prestep_t rvfi_handler::pre_step(bool config_print) {
   mach_bits instr_bits;
   if (config_print) {
     fprintf(stderr, "Waiting for cmd packet... ");
@@ -210,10 +203,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print)
     struct {
       char msg[8];
       uint64_t version;
-    } version_response = {
-        {'v', 'e', 'r', 's', 'i', 'o', 'n', '='},
-        trace_version
-    };
+    } version_response = {{'v', 'e', 'r', 's', 'i', 'o', 'n', '='}, trace_version};
     if (write(dii_sock, &version_response, sizeof(version_response)) != sizeof(version_response)) {
       fprintf(stderr, "Sending version response failed: %s\n", strerror(errno));
       exit(EXIT_FAILURE);

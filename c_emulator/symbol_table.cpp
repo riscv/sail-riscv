@@ -1,8 +1,7 @@
 #include "symbol_table.h"
 #include <optional>
 
-std::map<uint64_t, std::string> reverse_symbol_table(const std::map<std::string, uint64_t> &symbols)
-{
+std::map<uint64_t, std::string> reverse_symbol_table(const std::map<std::string, uint64_t> &symbols) {
   std::map<uint64_t, std::string> reversed;
   for (const auto &it : symbols) {
     // If multiple symbols have the same value the last one alphabetically wins.
@@ -11,9 +10,10 @@ std::map<uint64_t, std::string> reverse_symbol_table(const std::map<std::string,
   return reversed;
 }
 
-std::optional<std::pair<uint64_t, const std::string &>>
-symbolize_address(const std::map<uint64_t, std::string> &symbols, uint64_t address)
-{
+std::optional<std::pair<uint64_t, const std::string &>> symbolize_address(
+  const std::map<uint64_t, std::string> &symbols,
+  uint64_t address
+) {
   // Find the first symbol > the address.
   auto it = symbols.upper_bound(address);
   if (it == symbols.begin()) {

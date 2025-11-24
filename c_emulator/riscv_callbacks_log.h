@@ -1,12 +1,16 @@
 #pragma once
-#include "sail.h"
 #include "riscv_callbacks_if.h"
+#include "sail.h"
 
 class log_callbacks : public callbacks_if {
 
 public:
-  log_callbacks(bool config_print_reg = true, bool config_print_mem_access = true, bool config_use_abi_names = false,
-                FILE *trace_log = nullptr);
+  log_callbacks(
+    bool config_print_reg = true,
+    bool config_print_mem_access = true,
+    bool config_use_abi_names = false,
+    FILE *trace_log = nullptr
+  );
 
   // callbacks_if
   void mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;

@@ -1,7 +1,7 @@
 #pragma once
-#include "sail.h"
-#include "rts.h"
 #include "riscv_softfloat.h"
+#include "rts.h"
+#include "sail.h"
 
 #ifdef __cplusplus
 extern "C" {

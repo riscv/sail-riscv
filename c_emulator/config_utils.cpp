@@ -1,20 +1,19 @@
 #include "config_utils.h"
 
-#include <stdexcept>
 #include <fstream>
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
+#include <stdexcept>
 
+#include "config_schema.h"
+#include "default_config.h"
 #include "sail.h"
 #include "sail_config.h"
 #include "sail_riscv_model.h"
-#include "default_config.h"
-#include "config_schema.h"
 
 // These should eventually be part of compiler-generated `model_init()`,
 // but are consolidated here pending compiler support.
-void init_sail_configured_types()
-{
+void init_sail_configured_types() {
   sail_set_abstract_xlen();
   sail_set_abstract_vlen_exp();
   sail_set_abstract_ext_d_supported();
@@ -22,8 +21,7 @@ void init_sail_configured_types()
   sail_set_abstract_base_E_enabled();
 }
 
-std::string keypath_to_str(const std::vector<const char *> &keypath)
-{
+std::string keypath_to_str(const std::vector<const char *> &keypath) {
   std::string s;
   if (keypath.empty()) {
     return s;
@@ -36,8 +34,7 @@ std::string keypath_to_str(const std::vector<const char *> &keypath)
   return s;
 }
 
-uint64_t get_config_uint64(const std::vector<const char *> &keypath)
-{
+uint64_t get_config_uint64(const std::vector<const char *> &keypath) {
   sail_config_json json = sail_config_get(keypath.size(), keypath.data());
 
   if (json == nullptr) {
@@ -60,8 +57,9 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath)
     sail_config_unwrap_bits(&big_bits, json);
     if (big_bits.len > 64) {
       KILL(lbits)(&big_bits);
-      throw std::runtime_error("Couldn't read " + std::to_string(big_bits.len) + "-bit value '"
-                               + keypath_to_str(keypath) + "' into uint64_t.");
+      throw std::runtime_error(
+        "Couldn't read " + std::to_string(big_bits.len) + "-bit value '" + keypath_to_str(keypath) + "' into uint64_t."
+      );
     }
     // Second parameter is unused; see
     // https://github.com/rems-project/sail/issues/1429
@@ -70,28 +68,26 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath)
     return bits;
   }
 
-  throw std::runtime_error("Configuration option '" + keypath_to_str(keypath)
-                           + "' could not be parsed as an integer.\n");
+  throw std::runtime_error(
+    "Configuration option '" + keypath_to_str(keypath) + "' could not be parsed as an integer.\n"
+  );
 }
 
-const char *get_default_config()
-{
+const char *get_default_config() {
   return DEFAULT_JSON;
 }
 
-const char *get_config_schema()
-{
+const char *get_config_schema() {
   return CONFIG_SCHEMA;
 }
 
-void validate_config_schema(const std::string &conf_file)
-{
+void validate_config_schema(const std::string &conf_file) {
   using jsoncons::json;
   namespace jsonschema = jsoncons::jsonschema;
 
   // Compile the schema.
   json schema = json::parse(get_config_schema());
-  auto options = jsonschema::evaluation_options {}.default_version(jsonschema::schema_version::draft202012());
+  auto options = jsonschema::evaluation_options{}.default_version(jsonschema::schema_version::draft202012());
   // Throws schema_error if compilation fails.
   jsonschema::json_schema<json> compiled = jsonschema::make_json_schema(std::move(schema), options);
 
