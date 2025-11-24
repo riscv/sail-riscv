@@ -14,8 +14,7 @@ void register_callback(callbacks_if *cb)
 
 void remove_callback(callbacks_if *cb)
 {
-  callbacks.erase(std::remove(callbacks.begin(), callbacks.end(), cb),
-                  callbacks.end());
+  callbacks.erase(std::remove(callbacks.begin(), callbacks.end(), cb), callbacks.end());
 }
 
 unit fetch_callback(sbits opcode)
@@ -26,16 +25,14 @@ unit fetch_callback(sbits opcode)
   return UNIT;
 }
 
-unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
-                        lbits value)
+unit mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value)
 {
   for (auto c : callbacks) {
     c->mem_write_callback(type, paddr, width, value);
   }
   return UNIT;
 }
-unit mem_read_callback(const char *type, sbits paddr, uint64_t width,
-                       lbits value)
+unit mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value)
 {
   for (auto c : callbacks) {
     c->mem_read_callback(type, paddr, width, value);
@@ -51,8 +48,7 @@ unit mem_exception_callback(sbits paddr, uint64_t num_of_exception)
   return UNIT;
 }
 
-unit xreg_full_write_callback(const_sail_string abi_name, sbits reg,
-                              sbits value)
+unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value)
 {
   for (auto c : callbacks) {
     c->xreg_full_write_callback(abi_name, reg, value);
@@ -68,8 +64,7 @@ unit freg_write_callback(unsigned reg, sbits value)
   return UNIT;
 }
 
-unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
-                             sbits value)
+unit csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value)
 {
   for (auto c : callbacks) {
     c->csr_full_write_callback(csr_name, reg, value);
@@ -77,8 +72,7 @@ unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
   return UNIT;
 }
 
-unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
-                            sbits value)
+unit csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value)
 {
   for (auto c : callbacks) {
     c->csr_full_read_callback(csr_name, reg, value);

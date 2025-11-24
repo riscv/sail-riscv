@@ -28,30 +28,22 @@ unit load_reservation(sbits addr, uint64_t width)
   reservation_valid = true;
 
   // Ensure the reservation set subsumes the reserved bytes.
-  assert((width > 0)
-         && (((addr.bits + width - 1) & reservation_set_addr_mask)
-             == reservation));
+  assert((width > 0) && (((addr.bits + width - 1) & reservation_set_addr_mask) == reservation));
 
   if (trace_log != nullptr && config_print_reservation) {
-    fprintf(trace_log,
-            "reservation <- 0x%0" PRIx64 " (addr: 0x%0" PRIx64
-            ", width: %0" PRId64 ")\n",
-            reservation, addr.bits, width);
+    fprintf(trace_log, "reservation <- 0x%0" PRIx64 " (addr: 0x%0" PRIx64 ", width: %0" PRId64 ")\n", reservation,
+            addr.bits, width);
   }
   return UNIT;
 }
 
 bool match_reservation(sbits addr)
 {
-  bool ret = reservation_valid
-      && (reservation & reservation_set_addr_mask)
-          == (addr.bits & reservation_set_addr_mask);
+  bool ret = reservation_valid && (reservation & reservation_set_addr_mask) == (addr.bits & reservation_set_addr_mask);
 
   if (trace_log != nullptr && config_print_reservation) {
-    fprintf(trace_log,
-            "reservation(%c): 0x%0" PRIx64 ", key=0x%0" PRIx64 ": %s\n",
-            reservation_valid ? 'v' : 'i', reservation, addr.bits,
-            ret ? "ok" : "fail");
+    fprintf(trace_log, "reservation(%c): 0x%0" PRIx64 ", key=0x%0" PRIx64 ": %s\n", reservation_valid ? 'v' : 'i',
+            reservation, addr.bits, ret ? "ok" : "fail");
   }
   return ret;
 }

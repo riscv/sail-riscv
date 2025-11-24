@@ -104,12 +104,10 @@ static void print_isa(void)
 
 static void print_build_info(void)
 {
-  std::cout << "Sail RISC-V release: " << version_info::release_version
-            << std::endl;
+  std::cout << "Sail RISC-V release: " << version_info::release_version << std::endl;
   std::cout << "Sail RISC-V git: " << version_info::git_version << std::endl;
   std::cout << "Sail: " << version_info::sail_version << std::endl;
-  std::cout << "C++ compiler: " << version_info::cxx_compiler_version
-            << std::endl;
+  std::cout << "C++ compiler: " << version_info::cxx_compiler_version << std::endl;
   std::cout << "CLI11: " << CLI11_VERSION << std::endl;
   std::cout << "ELFIO: " << ELFIO_VERSION << std::endl;
   std::cout << "JSONCONS: " << jsoncons::version() << std::endl;
@@ -118,8 +116,7 @@ static void print_build_info(void)
 std::vector<uint8_t> read_file(const std::string &file_path)
 {
   std::ifstream instream(file_path, std::ios::in | std::ios::binary);
-  return {std::istreambuf_iterator<char>(instream),
-          std::istreambuf_iterator<char>()};
+  return {std::istreambuf_iterator<char>(instream), std::istreambuf_iterator<char>()};
 }
 
 // Set up command line option processing.
@@ -128,64 +125,40 @@ static void setup_options(CLI::App &app)
   app.add_flag("--show-times", do_show_times, "Show execution times");
   app.add_flag("--version", do_print_version, "Print model version");
   app.add_flag("--build-info", do_print_build_info, "Print build information");
-  app.add_flag("--print-default-config", do_print_default_config,
-               "Print default configuration");
-  app.add_flag("--print-config-schema", do_print_config_schema,
-               "Print configuration schema");
-  app.add_flag("--validate-config", do_validate_config,
-               "Exit after config validation (it is always validated)");
+  app.add_flag("--print-default-config", do_print_default_config, "Print default configuration");
+  app.add_flag("--print-config-schema", do_print_config_schema, "Print configuration schema");
+  app.add_flag("--validate-config", do_validate_config, "Exit after config validation (it is always validated)");
   app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
-  app.add_flag("--enable-experimental-extensions",
-               rv_enable_experimental_extensions,
-               "Enable experimental extensions");
-  app.add_flag("--use-abi-names", config_use_abi_names,
-               "Use ABI register names in trace log");
+  app.add_flag("--enable-experimental-extensions", rv_enable_experimental_extensions, "Enable experimental extensions");
+  app.add_flag("--use-abi-names", config_use_abi_names, "Use ABI register names in trace log");
 
   app.add_option("--device-tree-blob", dtb_file, "Device tree blob file")
       ->check(CLI::ExistingFile)
       ->option_text("<file>");
-  app.add_option("--terminal-log", term_log, "Terminal log output file")
-      ->option_text("<file>");
-  app.add_option("--test-signature", sig_file, "Test signature file")
-      ->option_text("<file>");
-  app.add_option("--config", config_file, "Configuration file")
-      ->check(CLI::ExistingFile)
-      ->option_text("<file>");
-  app.add_option("--trace-output", trace_log_path, "Trace output file")
-      ->option_text("<file>");
+  app.add_option("--terminal-log", term_log, "Terminal log output file")->option_text("<file>");
+  app.add_option("--test-signature", sig_file, "Test signature file")->option_text("<file>");
+  app.add_option("--config", config_file, "Configuration file")->check(CLI::ExistingFile)->option_text("<file>");
+  app.add_option("--trace-output", trace_log_path, "Trace output file")->option_text("<file>");
 
-  app.add_option("--signature-granularity", signature_granularity,
-                 "Signature granularity")
-      ->option_text("<uint>");
+  app.add_option("--signature-granularity", signature_granularity, "Signature granularity")->option_text("<uint>");
   app.add_option("--rvfi-dii", rvfi_dii_port, "RVFI DII port")
       ->check(CLI::Range(1, 65535))
       ->option_text("<int> (within [1 - 65535])");
-  app.add_option("--inst-limit", insn_limit, "Instruction limit")
-      ->option_text("<uint>");
+  app.add_option("--inst-limit", insn_limit, "Instruction limit")->option_text("<uint>");
 #ifdef SAILCOV
-  app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")
-      ->option_text("<file>");
+  app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")->option_text("<file>");
 #endif
 
-  app.add_flag("--trace-instr", config_print_instr,
-               "Enable trace output for instruction execution");
-  app.add_flag("--trace-reg", config_print_reg,
-               "Enable trace output for register access");
-  app.add_flag("--trace-mem", config_print_mem_access,
-               "Enable trace output for memory accesses");
-  app.add_flag("--trace-rvfi", config_print_rvfi,
-               "Enable trace output for RVFI");
-  app.add_flag("--trace-clint", config_print_clint,
-               "Enable trace output for CLINT memory accesses and status");
-  app.add_flag("--trace-exception", config_print_exception,
-               "Enable trace output for exceptions");
-  app.add_flag("--trace-interrupt", config_print_interrupt,
-               "Enable trace output for interrupts");
-  app.add_flag("--trace-htif", config_print_htif,
-               "Enable trace output for HTIF operations");
-  app.add_flag("--trace-pma", config_print_pma,
-               "Enable trace output for PMA checks");
+  app.add_flag("--trace-instr", config_print_instr, "Enable trace output for instruction execution");
+  app.add_flag("--trace-reg", config_print_reg, "Enable trace output for register access");
+  app.add_flag("--trace-mem", config_print_mem_access, "Enable trace output for memory accesses");
+  app.add_flag("--trace-rvfi", config_print_rvfi, "Enable trace output for RVFI");
+  app.add_flag("--trace-clint", config_print_clint, "Enable trace output for CLINT memory accesses and status");
+  app.add_flag("--trace-exception", config_print_exception, "Enable trace output for exceptions");
+  app.add_flag("--trace-interrupt", config_print_interrupt, "Enable trace output for interrupts");
+  app.add_flag("--trace-htif", config_print_htif, "Enable trace output for HTIF operations");
+  app.add_flag("--trace-pma", config_print_pma, "Enable trace output for PMA checks");
   app.add_flag_callback(
       "--trace-platform",
       [] {
@@ -197,10 +170,8 @@ static void setup_options(CLI::App &app)
       },
       "Enable trace output for platform-level events (MMIO, interrupts, "
       "exceptions, CLINT, HTIF, PMA)");
-  app.add_flag("--trace-step", config_print_step,
-               "Add a blank line between steps in the trace output");
-  app.add_flag("--trace-reservation", config_print_reservation,
-               "Enable trace output for LR/SC reservations.");
+  app.add_flag("--trace-step", config_print_step, "Add a blank line between steps in the trace output");
+  app.add_flag("--trace-reservation", config_print_reservation, "Enable trace output for LR/SC reservations.");
 
   app.add_flag_callback(
       "--trace-all",
@@ -222,11 +193,10 @@ static void setup_options(CLI::App &app)
   // All positional arguments are treated as ELF files.  All ELF files
   // are loaded into memory, but only the first is scanned for the
   // magic `tohost/{begin,end}_signature` symbols.
-  app.add_option(
-      "elfs", elfs,
-      "List of ELF files to load. They will be loaded in order, possibly "
-      "overwriting each other. PC will be set to the entry point of the first "
-      "file. This is optional with some arguments, e.g. --print-isa-string.");
+  app.add_option("elfs", elfs,
+                 "List of ELF files to load. They will be loaded in order, possibly "
+                 "overwriting each other. PC will be set to the entry point of the first "
+                 "file. This is optional with some arguments, e.g. --print-isa-string.");
 }
 
 uint64_t load_sail(const std::string &filename, bool main_file)
@@ -236,15 +206,13 @@ uint64_t load_sail(const std::string &filename, bool main_file)
   switch (elf.architecture()) {
   case Architecture::RV32:
     if (zxlen != 32) {
-      fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen);
+      fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n", zxlen);
       exit(EXIT_FAILURE);
     }
     break;
   case Architecture::RV64:
     if (zxlen != 64) {
-      fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen);
+      fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n", zxlen);
       exit(EXIT_FAILURE);
     }
     break;
@@ -306,8 +274,7 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
 
 void init_platform_constants()
 {
-  reservation_set_size_exp
-      = get_config_uint64({"platform", "reservation_set_size_exp"});
+  reservation_set_size_exp = get_config_uint64({"platform", "reservation_set_size_exp"});
   reservation_set_addr_mask = ~((1 << reservation_set_size_exp) - 1);
 }
 
@@ -336,9 +303,8 @@ void reinit_sail(uint64_t elf_entry, const char *config_file)
 void write_signature(const char *file)
 {
   if (mem_sig_start >= mem_sig_end) {
-    fprintf(stderr,
-            "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
-            mem_sig_start, mem_sig_end, file);
+    fprintf(stderr, "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n", mem_sig_start, mem_sig_end,
+            file);
     return;
   }
   FILE *f = fopen(file, "w");
@@ -347,8 +313,7 @@ void write_signature(const char *file)
     return;
   }
   /* write out words depending on signature granularity in signature area */
-  for (uint64_t addr = mem_sig_start; addr < mem_sig_end;
-       addr += signature_granularity) {
+  for (uint64_t addr = mem_sig_start; addr < mem_sig_end; addr += signature_granularity) {
     /* most-significant byte first */
     for (int i = signature_granularity - 1; i >= 0; i--) {
       uint8_t byte = (uint8_t)read_mem(addr + i);
@@ -387,10 +352,8 @@ void finish()
       fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
-    int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000
-        + (init_end.tv_usec - init_start.tv_usec) / 1000;
-    int exec_msecs = (run_end.tv_sec - init_end.tv_sec) * 1000
-        + (run_end.tv_usec - init_end.tv_usec) / 1000;
+    int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000 + (init_end.tv_usec - init_start.tv_usec) / 1000;
+    int exec_msecs = (run_end.tv_sec - init_end.tv_sec) * 1000 + (run_end.tv_usec - init_end.tv_usec) / 1000;
     double Kips = ((double)total_insns) / ((double)exec_msecs);
     fprintf(stderr, "Initialization:   %d msecs\n", init_msecs);
     fprintf(stderr, "Execution:        %d msecs\n", exec_msecs);
@@ -418,8 +381,7 @@ void run_sail(void)
   mach_int step_no = 0;
   uint64_t insn_cnt = 0;
 
-  uint64_t insns_per_tick
-      = get_config_uint64({"platform", "instructions_per_tick"});
+  uint64_t insns_per_tick = get_config_uint64({"platform", "instructions_per_tick"});
 
   struct timeval interval_start;
   if (gettimeofday(&interval_start, nullptr) < 0) {
@@ -465,16 +427,13 @@ void run_sail(void)
     }
 
     if (do_show_times && (total_insns & 0xfffff) == 0) {
-      uint64_t start_us = 1000000 * ((uint64_t)interval_start.tv_sec)
-          + ((uint64_t)interval_start.tv_usec);
+      uint64_t start_us = 1000000 * ((uint64_t)interval_start.tv_sec) + ((uint64_t)interval_start.tv_usec);
       if (gettimeofday(&interval_start, nullptr) < 0) {
         fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
       }
-      uint64_t end_us = 1000000 * ((uint64_t)interval_start.tv_sec)
-          + ((uint64_t)interval_start.tv_usec);
-      fprintf(stdout, "kips: %" PRIu64 "\n",
-              ((uint64_t)1000) * 0x100000 / (end_us - start_us));
+      uint64_t end_us = 1000000 * ((uint64_t)interval_start.tv_sec) + ((uint64_t)interval_start.tv_usec);
+      fprintf(stdout, "kips: %" PRIu64 "\n", ((uint64_t)1000) * 0x100000 / (end_us - start_us));
     }
 
     if (zhtif_done) {
@@ -501,19 +460,15 @@ void run_sail(void)
 void init_logs()
 {
   if (!term_log.empty()
-      && (term_fd = open(term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-                         S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR))
-          < 0) {
-    fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log.c_str(),
-            strerror(errno));
+      && (term_fd = open(term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
+    fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
 
   if (!trace_log_path.empty()) {
     trace_log = fopen(trace_log_path.c_str(), "w+");
     if (trace_log == nullptr) {
-      fprintf(stderr, "Cannot create trace log '%s': %s\n",
-              trace_log_path.c_str(), strerror(errno));
+      fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_log_path.c_str(), strerror(errno));
       exit(EXIT_FAILURE);
     }
   }
@@ -578,8 +533,7 @@ int inner_main(int argc, char **argv)
     fprintf(stderr, "using %s for test-signature output.\n", sig_file.c_str());
   }
   if (signature_granularity != DEFAULT_SIGNATURE_GRANULARITY) {
-    fprintf(stderr, "setting signature-granularity to %d bytes\n",
-            signature_granularity);
+    fprintf(stderr, "setting signature-granularity to %d bytes\n", signature_granularity);
   }
   if (rv_enable_experimental_extensions) {
     fprintf(stderr, "enabling unratified extensions.\n");
@@ -637,8 +591,7 @@ int inner_main(int argc, char **argv)
   }
 
   init_logs();
-  log_callbacks log_cbs(config_print_reg, config_print_mem_access,
-                        config_use_abi_names, trace_log);
+  log_callbacks log_cbs(config_print_reg, config_print_mem_access, config_use_abi_names, trace_log);
   register_callback(&log_cbs);
 
   if (gettimeofday(&init_start, nullptr) < 0) {
@@ -659,8 +612,7 @@ int inner_main(int argc, char **argv)
   }
 
   const std::string &initial_elf_file = elfs[0];
-  uint64_t entry = rvfi ? rvfi->get_entry()
-                        : load_sail(initial_elf_file, /*main_file=*/true);
+  uint64_t entry = rvfi ? rvfi->get_entry() : load_sail(initial_elf_file, /*main_file=*/true);
 
   fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
 

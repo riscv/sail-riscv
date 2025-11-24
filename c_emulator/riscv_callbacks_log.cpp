@@ -18,9 +18,8 @@ void print_lbits_hex(FILE *trace_log, lbits val, int length = 0)
   fprintf(trace_log, "\n");
 }
 
-log_callbacks::log_callbacks(bool config_print_reg,
-                             bool config_print_mem_access,
-                             bool config_use_abi_names, FILE *trace_log)
+log_callbacks::log_callbacks(bool config_print_reg, bool config_print_mem_access, bool config_use_abi_names,
+                             FILE *trace_log)
     : config_print_reg(config_print_reg)
     , config_print_mem_access(config_print_mem_access)
     , config_use_abi_names(config_use_abi_names)
@@ -31,36 +30,31 @@ log_callbacks::log_callbacks(bool config_print_reg,
 // Implementations of default callbacks for trace printing.
 // The model assumes that these functions do not change the state of the model.
 
-void log_callbacks::mem_write_callback(const char *type, sbits paddr,
-                                       uint64_t width, lbits value)
+void log_callbacks::mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value)
 {
   if (trace_log != nullptr && config_print_mem_access) {
-    fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] <- 0x", type,
-            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits);
+    fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] <- 0x", type, static_cast<int>((zphysaddrbits_len + 3) / 4),
+            paddr.bits);
     print_lbits_hex(trace_log, value, width);
   }
 }
 
-void log_callbacks::mem_read_callback(const char *type, sbits paddr,
-                                      uint64_t width, lbits value)
+void log_callbacks::mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value)
 {
   if (trace_log != nullptr && config_print_mem_access) {
-    fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] -> 0x", type,
-            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits);
+    fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] -> 0x", type, static_cast<int>((zphysaddrbits_len + 3) / 4),
+            paddr.bits);
     print_lbits_hex(trace_log, value, width);
   }
 }
 
-void log_callbacks::xreg_full_write_callback(const_sail_string abi_name,
-                                             sbits reg, sbits value)
+void log_callbacks::xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value)
 {
   if (trace_log != nullptr && config_print_reg) {
     if (config_use_abi_names) {
-      fprintf(trace_log, "%s <- 0x%0*" PRIX64 "\n", abi_name,
-              static_cast<int>(zxlen / 4), value.bits);
+      fprintf(trace_log, "%s <- 0x%0*" PRIX64 "\n", abi_name, static_cast<int>(zxlen / 4), value.bits);
     } else {
-      fprintf(trace_log, "x%" PRIu64 " <- 0x%0*" PRIX64 "\n", reg.bits,
-              static_cast<int>(zxlen / 4), value.bits);
+      fprintf(trace_log, "x%" PRIu64 " <- 0x%0*" PRIX64 "\n", reg.bits, static_cast<int>(zxlen / 4), value.bits);
     }
   }
 }
@@ -71,26 +65,23 @@ void log_callbacks::freg_write_callback(unsigned reg, sbits value)
   if (trace_log != nullptr && config_print_reg) {
     // TODO: Might need to change from PRIX64 to PRIX128 once the "Q" extension
     // is supported
-    fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg,
-            static_cast<int>(zflen / 4), value.bits);
+    fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg, static_cast<int>(zflen / 4), value.bits);
   }
 }
 
-void log_callbacks::csr_full_write_callback(const_sail_string csr_name,
-                                            unsigned reg, sbits value)
+void log_callbacks::csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value)
 {
   if (trace_log != nullptr && config_print_reg) {
-    fprintf(trace_log, "CSR %s (0x%03X) <- 0x%0*" PRIX64 "\n", csr_name, reg,
-            static_cast<int>(value.len / 4), value.bits);
+    fprintf(trace_log, "CSR %s (0x%03X) <- 0x%0*" PRIX64 "\n", csr_name, reg, static_cast<int>(value.len / 4),
+            value.bits);
   }
 }
 
-void log_callbacks::csr_full_read_callback(const_sail_string csr_name,
-                                           unsigned reg, sbits value)
+void log_callbacks::csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value)
 {
   if (trace_log != nullptr && config_print_reg) {
-    fprintf(trace_log, "CSR %s (0x%03X) -> 0x%0*" PRIX64 "\n", csr_name, reg,
-            static_cast<int>(value.len / 4), value.bits);
+    fprintf(trace_log, "CSR %s (0x%03X) -> 0x%0*" PRIX64 "\n", csr_name, reg, static_cast<int>(value.len / 4),
+            value.bits);
   }
 }
 

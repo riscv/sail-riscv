@@ -138,8 +138,7 @@ int main()
 {
   // Configure pmpaddr0 to match REGION and pmpaddr1 to match everything.
   uint_xlen_t ones = UINT_XLEN_MAX;
-  uint_xlen_t region_pmpaddr
-      = ((uint_xlen_t)(&REGION) >> 2) | ~(ones << (REGION_SIZE_EXP - 3));
+  uint_xlen_t region_pmpaddr = ((uint_xlen_t)(&REGION) >> 2) | ~(ones << (REGION_SIZE_EXP - 3));
   asm volatile("csrw pmpaddr0, %[pmpaddr]" : : [pmpaddr] "r"(region_pmpaddr));
   asm volatile("csrw pmpaddr1, %[pmpaddr]" : : [pmpaddr] "r"(ones));
   // Turn both PMPs off. Recall pmpaddr0 and pmpaddr1 are both configured in

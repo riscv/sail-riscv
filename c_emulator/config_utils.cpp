@@ -41,8 +41,7 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath)
   sail_config_json json = sail_config_get(keypath.size(), keypath.data());
 
   if (json == nullptr) {
-    throw std::runtime_error("Failed to find configuration option '"
-                             + keypath_to_str(keypath) + "'.");
+    throw std::runtime_error("Failed to find configuration option '" + keypath_to_str(keypath) + "'.");
   }
 
   if (sail_config_is_int(json)) {
@@ -61,9 +60,8 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath)
     sail_config_unwrap_bits(&big_bits, json);
     if (big_bits.len > 64) {
       KILL(lbits)(&big_bits);
-      throw std::runtime_error("Couldn't read " + std::to_string(big_bits.len)
-                               + "-bit value '" + keypath_to_str(keypath)
-                               + "' into uint64_t.");
+      throw std::runtime_error("Couldn't read " + std::to_string(big_bits.len) + "-bit value '"
+                               + keypath_to_str(keypath) + "' into uint64_t.");
     }
     // Second parameter is unused; see
     // https://github.com/rems-project/sail/issues/1429
@@ -93,14 +91,11 @@ void validate_config_schema(const std::string &conf_file)
 
   // Compile the schema.
   json schema = json::parse(get_config_schema());
-  auto options = jsonschema::evaluation_options {}.default_version(
-      jsonschema::schema_version::draft202012());
+  auto options = jsonschema::evaluation_options {}.default_version(jsonschema::schema_version::draft202012());
   // Throws schema_error if compilation fails.
-  jsonschema::json_schema<json> compiled
-      = jsonschema::make_json_schema(std::move(schema), options);
+  jsonschema::json_schema<json> compiled = jsonschema::make_json_schema(std::move(schema), options);
 
-  std::string source = conf_file.empty() ? "default configuration"
-                                         : "configuration in " + conf_file;
+  std::string source = conf_file.empty() ? "default configuration" : "configuration in " + conf_file;
 
   // Parse the config.
   json config;
@@ -117,16 +112,13 @@ void validate_config_schema(const std::string &conf_file)
 
   // Validate.
   bool is_valid = true;
-  auto report = [&is_valid](const jsonschema::validation_message &msg)
-      -> jsonschema::walk_result {
+  auto report = [&is_valid](const jsonschema::validation_message &msg) -> jsonschema::walk_result {
     is_valid = false;
-    std::cerr << msg.instance_location().string() << ": " << msg.message()
-              << std::endl;
+    std::cerr << msg.instance_location().string() << ": " << msg.message() << std::endl;
     return jsonschema::walk_result::advance;
   };
   compiled.validate(config, report);
   if (!is_valid) {
-    throw std::runtime_error("Schema conformance check failed for the " + source
-                             + ".");
+    throw std::runtime_error("Schema conformance check failed for the " + source + ".");
   }
 }

@@ -10,8 +10,8 @@ static uint_fast8_t uint8_of_rm(uint64_t rm)
   return static_cast<uint_fast8_t>(rm);
 }
 
-#define SOFTFLOAT_PRELUDE(rm)                                                  \
-  softfloat_exceptionFlags = 0;                                                \
+#define SOFTFLOAT_PRELUDE(rm)                                                                                          \
+  softfloat_exceptionFlags = 0;                                                                                        \
   softfloat_roundingMode = uint8_of_rm(rm)
 
 extern "C" {
