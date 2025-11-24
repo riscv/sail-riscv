@@ -16,7 +16,7 @@ core {
     core/vlen.sail,
     core/mem_addrtype.sail,
     core/mem_metadata.sail,
-    core/physical_memory.sail,
+    core/phys_mem_interface.sail,
     core/arithmetic.sail,
     core/range_util.sail,
     core/float_classify.sail,

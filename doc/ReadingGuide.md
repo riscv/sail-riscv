@@ -47,8 +47,8 @@ as `config` values, which means their value is derived from the
 configuration file for the model.
 
 The lowest level memory access primitives are defined in
-[prelude_mem.sail](../model/core/physical_memory.sail) and are implemented by the
-various Sail backends.
+[phys_mem_interface.sail](../model/core/phys_mem_interface.sail) and are
+implemented by the various Sail backends.
 [mem_addrtype.sail](../model/core/mem_addrtype.sail) and
 [mem_metadata.sail](../model/core/mem_metadata.sail)
 contain other low-level definitions related to memory.
@@ -157,6 +157,10 @@ for platform behavior, such as the handling of misaligned memory
 accesses, the handling of PTE dirty-bit updates during address
 translation, etc.
 
+[pma.sail](../model/sys/pma.sail) implements Physical Memory Attributes
+(PMAs), in terms of which the physical memory layout is configured in
+the configuration file.
+
 [mem.sail](../model/sys/mem.sail) contains the functions
 that convert accesses to physical addresses into accesses to physical
 memory, or MMIO accesses to the devices provided by the platform, or
@@ -195,9 +199,10 @@ for the fetch-decode-execute cycle.
 
 [insts_end.sail](../model/postlude/insts_end.sail) and
 [csr_end.sail](../model/postlude/csr_end.sail) terminate the
-scattered definitions begun in the `insts_begin.sail` file in
-the `sys` module and the `csr_begin.sail` file in the
-`core` module respectively.
+scattered definitions begun in the
+[insts_begin.sail](../model/sys/insts_begin.sail) file in
+the `sys` module and the [csr_begin.sail](../model/core/csr_begin.sail)
+file in the `core` module respectively.
 
 Definitions for the instruction stepper are in
 [step_common.sail](../model/postlude/step_common.sail), while
@@ -216,7 +221,7 @@ checks for any pending interrupts that may need to be handled, and
 maintains the current state of the model. The `try_step` function is
 the primary interface to the external C++ simulator harness.
 
-A `loop` function in `step.sail` implements the standalone
+A `loop` function in [step.sail](../model/postlude/step.sail) implements the standalone
 version of the fetch-decode-execute loop, and uses the same HTIF
 (host-target interface) mechanism as the Spike emulator to detect
 termination of execution. This function can be used to drive the
@@ -230,7 +235,7 @@ functions in
 Model initialization and reset are implemented in
 [model.sail](../model/postlude/model.sail).
 
-`fetch_rvfi.sail` provides the fetch function when the model
+[fetch_rvfi.sail](../model/postlude/fetch_rvfi.sail) provides the fetch function when the model
 is used for RVFI, and complements the `rvfi_dii*.sail` files mentioned
 above.
 
