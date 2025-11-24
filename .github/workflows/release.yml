@@ -78,7 +78,7 @@ jobs:
       #   run: |
       #     brew install --force --overwrite ...
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Build simulator
         run: |
