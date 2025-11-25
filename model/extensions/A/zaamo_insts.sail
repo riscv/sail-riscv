@@ -109,10 +109,8 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     if width <= xlen_bytes
     then X(rd) = sign_extend(loaded)
     else X_pair(rd) = sign_extend(loaded);
-    return RETIRE_SUCCESS;
-  };
-
-  match mem_write_value(addr, width, sign_extend(result), aq & rl, rl, true) {
+    RETIRE_SUCCESS
+  } else match mem_write_value(addr, width, sign_extend(result), aq & rl, rl, true) {
     Ok(true)  => {
       if width <= xlen_bytes
       then X(rd) = sign_extend(loaded)
