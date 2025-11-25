@@ -11,11 +11,24 @@
 
 function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(mem_payload)) -> bool =
   match acc {
-    Load(_)                     => bool_bits(ent[R]),
-    Store(_)                    => bool_bits(ent[W]),
-    Atomic(_)                   => bool_bits(ent[R]) & bool_bits(ent[W]),
     InstructionFetch()          => bool_bits(ent[X]),
+    Load(Data)                  => bool_bits(ent[R]),
+    Store(Data)                 => bool_bits(ent[W]),
+    Atomic(_, Data, Data)       => bool_bits(ent[R]) & bool_bits(ent[W]),
+    // The PMP checks are extended to require read-write permission
+    // for memory accessed by shadow stack instructions.
+    Load(ShadowStack)           => bool_bits(ent[R]) & bool_bits(ent[W]),
+    Store(ShadowStack)          => bool_bits(ent[R]) & bool_bits(ent[W]),
+    Atomic(_, ShadowStack, _)   => bool_bits(ent[R]) & bool_bits(ent[W]),
+    Atomic(_, _, ShadowStack)   => bool_bits(ent[R]) & bool_bits(ent[W]),
+    // A cache-block management instruction is permitted to access the
+    // specified cache block whenever a load instruction or store
+    // instruction is permitted to access the corresponding physical
+    // addresses.
     CacheAccess(CB_manage())    => bool_bits(ent[R]) | bool_bits(ent[W]),
+    // A cache-block zero instruction is permitted to access the
+    // specified cache block whenever a store instruction is permitted
+    // to access the corresponding physical addresses.
     CacheAccess(CB_zero())      => bool_bits(ent[W]),
     CacheAccess(CB_prefetch(p)) => match p {
       PREFETCH_I => bool_bits(ent[X]),
@@ -23,7 +36,6 @@ function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(mem_payload)) -> b
       PREFETCH_X => bool_bits(ent[W]),
     },
   }
-
 
 // matching logic
 
@@ -89,11 +101,24 @@ function pmpMatchAddr(
 
 function accessToFault(acc : MemoryAccessType(mem_payload)) -> ExceptionType =
   match acc {
-    Load(_)                     => E_Load_Access_Fault(),
-    Store(_)                    => E_SAMO_Access_Fault(),
-    Atomic(_)                   => E_SAMO_Access_Fault(),
     InstructionFetch()          => E_Fetch_Access_Fault(),
+    Load(Data)                  => E_Load_Access_Fault(),
+    Store(Data)                 => E_SAMO_Access_Fault(),
+    Atomic(_, Data, Data)       => E_SAMO_Access_Fault(),
+    // If the PMP does not provide read-write permissions or if the
+    // accessed memory is not idempotent then a store/AMO access-fault
+    // exception is raised for the shadow stack instructions.
+    Load(ShadowStack)           => E_SAMO_Access_Fault(),
+    Store(ShadowStack)          => E_SAMO_Access_Fault(),
+    Atomic(_, ShadowStack, _)   => E_SAMO_Access_Fault(),
+    Atomic(_, _, ShadowStack)   => E_SAMO_Access_Fault(),
+    // If access to the cache block is not permitted by PMP, a
+    // cache-block management instruction raises a store access-fault
+    // exception.
     CacheAccess(CB_manage())    => E_SAMO_Access_Fault(),
+    // If access to the cache block is not permitted by PMP, a
+    // cache-block zero instruction raises a store access-fault
+    // exception.
     CacheAccess(CB_zero())      => E_SAMO_Access_Fault(),
     // Though prefetches don't raise exceptions, we return a nominal
     // exception here to propagate the failed address translation to

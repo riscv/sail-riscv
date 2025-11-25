@@ -80,7 +80,11 @@ function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b
 // PRIVATE: check if a PTE is valid
 function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0
-  | (pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
+  // The encoding R=0, W=1, and X=0, is defined to represent an SS
+  // page. When menvcfg.SSE=0, this encoding remains reserved.
+  // TODO: handle V=1 and henvcfg.SSE=0 at VS/VU levels
+  | (pte_flags[X] == 0b0 & pte_flags[W] == 0b1 & pte_flags[R] == 0b0 & menvcfg[SSE] == 0b0)
+  | (pte_flags[X] == 0b1 & pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
   // Note, the following requirements depend on the privileged spec version.
   // Early versions do not require this check. This will need to be behind
   // a flag when the Sail model allows specifying the spec version.
@@ -92,10 +96,10 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
 // ----------------
 // Check access permissions in PTE
 
-// TODO: Zicfiss will add PTE_No_Access here.
 union pte_check_failure = {
   PTE_No_Permission : unit,
-  PTE_Ext_Failure : ext_ptw_fail
+  PTE_No_Access     : unit,
+  PTE_Ext_Failure   : ext_ptw_fail
 }
 
 // For (non-standard) extensions: this function gets the extension-available bits
@@ -134,7 +138,38 @@ function check_PTE_permission(ac        : MemoryAccessType(mem_payload),
   };
   if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
-  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
+  // Step 7 of VATP (see vmem.sail).
+  // Enforce Shadow Stack (SS) protection rules for a shadow stack page.
+  if not(pte_R) & pte_W & not(pte_X) then {
+    let shadow_stack_ok : bool =  match ac {
+      // Implicit accesses, including instruction fetches to an SS page, are not permitted.
+      // Such accesses will raise an access-fault exception appropriate to the access type.
+      InstructionFetch() => false,
+      // The shadow stack is readable by all instructions that only load from memory.
+      Load(_) => true,
+      // Memory mapped as an SS page cannot be written to by non-SS instructions.
+      // Attempts will raise a store/AMO access-fault exception.
+      Store(Data) => false,
+      Store(ShadowStack) => true,
+      Atomic(_, Data, Data) => false,
+      Atomic(_, ShadowStack, _) => true,
+      Atomic(_, _, ShadowStack) => true,
+      // Access to a SS page using cache-block operation (CBO.*)
+      // instructions is not permitted. Such accesses will raise a
+      // store/AMO access-fault exception.
+      CacheAccess(_) => false,
+    };
+    if not(shadow_stack_ok) then return PTE_Check_Failure((), PTE_No_Access());
+  } else if is_shadow_stack_access(ac) then {
+    // Should a shadow stack instruction access a page that is not
+    // designated as a shadow stack page and is not marked as
+    // read-only (pte.xwr=001), a store/AMO access-fault exception
+    // will be invoked. Conversely, if the page being accessed by a
+    // shadow stack instruction is a read-only page, a store/AMO
+    // page-fault exception will be triggered.
+    let is_read_only = pte_R & not(pte_W) & not(pte_X);
+    return PTE_Check_Failure((), if is_read_only then PTE_No_Permission() else PTE_No_Access());
+  };
 
   // Step 8 of VATP (see vmem.sail).
   let access_ok : bool = match ac {

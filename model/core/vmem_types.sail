@@ -40,9 +40,10 @@ type vpn_bits('v), is_sv_mode('v) = bits('v - pagesize_bits)
 // adding ShadowStack{Load,Store,LoadStore} variants to
 // MemoryAccessType and removing the ShadowStack enum here.
 
-enum mem_payload = { Data }
+enum mem_payload = { Data, ShadowStack }
 mapping mem_payload_str : mem_payload <-> string = {
   Data        <-> "",
+  ShadowStack <-> ".ss",
 }
 
 let default_write_acc : mem_payload = Data
@@ -54,6 +55,22 @@ function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
     Atomic(_, lp, sp)  => "R" ^ mem_payload_str(lp) ^ "W" ^ mem_payload_str(sp),
     InstructionFetch() => "X",
     CacheAccess(_)     => "C",
+  }
+
+function is_shadow_stack_access(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    Load(ShadowStack)         => true,
+    Store(ShadowStack)        => true,
+    Atomic(_, ShadowStack, _) => true,
+    Atomic(_, _, ShadowStack) => true,
+    _                         => false,
+  }
+
+function is_shadow_stack_amo(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    Atomic(_, ShadowStack, _) => true,
+    Atomic(_, _, ShadowStack) => true,
+    _                         => false,
   }
 
 overload to_str = {accessType_to_str}

@@ -359,6 +359,8 @@ bitfield MEnvcfg : bits(64) = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
+  // Shadow Stack Enable
+  SSE    : 3,
   // Landing Pad Enable
   LPE    : 2,
   // Fence of I/O implies Memory
@@ -372,40 +374,49 @@ bitfield SEnvcfg : xlenbits = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
+  // Shadow Stack Enable
+  SSE    : 3,
   // Landing Pad Enable
   LPE    : 2,
   // Fence of I/O implies Memory
   FIOM   : 0,
 }
 
+register menvcfg : MEnvcfg
+register senvcfg : SEnvcfg
+
 function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
-  [o with
+  let o = [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
+    // LPE intentionally uses hartSupports() instead of currentlyEnabled().
     LPE  = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
+    SSE  = if currentlyEnabled(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
-  ]
+  ];
+  // When menvcfg.SSE is 0, the henvcfg.SSE and senvcfg.SSE fields are read-only zero.
+  // TODO: also set henvcfg[SSE] to 0b0.
+  if o[SSE] == 0b0 then senvcfg[SSE] = 0b0;
+  o
 }
 
 function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
+    // LPE intentionally uses hartSupports() instead of currentlyEnabled().
     LPE = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
+    SSE = if currentlyEnabled(Ext_Zicfiss) & bool_bits(menvcfg[SSE]) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }
-
-// Initialised to legal values in case some bits are hard-coded to 1.
-register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
-register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
 
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"

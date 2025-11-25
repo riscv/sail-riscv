@@ -89,6 +89,7 @@ function accessFaultFromAccessType(accTy : MemoryAccessType(mem_payload)) -> Exc
   match accTy {
     InstructionFetch() => E_Fetch_Access_Fault(),
     Load(Data)         => E_Load_Access_Fault(),
+    // The wildcard is valid for Load(ShadowStack).
     _                  => E_SAMO_Access_Fault(),
   }
 
@@ -96,6 +97,8 @@ function alignmentFaultFromAccessType(accTy : MemoryAccessType(mem_payload)) -> 
   match accTy {
     InstructionFetch() => E_Fetch_Addr_Align(),
     Load(Data)         => E_Load_Addr_Align(),
+    // Misaligned shadow stack accesses should have been caught earlier.
+    Load(ShadowStack)  => internal_error(__FILE__, __LINE__, "misaligned shadow stack access to PMA"),
     _                  => E_SAMO_Addr_Align(),
   }
 
@@ -120,12 +123,13 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match accTy {
             InstructionFetch() => attributes.executable,
-            Load(_)            => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
-            Store(_)           => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+            Load(Data)         => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
+            Store(Data)        => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+
             // TODO: Add Atomic attributes to PMA and config. For now we assume all memory
             // supports all AMO operations.
             // XXX
-            Atomic(_, _, _)    => attributes.readable & attributes.writable,
+            Atomic(_, Data, Data) => attributes.readable & attributes.writable,
 
             // TODO: The PMAs shall be the same for all physical
             // addresses in the cache block, and if write permission
@@ -138,6 +142,14 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
               PREFETCH_W => attributes.writable,
               PREFETCH_X => attributes.executable,
             },
+
+            // The PMA checks are extended to require memory referenced by shadow stack instructions to be idempotent.
+            Load(ShadowStack)  => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone) & attributes.read_idempotent,
+            Store(ShadowStack) => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone) & attributes.write_idempotent,
+            // The SSAMOSWAP.W/D instructions require the PMA of the accessed memory range to provide AMOSwap level support.
+            // TODO: Add the AMOSwap requirement.
+            Atomic(_, ShadowStack, _) => attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent,
+            Atomic(_, _, ShadowStack) => attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent,
           };
 
           if get_config_print_pma() & not(canAccess)

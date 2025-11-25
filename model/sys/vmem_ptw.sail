@@ -49,7 +49,7 @@ function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
   match failure {
     PTE_No_Permission() => PTW_No_Permission(),
     PTE_Ext_Failure(_)  => PTW_No_Permission(),
-    // TODO: Zicfiss will map PTE_No_Access to PTW_Access
+    PTE_No_Access()     => PTW_No_Access(),
   }
 
 // Convert translation/PTW failures into architectural exceptions
@@ -58,14 +58,24 @@ function translationException(a : MemoryAccessType(mem_payload),
                              -> ExceptionType = {
   match (a, f) {
     (_, PTW_Ext_Error(e))                     => E_Extension(ext_translate_exception(e)),
+    (Load(Data), PTW_No_Access())             => E_Load_Access_Fault(),
+    (Load(Data), _)                           => E_Load_Page_Fault(),
+    // For shadow stack instructions, the reported instruction type is
+    // always as though it were a store or AMO, even for instructions
+    // SSPOPCHK and C.SSPOPCHK that only read from memory and do not
+    // write to it.
+    (Load(ShadowStack), PTW_No_Access())      => E_SAMO_Access_Fault(),
+    (Load(ShadowStack), _)                    => E_SAMO_Page_Fault(),
+
     (Atomic(_), PTW_No_Access())              => E_SAMO_Access_Fault(),
     (Atomic(_), _)                            => E_SAMO_Page_Fault(),
-    (Load(_), PTW_No_Access())                => E_Load_Access_Fault(),
-    (Load(_), _)                              => E_Load_Page_Fault(),
+
     (Store(_), PTW_No_Access())               => E_SAMO_Access_Fault(),
     (Store(_), _)                             => E_SAMO_Page_Fault(),
+
     (InstructionFetch(), PTW_No_Access())     => E_Fetch_Access_Fault(),
     (InstructionFetch(), _)                   => E_Fetch_Page_Fault(),
+
     (CacheAccess(CB_manage()), _)             => E_SAMO_Page_Fault(),
     (CacheAccess(CB_zero()), PTW_No_Access()) => E_SAMO_Access_Fault(),
     (CacheAccess(CB_zero()), _)               => E_SAMO_Page_Fault(),

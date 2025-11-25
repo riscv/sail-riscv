@@ -134,7 +134,7 @@ function pt_walk(
             if   ppn[low_bits - 1 .. 0] != zeros()
             then return Err(PTW_Misaligned(), ext_ptw);
           };
-          // Steps 6, 7 (TODO: shadow stack protection), 8 of VATP.
+          // Steps 6, 7, 8 of VATP.
           match check_PTE_permission(ac, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, pte_failure) =>
               Err(ext_get_ptw_error(pte_failure), ext_ptw),
@@ -363,6 +363,17 @@ function translateAddr(
   let effPriv = effectivePrivilege(ac, mstatus, cur_privilege);
 
   let mode = translationMode(effPriv);
+
+  if is_shadow_stack_access(ac) then {
+    // If satp.MODE (or vsatp.MODE when V=1) is set to Bare and the
+    // effective privilege mode is less than M, shadow stack
+    // instructions raise a store/AMO access-fault exception. When the
+    // effective privilege mode is M, memory access by an
+    // SSAMOSWAP.W/D instruction results in a store/AMO access-fault
+    // exception.
+     if (mode == Bare & effPriv != Machine) | (effPriv == Machine & is_shadow_stack_amo(ac))
+     then return Err(E_SAMO_Access_Fault(), init_ext_ptw);
+  };
 
   if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), init_ext_ptw);
 

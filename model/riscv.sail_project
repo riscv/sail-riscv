@@ -445,6 +445,17 @@ extensions {
         files extensions/cfi/zicfilp_insts.sail
       }
     }
+    Zicfiss {
+      Zicfiss_regs {
+        files
+          extensions/cfi/zicfiss_regs.sail
+      }
+      Zicfiss_insts {
+        requires sys, exceptions, CFI_types, Zicfiss_regs, A_types
+        files
+          extensions/cfi/zicfiss_insts.sail
+      }
+    }
   }
 
   bfloat16 {
