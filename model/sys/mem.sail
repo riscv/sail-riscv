@@ -115,7 +115,7 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
       // Check if we need to raise an exception for misalignment.
       match attributes.misaligned_fault {
         AccessFault if misaligned => return Some(accessFaultFromAccessType(accTy)),
-        _misaligned_fault if misaligned => return Some(alignmentFaultFromAccessType(accTy)),
+        AlignmentFault if misaligned => return Some(alignmentFaultFromAccessType(accTy)),
         _ => {
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match accTy {
