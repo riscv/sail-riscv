@@ -32,6 +32,16 @@ mapping vlewidth_pow : vlewidth <-> {3, 4, 5, 6} = {
   VLE64     <-> 6
 }
 
+mapping encdec_indexed_mop : indexed_mop <-> bits(2) = {
+  INDEXED_UNORDERED <-> 0b01,
+  INDEXED_ORDERED   <-> 0b11,
+}
+
+mapping indexed_mop_mnemonic : indexed_mop <-> string = {
+  INDEXED_UNORDERED <-> "u",
+  INDEXED_ORDERED   <-> "o",
+}
+
 // ******************* Vector Load Unit-Stride Normal & Segment (mop=0b00, lumop=0b00000) *********************
 union clause instruction = VLSEGTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
 
@@ -235,7 +245,7 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
 mapping clause assembly = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> "vs" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
-// ***************************** Vector Load Strided Normal & Segment (mop=0b10) ******************************
+// ***************************** Vector Load Constant-Stride Normal & Segment (mop=0b10) ******************************
 union clause instruction = VLSSEGTYPE : (nfields, bits(1), regidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
@@ -299,7 +309,7 @@ function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
 mapping clause assembly = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> "vls" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
-// **************************** Vector Store Strided Normal & Segment (mop=0b10) ******************************
+// **************************** Vector Store Constant-Stride Normal & Segment (mop=0b10) ******************************
 union clause instruction = VSSSEGTYPE : (nfields, bits(1), regidx, regidx, vlewidth, vregidx)
 
 mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
@@ -360,16 +370,18 @@ function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
 mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> "vss" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
-// ************************ Vector Load Indexed Unordered Normal & Segment (mop=0b01) *************************
+// ************************ Vector Load Indexed (Ordered and Unordered) Normal & Segment (mop=0b01 or mop=0b11) *******
 // Note: Zve64* extensions do not support EEW=64 for index values when XLEN=32.
-union clause instruction = VLUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VLXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx, indexed_mop)
 
-mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
-  <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+mapping clause encdec = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
+  <-> encdec_nfields(nf) @ 0b0 @ encdec_indexed_mop(mop) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
 
-function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : int) -> ExecutionResult = {
+// `mop` selects between the ordered and unordered variants of these instructions.  This function currently
+// only implements the ordered variant, hence `mop` is ignored.
+function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : indexed_mop) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
@@ -382,7 +394,7 @@ function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_byte
     Err(()) => return Illegal_Instruction()
   };
 
-  // currently mop = 1 (unordered) or 3 (ordered) do the same operations
+  // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { // active segments
       set_vstart(to_bits_unsafe(16, i));
@@ -405,7 +417,7 @@ function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_byte
   RETIRE_SUCCESS
 }
 
-function clause execute VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd) = {
+function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop) = {
   let EEW_index_pow = vlewidth_pow(width);
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
@@ -419,51 +431,24 @@ function clause execute VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd) = {
   if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
-  process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
+  process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop)
 }
 
-mapping clause assembly = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
-  <-> "vlux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
+mapping clause assembly = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
+  <-> "vl" ^ indexed_mop_mnemonic(mop) ^ "x" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-// ************************* Vector Load Indexed Ordered Normal & Segment (mop=0b11) **************************
+// *********************** Vector Store Indexed (Ordered and Unordered) Normal & Segment (mop=0b01 or mop=0b11) *******
 // Note: Zve64* extensions do not support EEW=64 for index values when XLEN=32.
-union clause instruction = VLOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
+union clause instruction = VSXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx, indexed_mop)
 
-mapping clause encdec = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
-  <-> encdec_nfields(nf) @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+mapping clause encdec = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
+  <-> encdec_nfields(nf) @ 0b0 @ encdec_indexed_mop(mop) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
 
-function clause execute VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd) = {
-  let EEW_index_pow = vlewidth_pow(width);
-  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
-  let EEW_data_pow = get_sew_pow();
-  let EEW_data_bytes = get_sew_bytes();
-  let EMUL_data_pow = get_lmul_pow();
-  let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
-
-  assert(num_elem > 0);
-
-  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
-  then return Illegal_Instruction();
-
-  process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
-}
-
-mapping clause assembly = VLOXSEGTYPE(nf, vm, vs2, rs1, width, vd)
-  <-> "vlox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
-
-// *********************** Vector Store Indexed Unordered Normal & Segment (mop=0b01) *************************
-// Note: Zve64* extensions do not support EEW=64 for index values when XLEN=32.
-union clause instruction = VSUXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
-
-mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> encdec_nfields(nf) @ 0b0 @ 0b01 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
-     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
-
-function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : int) -> ExecutionResult = {
+// `mop` selects between the ordered and unordered variants of these instructions.  This function currently
+// only implements the ordered variant, hence `mop` is ignored.
+function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : indexed_mop) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
@@ -475,7 +460,7 @@ function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_byt
     Err(()) => return Illegal_Instruction()
   };
 
-  // currently mop = 1 (unordered) or 3 (ordered) do the same operations
+  // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then { // active segments
       set_vstart(to_bits_unsafe(16, i));
@@ -496,7 +481,7 @@ function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_byt
   RETIRE_SUCCESS
 }
 
-function clause execute VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3) = {
+function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop) = {
   let EEW_index_pow = vlewidth_pow(width);
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
@@ -510,40 +495,11 @@ function clause execute VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3) = {
   if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
   then return Illegal_Instruction();
 
-  process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 1)
+  process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop)
 }
 
-mapping clause assembly = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> "vsux" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
-
-// ************************ Vector Store Indexed Ordered Normal & Segment (mop=0b11) **************************
-// Note: Zve64* extensions do not support EEW=64 for index values when XLEN=32.
-union clause instruction = VSOXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlewidth, vregidx)
-
-mapping clause encdec = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> encdec_nfields(nf) @ 0b0 @ 0b11 @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
-     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
-
-function clause execute VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3) = {
-  let EEW_index_pow = vlewidth_pow(width);
-  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
-  let EEW_data_pow = get_sew_pow();
-  let EEW_data_bytes = get_sew_bytes();
-  let EMUL_data_pow = get_lmul_pow();
-  let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); // number of data and indices are the same
-
-  assert(num_elem > 0);
-
-  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
-  then return Illegal_Instruction();
-
-  process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, 3)
-}
-
-mapping clause assembly = VSOXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
-  <-> "vsox" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
+mapping clause assembly = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
+  <-> "vs" ^ indexed_mop_mnemonic(mop) ^ "x" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 // **************** Vector Load Unit-Stride Whole Register (vm=0b1, mop=0b00, lumop=0b01000) ******************
 union clause instruction = VLRETYPE : (nfields_pow2, regidx, vlewidth, vregidx)
