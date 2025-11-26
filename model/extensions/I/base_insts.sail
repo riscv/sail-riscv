@@ -588,7 +588,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() =
-  Memory_Exception(Virtaddr(PC), E_Breakpoint())
+  Memory_Exception(Virtaddr(PC), E_Breakpoint(Brk_Software))
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 

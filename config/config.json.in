@@ -8,9 +8,13 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
+    // These settings control whether the specified exceptions
+    // cause information to be written into the appropriate
+    // `xtval` registers.
     "xtval_nonzero": {
       "illegal_instruction": true,
-      "breakpoint": true,
+      "software_breakpoint": true,
+      "hardware_breakpoint": true,
       "load_address_misaligned": true,
       "load_access_fault": true,
       "load_page_fault": true,
@@ -39,8 +43,8 @@
       "napot_supported": true
     },
     // This controls global support for misaligned access so it is
-    // checked before address translation. "misaligned_fault" in
-    // "regions" is checked after address translation.
+    // checked before address translation. `misaligned_fault` in
+    // `regions` is checked after address translation.
     "misaligned": {
       "supported": true,
       "byte_by_byte": false,
@@ -142,7 +146,7 @@
     // 6 for Za64rs and 7 for Za128rs.  In all cases, it must be less than or equal to 12.
     "reservation_set_size_exp": 3,
     "clint": {
-      // This must be in a suitable memory region (see memory.regions).
+      // This must be in a suitable memory region (see `memory.regions`).
       "base": 33554432,
       "size": 786432
     },
@@ -199,7 +203,7 @@
       "supported": true
     },
     // This extension just asserts that the cache block size is 64 bytes.
-    // If you enable this you also need to ensure platform.cache_block_size_exp
+    // If you enable this you also need to ensure `platform.cache_block_size_exp`
     // is 6, otherwise you will get a config validation error.
     "Zic64b": {
       "supported": true
@@ -386,6 +390,11 @@
       "supported": true
     },
     "Sstc": {
+      "supported": true
+    },
+    // Enabling Sstvala requires that the exceptions specified in the extension
+    // have their appropriate settings under `base.xtval_nonzero`.
+    "Sstvala": {
       "supported": true
     },
     "Svinval": {

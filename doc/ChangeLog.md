@@ -7,6 +7,7 @@
 
   - Za64rs, Za128rs
   - Zic64b
+  - Sstvala
   - Sstvecd
   - Ssu64xl
 

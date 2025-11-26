@@ -425,6 +425,11 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
 function clause hartSupports(Ext_Sstc) = config extensions.Sstc.supported
+// `stval` provides all needed values
+enum clause extension = Ext_Sstvala
+mapping clause extensionName = Ext_Sstvala <-> "sstvala"
+function clause hartSupports(Ext_Sstvala) = config extensions.Sstvala.supported
+function clause currentlyEnabled(Ext_Sstvala) = hartSupports(Ext_Sstvala) & currentlyEnabled(Ext_S)
 // stvec.MODE supports Direct, and in that mode stvec.BASE must be
 // capable of holding any valid four-byte-aligned address.
 enum clause extension = Ext_Sstvecd
@@ -597,6 +602,7 @@ let extensions_ordered_for_isa_string = [
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,
   Ext_Sstc,
+  Ext_Sstvala,
   Ext_Sstvecd,
   Ext_Ssu64xl,
   // Ext_Svade,
