@@ -29,20 +29,31 @@ type ppn_bits('v), is_sv_mode('v) = bits(if 'v == 32 then 22 else 44)
 type vpn_bits('v), is_sv_mode('v) = bits('v - pagesize_bits)
 
 
-// Extensions for memory Accesstype.
+// Memory access payloads.
+//
+// Note: For Zicfiss, this enum will be extended with ShadowStack, and
+// for CHERI, this enum can be extended with Cap/Tagged.  This assumes
+// that capabilities cannot be stored to the ShadowStack; this is
+// implied by CHERI and Zicfiss currently being incompatible.
+//
+// This will need to change if they are made compatible, e.g. by
+// adding ShadowStack{Load,Store,LoadStore} variants to
+// MemoryAccessType and removing the ShadowStack enum here.
 
-type ext_access_type = unit
+enum mem_payload = { Data }
+mapping mem_payload_str : mem_payload <-> string = {
+  Data        <-> "",
+}
 
-let Data  : ext_access_type = ()
+let default_write_acc : mem_payload = Data
 
-let default_write_acc : ext_access_type = Data
-
-function accessType_to_str(a : MemoryAccessType(ext_access_type)) -> string =
-  match (a) {
-    Load(_)            => "R",
-    Store(_)           => "W",
-    LoadStore(_, _)    => "RW",
+function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
+  match access {
+    Load(p)            => "R" ^ mem_payload_str(p),
+    Store(p)           => "W" ^ mem_payload_str(p),
+    Atomic(_, lp, sp)  => "R" ^ mem_payload_str(lp) ^ "W" ^ mem_payload_str(sp),
     InstructionFetch() => "X",
+    CacheAccess(_)     => "C",
   }
 
 overload to_str = {accessType_to_str}

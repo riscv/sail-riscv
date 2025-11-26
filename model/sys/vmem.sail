@@ -50,7 +50,7 @@ function write_pte forall 'n, 'n in {4, 8} . (
   pte_size : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, false, false, false)
+  mem_write_value_priv_meta(paddr, pte_size, pte, Store(Data), Supervisor, default_meta, false, false, false)
 
 // Read a Page Table Entry.
 function read_pte forall 'n, 'n in {4, 8} . (
@@ -64,7 +64,7 @@ function read_pte forall 'n, 'n in {4, 8} . (
 val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  MemoryAccessType(ext_access_type),  // Memory Load/Store/LoadStore/InstructionFetch
+  MemoryAccessType(mem_payload),// Memory Load/Store/AMO/InstructionFetch/CacheAccess
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum
@@ -78,7 +78,7 @@ val pt_walk : forall 'v, is_sv_mode('v) . (
 function pt_walk(
   sv_width,
   vpn,
-  ac,
+  access,
   priv,
   mxr,
   do_sum,
@@ -121,7 +121,7 @@ function pt_walk(
           // Non-Leaf PTE
           if level > 0 then
             // follow the pointer to walk next level (i.e., go to Step 2)
-            pt_walk(sv_width, vpn, ac, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
+            pt_walk(sv_width, vpn, access, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
           else
             // level 0 PTE, but contains a pointer instead of a leaf
             Err(PTW_Invalid_PTE(), ext_ptw)
@@ -135,7 +135,7 @@ function pt_walk(
             then return Err(PTW_Misaligned(), ext_ptw);
           };
           // Steps 6, 7 (TODO: shadow stack protection), 8 of VATP.
-          match check_PTE_permission(ac, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
+          match check_PTE_permission(access, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, pte_failure) =>
               Err(ext_get_ptw_error(pte_failure), ext_ptw),
             PTE_Check_Success(ext_ptw) => {
@@ -218,7 +218,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
   asid      : asidbits,
   vpn       : vpn_bits('v),
-  ac        : MemoryAccessType(ext_access_type),
+  access    : MemoryAccessType(mem_payload),
   priv      : Privilege,
   mxr       : bool,
   do_sum    : bool,
@@ -231,14 +231,14 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   let pte       = tlb_get_pte(pte_size, ent);  // Step 2 of VATP.
   let ext_pte   = ext_bits_of_PTE(pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
-  let pte_check = check_PTE_permission(ac, priv, mxr, do_sum, pte_flags,
+  let pte_check = check_PTE_permission(access, priv, mxr, do_sum, pte_flags,
                                        ext_pte, ext_ptw);
 
   match pte_check {
     PTE_Check_Failure(ext_ptw, pte_failure) =>
       Err(ext_get_ptw_error(pte_failure), ext_ptw),
     PTE_Check_Success(ext_ptw) =>
-      match update_PTE_Bits(pte, ac) {
+      match update_PTE_Bits(pte, access) {
         None()     => Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
         Some(pte') =>
           // Step 9 of VATP. See platform.sail.
@@ -265,7 +265,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  ac       : MemoryAccessType(ext_access_type),
+  access   : MemoryAccessType(mem_payload),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -275,7 +275,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
 
   // Step 2 of VATP occurs in pt_walk().
   let 'pte_size = if sv_width == 32 then 4 else 8;
-  let ptw_result = pt_walk(sv_width, vpn, ac, priv, mxr, do_sum,
+  let ptw_result = pt_walk(sv_width, vpn, access, priv, mxr, do_sum,
                            base_ppn, initial_level, false, ext_ptw);
   match ptw_result {
     Err(f, ext_ptw) => Err(f, ext_ptw),
@@ -283,7 +283,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
       let ext_pte = ext_bits_of_PTE(pte);
       // Without TLBs, this 'match' expression can be replaced simply
       // by: 'Ok(ppn, ext_ptw)'    (see TLB NOTE above)
-      match update_PTE_Bits(pte, ac) {
+      match update_PTE_Bits(pte, access) {
         None() => {
           add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
           Ok(ppn, ext_ptw)
@@ -324,7 +324,7 @@ function translate forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  ac       : MemoryAccessType(ext_access_type),
+  access   : MemoryAccessType(mem_payload),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -333,9 +333,9 @@ function translate forall 'v, is_sv_mode('v) . (
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB NOTE above)
   match lookup_TLB(sv_width, asid, vpn) {
-    Some(index, ent) => translate_TLB_hit(sv_width, asid, vpn, ac, priv,
+    Some(index, ent) => translate_TLB_hit(sv_width, asid, vpn, access, priv,
                                           mxr, do_sum, ext_ptw, index, ent),
-    None()           => translate_TLB_miss(sv_width, asid, base_ppn, vpn, ac, priv,
+    None()           => translate_TLB_miss(sv_width, asid, base_ppn, vpn, access, priv,
                                            mxr, do_sum, ext_ptw),
   }
 }
@@ -354,13 +354,13 @@ function get_satp forall 'v, is_sv_mode('v). (
 // Top-level addr-translation function
 // PUBLIC: invoked from instr-fetch and load/store/amo
 function translateAddr(
-  vAddr : virtaddr,
-  ac    : MemoryAccessType(ext_access_type),
+  vAddr  : virtaddr,
+  access : MemoryAccessType(mem_payload),
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
   // See sys_regs.sail for effectivePrivilege() and cur_privilege
-  let effPriv = effectivePrivilege(ac, mstatus, cur_privilege);
+  let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
 
   let mode = translationMode(effPriv);
 
@@ -377,7 +377,7 @@ function translateAddr(
 
   let svAddr = bits_of(vAddr)[sv_width - 1 .. 0];
   if bits_of(vAddr) != sign_extend(svAddr) then {
-    Err(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
+    Err(translationException(access, PTW_Invalid_Addr()), init_ext_ptw)
   } else {
     let mxr    = mstatus[MXR] == 0b1;
     let do_sum = mstatus[SUM] == 0b1;
@@ -390,7 +390,7 @@ function translateAddr(
                         zero_extend(asid),
                         base_ppn,
                         svAddr[sv_width - 1 .. pagesize_bits],
-                        ac, effPriv, mxr, do_sum,
+                        access, effPriv, mxr, do_sum,
                         init_ext_ptw);
     // Fixup result PA or exception
     match res {
@@ -404,7 +404,7 @@ function translateAddr(
         // the assertion above.
         Ok(Physaddr(zero_extend(paddr)), ext_ptw)
       },
-      Err(f, ext_ptw)  => Err(translationException(ac, f), ext_ptw)
+      Err(f, ext_ptw)  => Err(translationException(access, f), ext_ptw)
     }
   }
 }

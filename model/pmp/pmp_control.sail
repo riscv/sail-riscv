@@ -9,12 +9,19 @@
 
 // permission checks
 
-function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(ext_access_type)) -> bool =
-  match acc {
-    Load(_)            => ent[R] == 0b1,
-    Store(_)           => ent[W] == 0b1,
-    LoadStore(_)       => ent[R] == 0b1 & ent[W] == 0b1,
-    InstructionFetch() => ent[X] == 0b1,
+function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    Load(_)                     => bool_bits(ent[R]),
+    Store(_)                    => bool_bits(ent[W]),
+    Atomic(_)                   => bool_bits(ent[R]) & bool_bits(ent[W]),
+    InstructionFetch()          => bool_bits(ent[X]),
+    CacheAccess(CB_manage())    => bool_bits(ent[R]) | bool_bits(ent[W]),
+    CacheAccess(CB_zero())      => bool_bits(ent[W]),
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_I => bool_bits(ent[X]),
+      PREFETCH_R => bool_bits(ent[R]),
+      PREFETCH_X => bool_bits(ent[W]),
+    },
   }
 
 
@@ -80,18 +87,25 @@ function pmpMatchAddr(
 
 // priority checks
 
-function accessToFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType =
-  match acc {
-    Load(_)            => E_Load_Access_Fault(),
-    Store(_)           => E_SAMO_Access_Fault(),
-    LoadStore(_)       => E_SAMO_Access_Fault(),
-    InstructionFetch() => E_Fetch_Access_Fault(),
+function accessToFault(access : MemoryAccessType(mem_payload)) -> ExceptionType =
+  match access {
+    Load(_)                     => E_Load_Access_Fault(),
+    Store(_)                    => E_SAMO_Access_Fault(),
+    Atomic(_)                   => E_SAMO_Access_Fault(),
+    InstructionFetch()          => E_Fetch_Access_Fault(),
+    CacheAccess(CB_manage())    => E_SAMO_Access_Fault(),
+    CacheAccess(CB_zero())      => E_SAMO_Access_Fault(),
+    // Though prefetches don't raise exceptions, we return a nominal
+    // exception here to propagate the failed address translation to
+    // the execute of the calling instruction so that it can decide
+    // whether to actually proceed with a prefetch.
+    CacheAccess(CB_prefetch(_)) => E_Load_Access_Fault(),
   }
 
 function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   addr : physaddr,
   width : int('n),
-  acc : MemoryAccessType(ext_access_type),
+  access : MemoryAccessType(mem_payload),
   priv : Privilege,
 ) -> option(ExceptionType) = {
 
@@ -99,21 +113,29 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 
   let width : xlenbits = to_bits(width);
 
+  // TODO for accesses of type CacheAccess:
+  //
+  // The CMO extensions impose the following constraints on the
+  // physical addresses in a given cache block: The PMP access control
+  // bits shall be the same for all physical addresses in the cache
+  // block, and if write permission is granted by the PMP access
+  // control bits, read permission shall also be granted.
+
   foreach (i from 0 to sys_pmp_count - 1) {
     let prev_pmpaddr = if i > 0 then pmpReadAddrReg(i - 1) else zeros();
     let cfg = pmpcfg_n[i];
 
     match pmpMatchAddr(addr, width, cfg, pmpReadAddrReg(i), prev_pmpaddr) {
       PMP_NoMatch      => (),
-      PMP_PartialMatch => return Some(accessToFault(acc)),
+      PMP_PartialMatch => return Some(accessToFault(access)),
       PMP_Match        => return (
-        if pmpCheckRWX(cfg, acc) | (priv == Machine & not(pmpLocked(cfg)))
+        if pmpCheckRWX(cfg, access) | (priv == Machine & not(pmpLocked(cfg)))
         then None()
-        else Some(accessToFault(acc))
+        else Some(accessToFault(access))
       ),
     };
   };
-  if priv == Machine then None() else Some(accessToFault(acc))
+  if priv == Machine then None() else Some(accessToFault(access))
 }
 
 function reset_pmp() -> unit = {
