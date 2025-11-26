@@ -108,7 +108,7 @@ union PTE_Check = {
 }
 
 // PRIVATE
-function check_PTE_permission(ac        : MemoryAccessType(mem_payload),
+function check_PTE_permission(access    : MemoryAccessType(mem_payload),
                               priv      : Privilege,
                               // Make eXecutable Readable
                               mxr       : bool,
@@ -127,7 +127,7 @@ function check_PTE_permission(ac        : MemoryAccessType(mem_payload),
     User       => pte_U,
     // SUM allows supervisor mode to access U-mode pages, but only for
     // loads and stores; not instruction fetch.
-    Supervisor => not(pte_U) | (do_sum & is_load_store(ac)),
+    Supervisor => not(pte_U) | (do_sum & is_load_store(access)),
     Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
     VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
@@ -137,7 +137,7 @@ function check_PTE_permission(ac        : MemoryAccessType(mem_payload),
   // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
 
   // Step 8 of VATP (see vmem.sail).
-  let access_ok : bool = match ac {
+  let access_ok : bool = match access {
     Load(_)                     => pte_R | (pte_X & mxr),
     Store(_)                    => pte_W,
     Atomic(_)                   => pte_W & (pte_R | (pte_X & mxr)),
@@ -168,14 +168,14 @@ function check_PTE_permission(ac        : MemoryAccessType(mem_payload),
 // Update PTE bits if needed; return new PTE if updated
 // PRIVATE
 function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
-  pte : bits('pte_size),
-  a   : MemoryAccessType(mem_payload),
+  pte    : bits('pte_size),
+  access : MemoryAccessType(mem_payload),
 ) -> option(bits('pte_size)) = {
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
-                        & (match a {
+                        & (match access {
                              InstructionFetch()          => false,
                              Load(_)                     => false,
                              Store(_)                    => true,
@@ -185,7 +185,7 @@ function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
                              CacheAccess(CB_prefetch(_)) => false,
                            });
   // Update 'accessed'-bit?
-  let update_a = (pte_flags[A] == 0b0) & not(is_prefetch_access(a));
+  let update_a = (pte_flags[A] == 0b0) & not(is_prefetch_access(access));
 
   if update_d | update_a then {
     let pte_flags = [pte_flags with

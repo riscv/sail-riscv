@@ -9,8 +9,8 @@
 
 // permission checks
 
-function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(mem_payload)) -> bool =
-  match acc {
+function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
     Load(_)                     => bool_bits(ent[R]),
     Store(_)                    => bool_bits(ent[W]),
     Atomic(_)                   => bool_bits(ent[R]) & bool_bits(ent[W]),
@@ -87,8 +87,8 @@ function pmpMatchAddr(
 
 // priority checks
 
-function accessToFault(acc : MemoryAccessType(mem_payload)) -> ExceptionType =
-  match acc {
+function accessToFault(access : MemoryAccessType(mem_payload)) -> ExceptionType =
+  match access {
     Load(_)                     => E_Load_Access_Fault(),
     Store(_)                    => E_SAMO_Access_Fault(),
     Atomic(_)                   => E_SAMO_Access_Fault(),
@@ -105,7 +105,7 @@ function accessToFault(acc : MemoryAccessType(mem_payload)) -> ExceptionType =
 function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   addr : physaddr,
   width : int('n),
-  acc : MemoryAccessType(mem_payload),
+  access : MemoryAccessType(mem_payload),
   priv : Privilege,
 ) -> option(ExceptionType) = {
 
@@ -127,15 +127,15 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 
     match pmpMatchAddr(addr, width, cfg, pmpReadAddrReg(i), prev_pmpaddr) {
       PMP_NoMatch      => (),
-      PMP_PartialMatch => return Some(accessToFault(acc)),
+      PMP_PartialMatch => return Some(accessToFault(access)),
       PMP_Match        => return (
-        if pmpCheckRWX(cfg, acc) | (priv == Machine & not(pmpLocked(cfg)))
+        if pmpCheckRWX(cfg, access) | (priv == Machine & not(pmpLocked(cfg)))
         then None()
-        else Some(accessToFault(acc))
+        else Some(accessToFault(access))
       ),
     };
   };
-  if priv == Machine then None() else Some(accessToFault(acc))
+  if priv == Machine then None() else Some(accessToFault(access))
 }
 
 function reset_pmp() -> unit = {
