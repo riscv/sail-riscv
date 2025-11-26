@@ -79,7 +79,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : MemoryAccessTy
   }) : option((bits(8 * 'n), mem_meta));
   match (t, result) {
     (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
-    (Load(Data), None())         => Err(E_Load_Access_Fault()),
+    (Load(_), None())            => Err(E_Load_Access_Fault()),
     (_, None())                  => Err(E_SAMO_Access_Fault()),
     (_, Some(v, m))              => Ok(v, m),
   }
@@ -88,14 +88,14 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : MemoryAccessTy
 function accessFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match accTy {
     InstructionFetch() => E_Fetch_Access_Fault(),
-    Load(Data)         => E_Load_Access_Fault(),
+    Load(_)            => E_Load_Access_Fault(),
     _                  => E_SAMO_Access_Fault(),
   }
 
 function alignmentFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match accTy {
     InstructionFetch() => E_Fetch_Addr_Align(),
-    Load(Data)         => E_Load_Addr_Align(),
+    Load(_)            => E_Load_Addr_Align(),
     _                  => E_SAMO_Addr_Align(),
   }
 
