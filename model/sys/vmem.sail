@@ -50,7 +50,7 @@ function write_pte forall 'n, 'n in {4, 8} . (
   pte_size : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, false, false, false)
+  mem_write_value_priv_meta(paddr, pte_size, pte, Store(Data), Supervisor, default_meta, false, false, false)
 
 // Read a Page Table Entry.
 function read_pte forall 'n, 'n in {4, 8} . (
@@ -64,7 +64,7 @@ function read_pte forall 'n, 'n in {4, 8} . (
 val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  MemoryAccessType(ext_access_type),  // Memory Load/Store/LoadStore/InstructionFetch
+  MemoryAccessType(mem_payload),// Memory Load/Store/AMO/InstructionFetch/CacheAccess
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum
@@ -134,7 +134,7 @@ function pt_walk(
             if   ppn[low_bits - 1 .. 0] != zeros()
             then return Err(PTW_Misaligned(), ext_ptw);
           };
-          // Steps 6, 7 (TODO: shadow stack protection), 8 of VATP.
+          // Steps 6, 7, 8 of VATP.
           match check_PTE_permission(ac, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, pte_failure) =>
               Err(ext_get_ptw_error(pte_failure), ext_ptw),
@@ -218,7 +218,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
   asid      : asidbits,
   vpn       : vpn_bits('v),
-  ac        : MemoryAccessType(ext_access_type),
+  ac        : MemoryAccessType(mem_payload),
   priv      : Privilege,
   mxr       : bool,
   do_sum    : bool,
@@ -265,7 +265,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  ac       : MemoryAccessType(ext_access_type),
+  ac       : MemoryAccessType(mem_payload),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -324,7 +324,7 @@ function translate forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  ac       : MemoryAccessType(ext_access_type),
+  ac       : MemoryAccessType(mem_payload),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -355,7 +355,7 @@ function get_satp forall 'v, is_sv_mode('v). (
 // PUBLIC: invoked from instr-fetch and load/store/amo
 function translateAddr(
   vAddr : virtaddr,
-  ac    : MemoryAccessType(ext_access_type),
+  ac    : MemoryAccessType(mem_payload),
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
@@ -363,6 +363,17 @@ function translateAddr(
   let effPriv = effectivePrivilege(ac, mstatus, cur_privilege);
 
   let mode = translationMode(effPriv);
+
+  if is_shadow_stack_access(ac) then {
+    // If satp.MODE (or vsatp.MODE when V=1) is set to Bare and the
+    // effective privilege mode is less than M, shadow stack
+    // instructions raise a store/AMO access-fault exception. When the
+    // effective privilege mode is M, memory access by an
+    // SSAMOSWAP.W/D instruction results in a store/AMO access-fault
+    // exception.
+     if (mode == Bare & effPriv != Machine) | (effPriv == Machine & is_shadow_stack_amo(ac))
+     then return Err(E_SAMO_Access_Fault(), init_ext_ptw);
+  };
 
   if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), init_ext_ptw);
 

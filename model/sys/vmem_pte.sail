@@ -80,7 +80,11 @@ function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b
 // PRIVATE: check if a PTE is valid
 function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0
-  | (pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
+  // The encoding R=0, W=1, and X=0, is defined to represent an SS
+  // page. When menvcfg.SSE=0, this encoding remains reserved.
+  // TODO: handle V=1 and henvcfg.SSE=0 at VS/VU levels
+  | (pte_flags[X] == 0b0 & pte_flags[W] == 0b1 & pte_flags[R] == 0b0 & menvcfg[SSE] == 0b0)
+  | (pte_flags[X] == 0b1 & pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
   // Note, the following requirements depend on the privileged spec version.
   // Early versions do not require this check. This will need to be behind
   // a flag when the Sail model allows specifying the spec version.
@@ -92,10 +96,10 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
 // ----------------
 // Check access permissions in PTE
 
-// TODO: Zicfiss will add PTE_No_Access here.
 union pte_check_failure = {
   PTE_No_Permission : unit,
-  PTE_Ext_Failure : ext_ptw_fail
+  PTE_No_Access     : unit,
+  PTE_Ext_Failure   : ext_ptw_fail
 }
 
 // For (non-standard) extensions: this function gets the extension-available bits
@@ -108,7 +112,7 @@ union PTE_Check = {
 }
 
 // PRIVATE
-function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
+function check_PTE_permission(ac        : MemoryAccessType(mem_payload),
                               priv      : Privilege,
                               // Make eXecutable Readable
                               mxr       : bool,
@@ -134,14 +138,62 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
   };
   if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
-  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
+  // Step 7 of VATP (see vmem.sail).
+  // Enforce Shadow Stack (SS) protection rules for a shadow stack page.
+  if not(pte_R) & pte_W & not(pte_X) then {
+    let shadow_stack_ok : bool =  match ac {
+      // Implicit accesses, including instruction fetches to an SS page, are not permitted.
+      // Such accesses will raise an access-fault exception appropriate to the access type.
+      InstructionFetch() => false,
+      // The shadow stack is readable by all instructions that only load from memory.
+      Load(_) => true,
+      // Memory mapped as an SS page cannot be written to by non-SS instructions.
+      // Attempts will raise a store/AMO access-fault exception.
+      Store(Data) => false,
+      Store(ShadowStack) => true,
+      Atomic(_, Data, Data) => false,
+      Atomic(_, ShadowStack, _) => true,
+      Atomic(_, _, ShadowStack) => true,
+      // Access to a SS page using cache-block operation (CBO.*)
+      // instructions is not permitted. Such accesses will raise a
+      // store/AMO access-fault exception.
+      CacheAccess(_) => false,
+    };
+    if not(shadow_stack_ok) then return PTE_Check_Failure((), PTE_No_Access());
+  } else if is_shadow_stack_access(ac) then {
+    // Should a shadow stack instruction access a page that is not
+    // designated as a shadow stack page and is not marked as
+    // read-only (pte.xwr=001), a store/AMO access-fault exception
+    // will be invoked. Conversely, if the page being accessed by a
+    // shadow stack instruction is a read-only page, a store/AMO
+    // page-fault exception will be triggered.
+    let is_read_only = pte_R & not(pte_W) & not(pte_X);
+    return PTE_Check_Failure((), if is_read_only then PTE_No_Permission() else PTE_No_Access());
+  };
 
   // Step 8 of VATP (see vmem.sail).
   let access_ok : bool = match ac {
-    Load(_)             => pte_R | (pte_X & mxr),
-    Store(_)            => pte_W,
-    LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
-    InstructionFetch(_) => pte_X,
+    Load(_)                     => pte_R | (pte_X & mxr),
+    Store(_)                    => pte_W,
+    Atomic(_)                   => pte_W & (pte_R | (pte_X & mxr)),
+    InstructionFetch(_)         => pte_X,
+    CacheAccess(CB_zero())      => pte_W,
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_R => pte_R | (pte_X & mxr),
+      PREFETCH_W => pte_W,
+      PREFETCH_X => pte_X,
+    },
+    // "A cache-block management instruction is permitted to access
+    // the specified cache block whenever a load instruction or store
+    // instruction is permitted to access the corresponding physical
+    // addresses."
+    //
+    // TODO: "If neither a load instruction nor store instruction is
+    // permitted to access the physical addresses, but an instruction
+    // fetch is permitted to access the physical addresses, whether a
+    // cache-block management instruction is permitted to access the
+    // cache block is UNSPECIFIED."
+    CacheAccess(CB_manage())    => pte_R | (pte_X & mxr) | pte_W,
   };
   if not(access_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
@@ -152,20 +204,23 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
 // PRIVATE
 function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   pte : bits('pte_size),
-  a   : MemoryAccessType(ext_access_type),
+  a   : MemoryAccessType(mem_payload),
 ) -> option(bits('pte_size)) = {
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match a {
-                             InstructionFetch() => false,
-                             Load(_)            => false,
-                             Store(_)           => true,
-                             LoadStore(_, _)    => true
+                             InstructionFetch()          => false,
+                             Load(_)                     => false,
+                             Store(_)                    => true,
+                             Atomic(_)                   => true,
+                             CacheAccess(CB_manage())    => false,
+                             CacheAccess(CB_zero())      => true,
+                             CacheAccess(CB_prefetch(_)) => false,
                            });
   // Update 'accessed'-bit?
-  let update_a = (pte_flags[A] == 0b0);
+  let update_a = (pte_flags[A] == 0b0) & not(is_prefetch_access(a));
 
   if update_d | update_a then {
     let pte_flags = [pte_flags with

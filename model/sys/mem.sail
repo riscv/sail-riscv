@@ -72,7 +72,7 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
   }
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : MemoryAccessType(ext_access_type), paddr : physaddr, width : int('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
+function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : MemoryAccessType(mem_payload), paddr : physaddr, width : int('n), aq : bool, rl: bool, res : bool, meta : bool) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
   let result = (match read_kind_of_flags(aq, rl, res) {
     Some(rk) => Some(read_ram(rk, paddr, width, meta)),
     None()   => None()
@@ -85,17 +85,20 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : MemoryAccessTy
   }
 }
 
-function accessFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
+function accessFaultFromAccessType(accTy : MemoryAccessType(mem_payload)) -> ExceptionType =
   match accTy {
     InstructionFetch() => E_Fetch_Access_Fault(),
     Load(Data)         => E_Load_Access_Fault(),
+    // The wildcard is valid for Load(ShadowStack).
     _                  => E_SAMO_Access_Fault(),
   }
 
-function alignmentFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
+function alignmentFaultFromAccessType(accTy : MemoryAccessType(mem_payload)) -> ExceptionType =
   match accTy {
     InstructionFetch() => E_Fetch_Addr_Align(),
     Load(Data)         => E_Load_Addr_Align(),
+    // Misaligned shadow stack accesses should have been caught earlier.
+    Load(ShadowStack)  => internal_error(__FILE__, __LINE__, "misaligned shadow stack access to PMA"),
     _                  => E_SAMO_Addr_Align(),
   }
 
@@ -103,7 +106,7 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 (
   paddr      : physaddr,
   width      : int('n),
-  accTy      : MemoryAccessType(ext_access_type),
+  accTy      : MemoryAccessType(mem_payload),
   res_or_con : bool,
 )  -> option(ExceptionType) = {
   match matching_pma(pma_regions, paddr, width) {
@@ -120,15 +123,33 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match accTy {
             InstructionFetch() => attributes.executable,
-            Load(_)            => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
-            Store(_)           => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
-            // TODO: Extend MemoryAccessType with the specific type of AMO operation. For now we assume all memory
+            Load(Data)         => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
+            Store(Data)        => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+
+            // TODO: Add Atomic attributes to PMA and config. For now we assume all memory
             // supports all AMO operations.
-            LoadStore(_, _)    => attributes.readable & attributes.writable,
-            // TODO: Extend MemoryAccessType with a Cache() option. See https://github.com/riscv/sail-riscv/pull/792
-            // Cache(Zero)     => attributes.writable & attributes.supports_cbo_zero,
-            // Cache(_)        => internal_error(__FILE__, __LINE__,
-            //                                   "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
+            // XXX
+            Atomic(_, Data, Data) => attributes.readable & attributes.writable,
+
+            // TODO: The PMAs shall be the same for all physical
+            // addresses in the cache block, and if write permission
+            // is granted by the supported access type PMAs, read
+            // permission shall also be granted.
+            CacheAccess(CB_zero())      => attributes.writable & attributes.supports_cbo_zero,
+            CacheAccess(CB_manage())    => attributes.readable | attributes.writable,
+            CacheAccess(CB_prefetch(p)) => match p {
+              PREFETCH_R => attributes.readable,
+              PREFETCH_W => attributes.writable,
+              PREFETCH_X => attributes.executable,
+            },
+
+            // The PMA checks are extended to require memory referenced by shadow stack instructions to be idempotent.
+            Load(ShadowStack)  => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone) & attributes.read_idempotent,
+            Store(ShadowStack) => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone) & attributes.write_idempotent,
+            // The SSAMOSWAP.W/D instructions require the PMA of the accessed memory range to provide AMOSwap level support.
+            // TODO: Add the AMOSwap requirement.
+            Atomic(_, ShadowStack, _) => attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent,
+            Atomic(_, _, ShadowStack) => attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent,
           };
 
           if get_config_print_pma() & not(canAccess)
@@ -158,7 +179,7 @@ function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : Exceptio
 
 // Check if access is permitted according to PMPs and PMAs.
 function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
-  typ : MemoryAccessType(ext_access_type),
+  typ : MemoryAccessType(mem_payload),
   priv : Privilege,
   paddr : physaddr,
   width : int('n),
@@ -176,7 +197,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
-  t : MemoryAccessType(ext_access_type),
+  t : MemoryAccessType(mem_payload),
   priv : Privilege,
   paddr : physaddr,
   width : int('n),
@@ -196,10 +217,10 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
 
 // Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
-val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
-val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), Privilege, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
-val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
-val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), Privilege, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
+val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), Privilege, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
+val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), Privilege, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
 
 // The most generic memory read operation
 function mem_read_priv_meta (typ, priv, paddr, width, aq, rl, res, meta) = {
@@ -244,7 +265,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   paddr : physaddr,
   width : int('n),
   data: bits(8 * 'n),
-  typ : MemoryAccessType(ext_access_type),
+  typ : MemoryAccessType(mem_payload),
   priv : Privilege,
   meta: mem_meta,
   aq : bool,
@@ -268,7 +289,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
 // Memory write with an explicit metadata value.  Metadata writes are
 // currently assumed to have the same alignment constraints as their
 // data.
-val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(ext_access_type), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
+val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl, con) = {
   if (rl | con) & not(is_aligned_addr(paddr, width))
   then Err(E_SAMO_Addr_Align())
@@ -282,13 +303,8 @@ function mem_write_value_priv_meta (paddr, width, value, typ, priv, meta, aq, rl
   }
 }
 
-// Memory write with explicit Privilege, implicit MemoryAccessType and metadata
-val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_priv (paddr, width, value, priv, aq, rl, con) =
-  mem_write_value_priv_meta(paddr, width, value, Store(default_write_acc), priv, default_meta, aq, rl, con)
-
-// Memory write with explicit metadata and MemoryAccessType, implicit and Privilege
-val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), ext_access_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
+// Memory write with explicit metadata and MemoryAccessType, and implicit Privilege
+val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), mem_payload, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_meta (paddr, width, value, ext_acc, meta, aq, rl, con) = {
   let typ = Store(ext_acc);
   let ep = effectivePrivilege(typ, mstatus, cur_privilege);

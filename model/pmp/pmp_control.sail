@@ -9,14 +9,33 @@
 
 // permission checks
 
-function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(ext_access_type)) -> bool =
+function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(mem_payload)) -> bool =
   match acc {
-    Load(_)            => ent[R] == 0b1,
-    Store(_)           => ent[W] == 0b1,
-    LoadStore(_)       => ent[R] == 0b1 & ent[W] == 0b1,
-    InstructionFetch() => ent[X] == 0b1,
+    InstructionFetch()          => bool_bits(ent[X]),
+    Load(Data)                  => bool_bits(ent[R]),
+    Store(Data)                 => bool_bits(ent[W]),
+    Atomic(_, Data, Data)       => bool_bits(ent[R]) & bool_bits(ent[W]),
+    // The PMP checks are extended to require read-write permission
+    // for memory accessed by shadow stack instructions.
+    Load(ShadowStack)           => bool_bits(ent[R]) & bool_bits(ent[W]),
+    Store(ShadowStack)          => bool_bits(ent[R]) & bool_bits(ent[W]),
+    Atomic(_, ShadowStack, _)   => bool_bits(ent[R]) & bool_bits(ent[W]),
+    Atomic(_, _, ShadowStack)   => bool_bits(ent[R]) & bool_bits(ent[W]),
+    // A cache-block management instruction is permitted to access the
+    // specified cache block whenever a load instruction or store
+    // instruction is permitted to access the corresponding physical
+    // addresses.
+    CacheAccess(CB_manage())    => bool_bits(ent[R]) | bool_bits(ent[W]),
+    // A cache-block zero instruction is permitted to access the
+    // specified cache block whenever a store instruction is permitted
+    // to access the corresponding physical addresses.
+    CacheAccess(CB_zero())      => bool_bits(ent[W]),
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_I => bool_bits(ent[X]),
+      PREFETCH_R => bool_bits(ent[R]),
+      PREFETCH_X => bool_bits(ent[W]),
+    },
   }
-
 
 // matching logic
 
@@ -80,24 +99,52 @@ function pmpMatchAddr(
 
 // priority checks
 
-function accessToFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType =
+function accessToFault(acc : MemoryAccessType(mem_payload)) -> ExceptionType =
   match acc {
-    Load(_)            => E_Load_Access_Fault(),
-    Store(_)           => E_SAMO_Access_Fault(),
-    LoadStore(_)       => E_SAMO_Access_Fault(),
-    InstructionFetch() => E_Fetch_Access_Fault(),
+    InstructionFetch()          => E_Fetch_Access_Fault(),
+    Load(Data)                  => E_Load_Access_Fault(),
+    Store(Data)                 => E_SAMO_Access_Fault(),
+    Atomic(_, Data, Data)       => E_SAMO_Access_Fault(),
+    // If the PMP does not provide read-write permissions or if the
+    // accessed memory is not idempotent then a store/AMO access-fault
+    // exception is raised for the shadow stack instructions.
+    Load(ShadowStack)           => E_SAMO_Access_Fault(),
+    Store(ShadowStack)          => E_SAMO_Access_Fault(),
+    Atomic(_, ShadowStack, _)   => E_SAMO_Access_Fault(),
+    Atomic(_, _, ShadowStack)   => E_SAMO_Access_Fault(),
+    // If access to the cache block is not permitted by PMP, a
+    // cache-block management instruction raises a store access-fault
+    // exception.
+    CacheAccess(CB_manage())    => E_SAMO_Access_Fault(),
+    // If access to the cache block is not permitted by PMP, a
+    // cache-block zero instruction raises a store access-fault
+    // exception.
+    CacheAccess(CB_zero())      => E_SAMO_Access_Fault(),
+    // Though prefetches don't raise exceptions, we return a nominal
+    // exception here to propagate the failed address translation to
+    // the execute of the calling instruction so that it can decide
+    // whether to actually proceed with a prefetch.
+    CacheAccess(CB_prefetch(_)) => E_Load_Access_Fault(),
   }
 
 function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   addr : physaddr,
   width : int('n),
-  acc : MemoryAccessType(ext_access_type),
+  acc : MemoryAccessType(mem_payload),
   priv : Privilege,
 ) -> option(ExceptionType) = {
 
   if sys_pmp_count == 0 then return None();
 
   let width : xlenbits = to_bits(width);
+
+  // TODO for accesses of type CacheAccess:
+  //
+  // The CMO extensions impose the following constraints on the
+  // physical addresses in a given cache block: The PMP access control
+  // bits shall be the same for all physical addresses in the cache
+  // block, and if write permission is granted by the PMP access
+  // control bits, read permission shall also be granted.
 
   foreach (i from 0 to sys_pmp_count - 1) {
     let prev_pmpaddr = if i > 0 then pmpReadAddrReg(i - 1) else zeros();
