@@ -115,8 +115,8 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
                               // permit Supervisor User Memory access
                               do_sum    : bool,
                               pte_flags : PTE_Flags,
-                              ext       : PTE_Ext,
-                              ext_ptw   : ext_ptw) -> PTE_Check = {
+                              _ext      : PTE_Ext,
+                              _ext_ptw  : ext_ptw) -> PTE_Check = {
   let pte_U = bits_to_bool(pte_flags[U]);
   let pte_R = bits_to_bool(pte_flags[R]);
   let pte_W = bits_to_bool(pte_flags[W]);

@@ -96,7 +96,7 @@ function pmpLocked(cfg: Pmpcfg_ent) -> bool =
 function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
    (cfg[L] == 0b1) & (pmpAddrMatchType_encdec(cfg[A]) == TOR)
 
-function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
+function pmpWriteCfg(_n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
   if pmpLocked(cfg) then cfg
   else {
     // Bits 5 and 6 are zero.

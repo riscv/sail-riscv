@@ -27,12 +27,12 @@ mapping clause assembly = ZIMOP_MOP_R(mop, rs1, rd)
 mapping clause assembly = ZIMOP_MOP_RR(mop, rs2, rs1, rd)
   <-> "mop.rr." ^ dec_bits_3(mop) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-function clause execute ZIMOP_MOP_R(mop, rs1, rd) = {
+function clause execute ZIMOP_MOP_R(_mop, _rs1, rd) = {
   X(rd) = zeros();
   RETIRE_SUCCESS
 }
 
-function clause execute ZIMOP_MOP_RR(mop, rs2, rs1, rd) = {
+function clause execute ZIMOP_MOP_RR(_mop, _rs2, _rs1, rd) = {
   X(rd) = zeros();
   RETIRE_SUCCESS
 }

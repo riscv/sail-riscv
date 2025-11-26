@@ -74,7 +74,7 @@ register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
 // Indexed by the lowest bits of the VPN.
 function tlb_hash forall 'v, is_sv_mode('v) . (
-  sv_mode : int('v),
+  _sv_mode : int('v),
   vpn     : vpn_bits('v),
 ) -> tlb_index_range =
   unsigned(vpn[5 .. 0])

@@ -33,7 +33,7 @@ function ptw_error_to_str(e : PTW_Error) -> string = {
     PTW_No_Permission()    => "no-permission",
     PTW_Misaligned()       => "misaligned-superpage",
     PTW_PTE_Needs_Update() => "pte-update-needed",
-    PTW_Ext_Error(e)       => "extension-error"
+    PTW_Ext_Error(_)       => "extension-error"
   }
 }
 

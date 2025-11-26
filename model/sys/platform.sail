@@ -328,7 +328,7 @@ function htif_store(Physaddr(paddr), width, data) = {
         // reset to ack
         reset_htif()
       },
-      d => print("htif-???? cmd: " ^ bits_str(data))
+      _ => print("htif-???? cmd: " ^ bits_str(data))
     }
   };
   Ok(true)

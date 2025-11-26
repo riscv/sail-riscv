@@ -95,7 +95,7 @@ mapping clause encdec = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
   when (currentlyEnabled(Ext_Zvfh)   & get_sew() == 16)
      | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
-function clause execute RFWVVTYPE(funct6, vm, vs2, vs1, vd) = {
+function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);

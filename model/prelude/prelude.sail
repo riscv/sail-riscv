@@ -60,7 +60,7 @@ val print_log = pure {interpreter: "print_endline", c: "print_log", lem: "print_
 // Print an instruction to the --trace log file. The second argument is PC which can be used for
 // symbolization. This is only supported by the C backend so other backends just do a normal print.
 val print_log_instr = pure {c: "print_log_instr"} : (string, bits(64)) -> unit
-function print_log_instr(message, pc) = print_log(message)
+function print_log_instr(message, _pc) = print_log(message)
 
 val print_step = pure {c: "print_step"} : unit -> unit
 function print_step() = ()
