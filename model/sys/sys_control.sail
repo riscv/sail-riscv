@@ -273,8 +273,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
     E_Illegal_Instr() => illegal_instruction_writes_xtval,
-    E_Breakpoint(BRK_SOFTWARE) => software_breakpoint_writes_xtval,
-    E_Breakpoint(BRK_HARDWARE) => hardware_breakpoint_writes_xtval,
+    E_Breakpoint(Brk_Software) => software_breakpoint_writes_xtval,
+    E_Breakpoint(Brk_Hardware) => hardware_breakpoint_writes_xtval,
     E_Load_Addr_Align() => misaligned_load_writes_xtval,
     E_Load_Access_Fault() => load_access_fault_writes_xtval,
     E_Load_Page_Fault() => load_page_fault_writes_xtval,

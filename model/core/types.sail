@@ -170,7 +170,7 @@ overload to_str = {interruptType_to_str}
 
 // architectural exception definitions
 
-enum breakpoint_cause = {BRK_SOFTWARE, BRK_HARDWARE}
+enum breakpoint_cause = {Brk_Software, Brk_Hardware}
 
 union ExceptionType = {
   E_Fetch_Addr_Align   : unit,
@@ -218,8 +218,8 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Software_Check()     <-> 0b010010, // 18
 
   // breakpoints
-  E_Breakpoint(BRK_SOFTWARE) <-> 0b000011, // 3
-  E_Breakpoint(BRK_HARDWARE) <-> 0b000011, // 3
+  E_Breakpoint(Brk_Software) <-> 0b000011, // 3
+  E_Breakpoint(Brk_Hardware) <-> 0b000011, // 3
 
   // extensions
   E_Extension(e)         <-> ext_exc_type_bits(e)
@@ -247,8 +247,8 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_Software_Check()     => "software-check-fault",
 
     // breakpoints
-    E_Breakpoint(BRK_SOFTWARE) => "software-breakpoint",
-    E_Breakpoint(BRK_HARDWARE) => "hardware-breakpoint",
+    E_Breakpoint(Brk_Software) => "software-breakpoint",
+    E_Breakpoint(Brk_Hardware) => "hardware-breakpoint",
 
     // extensions
     E_Extension(e)         => ext_exc_type_to_str(e)
