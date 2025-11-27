@@ -278,16 +278,7 @@ platform model with any ISA implementation choices if specified,
 loads the ELF program or OS image into raw memory, including any ROM
 firmware and DeviceTree binary blobs, and initializes the memory map.
 
-The generated C model `sail_riscv_sim` is built from the Sail sources
-by the Sail compiler and contains calls to the platform interface
-[riscv_platform.h](../c_emulator/riscv_platform.h) for
-platform-specific information and to the callback interface
-[riscv_callbacks.h](../c_emulator/riscv_callbacks.h) for state-change
-events and logging. These provide the definitions declared as
-externally specified in the Sail files
-[platform.sail](../model/sys/platform.sail),
-[sys_reservation.sail](../model/sys/sys_reservation.sail) and
-[callbacks.sail](../model/core/callbacks.sail).
+TODO: Update description.
 
 The Sail run-time system provides a C library for use with its C backend, which
 provides the low-level details of the implementation of raw memory and
