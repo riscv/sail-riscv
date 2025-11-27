@@ -38,17 +38,11 @@ add_custom_target(generated_config_schema DEPENDS config_schema.h)
 add_library(riscv_model
     elf_loader.cpp
     elf_loader.h
-    riscv_callbacks.cpp
-    riscv_callbacks.h
     riscv_callbacks_if.h
     riscv_config.h
-    riscv_platform.cpp
-    riscv_platform.h
-    riscv_platform_impl.cpp
-    riscv_platform_impl.h
-    riscv_prelude.cpp
-    riscv_prelude.h
-    riscv_sail.h
+    riscv_platform_if.h
+    riscv_model_impl.cpp
+    riscv_model_impl.h
     riscv_softfloat.cpp
     riscv_softfloat.h
     config_utils.cpp
@@ -58,7 +52,7 @@ add_library(riscv_model
     sail_riscv_version.h
     "${CMAKE_CURRENT_BINARY_DIR}/config_schema.h"
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"
-    "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
+    "${CMAKE_BINARY_DIR}/sail_riscv_model.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
 )
 
@@ -66,7 +60,7 @@ target_include_directories(riscv_model
     PUBLIC
         # So the generated C can find riscv_platform/prelude.h"
         "${CMAKE_CURRENT_SOURCE_DIR}"
-        # So `riscv_sail.h` can find `sail_riscv_model.h`.
+        # So we can find `sail_riscv_model.h`.
         "${CMAKE_BINARY_DIR}"
         # So `config_utils.cpp` can find `config_schema.h`
         "${CMAKE_CURRENT_BINARY_DIR}"
@@ -97,7 +91,7 @@ set(_generated_c_warning_opt_out
     -Wno-uninitialized
 )
 set_source_files_properties(
-    "${CMAKE_BINARY_DIR}/sail_riscv_model.c"
+    "${CMAKE_BINARY_DIR}/sail_riscv_model.cpp"
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
     PROPERTIES COMPILE_OPTIONS "${_generated_c_warning_opt_out}"
 )
