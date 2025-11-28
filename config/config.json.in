@@ -27,11 +27,11 @@
       "software_check": true,
       "reserved_exceptions": false
     },
-    "reserved_behaviour":{
+    "reserved_behaviour": {
       // The configuration option determines how to handle the reserved behaviour `amocas_odd_registers`.
       // "ignore"  – ignore the condition and continue executing the AMO instruction.
       // "illegal" – treat it as an illegal instruction.
-      "amocas_odd_registers":"illegal"
+      "amocas_odd_registers": "illegal"
     }
   },
   "memory": {
