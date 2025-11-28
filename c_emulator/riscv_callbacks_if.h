@@ -13,7 +13,7 @@ public:
   virtual void pre_step_callback([[maybe_unused]] bool is_waiting) { }
 
   // Callback invoked after each step
-  virtual void post_step([[maybe_unused]] bool is_waiting) { }
+  virtual void post_step_callback([[maybe_unused]] bool is_waiting) { }
 
   // TODO: finding ways to improve the format
   virtual void fetch_callback([[maybe_unused]] sbits opcode) { }
