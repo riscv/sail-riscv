@@ -415,7 +415,7 @@ void run_sail(void)
       }
     }
 
-    callbacks_pre_step(is_waiting);
+    call_pre_step_callbacks(is_waiting);
 
     { /* run a Sail step */
       sail_int sail_step;
@@ -432,7 +432,7 @@ void run_sail(void)
       }
     }
 
-    callbacks_post_step(is_waiting);
+    call_post_step_callbacks(is_waiting);
 
     if (!is_waiting) {
       if (config_print_step) {
