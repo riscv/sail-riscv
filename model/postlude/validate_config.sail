@@ -306,6 +306,16 @@ private function check_extension_param_constraints() -> bool = {
   valid
 }
 
+function check_physaddr_bits() -> bool = {
+  if physaddr_bits > 34 & xlen == 32 then {
+    print_endline("physaddr_bits is bigger than 34 when xlen is 32");
+    false
+  } else if physaddr_bits > 32 & xlen == 32 & not(hartSupports(Ext_Sv32)) then {
+    print_endline("Sv32 is not enabled when xlen is 32 but physaddr_bits is bigger than 32");
+    false
+  } else true
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -315,4 +325,5 @@ function config_is_valid() -> bool = {
   & check_pmp()
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
+  & check_physaddr_bits()
 }
