@@ -19,7 +19,7 @@ void remove_callback(callbacks_if *cb)
 }
 
 // Invoke pre_step on all registered callbacks before each step
-void callbacks_pre_step(bool is_waiting)
+void pre_step_callback(bool is_waiting)
 {
   for (auto c : callbacks) {
     c->pre_step(is_waiting);
