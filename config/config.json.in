@@ -27,11 +27,9 @@
       "software_check": true,
       "reserved_exceptions": false
     },
-    // Determines how the model handles certain reserved behaviors defined in the RISC-V specification.
-    // When enabled (true), the model will immediately abort execution upon encountering a reserved behavior.
-    // When disabled (false), the model will ignore these behaviors.
-    // By default, strict mode is disabled.
-    "reserved_behaviour_strict": false
+    "reserved_behaviour":{
+      "amocas_odd_registers":"exception"
+    }
   },
   "memory": {
     "pmp": {

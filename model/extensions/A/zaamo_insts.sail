@@ -80,10 +80,10 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
           let rs2_num = unsigned(regidx_bits(rs2));
           let rd_num = unsigned(regidx_bits(rd));
           if (rs2_num%2!=0 |rd_num%2!=0)  & (width>xlen_bytes) & (op==AMOCAS)    then{
-            match (config base.reserved_behaviour_strict: bool ) {
-              true => internal_error(__FILE__, __LINE__, "Reserved behaviour: AMOCAS with odd-numbered registers"),
-              false => ()
-            }
+            match (config base.reserved_behaviour.amocas_odd_registers: string ) {
+              "illegal" => return  Illegal_Instruction(),
+              "ignore" => ()
+            };
           };
 
           // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
