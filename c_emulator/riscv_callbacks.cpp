@@ -27,7 +27,7 @@ void pre_step_callback(bool is_waiting)
 }
 
 // Invoke post_step on all registered callbacks after each step
-void callbacks_post_step(bool is_waiting)
+void post_step_callback(bool is_waiting)
 {
   for (auto c : callbacks) {
     c->post_step(is_waiting);
