@@ -82,6 +82,8 @@ bool config_enable_rvfi = false;
 struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
 uint64_t insn_limit = 0;
+std::optional<uint64_t> rng_seed;
+
 #ifdef SAILCOV
 char *sailcov_file = nullptr;
 #endif
@@ -163,6 +165,7 @@ static void setup_options(CLI::App &app)
       ->option_text("<int> (within [1 - 65535])");
   app.add_option("--inst-limit", insn_limit, "Instruction limit")
       ->option_text("<uint>");
+  app.add_option("--rng-seed", rng_seed, "RNG seed")->option_text("<uint>");
 #ifdef SAILCOV
   app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")
       ->option_text("<file>");
@@ -597,6 +600,8 @@ int inner_main(int argc, char **argv)
   } else {
     sail_config_set_string(get_default_config());
   }
+
+  rv_set_rng_seed(rng_seed);
 
   // Initialize platform.
   init_platform_constants();

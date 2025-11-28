@@ -3,10 +3,19 @@
 #include <stdio.h>
 #include <random>
 
+static std::optional<uint64_t> rng_seed;
+
+// Must be called before rv_16_random_bits().
+void rv_set_rng_seed(std::optional<uint64_t> seed)
+{
+  rng_seed = seed;
+}
+
 // Provides entropy for the scalar cryptography extension.
 uint64_t rv_16_random_bits(void)
 {
-  static std::mt19937_64 rng(0);
+  static std::mt19937_64 rng(rng_seed.has_value() ? *rng_seed
+                                                  : std::random_device {}());
   return static_cast<uint16_t>(rng());
 }
 
