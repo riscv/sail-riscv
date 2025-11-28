@@ -79,9 +79,9 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   //  Using odd-numbered registers for rs2 or rd in AMOCAS.D (RV32) or AMOCAS.Q (RV64) constitutes reserved behavior.
   let rs2_num = unsigned(regidx_bits(rs2));
   let rd_num = unsigned(regidx_bits(rd));
-  if (rs2_num%2!=0 |rd_num%2!=0)  & (width>xlen_bytes) & (op==AMOCAS)    then{
-    match (config base.reserved_behaviour.amocas_odd_registers: string ) {
-      "illegal" => return  Illegal_Instruction(),
+  if (rs2_num % 2 != 0 | rd_num % 2 != 0) & (width > xlen_bytes) & (op == AMOCAS) then {
+    match (config base.reserved_behaviour.amocas_odd_registers : string) {
+      "illegal" => return Illegal_Instruction(),
       "ignore" => ()
     };
   };
