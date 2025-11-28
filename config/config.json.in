@@ -55,6 +55,14 @@
     }
   },
   "memory": {
+    // This specifies the number of implemented physical address bits.
+    // This is less than or equal to 32 for RV32 without Sv32, 34 for
+    // RV32 with Sv32, and 64 for RV64. Architectural bits higher than
+    // physaddr_bits in physical addresses are effectively read-only zero.
+    // This is required to be 13 or higher to avoid representing empty
+    // bitvectors in the model and since it is unlikely real implementations
+    // will have lower values.
+    "physaddr_bits": @CONFIG__PHYSADDR__BITS@,
     "pmp": {
       "grain": 0,
       // This specifies the number of PMP entries present.
