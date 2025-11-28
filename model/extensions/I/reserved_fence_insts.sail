@@ -12,7 +12,7 @@ mapping clause encdec = FENCE_RESERVED(fm, pred, succ, rs, rd)
   <-> fm : bits(4) @ pred : bits(4) @ succ : bits(4) @ encdec_reg(rs) @ 0b000 @ encdec_reg(rd) @ 0b0001111
       when (fm != 0b0000 & fm != 0b1000) | rs != zreg | rd != zreg
 
-function clause execute FENCE_RESERVED(fm, pred, succ, rs, rd) = RETIRE_SUCCESS
+function clause execute FENCE_RESERVED(_fm, _pred, _succ, _rs, _rd) = RETIRE_SUCCESS
 
 mapping clause assembly = FENCE_RESERVED(fm, pred, succ, rs, rd)
   <-> "fence.reserved." ^ fence_bits(pred) ^ "." ^ fence_bits(succ) ^ "."
@@ -26,7 +26,7 @@ mapping clause encdec = FENCEI_RESERVED(imm, rs, rd)
   <-> imm : bits(12) @ encdec_reg(rs) @ 0b001 @ encdec_reg(rd) @ 0b0001111
       when imm != 0b000000000000 | rs != zreg | rd != zreg
 
-function clause execute FENCEI_RESERVED(imm, rs, rd) = RETIRE_SUCCESS
+function clause execute FENCEI_RESERVED(_imm, _rs, _rd) = RETIRE_SUCCESS
 
 mapping clause assembly = FENCEI_RESERVED(imm, rs, rd)
   <-> "fence.i.reserved." ^ reg_name(rd) ^ "." ^ reg_name(rs) ^ "." ^ hex_bits_12(imm)

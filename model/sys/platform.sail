@@ -123,7 +123,7 @@ function clint_load(t, Physaddr(addr), width) = {
     then print_log("clint[" ^ bits_str(addr) ^ "] -> <not-mapped>");
     match t {
       InstructionFetch() => Err(E_Fetch_Access_Fault()),
-      Load(Data)         => Err(E_Load_Access_Fault()),
+      Load(_)            => Err(E_Load_Access_Fault()),
       _                  => Err(E_SAMO_Access_Fault())
     }
   }
@@ -266,7 +266,7 @@ function htif_load(acc, Physaddr(paddr), width) = {
   then    Ok(zero_extend(32, htif_tohost[63..32])) // FIXME: Redundant zero_extend currently required by Lem backend
   else match acc {
     InstructionFetch() => Err(E_Fetch_Access_Fault()),
-    Load(Data)         => Err(E_Load_Access_Fault()),
+    Load(_)            => Err(E_Load_Access_Fault()),
     _                  => Err(E_SAMO_Access_Fault())
   }
 }
@@ -328,7 +328,7 @@ function htif_store(Physaddr(paddr), width, data) = {
         // reset to ack
         reset_htif()
       },
-      d => print("htif-???? cmd: " ^ bits_str(data))
+      _ => print("htif-???? cmd: " ^ bits_str(data))
     }
   };
   Ok(true)
@@ -352,7 +352,7 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : MemoryAccessType(e
   then htif_load(t, paddr, width)
   else match t {
     InstructionFetch() => Err(E_Fetch_Access_Fault()),
-    Load(Data)         => Err(E_Load_Access_Fault()),
+    Load(_)            => Err(E_Load_Access_Fault()),
     _                  => Err(E_SAMO_Access_Fault())
   }
 

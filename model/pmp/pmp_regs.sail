@@ -96,7 +96,7 @@ function pmpLocked(cfg: Pmpcfg_ent) -> bool =
 function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
    (cfg[L] == 0b1) & (pmpAddrMatchType_encdec(cfg[A]) == TOR)
 
-function pmpWriteCfg(n: range(0, 63), cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
+function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
   if pmpLocked(cfg) then cfg
   else {
     // Bits 5 and 6 are zero.
@@ -132,7 +132,7 @@ function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
     foreach (i from 0 to 3) {
       let idx = n*4 + i;
       if idx < sys_pmp_usable_count then
-        pmpcfg_n[idx]  = pmpWriteCfg(idx,  pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
+        pmpcfg_n[idx]  = pmpWriteCfg(pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
     }
   }
   else {
@@ -140,7 +140,7 @@ function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
     foreach (i from 0 to 7) {
       let idx = n*4 + i;
       if idx < sys_pmp_usable_count then
-        pmpcfg_n[idx]  = pmpWriteCfg(idx,  pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
+        pmpcfg_n[idx]  = pmpWriteCfg(pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
     }
   }
 }

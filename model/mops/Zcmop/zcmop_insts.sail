@@ -17,6 +17,6 @@ mapping clause encdec_compressed = ZCMOP(mop)
 mapping clause assembly = ZCMOP(mop)
   <-> "c.mop." ^ dec_bits_4(mop @ 0b1)
 
-function clause execute ZCMOP(mop) = {
+function clause execute ZCMOP(_mop) = {
   RETIRE_SUCCESS
 }

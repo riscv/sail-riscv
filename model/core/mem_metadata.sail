@@ -13,6 +13,6 @@ type mem_meta = unit
 
 let default_meta : mem_meta = ()
 
-function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, meta : mem_meta) -> unit = ()
+function __WriteRAM_Meta(_addr : physaddrbits, _width : mem_access_width, _meta : mem_meta) -> unit = ()
 
-function __ReadRAM_Meta(addr : physaddrbits, width : mem_access_width) -> mem_meta = default_meta
+function __ReadRAM_Meta(_addr : physaddrbits, _width : mem_access_width) -> mem_meta = default_meta

@@ -475,7 +475,7 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   ]
 }
 
-function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
+function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // M-mode interrupt delegation bits "should" be hardwired to 0.
   // FIXME: needs verification against eventual spec language.
   [Mk_Minterrupts(v) with MEI = 0b0, MTI = 0b0, MSI = 0b0]
@@ -500,7 +500,7 @@ bitfield Medeleg : bits(64) = {
   Fetch_Addr_Align  : 0
 }
 
-function legalize_medeleg(o : Medeleg, v : bits(64)) -> Medeleg = {
+function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
   // M-EnvCalls delegation is not supported
   [Mk_Medeleg(v) with MEnvCall = 0b0]
 }
@@ -623,7 +623,7 @@ bitfield Counteren : bits(32) = {
 }
 
 // scounteren
-function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
+function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren = {
   let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
   Mk_Counteren(v[31 .. 0] & supported_counters)
 }
@@ -635,7 +635,7 @@ function clause read_CSR(0x106) = zero_extend(scounteren.bits)
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); Ok(zero_extend(scounteren.bits)) }
 
 // mcounteren
-function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
+function legalize_mcounteren(_c : Counteren, v : xlenbits) -> Counteren = {
   let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
   Mk_Counteren(v[31 .. 0] & supported_counters)
 }
@@ -654,7 +654,7 @@ bitfield Counterin : bits(32) = {
   CY : 0
 }
 
-function legalize_mcountinhibit(c : Counterin, v : xlenbits) -> Counterin = {
+function legalize_mcountinhibit(_c : Counterin, v : xlenbits) -> Counterin = {
   // Note the 0 in 0b101 is because the mtimer counter can't be paused.
   let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b101;
   Mk_Counterin(v[31 .. 0] & supported_counters)

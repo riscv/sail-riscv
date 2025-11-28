@@ -95,7 +95,11 @@ mapping clause encdec = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
   when (currentlyEnabled(Ext_Zvfh)   & get_sew() == 16)
      | (currentlyEnabled(Ext_Zve64d) & get_sew() == 32)
 
-function clause execute RFWVVTYPE(funct6, vm, vs2, vs1, vd) = {
+// `funct6` selects between the ordered (`vfredosum`) and unordered
+// (`vfredusum`) variants of the instruction.  This function currently
+// only implements the ordered variant, as it is a valid
+// implementation of the unordered variant; hence `funct6` is ignored.
+function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);

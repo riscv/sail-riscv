@@ -228,7 +228,7 @@ function write_velem_quad(vd, SEW, input, i) = {
 // vector. The parameter n is implicit to help proof the proof assistant
 // backends infer its value.
 val get_velem_oct_vec : forall 'n 'm 'p, 'n > 0 & 8 <= 'm <= 64 & 'p >= 0 & 8 * 'p + 7 < 'n. (implicit('n), vector('n, bits('m)), int('p)) -> vector(8, bits('m))
-function get_velem_oct_vec(n, v, i) = [ v[8 * i + 7], v[8 * i + 6], v[8 * i + 5], v[8 * i + 4], v[8 * i + 3], v[8 * i + 2], v[8 * i + 1], v[8 * i] ]
+function get_velem_oct_vec(_n, v, i) = [ v[8 * i + 7], v[8 * i + 6], v[8 * i + 5], v[8 * i + 4], v[8 * i + 3], v[8 * i + 2], v[8 * i + 1], v[8 * i] ]
 
 // Writes each of the 8 elements from the input vector to the vector register vd, starting at position 8 * i
 val write_velem_oct_vec : forall 'n, is_sew_bitsize('n) . (vregidx, int('n), vector(8, bits('n)), nat) -> unit
@@ -273,7 +273,7 @@ function get_end_element() -> int = unsigned(vl) - 1
 //   vector2 is a "mask" vector that is true for an element if the corresponding element
 //     in the result vector should be updated by the calling instruction
 val init_masked_result : forall 'n 'm 'p, 'n >= 0 . (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
-function init_masked_result(num_elem, EEW, LMUL_pow, vd_val, vm_val) = {
+function init_masked_result(num_elem, _EEW, LMUL_pow, vd_val, vm_val) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Err(())
@@ -365,7 +365,7 @@ function init_masked_source(num_elem, LMUL_pow, vm_val) = {
 // Mask handling for carry functions that use masks as input/output
 // Only prestart and tail elements are masked in a mask value
 val init_masked_result_carry : forall 'n, 'n >= 0 . (int('n), sew_bitsize, int, bits('n)) -> result((bits('n), bits('n)), unit)
-function init_masked_result_carry(num_elem, EEW, LMUL_pow, vd_val) = {
+function init_masked_result_carry(num_elem, _EEW, LMUL_pow, vd_val) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Err(())
@@ -404,7 +404,7 @@ function init_masked_result_carry(num_elem, EEW, LMUL_pow, vd_val) = {
 
 // Mask handling for cmp functions that use masks as output
 val init_masked_result_cmp : forall 'n, 'n >= 0 . (int('n), sew_bitsize, int, bits('n), bits('n)) -> result((bits('n), bits('n)), unit)
-function init_masked_result_cmp(num_elem, EEW, LMUL_pow, vd_val, vm_val) = {
+function init_masked_result_cmp(num_elem, _EEW, LMUL_pow, vd_val, vm_val) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Err(())
@@ -531,7 +531,7 @@ function signed_saturation(len, elem) = {
 
 // The parameter m is implicit to help proof the proof assistant backends infer its value.
 val vrev8 : forall 'n 'm, 'n >= 0 & 'm >= 0. (implicit('m), vector('n, bits('m * 8))) -> vector('n, bits('m * 8))
-function vrev8(m, input) = {
+function vrev8(_m, input) = {
   var output : vector('n, bits('m * 8)) = input;
   foreach (i from 0 to ('n - 1)) {
     output[i] = rev8(input[i]);

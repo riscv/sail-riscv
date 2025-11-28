@@ -216,7 +216,7 @@ type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, ext_ptw), ('fai
 // PRIVATE: translate on TLB hit, and maintenance of PTE in TLB
 function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
-  asid      : asidbits,
+  _asid     : asidbits,
   vpn       : vpn_bits('v),
   ac        : MemoryAccessType(ext_access_type),
   priv      : Privilege,
@@ -250,7 +250,7 @@ function translate_TLB_hit forall 'v, is_sv_mode('v) . (
             write_TLB(tlb_index, tlb_set_pte(ent, pte'));
             match write_pte(ent.pteAddr, pte_size, pte') {
               Ok(_)  => (),
-              Err(e) => internal_error(__FILE__, __LINE__,
+              Err(_) => internal_error(__FILE__, __LINE__,
                                        "invalid physical address in TLB")
             };
             Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw)
@@ -300,7 +300,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
                 add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
                 Ok(ppn, ext_ptw)
               },
-              Err(e) =>
+              Err(_) =>
                 Err(PTW_No_Access(), ext_ptw)
             }
           }

@@ -369,7 +369,7 @@ mapping clause encdec = VLUXSEGTYPE(nf, vm, vs2, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
 
-function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), mop : int) -> ExecutionResult = {
+function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : int) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
@@ -463,7 +463,7 @@ mapping clause encdec = VSUXSEGTYPE(nf, vm, vs2, rs1, width, vs3)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
 
-function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), mop : int) -> ExecutionResult = {
+function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : int) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
