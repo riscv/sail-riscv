@@ -10,7 +10,7 @@ public:
   virtual ~callbacks_if() = default;
 
   // Callback invoked before each step
-  virtual void pre_step([[maybe_unused]] bool is_waiting) { }
+  virtual void pre_step_callback([[maybe_unused]] bool is_waiting) { }
 
   // Callback invoked after each step
   virtual void post_step([[maybe_unused]] bool is_waiting) { }
