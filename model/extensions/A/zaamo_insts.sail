@@ -68,55 +68,22 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
 
-  match ext_data_get_addr(rs1, zeros(), LoadStore(Data, Data), width) {
-    Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
-      if not(is_aligned_addr(vaddr, width))
-      then Memory_Exception(vaddr, E_SAMO_Addr_Align())
-      else match translateAddr(vaddr, LoadStore(Data, Data)) {
-        Err(e, _) => Memory_Exception(vaddr, e),
-        Ok(addr, _) => {
-          //  Using odd-numbered registers for rs2 or rd in AMOCAS.D (RV32) or AMOCAS.Q (RV64) constitutes reserved behavior.
-          let rs2_num = unsigned(regidx_bits(rs2));
-          let rd_num = unsigned(regidx_bits(rd));
-          if (rs2_num%2!=0 |rd_num%2!=0)  & (width>xlen_bytes) & (op==AMOCAS)    then{
-            match (config base.reserved_behaviour.amocas_odd_registers: string ) {
-              "illegal" => return  Illegal_Instruction(),
-              "ignore" => ()
-            };
-          };
-
-          // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
-          // registers. When the first register of a register pair is
-          // x0, then both halves of the pair read/write as zero.
-          let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
-          match mem_write_ea(addr, width, aq & rl, rl, true) {
-            Err(e) => Memory_Exception(vaddr, e),
-            Ok(_) => {
-              match mem_read(LoadStore(Data, Data), addr, width, aq, aq & rl, true) {
-                Err(e)     => Memory_Exception(vaddr, e),
-                Ok(loaded) => {
-                  let result : bits('width * 8) =
-                    match op {
-                      AMOSWAP => rs2_val,
-                      AMOADD  => rs2_val + loaded,
-                      AMOXOR  => rs2_val ^ loaded,
-                      AMOAND  => rs2_val & loaded,
-                      AMOOR   => rs2_val | loaded,
-                      AMOMIN  => if rs2_val <_s loaded then rs2_val else loaded,
-                      AMOMAX  => if rs2_val >_s loaded then rs2_val else loaded,
-                      AMOMINU => if rs2_val <_u loaded then rs2_val else loaded,
-                      AMOMAXU => if rs2_val >_u loaded then rs2_val else loaded,
-                      // If it *does* store a value, CAS always stores rs2.
-                      AMOCAS  => rs2_val,
-                    };
-
   if not(is_aligned_addr(vaddr, width))
   then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
 
   let addr : physaddr = match translateAddr(vaddr, LoadStore(Data, Data)) {
     Err(e, _) => return Memory_Exception(vaddr, e),
     Ok(addr, _) => addr,
+  };
+
+  //  Using odd-numbered registers for rs2 or rd in AMOCAS.D (RV32) or AMOCAS.Q (RV64) constitutes reserved behavior.
+  let rs2_num = unsigned(regidx_bits(rs2));
+  let rd_num = unsigned(regidx_bits(rd));
+  if (rs2_num%2!=0 |rd_num%2!=0)  & (width>xlen_bytes) & (op==AMOCAS)    then{
+    match (config base.reserved_behaviour.amocas_odd_registers: string ) {
+      "illegal" => return  Illegal_Instruction(),
+      "ignore" => ()
+    };
   };
 
   // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
