@@ -411,7 +411,7 @@ void flush_logs(void)
 
 void run_sail(void)
 {
-  bool is_waiting;
+  bool is_waiting = false;
   bool exit_wait = true;
 
   /* initialize the step number */
@@ -441,6 +441,9 @@ void run_sail(void)
         break;
       }
     }
+
+    call_pre_step_callbacks(is_waiting);
+
     { /* run a Sail step */
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
@@ -455,6 +458,9 @@ void run_sail(void)
         rvfi->send_trace(config_print_rvfi);
       }
     }
+
+    call_post_step_callbacks(is_waiting);
+
     if (!is_waiting) {
       if (config_print_step) {
         fprintf(trace_log, "\n");
