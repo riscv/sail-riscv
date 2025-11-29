@@ -10,8 +10,6 @@ public:
                 bool config_use_abi_names = false, FILE *trace_log = nullptr);
 
   // callbacks_if
-  void pre_step_callback(bool is_waiting) override;
-  void post_step_callback(bool is_waiting) override;
   void mem_write_callback(const char *type, sbits paddr, uint64_t width,
                           lbits value) override;
   void mem_read_callback(const char *type, sbits paddr, uint64_t width,

@@ -101,15 +101,3 @@ void log_callbacks::vreg_write_callback(unsigned reg, lbits value)
     print_lbits_hex(trace_log, value);
   }
 }
-
-void log_callbacks::pre_step_callback(bool is_waiting)
-{
-  // TODO: per-step logging or statistics
-  (void)is_waiting;
-}
-
-void log_callbacks::post_step_callback(bool is_waiting)
-{
-  // TODO: post-step logging or statistics
-  (void)is_waiting;
-}
