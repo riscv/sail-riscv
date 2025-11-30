@@ -3,7 +3,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <optional>
 
+void rv_set_rng_seed(std::optional<uint64_t> seed);
 // Provides entropy for the scalar cryptography extension.
 extern uint64_t rv_16_random_bits(void);
 
