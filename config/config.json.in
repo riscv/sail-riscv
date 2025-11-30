@@ -162,7 +162,9 @@
       "supported": true
     },
     "F": {
-      "supported": true
+      "supported": true,
+      // if F is not support, it will control whether mstatus.FS is read only.
+      "fs_read_only": false
     },
     "D": {
       "supported": true
@@ -182,7 +184,8 @@
       "support_level": "@CONFIG__V__SUPPORT@",
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
-      "vl_use_ceil": false
+      "vl_use_ceil": false,
+      "vs_read_only": false
     },
     "B": {
       "supported": true

@@ -146,6 +146,16 @@ function virtual_memory_supported() -> bool = {
   currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
 }
 
+function is_fs_read_only() -> bool = {
+  let fs_read_only : bool = config extensions.F.fs_read_only;
+  hartSupports(Ext_Zfinx) | (not(hartSupports(Ext_S)) & not(hartSupports(Ext_F)) & fs_read_only)
+}
+
+function is_vs_read_only() -> bool = {
+  let vs_read_only : bool = config extensions.V.vs_read_only;
+  not(hartSupports(Ext_Zve32x)) | (not(hartSupports(Ext_S)) & not(hartSupports(Ext_V)) & vs_read_only)
+}
+
 //
 // Illegal values legalized to least privileged mode supported.
 // Note: the only valid combinations of supported modes are M, M+U, M+S+U.
@@ -229,14 +239,10 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // to support code running in S/U-modes.  Spike does this, and for now, we match it,
     // but only if Zfinx isn't enabled.
     // FIXME: This should be made a platform parameter.
-    FS = if hartSupports(Ext_Zfinx) then extStatus_to_bits(Off) else v[FS],
+    FS = if is_fs_read_only() then extStatus_to_bits(Off) else v[FS],
     MPP = if have_nominal_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
-    // TODO: make this configurable
-    // If neither the v registers nor S-mode is implemented, then VS is
-    // read-only zero. If S-mode is implemented but the v registers are not,
-    // VS may optionally be read-only zero.
-    VS = if hartSupports(Ext_Zve32x) then v[VS] else 0b00,
+    VS = if is_vs_read_only() then 0b00 else v[VS],
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
