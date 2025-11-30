@@ -896,7 +896,13 @@ function legalize_satp(
   written_value : xlenbits,
 ) -> xlenbits = {
   if xlen == 32 then {
+    assert(pa_bits >= 13 & pa_bits < 35);
     let s = Mk_Satp32(written_value);
+    let s = [s with
+      Asid = s[Asid],
+      // Bits above the physically addressable memory are read only zero.
+      PPN = zero_extend(s[PPN][pa_bits - pagesize_bits - 1 .. 0]),
+    ];
     match satpMode_of_bits(arch, 0b000 @ s[Mode]) {
       None()  => prev_value,
       Some(Sv_mode) => match Sv_mode {
@@ -906,7 +912,15 @@ function legalize_satp(
       }
     }
   } else if xlen == 64 then {
+    let allow_bits = if pa_bits > 56 then 56 else pa_bits;
+    assert(allow_bits >= 13 & allow_bits < 57);
     let s = Mk_Satp64(written_value);
+    let s = [s with
+      // If full 16-bit ASID is not supported then the high bits will be read only zero.
+      Asid = zero_extend(s[Asid]),
+      // Bits above the physically addressable memory are read only zero.
+      PPN = zero_extend(s[PPN][allow_bits - pagesize_bits - 1 .. 0]),
+    ];
     match satpMode_of_bits(arch, s[Mode]) {
       None()  => prev_value,
       Some(Sv_mode) =>  match Sv_mode {

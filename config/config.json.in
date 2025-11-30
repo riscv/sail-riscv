@@ -29,6 +29,7 @@
     }
   },
   "memory": {
+    "pa_bits": @CONFIG__PA__BITS@,
     "pmp": {
       "grain": 0,
       // This specifies the number of PMP entries present.

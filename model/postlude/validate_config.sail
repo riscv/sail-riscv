@@ -282,6 +282,10 @@ function check_extension_param_constraints() -> bool = {
   valid
 }
 
+function check_pa_bits() -> bool = {
+  pa_bits <= 32 | (pa_bits <=34 & hartSupports(Ext_Sv32)) | xlen == 64
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -291,4 +295,5 @@ function config_is_valid() -> bool = {
   & check_pmp()
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
+  & check_pa_bits()
 }
