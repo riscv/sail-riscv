@@ -1,20 +1,22 @@
 #include "riscv_platform_impl.h"
 #include <unistd.h>
 #include <stdio.h>
+#include <random>
+
+static std::optional<uint64_t> rng_seed;
+
+// Must be called before rv_16_random_bits().
+void rv_set_rng_seed(std::optional<uint64_t> seed)
+{
+  rng_seed = seed;
+}
 
 // Provides entropy for the scalar cryptography extension.
 uint64_t rv_16_random_bits(void)
 {
-  // This function can be changed to support deterministic sequences of
-  // pseudo-random bytes. This is useful for testing.
-  const char *name = "/dev/urandom";
-  FILE *f = fopen(name, "rb");
-  uint16_t val;
-  if (fread(&val, 2, 1, f) != 1) {
-    fprintf(stderr, "Unable to read 2 bytes from %s\n", name);
-  }
-  fclose(f);
-  return (uint64_t)val;
+  static std::mt19937_64 rng(rng_seed.has_value() ? *rng_seed
+                                                  : std::random_device {}());
+  return static_cast<uint16_t>(rng());
 }
 
 bool rv_enable_experimental_extensions = false;
