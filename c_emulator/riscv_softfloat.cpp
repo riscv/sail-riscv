@@ -14,8 +14,6 @@ static uint_fast8_t uint8_of_rm(uint64_t rm)
   softfloat_exceptionFlags = 0;                                                \
   softfloat_roundingMode = uint8_of_rm(rm)
 
-extern "C" {
-
 bv5_bv16 softfloat_f16add(uint64_t rm, uint64_t v1, uint64_t v2)
 {
   SOFTFLOAT_PRELUDE(rm);
@@ -806,5 +804,3 @@ bv5_bv64 softfloat_f64roundToInt(uint64_t rm, uint64_t v, bool exact)
 
   return {softfloat_exceptionFlags, res.v};
 }
-
-} // extern "C"
