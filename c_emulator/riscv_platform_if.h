@@ -7,7 +7,7 @@ class callbacks_if;
 // The Model class derives from this one so when Sail calls C callback
 // functions it actually calls methods of this class. However they are
 // virtual functions so they actually call the Platform implementations
-// (see riscv_platform_impl.h). It's done this way because:
+// (see riscv_model_impl.h). It's done this way because:
 //
 // a) This allows the platform implementation to access the Model.
 // b) This allows exposing the Model in the library without fixing

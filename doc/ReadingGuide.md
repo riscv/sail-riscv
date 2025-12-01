@@ -278,7 +278,26 @@ platform model with any ISA implementation choices if specified,
 loads the ELF program or OS image into raw memory, including any ROM
 firmware and DeviceTree binary blobs, and initializes the memory map.
 
-TODO: Update description.
+The generated C++ model (`build/sail_riscv_model.{cpp,h}`) is built from the Sail sources
+by the Sail compiler. It contains a class called `hart::Model` which is derived
+from the `PlatformInterface` class in [riscv_platform_if.h](../c_emulator/riscv_platform_if.h).
+`PlatformInterface` contains virtual methods that are called by `hart::Model`.
+These methods provide platform functions (e.g. `load_reservation`), as well as
+informative state change callbacks (e.g. `freg_write_callback`) for logging.
+
+The actual implementation of the platform methods are in the `ModelImpl` class
+in [riscv_model_impl.h](../c_emulator/riscv_model_impl.h), so the callback flow
+is like this:
+
+![](./figs/class_structure.drawio.svg)
+
+The primary reason for this convoluted structure is to allow the callback
+implementations to access `hart::Model`.
+
+All of these callbacks are declared in the Sail model in
+[platform.sail](../model/sys/platform.sail),
+[sys_reservation.sail](../model/sys/sys_reservation.sail) and
+[callbacks.sail](../model/core/callbacks.sail).
 
 The Sail run-time system provides a C library for use with its C backend, which
 provides the low-level details of the implementation of raw memory and
