@@ -200,8 +200,7 @@ bool ModelImpl::valid_reservation(unit)
 
 unit ModelImpl::plat_term_write(mach_bits s)
 {
-  char c = s & 0xff;
-  plat_term_write_impl(c);
+  plat_term_write_impl(static_cast<char>(s));
   return UNIT;
 }
 
