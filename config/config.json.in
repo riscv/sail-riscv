@@ -84,6 +84,30 @@
         },
         "include_in_device_tree": false
       },
+      // Program Buffer
+      {
+        "base": {
+          "len": 64,
+          "value": "0x2000"
+        },
+        "size": {
+          "len": 64,
+          "value": "0x40"
+        },
+        "attributes": {
+          "cacheable": false,
+          "coherent": true,
+          "executable": true,
+          "readable": true,
+          "writable": true,
+          "read_idempotent": true,
+          "write_idempotent": true,
+          "misaligned_fault": "NoFault",
+          "reservability": "RsrvNone",
+          "supports_cbo_zero": false
+        },
+        "include_in_device_tree": false
+      },
       // MMIO
       {
         "base": {
@@ -152,7 +176,30 @@
     },
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
-    "wfi_is_nop": true
+    "wfi_is_nop": true,
+       "debug_module": {
+      // The two config options define the maximum number of ticks the jtag module
+      // executes before returning control to Sail and vice versa. This effectively
+      // models the relative clock rates of the jtag module and a single hart in a
+      // real system and allows testing different timing scenarios. Using larger
+      // ratios like 1:8 or 1:16 can change the observed behaviour. For example,
+      // if the jtag advances much faster than the hart it can lead to timeouts.
+      // Changing these values can also cause certain debug testcases from the
+      // riscv-tests to fail.
+      "max_ticks_jtag": 1,
+      "max_ticks_sail": 2,
+      // Value must be in the range [0, 12]
+      "num_data_reg": 12,
+      // Value must be in the range [0, 16]
+      "num_prog_reg": 16,
+      "impebreak": true,
+      "program_buffer": {
+        // This must be in a suitable memory region (see memory.regions).
+        "supported": true,
+        "base": 8192,
+        "size": 64
+      }
+    }
   },
   "extensions": {
     "M": {
