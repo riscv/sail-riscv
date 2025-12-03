@@ -33,6 +33,7 @@
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
 #include "riscv_model_impl.h"
+#include "remote_bitbang.h"
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -56,6 +57,9 @@ std::vector<std::string> elfs;
 std::optional<uint64_t> htif_tohost_address;
 
 rvfi_callbacks rvfi_cbs;
+
+int rbb_port = 0;
+std::optional<std::unique_ptr<remote_bitbang_t>> remote_bitbang;
 
 std::string sig_file;
 uint64_t mem_sig_start = 0;
@@ -131,6 +135,9 @@ std::vector<uint8_t> read_file(const std::string &file_path)
 // Set up command line option processing.
 static void setup_options(CLI::App &app)
 {
+  app.add_option("--debug", rbb_port, "Debug mode")
+      ->check(CLI::Range(1, 65535))
+      ->option_text("<int> (within [1 - 65535])");
   app.add_flag("--show-times", do_show_times, "Show execution times");
   app.add_flag("--version", do_print_version, "Print model version");
   app.add_flag("--build-info", do_print_build_info, "Print build information");
@@ -233,6 +240,8 @@ static void setup_options(CLI::App &app)
       "List of ELF files to load. They will be loaded in order, possibly "
       "overwriting each other. PC will be set to the entry point of the first "
       "file. This is optional with some arguments, e.g. --print-isa-string.");
+
+  app.footer("The --debug and --rvfi-dii options are mutually exclusive.");
 }
 
 uint64_t load_sail(const std::string &filename, bool main_file)
@@ -414,6 +423,8 @@ void flush_logs(void)
 
 void run_sail(void)
 {
+  // TODO: Uncomment once Sdext is available and remove is_waiting
+  // struct zstep_result step_result = {false, false, false, false};
   bool is_waiting = false;
   bool exit_wait = true;
 
@@ -451,6 +462,8 @@ void run_sail(void)
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
+      // TODO: Uncomment once Sdext is available
+      // step_result = ztry_step(sail_step, exit_wait);
       is_waiting = g_model.ztry_step(sail_step, exit_wait);
       if (g_model.have_exception) {
         break;
@@ -464,10 +477,13 @@ void run_sail(void)
 
     g_model.call_post_step_callbacks(is_waiting);
 
+    // TODO: Uncomment once Sdext is available
+    // if (!step_result.zin_wait) {
     if (!is_waiting) {
       if (config_print_step) {
         fprintf(trace_log, "\n");
       }
+      // TODO: Dont increment the variables when hart halted
       step_no++;
       insn_cnt++;
       total_insns++;
@@ -573,10 +589,20 @@ int inner_main(int argc, char **argv)
     printf("%s", get_config_schema());
     exit(EXIT_SUCCESS);
   }
+  // Mark RVFI and OpenOCD as mutually exclusive.
+  if (rvfi_dii_port != 0 && rbb_port != 0) {
+    fprintf(stderr, "--debug and --rvfi-dii are mutually exclusive.\n");
+    exit(EXIT_FAILURE);
+  }
   if (rvfi_dii_port != 0) {
     config_enable_rvfi = true;
     rvfi.emplace(rvfi_dii_port, g_model);
+  } else if (rbb_port != 0) {
+    uint64_t required_rti_cycles = 0;
+    remote_bitbang
+        = remote_bitbang_t::make(rbb_port, required_rti_cycles, &g_model);
   }
+
   if (do_show_times) {
     fprintf(stderr, "will show execution times on completion.\n");
   }
@@ -686,15 +712,18 @@ int inner_main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  do {
-    run_sail();
-    // `run_sail` only returns in the case of rvfi.
-    if (rvfi) {
-      /* Reset for next test */
-      reinit_sail(entry, config_file.c_str());
-    }
-  } while (rvfi);
-
+  if (remote_bitbang) {
+    remote_bitbang.value()->run(insn_limit);
+  } else {
+    do {
+      run_sail();
+      // `run_sail` only returns in the case of rvfi.
+      if (rvfi) {
+        /* Reset for next test */
+        reinit_sail(entry, config_file.c_str());
+      }
+    } while (rvfi);
+  }
   g_model.model_fini();
   flush_logs();
   close_logs();
