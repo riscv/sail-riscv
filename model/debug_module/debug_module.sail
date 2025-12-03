@@ -109,8 +109,7 @@ function legalize_abstractcs(d : Abstractcs, x : bits(32)) -> Abstractcs = {
   let x = Mk_Abstractcs(x);
   if check_abstract_busy_and_set_pending_error() then d
   else [d with
-    // W1C: clear bits that are written as 1
-    cmderr = d[cmderr] & ~(x[cmderr]),
+    cmderr = if x[cmderr] == ones() then zeros() else d[cmderr], // R/W1C
   ]
 }
 
