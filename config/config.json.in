@@ -152,7 +152,19 @@
     },
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
-    "wfi_is_nop": true
+    "wfi_is_nop": true,
+    "debug_module": {
+      // The two config options define the maximum number of ticks the jtag module
+      // executes before returning control to Sail and vice versa. This effectively
+      // models the relative clock rates of the jtag module and a single hart in a
+      // real system and allows testing different timing scenarios. Using larger
+      // ratios like 1:8 or 1:16 can change the observed behaviour. For example,
+      // if the jtag advances much faster than the hart it can lead to timeouts.
+      // Changing these values can also cause certain debug testcases from the
+      // riscv-tests to fail.
+      "max_ticks_jtag": 1,
+      "max_ticks_sail": 2
+    }
   },
   "extensions": {
     "M": {

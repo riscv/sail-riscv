@@ -2,8 +2,9 @@ RISCV Sail Model
 
 This Sail RISC-V architecture model, comprising all files and
 directories except for the third party dependencies in the
-'dependencies' directory (which include copies of their licences), is
-subject to the BSD two-clause licence below.
+'dependencies' directory (which include copies of their licences) and
+c_emulator/{jtag_dtm.{h,cpp},remote_bitbang.{h,cpp}} (which include copies
+of their licenses), is subject to the BSD two-clause licence below.
 
 Copyright (c) 2017-2025
    ahadali5000
