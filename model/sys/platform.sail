@@ -410,12 +410,8 @@ function program_buffer_read forall 'n, 0 < 'n <= max_mem_access . (access_type 
 
       // Check if we are beyond the program buffer and need implicit ebreak
       if addr == (plat_program_buffer_base + plat_program_buffer_size) & (config platform.debug_module.num_prog_reg : int == 1 | config platform.debug_module.impebreak : bool) then {
-        // Return hardcoded ebreak instruction
-        let ebreak_32 : bits(32) = EBREAK_INSTRUCTION;
-        let ebreak_16 : bits(16) = C_EBREAK_INSTRUCTION;
-
-        if width == 4 then Ok(ebreak_32)
-        else if width == 2 then Ok(ebreak_16)
+        if width == 4 then Ok(EBREAK_INSTRUCTION)
+        else if width == 2 then Ok(C_EBREAK_INSTRUCTION)
         else Err(E_Fetch_Access_Fault())
       }
       else {
@@ -423,14 +419,11 @@ function program_buffer_read forall 'n, 0 < 'n <= max_mem_access . (access_type 
         let byte_offset = unsigned(relative_addr) % 4;
 
         // Get the appropriate progbuf register
-        let progbuf_data : bits(32) = match word_addr {
-          0  => progbuf_regs[0],   1  => progbuf_regs[1],   2  => progbuf_regs[2],   3  => progbuf_regs[3],
-          4  => progbuf_regs[4],   5  => progbuf_regs[5],   6  => progbuf_regs[6],   7  => progbuf_regs[7],
-          8  => progbuf_regs[8],   9  => progbuf_regs[9],   10 => progbuf_regs[10],  11 => progbuf_regs[11],
-          12 => progbuf_regs[12],  13 => progbuf_regs[13],  14 => progbuf_regs[14],  15 => progbuf_regs[15],
-        // Out of Range
-          _  => return Err(E_Fetch_Access_Fault())
-        };
+        let progbuf_data : bits(32) =
+          if word_addr < 16
+          then progbuf_regs[word_addr]
+          // Out of Range
+          else return Err(E_Fetch_Access_Fault());
 
         if width == 4 then {
           if byte_offset == 0 then Ok(progbuf_data)
