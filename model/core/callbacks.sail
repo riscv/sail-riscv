@@ -53,7 +53,7 @@ function redirect_callback(_) = ()
 
 /// Called on interrupts and exceptions. The exc_code does not include the 'interrupt' bit which is
 /// in a separate bool.
-val trap_callback = pure {c: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code) -> unit
+val trap_callback = pure {c: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code, /* extra debug info */ trap_reason) -> unit
 function trap_callback(_) = ()
 
 // Overloads for easier use of callbacks

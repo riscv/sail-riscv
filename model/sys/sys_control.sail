@@ -152,12 +152,12 @@ function track_trap(p : Privilege) -> unit = {
 }
 
 // handle exceptional ctl flow by updating nextPC and operating privilege
-function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
+function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception), reason : trap_reason)
                      -> xlenbits = {
   let is_interrupt = trapCause_is_interrupt(c);
   let cause        = trapCause_bits(c);
 
-  trap_callback(is_interrupt, cause);
+  trap_callback(is_interrupt, cause, reason);
 
   if   get_config_print_platform()
   then print_log("handling " ^ to_str(c)
@@ -225,7 +225,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   get_config_print_platform()
       then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
-      trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext)
+      trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext, e.reason)
     },
     CTL_MRET()  => {
       let prev_priv = cur_privilege;
@@ -284,15 +284,22 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
-function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = xtval_exception_value(e, xtval),
-                                    ext     = None() };
+function handle_exception_with_reason(xtval : xlenbits, e : ExceptionType, r : trap_reason) -> unit = {
+  let t : sync_exception = struct {
+    trap    = e,
+    excinfo = xtval_exception_value(e, xtval),
+    ext     = None(),
+    reason  = r
+  };
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
+function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
+  handle_exception_with_reason(xtval, e, Trap_reason_none())
+}
+
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None()))
+  set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None(), Trap_reason_none()))
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {

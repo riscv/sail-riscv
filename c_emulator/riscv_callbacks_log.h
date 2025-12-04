@@ -24,7 +24,7 @@ public:
   void csr_full_read_callback(const_sail_string csr_name, unsigned reg,
                               sbits value) override;
   void vreg_write_callback(unsigned reg, lbits value) override;
-
+  void trap_callback(bool is_interrupt, fbits cause, trap_reason reason) override;
 private:
   bool config_print_reg;
   bool config_print_mem_access;

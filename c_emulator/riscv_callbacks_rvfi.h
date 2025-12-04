@@ -13,7 +13,9 @@ public:
   void mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
   void xreg_full_write_callback(const_sail_string abi_name, sbits reg,
                                 sbits value) override;
-  void trap_callback(bool is_interrupt, fbits cause) override;
+  void trap_callback(bool is_interrupt, fbits cause,
+                   trap_reason reason) override;
+
 };
 
 extern "C" {

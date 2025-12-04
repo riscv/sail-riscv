@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <inttypes.h>
+#include <cstdio>
 
 void print_lbits_hex(FILE *trace_log, lbits val, int length = 0)
 {
@@ -110,4 +111,29 @@ void log_callbacks::pre_step(bool is_waiting)
 void log_callbacks::post_step(bool is_waiting)
 {
   // TODO: post-step logging or statistics
+}
+
+void log_callbacks::trap_callback(bool is_interrupt,
+                                  fbits cause,
+                                  trap_reason reason)
+{
+    std::fprintf(stderr, "trap: is_interrupt=%d cause=%llu\n",
+                 is_interrupt ? 1 : 0,
+                 (unsigned long long)cause);
+
+    switch (reason.kind) {
+    case Kind_zTrap_reason_none:
+        std::fprintf(stderr, "  reason: none\n");
+        break;
+    case Kind_zAccess_not_in_physical_memory:
+        std::fprintf(stderr, "  reason: access_not_in_physical_memory\n");
+        break;
+    case Kind_zInvalid_pte_reserved_bits_nonzzero:
+        std::fprintf(stderr, "  reason: invalid_pte_reserved_bits_nonzero\n");
+        break;
+    default:
+        std::fprintf(stderr, "  reason: <unknown kind=%d>\n",
+                     (int)reason.kind);
+        break;
+    }
 }

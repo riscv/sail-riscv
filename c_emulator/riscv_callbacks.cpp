@@ -126,10 +126,10 @@ unit redirect_callback(sbits new_pc)
   return UNIT;
 }
 
-unit trap_callback(bool is_interrupt, fbits cause)
+unit trap_callback(bool is_interrupt, fbits cause, trap_reason reason)
 {
   for (auto c : callbacks) {
-    c->trap_callback(is_interrupt, cause);
+    c->trap_callback(is_interrupt, cause, reason);
   }
   return UNIT;
 }
