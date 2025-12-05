@@ -174,7 +174,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   }
 }
 
-// dispatches to MMIO regions or physical memory regions depending on physical memory map
+// dispatches to Program Buffer, MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   t : MemoryAccessType(ext_access_type),
   priv : Privilege,
@@ -188,7 +188,9 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   match phys_access_check(t, priv, paddr, width, res) {
     Some(e) => Err(e),
     None() => {
-      if   within_mmio_readable(paddr, width)
+      if within_program_buffer(paddr, width)
+      then MemoryOpResult_add_meta(program_buffer_read(t, paddr, width), default_meta)
+      else if within_mmio_readable(paddr, width)
       then MemoryOpResult_add_meta(mmio_read(t, paddr, width), default_meta)
       else phys_mem_read(t, paddr, width, aq, rl, res, meta)
     }
