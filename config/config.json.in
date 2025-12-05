@@ -383,6 +383,18 @@
     "Zvkt": {
       "supported": true
     },
+    "Sdext": {
+      "supported": true,
+      "writable_stepie": true,
+      "stopcount": {
+        "writable": true,
+        "preset_value": false
+      },
+      "mprven": {
+        "writable": true,
+        "preset_value": true
+      }
+    },
     "Sscofpmf": {
       "supported": true
     },

@@ -385,3 +385,29 @@ mapping width_mnemonic_wide : word_width_wide <-> string = {
   8  <-> "d",
   16 <-> "q",
 }
+
+// Debug entry causes
+enum debug_entry_cause = {DBGEntry_None, DBGEntry_EBreak, DBGEntry_Trigger, DBGEntry_HaltReq,
+                          DBGEntry_Step, DBGEntry_ResetHaltReq, DBGEntry_Group, DBGEntry_Other}
+
+mapping debug_cause_bits : bits(3) <-> debug_entry_cause = {
+  0b000 <-> DBGEntry_None,
+  0b001 <-> DBGEntry_EBreak,
+  0b010 <-> DBGEntry_Trigger,
+  0b011 <-> DBGEntry_HaltReq,
+  0b100 <-> DBGEntry_Step,
+  0b101 <-> DBGEntry_ResetHaltReq,
+  0b110 <-> DBGEntry_Group,
+  0b111 <-> DBGEntry_Other,
+}
+
+mapping debug_entry_cause_to_str : debug_entry_cause <-> string = {
+  DBGEntry_None         <-> "None",
+  DBGEntry_EBreak       <-> "EBreak",
+  DBGEntry_Trigger      <-> "Trigger",
+  DBGEntry_HaltReq      <-> "HaltReq",
+  DBGEntry_Step         <-> "Step",
+  DBGEntry_ResetHaltReq <-> "ResetHaltReq",
+  DBGEntry_Group        <-> "Group",
+  DBGEntry_Other        <-> "Other",
+}
