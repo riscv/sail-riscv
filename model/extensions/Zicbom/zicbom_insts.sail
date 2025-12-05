@@ -67,7 +67,7 @@ function cbop_priv_check(p: Privilege) -> checked_cbop = {
   }
 }
 
-function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResult = {
+function process_clean_inval(rs1 : regidx, _cbop : cbop_zicbom) -> ExecutionResult = {
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
 
@@ -103,7 +103,7 @@ function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResul
           match (exc_read, exc_write) {
             // Access is permitted if read OR write are allowed. If neither
             // are allowed then we always report a store exception.
-            (Some(exc_read), Some(exc_write)) => Some(exc_write),
+            (Some(_exc_read), Some(exc_write)) => Some(exc_write),
             _ => None(),
           }
         },

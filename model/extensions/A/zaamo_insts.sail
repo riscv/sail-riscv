@@ -63,65 +63,62 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
 
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
-  match ext_data_get_addr(rs1, zeros(), LoadStore(Data, Data), width) {
-    Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
-      if not(is_aligned_addr(vaddr, width))
-      then Memory_Exception(vaddr, E_SAMO_Addr_Align())
-      else match translateAddr(vaddr, LoadStore(Data, Data)) {
-        Err(e, _) => Memory_Exception(vaddr, e),
-        Ok(addr, _) => {
-          // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
-          // registers. When the first register of a register pair is
-          // x0, then both halves of the pair read/write as zero.
-          let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
-          match mem_write_ea(addr, width, aq & rl, rl, true) {
-            Err(e) => Memory_Exception(vaddr, e),
-            Ok(_) => {
-              match mem_read(LoadStore(Data, Data), addr, width, aq, aq & rl, true) {
-                Err(e)     => Memory_Exception(vaddr, e),
-                Ok(loaded) => {
-                  let result : bits('width * 8) =
-                    match op {
-                      AMOSWAP => rs2_val,
-                      AMOADD  => rs2_val + loaded,
-                      AMOXOR  => rs2_val ^ loaded,
-                      AMOAND  => rs2_val & loaded,
-                      AMOOR   => rs2_val | loaded,
-                      AMOMIN  => if rs2_val <_s loaded then rs2_val else loaded,
-                      AMOMAX  => if rs2_val >_s loaded then rs2_val else loaded,
-                      AMOMINU => if rs2_val <_u loaded then rs2_val else loaded,
-                      AMOMAXU => if rs2_val >_u loaded then rs2_val else loaded,
-                      // If it *does* store a value, CAS always stores rs2.
-                      AMOCAS  => rs2_val,
-                    };
+  let vaddr : virtaddr = match ext_data_get_addr(rs1, zeros(), LoadStore(Data, Data), width) {
+    Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
+    Ext_DataAddr_OK(vaddr) => vaddr,
+  };
 
-                  // All operations except CAS where loaded != X(rd) write their value back.
-                  if op == AMOCAS & loaded != (if width <= xlen_bytes then trunc(X(rd)) else trunc(X_pair(rd))) then {
-                    // Compared, but didn't swap.
-                    if width <= xlen_bytes
-                    then X(rd) = sign_extend(loaded)
-                    else X_pair(rd) = sign_extend(loaded);
-                    RETIRE_SUCCESS
-                  } else {
-                    match mem_write_value(addr, width, sign_extend(result), aq & rl, rl, true) {
-                      Ok(true)  => {
-                        if width <= xlen_bytes
-                        then X(rd) = sign_extend(loaded)
-                        else X_pair(rd) = sign_extend(loaded);
-                        RETIRE_SUCCESS
-                      },
-                      Ok(false) => { internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value") },
-                      Err(e)    => Memory_Exception(vaddr, e),
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  if not(is_aligned_addr(vaddr, width))
+  then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
+
+  let addr : physaddr = match translateAddr(vaddr, LoadStore(Data, Data)) {
+    Err(e, _) => return Memory_Exception(vaddr, e),
+    Ok(addr, _) => addr,
+  };
+
+  // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
+  // registers. When the first register of a register pair is
+  // x0, then both halves of the pair read/write as zero.
+  let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
+
+  let loaded : bits('width * 8) = match mem_write_ea(addr, width, aq & rl, rl, true) {
+    Err(e) => return Memory_Exception(vaddr, e),
+    Ok(_)  => match mem_read(LoadStore(Data, Data), addr, width, aq, aq & rl, true) {
+      Err(e)     => return Memory_Exception(vaddr, e),
+      Ok(loaded) => loaded,
+    },
+  };
+
+  let result : bits('width * 8) = match op {
+    AMOSWAP => rs2_val,
+    AMOADD  => rs2_val + loaded,
+    AMOXOR  => rs2_val ^ loaded,
+    AMOAND  => rs2_val & loaded,
+    AMOOR   => rs2_val | loaded,
+    AMOMIN  => if rs2_val <_s loaded then rs2_val else loaded,
+    AMOMAX  => if rs2_val >_s loaded then rs2_val else loaded,
+    AMOMINU => if rs2_val <_u loaded then rs2_val else loaded,
+    AMOMAXU => if rs2_val >_u loaded then rs2_val else loaded,
+    // If it *does* store a value, CAS always stores rs2.
+    AMOCAS  => rs2_val,
+  };
+
+  // All operations except CAS where loaded != X(rd) write their value back.
+  if op == AMOCAS & loaded != (if width <= xlen_bytes then trunc(X(rd)) else trunc(X_pair(rd))) then {
+    // Compared, but didn't swap.
+    if width <= xlen_bytes
+    then X(rd) = sign_extend(loaded)
+    else X_pair(rd) = sign_extend(loaded);
+    RETIRE_SUCCESS
+  } else match mem_write_value(addr, width, sign_extend(result), aq & rl, rl, true) {
+    Ok(true)  => {
+      if width <= xlen_bytes
+      then X(rd) = sign_extend(loaded)
+      else X_pair(rd) = sign_extend(loaded);
+      RETIRE_SUCCESS
+    },
+    Ok(false) => internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value"),
+    Err(e)    => Memory_Exception(vaddr, e),
   }
 }
 

@@ -196,6 +196,7 @@ function clause execute NVSTYPE(funct6, vm, vs2, vs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -268,6 +269,7 @@ function clause execute NVTYPE(funct6, vm, vs2, vs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -570,6 +572,7 @@ function clause execute NXSTYPE(funct6, vm, vs2, rs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -642,6 +645,7 @@ function clause execute NXTYPE(funct6, vm, vs2, rs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -987,6 +991,7 @@ function clause execute NISTYPE(funct6, vm, vs2, uimm, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1059,6 +1064,7 @@ function clause execute NITYPE(funct6, vm, vs2, uimm, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1302,7 +1308,12 @@ function clause execute VMVRTYPE(vs2, nreg, vd) = {
   let SEW     = get_sew();
   let EMUL    = nreg;
 
-  let EMUL_pow = log2(EMUL);
+  let EMUL_pow : range(0, 3) = match EMUL {
+    1 => 0,
+    2 => 1,
+    4 => 2,
+    8 => 3,
+  };
   let num_elem = get_num_elem(EMUL_pow, SEW);
   let 'n = num_elem;
   let 'm = SEW;
@@ -1552,6 +1563,7 @@ function clause execute WVVTYPE(funct6, vm, vs2, vs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1627,6 +1639,7 @@ function clause execute WVTYPE(funct6, vm, vs2, vs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1697,6 +1710,7 @@ function clause execute WMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -2147,6 +2161,7 @@ function clause execute WVXTYPE(funct6, vm, vs2, rs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -2221,6 +2236,7 @@ function clause execute WXTYPE(funct6, vm, vs2, rs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -2291,6 +2307,7 @@ function clause execute WMVXTYPE(funct6, vm, vs2, rs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;

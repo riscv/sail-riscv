@@ -11,11 +11,11 @@
 type ext_exception = unit
 
 // Is XRET from given mode permitted by extension?
-function ext_check_xret_priv (p : Privilege) : Privilege -> bool = true
+function ext_check_xret_priv (_p : Privilege) : Privilege -> bool = true
 // Called if above check fails
 function ext_fail_xret_priv () : unit -> unit = ()
 
-function handle_trap_extension(p : Privilege, pc : xlenbits, u : option(unit)) -> unit = ()
+function handle_trap_extension(_p : Privilege, _pc : xlenbits, _u : option(unit)) -> unit = ()
 
 // used for traps and ECALL
 function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {

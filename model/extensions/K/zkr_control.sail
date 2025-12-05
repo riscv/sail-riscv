@@ -54,4 +54,4 @@ function clause is_CSR_accessible(0x015, priv, access_type) =
   })
 
 function clause read_CSR(0x015) = read_seed_csr()
-function clause write_CSR(0x015, value) = Ok(write_seed_csr())
+function clause write_CSR(0x015, _value) = Ok(write_seed_csr())

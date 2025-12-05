@@ -460,7 +460,7 @@ function rsqrt7 (v, sub) = {
   zero_extend(64, sign @ out_exp @ out_sig)
 }
 
-function riscv_f16Rsqrte7(rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = {
+function riscv_f16Rsqrte7(_rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = {
   // TODO: Replace magic numbers here with `canonical_NaN()` etc.
   match float_classify(v) {
     float_class_negative_inf       => (nvFlag(), 0x7e00),
@@ -476,7 +476,7 @@ function riscv_f16Rsqrte7(rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = {
   }
 }
 
-function riscv_f32Rsqrte7(rm : bits_rm, v : bits_S) -> (bits_fflags, bits_S) = {
+function riscv_f32Rsqrte7(_rm : bits_rm, v : bits_S) -> (bits_fflags, bits_S) = {
   match float_classify(v) {
     float_class_negative_inf       => (nvFlag(), 0x7fc00000),
     float_class_negative_normal    => (nvFlag(), 0x7fc00000),
@@ -491,7 +491,7 @@ function riscv_f32Rsqrte7(rm : bits_rm, v : bits_S) -> (bits_fflags, bits_S) = {
   }
 }
 
-function riscv_f64Rsqrte7(rm : bits_rm, v : bits_D) -> (bits_fflags, bits_D) = {
+function riscv_f64Rsqrte7(_rm : bits_rm, v : bits_D) -> (bits_fflags, bits_D) = {
   match float_classify(v) {
     float_class_negative_inf       => (nvFlag(), 0x7ff8000000000000),
     float_class_negative_normal    => (nvFlag(), 0x7ff8000000000000),

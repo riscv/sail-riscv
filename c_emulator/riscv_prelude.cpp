@@ -40,9 +40,29 @@ bool get_config_print_instr(unit)
   return config_print_instr;
 }
 
-bool get_config_print_platform(unit)
+bool get_config_print_clint(unit)
 {
-  return config_print_platform;
+  return config_print_clint;
+}
+
+bool get_config_print_exception(unit)
+{
+  return config_print_exception;
+}
+
+bool get_config_print_interrupt(unit)
+{
+  return config_print_interrupt;
+}
+
+bool get_config_print_htif(unit)
+{
+  return config_print_htif;
+}
+
+bool get_config_print_pma(unit)
+{
+  return config_print_pma;
 }
 
 bool get_config_rvfi(unit)

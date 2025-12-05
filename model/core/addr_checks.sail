@@ -15,10 +15,10 @@ type ext_fetch_addr_error = unit
 // pc:       the PC for the current granule
 //
 // returns:  an optional fetch error.
-function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> option(ext_fetch_addr_error) =
+function ext_fetch_check_pc(_start_pc : xlenbits, _pc : xlenbits) -> option(ext_fetch_addr_error) =
   None()
 
-function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit =
+function ext_handle_fetch_check_error(_err : ext_fetch_addr_error) -> unit =
   ()
 
 // default control address checks
@@ -32,10 +32,10 @@ type ext_control_addr_error = unit
 // NOTE: the input value does *not* have bit[0] set to 0, to enable
 // more accurate bounds checking.
 
-function ext_control_check_pc(pc : xlenbits) -> option(ext_control_addr_error) =
+function ext_control_check_pc(_pc : xlenbits) -> option(ext_control_addr_error) =
   None()
 
-function ext_handle_control_check_error(err : ext_control_addr_error) -> unit =
+function ext_handle_control_check_error(_err : ext_control_addr_error) -> unit =
   ()
 
 
@@ -45,10 +45,10 @@ type ext_data_addr_error = unit
 
 // Default data addr is just base register + immediate offset (may be zero).
 // Extensions might override and add additional checks.
-function ext_data_get_addr(base : regidx, offset : xlenbits, acc : MemoryAccessType(ext_access_type), width : mem_access_width)
+function ext_data_get_addr(base : regidx, offset : xlenbits, _acc : MemoryAccessType(ext_access_type), _width : mem_access_width)
          -> Ext_DataAddr_Check(ext_data_addr_error) =
   let addr = Virtaddr(X(base) + offset) in
   Ext_DataAddr_OK(addr)
 
-function ext_handle_data_check_error(err : ext_data_addr_error) -> unit =
+function ext_handle_data_check_error(_err : ext_data_addr_error) -> unit =
   ()

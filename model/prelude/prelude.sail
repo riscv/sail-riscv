@@ -60,18 +60,26 @@ val print_log = pure {interpreter: "print_endline", c: "print_log", lem: "print_
 // Print an instruction to the --trace log file. The second argument is PC which can be used for
 // symbolization. This is only supported by the C backend so other backends just do a normal print.
 val print_log_instr = pure {c: "print_log_instr"} : (string, bits(64)) -> unit
-function print_log_instr(message, pc) = print_log(message)
+function print_log_instr(message, _pc) = print_log(message)
 
 val print_step = pure {c: "print_step"} : unit -> unit
 function print_step() = ()
 
 val get_config_print_instr = pure {c:"get_config_print_instr"} : unit -> bool
-val get_config_print_platform = pure {c:"get_config_print_platform"} : unit -> bool
+val get_config_print_clint = pure {c:"get_config_print_clint"} : unit -> bool
+val get_config_print_exception = pure {c:"get_config_print_exception"} : unit -> bool
+val get_config_print_interrupt = pure {c:"get_config_print_interrupt"} : unit -> bool
+val get_config_print_htif = pure {c:"get_config_print_htif"} : unit -> bool
+val get_config_print_pma = pure {c:"get_config_print_pma"} : unit -> bool
 val get_config_rvfi = pure {c:"get_config_rvfi"} : unit -> bool
 val get_config_use_abi_names = pure {c:"get_config_use_abi_names"} : unit -> bool
 // defaults for other backends
 function get_config_print_instr () = false
-function get_config_print_platform () = false
+function get_config_print_clint () = false
+function get_config_print_exception () = false
+function get_config_print_interrupt () = false
+function get_config_print_htif () = false
+function get_config_print_pma () = false
 function get_config_rvfi () = false
 function get_config_use_abi_names () = false
 
@@ -232,23 +240,6 @@ overload operator * = {mult_atom, mult_int}
 overload operator / = {quot_positive_round_zero}
 overload operator % = {rem_positive_round_zero}
 
-// helper for vector extension
-// 1. EEW between 8 and 64
-// 2. EMUL in vmv<nr>r.v instructions between 1 and 8
-val log2 : forall 'n, 'n in {1, 2, 4, 8, 16, 32, 64}. int('n) -> int
-function log2(n) = {
-  let result : int = match n {
-    1    => 0,
-    2    => 1,
-    4    => 2,
-    8    => 3,
-    16   => 4,
-    32   => 5,
-    64   => 6
-  };
-  result
-}
-
 // This is a slightly arbitrary limit on the maximum number of bytes
 // in a memory access.  It helps to generate slightly better C code
 // because it means width argument can be fast native integer. It
@@ -274,3 +265,15 @@ val sys_enable_experimental_extensions = pure "sys_enable_experimental_extension
 // bit vectors that aren't a multiple of 4 bits in binary).
 function hex_bits_str forall 'n, 'n >= 0 . (x : bits('n)) -> string =
   bits_str(zero_extend((3 - (('n + 3) % 4)) + 'n, x))
+
+// This can be called to type check that a boolean will always be true.
+// This can be used to verify a fact that the type checker already knows
+// to be true, so in a sense it is redundant. However it is useful for
+// documentation purposes, checking assumptions, and providing nicer errors
+// when editing.
+//
+// It can also be used to narrow down "could not resolve quantifiers" error
+// messages - if you get a list of properties, Sail is saying that *one*
+// of them can't be proven but it doesn't say which. If that happens you can
+// add static_assert() calls for each property to find out which one it is.
+function static_assert forall ('b : Bool), 'b . (_ : bool('b)) -> unit = ()

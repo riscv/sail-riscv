@@ -110,7 +110,7 @@ function write_ram(wk, Physaddr(addr), width, data, meta) = {
 }
 
 val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n)) -> unit
-function write_ram_ea(wk, Physaddr(addr), width) = ()
+function write_ram_ea(_wk, Physaddr(_addr), _width) = ()
 
 instantiation sail_mem_read with
   pa_bits = physaddrbits_zero_extend

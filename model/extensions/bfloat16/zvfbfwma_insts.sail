@@ -29,6 +29,7 @@ function clause execute VFWMACCBF16_VV(vm, vs2, vs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW == 16);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -73,6 +74,7 @@ function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   let num_elem = get_num_elem(LMUL_pow, SEW);
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+  assert(LMUL_pow_widen <= 3);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))

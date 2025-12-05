@@ -159,7 +159,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
   trap_callback(is_interrupt, cause, reason);
 
-  if   get_config_print_platform()
+  if   get_config_print_exception() | get_config_print_interrupt()
   then print_log("handling " ^ to_str(c)
                       ^ " at priv " ^ to_str(del_priv)
                       ^ " with tval " ^ bits_str(tval(info)));
@@ -222,7 +222,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
   match ctl {
     CTL_TRAP(e) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
-      if   get_config_print_platform()
+      if   get_config_print_exception()
       then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
       trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext, e.reason)
@@ -241,7 +241,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
-      if   get_config_print_platform()
+      if   get_config_print_exception()
       then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       prepare_xret_target(Machine)
@@ -260,7 +260,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
-      if   get_config_print_platform()
+      if   get_config_print_exception()
       then print_log("ret-ing from " ^ to_str(prev_priv)
                           ^ " to " ^ to_str(cur_privilege));
 
@@ -272,15 +272,28 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
 // Compute the value to write to mtval on a trap.
 function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
-    E_Breakpoint() => config base.xtval_nonzero.breakpoint,
-    E_Load_Addr_Align() => config base.xtval_nonzero.load_address_misaligned,
-    E_Load_Access_Fault() => config base.xtval_nonzero.load_access_fault,
-    E_SAMO_Addr_Align() => config base.xtval_nonzero.samo_address_misaligned,
-    E_SAMO_Access_Fault() => config base.xtval_nonzero.samo_access_fault,
-    E_Fetch_Addr_Align() => config base.xtval_nonzero.fetch_address_misaligned,
-    E_Fetch_Access_Fault() => config base.xtval_nonzero.fetch_access_fault,
-    E_Illegal_Instr() => config base.xtval_nonzero.illegal_instruction,
-    _ => true
+    E_Illegal_Instr() => illegal_instruction_writes_xtval,
+    E_Breakpoint(Brk_Software) => software_breakpoint_writes_xtval,
+    E_Breakpoint(Brk_Hardware) => hardware_breakpoint_writes_xtval,
+    E_Load_Addr_Align() => misaligned_load_writes_xtval,
+    E_Load_Access_Fault() => load_access_fault_writes_xtval,
+    E_Load_Page_Fault() => load_page_fault_writes_xtval,
+    E_SAMO_Addr_Align() => misaligned_samo_writes_xtval,
+    E_SAMO_Access_Fault() => samo_access_fault_writes_xtval,
+    E_SAMO_Page_Fault() => samo_page_fault_writes_xtval,
+    E_Fetch_Addr_Align() => misaligned_fetch_writes_xtval,
+    E_Fetch_Access_Fault() => fetch_access_fault_writes_xtval,
+    E_Fetch_Page_Fault() => fetch_page_fault_writes_xtval,
+    E_Software_Check() => software_check_fault_writes_xtval,
+    E_U_EnvCall() => false,
+    E_S_EnvCall() => false,
+    E_M_EnvCall() => false,
+    E_Extension(_) => true,
+    // the rest are all reserved exceptions
+    E_Reserved_10() => reserved_exceptions_write_xtval,
+    E_Reserved_14() => reserved_exceptions_write_xtval,
+    E_Reserved_16() => reserved_exceptions_write_xtval,
+    E_Reserved_17() => reserved_exceptions_write_xtval,
   } then Some(excinfo) else None()
 }
 
@@ -406,6 +419,6 @@ function MemoryOpResult_add_meta(r, m) = match r {
 
 val MemoryOpResult_drop_meta : forall ('t : Type). MemoryOpResult(('t, mem_meta)) -> MemoryOpResult('t)
 function MemoryOpResult_drop_meta(r) = match r {
-  Ok(v, m)  => Ok(v),
+  Ok(v, _m)  => Ok(v),
   Err(e) => Err(e)
 }
