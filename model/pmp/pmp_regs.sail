@@ -146,9 +146,14 @@ function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
 }
 
 function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
-  if   xlen == 32
-  then { if (locked | tor_locked) then reg else v }
-  else { if (locked | tor_locked) then reg else zero_extend(v[53..0]) }
+  if (locked | tor_locked) then reg
+  else {
+    // Address bits higher then PA_BITS-1 are read-only zero, but
+    // pmpaddr does not contain the lowest 2 bits of the addresses
+    // so we actually use PA_BITS-3.
+    assert(physaddr_bits <= xlen + 2);
+    zero_extend(v[physaddr_bits - 3 .. 0])
+  }
 
 function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
   if n < sys_pmp_usable_count then

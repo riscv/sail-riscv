@@ -24,3 +24,5 @@ function sub_virtaddr_xlenbits(Virtaddr(addr) : virtaddr, offset : xlenbits) -> 
 overload operator - = { sub_virtaddr_xlenbits }
 
 overload bits_of = { bits_of_physaddr, bits_of_virtaddr }
+
+let physaddr_bits : range(13, 56) = config memory.physaddr_bits
