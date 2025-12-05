@@ -191,13 +191,15 @@ function clint_store(Physaddr(addr), width, data) = {
   }
 }
 
-// Counters and timers are affected by Smcntrpmf (and the forthcoming Sdext extension).
+// Counters and timers are affected by Sdext and Smcntrpmf.
 
 function should_inc_mcycle(priv : Privilege) -> bool =
-  mcountinhibit[CY] == 0b0 & counter_priv_filter_bit(mcyclecfg, priv) == 0b0
+  (mcountinhibit[CY] == 0b0 & counter_priv_filter_bit(mcyclecfg, priv) == 0b0)
+  & not(currentlyEnabled(Ext_Sdext) & bool_bits(dcsr[StopCount]))
 
 function should_inc_minstret(priv : Privilege) -> bool =
-  mcountinhibit[IR] == 0b0 & counter_priv_filter_bit(minstretcfg, priv) == 0b0
+  (mcountinhibit[IR] == 0b0 & counter_priv_filter_bit(minstretcfg, priv) == 0b0)
+  & not(currentlyEnabled(Ext_Sdext) & bool_bits(dcsr[StopCount]))
 
 function tick_clock() -> unit = {
   if   should_inc_mcycle(cur_privilege)

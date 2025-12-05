@@ -13,6 +13,12 @@
 
 scattered union instruction
 
+union DebugTransition = {
+  Enter_Debug_Mode            : debug_entry_cause,
+  Exit_Debug_Abstract_Command : bool, // true = resume hart
+  Exit_Debug_Mode             : unit,
+}
+
 union ExecutionResult = {
   // Successfully retired.
   Retire_Success                 : unit,
@@ -30,6 +36,9 @@ union ExecutionResult = {
   Illegal_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
   Memory_Exception               : (virtaddr, ExceptionType),
+
+  // Enter or exit debug mode, or complete an abstract command
+  Debug                          : DebugTransition,
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,

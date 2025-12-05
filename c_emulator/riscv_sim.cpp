@@ -410,7 +410,7 @@ void flush_logs(void)
 
 void run_sail(void)
 {
-  bool is_waiting = false;
+  hart::zstep_result step_result = {false, false, false};
   bool exit_wait = true;
 
   /* initialize the step number */
@@ -441,13 +441,13 @@ void run_sail(void)
       }
     }
 
-    g_model.call_pre_step_callbacks(is_waiting);
+    g_model.call_pre_step_callbacks(step_result.zin_wait);
 
     { /* run a Sail step */
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      is_waiting = g_model.ztry_step(sail_step, exit_wait);
+      step_result = g_model.ztry_step(sail_step, exit_wait);
       if (g_model.have_exception) {
         break;
       }
@@ -458,9 +458,10 @@ void run_sail(void)
       }
     }
 
-    g_model.call_post_step_callbacks(is_waiting);
+    g_model.call_post_step_callbacks(step_result.zin_wait);
 
-    if (!is_waiting) {
+    if (!step_result.zin_wait) {
+      // TODO: Dont increment counter while in debug mode
       if (config_print_step) {
         fprintf(trace_log, "\n");
       }
