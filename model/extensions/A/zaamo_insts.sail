@@ -26,35 +26,26 @@ function clause currentlyEnabled(Ext_Zacas) = hartSupports(Ext_Zacas) & currentl
 //
 private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : regidx, Regidx(rd) : regidx) -> bool =
   // If AMOCAS, check that extension is enabled.
-  let enabled_ok = if op == AMOCAS then currentlyEnabled(Ext_Zacas)
-    else currentlyEnabled(Ext_Zaamo);
+  (if op == AMOCAS then currentlyEnabled(Ext_Zacas) else currentlyEnabled(Ext_Zaamo))
+  &
   // Check the size and register alignment.
-  let size_ok =
-    if width < 4 then
-      currentlyEnabled(Ext_Zabha)
-    else (
-      width <= xlen_bytes
-      | (op == AMOCAS & width <= xlen_bytes * 2 & rs2[0] == bitzero & rd[0] == bitzero)
-    );
-  //check if trigger reserved behaviour
-  if op == AMOCAS & width > xlen_bytes then {
-    let rs2_odd = rs2[0] == bitone;
-    let rd_odd  = rd[0] == bitone;
-    if rs2_odd | rd_odd then {
-      match (config base.reserved_behaviour.amocas_odd_registers: string) {
-        "exit" => {
-          amocas_odd_register_exit();
-          false
-        },
-        _ => false  
-      }
-    } else {
-      enabled_ok & size_ok
-    }
-  } else {
-    enabled_ok & size_ok
-  }
-}
+  (if width < 4 then currentlyEnabled(Ext_Zabha) else (
+    width <= xlen_bytes | (
+      (op == AMOCAS & width <= xlen_bytes * 2 )
+      & 
+      (if (rs2[0] == bitone | rd[0] == bitone) then (
+        match(config base.reserved_behaviour.amocas_odd_register: string){
+          "exit" =>{
+            amocas_odd_register_exit();
+            false
+          },
+          "illegal" => false,
+        }
+      )else(
+        true
+      )
+    )
+  )))
 
 // *****************************************************************
 
