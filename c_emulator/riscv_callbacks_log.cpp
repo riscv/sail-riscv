@@ -1,6 +1,6 @@
 #include "riscv_config.h"
 #include "riscv_callbacks_log.h"
-#include "riscv_sail.h"
+#include "sail_riscv_model.h"
 #include <stdlib.h>
 #include <vector>
 #include <inttypes.h>
@@ -31,52 +31,55 @@ log_callbacks::log_callbacks(bool config_print_reg,
 // Implementations of default callbacks for trace printing.
 // The model assumes that these functions do not change the state of the model.
 
-void log_callbacks::mem_write_callback(const char *type, sbits paddr,
-                                       uint64_t width, lbits value)
+void log_callbacks::mem_write_callback(hart::Model &model, const char *type,
+                                       sbits paddr, uint64_t width, lbits value)
 {
   if (trace_log != nullptr && config_print_mem_access) {
     fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] <- 0x", type,
-            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits);
+            static_cast<int>((model.zphysaddrbits_len + 3) / 4), paddr.bits);
     print_lbits_hex(trace_log, value, width);
   }
 }
 
-void log_callbacks::mem_read_callback(const char *type, sbits paddr,
-                                      uint64_t width, lbits value)
+void log_callbacks::mem_read_callback(hart::Model &model, const char *type,
+                                      sbits paddr, uint64_t width, lbits value)
 {
   if (trace_log != nullptr && config_print_mem_access) {
     fprintf(trace_log, "mem[%s,0x%0*" PRIX64 "] -> 0x", type,
-            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits);
+            static_cast<int>((model.zphysaddrbits_len + 3) / 4), paddr.bits);
     print_lbits_hex(trace_log, value, width);
   }
 }
 
-void log_callbacks::xreg_full_write_callback(const_sail_string abi_name,
+void log_callbacks::xreg_full_write_callback(hart::Model &,
+                                             const_sail_string abi_name,
                                              sbits reg, sbits value)
 {
   if (trace_log != nullptr && config_print_reg) {
     if (config_use_abi_names) {
       fprintf(trace_log, "%s <- 0x%0*" PRIX64 "\n", abi_name,
-              static_cast<int>(zxlen / 4), value.bits);
+              static_cast<int>(value.len / 4), value.bits);
     } else {
       fprintf(trace_log, "x%" PRIu64 " <- 0x%0*" PRIX64 "\n", reg.bits,
-              static_cast<int>(zxlen / 4), value.bits);
+              static_cast<int>(value.len / 4), value.bits);
     }
   }
 }
 
-void log_callbacks::freg_write_callback(unsigned reg, sbits value)
+void log_callbacks::freg_write_callback(hart::Model &, unsigned reg,
+                                        sbits value)
 {
   // TODO: will only print bits; should we print in floating point format?
   if (trace_log != nullptr && config_print_reg) {
-    // TODO: Might need to change from PRIX64 to PRIX128 once the "Q" extension
-    // is supported
+    // TODO: Might need to change from PRIX64 to PRIX128 once the "Q"
+    // extension is supported
     fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg,
-            static_cast<int>(zflen / 4), value.bits);
+            static_cast<int>(value.len / 4), value.bits);
   }
 }
 
-void log_callbacks::csr_full_write_callback(const_sail_string csr_name,
+void log_callbacks::csr_full_write_callback(hart::Model &,
+                                            const_sail_string csr_name,
                                             unsigned reg, sbits value)
 {
   if (trace_log != nullptr && config_print_reg) {
@@ -85,7 +88,8 @@ void log_callbacks::csr_full_write_callback(const_sail_string csr_name,
   }
 }
 
-void log_callbacks::csr_full_read_callback(const_sail_string csr_name,
+void log_callbacks::csr_full_read_callback(hart::Model &,
+                                           const_sail_string csr_name,
                                            unsigned reg, sbits value)
 {
   if (trace_log != nullptr && config_print_reg) {
@@ -94,7 +98,8 @@ void log_callbacks::csr_full_read_callback(const_sail_string csr_name,
   }
 }
 
-void log_callbacks::vreg_write_callback(unsigned reg, lbits value)
+void log_callbacks::vreg_write_callback(hart::Model &, unsigned reg,
+                                        lbits value)
 {
   if (trace_log != nullptr && config_print_reg) {
     fprintf(trace_log, "v%d <- 0x", reg);

@@ -27,14 +27,12 @@
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
-#include "riscv_platform_impl.h"
-#include "riscv_sail.h"
 #include "rvfi_dii.h"
 #include "config_utils.h"
 #include "sail_riscv_version.h"
-#include "riscv_callbacks_if.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
+#include "riscv_model_impl.h"
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -79,6 +77,8 @@ bool config_print_step = false;
 bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
 
+bool config_enable_experimental_extensions = false;
+
 struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
 uint64_t insn_limit = 0;
@@ -86,10 +86,15 @@ uint64_t insn_limit = 0;
 char *sailcov_file = nullptr;
 #endif
 
+// Single global model instance.
+// TODO: This shouldn't be global, but it is to facilitate gradual transition
+// from the C Sail output which was necessarily global.
+ModelImpl g_model;
+
 static void print_dts(void)
 {
   char *dts = nullptr;
-  zgenerate_dts(&dts, UNIT);
+  g_model.zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
 }
@@ -97,7 +102,7 @@ static void print_dts(void)
 static void print_isa(void)
 {
   char *isa = nullptr;
-  zgenerate_canonical_isa_string(&isa, UNIT);
+  g_model.zgenerate_canonical_isa_string(&isa, UNIT);
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
 }
@@ -137,7 +142,7 @@ static void setup_options(CLI::App &app)
   app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
   app.add_flag("--enable-experimental-extensions",
-               rv_enable_experimental_extensions,
+               config_enable_experimental_extensions,
                "Enable experimental extensions");
   app.add_flag("--use-abi-names", config_use_abi_names,
                "Use ABI register names in trace log");
@@ -199,8 +204,6 @@ static void setup_options(CLI::App &app)
       "exceptions, CLINT, HTIF, PMA)");
   app.add_flag("--trace-step", config_print_step,
                "Add a blank line between steps in the trace output");
-  app.add_flag("--trace-reservation", config_print_reservation,
-               "Enable trace output for LR/SC reservations.");
 
   app.add_flag_callback(
       "--trace-all",
@@ -215,7 +218,6 @@ static void setup_options(CLI::App &app)
         config_print_htif = true;
         config_print_pma = true;
         config_print_step = true;
-        config_print_reservation = true;
       },
       "Enable all trace output");
 
@@ -235,16 +237,16 @@ uint64_t load_sail(const std::string &filename, bool main_file)
 
   switch (elf.architecture()) {
   case Architecture::RV32:
-    if (zxlen != 32) {
+    if (g_model.zxlen != 32) {
       fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen);
+              g_model.zxlen);
       exit(EXIT_FAILURE);
     }
     break;
   case Architecture::RV64:
-    if (zxlen != 64) {
+    if (g_model.zxlen != 64) {
       fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n",
-              zxlen);
+              g_model.zxlen);
       exit(EXIT_FAILURE);
     }
     break;
@@ -306,30 +308,27 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb)
 
 void init_platform_constants()
 {
-  reservation_set_size_exp
-      = get_config_uint64({"platform", "reservation_set_size_exp"});
-  reservation_set_addr_mask = ~((1 << reservation_set_size_exp) - 1);
+  g_model.set_reservation_set_size_exp(
+      get_config_uint64({"platform", "reservation_set_size_exp"}));
 }
 
 void init_sail(uint64_t elf_entry, const char *config_file)
 {
   // zset_pc_reset_address must be called before zinit_model
   // because reset happens inside init_model().
-  zset_pc_reset_address(elf_entry);
+  g_model.zset_pc_reset_address(elf_entry);
   if (htif_tohost_address.has_value()) {
-    zenable_htif(*htif_tohost_address);
+    g_model.zenable_htif(*htif_tohost_address);
   }
-  zinit_model(config_file != nullptr ? config_file : "");
-  zinit_boot_requirements(UNIT);
+  g_model.zinit_model(config_file != nullptr ? config_file : "");
+  g_model.zinit_boot_requirements(UNIT);
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
 void reinit_sail(uint64_t elf_entry, const char *config_file)
 {
-  model_fini();
-
-  init_sail_configured_types();
-  model_init();
+  g_model.model_fini();
+  g_model.model_init();
   init_sail(elf_entry, config_file);
 }
 
@@ -375,12 +374,12 @@ void close_logs(void)
 void finish()
 {
   // Don't write a signature if there was an internal Sail exception.
-  if (!have_exception && !sig_file.empty()) {
+  if (!g_model.have_exception && !sig_file.empty()) {
     write_signature(sig_file.c_str());
   }
 
   // `model_fini()` exits with failure if there was a Sail exception.
-  model_fini();
+  g_model.model_fini();
 
   if (do_show_times) {
     if (gettimeofday(&run_end, nullptr) < 0) {
@@ -427,7 +426,7 @@ void run_sail(void)
     exit(EXIT_FAILURE);
   }
 
-  while (!zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
+  while (!g_model.zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
     if (rvfi) {
       switch (rvfi->pre_step(config_print_rvfi)) {
       case RVFI_prestep_continue:
@@ -442,14 +441,14 @@ void run_sail(void)
       }
     }
 
-    call_pre_step_callbacks(is_waiting);
+    g_model.call_pre_step_callbacks(is_waiting);
 
     { /* run a Sail step */
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      is_waiting = ztry_step(sail_step, exit_wait);
-      if (have_exception) {
+      is_waiting = g_model.ztry_step(sail_step, exit_wait);
+      if (g_model.have_exception) {
         break;
       }
       flush_logs();
@@ -459,7 +458,7 @@ void run_sail(void)
       }
     }
 
-    call_post_step_callbacks(is_waiting);
+    g_model.call_post_step_callbacks(is_waiting);
 
     if (!is_waiting) {
       if (config_print_step) {
@@ -483,19 +482,19 @@ void run_sail(void)
               ((uint64_t)1000) * 0x100000 / (end_us - start_us));
     }
 
-    if (zhtif_done) {
+    if (g_model.zhtif_done) {
       /* check exit code */
-      if (zhtif_exit_code == 0) {
+      if (g_model.zhtif_exit_code == 0) {
         fprintf(stdout, "SUCCESS\n");
       } else {
-        fprintf(stdout, "FAILURE: %" PRIi64 "\n", zhtif_exit_code);
+        fprintf(stdout, "FAILURE: %" PRIi64 "\n", g_model.zhtif_exit_code);
         exit(EXIT_FAILURE);
       }
     }
 
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
-      ztick_clock(UNIT);
+      g_model.ztick_clock(UNIT);
     }
   }
 
@@ -572,7 +571,7 @@ int inner_main(int argc, char **argv)
   }
   if (rvfi_dii_port != 0) {
     config_enable_rvfi = true;
-    rvfi = rvfi_handler(rvfi_dii_port);
+    rvfi.emplace(rvfi_dii_port, g_model);
   }
   if (do_show_times) {
     fprintf(stderr, "will show execution times on completion.\n");
@@ -587,8 +586,9 @@ int inner_main(int argc, char **argv)
     fprintf(stderr, "setting signature-granularity to %d bytes\n",
             signature_granularity);
   }
-  if (rv_enable_experimental_extensions) {
+  if (config_enable_experimental_extensions) {
     fprintf(stderr, "enabling unratified extensions.\n");
+    g_model.set_enable_experimental_extensions(true);
   }
   if (!trace_log_path.empty()) {
     fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
@@ -607,13 +607,12 @@ int inner_main(int argc, char **argv)
   // Initialize platform.
   init_platform_constants();
 
-  init_sail_configured_types();
-  model_init();
+  g_model.model_init();
 
   // Validate the configuration; exit if that's all we were asked to do
   // or if the validation failed.
   {
-    bool config_is_valid = zconfig_is_valid(UNIT);
+    bool config_is_valid = g_model.zconfig_is_valid(UNIT);
     const char *s = config_is_valid ? "valid" : "invalid";
     if (!config_is_valid || do_validate_config) {
       if (config_file.empty()) {
@@ -645,7 +644,7 @@ int inner_main(int argc, char **argv)
   init_logs();
   log_callbacks log_cbs(config_print_reg, config_print_mem_access,
                         config_use_abi_names, trace_log);
-  register_callback(&log_cbs);
+  g_model.register_callback(&log_cbs);
 
   if (gettimeofday(&init_start, nullptr) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
@@ -656,7 +655,7 @@ int inner_main(int argc, char **argv)
     if (!rvfi->setup_socket(config_print_rvfi)) {
       return 1;
     }
-    register_callback(&rvfi_cbs);
+    g_model.register_callback(&rvfi_cbs);
   }
 
   if (!dtb_file.empty()) {
@@ -692,7 +691,7 @@ int inner_main(int argc, char **argv)
     }
   } while (rvfi);
 
-  model_fini();
+  g_model.model_fini();
   flush_logs();
   close_logs();
 
