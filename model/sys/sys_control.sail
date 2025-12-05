@@ -284,7 +284,7 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
-function handle_exception_with_reason(xtval : xlenbits, e : ExceptionType, r : trap_reason) -> unit = {
+function handle_exception(xtval : xlenbits, e : ExceptionType, r : trap_reason) -> unit = {
   let t : sync_exception = struct {
     trap    = e,
     excinfo = xtval_exception_value(e, xtval),
@@ -292,10 +292,6 @@ function handle_exception_with_reason(xtval : xlenbits, e : ExceptionType, r : t
     reason  = r
   };
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
-}
-
-function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
-  handle_exception_with_reason(xtval, e, Trap_reason_none())
 }
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
