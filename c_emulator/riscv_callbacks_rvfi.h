@@ -14,7 +14,7 @@ public:
   void xreg_full_write_callback(const_sail_string abi_name, sbits reg,
                                 sbits value) override;
   void trap_callback(bool is_interrupt, fbits cause,
-                   trap_reason reason) override;
+                     trap_reason reason) override;
 
 };
 

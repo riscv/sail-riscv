@@ -42,11 +42,10 @@ void rvfi_callbacks::xreg_full_write_callback(const_sail_string, sbits reg,
   }
 }
 
-void rvfi_callbacks::trap_callback(bool is_interrupt, fbits cause,trap_reason reason)
+void rvfi_callbacks::trap_callback(bool is_interrupt, fbits cause,
+                                   trap_reason reason)
 {
   (void)is_interrupt;
   (void)cause;
-  if (config_enable_rvfi) {
-    zrvfi_trap(UNIT);
-  }
+  (void)reason;
 }
