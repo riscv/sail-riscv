@@ -6,6 +6,8 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
+val amocas_odd_register_exit: unit -> unit
+
 function clause currentlyEnabled(Ext_A) = hartSupports(Ext_A) & misa[A] == 0b1 // TODO: Move currentlyEnabled(Ext_A) to a more central file
 function clause currentlyEnabled(Ext_Zaamo) = hartSupports(Ext_Zaamo) | currentlyEnabled(Ext_A)
 function clause currentlyEnabled(Ext_Zabha) = hartSupports(Ext_Zabha) & currentlyEnabled(Ext_Zaamo)
@@ -24,12 +26,35 @@ function clause currentlyEnabled(Ext_Zacas) = hartSupports(Ext_Zacas) & currentl
 //
 private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : regidx, Regidx(rd) : regidx) -> bool =
   // If AMOCAS, check that extension is enabled.
-  (if op == AMOCAS then currentlyEnabled(Ext_Zacas) else currentlyEnabled(Ext_Zaamo))
-  &
+  let enabled_ok = if op == AMOCAS then currentlyEnabled(Ext_Zacas)
+    else currentlyEnabled(Ext_Zaamo);
   // Check the size and register alignment.
-  (if width < 4 then currentlyEnabled(Ext_Zabha) else (
-    width <= xlen_bytes | (op == AMOCAS & width <= xlen_bytes * 2 & rs2[0] == bitzero & rd[0] == bitzero)
-  ))
+  let size_ok =
+    if width < 4 then
+      currentlyEnabled(Ext_Zabha)
+    else (
+      width <= xlen_bytes
+      | (op == AMOCAS & width <= xlen_bytes * 2 & rs2[0] == bitzero & rd[0] == bitzero)
+    );
+  //check if trigger reserved behaviour
+  if op == AMOCAS & width > xlen_bytes then {
+    let rs2_odd = rs2[0] == bitone;
+    let rd_odd  = rd[0] == bitone;
+    if rs2_odd | rd_odd then {
+      match (config base.reserved_behaviour.amocas_odd_registers: string) {
+        "exit" => {
+          amocas_odd_register_exit();
+          false
+        },
+        _ => false  
+      }
+    } else {
+      enabled_ok & size_ok
+    }
+  } else {
+    enabled_ok & size_ok
+  }
+}
 
 // *****************************************************************
 
@@ -74,16 +99,6 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   let addr : physaddr = match translateAddr(vaddr, LoadStore(Data, Data)) {
     Err(e, _) => return Memory_Exception(vaddr, e),
     Ok(addr, _) => addr,
-  };
-
-  //  Using odd-numbered registers for rs2 or rd in AMOCAS.D (RV32) or AMOCAS.Q (RV64) constitutes reserved behavior.
-  let rs2_num = unsigned(regidx_bits(rs2));
-  let rd_num = unsigned(regidx_bits(rd));
-  if (rs2_num % 2 != 0 | rd_num % 2 != 0) & (width > xlen_bytes) & (op == AMOCAS) then {
-    match (config base.reserved_behaviour.amocas_odd_registers : string) {
-      "illegal" => return Illegal_Instruction(),
-      "ignore" => ()
-    };
   };
 
   // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
@@ -147,3 +162,8 @@ mapping amo_mnemonic : amoop <-> string = {
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
   <-> amo_mnemonic(op) ^ "." ^ width_mnemonic_wide(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+
+function amocas_odd_register_exit() -> unit = {
+  print("Triggered reserved behaviour: AMOCAS.D/Q used odd-numbered register.");
+  exit()
+}
