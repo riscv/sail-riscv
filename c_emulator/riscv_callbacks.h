@@ -5,6 +5,9 @@
 extern "C" {
 #endif
 
+#include "sail_riscv_model.h"
+typedef struct ztrap_reason trap_reason;
+
 unit fetch_callback(sbits opcode);
 unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
                         lbits value);
@@ -24,7 +27,7 @@ unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
 unit vreg_write_callback(unsigned reg, lbits value);
 unit pc_write_callback(sbits new_pc);
 unit redirect_callback(sbits new_pc);
-unit trap_callback(bool is_interrupt, fbits cause);
+unit trap_callback(bool is_interrupt, fbits cause, trap_reason reason);
 
 #ifdef __cplusplus
 }

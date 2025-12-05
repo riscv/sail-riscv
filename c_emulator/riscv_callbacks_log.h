@@ -10,6 +10,8 @@ public:
                 bool config_use_abi_names = false, FILE *trace_log = nullptr);
 
   // callbacks_if
+  void pre_step(bool is_waiting) override;
+  void post_step(bool is_waiting) override;
   void mem_write_callback(const char *type, sbits paddr, uint64_t width,
                           lbits value) override;
   void mem_read_callback(const char *type, sbits paddr, uint64_t width,
@@ -22,7 +24,7 @@ public:
   void csr_full_read_callback(const_sail_string csr_name, unsigned reg,
                               sbits value) override;
   void vreg_write_callback(unsigned reg, lbits value) override;
-
+  void trap_callback(bool is_interrupt, fbits cause, trap_reason reason) override;
 private:
   bool config_print_reg;
   bool config_print_mem_access;

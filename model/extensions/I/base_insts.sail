@@ -530,6 +530,7 @@ function clause execute ECALL() = {
     trap    = trap,
     excinfo = (None() : option(xlenbits)),
     ext     = None(),
+    reason  = Trap_reason_none(),
   };
   Trap(cur_privilege, CTL_TRAP(t), PC)
 }

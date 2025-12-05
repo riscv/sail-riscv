@@ -18,19 +18,19 @@ void remove_callback(callbacks_if *cb)
                   callbacks.end());
 }
 
-// Invoke pre_step_callback on all registered callbacks before each step.
-void call_pre_step_callbacks(bool is_waiting)
+// Invoke pre_step on all registered callbacks before each step
+void callbacks_pre_step(bool is_waiting)
 {
   for (auto c : callbacks) {
-    c->pre_step_callback(is_waiting);
+    c->pre_step(is_waiting);
   }
 }
 
-// Invoke post_step_callback on all registered callbacks after each step.
-void call_post_step_callbacks(bool is_waiting)
+// Invoke post_step on all registered callbacks after each step
+void callbacks_post_step(bool is_waiting)
 {
   for (auto c : callbacks) {
-    c->post_step_callback(is_waiting);
+    c->post_step(is_waiting);
   }
 }
 
@@ -126,10 +126,10 @@ unit redirect_callback(sbits new_pc)
   return UNIT;
 }
 
-unit trap_callback(bool is_interrupt, fbits cause)
+unit trap_callback(bool is_interrupt, fbits cause, trap_reason reason)
 {
   for (auto c : callbacks) {
-    c->trap_callback(is_interrupt, cause);
+    c->trap_callback(is_interrupt, cause, reason);
   }
   return UNIT;
 }
