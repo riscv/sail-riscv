@@ -251,10 +251,7 @@ Vector (`V`) and cryptography (`Zk*`) extensions.
 
 ### Other modules
 
-The `termination` module specifies
-[functions](../model/termination/termination.sail) that are used to prove
-loop termination for theorem prover backends of Sail. The
-`unit_tests` module collects Sail unit tests for the specification.
+The `unit_tests` module collects Sail unit tests for the specification.
 The `main` module provides a [`main()`](../model/main/main.sail)
 function that is used in other Sail backends.
 
