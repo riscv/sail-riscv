@@ -6,6 +6,8 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
+val amocas_odd_register_exit: unit -> unit
+
 function clause currentlyEnabled(Ext_A) = hartSupports(Ext_A) & misa[A] == 0b1 // TODO: Move currentlyEnabled(Ext_A) to a more central file
 function clause currentlyEnabled(Ext_Zaamo) = hartSupports(Ext_Zaamo) | currentlyEnabled(Ext_A)
 function clause currentlyEnabled(Ext_Zabha) = hartSupports(Ext_Zabha) & currentlyEnabled(Ext_Zaamo)
@@ -22,14 +24,28 @@ function clause currentlyEnabled(Ext_Zacas) = hartSupports(Ext_Zacas) & currentl
 // If Zabha and Zacas are implemented then CAS supports 8 and
 // 16-bit operands.
 //
-function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : regidx, Regidx(rd) : regidx) -> bool =
+function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : regidx, Regidx(rd) : regidx) -> bool = 
   // If AMOCAS, check that extension is enabled.
   (if op == AMOCAS then currentlyEnabled(Ext_Zacas) else currentlyEnabled(Ext_Zaamo))
   &
   // Check the size and register alignment.
   (if width < 4 then currentlyEnabled(Ext_Zabha) else (
-    width <= xlen_bytes | (op == AMOCAS & width <= xlen_bytes * 2 & rs2[0] == bitzero & rd[0] == bitzero)
-  ))
+    width <= xlen_bytes | (
+      (op == AMOCAS & width <= xlen_bytes * 2 )
+      & 
+      (if (rs2[0] == bitone | rd[0] == bitone) then (
+        match(config base.reserved_behaviour.amocas_odd_register: string){
+          "exit" =>{
+            amocas_odd_register_exit();
+            false
+          },
+          "illegal" => false,
+        }
+      )else(
+        true
+      )
+    )
+  )))
 
 // *****************************************************************
 
@@ -137,3 +153,8 @@ mapping amo_mnemonic : amoop <-> string = {
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
   <-> amo_mnemonic(op) ^ "." ^ width_mnemonic_wide(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
+
+function amocas_odd_register_exit() -> unit = {
+  print("Triggered reserved behaviour: AMOCAS.D/Q used odd-numbered register.");
+  exit()
+}
