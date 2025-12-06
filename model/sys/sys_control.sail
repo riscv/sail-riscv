@@ -308,7 +308,7 @@ function handle_exception(xtval : xlenbits, e : ExceptionType, r : trap_reason) 
 }
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None(), Trap_reason_none()))
+  set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None(), Trap_reason_unclassified()))
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {

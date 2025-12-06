@@ -49,11 +49,12 @@ type ext_ptw_fail = unit
 type ext_ptw_error = unit // No extensions for page-table-walk errors
 
 // Additional information about the underlying cause of a trap.
-// This is purely for debugging / logging and does not affect the ISA state.
+// This is more fine-grained than ExceptionType / mcause.
 union trap_reason = {
-  Trap_reason_none : unit,
+  Trap_reason_unclassified : unit,
   Access_not_in_physical_memory : unit,
-  Invalid_pte_reserved_bits_nonzero : (physaddrbits, xlenbits)
+  Invalid_pte_reserved_bits_nonzero : (physaddrbits, xlenbits),
+  Landing_pad_exception : unit
 }
 
 // This type supports extensions to the exceptions defined in the ISA.

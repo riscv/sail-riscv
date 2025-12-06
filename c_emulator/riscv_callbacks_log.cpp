@@ -122,15 +122,22 @@ void log_callbacks::trap_callback(bool is_interrupt,
                  (unsigned long long)cause);
 
     switch (reason.kind) {
-    case Kind_zTrap_reason_none:
-        std::fprintf(stderr, "  reason: none\n");
+    case Kind_zTrap_reason_unclassified:
+        std::fprintf(stderr, "  reason: unclassified\n");
         break;
+
     case Kind_zAccess_not_in_physical_memory:
         std::fprintf(stderr, "  reason: access_not_in_physical_memory\n");
         break;
+
     case Kind_zInvalid_pte_reserved_bits_nonzzero:
         std::fprintf(stderr, "  reason: invalid_pte_reserved_bits_nonzero\n");
         break;
+
+    case Kind_zLanding_pad_exception:
+        std::fprintf(stderr, "  reason: landing_pad_exception\n");
+        break;
+
     default:
         std::fprintf(stderr, "  reason: <unknown kind=%d>\n",
                      (int)reason.kind);

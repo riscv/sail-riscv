@@ -157,6 +157,21 @@ function wait_is_nop(wr : WaitReason) -> bool =
     WAIT_WRS_NTO => config extensions.Zawrs.nto.is_nop,
   }
 
+function memory_exception_reason(e : ExceptionType) -> trap_reason =
+  match e {
+    // These ExceptionType values indicate that the memory access
+    // failed at the level of the implemented physical memory
+    // (e.g. no backing memory / PMA issues / bus errors).
+    E_Fetch_Access_Fault() => Access_not_in_physical_memory(),
+    E_Load_Access_Fault()  => Access_not_in_physical_memory(),
+    E_SAMO_Access_Fault()  => Access_not_in_physical_memory(),
+
+    // All other exceptions (alignment, page faults, envcalls,
+    // software checks, extension-specific traps, etc.) are not yet
+    // classified more finely here.
+    _                      => Trap_reason_unclassified()
+  }
+
 // The `try_step` function is the main internal driver of the Sail
 // model. It performs the fetch-decode-execute for an instruction. It
 // is also the primary interface to the non-Sail execution harness.
@@ -212,8 +227,8 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Execute(ExecuteAs(_), _) => assert(false),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e, Access_not_in_physical_memory()),
-    Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr(), Trap_reason_none()),
+    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e, memory_exception_reason(e)),
+    Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr(), Trap_reason_unclassified()),
     Step_Execute(Enter_Wait(wr), instbits) => {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
