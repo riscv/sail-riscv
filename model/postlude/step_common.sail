@@ -27,6 +27,8 @@ union HartState = {
   HART_WAITING : (WaitReason, instbits),
 }
 
+register hart_state : HartState = HART_ACTIVE()
+
 // utility predicates
 
 function hart_is_active(s : HartState) -> bool =

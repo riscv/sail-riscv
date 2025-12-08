@@ -59,20 +59,25 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types
+  sys_reservation {
+    requires prelude, core
+    files sys/sys_reservation.sail
+  }
 
-  files
-    sys/sys_reservation.sail,
-    sys/sys_control.sail,
-    sys/platform.sail,
-    sys/pma.sail,
-    sys/mem.sail,
-    sys/vmem_pte.sail,
-    sys/vmem_ptw.sail,
-    sys/vmem_tlb.sail,
-    sys/vmem.sail,
-    sys/insts_begin.sail,
-    sys/vmem_utils.sail,
+  sys_main {
+    requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, sys_reservation, Sdext_regs, Sdext_control, debug_module
+    files
+      sys/sys_control.sail,
+      sys/platform.sail,
+      sys/pma.sail,
+      sys/mem.sail,
+      sys/vmem_pte.sail,
+      sys/vmem_ptw.sail,
+      sys/vmem_tlb.sail,
+      sys/vmem.sail,
+      sys/insts_begin.sail,
+      sys/vmem_utils.sail,
+  }
 }
 
 extensions {
@@ -84,7 +89,7 @@ extensions {
       files extensions/I/base_types.sail
     }
     I_insts {
-      requires exceptions, sys, I_types, Zicfilp_regs
+      requires exceptions, sys, I_types, Zicfilp_regs, Sdext, debug_module
 
       files
         extensions/I/base_insts.sail,
@@ -98,7 +103,7 @@ extensions {
 
   A {
     A_types {
-      before sys
+      before sys_reservation
       files extensions/A/aext_types.sail
     }
     Zaamo {
@@ -342,6 +347,7 @@ extensions {
   }
 
   Zicntr {
+    requires Sdext_regs
     files extensions/Zicntr/zicntr_control.sail
   }
 
@@ -433,6 +439,48 @@ extensions {
     }
   }
 
+  Sdext {
+    requires debug_module
+
+    Sdext_types {
+      requires core
+      files
+        extensions/Sdext/sdext_types.sail
+    }
+
+    Sdext_regs {
+      requires core, Sdext_types
+      files
+        extensions/Sdext/sdext_regs.sail
+    }
+
+    Sdext_control {
+      requires core, sys_reservation, exceptions, Sdext_types, Sdext_regs, Zicfilp_regs
+      files
+        extensions/Sdext/sdext_control.sail
+    }
+
+    Sdext_hooks {
+      requires sys
+      before I_insts
+      files
+        extensions/Sdext/sdext_hooks.sail
+    }
+
+    Sdext_instructions {
+      requires sys, Sdext_control
+      files
+        extensions/Sdext/sdext_insts.sail
+    }
+  }
+
+  debug_module {
+    requires prelude, core
+    files
+      debug_module/debug_module_types.sail,
+      debug_module/debug_module.sail
+  }
+
   rmem {
     requires sys
     files
@@ -461,7 +509,7 @@ mops {
 postlude {
   after extensions, mops
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts, FD_core, Sdext_types, Sdext_regs, Sdext_control, debug_module
 
   files
     postlude/insts_end.sail,
@@ -471,10 +519,11 @@ postlude {
     postlude/decode_ext.sail,
     postlude/fetch_rvfi.sail,
     postlude/fetch.sail,
-    postlude/step.sail,
     postlude/validate_config.sail,
     postlude/device_tree.sail,
-    postlude/model.sail
+    postlude/model.sail,
+    postlude/debug_module_handlers.sail,
+    postlude/step.sail,
 }
 
 termination {
