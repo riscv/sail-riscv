@@ -296,3 +296,13 @@ function loop () : unit -> unit = {
     }
   }
 }
+
+// Termination measures for loops are not supported by the Lean backend, so they
+// should be guarded by this condition:
+$iftarget coq
+
+// The top-level loop isn't terminating, but we put a limit so that it can still
+// be included in the Coq output
+termination_measure loop while 100
+
+$endif

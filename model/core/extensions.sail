@@ -19,14 +19,31 @@ scattered mapping extensionName
 val hartSupports : extension -> bool
 scattered function hartSupports
 
+function hartSupports_measure(ext : extension) -> int =
+  match ext {
+    Ext_D => 1, // > F
+    Ext_Sstvecd => 1, // > S
+    Ext_Ssu64xl => 1, // > S
+    Ext_Zvkn => 1, // > Zvkned
+    Ext_Zvks => 1, // > Zvksed
+
+    Ext_C => 2, // > D
+    Ext_Zvknc => 2, // > Zvkn
+    Ext_Zvkng => 2, // > Zvkn
+    Ext_Zvksc => 2, // > Zvks
+    Ext_Zvksg => 2, // > Zvks
+
+    _ => 0,
+  }
+
+termination_measure hartSupports(ext) = hartSupports_measure(ext)
+
 // Function used to determine if an extension is currently enabled in the model.
 // This means an extension is supported, *and* any necessary bits are set in the
 // relevant CSRs (misa, mstatus, etc.) to enable its use. It is possible for some
 // extensions to be supported in hardware, but temporarily disabled via a CSR, in
 // which case this function should return false.
-// Note: when adding a new extension, adjust the associated termination measure
-// in the file termination.sail, as explained in the comment in
-// that file.
+// Note: when adding a new extension, adjust the `currentlyEnabled_measure` below.
 val currentlyEnabled : extension -> bool
 scattered function currentlyEnabled
 
@@ -478,6 +495,66 @@ function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.su
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+
+// When adding a new extension X, we need to make sure that if X being enabled
+// depends on Y being enabled, then the value associated to X is _greater_ than
+// the value associated to Y. The default value is 2, so that if it does not
+// depend on anything or only on extensions A, B, C, D, F, M, S, Zve32x, Zvl* or Zicsr,
+// nothing needs to be done.
+
+function currentlyEnabled_measure(ext : extension) -> int =
+  match ext {
+    Ext_A => 0,
+    Ext_B => 0,
+    Ext_C => 0,
+    Ext_M => 0,
+    Ext_Zicsr => 0,
+    Ext_Zvl128b => 0,
+    Ext_Zvl32b => 0,
+    Ext_Zvl64b => 0,
+
+    Ext_D => 1, // > Zicsr
+    Ext_F => 1, // > Zicsr
+    Ext_S => 1, // > Zicsr
+    Ext_Zaamo => 1, // > A
+    Ext_Zalrsc => 1, // > A
+    Ext_Zca => 1, // > C
+    Ext_Zfinx => 1, // > Zicsr
+    Ext_Zicntr => 1, // > Zicsr
+    Ext_Zihpm => 1, // > Zicsr
+    Ext_Zve32x => 1, // > Zvl32b
+
+    // Note: even though these match the default case, making them explicit to
+    // annotate the chain of dependencies
+    Ext_Sv39 => 2, // > S
+    Ext_Zfh => 2, // > F
+    Ext_Zhinx => 2, // > Zfinx
+    Ext_Zvbb => 2, // > Zve32x
+    Ext_Zve32f => 2, // > Zve32x
+    Ext_Zve64x => 2, // > Zve32x
+
+    Ext_Svrsw60t59b => 3, // > Sv39
+    Ext_Zfhmin => 3, // > Zfh
+    Ext_Zhinxmin => 3, // > Zhinx
+    Ext_Zicfilp => 3, // > get_xLPE
+    Ext_Zvbc => 3, // > Zve64x
+    Ext_Zve64f => 3, // > Zve64x
+    Ext_Zvfbfmin => 3, // > Zve32f
+    Ext_Zvkb => 3, // > Zvbb
+    Ext_Zvknhb => 3, // > Zve64x
+
+    Ext_H => 4, // > virtual_mem_supported
+    Ext_Zve64d => 4, // > Zve64f
+    Ext_Zvfbfwma => 4, // > Zvfbfmin
+    Ext_Zvfh => 4, // > Zfhmin
+
+    Ext_V => 5, // > Zve64d
+    Ext_Zvfhmin => 5, // > Zvfh
+
+    _ => 2
+  }
+
+termination_measure currentlyEnabled(ext) = currentlyEnabled_measure(ext)
 
 let extensions_ordered_for_isa_string = [
   // Single letter extensions.
