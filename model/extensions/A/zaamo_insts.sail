@@ -24,7 +24,7 @@ function clause currentlyEnabled(Ext_Zacas) = hartSupports(Ext_Zacas) & currentl
 // If Zabha and Zacas are implemented then CAS supports 8 and
 // 16-bit operands.
 //
-function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : regidx, Regidx(rd) : regidx) -> bool = 
+function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : regidx, Regidx(rd) : regidx) -> bool =
   // If AMOCAS, check that extension is enabled.
   (if op == AMOCAS then currentlyEnabled(Ext_Zacas) else currentlyEnabled(Ext_Zaamo))
   &
@@ -32,7 +32,7 @@ function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : r
   (if width < 4 then currentlyEnabled(Ext_Zabha) else (
     width <= xlen_bytes | (
       (op == AMOCAS & width <= xlen_bytes * 2 )
-      & 
+      &
       (if (rs2[0] == bitone | rd[0] == bitone) then (
         match(config base.reserved_behaviour.amocas_odd_register: ReservedBehaviourPolicy){
           Exit =>{
@@ -153,4 +153,3 @@ mapping amo_mnemonic : amoop <-> string = {
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
   <-> amo_mnemonic(op) ^ "." ^ width_mnemonic_wide(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
-
