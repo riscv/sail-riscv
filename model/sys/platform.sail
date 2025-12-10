@@ -40,6 +40,23 @@ function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(ad
 function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   within_htif_writable(addr, width)
 
+// Program Buffer start addr and size
+register plat_program_buffer_base : physaddrbits = to_bits_checked(config platform.debug_module.program_buffer.base : int)
+register plat_program_buffer_size : physaddrbits = to_bits_checked(config platform.debug_module.program_buffer.size : int)
+
+// Program Buffer
+function within_program_buffer forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
+  let addr_int = unsigned(addr);
+  let program_buffer_base_int = unsigned(plat_program_buffer_base);
+  let program_buffer_size_int = unsigned(plat_program_buffer_size);
+  // NOTE/TODO: Handling implicit EBREAK is tricky. For example, if the ROM is placed
+  // immediately after the Program Buffer, the implicit break instruction could
+  // overlap into the ROM. Currently, I handle this by checking whether execution
+  // is still within an abstract command (Program Buffer). This approach works,
+  // but it requires more testing.
+  (program_buffer_size_int <= addr_int & (addr_int + sizeof('n)) <= (program_buffer_base_int + program_buffer_size_int)) | (((config platform.debug_module.num_prog_reg : int == 1) | config platform.debug_module.impebreak : bool) & (program_buffer_base_int + program_buffer_size_int) == addr_int)
+}
+
 // CLINT (Core Local Interruptor), based on Spike.
 
 // Each hart has a memory-mapped mtimecmp register. Typically these are
@@ -375,3 +392,52 @@ function init_platform() -> unit = {
 
 // Platform-specific wait-for-interrupt
 function platform_wfi() -> unit = ()
+
+// NOTE: According to the debug specification, any control transfer
+// instruction that jumps into or out of the Program Buffer may trigger
+// an illegal instruction exception. However, our implementation currently
+// permits jumps in both directions without enforcing this restriction.
+function program_buffer_read forall 'n, 0 < 'n <= max_mem_access . (access_type : MemoryAccessType(ext_access_type), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) = {
+  match access_type {
+    InstructionFetch() => {
+      let Physaddr(addr) = paddr;
+
+      // Calculate relative address within the program buffer
+      let relative_addr = addr - plat_program_buffer_base;
+      let program_buffer_size = unsigned(plat_program_buffer_size);
+      // Which progbuf register (0-15)
+      let word_addr = unsigned(relative_addr) / 4;
+
+      // Check if we are beyond the program buffer and need implicit ebreak
+      if addr == (plat_program_buffer_base + plat_program_buffer_size) & (config platform.debug_module.num_prog_reg : int == 1 | config platform.debug_module.impebreak : bool) then {
+        if width == 4 then Ok(EBREAK_INSTRUCTION)
+        else if width == 2 then Ok(C_EBREAK_INSTRUCTION)
+        else Err(E_Fetch_Access_Fault())
+      }
+      else {
+        // Offset within that register
+        let byte_offset = unsigned(relative_addr) % 4;
+
+        // Get the appropriate progbuf register
+        let progbuf_data : bits(32) =
+          if word_addr < 16
+          then progbuf_regs[word_addr]
+          // Out of Range
+          else return Err(E_Fetch_Access_Fault());
+
+        if width == 4 then {
+          if byte_offset == 0 then Ok(progbuf_data)
+          else Err(E_Fetch_Addr_Align())
+        }
+        else if width == 2 then {
+          if byte_offset == 0 then Ok(progbuf_data[15..0])
+          else if byte_offset == 2 then Ok(progbuf_data[31..16])
+          else Err(E_Fetch_Addr_Align())
+        }
+        else Err(E_Fetch_Access_Fault())
+      };
+    },
+  Load(Data) => Err(E_Load_Access_Fault()),
+  _          => Err(E_SAMO_Access_Fault())
+  }
+}
