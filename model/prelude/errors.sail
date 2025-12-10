@@ -11,7 +11,7 @@
 union exception = {
   Error_not_implemented : string,
   Error_internal_error  : unit,
-  Error_reserved_behaviour : string
+  Error_reserved_behavior : string
 }
 
 val not_implemented : forall ('a : Type). string -> 'a
@@ -24,5 +24,5 @@ function internal_error(file, line, s) = {
 }
 
 
-val reserved_behaviour : forall ('a : Type). string -> 'a
-function reserved_behaviour message = throw(Error_reserved_behaviour(message))
+val reserved_behavior : forall ('a : Type). string -> 'a
+function reserved_behavior message = throw(Error_reserved_behavior("Reserved behavior: " ^ message))
