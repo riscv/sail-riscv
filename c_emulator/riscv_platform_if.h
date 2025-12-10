@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sail.h"
+#include "sail_riscv_model.h"
 
 class callbacks_if;
 
@@ -86,6 +87,25 @@ public:
   {
     return UNIT;
   }
+
+// Page table walk callbacks
+virtual unit ptw_start_callback([[maybe_unused]] uint64_t vpn,
+                          [[maybe_unused]] struct hart::zMemoryAccessTypezIuzK access_type,
+                          [[maybe_unused]] enum hart::zPrivilege privilege) {
+    return UNIT;
+  }
+  virtual unit ptw_step_callback([[maybe_unused]] int64_t level, [[maybe_unused]] sbits pte_addr, [[maybe_unused]] uint64_t pte){
+    return UNIT;
+  }
+  virtual unit ptw_success_callback([[maybe_unused]] uint64_t final_ppn, [[maybe_unused]] int64_t level){
+    return UNIT;
+  }
+  virtual unit ptw_fail_callback([[maybe_unused]] struct hart::zPTW_Error error_type, [[maybe_unused]] int64_t level,
+                         [[maybe_unused]] sbits pte_addr){
+    return UNIT;
+  }
+
+
 
   // Provides entropy for the scalar cryptography extension.
   virtual mach_bits plat_get_16_random_bits(unit)

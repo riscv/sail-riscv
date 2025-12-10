@@ -36,7 +36,7 @@ public:
   void ptw_success_callback(hart::Model &model, uint64_t final_ppn,
                             int64_t level) override;
   void ptw_fail_callback(hart::Model &model, struct hart::zPTW_Error error_type,
-                         int64_t /*level*/, sbits pte_addr) override;
+                         int64_t level, sbits pte_addr) override;
 
 private:
   bool config_print_reg;
