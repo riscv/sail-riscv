@@ -154,7 +154,6 @@ unit ModelImpl::trap_callback(bool is_interrupt, fbits cause)
   return UNIT;
 }
 
-// Page table walk callback
 unit ModelImpl::ptw_start_callback(
     uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
     hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege)

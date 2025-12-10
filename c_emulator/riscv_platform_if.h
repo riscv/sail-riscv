@@ -25,64 +25,43 @@ struct zPTW_Error;
 
 class PlatformInterface {
 public:
-  virtual unit fetch_callback([[maybe_unused]] sbits opcode);
+  virtual unit fetch_callback(sbits opcode);
 
-  virtual unit mem_write_callback([[maybe_unused]] const char *type,
-                                  [[maybe_unused]] sbits paddr,
-                                  [[maybe_unused]] uint64_t width,
-                                  [[maybe_unused]] lbits value);
+  virtual unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
+                                  lbits value);
 
-  virtual unit mem_read_callback([[maybe_unused]] const char *type,
-                                 [[maybe_unused]] sbits paddr,
-                                 [[maybe_unused]] uint64_t width,
-                                 [[maybe_unused]] lbits value);
+  virtual unit mem_read_callback(const char *type, sbits paddr, uint64_t width,
+                                 lbits value);
 
-  virtual unit
-  mem_exception_callback([[maybe_unused]] sbits paddr,
-                         [[maybe_unused]] uint64_t num_of_exception);
+  virtual unit mem_exception_callback(sbits paddr, uint64_t num_of_exception);
 
-  virtual unit
-  xreg_full_write_callback([[maybe_unused]] const_sail_string abi_name,
-                           [[maybe_unused]] sbits reg,
-                           [[maybe_unused]] sbits value);
+  virtual unit xreg_full_write_callback(const_sail_string abi_name, sbits reg,
+                                        sbits value);
 
-  virtual unit freg_write_callback([[maybe_unused]] unsigned reg,
-                                   [[maybe_unused]] sbits value);
+  virtual unit freg_write_callback(unsigned reg, sbits value);
 
-  virtual unit
-  csr_full_write_callback([[maybe_unused]] const_sail_string csr_name,
-                          [[maybe_unused]] unsigned reg,
-                          [[maybe_unused]] sbits value);
+  virtual unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
+                                       sbits value);
 
-  virtual unit
-  csr_full_read_callback([[maybe_unused]] const_sail_string csr_name,
-                         [[maybe_unused]] unsigned reg,
-                         [[maybe_unused]] sbits value);
+  virtual unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
+                                      sbits value);
 
-  virtual unit vreg_write_callback([[maybe_unused]] unsigned reg,
-                                   [[maybe_unused]] lbits value);
+  virtual unit vreg_write_callback(unsigned reg, lbits value);
 
-  virtual unit pc_write_callback([[maybe_unused]] sbits new_pc);
+  virtual unit pc_write_callback(sbits new_pc);
 
-  virtual unit redirect_callback([[maybe_unused]] sbits new_pc);
+  virtual unit redirect_callback(sbits new_pc);
 
-  virtual unit trap_callback([[maybe_unused]] bool is_interrupt,
-                             [[maybe_unused]] fbits cause);
+  virtual unit trap_callback(bool is_interrupt, fbits cause);
 
   // Page table walk callbacks
-  virtual unit ptw_start_callback(
-      [[maybe_unused]] uint64_t vpn,
-      [[maybe_unused]] hart::zMemoryAccessTypezIuzK access_type,
-      [[maybe_unused]] hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9
-          privilege);
-  virtual unit ptw_step_callback([[maybe_unused]] int64_t level,
-                                 [[maybe_unused]] sbits pte_addr,
-                                 [[maybe_unused]] uint64_t pte);
-  virtual unit ptw_success_callback([[maybe_unused]] uint64_t final_ppn,
-                                    [[maybe_unused]] int64_t level);
-  virtual unit ptw_fail_callback([[maybe_unused]] hart::zPTW_Error error_type,
-                                 [[maybe_unused]] int64_t level,
-                                 [[maybe_unused]] sbits pte_addr);
+  virtual unit
+  ptw_start_callback(uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
+                     hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege);
+  virtual unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte);
+  virtual unit ptw_success_callback(uint64_t final_ppn, int64_t level);
+  virtual unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level,
+                                 sbits pte_addr);
 
   // Provides entropy for the scalar cryptography extension.
   virtual mach_bits plat_get_16_random_bits(unit);

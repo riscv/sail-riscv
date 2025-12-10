@@ -12,6 +12,7 @@ unit PlatformInterface::fetch_callback([[maybe_unused]] sbits opcode)
 {
   return UNIT;
 }
+
 unit PlatformInterface::mem_write_callback([[maybe_unused]] const char *type,
                                            [[maybe_unused]] sbits paddr,
                                            [[maybe_unused]] uint64_t width,
@@ -19,6 +20,7 @@ unit PlatformInterface::mem_write_callback([[maybe_unused]] const char *type,
 {
   return UNIT;
 }
+
 unit PlatformInterface::mem_read_callback([[maybe_unused]] const char *type,
                                           [[maybe_unused]] sbits paddr,
                                           [[maybe_unused]] uint64_t width,
@@ -26,54 +28,62 @@ unit PlatformInterface::mem_read_callback([[maybe_unused]] const char *type,
 {
   return UNIT;
 }
+
 unit PlatformInterface::mem_exception_callback(
     [[maybe_unused]] sbits paddr, [[maybe_unused]] uint64_t num_of_exception)
 {
   return UNIT;
 }
+
 unit PlatformInterface::xreg_full_write_callback(
     [[maybe_unused]] const_sail_string abi_name, [[maybe_unused]] sbits reg,
     [[maybe_unused]] sbits value)
 {
   return UNIT;
 }
+
 unit PlatformInterface::freg_write_callback([[maybe_unused]] unsigned reg,
                                             [[maybe_unused]] sbits value)
 {
   return UNIT;
 }
+
 unit PlatformInterface::csr_full_write_callback(
     [[maybe_unused]] const_sail_string csr_name, [[maybe_unused]] unsigned reg,
     [[maybe_unused]] sbits value)
 {
   return UNIT;
 }
+
 unit PlatformInterface::csr_full_read_callback(
     [[maybe_unused]] const_sail_string csr_name, [[maybe_unused]] unsigned reg,
     [[maybe_unused]] sbits value)
 {
   return UNIT;
 }
+
 unit PlatformInterface::vreg_write_callback([[maybe_unused]] unsigned reg,
                                             [[maybe_unused]] lbits value)
 {
   return UNIT;
 }
+
 unit PlatformInterface::pc_write_callback([[maybe_unused]] sbits new_pc)
 {
   return UNIT;
 }
+
 unit PlatformInterface::redirect_callback([[maybe_unused]] sbits new_pc)
 {
   return UNIT;
 }
+
 unit PlatformInterface::trap_callback([[maybe_unused]] bool is_interrupt,
                                       [[maybe_unused]] fbits cause)
 {
   return UNIT;
 }
 
-// Page table walk callbacks
 unit PlatformInterface::ptw_start_callback(
     [[maybe_unused]] uint64_t vpn,
     [[maybe_unused]] hart::zMemoryAccessTypezIuzK access_type,
@@ -81,6 +91,7 @@ unit PlatformInterface::ptw_start_callback(
 {
   return UNIT;
 }
+
 unit PlatformInterface::ptw_step_callback([[maybe_unused]] int64_t level,
                                           [[maybe_unused]] sbits pte_addr,
                                           [[maybe_unused]] uint64_t pte)
@@ -99,7 +110,6 @@ unit PlatformInterface::ptw_fail_callback(
   return UNIT;
 }
 
-// Provides entropy for the scalar cryptography extension.
 mach_bits PlatformInterface::plat_get_16_random_bits(unit)
 {
   return 0;
@@ -109,14 +119,17 @@ unit PlatformInterface::load_reservation(sbits, uint64_t)
 {
   return UNIT;
 }
+
 bool PlatformInterface::match_reservation(sbits)
 {
   return false;
 }
+
 unit PlatformInterface::cancel_reservation(unit)
 {
   return UNIT;
 }
+
 bool PlatformInterface::valid_reservation(unit)
 {
   return false;
