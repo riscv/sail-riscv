@@ -7,7 +7,9 @@ class log_callbacks : public callbacks_if {
 public:
   explicit log_callbacks(bool config_print_reg = true,
                          bool config_print_mem_access = true,
+                         bool config_print_ptw = true,
                          bool config_use_abi_names = false,
+
                          FILE *trace_log = nullptr);
 
   // callbacks_if
@@ -25,10 +27,21 @@ public:
                               unsigned reg, sbits value) override;
   void vreg_write_callback(hart::Model &model, unsigned reg,
                            lbits value) override;
+  // Page table walk callback
+  void ptw_start_callback(hart::Model &model, uint64_t vpn,
+                          struct hart::zMemoryAccessTypezIuzK access_type,
+                          enum hart::zPrivilege privilege) override;
+  void ptw_step_callback(hart::Model &model, int64_t level, sbits pte_addr,
+                         uint64_t pte) override;
+  void ptw_success_callback(hart::Model &model, uint64_t final_ppn,
+                            int64_t level) override;
+  void ptw_fail_callback(hart::Model &model, struct hart::zPTW_Error error_type,
+                         int64_t /*level*/, sbits pte_addr) override;
 
 private:
   bool config_print_reg;
   bool config_print_mem_access;
   bool config_use_abi_names;
+  bool config_print_ptw;
   FILE *trace_log;
 };
