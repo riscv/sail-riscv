@@ -28,9 +28,10 @@ public:
   void vreg_write_callback(hart::Model &model, unsigned reg,
                            lbits value) override;
   // Page table walk callback
-  void ptw_start_callback(hart::Model &model, uint64_t vpn,
-                          struct hart::zMemoryAccessTypezIuzK access_type,
-                          enum hart::zPrivilege privilege) override;
+  void ptw_start_callback(
+      hart::Model &model, uint64_t vpn,
+      hart::zMemoryAccessTypezIuzK access_type,
+      hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege) override;
   void ptw_step_callback(hart::Model &model, int64_t level, sbits pte_addr,
                          uint64_t pte) override;
   void ptw_success_callback(hart::Model &model, uint64_t final_ppn,

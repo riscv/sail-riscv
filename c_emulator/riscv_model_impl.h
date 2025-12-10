@@ -49,12 +49,12 @@ private:
   unit trap_callback(bool is_interrupt, fbits cause) override;
 
   // Page table walk callbacks
-  unit ptw_start_callback(uint64_t vpn,
-                          struct hart::zMemoryAccessTypezIuzK access_type,
-                          enum hart::zPrivilege privilege)  override;
+  unit ptw_start_callback(
+      uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
+      hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege) override;
   unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte) override;
   unit ptw_success_callback(uint64_t final_ppn, int64_t level) override;
-  unit ptw_fail_callback(struct hart::zPTW_Error error_type, int64_t level,
+  unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level,
                          sbits pte_addr) override;
   // Provides entropy for the scalar cryptography extension.
   mach_bits plat_get_16_random_bits(unit) override;

@@ -111,16 +111,15 @@ void log_callbacks::vreg_write_callback(hart::Model &, unsigned reg,
 
 // Page table walk callback
 void log_callbacks::ptw_start_callback(
-    hart::Model &model, uint64_t vpn,
-    struct hart::zMemoryAccessTypezIuzK access_type,
-    enum hart::zPrivilege privilege)
+    hart::Model &model, uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
+    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege)
 {
   if (trace_log != nullptr && config_print_ptw) {
     sail_string str_ac, str_pr;
     CREATE(sail_string)(&str_ac);
     CREATE(sail_string)(&str_pr);
     model.zaccessType_to_str(&str_ac, access_type);
-    model.zprivLevel_to_str(&str_pr, privilege);
+    model.zprivLevel_to_str(&str_pr, privilege.ztup0);
     fprintf(trace_log,
             "PTW: Start, vpn=0x%" PRIx64 ", access_type=%s, privilege=%s", vpn,
             str_ac, str_pr);

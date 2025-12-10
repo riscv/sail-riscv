@@ -87,7 +87,7 @@ function pt_walk(
   global,
   ext_ptw,
 ) = {
-  ptw_start_callback(zero_extend(vpn), ac, priv);
+  ptw_start_callback(zero_extend(vpn), ac, (priv, ()));
 
   // Extract the PPN component for this level; 10 bits on Sv32, otherwise 9.
   let 'vpn_i_size = if 'v == 32 then 10 else 9;

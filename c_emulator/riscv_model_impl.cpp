@@ -156,8 +156,8 @@ unit ModelImpl::trap_callback(bool is_interrupt, fbits cause)
 
 // Page table walk callback
 unit ModelImpl::ptw_start_callback(
-    uint64_t vpn, struct hart::zMemoryAccessTypezIuzK access_type,
-    enum hart::zPrivilege privilege)
+    uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
+    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege)
 {
   for (auto c : m_callbacks) {
     c->ptw_start_callback(*this, vpn, access_type, privilege);
@@ -181,8 +181,8 @@ unit ModelImpl::ptw_success_callback(uint64_t final_ppn, int64_t level)
   return UNIT;
 }
 
-unit ModelImpl::ptw_fail_callback(struct hart::zPTW_Error error_type,
-                                  int64_t level, sbits pte_addr)
+unit ModelImpl::ptw_fail_callback(hart::zPTW_Error error_type, int64_t level,
+                                  sbits pte_addr)
 {
   for (auto c : m_callbacks) {
     c->ptw_fail_callback(*this, error_type, level, pte_addr);
