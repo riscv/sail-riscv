@@ -386,14 +386,14 @@ mapping width_mnemonic_wide : word_width_wide <-> string = {
   16 <-> "q",
 }
 
-// Defines the policy for handling reserved behaviours encountered
-enum ReservedBehaviourPolicy = {
-  Exit,
+// Defines the policy for handling reserved behaviors encountered
+enum ReservedBehaviorPolicy = {
+  Fatal,
   Illegal
 }
 
-mapping ReservedBehaviourPolicy_support_str : ReservedBehaviourPolicy <-> string = {
-  Exit <-> "Exit",
+mapping ReservedBehaviorPolicy_str : ReservedBehaviorPolicy <-> string = {
+  Fatal <-> "Fatal",
   Illegal <-> "Illegal",
 }
-overload to_str = {ReservedBehaviourPolicy_support_str}
+overload to_str = {ReservedBehaviorPolicy_str}

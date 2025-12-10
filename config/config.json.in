@@ -27,9 +27,9 @@
       "software_check": true,
       "reserved_exceptions": false
     },
-    "reserved_behaviour": {
-      // The configuration option determines how to handle the reserved behaviour `amocas_odd_registers`.
-      // "exit"  – exit model
+    "reserved_behavior": {
+      // The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
+      // "Fatal"  – raise a Sail exception, stopping execution.
       // "illegal" – treat it as an illegal instruction.
       "amocas_odd_register": "Illegal"
     }
