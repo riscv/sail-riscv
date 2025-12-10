@@ -20,10 +20,12 @@ void print_lbits_hex(FILE *trace_log, lbits val, int length = 0)
 
 log_callbacks::log_callbacks(bool config_print_reg,
                              bool config_print_mem_access,
-                             bool config_use_abi_names, FILE *trace_log)
+                             bool config_print_ptw, bool config_use_abi_names,
+                             FILE *trace_log)
     : config_print_reg(config_print_reg)
     , config_print_mem_access(config_print_mem_access)
     , config_use_abi_names(config_use_abi_names)
+    , config_print_ptw(config_print_ptw)
     , trace_log(trace_log)
 {
 }
@@ -104,5 +106,59 @@ void log_callbacks::vreg_write_callback(hart::Model &, unsigned reg,
   if (trace_log != nullptr && config_print_reg) {
     fprintf(trace_log, "v%d <- 0x", reg);
     print_lbits_hex(trace_log, value);
+  }
+}
+
+// Page table walk callback
+void log_callbacks::ptw_start_callback(
+    hart::Model &model, uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
+    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege)
+{
+  if (trace_log != nullptr && config_print_ptw) {
+    sail_string str_ac, str_pr;
+    CREATE(sail_string)(&str_ac);
+    CREATE(sail_string)(&str_pr);
+    model.zaccessType_to_str(&str_ac, access_type);
+    model.zprivLevel_to_str(&str_pr, privilege.ztup0);
+    fprintf(trace_log,
+            "PTW: Start, vpn=0x%" PRIx64 ", access_type=%s, privilege=%s", vpn,
+            str_ac, str_pr);
+    KILL(sail_string)(&str_ac);
+    KILL(sail_string)(&str_pr);
+  }
+}
+
+void log_callbacks::ptw_step_callback(hart::Model & /*model*/, int64_t level,
+                                      sbits pte_addr, uint64_t pte)
+{
+  if (trace_log != nullptr && config_print_ptw) {
+    fprintf(trace_log,
+            "PTW: Step, level=%ld, pte=0x%" PRIX64 ", pte_addr=0x%" PRIX64 "\n",
+            level, pte, pte_addr.bits);
+  }
+}
+
+void log_callbacks::ptw_success_callback(hart::Model & /*model*/,
+                                         uint64_t final_ppn, int64_t level)
+{
+  if (trace_log != nullptr && config_print_ptw) {
+    fprintf(trace_log, "PTW: Success, final_ppn=0x%" PRIx64 ", level=%ld",
+            final_ppn, level);
+  }
+}
+
+void log_callbacks::ptw_fail_callback(hart::Model &model,
+                                      struct hart::zPTW_Error error_type,
+                                      int64_t level, sbits pte_addr)
+{
+  // failed trace is always available
+  if (trace_log != nullptr) {
+    sail_string str_et;
+    CREATE(sail_string)(&str_et);
+    model.zptw_error_to_str(&str_et, error_type);
+    fprintf(trace_log,
+            "PTW: failed, error=%s, level=%ld, pte_addr=0x%" PRIX64 "\n",
+            str_et, level, pte_addr.bits);
+    KILL(sail_string)(&str_et);
   }
 }

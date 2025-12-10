@@ -154,6 +154,41 @@ unit ModelImpl::trap_callback(bool is_interrupt, fbits cause)
   return UNIT;
 }
 
+unit ModelImpl::ptw_start_callback(
+    uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
+    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege)
+{
+  for (auto c : m_callbacks) {
+    c->ptw_start_callback(*this, vpn, access_type, privilege);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte)
+{
+  for (auto c : m_callbacks) {
+    c->ptw_step_callback(*this, level, pte_addr, pte);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::ptw_success_callback(uint64_t final_ppn, int64_t level)
+{
+  for (auto c : m_callbacks) {
+    c->ptw_success_callback(*this, final_ppn, level);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::ptw_fail_callback(hart::zPTW_Error error_type, int64_t level,
+                                  sbits pte_addr)
+{
+  for (auto c : m_callbacks) {
+    c->ptw_fail_callback(*this, error_type, level, pte_addr);
+  }
+  return UNIT;
+}
+
 // Provides entropy for the scalar cryptography extension.
 mach_bits ModelImpl::plat_get_16_random_bits(unit)
 {

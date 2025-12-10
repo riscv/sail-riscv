@@ -68,6 +68,7 @@ sys {
     sys/mem.sail,
     sys/vmem_pte.sail,
     sys/vmem_ptw.sail,
+    sys/callbacks.sail,
     sys/vmem_tlb.sail,
     sys/vmem.sail,
     sys/insts_begin.sail,
