@@ -11,7 +11,7 @@
 union exception = {
   Error_not_implemented : string,
   Error_internal_error  : unit,
-  Error_reserved_behavior : string
+  Error_reserved_behavior : string,
 }
 
 val not_implemented : forall ('a : Type). string -> 'a
