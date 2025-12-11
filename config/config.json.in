@@ -32,6 +32,10 @@
       // "Fatal"  – raise a Sail exception, stopping execution.
       // "Illegal" – treat it as an illegal instruction.
       "amocas_odd_register": "Illegal"
+      // The configuration option determines how to handle the reserved behavior `pmpcfg_with_R0W1`.
+      // "Fatal"  – raise a Sail exception, stopping execution.
+      // "set_to_R0W0" – convert a PMP entry with R=0, W=1 to R=0, W=0.
+      "pmpcfg_with_R0W1": "SetToR0W0"
     }
   },
   "memory": {
