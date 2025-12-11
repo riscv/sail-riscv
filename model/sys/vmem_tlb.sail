@@ -64,9 +64,11 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
   trunc(ppn | (vpn & levelMask))
 }
 
-// 64 entries is based on benchmarks of Linux boots and is where you stop
-// seeing performance improvements.
-type num_tlb_entries : Int = 64
+// 64 entries is based on benchmarks of Linux boots and is where
+// you stop seeing performance improvements.
+type tlb_entries_bits : Int = 6
+let  tlb_entries_bits = sizeof(tlb_entries_bits)
+type num_tlb_entries : Int = 2 ^ tlb_entries_bits
 type tlb_index_range = range(0, num_tlb_entries - 1)
 
 // PRIVATE
@@ -77,7 +79,7 @@ function tlb_hash forall 'v, is_sv_mode('v) . (
   _sv_mode : int('v),
   vpn     : vpn_bits('v),
 ) -> tlb_index_range =
-  unsigned(vpn[5 .. 0])
+  unsigned(vpn[tlb_entries_bits - 1 .. 0])
 
 // PUBLIC: invoked in reset_vmem() [vmem.sail]
 function reset_TLB() -> unit = tlb = vector_init(None())
