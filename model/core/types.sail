@@ -389,7 +389,7 @@ mapping width_mnemonic_wide : word_width_wide <-> string = {
 // Defines the policy for handling reserved behaviors encountered
 enum ReservedBehaviorPolicy = {
   Fatal,
-  SetToR0W0
+  SetToR0W0,
 }
 
 mapping ReservedBehaviorPolicy_str : ReservedBehaviorPolicy <-> string = {
