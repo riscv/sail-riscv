@@ -48,7 +48,7 @@ function write_mhpmeventh(index : hpmidx, value : bits(32)) -> unit =
   mhpmevent[index] = legalize_hpmevent(Mk_HpmEvent(value @ mhpmevent[index].bits[31 .. 0]))
 
 // mhpmevent3..31h
-function clause is_CSR_accessible((0b0111001 /* 0x720 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Sscofpmf) & (xlen == 32)
+function clause is_CSR_accessible((0b0111001 /* 0x720 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = CSRAccessibleIf(Ext_Sscofpmf, xlen == 32)
 function clause read_CSR(0b0111001 /* 0x720 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmeventh(hpmidx_from_bits(index))
 function clause write_CSR((0b0111001 /* 0x720 */ @ index : bits(5), value) if xlen == 32 & unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
@@ -78,6 +78,6 @@ function get_scountovf(priv : Privilege) -> bits(32) = {
 }
 
 // scountovf
-function clause is_CSR_accessible(0xDA0, _, _) = currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S)
+function clause is_CSR_accessible(0xDA0, _, _) = CSRAccessibleIf(currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S))
 function clause read_CSR(0xDA0) = zero_extend(get_scountovf(cur_privilege))
 // scountovf is read-only.
