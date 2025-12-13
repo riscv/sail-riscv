@@ -57,8 +57,8 @@ function ptw_error_to_trap_reason(e : PTW_Error) -> TrapReason = {
     PTW_PTE_Needed() =>
       Trap_Reason_PTE_Update_Needed_But_Disabled(),
 
-    PTW_Ext_Error(ext) =>
-      Trap_Reason_Ext_PTW_Error(ext)
+    PTW_Ext_Error() =>
+      Trap_Reason_Ext_PTW_Error()
   }
 }
 

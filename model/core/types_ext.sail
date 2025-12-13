@@ -44,19 +44,19 @@ let init_ext_ptw : ext_ptw = ()
 type ext_ptw_fail = unit
 
 union TrapReason = {
-  Trap_Reason_Unclassified               : unit,
+  Trap_Reason_Unclassified                 : unit,
 
-  Access_Not_In_Physical_Memory          : unit,
+  Access_Not_In_Physical_Memory            : unit,
 
-  Trap_Reason_Invalid_Source_Addr        : unit,
-  Trap_Reason_No_PTE                     : unit,
-  Trap_Reason_No_Permission              : unit,
-  Trap_Reason_Misaligned_Superpage       : unit,
+  Trap_Reason_Invalid_Source_Addr          : unit,
+  Trap_Reason_No_PTE                       : unit,
+  Trap_Reason_No_Permission                : unit,
+  Trap_Reason_Misaligned_Superpage         : unit,
   Trap_Reason_PTE_Update_Needed_But_Disabled : unit,
 
-  Invalid_Pte_Reserved_Bits_Nonzero      : (physaddrbits, xlenbits),
+  Invalid_Pte_Reserved_Bits_Nonzero        : (physaddrbits, xlenbits),
 
-  Trap_Reason_Ext_PTW_Error              : ext_ptw_error
+  Trap_Reason_Ext_PTW_Error                : unit
 }
 
 
