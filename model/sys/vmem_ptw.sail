@@ -37,6 +37,31 @@ function ptw_error_to_str(e : PTW_Error) -> string = {
   }
 }
 
+function ptw_error_to_trap_reason(e : PTW_Error) -> TrapReason = {
+  match e {
+    PTW_No_Access() =>
+      Access_Not_In_Physical_Memory(),
+
+    PTW_Invalid_Addr() =>
+      Trap_Reason_Invalid_Source_Addr(),
+
+    PTW_No_PTE() =>
+      Trap_Reason_No_PTE(),
+
+    PTW_No_Permission() =>
+      Trap_Reason_No_Permission(),
+
+    PTW_Misaligned() =>
+      Trap_Reason_Misaligned_Superpage(),
+
+    PTW_PTE_Needed() =>
+      Trap_Reason_PTE_Update_Needed_But_Disabled(),
+
+    PTW_Ext_Error(ext) =>
+      Trap_Reason_Ext_PTW_Error(ext)
+  }
+}
+
 // PUBLIC
 overload to_str = {ptw_error_to_str}
 
