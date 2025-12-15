@@ -496,6 +496,11 @@ enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
 
+enum clause extension = Ext_Smcsrind
+mapping clause extensionName = Ext_Smcsrind <-> "smcsrind"
+function clause hartSupports(Ext_Smcsrind) = config extensions.Smcsrind.supported
+function clause currentlyEnabled(Ext_Smcsrind) = hartSupports(Ext_Smcsrind)
+
 // When adding a new extension X, we need to make sure that if X being enabled
 // depends on Y being enabled, then the value associated to X is _greater_ than
 // the value associated to Y. The default value is 2, so that if it does not
@@ -693,4 +698,6 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smcntrpmf,
+
 ]

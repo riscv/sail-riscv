@@ -389,6 +389,9 @@
     "Smcntrpmf": {
       "supported": true
     },
+    "Smcsrind": {
+      "supported": false
+    },
     "Sstc": {
       "supported": true
     },
