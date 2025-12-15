@@ -65,7 +65,7 @@ add_custom_command(
     DEPENDS ${sail_srcs} ${project_file}
     OUTPUT ${c_model} ${c_model_header} ${branch_info_file} ${schema_file}
     VERBATIM
-    COMMENT "Building C code from Sail model"
+    COMMENT "Building C++ code from Sail model"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND
         ${SAIL_BIN}
