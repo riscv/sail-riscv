@@ -80,22 +80,39 @@ function set_stvec(value : xlenbits) -> xlenbits = {
   stvec.bits
 }
 
+function get_miselect() -> xlenbits =
+  miselect
+
+function legalize_miselect(old : xlenbits, new : xlenbits) -> xlenbits = {
+  //  MSB=0 reserved; keep old value (sensible WARL-like behaviour)
+  if new[xlen - 1] == (0b0)[0] then old else new
+}
+
+function set_miselect(value : xlenbits) -> xlenbits = {
+  miselect = legalize_miselect(miselect, value);
+  miselect
+}
+
 mapping clause csr_name_map = 0x105  <-> "stvec"
 mapping clause csr_name_map = 0x141  <-> "sepc"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
 mapping clause csr_name_map = 0x341  <-> "mepc"
+mapping clause csr_name_map = 0x350  <-> "miselect"
 
 function clause is_CSR_accessible(0x105, _, _) = currentlyEnabled(Ext_S) // stvec
 function clause is_CSR_accessible(0x141, _, _) = currentlyEnabled(Ext_S) // sepc
 function clause is_CSR_accessible(0x305, _, _) = true // mtvec
 function clause is_CSR_accessible(0x341, _, _) = true // mepc
+function clause is_CSR_accessible(0x350, _, _) = true // miselect
 
 function clause read_CSR(0x105) = get_stvec()
 function clause read_CSR(0x141) = get_xepc(Supervisor)
 function clause read_CSR(0x305) = get_mtvec()
 function clause read_CSR(0x341) = get_xepc(Machine)
+function clause read_CSR(0x350) = get_miselect()
 
 function clause write_CSR(0x105, value) = { Ok(set_stvec(value)) }
 function clause write_CSR(0x141, value) = { Ok(set_xepc(Supervisor, value)) }
 function clause write_CSR(0x305, value) = { Ok(set_mtvec(value)) }
 function clause write_CSR(0x341, value) = { Ok(set_xepc(Machine, value)) }
+function clause write_CSR(0x350, value) = { Ok(set_miselect(value)) }
