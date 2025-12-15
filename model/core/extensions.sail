@@ -698,6 +698,6 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
-  Ext_Smcntrpmf,
+  Ext_Smcsrind,
 
 ]
