@@ -103,7 +103,7 @@ function clause is_CSR_accessible(0x105, _, _) = currentlyEnabled(Ext_S) // stve
 function clause is_CSR_accessible(0x141, _, _) = currentlyEnabled(Ext_S) // sepc
 function clause is_CSR_accessible(0x305, _, _) = true // mtvec
 function clause is_CSR_accessible(0x341, _, _) = true // mepc
-function clause is_CSR_accessible(0x350, _, _) = true // miselect
+function clause is_CSR_accessible(0x350, _, _) = currentlyEnabled(Ext_Smcsrind) // miselect
 
 function clause read_CSR(0x105) = get_stvec()
 function clause read_CSR(0x141) = get_xepc(Supervisor)
