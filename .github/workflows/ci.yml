@@ -44,7 +44,7 @@ jobs:
 
       - name: Upload test results
         if: ${{ matrix.run_all_steps}}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: tests.xml
           path: build/tests.xml
@@ -52,7 +52,7 @@ jobs:
 
       - name: Upload event payload
         if: ${{ matrix.run_all_steps}}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: event.json
           path: ${{ github.event_path }}
