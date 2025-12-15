@@ -76,7 +76,7 @@ jobs:
           ninja -C build
 
       - name: Restore cache (linux image)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         id: linux-cache-restore
         with:
           path: os-boot/linux/build/fw_payload.elf
@@ -89,7 +89,7 @@ jobs:
       - name: Cache Linux image
         # Update cache only on the master branch
         if: steps.linux-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: os-boot/linux/build/fw_payload.elf
           key: ${{ steps.linux-cache-restore.outputs.cache-primary-key }}
