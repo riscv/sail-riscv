@@ -10,6 +10,7 @@
   - Sstvala
   - Sstvecd
   - Ssu64xl
+  - Smstateen, Sstateen
 
 # Release notes for version 0.9
 
