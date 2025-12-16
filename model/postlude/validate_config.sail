@@ -225,6 +225,10 @@ function check_required_sstvala_option(name : string, value : bool) -> bool = {
 
 function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
+  if hartSupports(Ext_F) & hartSupports(Ext_Zfinx) then {
+    valid = false;
+    print_endline("The F and Zfinx extensions are mutually exclusive and cannot be supported simultaneously.");
+  };
   if hartSupports(Ext_Zfinx) & not(hartSupports(Ext_Zicsr)) then {
     valid = false;
     print_endline("The Zfinx extensions is enabled but Zicsr is disabled: supporting Zfinx requires Zicsr.");
