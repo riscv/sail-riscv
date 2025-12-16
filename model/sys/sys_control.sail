@@ -26,9 +26,19 @@ function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
 function check_CSR_access(csr : csreg, access_type : CSRAccessType) -> bool =
   not((access_type == CSRWrite | access_type == CSRReadWrite) & (csrAccess(csr) == 0b11))
 
+// Checks whether the given privilege mode has permission to access the specified CSR.
+function check_CSR_stateen(csr : csreg, p : Privilege) -> bool = match (p) {
+  Machine           => true,
+  Supervisor        => check_CSR_stateen_permission(csr),
+  User              => check_CSR_stateen_permission(csr),
+  VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+}
+
 function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> bool =
     check_CSR_priv(csr, p)
   & check_CSR_access(csr, access_type)
+  & check_CSR_stateen(csr, p)
   & is_CSR_accessible(csr, p, access_type)
 
 // Exception delegation: given an exception and the privilege at which
@@ -386,6 +396,9 @@ function reset_sys() -> unit = {
 
   // If the Zicfilp extension is implemented, the mseccfg.MLPE field is reset to 0.
   if hartSupports(Ext_Zicfilp) then mseccfg[MLPE] = 0b0;
+
+  // "On reset, all writable mstateen bits are initialized by the hardware to zeros."
+  reset_stateen();
 
   // TODO: Probably need to remove these vector resets too but it needs
   // refactoring anyway. See https://github.com/riscv/sail-riscv/issues/566 etc.

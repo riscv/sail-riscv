@@ -419,6 +419,10 @@ function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
+// Supervisor-mode view of the state-enable extension
+enum clause extension = Ext_Ssstateen
+mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
+function clause hartSupports(Ext_Ssstateen) = config extensions.Ssstateen.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -476,6 +480,10 @@ function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.su
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Machine-mode view of the state-enable extension
+enum clause extension = Ext_Smstateen
+mapping clause extensionName = Ext_Smstateen <-> "smstateen"
+function clause hartSupports(Ext_Smstateen) = config extensions.Smstateen.supported
 
 // When adding a new extension X, we need to make sure that if X being supported
 // depends on Y being supported, then the value associated to X is _greater_ than
@@ -682,6 +690,7 @@ let extensions_ordered_for_isa_string = [
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,
+  Ext_Ssstateen,
   Ext_Sstc,
   Ext_Sstvala,
   Ext_Sstvecd,
@@ -697,4 +706,5 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smstateen,
 ]
