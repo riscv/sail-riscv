@@ -437,5 +437,7 @@ function accrue_fflags(flags : bits(5)) -> unit = {
   then {
     fcsr[FFLAGS] = f;
     dirty_fd_context_if_present();
-  }
+  };
+  csr_write_callback("fflags", zero_extend(fcsr[FFLAGS]));
+  csr_write_callback("fcsr", zero_extend(fcsr.bits));
 }
