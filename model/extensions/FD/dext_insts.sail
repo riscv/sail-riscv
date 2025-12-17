@@ -209,7 +209,7 @@ function fle_D(v1 : bits(64), v2 : bits(64), is_quiet : bool) -> (bool, bits(5))
 // ***************************************************************
 // Helper functions for 'encdec()'
 
-function clause currentlyEnabled(Ext_Zdinx) = hartSupports(Ext_Zdinx) & flen >= 64 // TODO: Separate Zfinx and Zdinx
+function clause currentlyEnabled(Ext_Zdinx) = hartSupports(Ext_Zdinx) & currentlyEnabled(Ext_Zfinx)
 
 function haveDoubleFPU() -> bool = currentlyEnabled(Ext_D) | currentlyEnabled(Ext_Zdinx)
 

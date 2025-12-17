@@ -181,7 +181,7 @@ function clause hartSupports(Ext_Zfinx) = config extensions.Zfinx.supported
 // Floating-Point in Integer Registers (double precision)
 enum clause extension = Ext_Zdinx
 mapping clause extensionName = Ext_Zdinx <-> "zdinx"
-function clause hartSupports(Ext_Zdinx) = config extensions.Zfinx.supported // TODO: Separate Zfinx and Zdinx supported flags
+function clause hartSupports(Ext_Zdinx) = config extensions.Zdinx.supported
 
 // Code Size Reduction: compressed instructions excluding floating point loads and stores
 enum clause extension = Ext_Zca

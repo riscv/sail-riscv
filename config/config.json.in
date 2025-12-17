@@ -274,6 +274,9 @@
     "Zfinx": {
       "supported": false
     },
+    "Zdinx": {
+      "supported": false
+    },
     "Zca": {
       "supported": true
     },

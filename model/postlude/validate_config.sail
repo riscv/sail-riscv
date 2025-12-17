@@ -225,6 +225,26 @@ function check_required_sstvala_option(name : string, value : bool) -> bool = {
 
 function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
+  if hartSupports(Ext_F) & hartSupports(Ext_Zfinx) then {
+    valid = false;
+    print_endline("The F and Zfinx extensions are mutually exclusive and cannot be supported simultaneously.");
+  };
+  if hartSupports(Ext_Zfinx) & not(hartSupports(Ext_Zicsr)) then {
+    valid = false;
+    print_endline("The Zfinx extensions is enabled but Zicsr is disabled: supporting Zfinx requires Zicsr.");
+  };
+  if hartSupports(Ext_Zdinx) & not(hartSupports(Ext_Zfinx)) then {
+    valid = false;
+    print_endline("The Zdinx extensions is enabled but Zfinx is disabled: supporting Zdinx requires Zfinx.");
+  };
+  if hartSupports(Ext_Zhinx) & not(hartSupports(Ext_Zfinx)) then {
+    valid = false;
+    print_endline("The Zhinx extensions is enabled but Zfinx is disabled: supporting Zhinx requires Zfinx.");
+  };
+  if hartSupports(Ext_Zhinxmin) & not(hartSupports(Ext_Zfinx)) then {
+    valid = false;
+    print_endline("The Zhinxmin extensions is enabled but Zfinx is disabled: supporting Zhinxmin requires Zfinx.");
+  };
   if hartSupports(Ext_Zicfilp) & not(hartSupports(Ext_Zicsr)) then {
     valid = false;
     print_endline("The Zicfilp extension is enabled but Zicsr is disabled: supporting Zicfilp requires Zicsr.");

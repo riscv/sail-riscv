@@ -7,7 +7,7 @@
 // =======================================================================================
 
 function clause currentlyEnabled(Ext_Zhinx) = hartSupports(Ext_Zhinx) & currentlyEnabled(Ext_Zfinx)
-function clause currentlyEnabled(Ext_Zhinxmin) = (hartSupports(Ext_Zhinxmin) & currentlyEnabled(Ext_Zfinx))| currentlyEnabled(Ext_Zhinx)
+function clause currentlyEnabled(Ext_Zhinxmin) = (hartSupports(Ext_Zhinxmin) & currentlyEnabled(Ext_Zfinx)) | currentlyEnabled(Ext_Zhinx)
 
 // ***************************************************************
 // This file specifies the instructions in the Zfh extension
