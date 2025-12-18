@@ -20,7 +20,7 @@ let htif_tohost_size = 8
 // This is called externally. bits(64) is used because it's easier to deal with from C.
 function enable_htif(tohost_addr : bits(64)) -> unit = htif_tohost_base = Some(trunc(tohost_addr))
 
-function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
+private function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
   // To avoid overflow issues when physical memory extends to the end
   // of the addressable range, we need to perform address bound checks
   // on unsigned unbounded integers.
@@ -31,13 +31,13 @@ function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : ph
   & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
 }
 
-function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
+private function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
   match htif_tohost_base {
     None() => false,
     Some(base) => (addr <_u base + htif_tohost_size) & (addr + width >_u base)
   }
 
-function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
+private function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   within_htif_writable(addr, width)
 
 // CLINT (Core Local Interruptor), based on Spike.
@@ -69,7 +69,7 @@ let MTIMECMP_BASE_HI : physaddrbits = zero_extend(0x04004)
 let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
 let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
 
-val clint_load : forall 'n, 'n > 0. (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+private val clint_load : forall 'n, 'n > 0. (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function clint_load(t, Physaddr(addr), width) = {
   let addr = addr - plat_clint_base;
   // FIXME: For now, only allow exact aligned access.
@@ -129,7 +129,7 @@ function clint_load(t, Physaddr(addr), width) = {
   }
 }
 
-function clint_dispatch() -> unit = {
+private function clint_dispatch() -> unit = {
   mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
     mip[STI] = bool_to_bits(stimecmp <=_u mtime);
@@ -139,7 +139,7 @@ function clint_dispatch() -> unit = {
     (if currentlyEnabled(Ext_Sstc) then ", mip.STI <- " ^ bits_str(mip[STI]) else "") ^ ")");
 }
 
-val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
+private val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function clint_store(Physaddr(addr), width, data) = {
   let addr = addr - plat_clint_base;
   if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
@@ -237,7 +237,7 @@ register htif_cmd_write : bit
 register htif_payload_writes : bits(4)
 
 // Once a htif command has been processed, the port is reset.
-function reset_htif () -> unit = {
+private function reset_htif () -> unit = {
   htif_cmd_write = bitzero;
   htif_payload_writes = 0x0;
   htif_tohost = zeros();
@@ -247,7 +247,7 @@ function reset_htif () -> unit = {
 // we'll assume here that physical memory model has correctly
 // dispatched the address.
 
-val htif_load : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+private val htif_load : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function htif_load(acc, Physaddr(paddr), width) = {
   if   get_config_print_htif()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ bits_str(htif_tohost));
@@ -271,7 +271,7 @@ function htif_load(acc, Physaddr(paddr), width) = {
   }
 }
 
-val htif_store : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
+private val htif_store : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
 function htif_store(Physaddr(paddr), width, data) = {
   if   get_config_print_htif()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] <- " ^ bits_str(data));

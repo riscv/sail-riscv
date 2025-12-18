@@ -43,7 +43,7 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 let sys_misaligned_allowed_within_exp : range(0, 11) = config memory.misaligned.allowed_within_exp
 
 // Check if an 'n byte access for an address is within an aligned 2^'r byte region
-val access_within : forall 'width 'n ('r : Nat), 'r <= 'width & 1 <= 'n <= 2^'r.
+private val access_within : forall 'width 'n ('r : Nat), 'r <= 'width & 1 <= 'n <= 2^'r.
   (bits('width), int('n), int('r)) -> bool
 function access_within(addr, bytes, region_width_exp) = {
   let mask : bits('width) = ~(zero_extend(ones(region_width_exp)));
@@ -53,7 +53,7 @@ function access_within(addr, bytes, region_width_exp) = {
 // This property demonstrates that when bytes == 2^region_width_exp, the access_within check above is
 // equivalent to a regular alignment check (for a constrained set of inputs to help the SMT solver).
 $[property]
-function prop_access_within_is_aligned(addr : bits(32), region_width_exp : bits(4)) -> bool = {
+private function prop_access_within_is_aligned(addr : bits(32), region_width_exp : bits(4)) -> bool = {
   let region_width_exp = unsigned(region_width_exp);
   let bytes = 2 ^ region_width_exp;
   access_within(addr, bytes, region_width_exp) == (unsigned(addr) % bytes == 0)
@@ -61,11 +61,11 @@ function prop_access_within_is_aligned(addr : bits(32), region_width_exp : bits(
 
 // A 1-byte access is always within a 2^0 = 1-byte region.
 $[property]
-function prop_access_within_single(addr : bits(32)) -> bool = {
+private function prop_access_within_single(addr : bits(32)) -> bool = {
   access_within(addr, 1, 0)
 }
 
-val allowed_misaligned : forall 'width, 'width > 0. (xlenbits, int('width)) -> bool
+private val allowed_misaligned : forall 'width, 'width > 0. (xlenbits, int('width)) -> bool
 
 function allowed_misaligned(vaddr, width) = {
   let region_width_exp = sys_misaligned_allowed_within_exp;
@@ -76,7 +76,7 @@ function allowed_misaligned(vaddr, width) = {
   access_within(vaddr, width, region_width_exp)
 }
 
-val split_misaligned : forall 'width, 'width > 0.
+private val split_misaligned : forall 'width, 'width > 0.
   (virtaddr, int('width)) -> {'n 'bytes, 'width == 'n * 'bytes & 'bytes > 0. (int('n), int('bytes))}
 
 function split_misaligned(vaddr, width) = {
@@ -95,7 +95,7 @@ type valid_misaligned_order('n, 'first, 'last, 'step) -> Bool =
     ('first == 0 & 'last == 'n - 1 & 'step == 1)
   | ('first == 'n - 1 & 'last == 0 & 'step == -1)
 
-val misaligned_order : forall 'n.
+private val misaligned_order : forall 'n.
   int('n) -> {'first 'last 'step, valid_misaligned_order('n, 'first, 'last, 'step). (int('first), int('last), int('step))}
 
 function misaligned_order(n) = {

@@ -22,7 +22,7 @@ function clause currentlyEnabled(Ext_Zacas) = hartSupports(Ext_Zacas) & currentl
 // If Zabha and Zacas are implemented then CAS supports 8 and
 // 16-bit operands.
 //
-function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : regidx, Regidx(rd) : regidx) -> bool =
+private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(rs2) : regidx, Regidx(rd) : regidx) -> bool =
   // If AMOCAS, check that extension is enabled.
   (if op == AMOCAS then currentlyEnabled(Ext_Zacas) else currentlyEnabled(Ext_Zaamo))
   &
