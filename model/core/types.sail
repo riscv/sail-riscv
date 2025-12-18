@@ -387,13 +387,13 @@ mapping width_mnemonic_wide : word_width_wide <-> string = {
 }
 
 // Defines the policy for handling reserved behaviors encountered
-enum ReservedBehaviorPolicy = {
+enum PmpWriteOnlyReservedBehavior = {
   Fatal,
-  SetToR0W0,
+  ClearPermissions,
 }
 
-mapping ReservedBehaviorPolicy_str : ReservedBehaviorPolicy <-> string = {
+mapping PmpWriteOnlyReservedBehavior_str : PmpWriteOnlyReservedBehavior <-> string = {
   Fatal <-> "Fatal",
-  SetToR0W0 <-> "SetToR0W0",
+  ClearPermissions <-> "ClearPermissions",
 }
-overload to_str = {ReservedBehaviorPolicy_str}
+overload to_str = {PmpWriteOnlyReservedBehavior_str}
