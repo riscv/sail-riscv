@@ -4,7 +4,6 @@
   for Zalrsc atomics has been added.
 
 - The following extensions have been added:
-
   - Za64rs, Za128rs
   - Zic64b
   - Sstvala
@@ -19,7 +18,6 @@
   the 'E' and 'I' base ISAs is not supported.
 
 - The following extensions have been added:
-
   - Zvfbfwma
   - Zvfbfmin
   - Zfbfmin

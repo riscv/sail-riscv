@@ -4,7 +4,7 @@ exclude: "^(dependencies/)"
 minimum_pre_commit_version: 3.2.0
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         # Do not strip trailing whitespace from patches or SVG images.
@@ -19,7 +19,7 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: "v21.1.5"
+    rev: "v21.1.8"
     hooks:
       - id: clang-format
         types_or: [c, c++] # Don't try running clang-format on .json files
@@ -29,7 +29,7 @@ repos:
       - id: forbid-tabs
         exclude: '.*\.(diff|dump|patch|svg|S|old)|Makefile*'
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.5.3
+    rev: v3.7.4
     hooks:
       - id: prettier
   - repo: https://github.com/codespell-project/codespell
@@ -37,9 +37,7 @@ repos:
     hooks:
       - id: codespell
   - repo: https://github.com/tcort/markdown-link-check
-    # Use an older version due to:
-    # https://github.com/tcort/markdown-link-check/issues/457
-    rev: v3.12.2
+    rev: v3.14.2
     hooks:
       - id: markdown-link-check
         args: [-q, -c .markdown-link-check.config]
