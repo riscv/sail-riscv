@@ -15,7 +15,7 @@ function is_sstateen_accessible() -> bool = currentlyEnabled(Ext_S) & (currently
 
 enum stateen_bit = {STATEEN_FCSR, STATEEN_ENVCFG, STATEEN_SE}
 
-mapping stateen_bit_index : stateen_bit <-> {1, 62, 63} = {
+mapping stateen_bit_index : stateen_bit <-> range(0, 63) = {
   STATEEN_SE     <-> 63,
   STATEEN_ENVCFG <-> 62,
   STATEEN_FCSR   <-> 1,
