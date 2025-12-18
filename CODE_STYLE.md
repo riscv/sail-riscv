@@ -113,5 +113,5 @@ corresponding elements vertically aligned.
   providing a stub implementation; these are reserved for use by out-of-tree
   extensions that provide their own non-stub implementations
 
-- Helper functions that are local to a file or module should be marked
+- Helper types and functions that are local to a file or module should be marked
   with the `private` keyword.
