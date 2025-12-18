@@ -89,6 +89,8 @@ function execute_vsetvl_type(
   // Check new SEW and LMUL have legal encodings. There are some reserved values.
   if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype();
+    // The new value of `vl` needs to be written to `rd`.
+    X(rd) = vl;
     return RETIRE_SUCCESS;
   };
 
@@ -105,6 +107,8 @@ function execute_vsetvl_type(
   if SEW_pow_new > (LMUL_pow_new + elen_exp) |
      (requires_fixed_vlmax & (lmul_sew_ratio != lmul_sew_ratio_new | not(valid_vtype()))) then {
     handle_illegal_vtype();
+    // The new value of `vl` needs to be written to `rd`.
+    X(rd) = vl;
     return RETIRE_SUCCESS;
   };
 
