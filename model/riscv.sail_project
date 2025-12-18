@@ -168,7 +168,7 @@ extensions {
   // Floating point (F and D extensions)
   FD {
     FD_core {
-      requires Stateen
+      requires Stateen_regs
       before sys
       files
         extensions/FD/freg_type.sail,
@@ -435,7 +435,13 @@ extensions {
   }
 
   Stateen {
-    files extensions/Stateen/stateen_regs.sail
+    Stateen_regs {
+      files extensions/Stateen/stateen_regs.sail
+    }
+    Stateen_csrs {
+      requires Stateen_regs
+      files extensions/Stateen/stateen_csrs.sail
+    }
   }
 
   rmem {
