@@ -36,9 +36,9 @@ mapping clause assembly = ZICBOM(cbop, rs1)
   <-> cbop_mnemonic(cbop) ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 // CBIE from xenvcfg
-enum cbie = {CBIE_ILLEGAL, CBIE_EXEC_FLUSH, CBIE_EXEC_INVAL}
+private enum cbie = {CBIE_ILLEGAL, CBIE_EXEC_FLUSH, CBIE_EXEC_INVAL}
 
-mapping encdec_cbie : cbie <-> bits(2) = {
+private mapping encdec_cbie : cbie <-> bits(2) = {
   CBIE_ILLEGAL    <-> 0b00,
   CBIE_EXEC_FLUSH <-> 0b01,
   CBIE_EXEC_INVAL <-> 0b11,
@@ -46,7 +46,7 @@ mapping encdec_cbie : cbie <-> bits(2) = {
 }
 
 // Illegal-Virtual will be needed by the hypervisor mode, but is currently unused.
-enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_INVAL_INVAL}
+private enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_INVAL_INVAL}
 
 // Select the cbop to perform based on the privilege.
 private function cbop_priv_check(p: Privilege) -> checked_cbop = {

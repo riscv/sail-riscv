@@ -20,7 +20,7 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(ext_access
 
 // matching logic
 
-enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
+private enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
 
 // Given a right-open interval [begin, end_), return whether [addr, addr+width)
 // is contained fully within it (PMP_Match), doesn't overlap at all (PMP_NoMatch)
