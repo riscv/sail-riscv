@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function rvfi_fetch() -> FetchResult = {
+private function rvfi_fetch() -> FetchResult = {
   rvfi_inst_data[rvfi_order] = minstret;
   rvfi_pc_data[rvfi_pc_rdata] = zero_extend(get_arch_pc());
   rvfi_inst_data[rvfi_mode] = zero_extend(privLevel_to_bits(cur_privilege));

@@ -50,7 +50,7 @@ mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
+private function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -113,7 +113,7 @@ mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
+private function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -193,7 +193,7 @@ mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
+private function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
@@ -253,7 +253,7 @@ mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
+private function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val  = read_vmask(num_elem, vm, zvreg);
   let vd_seg  = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -317,7 +317,7 @@ mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
+private function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
@@ -381,7 +381,7 @@ mapping clause encdec = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
-function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : indexed_mop) -> ExecutionResult = {
+private function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : indexed_mop) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
@@ -448,7 +448,7 @@ mapping clause encdec = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
-function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : indexed_mop) -> ExecutionResult = {
+private function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : indexed_mop) -> ExecutionResult = {
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
@@ -509,7 +509,7 @@ mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : word_width, rs1 : regidx, elem_per_reg : nat) -> ExecutionResult = {
+private function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : word_width, rs1 : regidx, elem_per_reg : nat) -> ExecutionResult = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -569,7 +569,7 @@ mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_Zve32x)
 
-function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 : regidx, vs3 : vregidx, elem_per_reg : nat) -> ExecutionResult = {
+private function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 : regidx, vs3 : vregidx, elem_per_reg : nat) -> ExecutionResult = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -638,7 +638,7 @@ mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op)
   <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vd_or_vs3) @ encdec_lsop(op)
   when currentlyEnabled(Ext_Zve32x)
 
-function process_vm(vd_or_vs3 : vregidx, rs1 : regidx, num_elem : nat, evl : nat, op : vmlsop) -> ExecutionResult = {
+private function process_vm(vd_or_vs3 : vregidx, rs1 : regidx, num_elem : nat, evl : nat, op : vmlsop) -> ExecutionResult = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()

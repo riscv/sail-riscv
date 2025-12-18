@@ -10,7 +10,7 @@
 
 register hart_state : HartState = HART_ACTIVE()
 
-union Step = {
+private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : (virtaddr, ExceptionType),
@@ -18,7 +18,7 @@ union Step = {
   Step_Waiting            : WaitReason,
 }
 
-function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
+private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
   // successfully interrupted waits
   if shouldWakeForInterrupt() then {
     if   get_config_print_instr()
@@ -86,7 +86,7 @@ function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : instbits, e
   }
 }
 
-function run_hart_active(step_no: nat) -> Step = {
+private function run_hart_active(step_no: nat) -> Step = {
   match dispatchInterrupt(cur_privilege) {
     Some(intr, priv) => Step_Pending_Interrupt(intr, priv),
     None() => match ext_fetch_hook(fetch()) {
@@ -150,7 +150,7 @@ function run_hart_active(step_no: nat) -> Step = {
   }
 }
 
-function wait_is_nop(wr : WaitReason) -> bool =
+private function wait_is_nop(wr : WaitReason) -> bool =
   match wr {
     WAIT_WFI     => config platform.wfi_is_nop,
     WAIT_WRS_STO => config extensions.Zawrs.sto.is_nop,

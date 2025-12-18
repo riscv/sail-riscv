@@ -7,7 +7,7 @@
 // =======================================================================================
 
 // Identifies the largest MMU address translation mode supported by this hart.
-function mmu_type() -> string = {
+private function mmu_type() -> string = {
   if xlen == 32 then {
     if hartSupports(Ext_Sv32) then "sv32" else "none"
   } else {
@@ -24,7 +24,7 @@ function mmu_type() -> string = {
 // NOTE: These assume a valid model configuration.
 
 // Generates the value for the "riscv,isa-base" property.
-function generate_isa_base() -> string = {
+private function generate_isa_base() -> string = {
   "rv" ^ dec_str(xlen) ^ "i"
 }
 
@@ -72,7 +72,7 @@ enum ISA_Format = {Canonical_Lowercase, DeviceTree_ISA_Extensions}
 //
 // As the above document uses lower-case, the generator below does too.
 
-function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
+private function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
   if not(hartSupports(ext)) then return "";
   let s = extensionName(ext);
   match fmt {
@@ -84,7 +84,7 @@ function ext_wrap(ext : extension, fmt : ISA_Format) -> string = {
   }
 }
 
-function generate_isa_string(fmt : ISA_Format) -> string = {
+private function generate_isa_string(fmt : ISA_Format) -> string = {
   var isa_string : string = match fmt {
     Canonical_Lowercase => "rv" ^ dec_str(xlen) ^ "i",
     DeviceTree_ISA_Extensions => "\"i\"",
@@ -99,7 +99,7 @@ function generate_isa_string(fmt : ISA_Format) -> string = {
 
 // Generates the full Device-Tree configuration for the model.
 
-function generate_dts_memories(pmas : list(PMA_Region)) -> string =
+private function generate_dts_memories(pmas : list(PMA_Region)) -> string =
   match pmas {
     [||] => "",
     pma :: rest => {

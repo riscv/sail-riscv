@@ -46,7 +46,7 @@ function is_aligned_vaddr(Virtaddr(addr) : virtaddr, width : nat1) -> bool =
 
 overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr}
 
-function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> read_kind =
+private function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> read_kind =
   match (aq, rl, res) {
     (false, false, false) => Read_plain,
     (true, false, false)  => internal_error(__FILE__, __LINE__, "Unreserved load with acquire semantics should be unreachable"),
@@ -72,21 +72,21 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => internal_error(__FILE__, __LINE__, "Store-conditional with acquire semantics should be unreachable"),
   }
 
-function accessFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
+private function accessFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match accTy {
     InstructionFetch() => E_Fetch_Access_Fault(),
     Load(_)            => E_Load_Access_Fault(),
     _                  => E_SAMO_Access_Fault(),
   }
 
-function alignmentFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
+private function alignmentFaultFromAccessType(accTy : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match accTy {
     InstructionFetch() => E_Fetch_Addr_Align(),
     Load(_)            => E_Load_Addr_Align(),
     _                  => E_SAMO_Addr_Align(),
   }
 
-function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
+private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 (
   paddr      : physaddr,
   width      : int('n),
@@ -128,7 +128,7 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   }
 }
 
-function alignmentOrAccessFaultPriority(exc : ExceptionType) -> range(0, 1) = {
+private function alignmentOrAccessFaultPriority(exc : ExceptionType) -> range(0, 1) = {
   match exc {
     E_Fetch_Access_Fault() => 1,
     E_Load_Access_Fault()  => 1,
@@ -140,10 +140,11 @@ function alignmentOrAccessFaultPriority(exc : ExceptionType) -> range(0, 1) = {
   }
 }
 
-function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : ExceptionType) -> ExceptionType =
+private function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : ExceptionType) -> ExceptionType =
   if alignmentOrAccessFaultPriority(l) > alignmentOrAccessFaultPriority(r) then l else r
 
 // Check if access is permitted according to PMPs and PMAs.
+// TODO: this can be marked private after https://github.com/riscv/sail-riscv/pull/1405
 function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   typ : MemoryAccessType(ext_access_type),
   priv : Privilege,
@@ -162,7 +163,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
 }
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
-function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
+private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   t : MemoryAccessType(ext_access_type),
   priv : Privilege,
   paddr : physaddr,

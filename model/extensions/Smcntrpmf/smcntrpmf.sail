@@ -8,7 +8,7 @@ bitfield CountSmcntrpmf : bits(64) = {
   VUINH : 58,
 }
 
-function legalize_smcntrpmf(c : CountSmcntrpmf, value : bits(64)) -> CountSmcntrpmf = {
+private function legalize_smcntrpmf(c : CountSmcntrpmf, value : bits(64)) -> CountSmcntrpmf = {
   let v = Mk_CountSmcntrpmf(value);
   // For each bit in 61:58, if the associated privilege mode is not implemented, the bit is read-only zero.
   [ c with
