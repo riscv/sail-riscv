@@ -9,9 +9,9 @@
 function clause currentlyEnabled(Ext_Smstateen) = hartSupports(Ext_Smstateen)
 function clause currentlyEnabled(Ext_Ssstateen) = hartSupports(Ext_Ssstateen)
 
-function enable_mstateen() -> bool = hartSupports(Ext_Smstateen)
-function enable_hstateen() -> bool = currentlyEnabled(Ext_H) & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
-function enable_sstateen() -> bool = currentlyEnabled(Ext_S) & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
+function is_mstateen_accessible() -> bool = hartSupports(Ext_Smstateen)
+function is_hstateen_accessible() -> bool = currentlyEnabled(Ext_H) & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
+function is_sstateen_accessible() -> bool = currentlyEnabled(Ext_S) & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
 
 bitfield Mstateen0 : bits(64) = {
   SE0     : 63,
@@ -22,7 +22,7 @@ bitfield Mstateen0 : bits(64) = {
   IMSIC   : 58,
   CONTEXT : 57,
   P1P13   : 56,
-  P1P14   : 55,
+  SRMCFG  : 55,
   CTR     : 54,
 
   JVT     : 2,
@@ -42,53 +42,32 @@ bitfield Mstateen3 : bits(64) = {
   SE3 : 63,
 }
 
-// TODO: This needs to be modified once support Hypervisor is added
-// see https://github.com/riscv/sail-riscv/pull/910#discussion_r2070685435
-function enable_SE0() -> bool = currentlyEnabled(Ext_S) | misa[F] == 0b0
+
+function is_mstateen_SE0_readonly_zero() -> bool = {
+  not(currentlyEnabled(Ext_H)) & not(currentlyEnabled(Ext_Zfinx))
+}
 
 function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
   let v = Mk_Mstateen0(v);
-
   [m with
-    SE0     = if enable_SE0() then v[SE0] else 0b0,
-    ENVCFG  = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
-
-    CSRIND  = 0b0, // Not implemented yet
-    AIA     = 0b0, // Not implemented yet
-    IMSIC   = 0b0, // Not implemented yet
-    CONTEXT = 0b0, // Not implemented yet
-    P1P13   = 0b0, // Not implemented yet
-    P1P14   = 0b0, // Not implemented yet
-    CTR     = 0b0, // Not implemented yet
-
-    JVT     = 0b0, // Not implemented yet
-    FCSR    = if misa[F] == 0b1 then 0b0 else v[FCSR],
-    C       = 0b0,
+    SE0    = if is_mstateen_SE0_readonly_zero() then 0b0 else v[SE0],
+    ENVCFG = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
+    FCSR   = if currentlyEnabled(Ext_Zfinx) then v[FCSR] else 0b0,
+    C      = 0b0,
   ];
 }
 
-function legalize_mstateen1(m : Mstateen1, v : bits(64)) -> Mstateen1 = {
-  let v = Mk_Mstateen1(v);
-  [m with SE1 = 0b0];
-}
+function legalize_mstateen1(m : Mstateen1, v : bits(64)) -> Mstateen1 = { m }
+function legalize_mstateen2(m : Mstateen2, v : bits(64)) -> Mstateen2 = { m }
+function legalize_mstateen3(m : Mstateen3, v : bits(64)) -> Mstateen3 = { m }
 
-function legalize_mstateen2(m : Mstateen2, v : bits(64)) -> Mstateen2 = {
-  let v = Mk_Mstateen2(v);
-  [m with SE2 = 0b0];
-}
-
-function legalize_mstateen3(m : Mstateen3, v : bits(64)) -> Mstateen3 = {
-  let v = Mk_Mstateen3(v);
-  [m with SE3 = 0b0];
-}
-
-register mstateen0 : Mstateen0 = legalize_mstateen0(Mk_Mstateen0(zeros()), zeros())
-register mstateen1 : Mstateen1 = legalize_mstateen1(Mk_Mstateen1(zeros()), zeros())
-register mstateen2 : Mstateen2 = legalize_mstateen2(Mk_Mstateen2(zeros()), zeros())
-register mstateen3 : Mstateen3 = legalize_mstateen3(Mk_Mstateen3(zeros()), zeros())
+register mstateen0 : Mstateen0 = Mk_Mstateen0(zeros())
+register mstateen1 : Mstateen1 = Mk_Mstateen1(zeros())
+register mstateen2 : Mstateen2 = Mk_Mstateen2(zeros())
+register mstateen3 : Mstateen3 = Mk_Mstateen3(zeros())
 
 function get_mstateen(idx : range(0, 3)) -> bits(64) = {
-  if not(enable_mstateen()) then ones()
+  if not(is_mstateen_accessible()) then ones()
   else match idx {
     0 => mstateen0.bits,
     1 => mstateen1.bits,
@@ -107,15 +86,15 @@ mapping clause csr_name_map = 0x31D <-> "mstateen1h"
 mapping clause csr_name_map = 0x31E <-> "mstateen2h"
 mapping clause csr_name_map = 0x31F <-> "mstateen3h"
 
-function clause is_CSR_accessible(0x30C, _, _) = enable_mstateen()
-function clause is_CSR_accessible(0x30D, _, _) = enable_mstateen()
-function clause is_CSR_accessible(0x30E, _, _) = enable_mstateen()
-function clause is_CSR_accessible(0x30F, _, _) = enable_mstateen()
+function clause is_CSR_accessible(0x30C, _, _) = is_mstateen_accessible()
+function clause is_CSR_accessible(0x30D, _, _) = is_mstateen_accessible()
+function clause is_CSR_accessible(0x30E, _, _) = is_mstateen_accessible()
+function clause is_CSR_accessible(0x30F, _, _) = is_mstateen_accessible()
 
-function clause is_CSR_accessible(0x31C, _, _) = enable_mstateen() & (xlen == 32)
-function clause is_CSR_accessible(0x31D, _, _) = enable_mstateen() & (xlen == 32)
-function clause is_CSR_accessible(0x31E, _, _) = enable_mstateen() & (xlen == 32)
-function clause is_CSR_accessible(0x31F, _, _) = enable_mstateen() & (xlen == 32)
+function clause is_CSR_accessible(0x31C, _, _) = is_mstateen_accessible() & (xlen == 32)
+function clause is_CSR_accessible(0x31D, _, _) = is_mstateen_accessible() & (xlen == 32)
+function clause is_CSR_accessible(0x31E, _, _) = is_mstateen_accessible() & (xlen == 32)
+function clause is_CSR_accessible(0x31F, _, _) = is_mstateen_accessible() & (xlen == 32)
 
 function clause read_CSR(0x30C) = mstateen0.bits[xlen - 1 .. 0]
 function clause read_CSR(0x30D) = mstateen1.bits[xlen - 1 .. 0]
@@ -142,13 +121,13 @@ function clause write_CSR((0x31D, value) if xlen == 32) = { mstateen1 = legalize
 function clause write_CSR((0x31E, value) if xlen == 32) = { mstateen2 = legalize_mstateen2(mstateen2, value @ mstateen2.bits[31 .. 0]); Ok(mstateen2.bits[63 .. 32]) }
 function clause write_CSR((0x31F, value) if xlen == 32) = { mstateen3 = legalize_mstateen3(mstateen3, value @ mstateen3.bits[31 .. 0]); Ok(mstateen3.bits[63 .. 32]) }
 
-register hstateen0 : Mstateen0 = legalize_mstateen0(Mk_Mstateen0(zeros()), zeros())
-register hstateen1 : Mstateen1 = legalize_mstateen1(Mk_Mstateen1(zeros()), zeros())
-register hstateen2 : Mstateen2 = legalize_mstateen2(Mk_Mstateen2(zeros()), zeros())
-register hstateen3 : Mstateen3 = legalize_mstateen3(Mk_Mstateen3(zeros()), zeros())
+register hstateen0 : Mstateen0 = Mk_Mstateen0(zeros())
+register hstateen1 : Mstateen1 = Mk_Mstateen1(zeros())
+register hstateen2 : Mstateen2 = Mk_Mstateen2(zeros())
+register hstateen3 : Mstateen3 = Mk_Mstateen3(zeros())
 
 function get_hstateen(idx : range(0, 3)) -> bits(64) = {
-  if not(enable_hstateen()) then ones()
+  if not(is_hstateen_accessible()) then ones()
   else match idx {
     0 => hstateen0.bits,
     1 => hstateen1.bits,
@@ -191,15 +170,15 @@ mapping clause csr_name_map = 0x61D <-> "hstateen1h"
 mapping clause csr_name_map = 0x61E <-> "hstateen2h"
 mapping clause csr_name_map = 0x61F <-> "hstateen3h"
 
-function clause is_CSR_accessible(0x60C, _, _) = enable_hstateen()
-function clause is_CSR_accessible(0x60D, _, _) = enable_hstateen()
-function clause is_CSR_accessible(0x60E, _, _) = enable_hstateen()
-function clause is_CSR_accessible(0x60F, _, _) = enable_hstateen()
+function clause is_CSR_accessible(0x60C, _, _) = is_hstateen_accessible()
+function clause is_CSR_accessible(0x60D, _, _) = is_hstateen_accessible()
+function clause is_CSR_accessible(0x60E, _, _) = is_hstateen_accessible()
+function clause is_CSR_accessible(0x60F, _, _) = is_hstateen_accessible()
 
-function clause is_CSR_accessible(0x61C, _, _) = enable_hstateen() & (xlen == 32)
-function clause is_CSR_accessible(0x61D, _, _) = enable_hstateen() & (xlen == 32)
-function clause is_CSR_accessible(0x61E, _, _) = enable_hstateen() & (xlen == 32)
-function clause is_CSR_accessible(0x61F, _, _) = enable_hstateen() & (xlen == 32)
+function clause is_CSR_accessible(0x61C, _, _) = is_hstateen_accessible() & (xlen == 32)
+function clause is_CSR_accessible(0x61D, _, _) = is_hstateen_accessible() & (xlen == 32)
+function clause is_CSR_accessible(0x61E, _, _) = is_hstateen_accessible() & (xlen == 32)
+function clause is_CSR_accessible(0x61F, _, _) = is_hstateen_accessible() & (xlen == 32)
 
 function clause read_CSR(0x60C) = (hstateen0.bits & get_hstateen_mask(0))[xlen - 1 .. 0]
 function clause read_CSR(0x60D) = (hstateen1.bits & get_hstateen_mask(1))[xlen - 1 .. 0]
@@ -232,7 +211,6 @@ bitfield Sstateen0 : bits(32) = {
   C    : 0,
 }
 
-
 bitfield Sstateen1 : bits(32) = {
   // No bits defined yet
 }
@@ -248,9 +226,7 @@ bitfield Sstateen3 : bits(32) = {
 function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
   let v = Mk_Sstateen0(v);
   [s with
-    JVT  = 0b0, // Not implemented yet
     FCSR = if misa[F] == 0b1 then 0b0 else v[FCSR],
-    C    = 0b0, // Not implemented yet
   ];
 }
 
@@ -258,14 +234,14 @@ function legalize_sstateen1(s : Sstateen1, v : bits(32)) -> Sstateen1 = { s }
 function legalize_sstateen2(s : Sstateen2, v : bits(32)) -> Sstateen2 = { s }
 function legalize_sstateen3(s : Sstateen3, v : bits(32)) -> Sstateen3 = { s }
 
-register sstateen0 : Sstateen0 = legalize_sstateen0(Mk_Sstateen0(zeros()), zeros())
-register sstateen1 : Sstateen1 = legalize_sstateen1(Mk_Sstateen1(zeros()), zeros())
-register sstateen2 : Sstateen2 = legalize_sstateen2(Mk_Sstateen2(zeros()), zeros())
-register sstateen3 : Sstateen3 = legalize_sstateen3(Mk_Sstateen3(zeros()), zeros())
+register sstateen0 : Sstateen0 = Mk_Sstateen0(zeros())
+register sstateen1 : Sstateen1 = Mk_Sstateen1(zeros())
+register sstateen2 : Sstateen2 = Mk_Sstateen2(zeros())
+register sstateen3 : Sstateen3 = Mk_Sstateen3(zeros())
 
 function get_sstateen(idx : range(0, 3)) -> bits(64) =
   0xFFFFFFFF @ (
-    if enable_sstateen() then (match idx {
+    if is_sstateen_accessible() then (match idx {
       0 => sstateen0.bits,
       1 => sstateen1.bits,
       2 => sstateen2.bits,
@@ -282,10 +258,10 @@ mapping clause csr_name_map = 0x10D <-> "sstateen1"
 mapping clause csr_name_map = 0x10E <-> "sstateen2"
 mapping clause csr_name_map = 0x10F <-> "sstateen3"
 
-function clause is_CSR_accessible(0x10C, _, _) = enable_sstateen()
-function clause is_CSR_accessible(0x10D, _, _) = enable_sstateen()
-function clause is_CSR_accessible(0x10E, _, _) = enable_sstateen()
-function clause is_CSR_accessible(0x10F, _, _) = enable_sstateen()
+function clause is_CSR_accessible(0x10C, _, _) = is_sstateen_accessible()
+function clause is_CSR_accessible(0x10D, _, _) = is_sstateen_accessible()
+function clause is_CSR_accessible(0x10E, _, _) = is_sstateen_accessible()
+function clause is_CSR_accessible(0x10F, _, _) = is_sstateen_accessible()
 
 function clause read_CSR(0x10C) = { let mask = get_sstateen_mask(0); zero_extend(sstateen0.bits & mask[31..0]) }
 function clause read_CSR(0x10D) = { let mask = get_sstateen_mask(1); zero_extend(sstateen1.bits & mask[31..0]) }
