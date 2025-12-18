@@ -360,7 +360,8 @@ private function get_satp forall 'v, is_sv_mode('v). (
 }
 
 // Top-level addr-translation function
-// PUBLIC: invoked from instr-fetch and load/store/amo
+// PUBLIC: invoked from instr-fetch, atomics and CBOs
+// [postlude/fetch.sail, A/zaamo_insts.sail, Zicbo{zm}/zicbo{zm}_insts.sail].
 function translateAddr(
   vAddr : virtaddr,
   ac    : MemoryAccessType(ext_access_type),
@@ -420,7 +421,7 @@ function translateAddr(
 // ****************************************************************
 // Initialize Virtual Memory state
 
-// PUBLIC: invoked from init_model()
+// PUBLIC: invoked from reset() [postlude/model.sail]
 function reset_vmem() -> unit = reset_TLB()
 
 // ****************************************************************

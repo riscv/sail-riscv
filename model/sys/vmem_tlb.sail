@@ -161,7 +161,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 }
 
 // Top-level TLB flush function
-// PUBLIC: invoked from SFENCE_VMA [insts_base.sail]
+// PUBLIC: invoked from SFENCE_VMA [extensions/I/insts_base.sail]
 function flush_TLB(asid : option(asidbits),
                    addr : option(xlenbits)) -> unit = {
   foreach (i from 0 to (length(tlb) - 1)) {

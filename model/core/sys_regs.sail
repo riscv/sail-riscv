@@ -547,6 +547,7 @@ bitfield Mtvec : xlenbits = {
 }
 register mtvec : Mtvec  // Trap Vector
 
+// PUBLIC: invoked from set_{ms}tvec() [exceptions/sys_exceptions.sail]
 function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  let v = Mk_Mtvec(v);
  match (trapVectorMode_of_bits(v[Mode])) {
@@ -586,6 +587,7 @@ register mepc : xlenbits
 
 // The xepc legalization zeroes xepc[1:0] when Zca is not supported.
 // When Zca is supported (whether it is enabled or not), it zeroes only xepc[0].
+// PUBLIC: invoked from set_xepc() [exceptions/sys_exceptions.sail]
 function legalize_xepc(v : xlenbits) -> xlenbits = {
   if   hartSupports(Ext_Zca)
   then [v with 0 = bitzero]
