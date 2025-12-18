@@ -103,12 +103,13 @@ private function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
     let cfg = Mk_Pmpcfg_ent(v & 0x9f);
 
     // "The R, W, and X fields form a collective WARL field for which the combinations with R=0 and W=1 are reserved."
-    // In this implementation if R=0 and W=1 then R, W and X are all set to 0.
-    // This is the least risky option from a security perspective.
+    // if R=0 and W=1, we allow two options currently:
+    // 1. exit the simulation with a fatal error
+    // 2. R, W and X are all set to 0.
     let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 then (
-      match (config base.reserved_behavior.pmpcfg_with_R0W1 : ReservedBehaviorPolicy) {
+      match (config base.reserved_behavior.pmpcfg_write_only : PmpWriteOnlyReservedBehavior) {
         Fatal => reserved_behavior("pmpcfg with R=0,W=1"),
-        SetToR0W0 => [cfg with X = 0b0, W = 0b0, R = 0b0],
+        ClearPerMissions => [cfg with X = 0b0, W = 0b0, R = 0b0],
       }
     ) else cfg;
 
