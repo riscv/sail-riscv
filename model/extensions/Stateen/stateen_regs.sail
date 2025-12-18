@@ -42,7 +42,7 @@ bitfield Mstateen3 : bits(64) = {
   SE3 : 63,
 }
 
-
+// TODO: Update when Zcmt is implemented
 function is_mstateen_SE0_readonly_zero() -> bool = {
   not(currentlyEnabled(Ext_H)) & not(currentlyEnabled(Ext_Zfinx))
 }
