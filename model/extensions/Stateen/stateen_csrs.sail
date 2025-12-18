@@ -55,14 +55,14 @@ mapping clause csr_name_map = 0x61D <-> "hstateen1h"
 mapping clause csr_name_map = 0x61E <-> "hstateen2h"
 mapping clause csr_name_map = 0x61F <-> "hstateen3h"
 
-function clause is_CSR_accessible(0x60C, _, _) = is_hstateen_accessible()
-function clause is_CSR_accessible(0x60D, _, _) = is_hstateen_accessible()
-function clause is_CSR_accessible(0x60E, _, _) = is_hstateen_accessible()
-function clause is_CSR_accessible(0x60F, _, _) = is_hstateen_accessible()
-function clause is_CSR_accessible(0x61C, _, _) = is_hstateen_accessible() & (xlen == 32)
-function clause is_CSR_accessible(0x61D, _, _) = is_hstateen_accessible() & (xlen == 32)
-function clause is_CSR_accessible(0x61E, _, _) = is_hstateen_accessible() & (xlen == 32)
-function clause is_CSR_accessible(0x61F, _, _) = is_hstateen_accessible() & (xlen == 32)
+function clause is_CSR_accessible(0x60C, priv, _) = is_hstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 0)
+function clause is_CSR_accessible(0x60D, priv, _) = is_hstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 1)
+function clause is_CSR_accessible(0x60E, priv, _) = is_hstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 2)
+function clause is_CSR_accessible(0x60F, priv, _) = is_hstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 3)
+function clause is_CSR_accessible(0x61C, priv, _) = (xlen == 32) & is_hstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 0)
+function clause is_CSR_accessible(0x61D, priv, _) = (xlen == 32) & is_hstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 1)
+function clause is_CSR_accessible(0x61E, priv, _) = (xlen == 32) & is_hstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 2)
+function clause is_CSR_accessible(0x61F, priv, _) = (xlen == 32) & is_hstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 3)
 
 function clause read_CSR(0x60C) = (hstateen0.bits & get_hstateen_mask(0))[xlen - 1 .. 0]
 function clause read_CSR(0x60D) = (hstateen1.bits & get_hstateen_mask(1))[xlen - 1 .. 0]
@@ -91,10 +91,10 @@ mapping clause csr_name_map = 0x10D <-> "sstateen1"
 mapping clause csr_name_map = 0x10E <-> "sstateen2"
 mapping clause csr_name_map = 0x10F <-> "sstateen3"
 
-function clause is_CSR_accessible(0x10C, _, _) = is_sstateen_accessible()
-function clause is_CSR_accessible(0x10D, _, _) = is_sstateen_accessible()
-function clause is_CSR_accessible(0x10E, _, _) = is_sstateen_accessible()
-function clause is_CSR_accessible(0x10F, _, _) = is_sstateen_accessible()
+function clause is_CSR_accessible(0x10C, priv, _) = is_sstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 0)
+function clause is_CSR_accessible(0x10D, priv, _) = is_sstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 1)
+function clause is_CSR_accessible(0x10E, priv, _) = is_sstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 2)
+function clause is_CSR_accessible(0x10F, priv, _) = is_sstateen_accessible() & check_stateen_bit(priv, STATEEN_SE, 3)
 
 function clause read_CSR(0x10C) = { let mask = get_sstateen_mask(0); zero_extend(sstateen0.bits & mask[31..0]) }
 function clause read_CSR(0x10D) = { let mask = get_sstateen_mask(1); zero_extend(sstateen1.bits & mask[31..0]) }
@@ -112,30 +112,12 @@ function clause write_CSR(0x10D, value) = { sstateen1 = legalize_sstateen1(sstat
 function clause write_CSR(0x10E, value) = { sstateen2 = legalize_sstateen2(sstateen2, value[31 .. 0]); Ok(zero_extend(sstateen2.bits)) }
 function clause write_CSR(0x10F, value) = { sstateen3 = legalize_sstateen3(sstateen3, value[31 .. 0]); Ok(zero_extend(sstateen3.bits)) }
 
-// Stateen permission checks for CSRs gated by stateen bits.
-val is_CSR_accessible_stateen : (csreg, Privilege) -> bool
-scattered function is_CSR_accessible_stateen
-
-function clause is_CSR_accessible_stateen(0x60C, priv) = check_stateen_bit(priv, STATEEN_SE, 0)
-function clause is_CSR_accessible_stateen(0x60D, priv) = check_stateen_bit(priv, STATEEN_SE, 1)
-function clause is_CSR_accessible_stateen(0x60E, priv) = check_stateen_bit(priv, STATEEN_SE, 2)
-function clause is_CSR_accessible_stateen(0x60F, priv) = check_stateen_bit(priv, STATEEN_SE, 3)
-
-function clause is_CSR_accessible_stateen(0x61C, priv) = check_stateen_bit(priv, STATEEN_SE, 0)
-function clause is_CSR_accessible_stateen(0x61D, priv) = check_stateen_bit(priv, STATEEN_SE, 1)
-function clause is_CSR_accessible_stateen(0x61E, priv) = check_stateen_bit(priv, STATEEN_SE, 2)
-function clause is_CSR_accessible_stateen(0x61F, priv) = check_stateen_bit(priv, STATEEN_SE, 3)
-
-function clause is_CSR_accessible_stateen(0x10C, priv) = check_stateen_bit(priv, STATEEN_SE, 0)
-function clause is_CSR_accessible_stateen(0x10D, priv) = check_stateen_bit(priv, STATEEN_SE, 1)
-function clause is_CSR_accessible_stateen(0x10E, priv) = check_stateen_bit(priv, STATEEN_SE, 2)
-function clause is_CSR_accessible_stateen(0x10F, priv) = check_stateen_bit(priv, STATEEN_SE, 3)
-
-function clause is_CSR_accessible_stateen(0x10A, priv) = check_stateen_bit(priv, STATEEN_ENVCFG, 0)
-
-function clause is_CSR_accessible_stateen(0x001, priv) = if currentlyEnabled(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true
-function clause is_CSR_accessible_stateen(0x002, priv) = if currentlyEnabled(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true
-function clause is_CSR_accessible_stateen(0x003, priv) = if currentlyEnabled(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true
-
-function clause is_CSR_accessible_stateen(_, _) = true
-end is_CSR_accessible_stateen
+// Stateen permission checks for CSRs in the Core module, to workaround a cyclic dependency between
+// the Core and Stateen modules.
+function check_stateen_for_core_CSRs(csr : csreg, priv : Privilege) -> bool = {
+  match csr {
+    0x10A => check_stateen_bit(priv, STATEEN_ENVCFG, 0),
+    // TODO: handle henvcfg and henvcfgh.
+    _     => true,
+  }
+}
