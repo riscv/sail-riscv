@@ -62,9 +62,9 @@ function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
   ];
 }
 
-function legalize_mstateen1(m : Mstateen1, v : bits(64)) -> Mstateen1 = { m }
-function legalize_mstateen2(m : Mstateen2, v : bits(64)) -> Mstateen2 = { m }
-function legalize_mstateen3(m : Mstateen3, v : bits(64)) -> Mstateen3 = { m }
+function legalize_mstateen1(m : Mstateen1, _v : bits(64)) -> Mstateen1 = { m }
+function legalize_mstateen2(m : Mstateen2, _v : bits(64)) -> Mstateen2 = { m }
+function legalize_mstateen3(m : Mstateen3, _v : bits(64)) -> Mstateen3 = { m }
 
 function get_mstateen(idx : range(0, 3)) -> bits(64) = {
   if not(is_mstateen_accessible()) then ones()
@@ -135,9 +135,9 @@ function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
   ];
 }
 
-function legalize_sstateen1(s : Sstateen1, v : bits(32)) -> Sstateen1 = { s }
-function legalize_sstateen2(s : Sstateen2, v : bits(32)) -> Sstateen2 = { s }
-function legalize_sstateen3(s : Sstateen3, v : bits(32)) -> Sstateen3 = { s }
+function legalize_sstateen1(s : Sstateen1, _v : bits(32)) -> Sstateen1 = { s }
+function legalize_sstateen2(s : Sstateen2, _v : bits(32)) -> Sstateen2 = { s }
+function legalize_sstateen3(s : Sstateen3, _v : bits(32)) -> Sstateen3 = { s }
 
 function get_sstateen(idx : range(0, 3)) -> bits(64) =
   0xFFFFFFFF @ (
