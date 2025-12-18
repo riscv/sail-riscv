@@ -26,20 +26,11 @@ function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
 function check_CSR_access(csr : csreg, access_type : CSRAccessType) -> bool =
   not((access_type == CSRWrite | access_type == CSRReadWrite) & (csrAccess(csr) == 0b11))
 
-// Checks whether the given privilege mode has permission to access the specified CSR.
-function check_CSR_stateen(csr : csreg, p : Privilege) -> bool = match (p) {
-  Machine           => true,
-  Supervisor        => check_CSR_stateen_permission(csr),
-  User              => check_CSR_stateen_permission(csr),
-  VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-  VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-}
-
 function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> bool =
     check_CSR_priv(csr, p)
   & check_CSR_access(csr, access_type)
-  & check_CSR_stateen(csr, p)
   & is_CSR_accessible(csr, p, access_type)
+  & is_CSR_accessible_stateen(csr, p)
 
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.
