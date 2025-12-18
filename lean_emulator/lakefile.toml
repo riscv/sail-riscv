@@ -1,0 +1,19 @@
+name = "lean-riscv"
+version = "0.1.0"
+defaultTargets = ["lean_riscv_emulator"]
+
+[[lean_lib]]
+name = "LeanRiscv"
+
+[[lean_exe]]
+name = "lean_riscv_emulator"
+root = "Main"
+
+[[require]]
+name = "ELFSage"
+git = "https://github.com/GaloisInc/ELFSage.git"
+rev = "7e68e68e836025df741de04a5bb83439fe88d956"
+
+[[require]]
+name = "Lean_RV64D_executable"
+path = "../build/model/Lean_RV64D_executable/"
