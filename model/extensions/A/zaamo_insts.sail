@@ -32,7 +32,7 @@ private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(
       (op == AMOCAS & width <= xlen_bytes * 2 )
       &
       (if (rs2[0] == bitone | rd[0] == bitone) then (
-        match (config base.reserved_behavior.amocas_odd_register : ReservedBehaviorPolicy) {
+        match (config base.reserved_behavior.amocas_odd_register : AmocasOddRegisterReservedBehavior) {
           Fatal => reserved_behavior("AMOCAS.D/Q used odd-numbered register"),
           Illegal => false,
         }
