@@ -48,7 +48,7 @@ register mstateen2 : Mstateen2 = Mk_Mstateen2(zeros())
 register mstateen3 : Mstateen3 = Mk_Mstateen3(zeros())
 
 // TODO: Update when Zcmt is implemented (JVT bit)
-function is_mstateen_SE0_readonly_zero() -> bool = {
+private function is_mstateen_SE0_readonly_zero() -> bool = {
   not(currentlyEnabled(Ext_H)) & not(currentlyEnabled(Ext_Zfinx))
 }
 
@@ -66,7 +66,7 @@ function legalize_mstateen1(m : Mstateen1, _v : bits(64)) -> Mstateen1 = { m }
 function legalize_mstateen2(m : Mstateen2, _v : bits(64)) -> Mstateen2 = { m }
 function legalize_mstateen3(m : Mstateen3, _v : bits(64)) -> Mstateen3 = { m }
 
-function get_mstateen(idx : range(0, 3)) -> bits(64) = {
+private function get_mstateen(idx : range(0, 3)) -> bits(64) = {
   if not(is_mstateen_accessible()) then ones()
   else match idx {
     0 => mstateen0.bits,
@@ -81,7 +81,7 @@ register hstateen1 : Mstateen1 = Mk_Mstateen1(zeros())
 register hstateen2 : Mstateen2 = Mk_Mstateen2(zeros())
 register hstateen3 : Mstateen3 = Mk_Mstateen3(zeros())
 
-function get_hstateen(idx : range(0, 3)) -> bits(64) = {
+private function get_hstateen(idx : range(0, 3)) -> bits(64) = {
   if not(is_hstateen_accessible()) then ones()
   else match idx {
     0 => hstateen0.bits,
@@ -139,7 +139,7 @@ function legalize_sstateen1(s : Sstateen1, _v : bits(32)) -> Sstateen1 = { s }
 function legalize_sstateen2(s : Sstateen2, _v : bits(32)) -> Sstateen2 = { s }
 function legalize_sstateen3(s : Sstateen3, _v : bits(32)) -> Sstateen3 = { s }
 
-function get_sstateen(idx : range(0, 3)) -> bits(64) =
+private function get_sstateen(idx : range(0, 3)) -> bits(64) =
   0xFFFFFFFF @ (
     if is_sstateen_accessible() then (match idx {
       0 => sstateen0.bits,
