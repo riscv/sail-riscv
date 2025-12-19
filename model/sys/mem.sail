@@ -200,9 +200,14 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   // implementation prioritizes PMP checks before PMA checks, as PMP
   // checks do not raise misaligned exceptions.
 
-  match pmpCheck(paddr, width, access, priv) {
-    Some(e) => Err(e),
-    None()  => pmaCheck(paddr, width, access, pbmt, res_or_con)
+  let spmpError : option(ExceptionType) = spmpCheck(paddr, width, access, priv);
+  match spmpError {
+    Some(e) => Err(e),  // SPMP has priority
+    None() =>
+      match pmpCheck(paddr, width, access, priv) {
+        Some(e) => Err(e),
+        None()  => pmaCheck(paddr, width, access, pbmt, res_or_con)
+      }
   }
 }
 
