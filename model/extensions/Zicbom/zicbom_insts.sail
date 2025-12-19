@@ -107,7 +107,7 @@ function process_clean_inval(rs1 : regidx, _cbop : cbop_zicbom) -> ExecutionResu
             _ => None(),
           }
         },
-        Err(e, _) => Some(e)
+        Err((e, _), _) => Some(e)
       };
       // "If access to the cache block is not permitted, a cache-block management
       //  instruction raises a store page fault or store guest-page fault exception
@@ -130,7 +130,7 @@ function process_clean_inval(rs1 : regidx, _cbop : cbop_zicbom) -> ExecutionResu
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          Memory_Exception(vaddr - negative_offset, e)
+          memory_exception(vaddr - negative_offset, e)
         }
       }
     }

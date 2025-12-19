@@ -13,7 +13,7 @@ register hart_state : HartState = HART_ACTIVE()
 union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
-  Step_Fetch_Failure      : (virtaddr, ExceptionType),
+  Step_Fetch_Failure      : (ExceptionType, ExceptionContext),
   Step_Execute            : (ExecutionResult, instbits),
   Step_Waiting            : WaitReason,
 }
@@ -93,7 +93,7 @@ function run_hart_active(step_no: nat) -> Step = {
       // extension error
       F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
       // standard error
-      F_Error(e, addr) => Step_Fetch_Failure(Virtaddr(addr), e),
+      F_Error(e, c) => Step_Fetch_Failure(e, c),
       // non-error cases:
       F_RVC(h) => {
         sail_instr_announce(h);
@@ -107,7 +107,7 @@ function run_hart_active(step_no: nat) -> Step = {
         // When ELP is set to LP_EXPECTED, the next instruction needs to be
         // the non-RVC `LPAD` instruction.
         if is_landing_pad_expected() then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+          let r = Trap(cur_privilege, make_landing_pad_exception(), PC);
           Step_Execute(r, instbits)
         }
         // check for RVC once here instead of every RVC execute clause.
@@ -135,7 +135,7 @@ function run_hart_active(step_no: nat) -> Step = {
         // the instruction stream is not LPAD, then a software check
         // exception with a landing pad fault code is thrown.
         if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+          let r = Trap(cur_privilege, make_landing_pad_exception(), PC);
           Step_Execute(r, instbits)
         } else {
           nextPC = PC + 4;
@@ -205,15 +205,15 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       handle_interrupt(intr, priv)
     },
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
-    Step_Fetch_Failure(vaddr, e) => handle_exception(bits_of(vaddr), e),
+    Step_Fetch_Failure(e, c) => handle_exception(e, c),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
     Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
     // This case was handled above when processing the fetch result.
     Step_Execute(ExecuteAs(_), _) => assert(false),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e),
-    Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
+    Step_Execute(Memory_Exception(e, c), _) => handle_exception(e, c),
+    Step_Execute(Illegal_Instruction(), instbits) => handle_exception(E_Illegal_Instr(), instr_exception_context(zero_extend(instbits), false)),
     Step_Execute(Enter_Wait(wr), instbits) => {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
