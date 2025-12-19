@@ -58,11 +58,12 @@ function handle_illegal_vtype(rd : regidx) -> unit = {
 
   vtype.bits = 0b1 @ zeros(xlen - 1); // set vtype.vill
   vl = zeros();
-  // The new value of `vl` needs to be written to `rd`.
-  X(rd) = vl;
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
   set_vstart(zeros());
+
+  // The new value of `vl` needs to be written to `rd`.
+  X(rd) = vl;
 }
 
 let vl_use_ceil : bool = config extensions.V.vl_use_ceil
