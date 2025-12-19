@@ -62,7 +62,9 @@ function handle_illegal_vtype(rd : regidx) -> unit = {
   csr_write_callback("vl", vl);
   set_vstart(zeros());
 
-  // The new value of `vl` needs to be written to `rd`.
+  // "The vset{i}vl{i} instructions set the vtype and vl CSRs based on their arguments,
+  //  and write the new value of vl into rd."
+  // So `rd` should be written even if the arguments were illegal or reserved.
   X(rd) = vl;
 }
 
