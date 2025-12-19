@@ -525,13 +525,15 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvl32b => 0,
     Ext_Zvl64b => 0,
 
+    Ext_Smstateen => 0,
+    Ext_Ssstateen => 0,
+
     Ext_D => 1, // > Zicsr
     Ext_F => 1, // > Zicsr
     Ext_S => 1, // > Zicsr
     Ext_Zaamo => 1, // > A
     Ext_Zalrsc => 1, // > A
     Ext_Zca => 1, // > C
-    Ext_Zfinx => 1, // > Zicsr
     Ext_Zicntr => 1, // > Zicsr
     Ext_Zihpm => 1, // > Zicsr
     Ext_Zve32x => 1, // > Zvl32b
@@ -540,14 +542,12 @@ function currentlyEnabled_measure(ext : extension) -> int =
     // annotate the chain of dependencies
     Ext_Sv39 => 2, // > S
     Ext_Zfh => 2, // > F
-    Ext_Zhinx => 2, // > Zfinx
     Ext_Zvbb => 2, // > Zve32x
     Ext_Zve32f => 2, // > Zve32x
     Ext_Zve64x => 2, // > Zve32x
 
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh
-    Ext_Zhinxmin => 3, // > Zhinx
     Ext_Zicfilp => 3, // > get_xLPE
     Ext_Zvbc => 3, // > Zve64x
     Ext_Zve64f => 3, // > Zve64x
@@ -562,6 +562,12 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_V => 5, // > Zve64d
     Ext_Zvfhmin => 5, // > Zvfh
+
+    Ext_Zfinx => 9, // > is_zfinx_enabled_by_stateen
+
+    Ext_Zhinx => 10, // > Zfinx
+
+    Ext_Zhinxmin => 11, // > Zhinx
 
     _ => 2
   }
