@@ -511,29 +511,84 @@ function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
 
 register mie     : Minterrupts // Enabled
 register mip     : Minterrupts // Pending
+register mieh    : bits(32) // RV32: high half of mie (AIA)
+register miph    : bits(32) // RV32: high half of mip (AIA)
 register medeleg : Medeleg     // Exception delegation to S-mode
 register mideleg : Minterrupts // Interrupt delegation to S-mode
 
+function mie_wide64() -> bits(64) = {
+  if xlen == 32 then (mieh @ mie.bits)
+  else zero_extend(64, mie.bits)
+}
+
+function mip_wide64() -> bits(64) = {
+  if xlen == 32 then (miph @ mip.bits)
+  else zero_extend(64, mip.bits)
+}
+
+function mtopi_pick_iid(cand : bits(64)) -> option(int) = {
+  if cand[43] == bitone then Some(43) else
+  if cand[11] == bitone then Some(11) else
+  if cand[3]  == bitone then Some(3)  else
+  if cand[7]  == bitone then Some(7)  else
+  if cand[9]  == bitone then Some(9)  else
+  if cand[1]  == bitone then Some(1)  else
+  if cand[5]  == bitone then Some(5)  else
+  if cand[12] == bitone then Some(12) else
+  if cand[10] == bitone then Some(10) else
+  if cand[2]  == bitone then Some(2)  else
+  if cand[6]  == bitone then Some(6)  else
+  if cand[13] == bitone then Some(13) else
+  if cand[35] == bitone then Some(35) else
+  None()
+}
+
 mapping clause csr_name_map = 0x304  <-> "mie"
 mapping clause csr_name_map = 0x344  <-> "mip"
+mapping clause csr_name_map = 0xFB0 <-> "mtopi"
+mapping clause csr_name_map = 0x314  <-> "mieh"
+mapping clause csr_name_map = 0x354  <-> "miph"
 mapping clause csr_name_map = 0x302  <-> "medeleg"
 mapping clause csr_name_map = 0x312  <-> "medelegh"
 mapping clause csr_name_map = 0x303  <-> "mideleg"
 
 function clause is_CSR_accessible(0x304, _, _) = true // mie
 function clause is_CSR_accessible(0x344, _, _) = true // mip
+function clause is_CSR_accessible(0xFB0, _, _) = true // mtopi
+function clause is_CSR_accessible(0x314, _, _) = (xlen == 32) // mieh
+function clause is_CSR_accessible(0x354, _, _) = (xlen == 32) // miph
 function clause is_CSR_accessible(0x302, _, _) = currentlyEnabled(Ext_S) // medeleg
 function clause is_CSR_accessible(0x312, _, _) = currentlyEnabled(Ext_S) & xlen == 32 // medelegh
 function clause is_CSR_accessible(0x303, _, _) = currentlyEnabled(Ext_S) // mideleg
 
 function clause read_CSR(0x304) = mie.bits
 function clause read_CSR(0x344) = mip.bits
+function clause read_CSR(0xFB0) = {
+  let cand : bits(64) = mip_wide64() & mie_wide64();
+
+  match mtopi_pick_iid(cand) {
+    Some(iid) => {
+      let iid12 : bits(12) = to_bits_checked(iid);
+      let iprio : bits(8)  = 0x01;
+      let res64 : bits(64) = zeros();
+      let res64 : bits(64) = [res64 with 27 .. 16 = iid12];
+      let res64 : bits(64) = [res64 with 7  .. 0  = iprio];
+
+      if xlen == 32 then res64[31 .. 0] else res64
+    },
+    None() => (zeros() : xlenbits)
+  }
+}
+function clause read_CSR(0x314 if xlen == 32) = mieh
+function clause read_CSR(0x354 if xlen == 32) = miph
 function clause read_CSR(0x302) = medeleg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x312 if xlen == 32) = medeleg.bits[63 .. 32]
 function clause read_CSR(0x303) = mideleg.bits
 
 function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); Ok(mie.bits) }
 function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); Ok(mip.bits) }
+function clause write_CSR((0x314, value) if xlen == 32) = { mieh = value; Ok(mieh) }
+function clause write_CSR((0x354, value) if xlen == 32) = { miph = value; Ok(miph) }
 function clause write_CSR((0x302, value) if xlen == 64) = { medeleg = legalize_medeleg(medeleg, value); Ok(medeleg.bits) }
 function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, medeleg.bits[63 .. 32] @ value); Ok(medeleg.bits[31 .. 0]) }
 function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); Ok(medeleg.bits[63 .. 32]) }
