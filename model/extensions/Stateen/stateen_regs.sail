@@ -141,12 +141,13 @@ function legalize_sstateen3(s : Sstateen3, _v : bits(32)) -> Sstateen3 = { s }
 
 private function get_sstateen(idx : range(0, 3)) -> bits(64) =
   0xFFFFFFFF @ (
-    if is_sstateen_accessible() then (match idx {
+    if not(is_sstateen_accessible()) then ones()
+    else match idx {
       0 => sstateen0.bits,
       1 => sstateen1.bits,
       2 => sstateen2.bits,
       3 => sstateen3.bits,
-    }) else ones()
+    }
   )
 
 function get_sstateen_mask(idx : range(0, 3)) -> bits(64) = get_mstateen(idx) & get_hstateen(idx)
