@@ -27,6 +27,9 @@ automated verification that is presented in a way that the reviewers
 of the pull request can run. It is desirable that the pull request
 explains how it relates to the existing RISC-V architectural tests.
 
+When contributing a bug fix, it is often helpful to point to or quote
+the pertinent portion of the spec in the PR or the code when relevant.
+
 We recommend installing pre-commit hooks that ensure certain basic coding
 style issues can be detected and fixed before submitting the pull request.
 To set up these hooks, install [pre-commit](https://pre-commit.com)

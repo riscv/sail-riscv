@@ -49,17 +49,23 @@ mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
   hex_bits_8(ma @ ta @ sew @ lmul)  <-> (ma, ta, sew, lmul),
 }
 
-function handle_illegal_vtype() -> unit = {
+function handle_illegal_vtype(rd : regidx) -> unit = {
   // Note: Implementations can set vill or trap with an illegal
   // instruction if the vtype setting is not supported.
   // TODO: configuration support for both solutions.
-  // NOTE: vstart should NOT be zeroed out if trapping.
+  // NOTE: vstart should NOT be zeroed out and rd
+  //       should NOT be written if trapping.
 
   vtype.bits = 0b1 @ zeros(xlen - 1); // set vtype.vill
   vl = zeros();
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
   set_vstart(zeros());
+
+  // "The vset{i}vl{i} instructions set the vtype and vl CSRs based on their arguments,
+  //  and write the new value of vl into rd."
+  // So `rd` should be written even if the arguments were illegal or reserved.
+  X(rd) = vl;
 }
 
 let vl_use_ceil : bool = config extensions.V.vl_use_ceil
@@ -88,7 +94,7 @@ function execute_vsetvl_type(
 ) -> ExecutionResult = {
   // Check new SEW and LMUL have legal encodings. There are some reserved values.
   if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
-    handle_illegal_vtype();
+    handle_illegal_vtype(rd);
     return RETIRE_SUCCESS;
   };
 
@@ -104,7 +110,7 @@ function execute_vsetvl_type(
   // Also some cases require that VLMAX doesn't change (i.e. LMUL/SEW is constant).
   if SEW_pow_new > (LMUL_pow_new + elen_exp) |
      (requires_fixed_vlmax & (lmul_sew_ratio != lmul_sew_ratio_new | not(valid_vtype()))) then {
-    handle_illegal_vtype();
+    handle_illegal_vtype(rd);
     return RETIRE_SUCCESS;
   };
 
@@ -163,7 +169,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let vt = Mk_Vtype(X(rs2));
 
   if vt[vill] == 0b1 | vt[reserved] != zeros()
-  then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  then { handle_illegal_vtype(rd); return RETIRE_SUCCESS };
 
   let avl =
     if rs1 != zreg then X(rs1)
