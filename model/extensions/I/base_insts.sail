@@ -522,8 +522,11 @@ mapping clause assembly =
   forwards FENCE(0b0000, pred, succ, rs, rd) => "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ)
     when rs == zreg & rd == zreg
 
-mapping clause assembly =
-  backwards "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ) => FENCE(0b0000, pred, succ, zreg, zreg)
+// TODO: This hits a Sail compiler bug, https://github.com/rems-project/sail/issues/1577
+// however we don't currently use the assembler direction of this mapping so
+// it doesn't really matter.
+// mapping clause assembly =
+//   backwards "fence" ^ spc() ^ fence_bits(pred) ^ sep() ^ fence_bits(succ) => FENCE(0b0000, pred, succ, zreg, zreg)
 
 // *****************************************************************
 union clause instruction = ECALL : unit
