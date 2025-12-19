@@ -89,39 +89,32 @@ function spmpAddrRange(cfg: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlen
  * 
  * Returns: true if the RWX encoding allows the access type
  * 
- * RWX Encoding (3-bit combined field, bits [2:0] = XWR):
- *   - 000: Deny (reserved for future use)
+ * RWX Encoding (3-bit combined field, bits [2:0] = XWR) per Figure 4:
+ *   - 000: No permissions (context-dependent enforcement)
  *   - 001: R-- (Read-only)
- *   - 010: Reserved (deny)
- *   - 011: RW- (Read+Write) - Reserved per spec but handled for compatibility
+ *   - 010: --W (Reserved for future standard use)
+ *   - 011: RW- (Reserved for future standard use)
  *   - 100: --X (Execute-only)
  *   - 101: R-X (Read+Execute)
- *   - 110: Reserved (deny)
+ *   - 110: -WX (Write+Execute, no read)
  *   - 111: RWX (Read+Write+Execute)
  */
 val CheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
 function CheckRWX(ent, acc, priv) = {
   let rwx = ent[X] @ ent[W] @ ent[R];  // Extract 3-bit RWX encoding
   
-  /* Check for reserved/deny encodings first */
-  if (rwx == 0b000) | (rwx == 0b010) | (rwx == 0b110) then {
+  /* Check for reserved encodings first - RWX=010 and RWX=011 are always reserved */
+  if (rwx == 0b010) | (rwx == 0b011) then {
     false  // Reserved encodings always deny
   }
   else {
     /* Check if RWX encoding allows the requested access */
     match rwx {
+      0b000 => false,  // No permissions (but Enforce applies in context)
       0b001 => {  // R-- : Read-only
         match acc {
           Load(_) => true,
           _ => false
-        }
-      },
-      0b011 => {  // RW- : Read+Write (Reserved per spec, but we handle it)
-        match acc {
-          Load(_) => true,
-          Store(_) => true,
-          LoadStore(_) => true,
-          InstructionFetch(_) => false
         }
       },
       0b100 => {  // --X : Execute-only
@@ -137,6 +130,14 @@ function CheckRWX(ent, acc, priv) = {
           _ => false
         }
       },
+      0b110 => {  // -WX : Write+Execute (no read)
+        match acc {
+          Store(_) => true,
+          InstructionFetch(_) => true,
+          LoadStore(_) => false,  // Needs read permission
+          Load(_) => false
+        }
+      },
       0b111 => {  // RWX : All permissions
         true
       },
@@ -147,22 +148,22 @@ function CheckRWX(ent, acc, priv) = {
 
 /* SPMP privilege-aware permission check implementing the complete permission matrix.
  * 
- * Based on the SPMP Encoding Table, SPMP has three kinds of rules:
+ * Based on Figure 4 SPMP Encoding Table, SPMP has three kinds of rules:
  *   1. S-mode-only rules (SHARED=0, U=0): Enforced on S-mode, denied on U-mode
  *   2. U-mode rules (SHARED=0, U=1): Enforced on U-mode, conditional on S-mode  
- *   3. Shared-Region rules (SHARED=1, U=1): Enforced on both modes with special constraints
+ *   3. Shared-Region rules (SHARED=1, U=1): Enforced on both modes with special encoding
  * 
- * RWX Encoding (3-bit combined field):
- *   - 000 (---): Reserved/Deny
- *   - 001 (R--): Read-only
- *   - 010 (--W): Reserved
- *   - 011 (R-X): Should be normalized to 001 or 101
- *   - 100 (--X): Execute-only
- *   - 101 (R-X): Read+Execute
- *   - 110 (-WX): Reserved
- *   - 111 (RWX): Read+Write+Execute (special handling for Shared-Region U-mode)
+ * Reserved Encodings (always deny):
+ *   - RWX=010 (--W, write-only)
+ *   - RWX=011 (RW-, read+write no execute)
+ *   - SHARED=1, U=0 (reserved combination)
  * 
- * Important: For Shared-Region rules, read and write permissions for U-mode are mutually exclusive.
+ * Special Shared-Region U-mode encodings per Figure 4:
+ *   - RWX=110: U-mode gets Read-only (not Write+Execute)
+ *   - RWX=111: U-mode gets Exec-only (not Read+Write+Execute)
+ * 
+ * For Shared-Region rules, U-mode and S-mode may have different effective permissions
+ * for the same RWX encoding, implementing the mutual exclusivity constraint.
  */
 val spmpCheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
 function spmpCheckRWX(ent, acc, priv) = {
@@ -171,113 +172,98 @@ function spmpCheckRWX(ent, acc, priv) = {
   let is_shared = ent[SHARED] == 0b1;
   let is_u_rule = ent[U] == 0b1;
   
-  /* Check for reserved/deny encodings - these always deny access regardless of privilege */
-  if (rwx == 0b000) | (rwx == 0b010) | (rwx == 0b110) then {
-    false  // RWX=000 (deny), RWX=010 (reserved), RWX=110 (reserved) always deny
+  /* Check for reserved encodings - RWX=010 and RWX=011 are always reserved */
+  if (rwx == 0b010) | (rwx == 0b011) then {
+    false  // RWX=010 (--W), RWX=011 (RW-) are reserved for future standard use
   }
   /* Check for reserved SHARED=1, U=0 combination - this is reserved per spec */
   else if is_shared & not(is_u_rule) then {
     false  // SHARED=1, U=0 is reserved for future standard use
   }
   /* Shared-Region rules (SHARED=1, U=1) - enforced for both S-mode and U-mode
-   * Key constraint: read and write permissions for U-mode are mutually exclusive.
-   * This means for Shared-Region U-mode access:
-   *   - If RWX allows read, it must deny write
-   *   - If RWX allows write, it must deny read
+   * Per Figure 4, U-mode has special constraints in Shared-Region:
+   *   - RWX=000: Enforce (no permissions but rule applies)
+   *   - RWX=100: Enforce (execute-only)
+   *   - RWX=110: Read-only (special: U-mode gets read despite WX encoding)
+   *   - RWX=001: Enforce (read-only)
+   *   - RWX=101: Enforce (read+execute)
+   *   - RWX=111: Exec-only (special: U-mode gets exec only despite RWX encoding)
    */
   else if is_shared & is_u_rule then {
     match priv {
       User => {
-        /* For Shared-Region U-mode, handle the mutual exclusivity constraint */
+        /* For Shared-Region U-mode, follow Figure 4 encoding table */
         match rwx {
-          /* RWX=001 (R--): U-mode can only read, no write, no execute */
-          0b001 => {
+          0b000 => false,  // No permissions
+          0b001 => {  // R-- : Read-only (Enforce)
             match acc {
-              Load(_)      => true,   // Allow read
-              Store(_)     => false,  // Deny write (mutual exclusivity)
-              LoadStore(_) => false,  // Deny write part
-              InstructionFetch(_)   => false   // No execute permission
+              Load(_) => true,
+              _ => false
             }
           },
-          /* RWX=011 (RW-): Reserved for non-Shared rules, but for Shared-Region:
-           * Spec table shows SHR X (execute + write, no read for U-mode).
-           * This implements the mutual exclusivity: write permitted, read denied.
-           * Note: RWX=011 is actually R+W encoding, but in SHARED region context
-           * it should deny read and allow write based on mutual exclusivity */
-          0b011 => {
+          0b100 => {  // --X : Execute-only (Enforce)
             match acc {
-              Load(_)      => false,  // Deny read (mutual exclusivity)
-              Store(_)     => true,   // Allow write
-              LoadStore(_) => false,  // Deny read part
-              InstructionFetch(_)   => false   // RWX=011 has no execute permission
+              InstructionFetch(_) => true,
+              _ => false
             }
           },
-          /* RWX=101 (R-X): Read+Execute - read permitted, write denied (mutual exclusivity) */
-          0b101 => {
+          0b101 => {  // R-X : Read+Execute (Enforce)
             match acc {
-              Load(_)      => true,   // Allow read
-              Store(_)     => false,  // Deny write (mutual exclusivity)
-              LoadStore(_) => false,  // Deny write part
-              InstructionFetch(_)   => true    // Allow execute
+              Load(_) => true,
+              InstructionFetch(_) => true,
+              _ => false
             }
           },
-          /* RWX=111 (RWX): For Shared-Region U-mode, the mutual exclusivity constraint applies.
-           * Per spec encoding table, this allows read for U-mode but denies write.
-           * Execute permission is also denied for U-mode in this encoding. */
-          0b111 => {
+          0b110 => {  // -WX : For U-mode in Shared-Region, this is Read-only per Figure 4
             match acc {
-              Load(_)      => true,   // Allow read
-              Store(_)     => false,  // Deny write (mutual exclusivity constraint)
-              LoadStore(_) => false,  // Deny write part
-              InstructionFetch(_)   => false   // Deny execute for U-mode in Shared-Region RWX=111
+              Load(_) => true,   // Read-only for U-mode
+              _ => false
             }
           },
-          /* RWX=100 (--X): Execute-only, check normally */
-          0b100 => {
+          0b111 => {  // RWX : For U-mode in Shared-Region, this is Exec-only per Figure 4
             match acc {
-              InstructionFetch(_) => true,     // Allow execute
-              _ => false              // Deny read/write
+              InstructionFetch(_) => true,  // Exec-only for U-mode
+              _ => false
             }
           },
-          /* Other encodings are already handled above (reserved cases filtered earlier) */
-          _ => false  // Should not reach here given earlier checks
+          _ => false  // Reserved cases already filtered
         }
       },
       Supervisor => {
-        /* S-mode in Shared-Region: check permissions normally
-         * S-mode is not subject to the mutual exclusivity constraint */
+        /* S-mode in Shared-Region: Enforce permissions per Figure 4 */
         match rwx {
-          0b001 => {  // R-- : Read-only
+          0b000 => false,  // No permissions
+          0b001 => {  // R-- : Read-only (Enforce)
             match acc {
               Load(_) => true,
               _ => false
             }
           },
-          0b011 => {  // RW- : Read+Write (note: execute not allowed)
+          0b100 => {  // --X : Execute-only (Enforce)
+            match acc {
+              InstructionFetch(_) => true,
+              _ => false
+            }
+          },
+          0b101 => {  // R-X : Read+Execute (Enforce)
             match acc {
               Load(_) => true,
+              InstructionFetch(_) => true,
+              _ => false
+            }
+          },
+          0b110 => {  // -WX : Write+Execute (Enforce for S-mode)
+            match acc {
               Store(_) => true,
-              LoadStore(_) => true,
-              InstructionFetch(_) => false
-            }
-          },
-          0b100 => {  // --X : Execute-only
-            match acc {
               InstructionFetch(_) => true,
-              _ => false
+              LoadStore(_) => false,  // Needs read
+              Load(_) => false
             }
           },
-          0b101 => {  // R-X : Read+Execute
-            match acc {
-              Load(_) => true,
-              InstructionFetch(_) => true,
-              _ => false
-            }
+          0b111 => {  // RWX : All permissions (Enforce)
+            true
           },
-          0b111 => {  // RWX : Read+Write+Execute
-            true  // All accesses allowed for S-mode
-          },
-          _ => false  // Reserved or deny
+          _ => false  // Reserved cases already filtered
         }
       },
       VirtualUser => false,  // Virtual modes not yet supported
@@ -453,27 +439,79 @@ function spmpMatchEntry(Physaddr(addr): physaddr, width: xlenbits, acc: MemoryAc
 /*=======================================================================================*/
 /*  SPMP Exception Handling                                                             */
 /*                                                                                       */
-/*  SPMP violations generate Page Fault exceptions, distinguishing them from PMP        */
+/*  SPMP violations generate Page Fault exceptions, distinguishing them from PMP.       */
+/*  Exceptions:                                                                         */
+/*    - Standard mode: Uses Page Fault exception codes (12, 13, 15)                    */
+/*    - Virtualization mode (V=1, hgatp.MODE=Bare): Uses Guest Page Fault codes        */
+/*      (20, 21, 23) - defined by Hypervisor extension                                 */
 /*=======================================================================================*/
 
 /* Convert memory access type to appropriate SPMP Page Fault exception.
  * 
- * Key difference from PMP :
- *   - PMP violations → Access Fault exceptions
- *   - SPMP violations → Page Fault exceptions  
+ * Exception Code Mapping per SPMP Specification:
  * 
- * This distinction allows OS kernels to differentiate between:
- *   - Page-level protection violations (SPMP) 
- *   - Platform-level protection violations (PMP)
+ * Standard Mode (V=0 or hgatp.MODE != Bare):
+ *   - Instruction fetch → Exception code 12 (Instruction page fault)
+ *   - Load access       → Exception code 13 (Load page fault)
+ *   - Store/AMO access  → Exception code 15 (Store/AMO page fault)
  * 
- * Exception types follow standard RISC-V privilege specification. */
-function accessToSpmpFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType =
-  match acc {
-    Load(_)            => E_Load_Page_Fault(),     // Load page fault
-    Store(_)           => E_SAMO_Page_Fault(),     // Store/AMO page fault  
-    LoadStore(_)       => E_SAMO_Page_Fault(),     // Store/AMO page fault
-    InstructionFetch(_)         => E_Fetch_Page_Fault()     // Instruction page fault
+ * Virtualization Mode (V=1 and hgatp.MODE=Bare):
+ *   - Instruction fetch → Exception code 20 (Instruction guest-page fault)
+ *   - Load access       → Exception code 21 (Load guest-page fault)
+ *   - Store/AMO access  → Exception code 23 (Store/AMO guest-page fault)
+ * 
+ * Rationale:
+ *   SPMP and G-stage translation are mutually exclusive. When SPMP is active
+ *   (hgatp.MODE=Bare), paged virtual memory translations are disabled, so
+ *   guest page fault exception codes can be repurposed for guest SPMP violations.
+ * 
+ * Current Implementation:
+ *   Only standard mode is implemented. Virtualization mode support requires
+ *   Hypervisor extension implementation and checking V bit + hgatp.MODE.
+ * 
+ * Key difference from PMP:
+ *   - PMP violations → Access Fault exceptions (codes 1, 5, 7)
+ *   - SPMP violations → Page Fault exceptions (codes 12, 13, 15 or 20, 21, 23)
+ * 
+ * This distinction allows S-mode OS to differentiate between:
+ *   - Page-level protection violations (SPMP) - can query satp.mode
+ *   - Platform-level protection violations (PMP) - M-mode only
+ */
+function accessToSpmpFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType = {
+  /* Virtualization mode detection:
+   * When in VirtualUser or VirtualSupervisor privilege level, 
+   * SPMP violations should generate Guest Page Fault exceptions.
+   * 
+   * Per SPMP spec: When V=1 and hgatp.MODE=Bare, use Guest Page Fault codes.
+   * In the current model, VirtualUser/VirtualSupervisor privilege indicates V=1.
+   * 
+   * Note: Full implementation would also check hgatp.MODE, but since hgatp
+   * is not yet implemented in this model, we use privilege level as proxy.
+   */
+  let is_virtual : bool = match cur_privilege {
+    VirtualUser       => true,
+    VirtualSupervisor => true,
+    _                 => false
+  };
+  
+  if is_virtual then {
+    /* Virtualization Mode: Use Guest Page Fault exceptions (codes 20, 21, 23) */
+    match acc {
+      InstructionFetch(_) => E_Fetch_Guest_Page_Fault(),  // Exception code 20
+      Load(_)             => E_Load_Guest_Page_Fault(),   // Exception code 21
+      Store(_)            => E_SAMO_Guest_Page_Fault(),   // Exception code 23
+      LoadStore(_)        => E_SAMO_Guest_Page_Fault()    // Exception code 23
+    }
+  } else {
+    /* Standard Mode: Use standard Page Fault exceptions (codes 12, 13, 15) */
+    match acc {
+      InstructionFetch(_) => E_Fetch_Page_Fault(),  // Exception code 12
+      Load(_)             => E_Load_Page_Fault(),   // Exception code 13
+      Store(_)            => E_SAMO_Page_Fault(),   // Exception code 15
+      LoadStore(_)        => E_SAMO_Page_Fault()    // Exception code 15
+    }
   }
+}
 
 /*=======================================================================================*/
 /*  SPMP Register Access Functions                                                      */
@@ -485,13 +523,22 @@ function accessToSpmpFault(acc : MemoryAccessType(ext_access_type)) -> Exception
 /* Retrieve SPMP configuration and address register pair for hardware entry i.
  * 
  * SPMP supports 64 entries (0-63) same as PMP, each with:
- *   - One configuration entry (8 bits in spmpcfg registers)
+ *   - One configuration entry (10 bits in spmpcfg registers)
  *   - One address register (spmpaddr registers)
  * 
  * This function provides unified access across all entries for the
- * main SPMP checking loop. The parameter i is a hardware index (pmpnum to 63). */
+ * main SPMP checking loop.
+ * 
+ * IMPORTANT: The parameter i is a HARDWARE index (pmpnum to 63), NOT a logical index.
+ * Hardware index directly maps to spmpcfg_n[i] and spmpaddr_n[i] arrays.
+ * 
+ * Index Relationship:
+ *   - Hardware index range for SPMP: [pmpnum, 63]
+ *   - Logical index (from siselect): [0, 63-pmpnum)
+ *   - Conversion: hardware_idx = pmpnum + logical_idx
+ */
 function spmpGetEntry(i: nat) -> (Spmpcfg_ent, xlenbits) = {
-  if i < 64 then (spmp_read_cfg_indirect(i), spmp_read_addr_indirect(i))
+  if i < 64 then (spmpcfg_n[i], spmpaddr_n[i])
   else (Mk_Spmpcfg_ent(0b0000000000), zeros())  // fallback case
 }
 
@@ -499,31 +546,40 @@ function spmpGetEntry(i: nat) -> (Spmpcfg_ent, xlenbits) = {
 
 /* Check if an SPMP entry is active based on spmpswitch and configuration.
  * 
- * Activation Rule:
- * - An entry is active only when: spmpswitch[i] & (spmp[i]cfg.A != OFF)
+ * Activation Rule (per spec):
+ *   An SPMP entry i is considered active only when:
+ *     sspmpswitch[i] & spmpcfg[i].A != 0
  * 
- * Special Cases:
- * - When spmpswitch[i] == 0 and spmp[i]cfg.L == 1, entry i remains enabled
- * - TOR entries match regardless of spmpswitch[i-1] value
+ * This means:
+ *   - If switch bit is 0, entry is inactive (regardless of L bit)
+ *   - If A == OFF, entry is inactive (regardless of switch bit)
+ *   - Entry is active only when BOTH switch bit is set AND A != OFF
+ * 
+ * Note on Lock bit:
+ *   The L bit makes the switch bit READ-ONLY (cannot be modified),
+ *   but does NOT automatically activate the entry.
+ *   A locked entry with switch bit = 0 remains inactive.
+ * 
+ * TOR mode note:
+ *   TOR address matching uses spmpaddr[i-1] regardless of whether entry i-1
+ *   is active. This is handled by the main checking function, not here.
  */
 function spmpEntryActive(hw_idx: range(0, 63), cfg: Spmpcfg_ent) -> bool = {
   let match_type = spmpAddrMatchType_of_bits(cfg[A]);
-  let switch_bit = if xlen == 32 then {
+  
+  /* Get the switch bit for this entry */
+  let switch_bit : bit = if xlen == 32 then {
     if hw_idx < 32 then spmpswitch[hw_idx] else spmpswitchh[hw_idx - 32]
   } else {
     spmpswitch[hw_idx]
   };
 
-  // Special case: locked entries remain enabled even when switch bit is 0
-  let is_locked = spmpLocked(cfg);
-  if is_locked then true
-  else {
-    /* Entry is active if:
-        * 1. Switch bit is set AND
-        * 2. Address matching mode is not OFF
-        * 3. Entry is TOR mode (TOR entries always match when A != OFF) */
-    (switch_bit == bitone) & (match_type != OFF)
-  }
+  /* Activation rule: sspmpswitch[i] & (spmpcfg[i].A != OFF)
+   * Entry is active only when:
+   *   1. Switch bit is set (= 1) AND
+   *   2. Address matching mode is not OFF
+   */
+  (switch_bit == bitone) & (match_type != OFF)
 }
 
 // defined in riscv_vmem.sail 
@@ -602,6 +658,10 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    * - If current privilege is S or U: effective privilege is current privilege
    * 
    * The MPRV bit in mstatus allows M-mode to access memory with privilege of a lower mode.
+   * 
+   * Exception for Hypervisor Extension:
+   * - HLV/HLVX/HSV instructions executed from M-mode when V=1 and hgatp.MODE=Bare
+   *   are subject to SPMP checks (not bypassed even though executed in M-mode)
    */
   let effective_priv : Privilege = match (priv, acc) {
     (Machine, _) if mstatus[MPRV] == 0b1 =>
@@ -611,7 +671,29 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
     _ => priv
   };
   
-  /* Rule 2: If effective privilege mode is M, the access is allowed */
+  /* Rule 2: If effective privilege mode is M, the access is allowed
+   * 
+   * Exception: Hypervisor Virtual Machine Load/Store instructions (HLV, HLVX, HSV)
+   * executed from M-mode are subject to SPMP checks when V=1 and hgatp.MODE=Bare.
+   * 
+   * Note: Current implementation does not distinguish HLV/HLVX/HSV instructions
+   * from regular M-mode accesses because ext_access_type = unit.
+   * Full support requires:
+   * 1. Extending ext_access_type to include a variant for hypervisor VM accesses
+   * 2. Checking if access is HLV/HLVX/HSV and V=1 and hgatp.MODE=Bare
+   * 3. If so, NOT bypassing SPMP checks even though priv=Machine
+   * 
+   * Example future implementation:
+   *   match (effective_priv, acc) {
+   *     (Machine, Load(HypervisorVMAccess)) if is_v_mode() & hgatp_is_bare() => 
+   *       (), // Continue to SPMP checks
+   *     (Machine, Store(HypervisorVMAccess)) if is_v_mode() & hgatp_is_bare() => 
+   *       (), // Continue to SPMP checks
+   *     (Machine, _) => 
+   *       return None(), // Bypass SPMP for regular M-mode accesses
+   *     _ => ()
+   *   }
+   */
   match effective_priv {
     Machine => return None(),
     _       => ()
@@ -619,9 +701,16 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   
   /* Check all SPMP entries in order for address matching.
    * SPMP entries begin from hardware index pmpnum and go to 63 */
-  var has_delegated_entries : bool = false;  // Track if any SPMP entries are delegated
   let spmp_start = getPmpNum();  // First hardware resource allocated to SPMP
   let spmp_end = 63;             // Last hardware resource (always 63)
+  
+  /* Check if at least one SPMP entry is implemented (allocated to S-mode).
+   * Per spec: "If the effective privilege mode of the access is S/U and no SPMP 
+   * entry matches, but at least one SPMP entry is implemented, the access is denied."
+   * 
+   * SPMP entries are "implemented" when hardware resources are allocated via mpmpdeleg.
+   * This means spmp_start <= 63 (at least one entry from pmpnum to 63 is SPMP). */
+  let has_implemented_entries : bool = (spmp_start <= spmp_end);
   
   var prev_spmpaddr : xlenbits = zeros();  // Previous address for TOR mode
   
@@ -631,12 +720,16 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
     
     /* Check if this entry is active (considering spmpswitch optimization) */
     if spmpEntryActive(hw_idx, cfg) then {
-      /* Entry is configured (A != OFF), mark that we have delegated entries */
-      if match_type != OFF then {
-        has_delegated_entries = true;
-      };
-      
-      /* Calculate address range for this entry */
+      /* Calculate address range for this entry.
+       * 
+       * IMPORTANT (per Sspmpsw spec):
+       * For TOR mode, address matching uses spmpaddr[i-1] regardless of:
+       *   - spmpcfg[i-1] configuration (entry i-1 could be OFF)
+       *   - sspmpswitch[i-1] activation state (entry i-1 could be inactive)
+       * 
+       * This is why prev_spmpaddr is updated unconditionally at the end of
+       * each iteration, not just when an entry is active.
+       */
       let rng = spmpAddrRange(cfg, spmpaddr, prev_spmpaddr, hw_idx);
       
       /* Check if access matches this entry's address range */
@@ -666,16 +759,25 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       }
     };
     
-    /* Update prev_spmpaddr for TOR mode of next entry */
+    /* Update prev_spmpaddr for TOR mode of next entry.
+     * Per Sspmpsw spec: TOR address matching is INDEPENDENT of the configuration
+     * or activation state of the preceding entry. We always update prev_spmpaddr
+     * regardless of whether the current entry is active or has A=OFF.
+     */
     prev_spmpaddr = spmpaddr;
   };
 
-  /* Rule 3: No SPMP entry matched, check delegation status */
-  if has_delegated_entries then {
-    /* At least one SPMP entry is configured, deny access by default */
+  /* Rule 3: No SPMP entry matched
+   * Per spec: "If the effective privilege mode of the access is S/U and no SPMP 
+   * entry matches, but at least one SPMP entry is implemented, the access is denied."
+   * 
+   * Note: "implemented" means hardware resources are allocated to SPMP (pmpnum <= 63),
+   * not that entries are configured (A != OFF). This is a security-first approach. */
+  if has_implemented_entries then {
+    /* At least one SPMP entry is implemented, deny unmatched access */
     Some(accessToSpmpFault(acc))
   } else {
-    /* No SPMP entries configured, allow access */
+    /* No SPMP entries implemented (all resources allocated to PMP), allow access */
     None()
   }
 }
@@ -741,31 +843,74 @@ function spmpUnlock(n: range(0, 63)) -> unit = {
  * Invalid configurations may lead to unpredictable behavior.
  * 
  * Parameters:
- *   i: Entry index (0-63)
+ *   hw_idx: Hardware entry index (0-63), NOT logical index from siselect
  *   cfg: Configuration entry to validate
  *   spmpaddr: Address register value
  * 
+ * IMPORTANT - Index Relationship:
+ *   This function uses HARDWARE indices that directly map to spmpcfg_n/spmpaddr_n arrays.
+ *   - Hardware index range for SPMP: [pmpnum, 63]
+ *   - Logical index (from siselect): [0, 63-pmpnum)
+ *   - Conversion: hardware_idx = pmpnum + logical_idx
+ * 
  * Returns: true if configuration is valid */
-function spmpValidateConfig(i: nat, cfg: Spmpcfg_ent, spmpaddr: xlenbits) -> bool = {
+function spmpValidateConfig(hw_idx: nat, cfg: Spmpcfg_ent, spmpaddr: xlenbits) -> bool = {
   match spmpAddrMatchType_of_bits(cfg[A]) {
     OFF => {
       /* OFF mode: Always valid, no address constraints */
       true
     },
     TOR => {
-      /* TOR mode: Valid if this entry's addr > previous entry's addr
-       * (checked at runtime during address range calculation) */
-      true
+      /* TOR mode: Top-Of-Range addressing
+       * Range is [prev_spmpaddr, current_spmpaddr)
+       * 
+       * For TOR mode, the range is [spmpaddr[i-1], spmpaddr[i]).
+       * 
+       * Validity conditions:
+       *   1. For the first SPMP entry (hw_idx == pmpnum): lower bound is 0
+       *   2. For other entries: valid if current_addr > prev_addr
+       * 
+       * An invalid TOR configuration (prev_addr >= current_addr) results in
+       * an empty address range, which means no addresses will match this entry.
+       * This is not an error, but the entry will be ineffective.
+       */
+      let pmpnum = getPmpNum();  // First hardware index for SPMP
+      
+      if hw_idx <= pmpnum then {
+        /* This is the first SPMP entry (hw_idx == pmpnum) */
+        /* For first entry, lower bound is implicitly 0, so any addr > 0 is valid */
+        unsigned(spmpaddr) > 0
+      } else {
+        /* Read previous entry's address directly using hardware index.
+         * Since hw_idx is a hardware index, (hw_idx - 1) is also a valid hardware index.
+         * We directly access spmpaddr_n array. */
+        let prev_hw_idx = hw_idx - 1;
+        let prev_addr : xlenbits = if prev_hw_idx < 64 then spmpaddr_n[prev_hw_idx] else zeros();
+        
+        /* Check that current address > previous address for valid range */
+        /* If prev_addr >= spmpaddr, the range [prev, current) is empty or invalid */
+        unsigned(spmpaddr) > unsigned(prev_addr)
+      }
     },
     NA4 => {
-      /* NA4 mode: Address must be 4-byte aligned
-       * Check that lowest 2 bits of spmpaddr are 0 */
-      spmpaddr[1..0] == 0b00
+      /* NA4 mode: Naturally Aligned 4-byte region
+       * Address must be 4-byte aligned (low 2 bits of spmpaddr should be 0)
+       * Since spmpaddr is stored as word-address (address >> 2), the actual
+       * byte address is spmpaddr << 2, which is always 4-byte aligned.
+       * Therefore NA4 mode is always valid in terms of alignment. */
+      true
     },
     NAPOT => {
-      /* NAPOT mode: Address encoding must be valid
-       * Trailing 1s indicate region size, must not overflow */
-      true  // Complex validation, typically done in hardware
+      /* NAPOT mode: Naturally Aligned Power-Of-Two region
+       * Address encoding uses trailing 1s to indicate region size.
+       * 
+       * Validity considerations:
+       *   - Region size = 2^(trailing_ones + 3) bytes
+       *   - All trailing 1s pattern is valid (maps to region size)
+       *   - Alignment is automatic due to NAPOT encoding
+       * 
+       * Complex validation typically done in hardware. */
+      true
     }
   }
 }

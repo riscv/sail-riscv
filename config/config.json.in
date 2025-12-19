@@ -48,6 +48,14 @@
       "na4_supported": true,
       "napot_supported": true
     },
+    "spmp": {
+      "enabled": true,
+      "count": 64,
+      "grain": 0,
+      "tor_supported": true,
+      "na4_supported": true,
+      "napot_supported": true
+    },
     // This controls global support for misaligned access so it is
     // checked before address translation. `misaligned_fault` in
     // `regions` is checked after address translation.

@@ -192,6 +192,13 @@ union ExceptionType = {
   E_Reserved_16        : unit,
   E_Reserved_17        : unit,
   E_Software_Check     : unit,
+  E_Reserved_19        : unit,
+  // Hypervisor extension guest page faults (codes 20, 21, 23)
+  // Used by SPMP when V=1 and hgatp.MODE=Bare
+  E_Fetch_Guest_Page_Fault : unit,  // 20
+  E_Load_Guest_Page_Fault  : unit,  // 21
+  E_Reserved_20             : unit,  // 22 (VS-mode environment call)
+  E_SAMO_Guest_Page_Fault  : unit,  // 23
 
   // extensions
   E_Extension          : ext_exc_type
@@ -216,6 +223,12 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Reserved_16()        <-> 0b010000, // 16
   E_Reserved_17()        <-> 0b010001, // 17
   E_Software_Check()     <-> 0b010010, // 18
+  E_Reserved_19()        <-> 0b010011, // 19
+  // Hypervisor extension guest page faults
+  E_Fetch_Guest_Page_Fault() <-> 0b010100, // 20
+  E_Load_Guest_Page_Fault()  <-> 0b010101, // 21
+  E_Reserved_20()            <-> 0b010110, // 22
+  E_SAMO_Guest_Page_Fault()  <-> 0b010111, // 23
 
   // breakpoints
   E_Breakpoint(Brk_Software) <-> 0b000011, // 3
@@ -245,6 +258,12 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_Reserved_16()        => "reserved-2",
     E_Reserved_17()        => "reserved-3",
     E_Software_Check()     => "software-check-fault",
+    E_Reserved_19()        => "reserved-4",
+    // Guest page faults (Hypervisor extension)
+    E_Fetch_Guest_Page_Fault() => "fetch-guest-page-fault",
+    E_Load_Guest_Page_Fault()  => "load-guest-page-fault",
+    E_Reserved_20()            => "reserved-5",
+    E_SAMO_Guest_Page_Fault()  => "store/amo-guest-page-fault",
 
     // breakpoints
     E_Breakpoint(Brk_Software) => "software-breakpoint",
