@@ -436,11 +436,11 @@ extensions {
 
   Stateen {
     Stateen_regs {
-      before sys
       files extensions/Stateen/stateen_regs.sail
     }
     Stateen_csrs {
       requires Stateen_regs
+      before sys
       files extensions/Stateen/stateen_csrs.sail
     }
   }
