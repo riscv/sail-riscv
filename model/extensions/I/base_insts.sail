@@ -456,7 +456,7 @@ function effective_fence_set(set : bits(4), fiom : bool) -> bits(4) = {
   } else set
 }
 
-function clause execute FENCE(fm, pred, succ, rs, rd) = {
+function clause execute FENCE(_fm, pred, succ, _rs, _rd) = {
   // "The unused fields in the FENCE instructions - rs1 and rd - are reserved for
   // finer-grain fences in future extensions. For forward compatibility, base
   // implementations shall ignore these fields. Likewise, many fm and
