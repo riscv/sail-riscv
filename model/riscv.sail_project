@@ -57,8 +57,17 @@ pmp {
     pmp/pmp_control.sail,
 }
 
+spmp {
+  requires prelude, core, pmp
+
+  files
+    spmp/spmp_regs.sail,
+    spmp/spmp_control.sail,
+    spmp/spmp_switch_test.sail,
+}
+
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types
+  requires prelude, core, exceptions, pmp, spmp, V_core, Smcntrpmf, Zicfilp_regs, A_types
 
   files
     sys/sys_reservation.sail,
