@@ -332,13 +332,13 @@ function set_vstart(value : bits(16)) -> unit = {
   csr_write_callback("vstart", vstart);
 }
 
-function ext_write_vcsr(vxrm_val : bits(2), vxsat_val : bits(1)) -> unit = {
+private function write_vcsr(vxrm_val : bits(2), vxsat_val : bits(1)) -> unit = {
   vcsr[vxrm]  = vxrm_val; // Note: frm can be an illegal value, 101, 110, 111
   vcsr[vxsat] = vxsat_val;
   dirty_v_context()
 }
 
 function clause write_CSR(0x008, value) = { set_vstart(value[15 .. 0]); Ok(vstart) }
-function clause write_CSR(0x009, value) = { ext_write_vcsr (vcsr[vxrm], value[0 .. 0]); Ok(zero_extend(vcsr[vxsat])) }
-function clause write_CSR(0x00A, value) = { ext_write_vcsr (value[1 .. 0], vcsr[vxsat]); Ok(zero_extend(vcsr[vxrm])) }
-function clause write_CSR(0x00F, value) = { ext_write_vcsr (value [2 .. 1], value [0 .. 0]); Ok(zero_extend(vcsr.bits)) }
+function clause write_CSR(0x009, value) = { write_vcsr (vcsr[vxrm], value[0 .. 0]); Ok(zero_extend(vcsr[vxsat])) }
+function clause write_CSR(0x00A, value) = { write_vcsr (value[1 .. 0], vcsr[vxsat]); Ok(zero_extend(vcsr[vxrm])) }
+function clause write_CSR(0x00F, value) = { write_vcsr (value [2 .. 1], value [0 .. 0]); Ok(zero_extend(vcsr.bits)) }
