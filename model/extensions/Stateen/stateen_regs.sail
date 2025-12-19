@@ -13,6 +13,9 @@ function is_mstateen_accessible() -> bool = hartSupports(Ext_Smstateen)
 function is_hstateen_accessible() -> bool = currentlyEnabled(Ext_H) & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
 function is_sstateen_accessible() -> bool = currentlyEnabled(Ext_S) & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
 
+termination_measure is_hstateen_accessible() = 5 // > Ext_H
+termination_measure is_sstateen_accessible() = 2 // > Ext_S
+
 enum stateen_bit = {STATEEN_FCSR, STATEEN_ENVCFG, STATEEN_SE}
 
 mapping stateen_bit_index : stateen_bit <-> range(0, 63) = {
@@ -91,6 +94,8 @@ private function get_hstateen(idx : range(0, 3)) -> bits(64) = {
   }
 }
 
+termination_measure get_hstateen(_) = 6 // > is_hstateen_accessible
+
 function get_hstateen_mask(idx : range(0, 3)) -> bits(64) = get_mstateen(idx)
 
 function legalize_hstateen0(h : Mstateen0, v : bits(64)) -> Mstateen0 = {
@@ -150,6 +155,8 @@ private function get_sstateen(idx : range(0, 3)) -> bits(64) =
     }
   )
 
+termination_measure get_sstateen(_) = 3 // > is_sstateen_accessible
+
 function get_sstateen_mask(idx : range(0, 3)) -> bits(64) = get_mstateen(idx) & get_hstateen(idx)
 
 function check_stateen_bit(priv : Privilege, bit_idx : stateen_bit, stateen_reg : range(0, 3)) -> bool = {
@@ -163,7 +170,11 @@ function check_stateen_bit(priv : Privilege, bit_idx : stateen_bit, stateen_reg 
   mask[stateen_bit_index(bit_idx)] == bitone
 }
 
+termination_measure check_stateen_bit(_, _, _) = 7 // > get_hstateen
+
 function is_zfinx_enabled_by_stateen() -> bool = check_stateen_bit(cur_privilege, STATEEN_FCSR, 0)
+
+termination_measure is_zfinx_enabled_by_stateen() = 8 // > check_stateen_bit
 
 function reset_stateen() -> unit = {
   mstateen0.bits = zeros();
