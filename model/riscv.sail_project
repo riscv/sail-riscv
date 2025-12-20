@@ -88,7 +88,6 @@ extensions {
 
       files
         extensions/I/base_insts.sail,
-        extensions/I/reserved_fence_insts.sail,
         if $RMEM then
           extensions/I/jalr_rmem.sail
         else
