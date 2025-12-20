@@ -54,3 +54,20 @@ let fetch_access_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_acc
 let fetch_page_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_page_fault
 let software_check_fault_writes_xtval : bool = config base.xtval_nonzero.software_check
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
+
+// Defines the policy for handling reserved behaviors encountered
+enum AmocasOddRegisterReservedBehavior = {
+  Fatal,
+  Illegal,
+}
+
+mapping AmocasOddRegisterReservedBehavior_str : AmocasOddRegisterReservedBehavior <-> string = {
+  Fatal <-> "Fatal",
+  Illegal <-> "Illegal",
+}
+overload to_str = {AmocasOddRegisterReservedBehavior_str}
+
+// The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
+// "Fatal"  – raise a Sail exception, stopping execution.
+// "illegal" – treat it as an illegal instruction.
+let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register

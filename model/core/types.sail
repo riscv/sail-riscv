@@ -385,15 +385,3 @@ mapping width_mnemonic_wide : word_width_wide <-> string = {
   8  <-> "d",
   16 <-> "q",
 }
-
-// Defines the policy for handling reserved behaviors encountered
-enum AmocasOddRegisterReservedBehavior = {
-  Fatal,
-  Illegal,
-}
-
-mapping AmocasOddRegisterReservedBehavior_str : AmocasOddRegisterReservedBehavior <-> string = {
-  Fatal <-> "Fatal",
-  Illegal <-> "Illegal",
-}
-overload to_str = {AmocasOddRegisterReservedBehavior_str}
