@@ -88,7 +88,8 @@ void callbacks_if::redirect_callback([[maybe_unused]] hart::Model &model,
 
 void callbacks_if::trap_callback([[maybe_unused]] hart::Model &model,
                                  [[maybe_unused]] bool is_interrupt,
-                                 [[maybe_unused]] fbits cause)
+                                 [[maybe_unused]] fbits cause,
+                                 [[maybe_unused]] hart::zoptionzIUtrap_reasonzK reason)
 {
 }
 

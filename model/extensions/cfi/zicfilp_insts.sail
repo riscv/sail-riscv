@@ -9,7 +9,8 @@
 function make_landing_pad_exception() -> sync_exception =
   struct { trap    = E_Software_Check(),
            excinfo = Some(zero_extend(software_check_cause(SWC_LANDING_PAD_FAULT))),
-           ext     = None() }
+           ext     = None(),
+           reason  = None() }
 
 union clause instruction = LPAD : (landing_pad_label)
 

@@ -130,7 +130,7 @@ function process_clean_inval(rs1 : regidx, _cbop : cbop_zicbom) -> ExecutionResu
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          Memory_Exception(vaddr - negative_offset, e)
+          Memory_Exception(vaddr - negative_offset, e, None())
         }
       }
     }

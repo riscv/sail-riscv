@@ -11,5 +11,6 @@
 struct sync_exception = {
   trap    : ExceptionType,
   excinfo : option(xlenbits),
-  ext     : option(ext_exception)   // for extensions
+  ext     : option(ext_exception),  // for extensions
+  reason  : option(trap_reason)  // detailed reason for debugging
 }

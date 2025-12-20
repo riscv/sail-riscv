@@ -172,6 +172,30 @@ overload to_str = {interruptType_to_str}
 
 enum breakpoint_cause = {Brk_Software, Brk_Hardware}
 
+// Reason for why an exception occurred, providing debugging information
+// about the underlying cause of the exception
+union trap_reason = {
+  // Physical memory access failures
+  access_not_in_physical_memory : (physaddrbits, int),  // address, width
+
+  // Page table walk failures
+  invalid_pte_reserved_bits_nonzero : (physaddrbits, xlenbits),  // PTE address, PTE value
+  pte_access_fault : physaddrbits,  // PTE address that couldn't be accessed
+  pte_permission_denied : (physaddrbits, xlenbits),  // PTE address, PTE value
+  pte_misaligned_superpage : physaddrbits,  // PTE address
+
+  // PMP/PMA failures
+  pmp_violation : (physaddrbits, int),  // address, width
+  pma_violation : (physaddrbits, int),  // address, width
+
+  // Other causes
+  alignment_fault : (xlenbits, int),  // address, width
+  illegal_instruction : instbits,  // instruction encoding
+
+  // Generic fallback for cases where no specific reason is available
+  unknown : unit
+}
+
 union ExceptionType = {
   E_Fetch_Addr_Align   : unit,
   E_Fetch_Access_Fault : unit,

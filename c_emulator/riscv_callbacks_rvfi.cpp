@@ -47,10 +47,11 @@ void rvfi_callbacks::xreg_full_write_callback(hart::Model &model,
 }
 
 void rvfi_callbacks::trap_callback(hart::Model &model, bool is_interrupt,
-                                   fbits cause)
+                                   fbits cause, hart::zoptionzIUtrap_reasonzK reason)
 {
   (void)is_interrupt;
   (void)cause;
+  (void)reason;
   if (config_enable_rvfi) {
     model.zrvfi_trap(UNIT);
   }

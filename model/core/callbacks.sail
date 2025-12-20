@@ -52,8 +52,9 @@ val redirect_callback = pure {cpp: "redirect_callback"} : (/* new_pc */ xlenbits
 function redirect_callback(_) = ()
 
 /// Called on interrupts and exceptions. The exc_code does not include the 'interrupt' bit which is
-/// in a separate bool.
-val trap_callback = pure {cpp: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code) -> unit
+/// in a separate bool. The trap_reason provides detailed debugging information about the underlying
+/// cause of the exception, if available.
+val trap_callback = pure {cpp: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code, /* trap_reason */ option(trap_reason)) -> unit
 function trap_callback(_) = ()
 
 // Overloads for easier use of callbacks

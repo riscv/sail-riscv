@@ -37,6 +37,8 @@ end assembly
 end encdec
 end encdec_compressed
 
-function print_insn(insn : instruction) -> string = assembly(insn)
+// Some legal instructions do not have any corresponding assembly, e.g. reserved fences.
+function instruction_to_str(insn : instruction) -> string =
+  if assembly_forwards_matches(insn) then assembly(insn) else (".insn " ^ bits_str(encdec(insn)))
 
-overload to_str = {print_insn}
+overload to_str = {instruction_to_str}

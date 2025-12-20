@@ -11,6 +11,7 @@ class Model;
 struct zMemoryAccessTypezIuzK;
 struct ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
 struct zPTW_Error;
+struct zoptionzIUtrap_reasonzK;
 
 }
 
@@ -52,7 +53,7 @@ public:
 
   virtual unit redirect_callback(sbits new_pc);
 
-  virtual unit trap_callback(bool is_interrupt, fbits cause);
+  virtual unit trap_callback(bool is_interrupt, fbits cause, hart::zoptionzIUtrap_reasonzK reason);
 
   // Page table walk callbacks
   virtual unit

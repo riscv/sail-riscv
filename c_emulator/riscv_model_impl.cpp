@@ -146,10 +146,10 @@ unit ModelImpl::redirect_callback(sbits new_pc)
   return UNIT;
 }
 
-unit ModelImpl::trap_callback(bool is_interrupt, fbits cause)
+unit ModelImpl::trap_callback(bool is_interrupt, fbits cause, hart::zoptionzIUtrap_reasonzK reason)
 {
   for (auto c : m_callbacks) {
-    c->trap_callback(*this, is_interrupt, cause);
+    c->trap_callback(*this, is_interrupt, cause, reason);
   }
   return UNIT;
 }

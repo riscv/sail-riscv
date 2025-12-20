@@ -15,5 +15,5 @@ public:
   void xreg_full_write_callback(hart::Model &model, const_sail_string abi_name,
                                 sbits reg, sbits value) override;
   void trap_callback(hart::Model &model, bool is_interrupt,
-                     fbits cause) override;
+                     fbits cause, hart::zoptionzIUtrap_reasonzK reason) override;
 };

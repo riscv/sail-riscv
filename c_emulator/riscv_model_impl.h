@@ -46,7 +46,7 @@ private:
   unit vreg_write_callback(unsigned reg, lbits value) override;
   unit pc_write_callback(sbits new_pc) override;
   unit redirect_callback(sbits new_pc) override;
-  unit trap_callback(bool is_interrupt, fbits cause) override;
+  unit trap_callback(bool is_interrupt, fbits cause, hart::zoptionzIUtrap_reasonzK reason) override;
 
   // Page table walk callbacks
   unit ptw_start_callback(
