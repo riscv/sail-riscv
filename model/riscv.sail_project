@@ -429,6 +429,7 @@ extensions {
   }
 
   Ssqosid {
+    requires core
     files extensions/Ssqosid/ssqosid.sail
   }
 
@@ -485,6 +486,11 @@ extensions {
         extensions/Stateen/stateen_csrs.sail,
         extensions/Stateen/stateen_access_checks.sail,
     }
+  }
+
+  Zvzip {
+    requires core, sys, I, V
+    files extensions/Zvzip/zvzip_insts.sail
   }
 
   rmem {

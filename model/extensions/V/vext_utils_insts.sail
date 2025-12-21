@@ -265,20 +265,13 @@ function get_start_element() -> result(nat, unit) = {
 // Get the ending element index from csr vl
 function get_end_element() -> int = unsigned(vl) - 1
 
-// Mask handling; creates a pre-masked result vector for vstart, vl, vta/vma, and vm
-// vm should be baked into vm_val from doing read_vmask
-// tail masking when lmul < 1 is handled in write_vreg
-// Returns two vectors:
-//   vector1 is the result vector with values applied to masked elements
-//   vector2 is a "mask" vector that is true for an element if the corresponding element
-//     in the result vector should be updated by the calling instruction
-val init_masked_result : forall 'n 'm 'p, 'n >= 0 . (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
-function init_masked_result(num_elem, _EEW, LMUL_pow, vd_val, vm_val) = {
+val init_masked_result_evl : forall 'n 'm 'e 'p, 'n >= 0 . (int('n), int('m), int('e), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
+function init_masked_result_evl(num_elem, _EEW, EVL, LMUL_pow, vd_val, vm_val) = {
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Err(())
   };
-  let end_element   = get_end_element();
+  let end_element   = EVL - 1;
   let tail_ag : agtype = get_vtype_vta();
   let mask_ag : agtype = get_vtype_vma();
   var mask : bits('n) = undefined;
@@ -321,6 +314,18 @@ function init_masked_result(num_elem, _EEW, LMUL_pow, vd_val, vm_val) = {
   };
 
   Ok((result, mask))
+}
+
+// Mask handling; creates a pre-masked result vector for vstart, vl, vta/vma, and vm
+// vm should be baked into vm_val from doing read_vmask
+// tail masking when lmul < 1 is handled in write_vreg
+// Returns two vectors:
+//   vector1 is the result vector with values applied to masked elements
+//   vector2 is a "mask" vector that is true for an element if the corresponding element
+//     in the result vector should be updated by the calling instruction
+val init_masked_result : forall 'n 'm 'p, 'n >= 0 . (int('n), int('m), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
+function init_masked_result(num_elem, _EEW, LMUL_pow, vd_val, vm_val) = {
+  init_masked_result_evl(num_elem, _EEW, unsigned(vl), LMUL_pow, vd_val, vm_val)
 }
 
 // For instructions like vector reduction and vector store,
