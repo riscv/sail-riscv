@@ -29,6 +29,7 @@
     }
   },
   "memory": {
+    "physaddr_bits": @CONFIG__PHYSADDR__BITS@,
     "pmp": {
       "grain": 0,
       // This specifies the number of PMP entries present.
