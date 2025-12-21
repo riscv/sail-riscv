@@ -415,6 +415,9 @@
     "Zvkt": {
       "supported": true
     },
+    "Zvzip": {
+      "supported": true
+    },
     "Sscofpmf": {
       "supported": true
     },

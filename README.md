@@ -187,6 +187,7 @@ For booting operating system images, see the information under the
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
 
 - Zibi extension for conditional branches with immediate operands, v0.6
+- Zvzip extension for Reordering Structured Data, v0.1
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 

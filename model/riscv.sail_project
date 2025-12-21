@@ -500,6 +500,11 @@ extensions {
     }
   }
 
+  Zvzip {
+    requires core, sys, I, V
+    files extensions/Zvzip/zvzip_insts.sail
+  }
+
   rmem {
     requires core, sys
     files
