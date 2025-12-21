@@ -42,7 +42,7 @@ private mapping encdec_cbie : cbie <-> bits(2) = {
   CBIE_ILLEGAL    <-> 0b00,
   CBIE_EXEC_FLUSH <-> 0b01,
   CBIE_EXEC_INVAL <-> 0b11,
-  backwards 0b10   => internal_error(__FILE__, __LINE__, "reserved CBIE"),
+  backwards 0b10   => reserved_behavior("CBIE = 0b10"),
 }
 
 // Illegal-Virtual will be needed by the hypervisor mode, but is currently unused.
