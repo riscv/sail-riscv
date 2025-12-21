@@ -127,6 +127,7 @@ For booting operating system images, see the information under the
 - Zvksg extension for vector cryptography ShangMi Algorithm Suite with GCM
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
+- Zvzip extension for Reordering Structured Data, v0.1
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0

@@ -323,6 +323,66 @@ function init_masked_result(num_elem, _EEW, LMUL_pow, vd_val, vm_val) = {
   Ok((result, mask))
 }
 
+// This function is provided for instructions like vzip that operate with different
+// effective vector length (EVL) than VL. The EVL is input by the instruction.
+// Mask handling; creates a pre-masked result vector for vstart, vl, vta/vma, and vm
+// vm should be baked into vm_val from doing read_vmask
+// tail masking when lmul < 1 is handled in write_vreg
+// Returns two vectors:
+//   vector1 is the result vector with values applied to masked elements
+//   vector2 is a "mask" vector that is true for an element if the corresponding element
+//     in the result vector should be updated by the calling instruction
+val init_masked_result_evl : forall 'n 'm 'e 'p, 'n >= 0 . (int('n), int('m), int('e), int('p), vector('n, bits('m)), bits('n)) -> result((vector('n, bits('m)), bits('n)), unit)
+function init_masked_result_evl(num_elem, _EEW, EVL, LMUL_pow, vd_val, vm_val) = {
+  let start_element : nat = match get_start_element() {
+    Ok(v)   => v,
+    Err(()) => return Err(())
+  };
+  let end_element   = EVL - 1;
+  let tail_ag : agtype = get_vtype_vta();
+  let mask_ag : agtype = get_vtype_vma();
+  var mask : bits('n) = undefined;
+  var result : vector('n, bits('m)) = undefined;
+
+  // Determine the actual number of elements when lmul < 1
+  let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (2 ^ (0 - LMUL_pow));
+  assert(num_elem >= real_num_elem);
+
+  foreach (i from 0 to (num_elem - 1)) {
+    if i < start_element then {
+      // Prestart elements defined by vstart
+      result[i] = vd_val[i];
+      mask[i] = bitzero
+    } else if i > end_element then {
+      // Tail elements defined by vl
+      result[i] = match tail_ag {
+        UNDISTURBED => vd_val[i],
+        AGNOSTIC    => vd_val[i] // TODO: configuration support
+      };
+      mask[i] = bitzero
+    } else if i >= real_num_elem then {
+      // Tail elements defined by lmul < 1
+      result[i] = match tail_ag {
+        UNDISTURBED => vd_val[i],
+        AGNOSTIC    => vd_val[i] // TODO: configuration support
+      };
+      mask[i] = bitzero
+    } else if vm_val[i] == bitzero then {
+      // Inactive body elements defined by vm
+      result[i] = match mask_ag {
+        UNDISTURBED => vd_val[i],
+        AGNOSTIC    => vd_val[i] // TODO: configuration support
+      };
+      mask[i] = bitzero
+    } else {
+      // Active body elements
+      mask[i] = bitone;
+    }
+  };
+
+  Ok((result, mask))
+}
+
 // For instructions like vector reduction and vector store,
 // masks on prestart, inactive and tail elements only affect the validation of source register elements
 // (vs3 for store and vs2 for reduction). There's no destination register to be masked.

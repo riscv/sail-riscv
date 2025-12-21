@@ -9,6 +9,7 @@
   - Sstvala
   - Sstvecd
   - Ssu64xl
+  - Zvzip
 
 # Release notes for version 0.9
 
