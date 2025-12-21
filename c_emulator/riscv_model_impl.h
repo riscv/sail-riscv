@@ -28,21 +28,16 @@ private:
   // These functions are called by the Sail code.
 
   unit fetch_callback(sbits opcode) override;
-  unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
-                          lbits value) override;
-  unit mem_read_callback(const char *type, sbits paddr, uint64_t width,
-                         lbits value) override;
+  unit mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;
+  unit mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
-  unit xreg_full_write_callback(const_sail_string abi_name, sbits reg,
-                                sbits value) override;
+  unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
   unit freg_write_callback(unsigned reg, sbits value) override;
   // `full` indicates that the name and index of the CSR are provided.
   // 64 bit CSRs use a long_csr_write_callback Sail function that automatically
   // makes two csr_full_write_callback calls on RV32.
-  unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
-                               sbits value) override;
-  unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
-                              sbits value) override;
+  unit csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value) override;
+  unit csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value) override;
   unit vreg_write_callback(unsigned reg, lbits value) override;
   unit pc_write_callback(sbits new_pc) override;
   unit redirect_callback(sbits new_pc) override;
@@ -50,12 +45,13 @@ private:
 
   // Page table walk callbacks
   unit ptw_start_callback(
-      uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
-      hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege) override;
+    uint64_t vpn,
+    hart::zMemoryAccessTypezIuzK access_type,
+    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+  ) override;
   unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte) override;
   unit ptw_success_callback(uint64_t final_ppn, int64_t level) override;
-  unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level,
-                         sbits pte_addr) override;
+  unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr) override;
   // Provides entropy for the scalar cryptography extension.
   mach_bits plat_get_16_random_bits(unit) override;
 
@@ -93,12 +89,11 @@ private:
 
   bool m_enable_experimental_extensions = false;
 
-  static unsigned seed()
-  {
+  static unsigned seed() {
     std::random_device rd;
     return rd();
   }
 
   // Randomly seeded PRNG.
-  std::mt19937_64 m_gen64 {seed()};
+  std::mt19937_64 m_gen64{seed()};
 };

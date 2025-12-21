@@ -25,12 +25,9 @@ bv5_bv64 softfloat_f64sub(uint64_t rm, uint64_t v1, uint64_t v2);
 bv5_bv64 softfloat_f64mul(uint64_t rm, uint64_t v1, uint64_t v2);
 bv5_bv64 softfloat_f64div(uint64_t rm, uint64_t v1, uint64_t v2);
 
-bv5_bv16 softfloat_f16muladd(uint64_t rm, uint64_t v1, uint64_t v2,
-                             uint64_t v3);
-bv5_bv32 softfloat_f32muladd(uint64_t rm, uint64_t v1, uint64_t v2,
-                             uint64_t v3);
-bv5_bv64 softfloat_f64muladd(uint64_t rm, uint64_t v1, uint64_t v2,
-                             uint64_t v3);
+bv5_bv16 softfloat_f16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3);
+bv5_bv32 softfloat_f32muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3);
+bv5_bv64 softfloat_f64muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3);
 
 bv5_bv16 softfloat_f16sqrt(uint64_t rm, uint64_t v);
 bv5_bv32 softfloat_f32sqrt(uint64_t rm, uint64_t v);

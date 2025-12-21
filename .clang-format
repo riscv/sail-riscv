@@ -1,13 +1,37 @@
 Language: Cpp
-BasedOnStyle: WebKit
-AlignArrayOfStructures: Left
-AlignAfterOpenBracket: Align
-AllowShortFunctionsOnASingleLine: Empty
-ColumnLimit: 80
+
+# LLVM is the best tested style because it is used by the Clang-format developers.
+# Other styles tend to be a bit buggy.
+BasedOnStyle: LLVM
+
+# Binpacking arguments/parameters (i.e. wrapping them as if they were prose)
+# is really bad for diffing, conflicts, etc.
+BinPackArguments: false
+BinPackParameters: false
+AlignAfterOpenBracket: BlockIndent
+PackConstructorInitializers: CurrentLine
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# For consistency don't put functions or enums on one line.
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+
+# Slightly less claustrophobic line lengths.
+ColumnLimit: 120
+
+# This just removes some spaces in braced initialiser lists.
 Cpp11BracedListStyle: true
+
+# Indentation is 2 spaces. This matches the style in the Sail code.
 IndentWidth: 2
-PointerAlignment: Right
-SortIncludes: Never
-AlignTrailingComments: true
-AccessModifierOffset: -2
+ContinuationIndentWidth: 2
+
+# Don't allow single-statement unbraced blocks; a notorious footgun.
 InsertBraces: true
+
+# Don't split between the return type and function name, for consistency.
+PenaltyReturnTypeOnItsOwnLine: 10000
+
+# Nicer constructor lists.
+BreakConstructorInitializers: AfterColon

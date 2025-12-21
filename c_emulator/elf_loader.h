@@ -25,10 +25,11 @@ public:
   // Return the entry point (where execution should begin).
   uint64_t entry() const;
 
-  using ElfWriteFn = std::function<void(uint64_t,        // address
-                                        const uint8_t *, // data
-                                        uint64_t         // length
-                                        )>;
+  using ElfWriteFn = std::function<void(
+    uint64_t,        // address
+    const uint8_t *, // data
+    uint64_t         // length
+  )>;
 
   // Call `writer()` to load all of the loadable sections into memory (or you
   // can do anything else with them).
