@@ -26,6 +26,12 @@
       "fetch_page_fault": true,
       "software_check": true,
       "reserved_exceptions": false
+    },
+    "reserved_behavior": {
+      // The configuration option determines how to handle the reserved behavior `xenvcfg.CBIE` with 0b10.
+      // "Fatal"  – raise a Sail exception, stopping execution.
+      // "ClearPermissions" – convert CBIE with 0b10 to 0b00.
+      "xenvcfg_cbie": "ClearPermissions"
     }
   },
   "memory": {
