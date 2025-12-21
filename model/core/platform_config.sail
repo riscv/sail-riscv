@@ -69,5 +69,5 @@ overload to_str = {AmocasOddRegisterReservedBehavior_str}
 
 // The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
 // "Fatal"  – raise a Sail exception, stopping execution.
-// "illegal" – treat it as an illegal instruction.
+// "Illegal" – treat it as an illegal instruction.
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
