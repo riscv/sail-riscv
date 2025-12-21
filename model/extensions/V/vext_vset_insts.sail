@@ -49,7 +49,7 @@ mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
   hex_bits_8(ma @ ta @ sew @ lmul)  <-> (ma, ta, sew, lmul),
 }
 
-function handle_illegal_vtype(rd : regidx) -> unit = {
+private function handle_illegal_vtype(rd : regidx) -> unit = {
   // Note: Implementations can set vill or trap with an illegal
   // instruction if the vtype setting is not supported.
   // TODO: configuration support for both solutions.
@@ -70,7 +70,7 @@ function handle_illegal_vtype(rd : regidx) -> unit = {
 
 let vl_use_ceil : bool = config extensions.V.vl_use_ceil
 
-function calculate_new_vl(AVL : xlenbits, VLMAX : range(1, vlen)) -> range(0, vlen) = {
+private function calculate_new_vl(AVL : xlenbits, VLMAX : range(1, vlen)) -> range(0, vlen) = {
   let AVL = unsigned(AVL);
   // See "Constraints on Setting vl" in the vector spec.
   if AVL <= VLMAX then AVL
@@ -83,7 +83,7 @@ function calculate_new_vl(AVL : xlenbits, VLMAX : range(1, vlen)) -> range(0, vl
 }
 
 // Execute vsetvl, vsetvli, or vsetivli.
-function execute_vsetvl_type(
+private function execute_vsetvl_type(
   ma : bits(1),
   ta : bits(1),
   sew : bits(3),

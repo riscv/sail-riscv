@@ -40,12 +40,12 @@ function clause currentlyEnabled(Ext_Zicfilp) =
   currentlyEnabled(Ext_Zicsr) & hartSupports(Ext_Zicfilp) & get_xLPE(cur_privilege)
 
 /// Architectural state for the Zicfilp extension.
-enum landing_pad_expectation = { NO_LP_EXPECTED, LP_EXPECTED }
+private enum landing_pad_expectation = { NO_LP_EXPECTED, LP_EXPECTED }
 
 // Expected Landing Pad
 register elp : bits(1)
 
-mapping landing_pad_bits : bits(1) <-> landing_pad_expectation = {
+private mapping landing_pad_bits : bits(1) <-> landing_pad_expectation = {
   0b0 <-> NO_LP_EXPECTED,
   0b1 <-> LP_EXPECTED,
 }

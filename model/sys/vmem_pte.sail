@@ -42,17 +42,18 @@ bitfield PTE_Ext : pte_ext_bits = {
 // this default_sv32_ext_pte value.
 let default_sv32_ext_pte : pte_ext_bits = zeros()
 
-// PRIVATE: extract ext bits of PTE above the PPN.
-val ext_bits_of_PTE : forall 'pte_size, 'pte_size in {32, 64}. bits('pte_size) -> PTE_Ext
+// Extract ext bits of PTE above the PPN.
+private val ext_bits_of_PTE : forall 'pte_size, 'pte_size in {32, 64}. bits('pte_size) -> PTE_Ext
 function ext_bits_of_PTE(pte) =
   Mk_PTE_Ext(if 'pte_size == 64 then pte[63 .. 54] else default_sv32_ext_pte)
 
-// PRIVATE: extract full PPN from a PTE
-val PPN_of_PTE : forall 'pte_size, 'pte_size in {32, 64}.
+// Extract full PPN from a PTE
+private val PPN_of_PTE : forall 'pte_size, 'pte_size in {32, 64}.
   bits('pte_size) -> bits(if 'pte_size == 32 then 22 else 44)
 function PPN_of_PTE(pte) = if 'pte_size == 32 then pte[31 .. 10] else pte[53 .. 10]
 
-// PRIVATE: 8 LSBs of PTEs in Sv32, Sv39, Sv48 and Sv57
+// 8 LSBs of PTEs in Sv32, Sv39, Sv48 and Sv57
+// TODO: This would ideally be private.
 bitfield PTE_Flags : pte_flags_bits = {
   D : 7,    // dirty
   A : 6,    // accessed
@@ -64,8 +65,8 @@ bitfield PTE_Flags : pte_flags_bits = {
   V : 0     // Valid
 }
 
-// PRIVATE: check if a PTE is a pointer to next level (non-leaf)
-function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
+// Check if a PTE is a pointer to next level (non-leaf)
+private function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
     pte_flags[X] == 0b0
   & pte_flags[W] == 0b0
   & pte_flags[R] == 0b0
@@ -77,8 +78,8 @@ function clause currentlyEnabled(Ext_Svpbmt) = false
 // Svrsw60t59b: PTE Reserved for software bits 60-59
 function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b) & currentlyEnabled(Ext_Sv39)
 
-// PRIVATE: check if a PTE is valid
-function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
+// Check if a PTE is valid
+private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0
   | (pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
   // Note, the following requirements depend on the privileged spec version.
@@ -107,16 +108,17 @@ union PTE_Check = {
   PTE_Check_Failure : (ext_ptw, pte_check_failure)
 }
 
-// PRIVATE
-function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
-                              priv      : Privilege,
-                              // Make eXecutable Readable
-                              mxr       : bool,
-                              // permit Supervisor User Memory access
-                              do_sum    : bool,
-                              pte_flags : PTE_Flags,
-                              _ext      : PTE_Ext,
-                              _ext_ptw  : ext_ptw) -> PTE_Check = {
+private function check_PTE_permission(
+  ac        : MemoryAccessType(ext_access_type),
+  priv      : Privilege,
+  // Make eXecutable Readable
+  mxr       : bool,
+  // permit Supervisor User Memory access
+  do_sum    : bool,
+  pte_flags : PTE_Flags,
+  _ext      : PTE_Ext,
+  _ext_ptw  : ext_ptw
+) -> PTE_Check = {
   let pte_U = bits_to_bool(pte_flags[U]);
   let pte_R = bits_to_bool(pte_flags[R]);
   let pte_W = bits_to_bool(pte_flags[W]);
@@ -149,8 +151,7 @@ function check_PTE_permission(ac        : MemoryAccessType(ext_access_type),
 }
 
 // Update PTE bits if needed; return new PTE if updated
-// PRIVATE
-function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
+private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   pte : bits('pte_size),
   a   : MemoryAccessType(ext_access_type),
 ) -> option(bits('pte_size)) = {

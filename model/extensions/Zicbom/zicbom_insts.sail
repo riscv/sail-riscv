@@ -10,7 +10,7 @@
 
 function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 
-function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
+private function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
 
 // *****************************************************************
 union clause instruction = ZICBOM : (cbop_zicbom, regidx)
@@ -36,9 +36,9 @@ mapping clause assembly = ZICBOM(cbop, rs1)
   <-> cbop_mnemonic(cbop) ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 // CBIE from xenvcfg
-enum cbie = {CBIE_ILLEGAL, CBIE_EXEC_FLUSH, CBIE_EXEC_INVAL}
+private enum cbie = {CBIE_ILLEGAL, CBIE_EXEC_FLUSH, CBIE_EXEC_INVAL}
 
-mapping encdec_cbie : cbie <-> bits(2) = {
+private mapping encdec_cbie : cbie <-> bits(2) = {
   CBIE_ILLEGAL    <-> 0b00,
   CBIE_EXEC_FLUSH <-> 0b01,
   CBIE_EXEC_INVAL <-> 0b11,
@@ -46,10 +46,10 @@ mapping encdec_cbie : cbie <-> bits(2) = {
 }
 
 // Illegal-Virtual will be needed by the hypervisor mode, but is currently unused.
-enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_INVAL_INVAL}
+private enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_INVAL_INVAL}
 
 // Select the cbop to perform based on the privilege.
-function cbop_priv_check(p: Privilege) -> checked_cbop = {
+private function cbop_priv_check(p: Privilege) -> checked_cbop = {
   let mCBIE : cbie = encdec_cbie(menvcfg[CBIE]);
   // TODO: check henvcfg after hypervisor is implemented
   let sCBIE : cbie = if   currentlyEnabled(Ext_S)
@@ -67,7 +67,7 @@ function cbop_priv_check(p: Privilege) -> checked_cbop = {
   }
 }
 
-function process_clean_inval(rs1 : regidx, _cbop : cbop_zicbom) -> ExecutionResult = {
+private function process_clean_inval(rs1 : regidx, _cbop : cbop_zicbom) -> ExecutionResult = {
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
 

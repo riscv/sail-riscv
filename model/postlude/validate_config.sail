@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function check_privs() -> bool = {
+private function check_privs() -> bool = {
   if hartSupports(Ext_S) & not(hartSupports(Ext_U))
   then {
     print_endline("User mode (U) should be enabled if supervisor mode (S) is enabled.");
@@ -16,7 +16,7 @@ function check_privs() -> bool = {
 }
 
 // This logic will need to change once MXL/SXL/UXL can differ.
-function check_mmu_config() -> bool = {
+private function check_mmu_config() -> bool = {
   var valid : bool = true;
   if xlen == 64 then {
     if not(hartSupports(Ext_S)) & (hartSupports(Ext_Sv57) | hartSupports(Ext_Sv48) | hartSupports(Ext_Sv39))
@@ -60,7 +60,7 @@ function check_mmu_config() -> bool = {
   valid
 }
 
-function check_vlen_elen() -> bool = {
+private function check_vlen_elen() -> bool = {
   // Should this be conditioned on a vector extension being enabled?
 
   // Due to the `constraint elen_exp <= vlen_exp` the Sail compiler will
@@ -88,7 +88,7 @@ function check_vlen_elen() -> bool = {
   true
 }
 
-function check_vext_config() -> bool = {
+private function check_vext_config() -> bool = {
   var valid : bool = true;
   // Standard Vector Extensions
   if vector_support_level >= Integer & (elen_exp : nat) < 5 then {
@@ -178,7 +178,7 @@ function check_vext_config() -> bool = {
 }
 
 // Return true if a list of PMA regions are sorted and don't overlap.
-function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64)) -> bool =
+private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64)) -> bool =
   match pmas {
     [||] => true,
     pma :: rest => {
@@ -193,13 +193,13 @@ function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_s
   }
 
 // Check that all memory regions are sorted and don't overlap.
-function check_mem_layout() -> bool =
+private function check_mem_layout() -> bool =
   if pma_regions == [||] then {
     print_endline("No memory regions specified.");
     false
   } else check_pma_regions(pma_regions, zeros(), zeros())
 
-function check_pmp() -> bool = {
+private function check_pmp() -> bool = {
   var valid : bool = true;
   if (config memory.pmp.na4_supported : bool) & sys_pmp_grain != 0
   then {
@@ -214,7 +214,7 @@ function check_pmp() -> bool = {
   valid
 }
 
-function check_required_sstvala_option(name : string, value : bool) -> bool = {
+private function check_required_sstvala_option(name : string, value : bool) -> bool = {
   if not(value) then {
     print_endline("The Sstvala extension is enabled but " ^ name ^ " have not been configured (under `base.xtval_nonzero`) to write xtval.");
     false
@@ -223,7 +223,7 @@ function check_required_sstvala_option(name : string, value : bool) -> bool = {
   }
 }
 
-function check_misc_extension_dependencies() -> bool = {
+private function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
   if hartSupports(Ext_F) & hartSupports(Ext_Zfinx) then {
     valid = false;
@@ -286,7 +286,7 @@ function check_misc_extension_dependencies() -> bool = {
   valid
 }
 
-function check_extension_param_constraints() -> bool = {
+private function check_extension_param_constraints() -> bool = {
   var valid : bool = true;
   if hartSupports(Ext_Zic64b) & (plat_cache_block_size_exp != 6) then {
     valid = false;

@@ -41,9 +41,9 @@ mapping clause csr_name_map = 0x73F  <-> "mhpmevent31h"
 
 mapping clause csr_name_map = 0xDA0  <-> "scountovf"
 
-function read_mhpmeventh(index : hpmidx) -> bits(32) = mhpmevent[index].bits[63 .. 32]
+private function read_mhpmeventh(index : hpmidx) -> bits(32) = mhpmevent[index].bits[63 .. 32]
 
-function write_mhpmeventh(index : hpmidx, value : bits(32)) -> unit =
+private function write_mhpmeventh(index : hpmidx, value : bits(32)) -> unit =
   if sys_writable_hpm_counters[index] == bitone then
   mhpmevent[index] = legalize_hpmevent(Mk_HpmEvent(value @ mhpmevent[index].bits[31 .. 0]))
 
@@ -57,7 +57,7 @@ function clause write_CSR((0b0111001 /* 0x720 */ @ index : bits(5), value) if xl
 }
 
 // scountovf collates the OF (overflow) bit for each event.
-function get_scountovf(priv : Privilege) -> bits(32) = {
+private function get_scountovf(priv : Privilege) -> bits(32) = {
   let overflow =
     mhpmevent[31][OF] @ mhpmevent[30][OF] @ mhpmevent[29][OF] @ mhpmevent[28][OF] @
     mhpmevent[27][OF] @ mhpmevent[26][OF] @ mhpmevent[25][OF] @ mhpmevent[24][OF] @

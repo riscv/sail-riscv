@@ -9,7 +9,7 @@
 
 // permission checks
 
-function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(ext_access_type)) -> bool =
+private function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(ext_access_type)) -> bool =
   match acc {
     Load(_)            => ent[R] == 0b1,
     Store(_)           => ent[W] == 0b1,
@@ -20,12 +20,12 @@ function pmpCheckRWX(ent : Pmpcfg_ent, acc : MemoryAccessType(ext_access_type)) 
 
 // matching logic
 
-enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
+private enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
 
 // Given a right-open interval [begin, end_), return whether [addr, addr+width)
 // is contained fully within it (PMP_Match), doesn't overlap at all (PMP_NoMatch)
 // or partially intersects it (PMP_PartialMatch).
-function pmpRangeMatch(
+private function pmpRangeMatch(
   begin : nat,
   end_ : nat,
   addr : nat,
@@ -37,7 +37,7 @@ function pmpRangeMatch(
   then    PMP_Match
   else    PMP_PartialMatch
 
-function pmpMatchAddr(
+private function pmpMatchAddr(
   Physaddr(addr) : physaddr,
   width : xlenbits,
   ent : Pmpcfg_ent,
@@ -80,7 +80,7 @@ function pmpMatchAddr(
 
 // priority checks
 
-function accessToFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType =
+private function accessToFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType =
   match acc {
     Load(_)            => E_Load_Access_Fault(),
     Store(_)           => E_SAMO_Access_Fault(),

@@ -22,9 +22,9 @@ let sys_pmp_grain : range(0, 63) = config memory.pmp.grain
 
 // PMP configuration entries
 
-enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
+private enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
 
-mapping pmpAddrMatchType_encdec : PmpAddrMatchType <-> bits(2) = {
+private mapping pmpAddrMatchType_encdec : PmpAddrMatchType <-> bits(2) = {
   OFF   <-> 0b00,
   TOR   <-> 0b01,
   NA4   <-> 0b10,
@@ -46,7 +46,7 @@ register pmpaddr_n : vector(64, xlenbits)
 
 // Packing and unpacking pmpcfg regs for xlen-width accesses
 
-function pmpReadCfgReg(n : range(0, 15)) -> xlenbits = {
+private function pmpReadCfgReg(n : range(0, 15)) -> xlenbits = {
   if xlen == 32
   then {
     pmpcfg_n[n*4 + 3].bits @
@@ -67,7 +67,7 @@ function pmpReadCfgReg(n : range(0, 15)) -> xlenbits = {
   }
 }
 
-function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
+private function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
   let G = sys_pmp_grain;
   let match_type = pmpcfg_n[n][A];
   let addr = pmpaddr_n[n];
@@ -90,13 +90,13 @@ function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
 }
 
 // Helpers to handle locked entries
-function pmpLocked(cfg: Pmpcfg_ent) -> bool =
+private function pmpLocked(cfg: Pmpcfg_ent) -> bool =
    cfg[L] == 0b1
 
-function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
+private function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
    (cfg[L] == 0b1) & (pmpAddrMatchType_encdec(cfg[A]) == TOR)
 
-function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
+private function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
   if pmpLocked(cfg) then cfg
   else {
     // Bits 5 and 6 are zero.
@@ -126,7 +126,7 @@ function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
     cfg
   }
 
-function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
+private function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
   if xlen == 32
   then {
     foreach (i from 0 to 3) {
@@ -145,12 +145,12 @@ function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
   }
 }
 
-function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
+private function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
   if   xlen == 32
   then { if (locked | tor_locked) then reg else v }
   else { if (locked | tor_locked) then reg else zero_extend(v[53..0]) }
 
-function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
+private function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
   if n < sys_pmp_usable_count then
     pmpaddr_n[n] = pmpWriteAddr(
       pmpLocked(pmpcfg_n[n]),

@@ -99,7 +99,7 @@ function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
 // unsetting C. If it returns true the write will have no effect.
 val ext_veto_disable_C : unit -> bool
 
-function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
+private function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   let v = Mk_Misa(v);
   // Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes
   if   not(sys_enable_writable_misa) | (v[C] == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C()))
@@ -202,7 +202,7 @@ bitfield Mstatus : bits(64) = {
   SIE  : 1,
 }
 
-function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
+private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   // Populate all defined fields using the bits of v, stripping anything
   // that does not have a matching bitfield entry. The SD bits are handled
   // explicitly later depending on xlen.
@@ -307,7 +307,7 @@ bitfield Seccfg : bits(64) = {
   USEED  : 8,
 }
 
-function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
+private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
   let sseed_read_only_zero =
       (config extensions.Zkr.sseed_read_only_zero : bool)
     | not(currentlyEnabled(Ext_S))
@@ -382,7 +382,7 @@ bitfield SEnvcfg : xlenbits = {
   FIOM   : 0,
 }
 
-function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
+private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
@@ -395,7 +395,7 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   ]
 }
 
-function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
+private function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
@@ -454,7 +454,7 @@ bitfield Minterrupts : xlenbits = {
   SSI : 1,
 }
 
-function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
   [o with
@@ -467,7 +467,7 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   ]
 }
 
-function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [o with
     MEI = v[MEI],
@@ -479,7 +479,7 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   ]
 }
 
-function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // M-mode interrupt delegation bits "should" be hardwired to 0.
   // FIXME: needs verification against eventual spec language.
   [Mk_Minterrupts(v) with MEI = 0b0, MTI = 0b0, MSI = 0b0]
@@ -504,7 +504,7 @@ bitfield Medeleg : bits(64) = {
   Fetch_Addr_Align  : 0
 }
 
-function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
+private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
   // M-EnvCalls delegation is not supported
   [Mk_Medeleg(v) with MEnvCall = 0b0]
 }
@@ -547,6 +547,7 @@ bitfield Mtvec : xlenbits = {
 }
 register mtvec : Mtvec  // Trap Vector
 
+// PUBLIC: invoked from set_{ms}tvec() [exceptions/sys_exceptions.sail]
 function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  let v = Mk_Mtvec(v);
  match (trapVectorMode_of_bits(v[Mode])) {
@@ -586,6 +587,7 @@ register mepc : xlenbits
 
 // The xepc legalization zeroes xepc[1:0] when Zca is not supported.
 // When Zca is supported (whether it is enabled or not), it zeroes only xepc[0].
+// PUBLIC: invoked from set_xepc() [exceptions/sys_exceptions.sail]
 function legalize_xepc(v : xlenbits) -> xlenbits = {
   if   hartSupports(Ext_Zca)
   then [v with 0 = bitzero]
@@ -627,7 +629,7 @@ bitfield Counteren : bits(32) = {
 }
 
 // scounteren
-function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren = {
+private function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren = {
   let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
   Mk_Counteren(v[31 .. 0] & supported_counters)
 }
@@ -658,7 +660,7 @@ bitfield Counterin : bits(32) = {
   CY : 0
 }
 
-function legalize_mcountinhibit(_c : Counterin, v : xlenbits) -> Counterin = {
+private function legalize_mcountinhibit(_c : Counterin, v : xlenbits) -> Counterin = {
   // Note the 0 in 0b101 is because the mtimer counter can't be paused.
   let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b101;
   Mk_Counterin(v[31 .. 0] & supported_counters)
@@ -734,7 +736,7 @@ bitfield Sstatus : bits(64) = {
 }
 // sstatus is a view of mstatus, so there is no register defined.
 
-function lower_mstatus(m : Mstatus) -> Sstatus = {
+private function lower_mstatus(m : Mstatus) -> Sstatus = {
   let s = Mk_Sstatus(zeros());
 
   [s with
@@ -753,7 +755,7 @@ function lower_mstatus(m : Mstatus) -> Sstatus = {
   ]
 }
 
-function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
+private function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   let dirty = extStatus_of_bits(s[FS]) == Dirty | extStatus_of_bits(s[XS]) == Dirty |
               extStatus_of_bits(s[VS]) == Dirty;
 
@@ -773,7 +775,7 @@ function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   ]
 }
 
-function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
+private function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
 }
 
@@ -793,7 +795,7 @@ bitfield Sinterrupts : xlenbits = {
 
 // sip
 // Provides the sip read view of mip (m) as delegated by mideleg (d).
-function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
+private function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
   [s with
@@ -804,7 +806,7 @@ function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 }
 
 // Provides the sie read view of mie (m) as delegated by mideleg (d).
-function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
+private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
   [s with
@@ -815,13 +817,13 @@ function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 }
 
 // Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d).
-function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
+private function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
   let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
   m
 }
 
-function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   lift_sip(m, d, Mk_Sinterrupts(v))
 }
 
@@ -833,7 +835,7 @@ function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, val
 
 // sie
 // Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d).
-function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
+private function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   let m : Minterrupts = o;
   [m with
     SEI = if d[SEI] == 0b1 then s[SEI] else m[SEI],
@@ -842,7 +844,7 @@ function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
   ]
 }
 
-function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   lift_sie(m, d, Mk_Sinterrupts(v))
 }
 

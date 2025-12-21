@@ -23,7 +23,7 @@ function range_subset forall 'n, 0 <= 'n <= 64 . (
 }
 
 $[test]
-function test_range_subset() -> unit = {
+private function test_range_subset() -> unit = {
   assert(range_subset(0x0, 0x0, 0x0, 0x0));
   assert(range_subset(0x1, 0x0, 0x1, 0x0));
   assert(range_subset(0x0, 0x0, 0x0, 0x1));
@@ -37,14 +37,14 @@ function test_range_subset() -> unit = {
 
 // Check if two ranges are subsets of each other they must be equal.
 $[property]
-function range_subset_equals(a_begin : bits(8), a_size : bits(8), b_begin : bits(8), b_size : bits(8)) -> bool =
+private function range_subset_equals(a_begin : bits(8), a_size : bits(8), b_begin : bits(8), b_size : bits(8)) -> bool =
   range_subset(a_begin, a_size, b_begin, b_size) & range_subset(b_begin, b_size, a_begin, a_size)
     ==> (a_begin == b_begin & a_size == b_size)
 
 // Check that if A is a subset of B, then all indices in A must be in B.
 // Also check that an index exists that is in A but not B then A cannot be a subset of B.
 $[property]
-function range_subset_precise(a_begin : bits(8), a_size : bits(8), b_begin : bits(8), b_size : bits(8), index : bits(8)) -> bool = {
+private function range_subset_precise(a_begin : bits(8), a_size : bits(8), b_begin : bits(8), b_size : bits(8), index : bits(8)) -> bool = {
   let index_in_a = (index - a_begin) <_u a_size;
   let index_in_b = (index - b_begin) <_u b_size;
   let is_subset = range_subset(a_begin, a_size, b_begin, b_size);

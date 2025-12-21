@@ -9,9 +9,9 @@
 // Current fetch hooks for RISC-V extensions call extensions
 // to check PC validity *before* standard fetch processing checks.
 
-function isRVC(h : half) -> bool = not(h[1 .. 0] == 0b11)
+private function isRVC(h : half) -> bool = not(h[1 .. 0] == 0b11)
 
-function fetch() -> FetchResult = {
+private function fetch() -> FetchResult = {
   // fetch PC check for extensions: extensions return a transformed PC to fetch,
   // but any exceptions use the untransformed PC.
   // TODO: Add a parameter to try_step() to allow forcing the fetch result and use that instead.
