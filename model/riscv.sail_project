@@ -58,7 +58,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, debug_module
 
   files
     sys/sys_reservation.sail,
@@ -457,10 +457,20 @@ mops {
   }
 }
 
+debug_module {
+  requires prelude, core, FD_core
+  files
+    debug_module/debug_module_types.sail,
+    debug_module/debug_module_regs.sail,
+    debug_module/debug_module_utils.sail,
+    debug_module/debug_module.sail,
+    debug_module/debug_module_interface.sail
+}
+
 postlude {
   after extensions, mops
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts, debug_module
 
   files
     postlude/insts_end.sail,
