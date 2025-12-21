@@ -54,3 +54,17 @@ let fetch_access_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_acc
 let fetch_page_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_page_fault
 let software_check_fault_writes_xtval : bool = config base.xtval_nonzero.software_check
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
+
+// Defines the policy for handling reserved behaviors encountered
+enum XenvcfgCbieReservedBehavior = {
+  Fatal,
+  ClearPermissions,
+}
+
+mapping XenvcfgCbieReservedBehavior_str : XenvcfgCbieReservedBehavior <-> string = {
+  Fatal <-> "Fatal",
+  ClearPermissions <-> "ClearPermissions",
+}
+overload to_str = {XenvcfgCbieReservedBehavior_str}
+
+let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
