@@ -30,7 +30,7 @@
     "reserved_behavior": {
       // The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
       // "Fatal"  – raise a Sail exception, stopping execution.
-      // "illegal" – treat it as an illegal instruction.
+      // "Illegal" – treat it as an illegal instruction.
       "amocas_odd_register": "Illegal"
     }
   },
