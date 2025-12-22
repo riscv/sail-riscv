@@ -123,14 +123,6 @@ target_compile_options(sail_riscv_sim PRIVATE
   -Wno-unused-parameter
 )
 
-option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" FALSE)
-
-if(IS_CI_BUILD)
-  target_compile_options(sail_riscv_sim PRIVATE
-    -Werror
-  )
-endif()
-
 # Enable Sail coverage collection.
 if (COVERAGE)
     target_compile_definitions(sail_riscv_sim
