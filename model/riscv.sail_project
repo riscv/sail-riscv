@@ -457,10 +457,16 @@ mops {
   }
 }
 
+debug_module {
+  requires core
+  files
+    debug_module/debug_module_interface.sail
+}
+
 postlude {
   after extensions, mops
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts, debug_module
 
   files
     postlude/insts_end.sail,

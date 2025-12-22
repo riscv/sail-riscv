@@ -38,6 +38,10 @@ add_custom_target(generated_config_schema DEPENDS config_schema.h)
 add_library(riscv_model
     elf_loader.cpp
     elf_loader.h
+    jtag_dtm.cpp
+    jtag_dtm.h
+    remote_bitbang.cpp
+    remote_bitbang.h
     riscv_callbacks_if.cpp
     riscv_callbacks_if.h
     riscv_config.h
