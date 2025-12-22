@@ -12,7 +12,7 @@ struct zMemoryAccessTypezIuzK;
 struct ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
 struct zPTW_Error;
 
-}
+} // namespace hart
 
 // The Model class derives from this one so when Sail calls C callback
 // functions it actually calls methods of this class. However they are
@@ -27,24 +27,19 @@ class PlatformInterface {
 public:
   virtual unit fetch_callback(sbits opcode);
 
-  virtual unit mem_write_callback(const char *type, sbits paddr, uint64_t width,
-                                  lbits value);
+  virtual unit mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value);
 
-  virtual unit mem_read_callback(const char *type, sbits paddr, uint64_t width,
-                                 lbits value);
+  virtual unit mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value);
 
   virtual unit mem_exception_callback(sbits paddr, uint64_t num_of_exception);
 
-  virtual unit xreg_full_write_callback(const_sail_string abi_name, sbits reg,
-                                        sbits value);
+  virtual unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value);
 
   virtual unit freg_write_callback(unsigned reg, sbits value);
 
-  virtual unit csr_full_write_callback(const_sail_string csr_name, unsigned reg,
-                                       sbits value);
+  virtual unit csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value);
 
-  virtual unit csr_full_read_callback(const_sail_string csr_name, unsigned reg,
-                                      sbits value);
+  virtual unit csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value);
 
   virtual unit vreg_write_callback(unsigned reg, lbits value);
 
@@ -55,13 +50,14 @@ public:
   virtual unit trap_callback(bool is_interrupt, fbits cause);
 
   // Page table walk callbacks
-  virtual unit
-  ptw_start_callback(uint64_t vpn, hart::zMemoryAccessTypezIuzK access_type,
-                     hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege);
+  virtual unit ptw_start_callback(
+    uint64_t vpn,
+    hart::zMemoryAccessTypezIuzK access_type,
+    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+  );
   virtual unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte);
   virtual unit ptw_success_callback(uint64_t final_ppn, int64_t level);
-  virtual unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level,
-                                 sbits pte_addr);
+  virtual unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr);
 
   // Provides entropy for the scalar cryptography extension.
   virtual mach_bits plat_get_16_random_bits(unit);

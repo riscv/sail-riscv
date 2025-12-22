@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
 
 // Get a uint64_t from the JSON config file. This works with integers and
 // non-abstract bit vectors. Bit vectors over 64 bits throw an exception.
