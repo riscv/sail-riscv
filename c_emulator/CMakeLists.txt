@@ -116,14 +116,18 @@ foreach (config_filename IN LISTS generated_config_filenames)
     )
 endforeach()
 
-option(IS_CI_BUILD "Is a build in CI" FALSE)
+target_compile_options(sail_riscv_sim PRIVATE
+  -Wall
+  -Werror
+  -Wextra
+  -Wno-unused-parameter
+)
+
+option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" FALSE)
 
 if(IS_CI_BUILD)
   target_compile_options(sail_riscv_sim PRIVATE
-    -Wall
     -Werror
-    -Wextra
-    -Wno-unused-parameter
   )
 endif()
 
