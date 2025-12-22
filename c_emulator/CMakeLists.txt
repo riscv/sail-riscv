@@ -116,15 +116,16 @@ foreach (config_filename IN LISTS generated_config_filenames)
     )
 endforeach()
 
-# TODO: Enable warnings when we use the #include trick
-# to include the generated Sail code. Currently it
-# generates too many warnings to turn these on globally.
+option(IS_CI_BUILD "Is a build in CI" FALSE)
 
-# target_compile_options(sail_riscv_sim PRIVATE
-#     -Wall -Wextra
-#     # Too annoying at the moment.
-#     -Wno-unused-parameter
-# )
+if(IS_CI_BUILD)
+  target_compile_options(sail_riscv_sim PRIVATE
+    -Wall
+    -Werror
+    -Wextra
+    -Wno-unused-parameter
+  )
+endif()
 
 # Enable Sail coverage collection.
 if (COVERAGE)
