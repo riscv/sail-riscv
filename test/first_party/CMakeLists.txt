@@ -38,8 +38,8 @@ if (CLANG_BIN)
 
     # Check if `riscv32` is present in the output
     if (clang_targets MATCHES "riscv32")
-        set(CROSS_COMPILER_COMMAND_RV32 ${CLANG_BIN} --target=riscv32)
-        set(CROSS_COMPILER_COMMAND_RV64 ${CLANG_BIN} --target=riscv64)
+        set(CROSS_COMPILER_COMMAND_RV32 ${CLANG_BIN} --target=riscv32 -fuse-ld=lld)
+        set(CROSS_COMPILER_COMMAND_RV64 ${CLANG_BIN} --target=riscv64 -fuse-ld=lld)
     endif()
 endif()
 
