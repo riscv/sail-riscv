@@ -116,11 +116,23 @@ foreach (config_filename IN LISTS generated_config_filenames)
     )
 endforeach()
 
+# Make this use CMAKE_COMPILE_WARNING_AS_ERROR once we upgrade
+# the cmake_minimum_version to 3.24 or higher.
 target_compile_options(sail_riscv_sim PRIVATE
   -Wall
   -Wextra
   -Wno-unused-parameter
+  # For Sail generated code that uses extra parentheses.
+  -Wno-parentheses-equality
 )
+
+option(WARNINGS_AS_ERRORS "Treat C++ compiler warnings as errors." FALSE)
+
+if(WARNINGS_AS_ERRORS)
+  target_compile_options(sail_riscv_sim PRIVATE
+    -Werror
+  )
+endif()
 
 # Enable Sail coverage collection.
 if (COVERAGE)
