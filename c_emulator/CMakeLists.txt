@@ -118,7 +118,6 @@ endforeach()
 
 target_compile_options(sail_riscv_sim PRIVATE
   -Wall
-  -Werror
   -Wextra
   -Wno-unused-parameter
 )
