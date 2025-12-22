@@ -42,13 +42,16 @@ private function write_seed_csr () -> xlenbits = zeros()
 // CSR mapping
 mapping clause csr_name_map = 0x015  <-> "seed"
 function clause is_CSR_accessible(0x015, priv, access_type) =
-  currentlyEnabled(Ext_Zkr) &
-  // Read-only access is not allowed.
-  (access_type != CSRRead) &
-  (match priv {
-    Machine => true,
-    Supervisor => mseccfg[SSEED] == 0b1,
-    User => mseccfg[USEED] == 0b1,
+  csr_require_ext(Ext_Zkr)
+  & (match priv {
+    Machine => match access_type {
+      // Read-only access is not allowed.
+      CSRRead => CSRAccess_Illegal(CSR_Illegal_AccessType()),
+      _ => CSRAccess_Success(),
+    },
+    Supervisor => csr_require_cond(mseccfg[SSEED] == 0b1, "Access seed in S mode require (mseccfg[SSEED] == 0b1)"),
+    User => csr_require_cond(mseccfg[USEED] == 0b1, "Access seed in U mode require (mseccfg[USEED] == 0b1)"),
+    // TODO: wait for Hypervisor extension
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   })
