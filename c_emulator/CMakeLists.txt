@@ -116,8 +116,6 @@ foreach (config_filename IN LISTS generated_config_filenames)
     )
 endforeach()
 
-# Make this use CMAKE_COMPILE_WARNING_AS_ERROR once we upgrade
-# the cmake_minimum_version to 3.24 or higher.
 target_compile_options(sail_riscv_sim PRIVATE
   -Wall
   -Wextra
@@ -126,6 +124,8 @@ target_compile_options(sail_riscv_sim PRIVATE
   -Wno-parentheses-equality
 )
 
+# Make this use CMAKE_COMPILE_WARNING_AS_ERROR once we upgrade
+# the cmake_minimum_version to 3.24 or higher.
 option(WARNINGS_AS_ERRORS "Treat C++ compiler warnings as errors." FALSE)
 
 if(WARNINGS_AS_ERRORS)
