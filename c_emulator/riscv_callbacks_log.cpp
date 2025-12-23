@@ -158,3 +158,19 @@ void log_callbacks::ptw_fail_callback(
     KILL(sail_string)(&str_et);
   }
 }
+
+void log_callbacks::trap_callback(hart::Model &model, bool is_interrupt,
+                                  fbits cause, const hart::zTrapReason &reason)
+{
+  if (trace_log != nullptr) {
+    sail_string str_r;
+    CREATE(sail_string)(&str_r);
+
+    model.ztrap_reason_to_str(&str_r, reason);
+
+    fprintf(trace_log, "trap: is_interrupt=%d cause=0x%" PRIx64 " reason=%s\n",
+            (int)is_interrupt, (uint64_t)cause, str_r);
+
+    KILL(sail_string)(&str_r);
+  }
+}

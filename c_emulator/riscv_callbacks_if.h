@@ -9,6 +9,7 @@ class Model;
 struct zMemoryAccessTypezIuzK;
 struct ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
 struct zPTW_Error;
+struct zTrapReason;
 
 } // namespace hart
 
@@ -44,7 +45,8 @@ public:
 
   virtual void redirect_callback(hart::Model &model, sbits new_pc);
 
-  virtual void trap_callback(hart::Model &model, bool is_interrupt, fbits cause);
+  virtual void trap_callback(hart::Model &model, bool is_interrupt, fbits cause,
+                             const hart::zTrapReason &reason);
 
   // Page table walk callbacks
   virtual void ptw_start_callback(
