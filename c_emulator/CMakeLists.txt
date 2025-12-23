@@ -124,7 +124,7 @@ target_compile_options(sail_riscv_sim PRIVATE
   -Wno-parentheses-equality
 )
 
-# Make this use CMAKE_COMPILE_WARNING_AS_ERROR once we upgrade
+# TODO: Make this use CMAKE_COMPILE_WARNING_AS_ERROR once we upgrade
 # the cmake_minimum_version to 3.24 or higher.
 option(WARNINGS_AS_ERRORS "Treat C++ compiler warnings as errors." FALSE)
 
