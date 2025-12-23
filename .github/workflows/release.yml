@@ -45,7 +45,7 @@ jobs:
     container: ${{ matrix.container }}
 
     env:
-      SAIL_VERSION: "0.20"
+      SAIL_VERSION: "0.20.1"
       # This helps with reproducible builds by not embedding variable timestamps in files.
       # This is needed in particular for the Debian package's compressed changelog.
       # See the comments in `cmake/packaging.cmake`.

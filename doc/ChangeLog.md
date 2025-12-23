@@ -10,6 +10,8 @@
   - Sstvecd
   - Ssu64xl
 
+- The model now requires the Sail 0.20.1 compiler version.
+
 # Release notes for version 0.9
 
 - Support for the RV32E and RV64E base ISAs has been added. These

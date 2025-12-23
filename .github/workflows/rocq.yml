@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OPAMROOT: /home/rocq/.opam
-      SAIL_VERSION: "0.20"
+      SAIL_VERSION: "0.20.1"
     container:
       image: rocq/rocq-prover:9.0.1
       # github requires root to access some resources from outside the container
