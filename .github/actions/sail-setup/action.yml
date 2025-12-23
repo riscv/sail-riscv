@@ -48,7 +48,7 @@ runs:
       shell: bash
       run: |
         sudo mkdir -p /usr/local
-        curl --location https://github.com/rems-project/sail/releases/download/${{ inputs.sail-version }}-linux-binary/sail-$(uname)-$(arch).tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+        curl --location https://github.com/rems-project/sail/releases/download/${{ inputs.sail-version }}/sail-$(uname)-$(arch).tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
     - name: Install Sail (macOS opam)
       if: runner.os == 'macOS' && steps.cache-opam-restore.outputs.cache-hit != 'true' && inputs.sail-version != 'latest'
