@@ -29,17 +29,15 @@ private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(
   // Check the size and register alignment.
   (if width < 4 then currentlyEnabled(Ext_Zabha) else (
     width <= xlen_bytes | (
-      (op == AMOCAS & width <= xlen_bytes * 2 )
+      (op == AMOCAS & width <= xlen_bytes * 2)
       &
-      (if (rs2[0] == bitone | rd[0] == bitone) then (
-        match amocas_odd_register_reserved_behavior {
-          Fatal => reserved_behavior("AMOCAS.D/Q used odd-numbered register"),
-          Illegal => false,
-        }
-      )
-      else true
-    )
-  )))
+      (if   rs2[0] == bitone | rd[0] == bitone
+       then match amocas_odd_register_reserved_behavior {
+         Fatal   => reserved_behavior("AMOCAS.D/Q used odd-numbered register"),
+         Illegal => false,
+       }
+       else true)
+    )))
 
 // *****************************************************************
 
