@@ -192,6 +192,10 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
     },
   }
 
+// Return true iff [addr, addr+size) is fully contained in a single configured PMA memory region.
+function dtb_within_configured_pma_memory(addr : bits(64), size : bits(64)) -> bool =
+  is_some(matching_pma_bits_range(pma_regions, addr, size))
+
 // Check that all memory regions are sorted and don't overlap.
 private function check_mem_layout() -> bool =
   if pma_regions == [||] then {
