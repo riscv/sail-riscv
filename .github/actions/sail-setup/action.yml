@@ -8,7 +8,7 @@ inputs:
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
     required: false
-    default: "0.20"
+    default: "0.20.1"
 
 runs:
   using: "composite"

@@ -17,19 +17,19 @@ install: [
   ["sh" "-c" "install build/rocq/* `coqc -where`/user-contrib/Riscv"]
 ]
 depends: [
-  "sail" {>= "0.20"}
-  "sail_c_backend" {>= "0.20"}
-  "sail_coq_backend" {>= "0.20"}
-  "sail_doc_backend" {>= "0.20"}
-  "sail_latex_backend" {>= "0.20"}
-  "sail_lean_backend" {>= "0.20"}
-  "sail_lem_backend" {>= "0.20"}
-  "sail_smt_backend" {>= "0.20"}
-  "sail_sv_backend" {>= "0.20"}
-  "sail_ocaml_backend" {>= "0.20"}
-  "sail_output" {>= "0.20"}
-  "sail_manifest" {>= "0.20"}
-  "coq-sail-stdpp" {>= "0.20"}
+  "sail" {>= "0.20.1"}
+  "sail_c_backend" {>= "0.20.1"}
+  "sail_coq_backend" {>= "0.20.1"}
+  "sail_doc_backend" {>= "0.20.1"}
+  "sail_latex_backend" {>= "0.20.1"}
+  "sail_lean_backend" {>= "0.20.1"}
+  "sail_lem_backend" {>= "0.20.1"}
+  "sail_smt_backend" {>= "0.20.1"}
+  "sail_sv_backend" {>= "0.20.1"}
+  "sail_ocaml_backend" {>= "0.20.1"}
+  "sail_output" {>= "0.20.1"}
+  "sail_manifest" {>= "0.20.1"}
+  "coq-sail-stdpp" {>= "0.20.1"}
   "conf-cmake"
 ]
 synopsis:

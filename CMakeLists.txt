@@ -20,7 +20,7 @@ project(sail-riscv
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(SAIL_REQUIRED_VER 0.20)
+set(SAIL_REQUIRED_VER 0.20.1)
 
 # Make users explicitly pick a build type so they don't get
 # surprised when the default gives a very slow emulator.
