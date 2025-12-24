@@ -26,6 +26,10 @@
       "fetch_page_fault": true,
       "software_check": true,
       "reserved_exceptions": false
+    },
+    "mstatus": {
+      "mstatus_fs_writable": false,
+      "mstatus_vs_writable": false
     }
   },
   "memory": {
