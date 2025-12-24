@@ -24,19 +24,17 @@ public:
   void vreg_write_callback(hart::Model &model, unsigned reg, lbits value) override;
   // Page table walk callback
   void ptw_start_callback(
-    hart::Model &model,
-    uint64_t vpn,
-    hart::zMemoryAccessTypezIuzK access_type,
-    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
-  ) override;
-  void ptw_step_callback(hart::Model &model, int64_t level, sbits pte_addr, uint64_t pte) override;
-  void ptw_success_callback(hart::Model &model, uint64_t final_ppn, int64_t level) override;
-  void ptw_fail_callback(
-    hart::Model &model,
-    struct hart::zPTW_Error error_type,
-    int64_t level,
-    sbits pte_addr
-  ) override;
+      hart::Model &model, uint64_t vpn,
+      hart::zMemoryAccessTypezIuzK access_type,
+      hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege) override;
+  void ptw_step_callback(hart::Model &model, int64_t level, sbits pte_addr,
+                         uint64_t pte) override;
+  void ptw_success_callback(hart::Model &model, uint64_t final_ppn,
+                            int64_t level) override;
+  void ptw_fail_callback(hart::Model &model, struct hart::zPTW_Error error_type,
+                         int64_t level, sbits pte_addr) override;
+  void trap_callback(hart::Model &model, bool is_interrupt, fbits cause,
+                     const hart::zTrapReason &reason) override;
 
 private:
   bool config_print_reg;

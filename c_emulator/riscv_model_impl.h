@@ -11,6 +11,10 @@
 extern FILE *trace_log;
 extern int term_fd;
 void plat_term_write_impl(char c);
+namespace hart {
+class Model;
+struct zTrapReason;
+}
 
 // Model wrapped with an implementation of its platform callbacks.
 class ModelImpl final : public hart::Model {
@@ -41,7 +45,8 @@ private:
   unit vreg_write_callback(unsigned reg, lbits value) override;
   unit pc_write_callback(sbits new_pc) override;
   unit redirect_callback(sbits new_pc) override;
-  unit trap_callback(bool is_interrupt, fbits cause) override;
+  unit trap_callback(bool is_interrupt, fbits cause,
+                     const hart::zTrapReason &reason) override;
 
   // Page table walk callbacks
   unit ptw_start_callback(
