@@ -279,21 +279,21 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb) {
   // Overflow check for addr + size - 1
   uint64_t end = addr + size - 1;
   if (end < addr) {
-    fprintf(stderr,
-            "DTB address/size overflow: addr=0x%0" PRIx64 ", size=0x%0" PRIx64
-            "\n",
-            addr, size);
+    fprintf(stderr, "DTB address/size overflow: addr=0x%0" PRIx64 ", size=0x%0" PRIx64 "\n", addr, size);
     exit(EXIT_FAILURE);
   }
 
   // Validate DTB range against configured PMA memory regions.
   if (!g_model.zdtb_within_configured_pma_memory(addr, size)) {
     fprintf(
-        stderr,
-        "DTB does not fit in any configured PMA memory region: "
-        "addr=0x%0" PRIx64 ", size=0x%0" PRIx64 " (end=0x%0" PRIx64 ")\n"
-        "Hint: adjust memory.dtb_address or memory.regions in the config.\n",
-        addr, size, end);
+      stderr,
+      "DTB does not fit in any configured PMA memory region: "
+      "addr=0x%0" PRIx64 ", size=0x%0" PRIx64 " (end=0x%0" PRIx64 ")\n"
+      "Hint: adjust memory.dtb_address or memory.regions in the config.\n",
+      addr,
+      size,
+      end
+    );
     exit(EXIT_FAILURE);
   }
 
