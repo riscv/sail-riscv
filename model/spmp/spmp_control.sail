@@ -89,35 +89,36 @@ function spmpAddrRange(cfg: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlen
  * 
  * Returns: true if the RWX encoding allows the access type
  * 
- * RWX Encoding (3-bit combined field, bits [2:0] = XWR) per Figure 4:
+ * RWX Encoding (3-bit combined field, bits [2:0] = RWX):
  *   - 000: No permissions (context-dependent enforcement)
- *   - 001: R-- (Read-only)
- *   - 010: --W (Reserved for future standard use)
- *   - 011: RW- (Reserved for future standard use)
- *   - 100: --X (Execute-only)
+ *   - 100: R-- (Read-only)
+ *   - 110: RW- (Read+Write, no execute)
+ *   - 001: --X (Execute-only)
  *   - 101: R-X (Read+Execute)
- *   - 110: -WX (Write+Execute, no read)
  *   - 111: RWX (Read+Write+Execute)
+ *   - 010: -W- (Reserved - write-only not useful)
+ *   - 011: -WX (Reserved - write+execute without read)
  */
 val CheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
 function CheckRWX(ent, acc, priv) = {
-  let rwx = ent[X] @ ent[W] @ ent[R];  // Extract 3-bit RWX encoding
+  let rwx = ent[R] @ ent[W] @ ent[X];  // Extract 3-bit RWX encoding (bit2=R, bit1=W, bit0=X)
   
-  /* Check for reserved encodings first - RWX=010 and RWX=011 are always reserved */
+  /* Check for reserved encodings first - RWX=010 and RWX=011 are always reserved
+   * These are cases where W=1 but R=0, which are not useful in practice */
   if (rwx == 0b010) | (rwx == 0b011) then {
     false  // Reserved encodings always deny
   }
   else {
     /* Check if RWX encoding allows the requested access */
     match rwx {
-      0b000 => false,  // No permissions (but Enforce applies in context)
-      0b001 => {  // R-- : Read-only
+      0b000 => false,  // No permissions
+      0b100 => {  // R-- : Read-only
         match acc {
           Load(_) => true,
           _ => false
         }
       },
-      0b100 => {  // --X : Execute-only
+      0b001 => {  // --X : Execute-only
         match acc {
           InstructionFetch(_) => true,
           _ => false
@@ -130,12 +131,12 @@ function CheckRWX(ent, acc, priv) = {
           _ => false
         }
       },
-      0b110 => {  // -WX : Write+Execute (no read)
+      0b110 => {  // RW- : Read+Write (no execute)
         match acc {
+          Load(_) => true,
           Store(_) => true,
-          InstructionFetch(_) => true,
-          LoadStore(_) => false,  // Needs read permission
-          Load(_) => false
+          LoadStore(_) => true,  // AMO needs both R and W
+          InstructionFetch(_) => false
         }
       },
       0b111 => {  // RWX : All permissions
@@ -154,13 +155,13 @@ function CheckRWX(ent, acc, priv) = {
  *   3. Shared-Region rules (SHARED=1, U=1): Enforced on both modes with special encoding
  * 
  * Reserved Encodings (always deny):
- *   - RWX=010 (--W, write-only)
- *   - RWX=011 (RW-, read+write no execute)
+ *   - RWX=010 (-W-, write-only)
+ *   - RWX=011 (-WX, write+execute without read)
  *   - SHARED=1, U=0 (reserved combination)
  * 
  * Special Shared-Region U-mode encodings per Figure 4:
- *   - RWX=110: U-mode gets Read-only (not Write+Execute)
- *   - RWX=111: U-mode gets Exec-only (not Read+Write+Execute)
+ *   - RWX=110 (RW-): U-mode gets Read-only (downgraded from Read+Write)
+ *   - RWX=111 (RWX): U-mode gets Exec-only (downgraded from full permissions)
  * 
  * For Shared-Region rules, U-mode and S-mode may have different effective permissions
  * for the same RWX encoding, implementing the mutual exclusivity constraint.
@@ -168,104 +169,48 @@ function CheckRWX(ent, acc, priv) = {
 val spmpCheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
 function spmpCheckRWX(ent, acc, priv) = {
   let do_sum : bool = mstatus[SUM] == 0b1;  // Check SUM bit in mstatus (accessible via sstatus)
-  let rwx = ent[X] @ ent[W] @ ent[R];       // Extract RWX as 3-bit combined field (bits [2:0])
+  let rwx = ent[R] @ ent[W] @ ent[X];       // Extract RWX as 3-bit combined field (bit2=R, bit1=W, bit0=X)
   let is_shared = ent[SHARED] == 0b1;
   let is_u_rule = ent[U] == 0b1;
   
-  /* Check for reserved encodings - RWX=010 and RWX=011 are always reserved */
+  /* Check for reserved encodings - RWX=010 and RWX=011 are always reserved
+   * These are W=1, R=0 cases which are not useful */
   if (rwx == 0b010) | (rwx == 0b011) then {
-    false  // RWX=010 (--W), RWX=011 (RW-) are reserved for future standard use
+    false  // RWX=010 (-W-), RWX=011 (-WX) are reserved for future standard use
   }
   /* Check for reserved SHARED=1, U=0 combination - this is reserved per spec */
   else if is_shared & not(is_u_rule) then {
     false  // SHARED=1, U=0 is reserved for future standard use
   }
   /* Shared-Region rules (SHARED=1, U=1) - enforced for both S-mode and U-mode
-   * Per Figure 4, U-mode has special constraints in Shared-Region:
-   *   - RWX=000: Enforce (no permissions but rule applies)
-   *   - RWX=100: Enforce (execute-only)
-   *   - RWX=110: Read-only (special: U-mode gets read despite WX encoding)
-   *   - RWX=001: Enforce (read-only)
-   *   - RWX=101: Enforce (read+execute)
-   *   - RWX=111: Exec-only (special: U-mode gets exec only despite RWX encoding)
+   * sstatus.SUM is ignored in shared mode.
+   * U-mode has special degradation rules in Shared-Region:
+   *   - RWX=110 (RW-): U-mode is downgraded to Read-only
+   *   - RWX=111 (RWX): U-mode is downgraded to Exec-only
+   *   - Other encodings: standard Enforce
+   * S-mode in Shared-Region: Enforce permissions directly (same as CheckRWX)
    */
   else if is_shared & is_u_rule then {
     match priv {
       User => {
-        /* For Shared-Region U-mode, follow Figure 4 encoding table */
+        /* For Shared-Region U-mode, apply special degradation rules */
         match rwx {
-          0b000 => false,  // No permissions
-          0b001 => {  // R-- : Read-only (Enforce)
+          0b110 => {  // RW- : U-mode is downgraded to Read-only (originally Read+Write)
             match acc {
               Load(_) => true,
               _ => false
             }
           },
-          0b100 => {  // --X : Execute-only (Enforce)
+          0b111 => {  // RWX : U-mode is downgraded to Exec-only (originally full permissions)
             match acc {
               InstructionFetch(_) => true,
               _ => false
             }
           },
-          0b101 => {  // R-X : Read+Execute (Enforce)
-            match acc {
-              Load(_) => true,
-              InstructionFetch(_) => true,
-              _ => false
-            }
-          },
-          0b110 => {  // -WX : For U-mode in Shared-Region, this is Read-only per Figure 4
-            match acc {
-              Load(_) => true,   // Read-only for U-mode
-              _ => false
-            }
-          },
-          0b111 => {  // RWX : For U-mode in Shared-Region, this is Exec-only per Figure 4
-            match acc {
-              InstructionFetch(_) => true,  // Exec-only for U-mode
-              _ => false
-            }
-          },
-          _ => false  // Reserved cases already filtered
+          _ => CheckRWX(ent, acc, priv)  // Other encodings: standard Enforce
         }
       },
-      Supervisor => {
-        /* S-mode in Shared-Region: Enforce permissions per Figure 4 */
-        match rwx {
-          0b000 => false,  // No permissions
-          0b001 => {  // R-- : Read-only (Enforce)
-            match acc {
-              Load(_) => true,
-              _ => false
-            }
-          },
-          0b100 => {  // --X : Execute-only (Enforce)
-            match acc {
-              InstructionFetch(_) => true,
-              _ => false
-            }
-          },
-          0b101 => {  // R-X : Read+Execute (Enforce)
-            match acc {
-              Load(_) => true,
-              InstructionFetch(_) => true,
-              _ => false
-            }
-          },
-          0b110 => {  // -WX : Write+Execute (Enforce for S-mode)
-            match acc {
-              Store(_) => true,
-              InstructionFetch(_) => true,
-              LoadStore(_) => false,  // Needs read
-              Load(_) => false
-            }
-          },
-          0b111 => {  // RWX : All permissions (Enforce)
-            true
-          },
-          _ => false  // Reserved cases already filtered
-        }
-      },
+      Supervisor => CheckRWX(ent, acc, priv),  // S-mode: standard Enforce
       VirtualUser => false,  // Virtual modes not yet supported
       VirtualSupervisor => false,  // Virtual modes not yet supported
       Machine => true  // M-mode bypasses all SPMP checks
@@ -274,9 +219,9 @@ function spmpCheckRWX(ent, acc, priv) = {
   /* S-mode-only rule (SHARED=0, U=0) - enforced for S-mode, denied for U-mode */
   else if not(is_u_rule) then {
     match priv {
-      User => false,  // U-mode accessing S-mode-only region: always deny
+      User => false,  // U-mode accessing S-mode-only region: always Deny
       VirtualUser => false,  // Virtual modes not yet supported
-      Supervisor => CheckRWX(ent, acc, priv),  // S-mode: check permissions
+      Supervisor => CheckRWX(ent, acc, priv),  // S-mode: Enforce
       VirtualSupervisor => false,  // Virtual modes not yet supported
       Machine => true  // M-mode bypasses SPMP
     }
@@ -284,7 +229,7 @@ function spmpCheckRWX(ent, acc, priv) = {
   /* U-mode rule (SHARED=0, U=1) */
   else {
     match priv {
-      User => CheckRWX(ent, acc, priv),  // U-mode: check permissions
+      User => CheckRWX(ent, acc, priv),  // U-mode: Enforce
       VirtualUser => false,  // Virtual modes not yet supported
       Supervisor => {
         // S-mode accessing U-mode region: conditional on SUM bit
@@ -295,7 +240,7 @@ function spmpCheckRWX(ent, acc, priv) = {
             _ => CheckRWX(ent, acc, priv)  // Check R/W permissions
           }
         } else {
-          // SUM=0: S-mode cannot access U-mode regions
+          // SUM=0: S-mode cannot access U-mode regions - Deny
           false
         }
       },
