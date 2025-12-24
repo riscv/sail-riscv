@@ -396,6 +396,10 @@ extensions {
     files extensions/Zihintpause/zihintpause_insts.sail
   }
 
+  Ssqosid {
+    files extensions/Ssqosid/ssqosid.sail
+  }
+
   CFI {
     CFI_types {
       before sys
