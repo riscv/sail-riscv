@@ -60,7 +60,7 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   // If it is not 4-byte aligned and compressed instructions are
   // not enabled then raise an alignment exception.
   if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
-  then return Memory_Exception(Virtaddr(target), E_Fetch_Addr_Align());
+  then return memory_exception(Virtaddr(target), E_Fetch_Addr_Align());
 
   set_next_pc(target);
   RETIRE_SUCCESS
@@ -542,12 +542,8 @@ function clause execute ECALL() = {
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
-  let t : sync_exception = struct {
-    trap    = trap,
-    excinfo = (None() : option(xlenbits)),
-    ext     = None(),
-  };
-  Trap(cur_privilege, CTL_TRAP(t), PC)
+  let c : ExceptionContext = empty_exception_context();
+  Trap(cur_privilege, CTL_TRAP(trap, c), PC)
 }
 
 mapping clause assembly = ECALL() <-> "ecall"
@@ -604,7 +600,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() =
-  Memory_Exception(Virtaddr(PC), E_Breakpoint(Brk_Software))
+  memory_exception(Virtaddr(PC), E_Breakpoint(Brk_Software))
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 

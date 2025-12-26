@@ -69,10 +69,10 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   };
 
   if not(is_aligned_addr(vaddr, width))
-  then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
+  then return memory_exception(vaddr, E_SAMO_Addr_Align());
 
   let addr : physaddr = match translateAddr(vaddr, LoadStore(Data, Data)) {
-    Err(e, _) => return Memory_Exception(vaddr, e),
+    Err((e, c), _) => return Memory_Exception(e, c),
     Ok(addr, _) => addr,
   };
 
@@ -82,9 +82,9 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
 
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, aq & rl, rl, true) {
-    Err(e) => return Memory_Exception(vaddr, e),
+    Err(e) => return memory_exception(vaddr, e),
     Ok(_)  => match mem_read(LoadStore(Data, Data), addr, width, aq, aq & rl, true) {
-      Err(e)     => return Memory_Exception(vaddr, e),
+      Err(e)     => return memory_exception(vaddr, e),
       Ok(loaded) => loaded,
     },
   };
@@ -118,7 +118,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       RETIRE_SUCCESS
     },
     Ok(false) => internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value"),
-    Err(e)    => Memory_Exception(vaddr, e),
+    Err(e)    => memory_exception(vaddr, e),
   }
 }
 
