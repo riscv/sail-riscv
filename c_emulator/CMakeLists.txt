@@ -116,15 +116,23 @@ foreach (config_filename IN LISTS generated_config_filenames)
     )
 endforeach()
 
-# TODO: Enable warnings when we use the #include trick
-# to include the generated Sail code. Currently it
-# generates too many warnings to turn these on globally.
+target_compile_options(sail_riscv_sim PRIVATE
+  -Wall
+  -Wextra
+  -Wno-unused-parameter
+  # For Sail generated code that uses extra parentheses.
+  -Wno-parentheses-equality
+)
 
-# target_compile_options(sail_riscv_sim PRIVATE
-#     -Wall -Wextra
-#     # Too annoying at the moment.
-#     -Wno-unused-parameter
-# )
+# TODO: Make this use CMAKE_COMPILE_WARNING_AS_ERROR once we upgrade
+# the cmake_minimum_version to 3.24 or higher.
+option(WARNINGS_AS_ERRORS "Treat C++ compiler warnings as errors." FALSE)
+
+if(WARNINGS_AS_ERRORS)
+  target_compile_options(sail_riscv_sim PRIVATE
+    -Werror
+  )
+endif()
 
 # Enable Sail coverage collection.
 if (COVERAGE)
