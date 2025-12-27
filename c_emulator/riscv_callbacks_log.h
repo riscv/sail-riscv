@@ -37,6 +37,7 @@ public:
     int64_t level,
     sbits pte_addr
   ) override;
+  void trap_callback(hart::Model &model, bool is_interrupt, fbits cause, const hart::zTrapReason &reason) override;
 
 private:
   bool config_print_reg;

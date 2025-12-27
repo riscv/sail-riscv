@@ -365,7 +365,7 @@ private function get_satp forall 'v, is_sv_mode('v). (
 function translateAddr(
   vAddr : virtaddr,
   ac    : MemoryAccessType(ext_access_type),
-) -> TR_Result(physaddr, ExceptionType) = {
+) -> TR_Result(physaddr, (ExceptionType, TrapReason)) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
   // See sys_regs.sail for effectivePrivilege() and cur_privilege
@@ -386,7 +386,7 @@ function translateAddr(
 
   let svAddr = bits_of(vAddr)[sv_width - 1 .. 0];
   if bits_of(vAddr) != sign_extend(svAddr) then {
-    Err(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
+    Err((translationException(ac, PTW_Invalid_Addr()), ptw_error_to_trap_reason(PTW_Invalid_Addr())), init_ext_ptw)
   } else {
     let mxr    = mstatus[MXR] == 0b1;
     let do_sum = mstatus[SUM] == 0b1;
@@ -413,7 +413,10 @@ function translateAddr(
         // the assertion above.
         Ok(Physaddr(zero_extend(paddr)), ext_ptw)
       },
-      Err(f, ext_ptw)  => Err(translationException(ac, f), ext_ptw)
+      Err(f, ext_ptw) => {
+        let exc = translationException(ac, f);
+        Err((exc, ptw_error_to_trap_reason(f)), ext_ptw)
+      }
     }
   }
 }

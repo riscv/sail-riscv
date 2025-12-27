@@ -43,6 +43,36 @@ let init_ext_ptw : ext_ptw = ()
 
 type ext_ptw_fail = unit
 
+union TrapReason = {
+  Trap_Reason_Unclassified                 : unit,
+
+  Access_Not_In_Physical_Memory            : unit,
+
+  Trap_Reason_Invalid_Source_Addr          : unit,
+  Trap_Reason_No_PTE                       : unit,
+  Trap_Reason_No_Permission                : unit,
+  Trap_Reason_Misaligned_Superpage         : unit,
+  Trap_Reason_PTE_Update_Needed_But_Disabled : unit,
+
+  Invalid_Pte_Reserved_Bits_Nonzero        : (physaddrbits, xlenbits),
+
+  Trap_Reason_Ext_PTW_Error                : unit
+}
+
+function trap_reason_to_str(r : TrapReason) -> string = {
+  match r {
+    Trap_Reason_Unclassified() => "unclassified",
+    Access_Not_In_Physical_Memory() => "access-not-in-physical-memory",
+    Trap_Reason_Invalid_Source_Addr() => "invalid-source-addr",
+    Trap_Reason_No_PTE() => "no-pte",
+    Trap_Reason_No_Permission() => "no-permission",
+    Trap_Reason_Misaligned_Superpage() => "misaligned-superpage",
+    Trap_Reason_PTE_Update_Needed_But_Disabled() => "pte-update-needed-but-disabled",
+    Invalid_Pte_Reserved_Bits_Nonzero(_, _) => "invalid-pte-reserved-bits-nonzero",
+    Trap_Reason_Ext_PTW_Error() => "extension-ptw-error"
+  }
+}
+
 // This type can be used for custom errors for page-table-walks,
 // and values in this type are typically generated from the final
 // result of the ext_ptw at the end of the walk.

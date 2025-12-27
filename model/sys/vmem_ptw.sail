@@ -14,7 +14,7 @@
 
 // Failure modes for address-translation/page-table-walks
 private union PTW_Error = {
-  PTW_Invalid_Addr     : unit,          // invalid source address
+  PTW_Invalid_Addr : unit,           // invalid source address
   PTW_No_Access        : unit,          // physical memory access error for a PTE
   PTW_Invalid_PTE      : unit,
   PTW_No_Permission    : unit,
@@ -35,6 +35,33 @@ private function ptw_error_to_str(e : PTW_Error) -> string = {
   }
 }
 
+function ptw_error_to_trap_reason(e : PTW_Error) -> TrapReason = {
+  match e {
+    PTW_No_Access() =>
+      Access_Not_In_Physical_Memory(),
+
+    PTW_Invalid_Addr() =>
+      Trap_Reason_Invalid_Source_Addr(),
+
+    PTW_Invalid_PTE() =>
+      Trap_Reason_No_PTE(),
+
+    PTW_No_Permission() =>
+      Trap_Reason_No_Permission(),
+
+    PTW_Misaligned() =>
+      Trap_Reason_Misaligned_Superpage(),
+
+    PTW_PTE_Needs_Update() =>
+      Trap_Reason_PTE_Update_Needed_But_Disabled(),
+
+    PTW_Ext_Error(_) =>
+      Trap_Reason_Ext_PTW_Error()
+  }
+}
+
+
+// PUBLIC
 overload to_str = {ptw_error_to_str}
 
 // hook for (non-standard) extensions to customize errors reported by page-table

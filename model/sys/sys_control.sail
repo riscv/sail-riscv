@@ -115,6 +115,8 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
   }
 }
 
+register pending_trap_reason : TrapReason = Trap_Reason_Unclassified()
+
 // types of privilege transitions
 
 union ctl_result = {
@@ -152,12 +154,13 @@ function track_trap(p : Privilege) -> unit = {
 }
 
 // handle exceptional ctl flow by updating nextPC and operating privilege
-function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
-                     -> xlenbits = {
+function trap_handler(del_priv : Privilege, c : TrapCause, pc : virtaddr,
+                      info : option(xlenbits), ext : option(ext_exception),
+                      reason : TrapReason) -> xlenbits = {
   let is_interrupt = trapCause_is_interrupt(c);
   let cause        = trapCause_bits(c);
 
-  trap_callback(is_interrupt, cause);
+  trap_callback(is_interrupt, cause, reason);
 
   if   get_config_print_exception() | get_config_print_interrupt()
   then print_log("handling " ^ to_str(c)
@@ -175,11 +178,11 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
       mstatus[MIE]  = 0b0;
       mstatus[MPP]  = privLevel_to_bits(cur_privilege);
       mtval         = tval(info);
-      mepc          = pc;
+      mepc          = bits_of_virtaddr(pc);
 
       cur_privilege = del_priv;
 
-      handle_trap_extension(del_priv, pc, ext);
+      handle_trap_extension(del_priv, bits_of_virtaddr(pc), ext);
 
       track_trap(del_priv);
 
@@ -201,11 +204,11 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
         VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
       };
       stval           = tval(info);
-      sepc            = pc;
+      sepc            = bits_of_virtaddr(pc);
 
       cur_privilege   = del_priv;
 
-      handle_trap_extension(del_priv, pc, ext);
+      handle_trap_extension(del_priv, bits_of_virtaddr(pc), ext);
 
       track_trap(del_priv);
 
@@ -218,14 +221,16 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 }
 
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
-                           pc: xlenbits) -> xlenbits = {
+                           pc : virtaddr) -> xlenbits = {
   match ctl {
     CTL_TRAP(e) => {
       let del_priv = exception_delegatee(e.trap, cur_priv);
       if   get_config_print_exception()
       then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(e.trap));
-      trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext)
+      let r = pending_trap_reason;
+      pending_trap_reason = Trap_Reason_Unclassified();
+      trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext, r)
     },
     CTL_MRET()  => {
       let prev_priv = cur_privilege;
@@ -297,15 +302,20 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
-function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = xtval_exception_value(e, xtval),
-                                    ext     = None() };
+function handle_exception_with_reason(xtval : xlenbits, e : ExceptionType, reason : TrapReason) -> unit = {
+  pending_trap_reason = reason;
+  let t : sync_exception =
+    struct { trap    = e,
+             excinfo = xtval_exception_value(e, xtval),
+             ext     = None() };
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
+function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit =
+  handle_exception_with_reason(xtval, e, Trap_Reason_Unclassified())
+
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None()))
+  set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None(), Trap_Reason_Unclassified()))
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
@@ -333,10 +343,11 @@ function reset_misa() -> unit = {
 }
 
 // Address to reset PC to on reset.
-register pc_reset_address : xlenbits = zeros()
+register pc_reset_address : virtaddr = mk_virtaddr(zeros())
 // This is called externally to set the PC reset address to the ELF entry point.
 // bits(64) is used because it's easier to deal with in C.
-function set_pc_reset_address(addr : bits(64)) -> unit = pc_reset_address = trunc(addr)
+function set_pc_reset_address(addr : bits(64)) -> unit =
+  pc_reset_address = mk_virtaddr(trunc(addr))
 
 // This function is called on reset, so it should only perform the reset actions
 // described in the "Reset" section of the privileged architecture specification.
@@ -366,7 +377,7 @@ function reset_sys() -> unit = {
 
   // "The pc is set to an implementation-defined reset vector."
   PC = pc_reset_address;
-  nextPC = pc_reset_address;
+  nextPC = bits_of_virtaddr(pc_reset_address);
 
   // "The mcause register is set to a value indicating the cause of the reset."
   // "The mcause values after reset have implementation-specific interpretation,
