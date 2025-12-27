@@ -78,9 +78,10 @@ unit PlatformInterface::redirect_callback([[maybe_unused]] sbits new_pc) {
 }
 
 unit PlatformInterface::trap_callback(
-    [[maybe_unused]] bool is_interrupt, [[maybe_unused]] fbits cause,
-    [[maybe_unused]] const hart::zTrapReason &reason)
-{
+  [[maybe_unused]] bool is_interrupt,
+  [[maybe_unused]] fbits cause,
+  [[maybe_unused]] const hart::zTrapReason &reason
+) {
   return UNIT;
 }
 

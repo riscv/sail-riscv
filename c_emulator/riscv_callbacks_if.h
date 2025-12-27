@@ -45,8 +45,7 @@ public:
 
   virtual void redirect_callback(hart::Model &model, sbits new_pc);
 
-  virtual void trap_callback(hart::Model &model, bool is_interrupt, fbits cause,
-                             const hart::zTrapReason &reason);
+  virtual void trap_callback(hart::Model &model, bool is_interrupt, fbits cause, const hart::zTrapReason &reason);
 
   // Page table walk callbacks
   virtual void ptw_start_callback(

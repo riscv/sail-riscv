@@ -37,9 +37,11 @@ void rvfi_callbacks::xreg_full_write_callback(hart::Model &model, const_sail_str
 }
 
 void rvfi_callbacks::trap_callback(
-    hart::Model &model, bool is_interrupt, fbits cause,
-    [[maybe_unused]] const hart::zTrapReason &reason)
-{
+  hart::Model &model,
+  bool is_interrupt,
+  fbits cause,
+  [[maybe_unused]] const hart::zTrapReason &reason
+) {
   (void)is_interrupt;
   (void)cause;
   if (config_enable_rvfi) {

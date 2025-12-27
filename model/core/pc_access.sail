@@ -15,7 +15,7 @@
   The value in the PC register is the absolute virtual address of the instruction
   to fetch.
  */
-function get_arch_pc() -> xlenbits = PC
+function get_arch_pc() -> xlenbits = bits_of_virtaddr(PC)
 
 function get_next_pc() -> xlenbits = nextPC
 
@@ -26,6 +26,8 @@ function set_next_pc(pc : xlenbits) -> unit = {
 }
 
 function tick_pc() -> unit = {
-  PC = nextPC;
-  pc_write_callback(PC);
+  PC = mk_virtaddr(nextPC);
+  pc_write_callback(bits_of_virtaddr(PC));
 }
+
+function get_pc_bits() -> xlenbits = bits_of_virtaddr(PC)
