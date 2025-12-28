@@ -24,4 +24,4 @@ function internal_error(file, line, s) = {
 }
 
 val reserved_behavior : forall ('a : Type). string -> 'a
-function reserved_behavior message = throw(Error_reserved_behavior("Reserved behavior: " ^ message))
+function reserved_behavior(message) = throw(Error_reserved_behavior("Reserved behavior: " ^ message))
