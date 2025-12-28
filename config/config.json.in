@@ -26,6 +26,12 @@
       "fetch_page_fault": true,
       "software_check": true,
       "reserved_exceptions": false
+    },
+    "reserved_behavior": {
+      // The configuration option determines how to handle the reserved behavior: Odd-numbered registers for RV32Zdinx.
+      // "Fatal"  – raise a Sail exception, stopping execution.
+      // "Illegal" – treat it as an illegal instruction.
+      "rv32zdinx_odd_register": "Illegal"
     }
   },
   "memory": {

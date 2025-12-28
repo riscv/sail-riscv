@@ -54,3 +54,16 @@ let fetch_access_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_acc
 let fetch_page_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_page_fault
 let software_check_fault_writes_xtval : bool = config base.xtval_nonzero.software_check
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
+
+enum RV32ZdinxOddRegisterReservedBehavior = {
+  Fatal,
+  Illegal,
+}
+
+mapping RV32ZdinxOddRegisterReservedBehavior_str : RV32ZdinxOddRegisterReservedBehavior <-> string = {
+  Fatal   <-> "Fatal",
+  Illegal <-> "Illegal",
+}
+overload to_str = {RV32ZdinxOddRegisterReservedBehavior_str}
+
+let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
