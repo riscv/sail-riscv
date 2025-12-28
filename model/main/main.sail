@@ -12,7 +12,7 @@
 function main() : unit -> unit = {
   try {
     init_model("");
-    print_bits("PC = ", PC);
+    print_bits("PC = ", bits_of_virtaddr(PC));
     sail_end_cycle();
     loop()
   } catch {
