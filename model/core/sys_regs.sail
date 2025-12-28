@@ -385,15 +385,13 @@ bitfield SEnvcfg : xlenbits = {
 private function legalize_xenvcfg_cbie(cbie : bits(2)) -> bits(2) = {
   if cbie != 0b10 then (
     cbie
-  ) else (
-    match (xenvcfg_cbie_reserved_behavior) {
-      Xenvcfg_Fatal => reserved_behavior("envcfg.CBIE = 0b10"),
+  ) else match xenvcfg_cbie_reserved_behavior {
+      Xenvcfg_Fatal => reserved_behavior("xenvcfg.CBIE = 0b10"),
       Xenvcfg_ClearPermissions => 0b00,
     }
-  )
 }
 
-function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
+private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
