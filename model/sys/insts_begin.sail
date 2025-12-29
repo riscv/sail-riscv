@@ -29,7 +29,7 @@ union ExecutionResult = {
   // Did not retire for a standard reason.
   Illegal_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
-  Memory_Exception               : (virtaddr, ExceptionType),
+  Memory_Exception : (virtaddr, (ExceptionType, TrapReason)),
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,
