@@ -107,9 +107,9 @@ private function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
     // 1. exit the simulation with a fatal error
     // 2. R, W and X are all set to 0.
     let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 then (
-      match (pmp_write_only_reserved_behavior) {
+      match pmp_write_only_reserved_behavior {
         Fatal => reserved_behavior("pmpcfg with R=0,W=1"),
-        ClearPerMissions => [cfg with X = 0b0, W = 0b0, R = 0b0],
+        ClearPermissions => [cfg with X = 0b0, W = 0b0, R = 0b0],
       }
     ) else cfg;
 
