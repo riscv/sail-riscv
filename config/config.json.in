@@ -427,6 +427,11 @@
     },
     "Sv57": {
       "supported": @CONFIG_XLEN_IS_64@
+    },
+    "Ssqosid": {
+      "supported": true,
+      "rcid_length": 12,
+      "mcid_length": 12
     }
   }
 }

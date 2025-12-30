@@ -287,6 +287,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_required_sstvala_option("hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
     valid = valid & check_required_sstvala_option("illegal instruction exceptions", illegal_instruction_writes_xtval);
   };
+  if hartSupports(Ext_Ssqosid) & not(hartSupports(Ext_Zicsr)) then {
+    valid = false;
+    print_endline("The Ssqosid extensions is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
+  };
   valid
 }
 

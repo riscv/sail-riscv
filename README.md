@@ -130,6 +130,7 @@ For booting operating system images, see the information under the
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
+- Ssqosid extension for Quality-of-Service (QoS) Identifiers, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Sstvala extension for `stval` provides all needed values, v1.0
 - Sstvecd extension for Direct mode support in `stvec.MODE`, v1.0
