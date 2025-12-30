@@ -192,7 +192,7 @@ function satp_to_ppn(satp_val) =
   if 'n == 32 then Mk_Satp32(satp_val)[PPN] else Mk_Satp64(satp_val)[PPN]
 
 // Compute address translation mode from SATP register
-private function translationMode(priv : Privilege) -> SATPMode = {
+function translationMode(priv : Privilege) -> SATPMode = {
   if priv == Machine then Bare
   else {
     let arch = architecture(Supervisor);
