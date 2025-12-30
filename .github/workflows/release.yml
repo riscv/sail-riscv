@@ -45,7 +45,7 @@ jobs:
     container: ${{ matrix.container }}
 
     env:
-      SAIL_VERSION: "0.20"
+      SAIL_VERSION: "0.20.1"
       # This helps with reproducible builds by not embedding variable timestamps in files.
       # This is needed in particular for the Debian package's compressed changelog.
       # See the comments in `cmake/packaging.cmake`.
@@ -69,7 +69,7 @@ jobs:
               gcc-c++ \
               cmake \
               ninja-build
-          curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/$SAIL_VERSION-linux-binary/sail-$(uname)-$(arch).tar.gz
+          curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/$SAIL_VERSION/sail-$(uname)-$(arch).tar.gz
           tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
 
       # TODO: Mac
