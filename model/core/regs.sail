@@ -8,7 +8,7 @@
 
 // program counter
 
-register PC       : xlenbits
+register PC       : virtaddr = mk_virtaddr(zeros())
 register nextPC   : xlenbits
 
 // Mappings for encoding
