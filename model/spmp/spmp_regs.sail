@@ -134,7 +134,8 @@ register spmpswitchh : bits(32)  // Only used in RV32
 
 /* SPMP configuration entries */
 
-/* Reuse PmpAddrMatchType */
+/* The names of enum are global in Sail and cannot be defined repeatedly.
+ * Reuse PmpAddrMatchType */
 // enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
 
 val spmpAddrMatchType_of_bits : bits(2) -> PmpAddrMatchType
@@ -235,7 +236,8 @@ function clause write_CSR((0x1F2, value)) = {
     /* Find the highest index of any locked PMP entry */
     var max_locked_pmp_idx : int = -1;  /* -1 means no locked PMP entry */
     foreach (i from 0 to 63) {
-      if pmpLocked(pmpcfg_n[i]) then {
+      /* Check if PMP entry is locked by checking L bit directly */
+      if pmpcfg_n[i][L] == 0b1 then {
         max_locked_pmp_idx = i;
       }
     };

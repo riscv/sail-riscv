@@ -527,8 +527,9 @@ function spmpEntryActive(hw_idx: range(0, 63), cfg: Spmpcfg_ent) -> bool = {
   (switch_bit == bitone) & (match_type != OFF)
 }
 
-// defined in riscv_vmem.sail 
-val translationMode: Privilege -> SATPMode
+/* Forward declaration: Get translation mode for privilege level.
+ * Implemented in sys/vmem.sail */
+val translationMode : Privilege -> SATPMode
 
 /*=======================================================================================*/
 /*  Main SPMP Checking Function                                                         */
