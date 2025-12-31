@@ -343,6 +343,12 @@ function clause hartSupports(Ext_Zvbb) = config extensions.Zvbb.supported
 enum clause extension = Ext_Zvbc
 mapping clause extensionName = Ext_Zvbc <-> "zvbc"
 function clause hartSupports(Ext_Zvbc) = config extensions.Zvbc.supported
+
+// Vector Integer Absolute Difference
+enum clause extension = Ext_Zvabd
+mapping clause extensionName = Ext_Zvabd <-> "zvabd"
+function clause hartSupports(Ext_Zvabd) = config extensions.Zvabd.supported
+
 // Vector Cryptography Bit-manipulation
 enum clause extension = Ext_Zvkb
 mapping clause extensionName = Ext_Zvkb <-> "zvkb"
@@ -559,6 +565,7 @@ let extensions_ordered_for_isa_string = [
   // Zvb
   Ext_Zvbb,
   Ext_Zvbc,
+  Ext_Zvabd,
 
   // Zve
   Ext_Zve32f,
