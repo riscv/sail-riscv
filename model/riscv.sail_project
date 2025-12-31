@@ -47,6 +47,7 @@ exceptions {
   files
     exceptions/sys_exceptions.sail,
     exceptions/sync_exception.sail,
+    exceptions/exception_context.sail,
 }
 
 pmp {
@@ -101,7 +102,7 @@ extensions {
       files extensions/A/aext_types.sail
     }
     Zaamo {
-      requires sys, A_types
+      requires sys, exceptions, A_types
       files extensions/A/zaamo_insts.sail
     }
     Zalrsc {
@@ -350,7 +351,7 @@ extensions {
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
-      requires sys, Zicbom_types
+      requires sys, exceptions, Zicbom_types
       files extensions/Zicbom/zicbom_insts.sail
     }
   }
@@ -369,7 +370,7 @@ extensions {
   }
 
   Zicboz {
-    requires sys
+    requires sys, exceptions
     files extensions/Zicboz/zicboz_insts.sail
   }
 

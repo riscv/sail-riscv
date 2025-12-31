@@ -64,3 +64,11 @@ function translationException(a : MemoryAccessType(ext_access_type),
     (InstructionFetch(), _)               => E_Fetch_Page_Fault()
   }
 }
+
+function translationExcContext(e : PTW_Error, vaddr : bits(64))
+                                -> ExceptionContext = {
+  match e {
+    PTW_Ext_Error(e)  => ext_exception_context(e),
+    _ => vmem_exception_context(truncate(vaddr, xlen), false, None(), None()),
+  }
+}
