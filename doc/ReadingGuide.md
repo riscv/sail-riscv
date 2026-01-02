@@ -1,31 +1,3 @@
-# Using the Sail RISC-V specification
-
-The most common workflows using the Sail model of RISC-V are shown
-below.
-
-![](./figs/workflow.svg)
-
-The Sail components of the model are a Sail project file
-(`riscv.sail_project`) and several associated files of Sail source
-code. The Sail compiler translates these components into a C++ model
-(`sail_riscv_model.{h,cpp}`), which is then wrapped in a C++ harness
-and compiled into a `sail_riscv_sim` executable binary to give an
-RISC-V emulator.
-
-When running this emulator on a RISC-V ELF binary (`test.elf`), the
-emulator can also be a provided a configuration file in JSON format
-(named `dut_config.json` above); if no configuration file is provided,
-a default RV64 configuration is assumed. The Sail compiler also
-generates a JSON schema (`sail_riscv_config_schema.json`) for the
-configuration file from the Sail sources; every configuration file is
-validated against this schema before use. More information on using
-the emulator is available using its `-h` help command-line option.
-
-The Sail model can also be used to generate `JSON` and `HTML`
-artifacts for documentation. A prototype of their use to annotate the
-unprivileged volume of the RISC-V specification is available
-[here](https://github.com/Timmmm/riscv-isa-manual).
-
 # Reading the Sail RISC-V specification
 
 This RISC-V specification is written in the Sail language. Although

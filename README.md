@@ -19,9 +19,49 @@ interactive proof (in Isabelle, Rocq, and Lean), support proof about binary code
 
 <img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
 
+## Using the Sail RISC-V specification
+
+The most common workflows using the Sail model of RISC-V are shown
+below.
+
+![](./doc/figs/workflow.svg)
+
+The Sail components of the model are a Sail project file
+[`riscv.sail_project`](model/riscv.sail_project) and several
+associated files of Sail source code. The Sail compiler translates
+these components into a C++ model (`sail_riscv_model.{h,cpp}`), which
+is then wrapped in a C++ harness and compiled into a `sail_riscv_sim`
+executable binary to give an RISC-V emulator.
+
+When running this emulator on a RISC-V ELF binary (`test.elf`), the
+emulator can also be a provided a configuration file in JSON format
+(named `dut_config.json` above); if no configuration file is provided,
+a default RV64 configuration is assumed. The Sail compiler also
+generates a JSON schema (`sail_riscv_config_schema.json`) for the
+configuration file from the Sail sources; every configuration file is
+validated against this schema before use. More information on using
+the emulator is available using its `-h` help command-line option.
+
+The Sail model can also be used to generate `JSON` and `HTML`
+artifacts for documentation. A prototype of their use to annotate the
+unprivileged volume of the RISC-V specification is available
+[here](https://github.com/Timmmm/riscv-isa-manual).
+
 ## Getting started
 
-### Building the model
+### Using the binary releases
+
+Recent released versions of the model have binaries for the `x86_64`
+and ARM `aarch64` Linux platforms, available
+[here](https://github.com/riscv/sail-riscv/releases). The executable
+model is at `bin/sail_riscv_sim`. Sample model configurations are
+under the `share/sail-riscv/config` directory, and the configuration
+schema is available under
+`share/sail-riscv/sail_riscv_config_schema.json`. A custom
+configuration can be created by copying one of the sample
+configurations and editing it as needed (see [below](#configuring-platform-options)).
+
+### Building the model from source
 
 Install [Sail](https://github.com/rems-project/sail/). On Linux you can download a [binary release](https://github.com/rems-project/sail/releases) (strongly recommended), or you can install from source [using opam](https://github.com/rems-project/sail/blob/sail2/INSTALL.md). Then:
 
