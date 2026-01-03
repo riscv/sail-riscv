@@ -1,5 +1,10 @@
 # Release notes for the next version
 
+- The highlight of this release is the switch to using the C++ backend
+  of the Sail compiler. The generated model for the hart is wrapped
+  in a C++ `class`, which opens up the possibility of instantiating
+  multiple harts to simulate multicore platforms.
+
 - A configuration parameter to specify the size of the reservation set
   for Zalrsc atomics has been added.
 

@@ -1,4 +1,4 @@
-# A guide to reading the Sail RISC-V specification
+# Reading the Sail RISC-V specification
 
 This RISC-V specification is written in the Sail language. Although
 specifications in Sail are quite readable as pseudocode, it would help

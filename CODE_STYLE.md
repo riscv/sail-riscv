@@ -5,7 +5,7 @@ RISC-V Sail model.
 Where something is not specified, please look for existing code similar to what
 is being added and copy the predominant style.
 
-For C the formatting rules should be followed where applicable.
+For C and C++, the formatting rules should be followed where applicable.
 For other languages, follow the standard style for that language if it exists;
 for example, Python should follow the standard PEP-8 style.
 
@@ -23,7 +23,7 @@ for example, Python should follow the standard PEP-8 style.
 
 - Files should be free from leading, trailing and double blank lines
 
-- Use line comments (i.e. `//`) rather than block comments (i.e. `/* .. */`) where possible
+- Use line comments (i.e. `//`) rather than block comments (i.e. `/* .. */`)
 
 - There should be one space either side of operators such as `=` and `+`
 
