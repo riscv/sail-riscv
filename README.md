@@ -59,7 +59,8 @@ under the `share/sail-riscv/config` directory, and the configuration
 schema is available under
 `share/sail-riscv/sail_riscv_config_schema.json`. A custom
 configuration can be created by copying one of the sample
-configurations and editing it as needed (see [below](#configuring-platform-options)).
+configurations and editing it as needed (see also
+[below](#configuring-platform-options)).
 
 ### Building the model from source
 
@@ -209,11 +210,11 @@ mapping encdec_iop : iop <-> bits(3) = {
   XORI  <-> 0b100
 }
 
-mapping clause encdec = ITYPE(imm, rs1, rd, op) <-> imm @ rs1 @ encdec_iop(op) @ rd @ 0b0010011
+mapping clause encdec = ITYPE(imm, rs1, rd, op) <-> imm @ encdec_reg(rs1) @ encdec_iop(op) @ encdec_reg(rd) @ 0b0010011
 
 /* the execution semantics for the ITYPE instructions */
 
-function clause execute (ITYPE (imm, rs1, rd, op)) = {
+function clause execute ITYPE(imm, rs1, rd, op) = {
   let immext : xlenbits = sign_extend(imm);
   X(rd) = match op {
     ADDI  => X(rs1) + immext,
@@ -270,24 +271,18 @@ mapping clause assembly = SRET() <-> "sret"
 
 ## Sequential execution
 
-The model builds a C emulator that can execute RISC-V ELF
-files, and both emulators provide platform support sufficient to boot
+The model builds a C++ emulator that can execute RISC-V ELF
+files and provides platform support sufficient to boot
 Linux, FreeBSD and seL4.
 
-The C emulator, for the Linux boot, currently runs at approximately
-300 KIPS on an Intel i7-7700 (when detailed per-instruction tracing
-is disabled), and there are many opportunities for future optimisation
-(the Sail MIPS model runs at approximately 1 MIPS). This enables one to
-boot Linux in about 4 minutes, and FreeBSD in about 2 minutes. Memory
-usage for the C emulator when booting Linux is approximately 140MB.
-
-The files in the C emulator directory implements ELF loading and the
-platform devices, defines the physical memory map, and uses command-line
-options to select implementation-specific ISA choices.
+The files in the [`c_emulator`](c_emulator) directory implement ELF
+loading, the platform devices, and the physical memory map, and
+perform configuration validation before configuring the selected ISA
+choices.
 
 ### Use for specification coverage measurement in testing
 
-The Sail-generated C emulator can measure specification branch
+The Sail-generated emulator can measure specification branch
 coverage of any executed tests, displaying the results as per-file
 tables and as html-annotated versions of the model source.
 
@@ -295,7 +290,7 @@ tables and as html-annotated versions of the model source.
 
 For tandem verification of random instruction streams, the tools support the
 protocols used in [TestRIG](https://github.com/CTSRD-CHERI/TestRIG) to
-directly inject instructions into the C emulator and produce trace
+directly inject instructions into the emulator and produce trace
 information in RVFI format. This has been used for cross testing
 against spike and the [RVBS](https://github.com/CTSRD-CHERI/RVBS)
 specification written in Bluespec SystemVerilog.
@@ -353,7 +348,7 @@ sail-riscv
 - handwritten_support     // prover support files
 - c_emulator              // supporting platform files for C emulator
 - cmake                   // extra build system modules
-- dependencies            // external dependencies (currently only SoftFloat)
+- dependencies            // external dependencies
 - sail_runtime            // build files for sail runtime
 - doc                     // documentation, including a reading guide
 - test                    // CMake test setup and URL references for RISC-V test suites
