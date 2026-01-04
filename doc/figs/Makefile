@@ -1,17 +1,17 @@
-all: riscvcsimdeps.svg workflow.svg
+all: riscvcsimdeps.svg workflow.svg class_structure.svg
 
-riscvcsimdeps.pdf: riscvcsimdeps.tex Makefile
+%.pdf: %.tex Makefile
 	pdflatex $<
 
-riscvcsimdeps.svg: riscvcsimdeps.pdf riscvcsimdeps.tex Makefile
+%.svg: %.pdf Makefile
 	dvisvgm -Z 1.5 --pdf $<
 
-workflow.pdf: workflow.typ Makefile
+%.pdf: %.typ Makefile
 	typst c $<
 
-workflow.svg: workflow.typ Makefile
+%.svg: %.typ Makefile
 	typst c -f svg $<
 
 clean:
 	rm -f riscvcsimdeps.pdf riscvcsimdeps.aux riscvcsimdeps.log
-	rm -f workflow.pdf
+	rm -f workflow.pdf class_structure.pdf
