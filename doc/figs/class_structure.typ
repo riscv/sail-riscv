@@ -9,8 +9,8 @@
     let blob(pos, label, tint: white, ..args) = node(
       pos,
       align(center, label),
-      width: 12em,
-      height: 2em,
+      width: 16em,
+      height: 4em,
       fill: tint.lighten(60%),
       stroke: 1pt + tint.darken(20%),
       corner-radius: 0.5em,
@@ -21,17 +21,32 @@
     let disp = 3
     let (impl, model, intf) = ((0, 0), (0, disp), (0, 2 * disp))
 
-    blob(impl, [`ModelImpl`], tint: yellow, name: <impl>)
+    blob(
+      impl,
+      [`ModelImpl` \ (`riscv_model_impl.{h,cpp}`)],
+      tint: yellow,
+      name: <impl>,
+    )
     node(
       <impl.north>,
       align(top + center)[Actual callback implementations],
       height: 3.5em,
     )
 
-    blob(model, [`hart::Model`], tint: green, name: <model>)
+    blob(
+      model,
+      [`hart::Model` \ (`sail_riscv_model.{h,cpp}`)],
+      tint: green,
+      name: <model>,
+    )
     edge(<model>, <impl>, "-|>", stroke: blue.lighten(33%))
 
-    blob(intf, [`PlatformInterface`], tint: yellow, name: <intf>)
+    blob(
+      intf,
+      [`PlatformInterface` \ (`riscv_platform_if.{h,cpp}`)],
+      tint: yellow,
+      name: <intf>,
+    )
     node(
       <intf.south>,
       align(bottom + center)[Hand-written "nop" callback implementations],
@@ -44,7 +59,7 @@
       <intf.east>,
       "-|>",
       [Sail code calls platform callback],
-      bend: 100deg,
+      bend: 90deg,
       label-side: left,
     )
     edge(
@@ -52,7 +67,7 @@
       <impl.west>,
       "-|>",
       [Virtual function delegation],
-      bend: 100deg,
+      bend: 90deg,
       label-side: left,
     )
 
