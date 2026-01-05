@@ -1,4 +1,4 @@
-# RISCV Sail Model
+# Formal Specification of the RISC-V ISA
 
 This repository contains a formal specification of the RISC-V architecture, written in
 [Sail](https://github.com/rems-project/sail). It has been adopted by RISC-V International.
