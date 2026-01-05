@@ -100,12 +100,14 @@
           ..args,
         )
       } else {
-        edge(
-          (pos.at(0), pos.at(1) + 0.35),
-          (pos.at(0), pos.at(1) - 0.35),
-          "-|>",
-          stroke: blue.lighten(33%),
-        )
+        let inset = 0.35
+        let edge_shift = 0.15
+        let sep = 0.2
+        let A = (pos.at(0) + edge_shift / 2, pos.at(1) + inset)
+        node(A, [A])
+        let B = (pos.at(0) + edge_shift / 2, pos.at(1) - inset)
+        node(B, [B])
+        edge(A, B, "-|>", shift: edge_shift, stroke: blue.lighten(33%))
       }
     }
     let (hand, sail, inherits) = (
@@ -131,7 +133,7 @@
     )
     legend_blob(
       inherits,
-      "Inherits",
+      "B inherits from A",
       <inherits>,
       <inherits_label>,
       is_node: false,
