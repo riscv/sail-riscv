@@ -102,7 +102,6 @@
       } else {
         let inset = 0.35
         let edge_shift = 0.15
-        let sep = 0.2
         let A = (pos.at(0) + edge_shift / 2, pos.at(1) + inset)
         node(A, [A])
         let B = (pos.at(0) + edge_shift / 2, pos.at(1) - inset)
