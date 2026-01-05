@@ -393,6 +393,7 @@ void finish() {
 void flush_logs(void) {
   if (config_print_instr) {
     fflush(stderr);
+    fflush(stdout);
     fflush(trace_log);
   }
 }
