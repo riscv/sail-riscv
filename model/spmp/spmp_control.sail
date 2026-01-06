@@ -20,14 +20,14 @@
 type spmp_addr_range = option((xlenbits, xlenbits))
 
 /* Calculate the address range matched by an SPMP entry.
- * 
+ *
  * Parameters:
  *   cfg: SPMP configuration entry containing address matching type in A field
  *   spmpaddr: Current SPMP address register value (word-addressed, bits [XLEN-1:2])
  *   prev_spmpaddr: Previous SPMP address register (for TOR mode)
- * 
+ *
  * Returns: Address range [min, max) in bytes, or None if no addresses match
- * 
+ *
  * Address Matching Types:
  *   - OFF: Entry is disabled, matches no addresses
  *   - TOR: Top-of-Range, matches [prev_spmpaddr*4, spmpaddr*4)
@@ -37,25 +37,25 @@ function spmpAddrRange(cfg: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlen
   match spmpAddrMatchType_of_bits(cfg[A]) {
     /* OFF: Entry disabled - no address matching*/
     OFF   => None(),
-    
+
     /* TOR: Top-of-Range addressing
      * Matches addresses in range [prev_spmpaddr*4, spmpaddr*4)
      * If prev_spmpaddr >= spmpaddr, no addresses match (invalid range) */
     TOR => {
-      let lower_bound : xlenbits = if entry_index == 0 then zeros() 
+      let lower_bound : xlenbits = if entry_index == 0 then zeros()
                                     else prev_spmpaddr;
       // Check for valid range (lower < upper)
       if unsigned(lower_bound) >= unsigned(spmpaddr) then None()
       else Some((lower_bound << 2, spmpaddr << 2))
     },
-    
+
     /* NA4: Naturally Aligned 4-byte region
      * Matches exactly 4 bytes starting at spmpaddr*4 */
-    NA4   => { 
+    NA4   => {
       let lo : xlenbits = spmpaddr << 2;
       Some((lo, lo + 4))       // 4-byte region
     },
-    
+
     /* NAPOT: Naturally Aligned Power-Of-Two region
      * Region size is determined by trailing 1s in spmpaddr
      * Where trailing 1s in spmpaddr indicate the region size */
@@ -78,17 +78,17 @@ function spmpAddrRange(cfg: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlen
 
 /* Basic R/W/X permission check using the 3-bit combined RWX encoding.
  * This function checks if the RWX encoding allows the requested access type.
- * 
+ *
  * Note: This does NOT handle privilege-level specific rules or Shared-Region constraints.
  * Those are handled by spmpCheckRWX().
- * 
+ *
  * Parameters:
  *   ent: SPMP configuration entry with R/W/X permission bits
  *   acc: Type of memory access (Read/Write/Execute/ReadWrite)
  *   priv: Current privilege level (not used in basic check)
- * 
+ *
  * Returns: true if the RWX encoding allows the access type
- * 
+ *
  * RWX Encoding (3-bit combined field, bits [2:0] = RWX):
  *   - 000: No permissions (context-dependent enforcement)
  *   - 100: R-- (Read-only)
@@ -102,7 +102,7 @@ function spmpAddrRange(cfg: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlen
 val CheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
 function CheckRWX(ent, acc, priv) = {
   let rwx = ent[R] @ ent[W] @ ent[X];  // Extract 3-bit RWX encoding (bit2=R, bit1=W, bit0=X)
-  
+
   /* Check for reserved encodings first - RWX=010 and RWX=011 are always reserved
    * These are cases where W=1 but R=0, which are not useful in practice */
   if (rwx == 0b010) | (rwx == 0b011) then {
@@ -148,21 +148,21 @@ function CheckRWX(ent, acc, priv) = {
 }
 
 /* SPMP privilege-aware permission check implementing the complete permission matrix.
- * 
+ *
  * Based on Figure 4 SPMP Encoding Table, SPMP has three kinds of rules:
  *   1. S-mode-only rules (SHARED=0, U=0): Enforced on S-mode, denied on U-mode
- *   2. U-mode rules (SHARED=0, U=1): Enforced on U-mode, conditional on S-mode  
+ *   2. U-mode rules (SHARED=0, U=1): Enforced on U-mode, conditional on S-mode
  *   3. Shared-Region rules (SHARED=1, U=1): Enforced on both modes with special encoding
- * 
+ *
  * Reserved Encodings (always deny):
  *   - RWX=010 (-W-, write-only)
  *   - RWX=011 (-WX, write+execute without read)
  *   - SHARED=1, U=0 (reserved combination)
- * 
+ *
  * Special Shared-Region U-mode encodings per Figure 4:
  *   - RWX=110 (RW-): U-mode gets Read-only (downgraded from Read+Write)
  *   - RWX=111 (RWX): U-mode gets Exec-only (downgraded from full permissions)
- * 
+ *
  * For Shared-Region rules, U-mode and S-mode may have different effective permissions
  * for the same RWX encoding, implementing the mutual exclusivity constraint.
  */
@@ -172,7 +172,7 @@ function spmpCheckRWX(ent, acc, priv) = {
   let rwx = ent[R] @ ent[W] @ ent[X];       // Extract RWX as 3-bit combined field (bit2=R, bit1=W, bit0=X)
   let is_shared = ent[SHARED] == 0b1;
   let is_u_rule = ent[U] == 0b1;
-  
+
   /* Check for reserved encodings - RWX=010 and RWX=011 are always reserved
    * These are W=1, R=0 cases which are not useful */
   if (rwx == 0b010) | (rwx == 0b011) then {
@@ -251,17 +251,17 @@ function spmpCheckRWX(ent, acc, priv) = {
 }
 
 /* High-level SPMP permission check entry point.
- * 
+ *
  * Machine mode behavior :
  *   - Machine mode bypasses all SPMP checks
  *   - This follows the principle that machine mode has unrestricted access
  *   - Only supervisor and user modes are subject to SPMP restrictions
- * 
+ *
  * Parameters:
  *   ent: SPMP configuration entry to check against
  *   acc: Memory access type being attempted
  *   priv: Current effective privilege level
- * 
+ *
  * Returns: true if access should be permitted, false if denied */
 val spmpCheckPerms: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
 function spmpCheckPerms(ent, acc, priv) = {
@@ -284,21 +284,21 @@ function spmpCheckPerms(ent, acc, priv) = {
 enum spmpAddrMatch = {SPMP_NoMatch, SPMP_PartialMatch, SPMP_Match}
 
 /* Determine relationship between access range and SPMP protection range.
- * 
+ *
  * SPMP requires that memory accesses either:
  *   1. Completely fall within a protected region (SPMP_Match)
  *   2. Completely fall outside all protected regions (SPMP_NoMatch)
  *   3. Partially overlap a region (SPMP_PartialMatch - this is a violation)
- * 
+ *
  * If any byte of an access partially matches
  * an SPMP entry, the entire access fails.
- * 
+ *
  * Parameters:
  *   begin: Start of SPMP protected region (inclusive)
- *   end_: End of SPMP protected region (exclusive) 
+ *   end_: End of SPMP protected region (exclusive)
  *   addr: Start address of memory access
  *   width: Size of memory access in bytes
- * 
+ *
  * Returns: Relationship between access [addr, addr+width) and region [begin, end_) */
 function spmpRangeMatch(
   begin : nat,
@@ -313,12 +313,12 @@ function spmpRangeMatch(
   else    SPMP_PartialMatch // Access partially overlaps region (violation)
 
 /* Match a memory access against an SPMP address range.
- * 
+ *
  * Parameters:
  *   addr: Physical address of access
  *   width: Width of access in bytes
  *   rng: SPMP address range (None if entry disabled)
- * 
+ *
  * Returns: Address match result */
 function spmpMatchAddr(addr: nat, width: nat, rng: spmp_addr_range) -> spmpAddrMatch = {
   match rng {
@@ -342,30 +342,30 @@ function spmpMatchAddr(addr: nat, width: nat, rng: spmp_addr_range) -> spmpAddrM
 enum spmpMatch = {SPMP_Success, SPMP_Continue, SPMP_Fail}
 
 /* Match a memory access against a single SPMP entry.
- * 
- * NOTE: This function is kept for compatibility but is no longer used 
+ *
+ * NOTE: This function is kept for compatibility but is no longer used
  * by the main spmpCheck function, which implements the revised matching logic directly.
- * 
+ *
  * This function implements the complete SPMP checking algorithm for one entry:
  *   1. Check if the access address range matches the entry's protected range
  *   2. If matched, verify permissions according to privilege level and S bit
  *   3. Return appropriate result for SPMP decision
- * 
+ *
  * SPMP entries are checked in order from 0 to 63.
  * The first matching entry determines the access result.
- * 
+ *
  * Parameters:
  *   Physaddr(addr): Physical address being accessed
- *   width: Access width in bytes 
+ *   width: Access width in bytes
  *   acc: Type of memory access (read/write/execute)
  *   priv: Current privilege level
  *   ent: SPMP configuration entry being checked
  *   spmpaddr: Address register value for this entry
  *   prev_spmpaddr: Previous entry's address (needed for TOR mode)
- * 
+ *
  * Returns:
  *   SPMP_Success: Access granted by this entry
- *   SPMP_Fail: Access denied by this entry  
+ *   SPMP_Fail: Access denied by this entry
  *   SPMP_Continue: This entry doesn't match, check next entry */
 function spmpMatchEntry(Physaddr(addr): physaddr, width: xlenbits, acc: MemoryAccessType(ext_access_type), priv: Privilege,
                        ent: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlenbits, entry_index: nat) -> spmpMatch = {
@@ -392,44 +392,44 @@ function spmpMatchEntry(Physaddr(addr): physaddr, width: xlenbits, acc: MemoryAc
 /*=======================================================================================*/
 
 /* Convert memory access type to appropriate SPMP Page Fault exception.
- * 
+ *
  * Exception Code Mapping per SPMP Specification:
- * 
+ *
  * Standard Mode (V=0 or hgatp.MODE != Bare):
  *   - Instruction fetch → Exception code 12 (Instruction page fault)
  *   - Load access       → Exception code 13 (Load page fault)
  *   - Store/AMO access  → Exception code 15 (Store/AMO page fault)
- * 
+ *
  * Virtualization Mode (V=1 and hgatp.MODE=Bare):
  *   - Instruction fetch → Exception code 20 (Instruction guest-page fault)
  *   - Load access       → Exception code 21 (Load guest-page fault)
  *   - Store/AMO access  → Exception code 23 (Store/AMO guest-page fault)
- * 
+ *
  * Rationale:
  *   SPMP and G-stage translation are mutually exclusive. When SPMP is active
  *   (hgatp.MODE=Bare), paged virtual memory translations are disabled, so
  *   guest page fault exception codes can be repurposed for guest SPMP violations.
- * 
+ *
  * Current Implementation:
  *   Only standard mode is implemented. Virtualization mode support requires
  *   Hypervisor extension implementation and checking V bit + hgatp.MODE.
- * 
+ *
  * Key difference from PMP:
  *   - PMP violations → Access Fault exceptions (codes 1, 5, 7)
  *   - SPMP violations → Page Fault exceptions (codes 12, 13, 15 or 20, 21, 23)
- * 
+ *
  * This distinction allows S-mode OS to differentiate between:
  *   - Page-level protection violations (SPMP) - can query satp.mode
  *   - Platform-level protection violations (PMP) - M-mode only
  */
 function accessToSpmpFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType = {
   /* Virtualization mode detection:
-   * When in VirtualUser or VirtualSupervisor privilege level, 
+   * When in VirtualUser or VirtualSupervisor privilege level,
    * SPMP violations should generate Guest Page Fault exceptions.
-   * 
+   *
    * Per SPMP spec: When V=1 and hgatp.MODE=Bare, use Guest Page Fault codes.
    * In the current model, VirtualUser/VirtualSupervisor privilege indicates V=1.
-   * 
+   *
    * Note: Full implementation would also check hgatp.MODE, but since hgatp
    * is not yet implemented in this model, we use privilege level as proxy.
    */
@@ -438,7 +438,7 @@ function accessToSpmpFault(acc : MemoryAccessType(ext_access_type)) -> Exception
     VirtualSupervisor => true,
     _                 => false
   };
-  
+
   if is_virtual then {
     /* Virtualization Mode: Use Guest Page Fault exceptions (codes 20, 21, 23) */
     match acc {
@@ -466,17 +466,17 @@ function accessToSpmpFault(acc : MemoryAccessType(ext_access_type)) -> Exception
 /*=======================================================================================*/
 
 /* Retrieve SPMP configuration and address register pair for hardware entry i.
- * 
+ *
  * SPMP supports 64 entries (0-63) same as PMP, each with:
  *   - One configuration entry (10 bits in spmpcfg registers)
  *   - One address register (spmpaddr registers)
- * 
+ *
  * This function provides unified access across all entries for the
  * main SPMP checking loop.
- * 
+ *
  * IMPORTANT: The parameter i is a HARDWARE index (pmpnum to 63), NOT a logical index.
  * Hardware index directly maps to spmpcfg_n[i] and spmpaddr_n[i] arrays.
- * 
+ *
  * Index Relationship:
  *   - Hardware index range for SPMP: [pmpnum, 63]
  *   - Logical index (from siselect): [0, 63-pmpnum)
@@ -490,28 +490,28 @@ function spmpGetEntry(i: nat) -> (Spmpcfg_ent, xlenbits) = {
 /* SPMP Context Switch Optimization Helper Functions */
 
 /* Check if an SPMP entry is active based on spmpswitch and configuration.
- * 
+ *
  * Activation Rule (per spec):
  *   An SPMP entry i is considered active only when:
  *     sspmpswitch[i] & spmpcfg[i].A != 0
- * 
+ *
  * This means:
  *   - If switch bit is 0, entry is inactive (regardless of L bit)
  *   - If A == OFF, entry is inactive (regardless of switch bit)
  *   - Entry is active only when BOTH switch bit is set AND A != OFF
- * 
+ *
  * Note on Lock bit:
  *   The L bit makes the switch bit READ-ONLY (cannot be modified),
  *   but does NOT automatically activate the entry.
  *   A locked entry with switch bit = 0 remains inactive.
- * 
+ *
  * TOR mode note:
  *   TOR address matching uses spmpaddr[i-1] regardless of whether entry i-1
  *   is active. This is handled by the main checking function, not here.
  */
 function spmpEntryActive(hw_idx: range(0, 63), cfg: Spmpcfg_ent) -> bool = {
   let match_type = spmpAddrMatchType_of_bits(cfg[A]);
-  
+
   /* Get the switch bit for this entry */
   let switch_bit : bit = if xlen == 32 then {
     if hw_idx < 32 then spmpswitch[hw_idx] else spmpswitchh[hw_idx - 32]
@@ -539,32 +539,32 @@ val translationMode : Privilege -> SATPMode
 /*=======================================================================================*/
 
 /* Perform SPMP access control check for a memory operation.
- * 
+ *
  * SPMP and Paging Interaction:
  *   - SPMP is enabled when satp.mode == Bare and SPMP is implemented
  *   - SPMP and paged virtual memory are mutually exclusive
  *   - When satp.mode != Bare, paged virtual memory provides protection instead
  *   - Machine mode always uses SPMP if implemented (M-mode doesn't use virtual memory)
- * 
+ *
  * Matching Logic:
  *   1. SPMP entries are statically prioritized (0-63 in order)
  *   2. The lowest-numbered SPMP entry that matches any byte of access determines the result
  *   3. The SPMP entry must match ALL bytes of access, or the access fails
  *   4. Address matching is done irrespective of the S, R, W, and X bits
- * 
+ *
  * Access Control Rules:
  *   1. Calculate effective privilege mode considering MPRV bit
  *   2. If effective privilege mode is M, the access is allowed
- *   3. If effective privilege mode is S/U and no SPMP entry matches, but at least 
+ *   3. If effective privilege mode is S/U and no SPMP entry matches, but at least
  *      one SPMP entry is delegated, the access is denied
  *   4. Otherwise, access is checked according to permission bits in matching SPMP entry
- * 
+ *
  * Parameters:
  *   addr: Physical address of the memory access
  *   width: Size of the access in bytes (1, 2, 4, 8, etc.)
  *   acc: Type of access (Read/Write/Execute/ReadWrite)
  *   priv: Current privilege level of the accessing code
- * 
+ *
  * Returns:
  *   None(): Access allowed
  *   Some(exception): Access denied with specific page fault type */
@@ -575,17 +575,17 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   priv: Privilege
 ) -> option(ExceptionType) = {
   let width : xlenbits = to_bits(sizeof(xlen), width);
-  
+
   /* SPMP Enablement Check: SPMP is only active when satp.mode == Bare
    * When paged virtual memory is active (satp.mode != Bare), SPMP is disabled
    * and this function should allow all accesses to proceed */
   if not(sys_spmp_enabled) then return None();  // SPMP not implemented
-  
+
   /* Check SPMP and Paging interaction:
    * - Machine mode: Always uses SPMP if implemented (Machine mode doesn't use virtual memory)
    * - Supervisor/User modes: SPMP is only active when satp.mode == Bare
    * - When satp.mode != Bare, paged virtual memory provides protection instead
-   * 
+   *
    * This ensures SPMP and paged virtual memory are mutually exclusive per spec.
    */
   if priv != Machine then {
@@ -595,16 +595,16 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       return None();
     }
   };
-  
+
   /* Rule 1: Calculate effective privilege mode for SPMP checking
-   * 
+   *
    * SPMP checks will be applied to all accesses whose effective privilege mode is S or U:
    * - If current privilege is M and MPRV=0: effective privilege is M (bypass SPMP)
    * - If current privilege is M and MPRV=1: effective privilege is determined by MPP
    * - If current privilege is S or U: effective privilege is current privilege
-   * 
+   *
    * The MPRV bit in mstatus allows M-mode to access memory with privilege of a lower mode.
-   * 
+   *
    * Exception for Hypervisor Extension:
    * - HLV/HLVX/HSV instructions executed from M-mode when V=1 and hgatp.MODE=Bare
    *   are subject to SPMP checks (not bypassed even though executed in M-mode)
@@ -616,26 +616,26 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       Machine,  // Instruction fetches ignore MPRV
     _ => priv
   };
-  
+
   /* Rule 2: If effective privilege mode is M, the access is allowed
-   * 
+   *
    * Exception: Hypervisor Virtual Machine Load/Store instructions (HLV, HLVX, HSV)
    * executed from M-mode are subject to SPMP checks when V=1 and hgatp.MODE=Bare.
-   * 
+   *
    * Note: Current implementation does not distinguish HLV/HLVX/HSV instructions
    * from regular M-mode accesses because ext_access_type = unit.
    * Full support requires:
    * 1. Extending ext_access_type to include a variant for hypervisor VM accesses
    * 2. Checking if access is HLV/HLVX/HSV and V=1 and hgatp.MODE=Bare
    * 3. If so, NOT bypassing SPMP checks even though priv=Machine
-   * 
+   *
    * Example future implementation:
    *   match (effective_priv, acc) {
-   *     (Machine, Load(HypervisorVMAccess)) if is_v_mode() & hgatp_is_bare() => 
+   *     (Machine, Load(HypervisorVMAccess)) if is_v_mode() & hgatp_is_bare() =>
    *       (), // Continue to SPMP checks
-   *     (Machine, Store(HypervisorVMAccess)) if is_v_mode() & hgatp_is_bare() => 
+   *     (Machine, Store(HypervisorVMAccess)) if is_v_mode() & hgatp_is_bare() =>
    *       (), // Continue to SPMP checks
-   *     (Machine, _) => 
+   *     (Machine, _) =>
    *       return None(), // Bypass SPMP for regular M-mode accesses
    *     _ => ()
    *   }
@@ -644,45 +644,45 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
     Machine => return None(),
     _       => ()
   };
-  
+
   /* Check all SPMP entries in order for address matching.
    * SPMP entries begin from hardware index pmpnum and go to 63 */
   let spmp_start = getPmpNum();  // First hardware resource allocated to SPMP
   let spmp_end = 63;             // Last hardware resource (always 63)
-  
+
   /* Check if at least one SPMP entry is implemented (allocated to S-mode).
-   * Per spec: "If the effective privilege mode of the access is S/U and no SPMP 
+   * Per spec: "If the effective privilege mode of the access is S/U and no SPMP
    * entry matches, but at least one SPMP entry is implemented, the access is denied."
-   * 
+   *
    * SPMP entries are "implemented" when hardware resources are allocated via mpmpdeleg.
    * This means spmp_start <= 63 (at least one entry from pmpnum to 63 is SPMP). */
   let has_implemented_entries : bool = (spmp_start <= spmp_end);
-  
+
   var prev_spmpaddr : xlenbits = zeros();  // Previous address for TOR mode
-  
+
   foreach (hw_idx from spmp_start to spmp_end) {
     let (cfg, spmpaddr) = spmpGetEntry(hw_idx);
     let match_type = spmpAddrMatchType_of_bits(cfg[A]);
-    
+
     /* Check if this entry is active (considering spmpswitch optimization) */
     if spmpEntryActive(hw_idx, cfg) then {
       /* Calculate address range for this entry.
-       * 
+       *
        * IMPORTANT (per Sspmpsw spec):
        * For TOR mode, address matching uses spmpaddr[i-1] regardless of:
        *   - spmpcfg[i-1] configuration (entry i-1 could be OFF)
        *   - sspmpswitch[i-1] activation state (entry i-1 could be inactive)
-       * 
+       *
        * This is why prev_spmpaddr is updated unconditionally at the end of
        * each iteration, not just when an entry is active.
        */
       let rng = spmpAddrRange(cfg, spmpaddr, prev_spmpaddr, hw_idx);
-      
+
       /* Check if access matches this entry's address range */
       let Physaddr(paddr) = addr;
       let addr_nat = unsigned(paddr);
       let width_nat = unsigned(width);
-      
+
       match spmpMatchAddr(addr_nat, width_nat, rng) {
         SPMP_NoMatch => {
           /* No match, continue to next entry */
@@ -704,7 +704,7 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
         }
       }
     };
-    
+
     /* Update prev_spmpaddr for TOR mode of next entry.
      * Per Sspmpsw spec: TOR address matching is INDEPENDENT of the configuration
      * or activation state of the preceding entry. We always update prev_spmpaddr
@@ -714,9 +714,9 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   };
 
   /* Rule 3: No SPMP entry matched
-   * Per spec: "If the effective privilege mode of the access is S/U and no SPMP 
+   * Per spec: "If the effective privilege mode of the access is S/U and no SPMP
    * entry matches, but at least one SPMP entry is implemented, the access is denied."
-   * 
+   *
    * Note: "implemented" means hardware resources are allocated to SPMP (pmpnum <= 63),
    * not that entries are configured (A != OFF). This is a security-first approach. */
   if has_implemented_entries then {
@@ -733,18 +733,18 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 /*=======================================================================================*/
 
 /* Initialize SPMP to safe default state.
- * 
+ *
  * SPMP should be initialized to allow all
  * access by default to maintain compatibility with existing software.
- * 
+ *
  * Reset behavior:
  *   - All entries set to OFF (disabled) state
- *   - No memory regions protected initially  
+ *   - No memory regions protected initially
  *   - All accesses allowed until SPMP entries are configured
  *   - L bits are cleared (only possible during reset by hardware/M-mode)
- * 
- * This differs from PMP reset which typically denies access by default. 
- * 
+ *
+ * This differs from PMP reset which typically denies access by default.
+ *
  * NOTE: This function should only be called during system reset or by M-mode code.
  * The L bit can only be cleared by M-mode or hardware reset. */
 function reset_spmp() -> unit = {
@@ -784,21 +784,21 @@ function spmpUnlock(n: range(0, 63)) -> unit = {
 /*=======================================================================================*/
 
 /* Validate SPMP configuration entry for correctness.
- * 
+ *
  * Checks entry-specific constraints based on address matching mode.
  * Invalid configurations may lead to unpredictable behavior.
- * 
+ *
  * Parameters:
  *   hw_idx: Hardware entry index (0-63), NOT logical index from siselect
  *   cfg: Configuration entry to validate
  *   spmpaddr: Address register value
- * 
+ *
  * IMPORTANT - Index Relationship:
  *   This function uses HARDWARE indices that directly map to spmpcfg_n/spmpaddr_n arrays.
  *   - Hardware index range for SPMP: [pmpnum, 63]
  *   - Logical index (from siselect): [0, 63-pmpnum)
  *   - Conversion: hardware_idx = pmpnum + logical_idx
- * 
+ *
  * Returns: true if configuration is valid */
 function spmpValidateConfig(hw_idx: nat, cfg: Spmpcfg_ent, spmpaddr: xlenbits) -> bool = {
   match spmpAddrMatchType_of_bits(cfg[A]) {
@@ -809,19 +809,19 @@ function spmpValidateConfig(hw_idx: nat, cfg: Spmpcfg_ent, spmpaddr: xlenbits) -
     TOR => {
       /* TOR mode: Top-Of-Range addressing
        * Range is [prev_spmpaddr, current_spmpaddr)
-       * 
+       *
        * For TOR mode, the range is [spmpaddr[i-1], spmpaddr[i]).
-       * 
+       *
        * Validity conditions:
        *   1. For the first SPMP entry (hw_idx == pmpnum): lower bound is 0
        *   2. For other entries: valid if current_addr > prev_addr
-       * 
+       *
        * An invalid TOR configuration (prev_addr >= current_addr) results in
        * an empty address range, which means no addresses will match this entry.
        * This is not an error, but the entry will be ineffective.
        */
       let pmpnum = getPmpNum();  // First hardware index for SPMP
-      
+
       if hw_idx <= pmpnum then {
         /* This is the first SPMP entry (hw_idx == pmpnum) */
         /* For first entry, lower bound is implicitly 0, so any addr > 0 is valid */
@@ -832,7 +832,7 @@ function spmpValidateConfig(hw_idx: nat, cfg: Spmpcfg_ent, spmpaddr: xlenbits) -
          * We directly access spmpaddr_n array. */
         let prev_hw_idx = hw_idx - 1;
         let prev_addr : xlenbits = if prev_hw_idx < 64 then spmpaddr_n[prev_hw_idx] else zeros();
-        
+
         /* Check that current address > previous address for valid range */
         /* If prev_addr >= spmpaddr, the range [prev, current) is empty or invalid */
         unsigned(spmpaddr) > unsigned(prev_addr)
@@ -849,12 +849,12 @@ function spmpValidateConfig(hw_idx: nat, cfg: Spmpcfg_ent, spmpaddr: xlenbits) -
     NAPOT => {
       /* NAPOT mode: Naturally Aligned Power-Of-Two region
        * Address encoding uses trailing 1s to indicate region size.
-       * 
+       *
        * Validity considerations:
        *   - Region size = 2^(trailing_ones + 3) bytes
        *   - All trailing 1s pattern is valid (maps to region size)
        *   - Alignment is automatic due to NAPOT encoding
-       * 
+       *
        * Complex validation typically done in hardware. */
       true
     }
