@@ -18,6 +18,9 @@ on:
         default: true
         required: false
         type: boolean
+  schedule:
+    # Weekly on Mondays at 02:35 UTC
+    - cron: "35 2 * * 1"
 
 permissions:
   id-token: write
@@ -130,16 +133,45 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v7
+
+      - name: Prepare release inputs
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            SHORT_SHA=${GITHUB_SHA:0:7}
+            TAG="$(date -u +%F)-${SHORT_SHA}"
+            NAME="Weekly Release ${TAG}"
+            PRERELEASE=true
+            DRAFT=false
+            GEN_NOTES=true
+            BODY="Weekly scheduled pre-release for commit ${GITHUB_SHA}."
+          else
+            TAG=${{ inputs.version }}
+            NAME="${TAG}"
+            PRERELEASE=${{ inputs.prerelease }}
+            DRAFT=${{ inputs.draft }}
+            GEN_NOTES=false
+            BODY="${{ inputs.notes }}"
+          fi
+          echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "draft=$DRAFT" >> "$GITHUB_OUTPUT"
+          echo "generate_release_notes=$GEN_NOTES" >> "$GITHUB_OUTPUT"
+          echo "body=$BODY" >> "$GITHUB_OUTPUT"
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ steps.params.outputs.name }}
+          tag_name: ${{ steps.params.outputs.tag_name }}
+          body: ${{ steps.params.outputs.body }}
+          generate_release_notes: ${{ steps.params.outputs.generate_release_notes }}
+          prerelease: ${{ steps.params.outputs.prerelease }}
+          draft: ${{ steps.params.outputs.draft }}
           files: |
             release-Linux-x86_64/sail-riscv-Linux-x86_64.tar.gz
             release-Linux-aarch64/sail-riscv-Linux-aarch64.tar.gz
             release-Linux-x86_64/model/sail_riscv_model.json
             release-Linux-x86_64/model/sail_riscv_html.tgz
           fail_on_unmatched_files: true
-          tag_name: ${{ inputs.version }}
-          body: ${{ inputs.notes }}
-          prerelease: ${{ inputs.prerelease }}
-          draft: ${{ inputs.draft }}
