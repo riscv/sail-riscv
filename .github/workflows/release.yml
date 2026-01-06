@@ -19,8 +19,8 @@ on:
         required: false
         type: boolean
   schedule:
-    # Weekly on Mondays at 00:00 UTC
-    - cron: "0 0 * * 1"
+    # Weekly on Mondays at 02:35 UTC
+    - cron: "35 2 * * 1"
 
 permissions:
   id-token: write
