@@ -1,4 +1,4 @@
-# A guide to reading the Sail RISC-V specification
+# Reading the Sail RISC-V specification
 
 This RISC-V specification is written in the Sail language. Although
 specifications in Sail are quite readable as pseudocode, it would help
@@ -286,7 +286,7 @@ The actual implementation of the platform methods are in the `ModelImpl` class
 in [riscv_model_impl.h](../c_emulator/riscv_model_impl.h), so the callback flow
 is like this:
 
-![](./figs/class_structure.drawio.svg)
+![](./figs/class_structure.svg)
 
 The primary reason for this convoluted structure is to allow the callback
 implementations to access `hart::Model`.

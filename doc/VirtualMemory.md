@@ -22,7 +22,7 @@ walk. Speed matters mostly for large simulations (e.g., Linux-boot
 can speed up from tens of minutes to a few minutes).
 
 The main code in [vmem.sail](../model/sys/vmem.sail) is
-structured and commented to make it is easy to ignore/skip TLB-related
+structured and commented to make it easy to ignore/skip TLB-related
 parts.
 
 ## Simplified call graph
