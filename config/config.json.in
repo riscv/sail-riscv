@@ -31,11 +31,11 @@
       // The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
       // "Fatal"  – raise a Sail exception, stopping execution.
       // "Illegal" – treat it as an illegal instruction.
-      "amocas_odd_register": "Illegal"
+      "amocas_odd_register": "Illegal",
       // The configuration option determines how to handle the reserved behavior `pmpcfg_with_R0W1`.
       // "Fatal"  – raise a Sail exception, stopping execution.
       // "ClearPermissions" – convert a PMP entry with R=0, W=1 to R=0, W=0, X=0.
-      "pmpcfg_write_only": "ClearPermissions"
+      "pmpcfg_write_only": "Pmp_ClearPermissions"
     }
   },
   "memory": {

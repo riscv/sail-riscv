@@ -73,13 +73,13 @@ overload to_str = {AmocasOddRegisterReservedBehavior_str}
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
 
 enum PmpWriteOnlyReservedBehavior = {
-  Fatal,
-  ClearPermissions,
+  Pmp_Fatal,
+  Pmp_ClearPermissions,
 }
 
 mapping PmpWriteOnlyReservedBehavior_str : PmpWriteOnlyReservedBehavior <-> string = {
-  Fatal <-> "Fatal",
-  ClearPermissions <-> "ClearPermissions",
+  Pmp_Fatal <-> "Pmp_Fatal",
+  Pmp_ClearPermissions <-> "Pmp_ClearPermissions",
 }
 overload to_str = {PmpWriteOnlyReservedBehavior_str}
 
