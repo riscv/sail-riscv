@@ -476,6 +476,10 @@ function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.su
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Main memory supports misaligned loads/stores
+enum clause extension = Ext_Zicclsm
+mapping clause extensionName = Ext_Zicclsm <-> "zicclsm"
+function clause hartSupports(Ext_ZicClsm) = config extensions.Zicclsm.supported
 
 // When adding a new extension X, we need to make sure that if X being supported
 // depends on Y being supported, then the value associated to X is _greater_ than
@@ -536,6 +540,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvbb => 2, // > Zve32x
     Ext_Zve32f => 2, // > Zve32x
     Ext_Zve64x => 2, // > Zve32x
+    Ext_Zicclsm => 2,
 
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh
@@ -580,6 +585,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicbom,
   Ext_Zicbop,
   Ext_Zicboz,
+  Ext_Zicclsm,
   Ext_Zicfilp,
   Ext_Zicntr,
   Ext_Zicond,
