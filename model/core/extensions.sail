@@ -565,6 +565,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_Zfinx => 9, // > is_zfinx_enabled_by_stateen
 
+    Ext_Zdinx => 10, // > Zdinx
     Ext_Zhinx => 10, // > Zfinx
 
     Ext_Zhinxmin => 11, // > Zhinx

@@ -111,13 +111,3 @@ function clause write_CSR(0x10C, value) = {
 function clause write_CSR(0x10D, value) = { sstateen1 = legalize_sstateen1(sstateen1, value[31 .. 0]); Ok(zero_extend(sstateen1.bits)) }
 function clause write_CSR(0x10E, value) = { sstateen2 = legalize_sstateen2(sstateen2, value[31 .. 0]); Ok(zero_extend(sstateen2.bits)) }
 function clause write_CSR(0x10F, value) = { sstateen3 = legalize_sstateen3(sstateen3, value[31 .. 0]); Ok(zero_extend(sstateen3.bits)) }
-
-// Stateen permission checks for CSRs in the Core module, to workaround a cyclic dependency between
-// the Core and Stateen modules.
-function check_stateen_for_core_CSRs(csr : csreg, priv : Privilege) -> bool = {
-  match csr {
-    0x10A => check_stateen_bit(priv, STATEEN_ENVCFG, 0),
-    // TODO: handle henvcfg and henvcfgh.
-    _     => true,
-  }
-}

@@ -417,9 +417,9 @@ mapping clause csr_name_map = 0x10A  <-> "senvcfg"
 
 function clause is_CSR_accessible(0x30A, _, _) = currentlyEnabled(Ext_U) // menvcfg
 function clause is_CSR_accessible(0x31A, _, _) = currentlyEnabled(Ext_U) & (xlen == 32) // menvcfgh
-// `xstateen0.ENVCFG` needs to be checked as well for `senvcfg` if S{ms}stateen is supported, but
-// that creates a cyclic dependency between the Stateen and Core modules.  This special case is
-// handled by check_stateen_for_core_CSRs in sys/sys_control.sail.
+
+// This should ideally also check `xstateen.ENVCFG`, but due to module
+// interdependency issues, that is handled by `is_CSR_accessible_via_stateen`.
 function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) // senvcfg
 
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
