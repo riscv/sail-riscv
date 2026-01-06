@@ -136,6 +136,7 @@ For booting operating system images, see the information under the
 - Ziccamoa extension for Main memory supports all atomics in Zaamo, v1.0
 - Ziccamoc extension for Main memory supports atomics in Zacas, v1.0
 - Ziccif extension for Main memory supports instruction fetch with atomicity requirement, v1.0
+- Zicclsm extension for Main memory misaligned accesses, v1.0
 - Ziccrse extension for Main memory regions with both the cacheability and coherence PMAs must support RsrvEventual, v1.0
 - Zicfilp extension for Landing Pad Control Flow Integrity, v1.0
 - Zicfiss extension for Shadow Stack Control Flow Integrity, v1.0

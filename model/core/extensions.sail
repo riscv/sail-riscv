@@ -261,6 +261,11 @@ enum clause extension = Ext_Ziccif
 mapping clause extensionName = Ext_Ziccif <-> "ziccif"
 function clause hartSupports(Ext_Ziccif) = config extensions.Ziccif.supported
 function clause currentlyEnabled(Ext_Ziccif) = hartSupports(Ext_Ziccif)
+// Main memory misaligned accesses
+enum clause extension = Ext_Zicclsm
+mapping clause extensionName = Ext_Zicclsm <-> "zicclsm"
+function clause hartSupports(Ext_Zicclsm) = config extensions.Zicclsm.supported
+function clause currentlyEnabled(Ext_Zicclsm) = hartSupports(Ext_Zicclsm)
 // Main memory supports forward progress on LR/SC sequences
 enum clause extension = Ext_Ziccrse
 mapping clause extensionName= Ext_Ziccrse <-> "ziccrse"
@@ -660,6 +665,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Ziccamoa,
   Ext_Ziccamoc,
   Ext_Ziccif,
+  Ext_Zicclsm,
   Ext_Ziccrse,
   Ext_Zicfilp,
   Ext_Zicfiss,

@@ -268,6 +268,7 @@ private struct pma_check_opts = {
   ziccamoa : bool,
   ziccamoc : bool,
   ziccif   : bool,
+  zicclsm  : bool,
   ziccrse  : bool,
   ssccptr  : bool,
   svadu    : bool,
@@ -303,6 +304,16 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
         if check_opts.ziccif & not(attributes.executable) then {
           print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with no instruction fetch support, but Ziccif is enabled which requires this support.");
           return false;
+        };
+        if check_opts.zicclsm then {
+          if not(is_none(attributes.misaligned_exceptions.load_store)) then {
+            print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with exceptions for misaligned scalar loads/stores, but Zicclsm is enabled which requires no exceptions for such accesses.");
+            return false;
+          };
+          if not(is_none(attributes.misaligned_exceptions.vector)) then {
+            print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with exceptions for misaligned vector loads/stores, but Zicclsm is enabled which requires no exceptions for such accesses.");
+            return false;
+          };
         };
         if check_opts.ziccrse & attributes.reservability != RsrvEventual then {
           print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
@@ -353,6 +364,7 @@ private function check_mem_layout() -> bool =
       ziccamoa = config extensions.Ziccamoa.supported,
       ziccamoc = config extensions.Ziccamoc.supported,
       ziccif   = config extensions.Ziccif.supported,
+      zicclsm  = config extensions.Zicclsm.supported,
       ziccrse  = config extensions.Ziccrse.supported,
       ssccptr  = config extensions.Ssccptr.supported,
       svadu    = config extensions.Svadu.supported,
@@ -492,6 +504,16 @@ private function check_extension_param_constraints() -> bool = {
     print_endline("The A or Zalrsc extensions are enabled, but the reservation set size of 2^" ^ dec_str(plat_reservation_set_size_exp) ^
                   " is too small; it should be at least 2^" ^ dec_str(min_rss_exp) ^
                   " for the LR/SC operands on this platform.");
+  };
+  if (config extensions.Zicclsm.supported : bool) then {
+    if not(is_none((config memory.misaligned.exceptions : GlobalMisalignedExceptions).load_store)) then {
+      valid = false;
+      print_endline("The Zicclsm extension is enabled, but misaligned scalar loads/stores raise misaligned exceptions before address translation (as per `memory.misaligned.exceptions.load_store`); Zicclsm requires no exceptions for such accesses.");
+    };
+    if not(is_none((config memory.misaligned.exceptions : GlobalMisalignedExceptions).vector)) then {
+      valid = false;
+      print_endline("The Zicclsm extension is enabled, but misaligned vector loads/stores raise misaligned exceptions before address translation (as per `memory.misaligned.exceptions.vector`); Zicclsm requires no exceptions for such accesses.");
+    };
   };
   valid
 }

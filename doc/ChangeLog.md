@@ -33,6 +33,7 @@
   - Ziccamoa
   - Ziccamoc
   - Ziccif
+  - Zicclsm
   - Ziccrse
   - Zicfiss
   - Ssccptr
