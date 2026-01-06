@@ -182,7 +182,7 @@ bitfield Spmpcfg_ent : bits(10) = {
 
 /* Helper function to extract RWX as a 3-bit field for permission encoding checks.
  * The RWX field is a combined 3-bit encoding (bits [2:0] = XWR).
- * 
+ *
  * Valid Encodings (per SPMP spec):
  *   000 (0x0): No permissions
  *   001 (0x1): Read-only (R--)
@@ -190,11 +190,11 @@ bitfield Spmpcfg_ent : bits(10) = {
  *   101 (0x5): Read+Execute (R-X)
  *   110 (0x6): Write+Execute (-WX, valid for Shared-Region S-mode)
  *   111 (0x7): Read+Write+Execute (RWX)
- * 
+ *
  * Reserved Encodings (per SPMP spec):
  *   010 (0x2): Write-only (--W, reserved for future standard use)
  *   011 (0x3): Read+Write (RW-, reserved for future standard use)
- * 
+ *
  * See spmpCheckRWX() in spmp_control.sail for the full permission matrix including
  * privilege-level specific rules and Shared-Region special constraints.
  */
@@ -219,20 +219,20 @@ function clause write_CSR((0x1F2, value)) = {
   if cur_privilege == Machine then {
     let new_pmpnum = value[6 .. 0];
     let pmpnum_val = unsigned(new_pmpnum);
-    
-    /* 
+
+    /*
      * "The pmpnum value cannot be set to an index that is less than or equal to
      *  that of any locked PMP entry."
-     * 
+     *
      * Example: If PMP[7] is locked, any attempt to write a value less than 8
      * to pmpnum is ignored.
-     * 
+     *
      * "The pmpnum value can be set to override locked SPMP entries."
      * Example: If SPMP[0] is locked, M-mode can still increment pmpnum.
-     * 
+     *
      * So we ONLY check locked PMP entries, NOT locked SPMP entries.
      */
-    
+
     /* Find the highest index of any locked PMP entry */
     var max_locked_pmp_idx : int = -1;  /* -1 means no locked PMP entry */
     foreach (i from 0 to 63) {
@@ -241,13 +241,13 @@ function clause write_CSR((0x1F2, value)) = {
         max_locked_pmp_idx = i;
       }
     };
-    
+
     /* pmpnum must be > max_locked_pmp_idx (i.e., >= max_locked_pmp_idx + 1)
      * This ensures no locked PMP entry is converted to SPMP.
      * If no PMP entry is locked (max_locked_pmp_idx == -1), any value is allowed.
      */
     let min_allowed_pmpnum : int = max_locked_pmp_idx + 1;
-    
+
     if pmpnum_val >= min_allowed_pmpnum then {
       /* Valid pmpnum value - clamp to [0, 64] */
       if pmpnum_val <= 64 then {
@@ -310,10 +310,10 @@ function clause write_CSR((0x1F2, value)) = {
 
 /* Get valid SPMP entry range based on delegation */
 function getSpmpValidRange() -> (nat, nat) = {
-  let pmp_count = getPmpNum();           
-  let total_resources = 64;              
-  let spmp_start = pmp_count;             
-  let spmp_count_val = total_resources - pmp_count;  
+  let pmp_count = getPmpNum();
+  let total_resources = 64;
+  let spmp_start = pmp_count;
+  let spmp_count_val = total_resources - pmp_count;
   // Ensure we don't return negative values for nat type
   if spmp_count_val <= 0 then (0, 0)
   else (spmp_start, total_resources - 1) // [pmpnum, 63] - hardware indices
@@ -374,22 +374,22 @@ function spmp_read_cfg_indirect(entry_idx: int) -> Spmpcfg_ent = {
 /* Write SPMP address with granularity masking.
  * This function applies the minimum granularity mask to SPMP address writes,
  * allowing software to probe the SPMP granularity per spec.
- * 
+ *
  * Parameters:
  *   locked: Whether the entry is locked (L=1)
  *   tor_locked: Whether the next entry is locked TOR mode
  *   reg: Current address register value
  *   v: New value to write
- * 
+ *
  * Returns: Masked address value according to granularity settings
- * 
+ *
  * Per spec: "Software can probe the minimum SPMP granularity by writing all ones
  * to spmpaddr[i] and reading back the result. If G is the index of the least-
  * significant bit set, the granularity is 2^(G+2) bytes."
  */
 function spmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits = {
   let G = sys_spmp_grain;
-  
+
   /* If locked or TOR-locked, preserve existing value */
   if locked | tor_locked then reg
   else {
@@ -397,7 +397,7 @@ function spmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbit
      * For RV32: full 32-bit value, for RV64: bits [53:0] only (54-bit physical address)
      * Then mask low G bits to enforce minimum granularity. */
     let addr = if xlen == 32 then v else zero_extend(v[53..0]);
-    
+
     /* Apply granularity mask: low G bits read as zeros.
      * This allows software to detect minimum granularity by writing all 1s. */
     if G == 0 then addr
@@ -410,11 +410,11 @@ function spmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbit
 
 /* Write SPMP address register via indirect access through siselect.
  * entry_idx is the LOGICAL index (0-63) from siselect value (0x100-0x13F).
- * 
- * Per SPMP spec: "Attempts to write to locked spmpaddr[i] registers using the 
- * siselect CSR are ignored. If a locked entry has spmpcfg[i].A set to TOR, 
+ *
+ * Per SPMP spec: "Attempts to write to locked spmpaddr[i] registers using the
+ * siselect CSR are ignored. If a locked entry has spmpcfg[i].A set to TOR,
  * writes to the preceding spmpaddr[i-1] via siselect are also ignored."
- * 
+ *
  * Write restrictions (applies to ALL privilege levels using siselect):
  *   - Cannot write to locked entries (L=1) via siselect
  *   - Cannot write to spmpaddr[i-1] if spmp[i]cfg is locked TOR entry
@@ -426,12 +426,12 @@ function spmp_write_addr_indirect(entry_idx: int, value: xlenbits) -> unit = {
     if hw_idx >= 0 & hw_idx < 64 then {
       let cfg = spmpcfg_n[hw_idx];
       let is_locked = spmpLocked(cfg);
-      
+
       /* Check TOR locking: if next entry is locked TOR, this addr is also locked */
       let next_hw_idx = hw_idx + 1;
       let next_cfg = if next_hw_idx < 64 then spmpcfg_n[next_hw_idx] else Mk_Spmpcfg_ent(0b0000000000);
       let is_tor_locked = spmpTORLocked(next_cfg);
-      
+
       /* Apply granularity masking and lock check */
       spmpaddr_n[hw_idx] = spmpWriteAddr(is_locked, is_tor_locked, spmpaddr_n[hw_idx], value);
     }
@@ -439,16 +439,16 @@ function spmp_write_addr_indirect(entry_idx: int, value: xlenbits) -> unit = {
 }
 
 /* WARL validation and L bit access control for SPMP configuration writes.
- * 
+ *
  * This function performs two checks:
  * 1. WARL validation: Rejects reserved encodings (SHARED=1+U=0, RWX=010, RWX=011)
  * 2. L bit transition control: S-mode can set L bit (0->1) but cannot clear it (1->0)
- * 
- * Note: This function does NOT check if entry is locked. Lock checking is the 
+ *
+ * Note: This function does NOT check if entry is locked. Lock checking is the
  * responsibility of the caller:
  * - spmp_write_cfg_indirect: Checks lock, rejects writes to locked entries (any privilege)
  * - spmp_mmode_write_cfg_indirect: No lock check, M-mode can modify locked entries via miselect
- * 
+ *
  * Parameters:
  * - n: hardware index (not used in validation, kept for interface consistency)
  * - cfg: current configuration value
@@ -458,25 +458,25 @@ function spmp_write_addr_indirect(entry_idx: int, value: xlenbits) -> unit = {
 function spmpWriteCfg(n: int, cfg: Spmpcfg_ent, v: bits(10), priv: Privilege) -> Spmpcfg_ent = {
   let new_cfg = Mk_Spmpcfg_ent(v);
   let is_machine_mode = (priv == Machine);
-  
+
   // Extract fields for WARL validation
   let rwx = new_cfg[X] @ new_cfg[W] @ new_cfg[R];
   let shared = new_cfg[SHARED];
   let u_bit = new_cfg[U];
   let new_l_bit = new_cfg[L];
   let old_l_bit = cfg[L];
-  
+
   /* WARL (Write Any, Read Legal) validation:
    * According to spec, the following encodings are reserved for future standard use:
    * 1. SHARED=1, U=0 (reserved combination)
    * 2. RWX=010 (--W, write-only, reserved)
    * 3. RWX=011 (RW-, read+write but no execute, reserved)
-   * 
+   *
    * Note: RWX=110 (-WX) is NOT reserved - it's valid for Shared-Region S-mode access
-   * 
+   *
    * For reserved encodings, the write is ignored and the old value is preserved.
    */
-  
+
   // Check for reserved SHARED=1, U=0 combination
   if (shared == 0b1) & (u_bit == 0b0) then {
     cfg  // Ignore write, preserve old value
@@ -488,7 +488,7 @@ function spmpWriteCfg(n: int, cfg: Spmpcfg_ent, v: bits(10), priv: Privilege) ->
     /* L bit access control:
      * - M-mode: can set or clear L bit freely
      * - S-mode: can only set L bit (0->1), cannot clear it (1->0)
-     * Per spec: "The lock bit (spmpcfg[i].L) of an SPMP entry can only be 
+     * Per spec: "The lock bit (spmpcfg[i].L) of an SPMP entry can only be
      * cleared by M-mode through an indirect access using miselect."
      */
     if not(is_machine_mode) & (old_l_bit == 0b1) & (new_l_bit == 0b0) then {
@@ -502,10 +502,10 @@ function spmpWriteCfg(n: int, cfg: Spmpcfg_ent, v: bits(10), priv: Privilege) ->
 
 /* Write SPMP configuration register via indirect access through siselect.
  * entry_idx is the LOGICAL index (0-63) from siselect value (0x100-0x13F).
- * 
- * Per SPMP spec: "Attempts to write to locked spmpcfg[i] registers using the 
+ *
+ * Per SPMP spec: "Attempts to write to locked spmpcfg[i] registers using the
  * siselect CSR are ignored."
- * 
+ *
  * Write restrictions (applies to ALL privilege levels using siselect):
  *   - Cannot write to locked entries (L=1) via siselect
  *   - S-mode can set L bit (0->1) but cannot clear it (1->0)
@@ -517,7 +517,7 @@ function spmp_write_cfg_indirect(entry_idx: int, cfg: Spmpcfg_ent) -> unit = {
     if hw_idx >= 0 & hw_idx < 64 then {
       let current_cfg = spmpcfg_n[hw_idx];
       let is_locked = spmpLocked(current_cfg);
-      
+
       /* Per spec: writes to locked entries via siselect are ignored (any privilege) */
       if not(is_locked) then {
         /* Apply WARL validation using spmpWriteCfg function */
@@ -532,7 +532,7 @@ function spmp_write_cfg_indirect(entry_idx: int, cfg: Spmpcfg_ent) -> unit = {
 /* M-mode version with same range checking for consistency.
  * entry_idx is the LOGICAL index (0-63) from miselect value (0x100-0x13F).
  * This needs to be converted to hardware index: hw_idx = pmpnum + entry_idx
- * 
+ *
  * M-mode privileges:
  * - Can always write to any SPMP entry, even locked ones
  * - Can CLEAR the L bit (this is the ONLY way to clear L bit per spec)
@@ -541,14 +541,14 @@ function spmp_write_cfg_indirect(entry_idx: int, cfg: Spmpcfg_ent) -> unit = {
 function spmp_mmode_write_cfg_indirect(entry_idx: int, cfg: Spmpcfg_ent) -> unit = {
   let pmpnum = getPmpNum();
   let spmp_count : int = 64 - pmpnum;  // Number of delegated SPMP entries
-  
+
   // Check if logical index is within valid SPMP range
   if entry_idx >= 0 & entry_idx < spmp_count then {
     // Convert logical index to hardware index
     let hw_idx = pmpnum + entry_idx;
     if hw_idx < 64 then {
       let current_cfg = spmpcfg_n[hw_idx];
-      
+
       /* Apply WARL validation for reserved encodings.
        * M-mode can override lock status, so we pass Machine privilege.
        * This allows M-mode to clear L bit and modify all fields.
@@ -567,7 +567,7 @@ function spmp_mmode_write_cfg_indirect(entry_idx: int, cfg: Spmpcfg_ent) -> unit
 function spmp_mmode_read_cfg_indirect(entry_idx: int) -> Spmpcfg_ent = {
   let pmpnum = getPmpNum();
   let spmp_count : int = 64 - pmpnum;  // Number of delegated SPMP entries
-  
+
   // Check if logical index is within valid SPMP range
   if entry_idx >= 0 & entry_idx < spmp_count then {
     // Convert logical index to hardware index
@@ -586,7 +586,7 @@ function spmp_mmode_read_cfg_indirect(entry_idx: int) -> Spmpcfg_ent = {
 /* M-mode address register write via miselect interface.
  * entry_idx is the LOGICAL index (0-63) from miselect value (0x100-0x13F).
  * This needs to be converted to hardware index: hw_idx = pmpnum + entry_idx
- * 
+ *
  * M-mode privileges via miselect:
  * - Can write to ANY SPMP entry, including locked ones
  * - This is the ONLY way to modify locked entries per spec
@@ -596,7 +596,7 @@ function spmp_mmode_read_cfg_indirect(entry_idx: int) -> Spmpcfg_ent = {
 function spmp_mmode_write_addr_indirect(entry_idx: int, value: xlenbits) -> unit = {
   let pmpnum = getPmpNum();
   let spmp_count : int = 64 - pmpnum;  // Number of delegated SPMP entries
-  
+
   // Check if logical index is within valid SPMP range
   if entry_idx >= 0 & entry_idx < spmp_count then {
     // Convert logical index to hardware index
@@ -617,7 +617,7 @@ function spmp_mmode_write_addr_indirect(entry_idx: int, value: xlenbits) -> unit
 function spmp_mmode_read_addr_indirect(entry_idx: int) -> xlenbits = {
   let pmpnum = getPmpNum();
   let spmp_count : int = 64 - pmpnum;  // Number of delegated SPMP entries
-  
+
   // Check if logical index is within valid SPMP range
   if entry_idx >= 0 & entry_idx < spmp_count then {
     // Convert logical index to hardware index
@@ -658,21 +658,21 @@ function clause write_CSR((0x1F0, value)) = {
   /* According to spec: When an entry i is locked (spmpcfg[i].L == 1),
    * its corresponding sspmpswitch[i] bit becomes read-only.
    * This means no modification is allowed for locked entries. */
-  
+
   let spmp_start = getPmpNum();
   let spmp_end = 63;
-  
+
   var new_switch : xlenbits = value;
-  
+
   /* For each SPMP entry, check if it's locked and restore its original switch bit if locked */
   foreach (hw_idx from spmp_start to spmp_end) {
     /* In RV32, spmpswitch only handles entries [0:31] */
     let in_range = if xlen == 32 then hw_idx < 32 else true;
-    
+
     if in_range then {
       let cfg = spmpcfg_n[hw_idx];
       let is_locked = spmpLocked(cfg);
-      
+
       if is_locked then {
         /* For locked entries, restore the original bit from spmpswitch */
         let bit_idx = hw_idx;
@@ -682,7 +682,7 @@ function clause write_CSR((0x1F0, value)) = {
       /* For unlocked entries, keep the new value from 'value' */
     }
   };
-  
+
   spmpswitch = new_switch;
   Ok(spmpswitch)
 }
@@ -700,15 +700,15 @@ function clause write_CSR((0x1F1, value)) = {
     /* Similar to spmpswitch, locked entries become read-only */
     let spmp_start = getPmpNum();
     let spmp_end = 63;
-    
+
     var new_switchh : bits(32) = value[31 .. 0];
-    
+
     /* For entries [32:63], check if locked and restore original switch bit if locked */
     foreach (hw_idx from spmp_start to spmp_end) {
       if hw_idx >= 32 then {  // Only process entries [32:63]
         let cfg = spmpcfg_n[hw_idx];
         let is_locked = spmpLocked(cfg);
-        
+
         if is_locked then {
           /* For locked entries, restore the original bit from spmpswitchh */
           let bit_idx = hw_idx - 32;
@@ -718,7 +718,7 @@ function clause write_CSR((0x1F1, value)) = {
         /* For unlocked entries, keep the new value from 'value' */
       }
     };
-    
+
     spmpswitchh = new_switchh;
   };
   Ok(zero_extend(spmpswitchh))
@@ -884,7 +884,7 @@ function clause write_CSR((0x152, value)) = {
     let entry_idx = siselect_get_spmp_index();
     /* Use indirect access function which handles:
      * - Logical-to-hardware index conversion
-     * - Range checking  
+     * - Range checking
      * - Lock status checking
      * - M-mode/S-mode privilege checking
      * - WARL validation
@@ -959,7 +959,7 @@ function miselect_get_spmp_index() -> int = {
   sel - unsigned(SPMP_MISELECT_BASE)
 }
 
-/* Check if SPMP entry is valid for indirect access via miselect 
+/* Check if SPMP entry is valid for indirect access via miselect
  * M-mode uses the same view as S-mode: indices [0, spmp_count) */
 function miselect_spmp_entry_valid() -> bool = {
   let (start, end_idx) = getSpmpValidRange();
@@ -1021,7 +1021,7 @@ function clause write_CSR((0x352, value)) = {
     let entry_idx = miselect_get_spmp_index();
     /* M-mode has full access - can write any field including clearing L bit.
      * This is the ONLY way to unlock SPMP entries per spec:
-     * "The lock bit (spmpcfg[i].L) of an SPMP entry can only be cleared by 
+     * "The lock bit (spmpcfg[i].L) of an SPMP entry can only be cleared by
      *  M-mode through an indirect access using miselect."
      */
     let new_cfg = Mk_Spmpcfg_ent(value[9..0]);
