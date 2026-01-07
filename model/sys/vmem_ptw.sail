@@ -49,10 +49,10 @@ private function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
   }
 
 // Convert translation/PTW failures into architectural exceptions
-function translationException(a : MemoryAccessType(ext_access_type),
-                              f : PTW_Error)
+function translationException(access : MemoryAccessType(ext_access_type),
+                              err : PTW_Error)
                              -> ExceptionType = {
-  match (a, f) {
+  match (access, err) {
     (_, PTW_Ext_Error(e))                 => E_Extension(ext_translate_exception(e)),
     (LoadStore(_), PTW_No_Access())       => E_SAMO_Access_Fault(),
     (LoadStore(_), _)                     => E_SAMO_Page_Fault(),

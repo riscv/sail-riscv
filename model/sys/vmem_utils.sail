@@ -120,7 +120,7 @@ val vmem_read_addr : forall 'width, is_mem_width('width).
   (virtaddr, xlenbits, int('width), MemoryAccessType(ext_access_type), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
-function vmem_read_addr(vaddr, offset, width, acc, aq, rl, res) = {
+function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
   // TODO: Rationalize to use a single alignment definition if possible.
   if res then {
     // "LR faults like a normal load, even though it's in the AMO major opcode space."
@@ -146,10 +146,10 @@ function vmem_read_addr(vaddr, offset, width, acc, aq, rl, res) = {
   repeat {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
-    match translateAddr(Virtaddr(vaddr), acc) {
+    match translateAddr(Virtaddr(vaddr), access) {
       Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
-      Ok(paddr, _) => match mem_read(acc, paddr, bytes, aq, rl, res) {
+      Ok(paddr, _) => match mem_read(access, paddr, bytes, aq, rl, res) {
         Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
         Ok(v) => {
@@ -179,7 +179,7 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(ext_access_type), bool, bool, bool)
   -> result(bool, ExecutionResult)
 
-function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
+function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   if   check_misaligned(vaddr, width)
   then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
 
@@ -197,7 +197,7 @@ function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
   repeat {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
-    match translateAddr(Virtaddr(vaddr), acc) {
+    match translateAddr(Virtaddr(vaddr), access) {
       Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
       // NOTE: Currently, we only announce the effective address if address translation is successful.
@@ -237,28 +237,28 @@ val vmem_read : forall 'width, is_mem_width('width).
   (regidx, xlenbits, int('width), MemoryAccessType(ext_access_type), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
-function vmem_read(rs, offset, width, acc, aq, rl, res) = {
+function vmem_read(rs, offset, width, access, aq, rl, res) = {
   // Get the address, X(rs1) + offset.
   // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match ext_data_get_addr(rs, offset, acc, width) {
+  let vaddr : virtaddr = match ext_data_get_addr(rs, offset, access, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_read_addr(vaddr, offset, width, acc, aq, rl, res)
+  vmem_read_addr(vaddr, offset, width, access, aq, rl, res)
 }
 
 val vmem_write : forall 'width, is_mem_width('width).
   (regidx, xlenbits, int('width), bits(8 * 'width), MemoryAccessType(ext_access_type), bool, bool, bool)
   -> result(bool, ExecutionResult)
 
-function vmem_write(rs_addr, offset, width, data, acc, aq, rl, res) = {
+function vmem_write(rs_addr, offset, width, data, access, aq, rl, res) = {
   // Get the address, X(rs_addr) + offset.
   // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match ext_data_get_addr(rs_addr, offset, acc, width) {
+  let vaddr : virtaddr = match ext_data_get_addr(rs_addr, offset, access, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_write_addr(vaddr, width, data, acc, aq, rl, res)
+  vmem_write_addr(vaddr, width, data, access, aq, rl, res)
 }

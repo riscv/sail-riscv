@@ -37,8 +37,8 @@ let Data  : ext_access_type = ()
 
 let default_write_acc : ext_access_type = Data
 
-function accessType_to_str(a : MemoryAccessType(ext_access_type)) -> string =
-  match (a) {
+function accessType_to_str(access : MemoryAccessType(ext_access_type)) -> string =
+  match access {
     Load(_)            => "R",
     Store(_)           => "W",
     LoadStore(_, _)    => "RW",

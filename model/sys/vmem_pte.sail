@@ -109,7 +109,7 @@ union PTE_Check = {
 }
 
 private function check_PTE_permission(
-  ac        : MemoryAccessType(ext_access_type),
+  access    : MemoryAccessType(ext_access_type),
   priv      : Privilege,
   // Make eXecutable Readable
   mxr       : bool,
@@ -129,7 +129,7 @@ private function check_PTE_permission(
     User       => pte_U,
     // SUM allows supervisor mode to access U-mode pages, but only for
     // loads and stores; not instruction fetch.
-    Supervisor => not(pte_U) | (do_sum & is_load_store(ac)),
+    Supervisor => not(pte_U) | (do_sum & is_load_store(access)),
     Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
     VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
@@ -139,7 +139,7 @@ private function check_PTE_permission(
   // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
 
   // Step 8 of VATP (see vmem.sail).
-  let access_ok : bool = match ac {
+  let access_ok : bool = match access {
     Load(_)             => pte_R | (pte_X & mxr),
     Store(_)            => pte_W,
     LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
@@ -153,13 +153,13 @@ private function check_PTE_permission(
 // Update PTE bits if needed; return new PTE if updated
 private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   pte : bits('pte_size),
-  a   : MemoryAccessType(ext_access_type),
+  access : MemoryAccessType(ext_access_type),
 ) -> option(bits('pte_size)) = {
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
-                        & (match a {
+                        & (match access {
                              InstructionFetch() => false,
                              Load(_)            => false,
                              Store(_)           => true,
