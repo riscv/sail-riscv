@@ -101,13 +101,7 @@ function clause read_CSR(0x10D) = { let mask = get_sstateen_mask(1); zero_extend
 function clause read_CSR(0x10E) = { let mask = get_sstateen_mask(2); zero_extend(sstateen2.bits & mask[31..0]) }
 function clause read_CSR(0x10F) = { let mask = get_sstateen_mask(3); zero_extend(sstateen3.bits & mask[31..0]) }
 
-function clause write_CSR(0x10C, value) = {
-  let legalized = legalize_sstateen0(sstateen0, value[31 .. 0]);
-  let mask = get_sstateen_mask(0);
-  sstateen0 = Mk_Sstateen0(legalized.bits & mask[31..0]);
-  Ok(zero_extend(sstateen0.bits))
-}
-
+function clause write_CSR(0x10C, value) = { sstateen0 = legalize_sstateen0(sstateen0, value[31 .. 0]); Ok(zero_extend(sstateen0.bits)) }
 function clause write_CSR(0x10D, value) = { sstateen1 = legalize_sstateen1(sstateen1, value[31 .. 0]); Ok(zero_extend(sstateen1.bits)) }
 function clause write_CSR(0x10E, value) = { sstateen2 = legalize_sstateen2(sstateen2, value[31 .. 0]); Ok(zero_extend(sstateen2.bits)) }
 function clause write_CSR(0x10F, value) = { sstateen3 = legalize_sstateen3(sstateen3, value[31 .. 0]); Ok(zero_extend(sstateen3.bits)) }

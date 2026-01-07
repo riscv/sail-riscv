@@ -50,6 +50,16 @@ register mstateen1 : Mstateen1 = Mk_Mstateen1(zeros())
 register mstateen2 : Mstateen2 = Mk_Mstateen2(zeros())
 register mstateen3 : Mstateen3 = Mk_Mstateen3(zeros())
 
+private function get_mstateen(idx : range(0, 3)) -> bits(64) = {
+  if not(is_mstateen_accessible()) then ones()
+  else match idx {
+    0 => mstateen0.bits,
+    1 => mstateen1.bits,
+    2 => mstateen2.bits,
+    3 => mstateen3.bits,
+  }
+}
+
 // TODO: Update when Zcmt is implemented (JVT bit)
 private function is_mstateen_SE0_readonly_zero() -> bool = {
   not(currentlyEnabled(Ext_H)) & not(currentlyEnabled(Ext_Zfinx))
@@ -68,16 +78,6 @@ function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
 function legalize_mstateen1(m : Mstateen1, _v : bits(64)) -> Mstateen1 = { m }
 function legalize_mstateen2(m : Mstateen2, _v : bits(64)) -> Mstateen2 = { m }
 function legalize_mstateen3(m : Mstateen3, _v : bits(64)) -> Mstateen3 = { m }
-
-private function get_mstateen(idx : range(0, 3)) -> bits(64) = {
-  if not(is_mstateen_accessible()) then ones()
-  else match idx {
-    0 => mstateen0.bits,
-    1 => mstateen1.bits,
-    2 => mstateen2.bits,
-    3 => mstateen3.bits,
-  }
-}
 
 register hstateen0 : Mstateen0 = Mk_Mstateen0(zeros())
 register hstateen1 : Mstateen1 = Mk_Mstateen1(zeros())
@@ -133,17 +133,6 @@ register sstateen1 : Sstateen1 = Mk_Sstateen1(zeros())
 register sstateen2 : Sstateen2 = Mk_Sstateen2(zeros())
 register sstateen3 : Sstateen3 = Mk_Sstateen3(zeros())
 
-function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
-  let v = Mk_Sstateen0(v);
-  [s with
-    FCSR = if misa[F] == 0b1 then 0b0 else v[FCSR],
-  ];
-}
-
-function legalize_sstateen1(s : Sstateen1, _v : bits(32)) -> Sstateen1 = { s }
-function legalize_sstateen2(s : Sstateen2, _v : bits(32)) -> Sstateen2 = { s }
-function legalize_sstateen3(s : Sstateen3, _v : bits(32)) -> Sstateen3 = { s }
-
 private function get_sstateen(idx : range(0, 3)) -> bits(64) =
   0xFFFFFFFF @ (
     if not(is_sstateen_accessible()) then ones()
@@ -158,6 +147,19 @@ private function get_sstateen(idx : range(0, 3)) -> bits(64) =
 termination_measure get_sstateen(_) = 3 // > is_sstateen_accessible
 
 function get_sstateen_mask(idx : range(0, 3)) -> bits(64) = get_mstateen(idx) & get_hstateen(idx)
+
+function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
+  let v = Mk_Sstateen0(v);
+  let mask = get_sstateen_mask(0);
+  let legalized = [s with
+    FCSR = if misa[F] == 0b1 then 0b0 else v[FCSR],
+  ];
+  Mk_Sstateen0(legalized.bits & mask[31..0])
+}
+
+function legalize_sstateen1(s : Sstateen1, _v : bits(32)) -> Sstateen1 = { s }
+function legalize_sstateen2(s : Sstateen2, _v : bits(32)) -> Sstateen2 = { s }
+function legalize_sstateen3(s : Sstateen3, _v : bits(32)) -> Sstateen3 = { s }
 
 function check_stateen_bit(priv : Privilege, bit_idx : stateen_bit, stateen_reg : range(0, 3)) -> bool = {
   let mask : bits(64) = match priv {
