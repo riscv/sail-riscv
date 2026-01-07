@@ -20,6 +20,10 @@ on:
         type: boolean
   schedule:
     # Weekly on Mondays at 02:35 UTC
+    # The schedule event can be delayed during periods of high loads of GitHub Actions workflow runs.
+    # High load times include the start of every hour. If the load is sufficiently high enough, some queued jobs may be dropped.
+    # To decrease the chance of delay, schedule your workflow to run at a different time of the hour.
+    # https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule
     - cron: "35 2 * * 1"
 
 permissions:
