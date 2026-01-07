@@ -203,6 +203,7 @@ private function check_mem_layout() -> bool =
     false
   } else check_pma_regions(pma_regions, zeros(), zeros())
 
+
 private function check_pmp() -> bool = {
   var valid : bool = true;
   if (config memory.pmp.na4_supported : bool) & sys_pmp_grain != 0
@@ -294,6 +295,18 @@ private function check_misc_extension_dependencies() -> bool = {
   valid
 }
 
+private function check_pma_regions_zicclsm(pmas : list(PMA_Region)) -> bool =
+  match pmas {
+    [||] => true,
+    pma :: rest => {
+      let attr = pma.attributes;
+      if attr.cacheable & attr.coherent & attr.misaligned_fault != NoFault then {
+        return false;
+      };
+      check_pma_regions_zicclsm(rest)
+    },
+  }
+
 private function check_extension_param_constraints() -> bool = {
   var valid : bool = true;
   if hartSupports(Ext_Zic64b) & (plat_cache_block_size_exp != 6) then {
@@ -306,6 +319,10 @@ private function check_extension_param_constraints() -> bool = {
     print_endline("The A or Zalrsc extensions are enabled, but the reservation set size of 2^" ^ dec_str(plat_reservation_set_size_exp) ^
                   " is too small; it should be at least 2^" ^ dec_str(min_rss_exp) ^
                   " for the LR/SC operands on this platform.");
+  };
+  if hartSupports(Ext_Zicclsm) & not(check_pma_regions_zicclsm(pma_regions)) then {
+    valid = false;
+    print_endline("Zicclsm is enabled but cacheable and coherent memory regions are not set to NoFault.");
   };
   valid
 }
