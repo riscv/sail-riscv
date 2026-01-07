@@ -525,9 +525,6 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvl32b => 0,
     Ext_Zvl64b => 0,
 
-    Ext_Smstateen => 0,
-    Ext_Ssstateen => 0,
-
     Ext_D => 1, // > Zicsr
     Ext_F => 1, // > Zicsr
     Ext_S => 1, // > Zicsr
@@ -537,6 +534,8 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zicntr => 1, // > Zicsr
     Ext_Zihpm => 1, // > Zicsr
     Ext_Zve32x => 1, // > Zvl32b
+    Ext_Smstateen => 1, // > Zicsr
+    Ext_Ssstateen => 1, // > Zicsr
 
     // Note: even though these match the default case, making them explicit to
     // annotate the chain of dependencies
