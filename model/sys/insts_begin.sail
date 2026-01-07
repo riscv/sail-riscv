@@ -29,7 +29,7 @@ union ExecutionResult = {
   // Did not retire for a standard reason.
   Illegal_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
-  Memory_Exception               : (virtaddr, ExceptionType),
+  Memory_Exception               : (ExceptionType, ExceptionContext),
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,
@@ -37,6 +37,15 @@ union ExecutionResult = {
   Ext_DataAddr_Check_Failure     : ext_data_addr_error,
   Ext_XRET_Priv_Failure          : unit,
 }
+
+function memory_exception(vaddr : virtaddr, e : ExceptionType) -> ExecutionResult =
+  Memory_Exception(e, struct {
+    excinfo     = Some(bits_of(vaddr)),
+    info_is_gva = false,
+    excinfo2    = None(),
+    excinst     = None(),
+    ext         = None(),
+  })
 
 // To ease the introduction of `ExecutionResult`, this global
 // definition is temporarily used instead of the previous

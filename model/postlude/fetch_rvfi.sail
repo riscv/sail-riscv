@@ -20,10 +20,10 @@ private function rvfi_fetch() -> FetchResult = {
 
   // Then check PC alignment
   if   (PC[0] != bitzero | (PC[1] != bitzero & not(currentlyEnabled(Ext_Zca))))
-  then return F_Error(E_Fetch_Addr_Align(), PC);
+  then return F_Error(E_Fetch_Addr_Align(), mem_exception_context(PC, false));
 
   match translateAddr(Virtaddr(PC), InstructionFetch()) {
-    Err(e, _) => return F_Error(e, PC),
+    Err(e, _) => return F_Error(e),
     Ok(_, _)  => (),
   };
 
@@ -40,7 +40,7 @@ private function rvfi_fetch() -> FetchResult = {
   };
 
   match translateAddr(Virtaddr(PC_hi), InstructionFetch()) {
-    Err(e, _) => F_Error(e, PC),
+    Err(e, _) => F_Error(e),
     Ok(_, _)  => F_Base(i)
   }
 }

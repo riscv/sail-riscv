@@ -44,15 +44,15 @@ function clause execute ZICBOZ(rs1) = {
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          Err(e, _) => Memory_Exception(vaddr - negative_offset, e),
+          Err((e, _), _) => memory_exception(vaddr - negative_offset, e),
           Ok(paddr, _) => {
             match mem_write_ea(paddr, cache_block_size, false, false, false) {
-              Err(e) => Memory_Exception(vaddr - negative_offset, e),
+              Err(e) => memory_exception(vaddr - negative_offset, e),
               Ok(_)  => {
                 match mem_write_value(paddr, cache_block_size, zeros(), false, false, false) {
                   Ok(true)  => RETIRE_SUCCESS,
                   Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                  Err(e)    => Memory_Exception(vaddr - negative_offset, e)
+                  Err(e)    => memory_exception(vaddr - negative_offset, e)
                 }
               }
             }
