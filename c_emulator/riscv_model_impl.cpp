@@ -130,7 +130,7 @@ unit ModelImpl::trap_callback(bool is_interrupt, fbits cause) {
 
 unit ModelImpl::ptw_start_callback(
   uint64_t vpn,
-  hart::zMemoryAccessTypezIuzK access_type,
+  hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
   hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
 ) {
   for (auto c : m_callbacks) {
