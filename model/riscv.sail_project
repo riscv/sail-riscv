@@ -460,7 +460,7 @@ mops {
 postlude {
   after extensions, mops
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts, FD_core, V_core
 
   files
     postlude/insts_end.sail,
@@ -473,6 +473,7 @@ postlude {
     postlude/step.sail,
     postlude/validate_config.sail,
     postlude/device_tree.sail,
+    postlude/snapshot.sail,
     postlude/model.sail
 }
 

@@ -4,9 +4,12 @@
 #include <cstdio>
 #include <random>
 #include <vector>
+#include <memory>
 
 #include "sail.h"
 #include "sail_riscv_model.h"
+#include "snapshot_manager.h"
+#include "checkpoint_manager.h"
 
 extern FILE *trace_log;
 extern int term_fd;
@@ -15,6 +18,8 @@ void plat_term_write_impl(char c);
 // Model wrapped with an implementation of its platform callbacks.
 class ModelImpl final : public hart::Model {
 public:
+  ModelImpl();
+  
   void register_callback(callbacks_if *cb);
   void remove_callback(callbacks_if *cb);
 
@@ -23,6 +28,12 @@ public:
 
   void set_enable_experimental_extensions(bool en);
   void set_reservation_set_size_exp(uint64_t exponent);
+
+  // Snapshot manager access
+  snapshot::SnapshotManager *get_snapshot_manager() { return m_snapshot_mgr.get(); }
+  
+  // Checkpoint manager access
+  checkpoint::CheckpointManager *get_checkpoint_manager() { return m_checkpoint_mgr.get(); }
 
 private:
   // These functions are called by the Sail code.
@@ -92,6 +103,12 @@ private:
   uint64_t m_reservation_set_addr_mask = 0;
 
   bool m_enable_experimental_extensions = false;
+
+  // Snapshot manager
+  std::unique_ptr<snapshot::SnapshotManager> m_snapshot_mgr;
+  
+  // Checkpoint manager
+  std::unique_ptr<checkpoint::CheckpointManager> m_checkpoint_mgr;
 
   static unsigned seed()
   {

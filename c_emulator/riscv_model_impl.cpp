@@ -7,8 +7,18 @@
 #include "riscv_callbacks_if.h"
 #include "symbol_table.h"
 #include "riscv_config.h"
+#include "snapshot_manager.h"
+#include "checkpoint_manager.h"
 
 int term_fd = 1; // set during startup
+
+ModelImpl::ModelImpl()
+  : m_snapshot_mgr(std::make_unique<snapshot::SnapshotManager>(*this))
+  , m_checkpoint_mgr(std::make_unique<checkpoint::CheckpointManager>(*m_snapshot_mgr))
+{
+  // Register checkpoint manager as a callback to receive simulation events
+  register_callback(m_checkpoint_mgr.get());
+}
 void plat_term_write_impl(char c)
 {
   if (write(term_fd, &c, sizeof(c)) < 0) {

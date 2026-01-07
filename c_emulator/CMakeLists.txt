@@ -51,6 +51,16 @@ add_library(riscv_model
     config_utils.h
     symbol_table.cpp
     symbol_table.h
+    snapshot_format.cpp
+    snapshot_format.h
+    snapshot_memory.c
+    snapshot_memory.h
+    snapshot_sail_interface.cpp
+    snapshot_sail_interface.h
+    snapshot_manager.cpp
+    snapshot_manager.h
+    checkpoint_manager.cpp
+    checkpoint_manager.h
     sail_riscv_version.h
     "${CMAKE_CURRENT_BINARY_DIR}/config_schema.h"
     "${CMAKE_CURRENT_BINARY_DIR}/sail_riscv_version.cpp"

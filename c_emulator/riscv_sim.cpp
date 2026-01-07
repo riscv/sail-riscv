@@ -16,6 +16,8 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <sstream>
+#include <iomanip>
 
 #include "jsoncons/config/version.hpp"
 #include "CLI11.hpp"
@@ -33,6 +35,7 @@
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
 #include "riscv_model_impl.h"
+#include "checkpoint_manager.h"
 
 bool do_show_times = false;
 bool do_print_version = false;
@@ -79,6 +82,22 @@ bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
 
 bool config_enable_experimental_extensions = false;
+
+// Snapshot and checkpoint options
+std::string snapshot_save_path;
+std::string snapshot_restore_path;
+std::string checkpoint_dir = "checkpoints";
+uint64_t checkpoint_interval = 0;  // 0 means disabled
+std::vector<uint64_t> checkpoint_pc_values;
+std::vector<std::pair<uint64_t, uint64_t>> checkpoint_pc_ranges;
+std::vector<uint64_t> checkpoint_mem_addresses;
+std::vector<uint64_t> checkpoint_memory_read_addrs;
+std::vector<uint64_t> checkpoint_memory_write_addrs;
+std::vector<uint64_t> checkpoint_register_write_regs;
+std::vector<uint64_t> checkpoint_freg_write_regs;
+std::vector<uint16_t> checkpoint_csr_read_addrs;
+std::vector<uint16_t> checkpoint_csr_write_addrs;
+bool checkpoint_enabled = false;
 
 struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
@@ -173,6 +192,46 @@ static void setup_options(CLI::App &app)
   app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")
       ->option_text("<file>");
 #endif
+
+  // Snapshot options
+  app.add_option("--snapshot-save", snapshot_save_path,
+                 "Create a snapshot and save to file")
+      ->option_text("<file>");
+  app.add_option("--snapshot-restore", snapshot_restore_path,
+                 "Restore simulation state from snapshot file")
+      ->check(CLI::ExistingFile)
+      ->option_text("<file>");
+
+  // Checkpoint options
+  app.add_option("--checkpoint-dir", checkpoint_dir,
+                 "Directory to save checkpoint snapshots")
+      ->option_text("<dir>");
+  app.add_option("--checkpoint-interval", checkpoint_interval,
+                 "Create checkpoint every N instructions (0 = disabled)")
+      ->option_text("<uint>");
+  app.add_option("--checkpoint-pc", checkpoint_pc_values,
+                 "Create checkpoint when PC reaches this value (can be repeated)")
+      ->option_text("<uint>");
+  app.add_option("--checkpoint-memory-read", checkpoint_memory_read_addrs,
+                 "Create checkpoint when memory address is read (can be repeated)")
+      ->option_text("<hex_addr>");
+  app.add_option("--checkpoint-memory-write", checkpoint_memory_write_addrs,
+                 "Create checkpoint when memory address is written (can be repeated)")
+      ->option_text("<hex_addr>");
+  app.add_option("--checkpoint-register-write", checkpoint_register_write_regs,
+                 "Create checkpoint when integer register (x0-x31) is written (can be repeated)")
+      ->option_text("<reg_num>");
+  app.add_option("--checkpoint-freg-write", checkpoint_freg_write_regs,
+                 "Create checkpoint when floating-point register (f0-f31) is written (can be repeated)")
+      ->option_text("<reg_num>");
+  app.add_option("--checkpoint-csr-read", checkpoint_csr_read_addrs,
+                 "Create checkpoint when CSR is read (can be repeated, use hex address)")
+      ->option_text("<hex_csr_addr>");
+  app.add_option("--checkpoint-csr-write", checkpoint_csr_write_addrs,
+                 "Create checkpoint when CSR is written (can be repeated, use hex address)")
+      ->option_text("<hex_csr_addr>");
+  app.add_flag("--enable-checkpoints", checkpoint_enabled,
+               "Enable checkpoint system");
 
   app.add_flag("--trace-instr", config_print_instr,
                "Enable trace output for instruction execution");
@@ -326,6 +385,141 @@ void init_sail(uint64_t elf_entry, const char *config_file)
   }
   g_model.zinit_model(config_file != nullptr ? config_file : "");
   g_model.zinit_boot_requirements(UNIT);
+  
+  // Restore snapshot if requested
+  if (!snapshot_restore_path.empty()) {
+    auto *snapshot_mgr = g_model.get_snapshot_manager();
+    if (snapshot_mgr && snapshot_mgr->restore_snapshot(snapshot_restore_path)) {
+      fprintf(stdout, "Successfully restored snapshot from: %s\n",
+              snapshot_restore_path.c_str());
+    } else {
+      fprintf(stderr, "Failed to restore snapshot from: %s\n",
+              snapshot_restore_path.c_str());
+      exit(EXIT_FAILURE);
+    }
+  }
+  
+  // Configure checkpoints if enabled
+  if (checkpoint_enabled) {
+    auto *checkpoint_mgr = g_model.get_checkpoint_manager();
+    if (checkpoint_mgr) {
+      checkpoint_mgr->set_enabled(true);
+      
+      // Add instruction count checkpoint
+      if (checkpoint_interval > 0) {
+        checkpoint::CheckpointCondition cond;
+        cond.type = checkpoint::ConditionType::INSTRUCTION_COUNT;
+        cond.name = "instruction_interval";
+        cond.params.instruction_count.interval = checkpoint_interval;
+        cond.snapshot_dir = checkpoint_dir;
+        cond.snapshot_prefix = "checkpoint_inst";
+        cond.auto_increment = true;
+        checkpoint_mgr->add_condition(cond);
+      }
+      
+      // Add PC value checkpoints
+      for (size_t i = 0; i < checkpoint_pc_values.size(); i++) {
+        checkpoint::CheckpointCondition cond;
+        cond.type = checkpoint::ConditionType::PC_VALUE;
+        cond.name = "pc_value_" + std::to_string(i);
+        cond.params.pc_value.pc_value = checkpoint_pc_values[i];
+        cond.snapshot_dir = checkpoint_dir;
+        cond.snapshot_prefix = "checkpoint_pc_" + std::to_string(checkpoint_pc_values[i]);
+        cond.auto_increment = false;
+        checkpoint_mgr->add_condition(cond);
+      }
+      
+      // Add memory read checkpoints
+      for (size_t i = 0; i < checkpoint_memory_read_addrs.size(); i++) {
+        checkpoint::CheckpointCondition cond;
+        cond.type = checkpoint::ConditionType::MEMORY_READ;
+        cond.name = "mem_read_" + std::to_string(i);
+        cond.params.memory_address.address = checkpoint_memory_read_addrs[i];
+        cond.snapshot_dir = checkpoint_dir;
+        cond.snapshot_prefix = "checkpoint_mem_read_0x" + 
+                              std::to_string(checkpoint_memory_read_addrs[i]);
+        cond.auto_increment = true;
+        checkpoint_mgr->add_condition(cond);
+      }
+      
+      // Add memory write checkpoints
+      for (size_t i = 0; i < checkpoint_memory_write_addrs.size(); i++) {
+        checkpoint::CheckpointCondition cond;
+        cond.type = checkpoint::ConditionType::MEMORY_WRITE;
+        cond.name = "mem_write_" + std::to_string(i);
+        cond.params.memory_address.address = checkpoint_memory_write_addrs[i];
+        cond.snapshot_dir = checkpoint_dir;
+        cond.snapshot_prefix = "checkpoint_mem_write_0x" + 
+                              std::to_string(checkpoint_memory_write_addrs[i]);
+        cond.auto_increment = true;
+        checkpoint_mgr->add_condition(cond);
+      }
+      
+      // Add integer register write checkpoints
+      for (size_t i = 0; i < checkpoint_register_write_regs.size(); i++) {
+        uint64_t reg_num = checkpoint_register_write_regs[i];
+        if (reg_num > 31) {
+          fprintf(stderr, "Warning: Register number %" PRIu64 " out of range (0-31), skipping\n", reg_num);
+          continue;
+        }
+        checkpoint::CheckpointCondition cond;
+        cond.type = checkpoint::ConditionType::REGISTER_WRITE;
+        cond.name = "xreg_write_" + std::to_string(reg_num);
+        cond.params.register_write.reg_index = static_cast<unsigned>(reg_num);
+        cond.params.register_write.is_freg = false;
+        cond.snapshot_dir = checkpoint_dir;
+        cond.snapshot_prefix = "checkpoint_x" + std::to_string(reg_num) + "_write";
+        cond.auto_increment = true;
+        checkpoint_mgr->add_condition(cond);
+      }
+      
+      // Add floating-point register write checkpoints
+      for (size_t i = 0; i < checkpoint_freg_write_regs.size(); i++) {
+        uint64_t reg_num = checkpoint_freg_write_regs[i];
+        if (reg_num > 31) {
+          fprintf(stderr, "Warning: Register number %" PRIu64 " out of range (0-31), skipping\n", reg_num);
+          continue;
+        }
+        checkpoint::CheckpointCondition cond;
+        cond.type = checkpoint::ConditionType::REGISTER_WRITE;
+        cond.name = "freg_write_" + std::to_string(reg_num);
+        cond.params.register_write.reg_index = static_cast<unsigned>(reg_num);
+        cond.params.register_write.is_freg = true;
+        cond.snapshot_dir = checkpoint_dir;
+        cond.snapshot_prefix = "checkpoint_f" + std::to_string(reg_num) + "_write";
+        cond.auto_increment = true;
+        checkpoint_mgr->add_condition(cond);
+      }
+      
+      // Add CSR read checkpoints
+      for (size_t i = 0; i < checkpoint_csr_read_addrs.size(); i++) {
+        checkpoint::CheckpointCondition cond;
+        cond.type = checkpoint::ConditionType::CSR_READ;
+        cond.name = "csr_read_" + std::to_string(i);
+        cond.params.csr_access.csr_addr = checkpoint_csr_read_addrs[i];
+        cond.snapshot_dir = checkpoint_dir;
+        std::stringstream ss;
+        ss << "checkpoint_csr_read_0x" << std::hex << checkpoint_csr_read_addrs[i];
+        cond.snapshot_prefix = ss.str();
+        cond.auto_increment = true;
+        checkpoint_mgr->add_condition(cond);
+      }
+      
+      // Add CSR write checkpoints
+      for (size_t i = 0; i < checkpoint_csr_write_addrs.size(); i++) {
+        checkpoint::CheckpointCondition cond;
+        cond.type = checkpoint::ConditionType::CSR_WRITE;
+        cond.name = "csr_write_" + std::to_string(i);
+        cond.params.csr_access.csr_addr = checkpoint_csr_write_addrs[i];
+        cond.snapshot_dir = checkpoint_dir;
+        std::stringstream ss;
+        ss << "checkpoint_csr_write_0x" << std::hex << checkpoint_csr_write_addrs[i];
+        cond.snapshot_prefix = ss.str();
+        cond.auto_increment = true;
+        checkpoint_mgr->add_condition(cond);
+      }
+    }
+  }
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
@@ -401,6 +595,35 @@ void finish()
     fprintf(stderr, "Perf:             %.3f Kips\n", Kips);
   }
   close_logs();
+  
+  // Save snapshot if requested (before exiting)
+  if (!snapshot_save_path.empty()) {
+    auto *snapshot_mgr = g_model.get_snapshot_manager();
+    if (snapshot_mgr && snapshot_mgr->create_snapshot(snapshot_save_path,
+                                                      "manual",
+                                                      "Snapshot created at end of simulation")) {
+      fprintf(stdout, "Successfully saved snapshot to: %s\n",
+              snapshot_save_path.c_str());
+    } else {
+      fprintf(stderr, "Failed to save snapshot to: %s\n",
+              snapshot_save_path.c_str());
+    }
+  }
+  
+  // Print checkpoint statistics
+  if (checkpoint_enabled) {
+    auto *checkpoint_mgr = g_model.get_checkpoint_manager();
+    if (checkpoint_mgr) {
+      fprintf(stdout, "\nCheckpoint Statistics:\n");
+      fprintf(stdout, "  Total checkpoints created: %" PRIu64 "\n",
+              checkpoint_mgr->get_total_checkpoints_created());
+      auto stats = checkpoint_mgr->get_condition_stats();
+      for (const auto &[name, count] : stats) {
+        fprintf(stdout, "  %s: %" PRIu64 " triggers\n", name.c_str(), count);
+      }
+    }
+  }
+  
   exit(EXIT_SUCCESS);
 }
 
@@ -696,6 +919,7 @@ int inner_main(int argc, char **argv)
   } while (rvfi);
 
   g_model.model_fini();
+  
   flush_logs();
   close_logs();
 
