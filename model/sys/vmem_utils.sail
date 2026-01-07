@@ -109,7 +109,7 @@ function misaligned_order(n) = {
 // External API
 
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
-  if plat_enable_misaligned_access | hartSupports(Ext_Zicclsm) then {
+  if plat_enable_misaligned_access then {
     false
   } else {
     not(is_aligned_addr(vaddr, width))
