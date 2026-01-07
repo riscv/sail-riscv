@@ -203,7 +203,6 @@ private function check_mem_layout() -> bool =
     false
   } else check_pma_regions(pma_regions, zeros(), zeros())
 
-
 private function check_pmp() -> bool = {
   var valid : bool = true;
   if (config memory.pmp.na4_supported : bool) & sys_pmp_grain != 0
