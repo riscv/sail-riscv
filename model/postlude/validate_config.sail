@@ -322,7 +322,7 @@ private function check_extension_param_constraints() -> bool = {
   };
   if hartSupports(Ext_Zicclsm) & not(check_pma_regions_zicclsm(pma_regions)) then {
     valid = false;
-    print_endline("Zicclsm is enabled but cacheable and coherent memory regions are not set to NoFault.");
+    print_endline("The extension Zicclsm is enabled but at least one main memory region that is cacheable and coherent and has misaligned_fault = NoFault is required.");
   };
   valid
 }
