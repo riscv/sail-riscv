@@ -28,6 +28,7 @@ core {
     core/types_ext.sail,
     core/types.sail,
     core/vmem_types.sail,
+    core/mem_type_utils.sail,
     core/csr_begin.sail,
     core/callbacks.sail,
     core/reg_type.sail,

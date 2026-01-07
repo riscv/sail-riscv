@@ -80,14 +80,6 @@ private function pmpMatchAddr(
 
 // priority checks
 
-private function accessToFault(access : MemoryAccessType(ext_access_type)) -> ExceptionType =
-  match access {
-    Load(_)            => E_Load_Access_Fault(),
-    Store(_)           => E_SAMO_Access_Fault(),
-    LoadStore(_)       => E_SAMO_Access_Fault(),
-    InstructionFetch() => E_Fetch_Access_Fault(),
-  }
-
 function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   addr : physaddr,
   width : int('n),
@@ -105,15 +97,15 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 
     match pmpMatchAddr(addr, width, cfg, pmpReadAddrReg(i), prev_pmpaddr) {
       PMP_NoMatch      => (),
-      PMP_PartialMatch => return Some(accessToFault(access)),
+      PMP_PartialMatch => return Some(accessFaultFromAccessType(access)),
       PMP_Match        => return (
         if pmpCheckRWX(cfg, access) | (priv == Machine & not(pmpLocked(cfg)))
         then None()
-        else Some(accessToFault(access))
+        else Some(accessFaultFromAccessType(access))
       ),
     };
   };
-  if priv == Machine then None() else Some(accessToFault(access))
+  if priv == Machine then None() else Some(accessFaultFromAccessType(access))
 }
 
 function reset_pmp() -> unit = {
