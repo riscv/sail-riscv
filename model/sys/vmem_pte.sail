@@ -140,10 +140,29 @@ private function check_PTE_permission(
 
   // Step 8 of VATP (see vmem.sail).
   let access_ok : bool = match access {
-    Load(_)             => pte_R | (pte_X & mxr),
-    Store(_)            => pte_W,
-    LoadStore(_, _)     => pte_W & (pte_R | (pte_X & mxr)),
-    InstructionFetch(_) => pte_X,
+    Load(_)                     => pte_R | (pte_X & mxr),
+    LoadReserved(_)             => pte_R | (pte_X & mxr),
+    Store(_)                    => pte_W,
+    StoreConditional(_)         => pte_W,
+    Atomic(_, _, _)             => pte_W & (pte_R | (pte_X & mxr)),
+    InstructionFetch(_)         => pte_X,
+    CacheAccess(CB_zero())      => pte_W,
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_R => pte_R | (pte_X & mxr),
+      PREFETCH_W => pte_W,
+      PREFETCH_I => pte_X,
+    },
+    // "A cache-block management instruction is permitted to access
+    // the specified cache block whenever a load instruction or store
+    // instruction is permitted to access the corresponding physical
+    // addresses."
+    //
+    // TODO: "If neither a load instruction nor store instruction is
+    // permitted to access the physical addresses, but an instruction
+    // fetch is permitted to access the physical addresses, whether a
+    // cache-block management instruction is permitted to access the
+    // cache block is UNSPECIFIED."
+    CacheAccess(CB_manage())    => pte_R | (pte_X & mxr) | pte_W,
   };
   if not(access_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
@@ -160,13 +179,29 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   // Update 'dirty' bit?
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match access {
-                             InstructionFetch() => false,
-                             Load(_)            => false,
-                             Store(_)           => true,
-                             LoadStore(_, _)    => true
+                             InstructionFetch()          => false,
+                             Load(_)                     => false,
+                             LoadReserved(_)             => false,
+                             Store(_)                    => true,
+                             // "For the purposes of memory protection, a
+                             // failed SC.W may be treated like a store."
+                             StoreConditional(_)         => true,
+                             Atomic(_, _, _)             => true,
+                             // A cache-block management instruction
+                             // does not affect the dirty bit.
+                             CacheAccess(CB_manage())    => false,
+                             // "During address translation, the
+                             // [cache-block zero] instruction also
+                             // checks the accessed and dirty bits and
+                             // may either raise an exception or set the
+                             // bits as required."
+                             CacheAccess(CB_zero())      => true,
+                             CacheAccess(CB_prefetch(_)) => false,
                            });
   // Update 'accessed'-bit?
-  let update_a = (pte_flags[A] == 0b0);
+  // Cache-block management and zero instructions update the accessed bit,
+  // but cache-block prefetch instructions do not.
+  let update_a = (pte_flags[A] == 0b0) & not(is_prefetch_access(access));
 
   if update_d | update_a then {
     let pte_flags = [pte_flags with

@@ -47,10 +47,13 @@ let default_write_acc : mem_payload = Data
 
 function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
   match access {
-    Load(p)            => "R" ^ mem_payload_str(p),
-    Store(p)           => "W" ^ mem_payload_str(p),
-    LoadStore(lp, sp)  => "R" ^ mem_payload_str(lp) ^ "W" ^ mem_payload_str(sp),
-    InstructionFetch() => "X",
+    Load(p)             => "R" ^ mem_payload_str(p),
+    LoadReserved(p)     => "R" ^ mem_payload_str(p),
+    Store(p)            => "W" ^ mem_payload_str(p),
+    StoreConditional(p) => "W" ^ mem_payload_str(p),
+    Atomic(_, lp, sp)   => "R" ^ mem_payload_str(lp) ^ "W" ^ mem_payload_str(sp),
+    InstructionFetch()  => "X",
+    CacheAccess(_)      => "C",
   }
 
 overload to_str = {accessType_to_str}

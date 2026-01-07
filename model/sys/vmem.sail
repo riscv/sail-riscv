@@ -58,7 +58,7 @@ private function read_pte forall 'n, 'n in {4, 8} . (
 private val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  MemoryAccessType(mem_payload),  // Memory Load/Store/LoadStore/InstructionFetch
+  MemoryAccessType(mem_payload),  // Memory Load{Reserved}/Store{Conditional}/Atomic/InstructionFetch/CacheAccess
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum

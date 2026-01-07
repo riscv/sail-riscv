@@ -51,7 +51,7 @@ exceptions {
 }
 
 pmp {
-  requires prelude, core
+  requires prelude, core, Zicbop_types
 
   files
     pmp/pmp_regs.sail,
@@ -59,7 +59,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types
 
   files
     sys/sys_reservation.sail,
@@ -77,9 +77,11 @@ sys {
 }
 
 extensions {
-  requires prelude, core
+  requires prelude
 
   I {
+    requires core
+
     I_types {
       before sys
       files extensions/I/base_types.sail
@@ -98,20 +100,22 @@ extensions {
 
   A {
     A_types {
-      before sys
+      before core
       files extensions/A/aext_types.sail
     }
     Zaamo {
-      requires sys, A_types
+      requires core, sys, A_types
       files extensions/A/zaamo_insts.sail
     }
     Zalrsc {
-      requires sys, A_types
+      requires core, sys, A_types
       files extensions/A/zalrsc_insts.sail
     }
   }
 
   M {
+    requires core
+
     M_types {
       before sys
       files extensions/M/mext_types.sail
@@ -124,6 +128,8 @@ extensions {
 
   // RISC-V Bit manipulation extensions
   B {
+    requires core
+
     B_types {
       before sys
       files extensions/B/bext_types.sail
@@ -149,6 +155,8 @@ extensions {
 
   // Compressed instructions
   C {
+    requires core
+
     Zca {
       requires exceptions, sys, I
       files extensions/C/zca_insts.sail
@@ -161,12 +169,16 @@ extensions {
 
   // Hypervisor
   H {
+    requires core
+
     files
       extensions/H/hext_insts.sail
   }
 
   // Floating point (F and D extensions)
   FD {
+    requires core
+
     FD_core {
       // for Zfinx
       requires Stateen_regs
@@ -191,6 +203,8 @@ extensions {
 
   // RISC-V vector extension
   V {
+    requires core
+
     V_types {
       before sys
       files
@@ -224,6 +238,8 @@ extensions {
 
   // RISC-V Cryptography Extension
   K {
+    requires core
+
     K_core {
       files extensions/K/types_kext.sail
     }
@@ -250,6 +266,8 @@ extensions {
   }
 
   vector_crypto {
+    requires core
+
     Zvk_core {
       requires V_core, K_core
       before sys
@@ -288,6 +306,8 @@ extensions {
 
   // Control and Status Register (CSR) Instructions
   Zicsr {
+    requires core
+
     Zicsr_types {
       before sys
       files extensions/Zicsr/zicsr_types.sail
@@ -299,29 +319,33 @@ extensions {
   }
 
   Svinval {
-    requires sys, I
+    requires core, sys, I
     files extensions/Svinval/svinval_insts.sail
   }
 
   Zihpm {
+    requires core
     files extensions/Zihpm/zihpm.sail
   }
 
   Smcntrpmf {
+    requires core
     files extensions/Smcntrpmf/smcntrpmf.sail
   }
 
   Sscofpmf {
-    requires Zihpm
+    requires core, Zihpm
     files extensions/Sscofpmf/sscofpmf.sail
   }
 
   Sstc {
-    requires sys
+    requires core, sys
     files extensions/Sstc/sstc.sail
   }
 
   Zawrs {
+    requires core
+
     Zawrs_types {
       before sys
       files extensions/Zawrs/zawrs_types.sail
@@ -333,6 +357,8 @@ extensions {
   }
 
   Zicond {
+    requires core
+
     Zicond_types {
       before sys
       files extensions/Zicond/zicond_types.sail
@@ -344,10 +370,13 @@ extensions {
   }
 
   Zicntr {
+    requires core
     files extensions/Zicntr/zicntr_control.sail
   }
 
   Zicbom {
+    requires core
+
     Zicbom_types {
       before sys
       files extensions/Zicbom/zicbom_types.sail
@@ -360,28 +389,30 @@ extensions {
 
   Zicbop {
     Zicbop_types {
-      before sys
+      before core
       files extensions/Zicbop/zicbop_types.sail
     }
     Zicbop_insts {
       // PREFETCH.{I,R,W} instructions override ORI hints (rd=0)
       before I_insts
-      requires sys, Zicbop_types
+      requires core, sys, Zicbop_types
       files extensions/Zicbop/zicbop_insts.sail
     }
   }
 
   Zicboz {
-    requires sys
+    requires core, sys
     files extensions/Zicboz/zicboz_insts.sail
   }
 
   Zifenci {
-    requires sys
+    requires core, sys
     files extensions/Zifenci/zifencei_insts.sail
   }
 
   Zihintntl {
+    requires core
+
     Zihintntl_types {
       before sys // needs to appear before definition of `instruction`
       files extensions/Zihintntl/zihintntl_types.sail
@@ -394,12 +425,14 @@ extensions {
   }
 
   Zihintpause {
-    requires sys
+    requires core, sys
     before I_insts // PAUSE overrides a FENCE
     files extensions/Zihintpause/zihintpause_insts.sail
   }
 
   CFI {
+    requires core
+
     CFI_types {
       before sys
       files extensions/cfi/cfi_types.sail
@@ -417,6 +450,8 @@ extensions {
   }
 
   bfloat16 {
+    requires core
+
     bfloat16_core {
       requires sys, FD
       files extensions/bfloat16/zfbfmin_utils.sail
@@ -449,7 +484,7 @@ extensions {
   }
 
   rmem {
-    requires sys
+    requires core, sys
     files
       if $RMEM then
         extensions/rmem/insts_rmem.sail

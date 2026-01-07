@@ -71,7 +71,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
 
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
-  let vaddr : virtaddr = match ext_data_get_addr(rs1, zeros(), LoadStore(Data, Data), width) {
+  let vaddr : virtaddr = match ext_data_get_addr(rs1, zeros(), Atomic(op, Data, Data), width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
@@ -79,7 +79,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   if not(is_aligned_addr(vaddr, width))
   then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
 
-  let addr : physaddr = match translateAddr(vaddr, LoadStore(Data, Data)) {
+  let addr : physaddr = match translateAddr(vaddr, Atomic(op, Data, Data)) {
     Err(e, _) => return Memory_Exception(vaddr, e),
     Ok(addr, _) => addr,
   };
@@ -91,7 +91,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
 
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, aq & rl, rl, true) {
     Err(e) => return Memory_Exception(vaddr, e),
-    Ok(_)  => match mem_read(LoadStore(Data, Data), addr, width, aq, aq & rl, true) {
+    Ok(_)  => match mem_read(Atomic(op, Data, Data), addr, width, aq, aq & rl, true) {
       Err(e)     => return Memory_Exception(vaddr, e),
       Ok(loaded) => loaded,
     },

@@ -92,16 +92,29 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
         _ => {
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match access {
-            InstructionFetch() => attributes.executable,
-            Load(_)            => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
-            Store(_)           => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+            InstructionFetch()  => attributes.executable,
+            // XXX: remove reservability check from Load/Store
+            Load(_)             => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
+            Store(_)            => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+            // TODO: For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
+            // or absence (RsrvNonEventual) of an eventual success guarantee.
+            LoadReserved(_)     => attributes.readable & attributes.reservability != RsrvNone,
+            StoreConditional(_) => attributes.writable & attributes.reservability != RsrvNone,
             // TODO: Extend MemoryAccessType with the specific type of AMO operation. For now we assume all memory
             // supports all AMO operations.
-            LoadStore(_, _)    => attributes.readable & attributes.writable,
-            // TODO: Extend MemoryAccessType with a Cache() option. See https://github.com/riscv/sail-riscv/pull/792
-            // Cache(Zero)     => attributes.writable & attributes.supports_cbo_zero,
-            // Cache(_)        => internal_error(__FILE__, __LINE__,
-            //                                   "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
+            Atomic(_, _, _)     => attributes.readable & attributes.writable,
+
+            // TODO: The PMAs shall be the same for all physical
+            // addresses in the cache block, and if write permission
+            // is granted by the supported access type PMAs, read
+            // permission shall also be granted.
+            CacheAccess(CB_zero())      => attributes.writable & attributes.supports_cbo_zero,
+            CacheAccess(CB_manage())    => attributes.readable | attributes.writable,
+            CacheAccess(CB_prefetch(p)) => match p {
+              PREFETCH_R => attributes.readable,
+              PREFETCH_W => attributes.writable,
+              PREFETCH_I => attributes.executable,
+            },
           };
 
           if get_config_print_pma() & not(canAccess)
