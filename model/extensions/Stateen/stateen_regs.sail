@@ -61,17 +61,19 @@ private function get_mstateen(idx : range(0, 3)) -> bits(64) = {
 }
 
 // TODO: Update when Zcmt is implemented (JVT bit)
-private function is_mstateen_SE0_readonly_zero() -> bool = {
-  not(currentlyEnabled(Ext_H)) & not(currentlyEnabled(Ext_Zfinx))
-}
+private function is_mstateen_SE0_readonly_zero() -> bool =
+  config extensions.Stateen.SE0_readonly_zero : bool
+  & not(currentlyEnabled(Ext_H))
+  & not(hartSupports(Ext_Zfinx) & (misa[F] == 0b0))
+  & not(config extensions.Stateen.C_writable : bool)
 
 function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
   let v = Mk_Mstateen0(v);
   [m with
     SE0    = if is_mstateen_SE0_readonly_zero() then 0b0 else v[SE0],
     ENVCFG = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
-    FCSR   = if currentlyEnabled(Ext_Zfinx) then v[FCSR] else 0b0,
-    C      = 0b0,
+    FCSR   = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
+    C      = if config extensions.Stateen.C_writable then v[C] else 0b0,
   ];
 }
 
@@ -152,7 +154,8 @@ function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
   let v = Mk_Sstateen0(v);
   let mask = get_sstateen_mask(0);
   let legalized = [s with
-    FCSR = if misa[F] == 0b1 then 0b0 else v[FCSR],
+    FCSR = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
+    C    = if config extensions.Stateen.C_writable then v[C] else 0b0,
   ];
   Mk_Sstateen0(legalized.bits & mask[31..0])
 }

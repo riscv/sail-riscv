@@ -399,9 +399,6 @@
     "Sscofpmf": {
       "supported": true
     },
-    "Ssstateen": {
-      "supported": true
-    },
     "Sstc": {
       "supported": true
     },
@@ -419,9 +416,6 @@
     "Smcntrpmf": {
       "supported": true
     },
-    "Smstateen": {
-      "supported": true
-    },
     "Svbare": {
       "supported": true,
       "sfence_vma_illegal_if_svbare_only": true
@@ -437,6 +431,16 @@
     },
     "Sv57": {
       "supported": @CONFIG_XLEN_IS_64@
+    },
+    "Stateen": {
+      "Smstateen": {
+        "supported": true
+      },
+      "Ssstateen": {
+        "supported": true
+      },
+      "C_writable": false,
+      "SE0_readonly_zero": false
     }
   }
 }

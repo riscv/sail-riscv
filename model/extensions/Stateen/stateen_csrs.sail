@@ -55,14 +55,14 @@ mapping clause csr_name_map = 0x61D <-> "hstateen1h"
 mapping clause csr_name_map = 0x61E <-> "hstateen2h"
 mapping clause csr_name_map = 0x61F <-> "hstateen3h"
 
-function clause is_CSR_accessible(0x60C, priv, _) = is_hstateen_accessible()
-function clause is_CSR_accessible(0x60D, priv, _) = is_hstateen_accessible()
-function clause is_CSR_accessible(0x60E, priv, _) = is_hstateen_accessible()
-function clause is_CSR_accessible(0x60F, priv, _) = is_hstateen_accessible()
-function clause is_CSR_accessible(0x61C, priv, _) = (xlen == 32) & is_hstateen_accessible()
-function clause is_CSR_accessible(0x61D, priv, _) = (xlen == 32) & is_hstateen_accessible()
-function clause is_CSR_accessible(0x61E, priv, _) = (xlen == 32) & is_hstateen_accessible()
-function clause is_CSR_accessible(0x61F, priv, _) = (xlen == 32) & is_hstateen_accessible()
+function clause is_CSR_accessible(0x60C, _, _) = is_hstateen_accessible()
+function clause is_CSR_accessible(0x60D, _, _) = is_hstateen_accessible()
+function clause is_CSR_accessible(0x60E, _, _) = is_hstateen_accessible()
+function clause is_CSR_accessible(0x60F, _, _) = is_hstateen_accessible()
+function clause is_CSR_accessible(0x61C, _, _) = (xlen == 32) & is_hstateen_accessible()
+function clause is_CSR_accessible(0x61D, _, _) = (xlen == 32) & is_hstateen_accessible()
+function clause is_CSR_accessible(0x61E, _, _) = (xlen == 32) & is_hstateen_accessible()
+function clause is_CSR_accessible(0x61F, _, _) = (xlen == 32) & is_hstateen_accessible()
 
 function clause read_CSR(0x60C) = (hstateen0.bits & get_hstateen_mask(0))[xlen - 1 .. 0]
 function clause read_CSR(0x60D) = (hstateen1.bits & get_hstateen_mask(1))[xlen - 1 .. 0]
@@ -91,10 +91,10 @@ mapping clause csr_name_map = 0x10D <-> "sstateen1"
 mapping clause csr_name_map = 0x10E <-> "sstateen2"
 mapping clause csr_name_map = 0x10F <-> "sstateen3"
 
-function clause is_CSR_accessible(0x10C, priv, _) = is_sstateen_accessible()
-function clause is_CSR_accessible(0x10D, priv, _) = is_sstateen_accessible()
-function clause is_CSR_accessible(0x10E, priv, _) = is_sstateen_accessible()
-function clause is_CSR_accessible(0x10F, priv, _) = is_sstateen_accessible()
+function clause is_CSR_accessible(0x10C, _, _) = is_sstateen_accessible()
+function clause is_CSR_accessible(0x10D, _, _) = is_sstateen_accessible()
+function clause is_CSR_accessible(0x10E, _, _) = is_sstateen_accessible()
+function clause is_CSR_accessible(0x10F, _, _) = is_sstateen_accessible()
 
 function clause read_CSR(0x10C) = { let mask = get_sstateen_mask(0); zero_extend(sstateen0.bits & mask[31..0]) }
 function clause read_CSR(0x10D) = { let mask = get_sstateen_mask(1); zero_extend(sstateen1.bits & mask[31..0]) }

@@ -422,7 +422,7 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 // Supervisor-mode view of the state-enable extension
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
-function clause hartSupports(Ext_Ssstateen) = config extensions.Ssstateen.supported
+function clause hartSupports(Ext_Ssstateen) = config extensions.Stateen.Ssstateen.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -483,7 +483,7 @@ function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.suppor
 // Machine-mode view of the state-enable extension
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
-function clause hartSupports(Ext_Smstateen) = config extensions.Smstateen.supported
+function clause hartSupports(Ext_Smstateen) = config extensions.Stateen.Smstateen.supported
 
 // When adding a new extension X, we need to make sure that if X being supported
 // depends on Y being supported, then the value associated to X is _greater_ than
