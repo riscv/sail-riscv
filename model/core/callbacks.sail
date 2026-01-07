@@ -53,8 +53,8 @@ function redirect_callback(_) = ()
 
 /// Called on interrupts and exceptions. The exc_code does not include the 'interrupt' bit which is
 /// in a separate bool.
-val trap_callback = pure {cpp: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code) -> unit
-function trap_callback(_) = ()
+val trap_callback = pure {cpp: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code, /* reason */ TrapReason) -> unit
+function trap_callback(_, _, _) = ()
 
 // Overloads for easier use of callbacks
 function csr_name_write_callback(name : string, value : xlenbits) -> unit = {

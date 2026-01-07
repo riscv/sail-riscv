@@ -11,9 +11,8 @@ class Model;
 struct zMemoryAccessTypezIuzK;
 struct ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
 struct zPTW_Error;
-
-} // namespace hart
-
+struct zTrapReason;
+}
 // The Model class derives from this one so when Sail calls C callback
 // functions it actually calls methods of this class. However they are
 // virtual functions so they actually call the Platform implementations
@@ -47,7 +46,8 @@ public:
 
   virtual unit redirect_callback(sbits new_pc);
 
-  virtual unit trap_callback(bool is_interrupt, fbits cause);
+  virtual unit trap_callback(bool is_interrupt, fbits cause,
+                             const hart::zTrapReason &reason);
 
   // Page table walk callbacks
   virtual unit ptw_start_callback(

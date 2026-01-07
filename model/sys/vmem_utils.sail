@@ -126,10 +126,10 @@ function vmem_read_addr(vaddr, offset, width, acc, aq, rl, res) = {
     // "LR faults like a normal load, even though it's in the AMO major opcode space."
     // - Andrew Waterman, isa-dev, 10 Jul 2018.
     if   not(is_aligned_addr(vaddr, width))
-    then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
+    then return Err(Memory_Exception(vaddr, (E_Load_Addr_Align(), Trap_Reason_Unclassified())));
   } else {
     if check_misaligned(vaddr, width)
-    then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
+    then return Err(Memory_Exception(vaddr, (E_Load_Addr_Align(), Trap_Reason_Unclassified())));
   };
 
   // If the load is misaligned or an allowed misaligned access, split into `n`
@@ -147,10 +147,10 @@ function vmem_read_addr(vaddr, offset, width, acc, aq, rl, res) = {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
     match translateAddr(Virtaddr(vaddr), acc) {
-      Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+      Err((e, r), _) => return Err(Memory_Exception(Virtaddr(vaddr), (e, r))),
 
       Ok(paddr, _) => match mem_read(acc, paddr, bytes, aq, rl, res) {
-        Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+        Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), (e, Trap_Reason_Unclassified()))),
 
         Ok(v) => {
           if res then {
@@ -181,7 +181,7 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
 
 function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
   if   check_misaligned(vaddr, width)
-  then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+  then return Err(Memory_Exception(vaddr, (E_SAMO_Addr_Align(), Trap_Reason_Unclassified())));
 
   // If the store is misaligned or an allowed misaligned access, split into `n`
   // (single-copy-atomic) memory operations, each of `bytes` width. If the store is
@@ -198,7 +198,7 @@ function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
     match translateAddr(Virtaddr(vaddr), acc) {
-      Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+      Err((e, r), _) => return Err(Memory_Exception(Virtaddr(vaddr), (e, r))),
 
       // NOTE: Currently, we only announce the effective address if address translation is successful.
       // This may need revisiting, particularly in the misaligned case.
@@ -207,12 +207,12 @@ function vmem_write_addr(vaddr, width, data, acc, aq, rl, res) = {
         if res & not(match_reservation(bits_of(paddr))) then {
           write_success = false
         } else match mem_write_ea(paddr, bytes, aq, rl, res) {
-          Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+          Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), (e, Trap_Reason_Unclassified()))),
 
           Ok(()) => {
             let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
             match mem_write_value(paddr, bytes, write_value, aq, rl, res) {
-              Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+              Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), (e, Trap_Reason_Unclassified()))),
               Ok(s)  => write_success = write_success & s,
             }
           }
