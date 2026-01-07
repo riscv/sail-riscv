@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: BSD-2-Clause
 //=======================================================================================
 
-function clause currentlyEnabled(Ext_Smstateen) = hartSupports(Ext_Smstateen)
-function clause currentlyEnabled(Ext_Ssstateen) = hartSupports(Ext_Ssstateen)
+function clause currentlyEnabled(Ext_Smstateen) = hartSupports(Ext_Smstateen) & currentlyEnabled(Ext_Zicsr)
+function clause currentlyEnabled(Ext_Ssstateen) = hartSupports(Ext_Ssstateen) & currentlyEnabled(Ext_Zicsr)
 
 function is_mstateen_accessible() -> bool = hartSupports(Ext_Smstateen)
 function is_hstateen_accessible() -> bool = currentlyEnabled(Ext_H) & (currentlyEnabled(Ext_Smstateen) | currentlyEnabled(Ext_Ssstateen))
