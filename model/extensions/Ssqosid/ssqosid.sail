@@ -17,7 +17,7 @@ bitfield Srmcfg : xlenbits = {
 function clause currentlyEnabled(Ext_Ssqosid) = hartSupports(Ext_Ssqosid) &
                                                 currentlyEnabled(Ext_Zicsr)
 
-function legalize_srmcfg(o: Srmcfg, value : xlenbits) -> Srmcfg = {
+private function legalize_srmcfg(o: Srmcfg, value : xlenbits) -> Srmcfg = {
   let v = Mk_Srmcfg(value);
   let rcid_mask : bits(12) = zero_extend(ones(rcidlen));
   let mcid_mask : bits(12) = zero_extend(ones(mcidlen));
@@ -33,11 +33,11 @@ register srmcfg : Srmcfg
 mapping clause csr_name_map = 0x181  <-> "srmcfg"
 
 // TODO: Add dependence on mstateen0 when that is added
-function srmcfg_CSR_accessible(priv : Privilege) -> bool =
+private function srmcfg_CSR_accessible(priv : Privilege) -> bool =
     ((priv == Machine) | (priv == Supervisor))
 
 function clause is_CSR_accessible(0x181, priv, _) =
-    currentlyEnabled(Ext_Ssqosid) & srmcfg_CSR_accessible(priv)
+  currentlyEnabled(Ext_Ssqosid) & srmcfg_CSR_accessible(priv)
 
 function clause read_CSR(0x181) = srmcfg.bits
 
