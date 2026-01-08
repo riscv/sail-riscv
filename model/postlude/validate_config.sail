@@ -316,7 +316,7 @@ private function check_stateen_config() -> bool = {
   // TODO: Update when Zcmt is implemented
   if config extensions.Stateen.SE0_readonly_zero : bool & (hartSupports(Ext_Zfinx) | config extensions.Stateen.C_writable : bool) then {
     valid = false;
-    print_endline("Stateen SE0_readonly_zero is true but sstateen0 has writable bits (Zfinx or C_writable): SE0 must be writable.");
+    print_endline("Stateen SE0_readonly_zero is true but sstateen0 has writable bits (FCSR due to Zfinx support or C due to enabled C_writable): SE0 must be writable.");
   };
   valid
 }

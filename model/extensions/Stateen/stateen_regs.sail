@@ -63,7 +63,7 @@ private function get_mstateen(idx : range(0, 3)) -> bits(64) = {
 function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
   let v = Mk_Mstateen0(v);
   [m with
-    SE0    = if config extensions.Stateen.SE0_readonly_zero : bool then 0b0 else v[SE0],
+    SE0    = if config extensions.Stateen.SE0_readonly_zero then 0b0 else v[SE0],
     ENVCFG = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
     FCSR   = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
     C      = if config extensions.Stateen.C_writable then v[C] else 0b0,
