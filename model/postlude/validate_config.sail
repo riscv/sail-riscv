@@ -187,6 +187,9 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
                       " is not above the end of the previous region starting at " ^
                       bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
         return false;
+      } else if pma.base + pma.size >_u zero_extend(ones(physaddr_bits)) then {
+        print_endline("pma regions are above the limits of the physical address bit size. the limits of the physical address bit size. ");
+        return false;
       };
       check_pma_regions(rest, pma.base, pma.size)
     },
@@ -306,6 +309,22 @@ private function check_extension_param_constraints() -> bool = {
   valid
 }
 
+function check_physaddr_bits() -> bool = {
+  if (physaddr_bits : nat) > 64 then {
+    print_endline("physaddr_bits is bigger than 64");
+    false
+  } else if (physaddr_bits : nat) > 34 & xlen == 32 then {
+    print_endline("physaddr_bits is bigger than 34 when xlen is 32");
+    false
+  } else if (physaddr_bits : nat) > 32 & xlen == 32 & not(hartSupports(Ext_Sv32)) then {
+    print_endline("Sv32 is not enabled when xlen is 32 but physaddr_bits is bigger than 32");
+    false
+  } else if (physaddr_bits : nat) < 13 then {
+    print_endline("physaddr_bits is not big enough for a memory page");
+    false
+  } else true
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -315,4 +334,5 @@ function config_is_valid() -> bool = {
   & check_pmp()
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
+  & check_physaddr_bits()
 }
