@@ -42,11 +42,11 @@ function is_CSR_accessible_via_stateen(csr : csreg, priv : Privilege, _access_ty
     (0x10A, priv) => check_stateen_bit(priv, STATEEN_ENVCFG, 0),
 
     // fflags
-    (0x001, priv) => if currentlyEnabled(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true,
+    (0x001, priv) => if hartSupports(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true,
     // frm
-    (0x002, priv) => if currentlyEnabled(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true,
+    (0x002, priv) => if hartSupports(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true,
     // fcsr
-    (0x003, priv) => if currentlyEnabled(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true,
+    (0x003, priv) => if hartSupports(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true,
 
     // CSRs that are not governed by xstateen are not gated by
     // this function

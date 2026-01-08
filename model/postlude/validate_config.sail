@@ -306,6 +306,21 @@ private function check_extension_param_constraints() -> bool = {
   valid
 }
 
+private function check_stateen_config() -> bool = {
+  if not(hartSupports(Ext_Smstateen)) & not(hartSupports(Ext_Ssstateen)) then return true;
+  var valid : bool = true;
+  if config extensions.Stateen.SE0_readonly_zero : bool & hartSupports(Ext_H) then {
+    valid = false;
+    print_endline("Stateen SE0_readonly_zero is true but H extension is supported: SE0 must be writable when H is implemented.");
+  };
+  // TODO: Update when Zcmt is implemented
+  if config extensions.Stateen.SE0_readonly_zero : bool & (hartSupports(Ext_Zfinx) | config extensions.Stateen.C_writable : bool) then {
+    valid = false;
+    print_endline("Stateen SE0_readonly_zero is true but sstateen0 has writable bits (Zfinx or C_writable): SE0 must be writable.");
+  };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -315,4 +330,5 @@ function config_is_valid() -> bool = {
   & check_pmp()
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
+  & check_stateen_config()
 }
