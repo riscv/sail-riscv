@@ -59,7 +59,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen
 
   files
     sys/sys_reservation.sail,
@@ -168,6 +168,8 @@ extensions {
   // Floating point (F and D extensions)
   FD {
     FD_core {
+      // for Zfinx
+      requires Stateen_regs
       before sys
       files
         extensions/FD/freg_type.sail,
@@ -430,6 +432,19 @@ extensions {
     Zvfbfwma {
       requires sys, FD, V, bfloat16_core
       files extensions/bfloat16/zvfbfwma_insts.sail
+    }
+  }
+
+  Stateen {
+    Stateen_regs {
+      files extensions/Stateen/stateen_regs.sail
+    }
+    Stateen_csrs {
+      requires Stateen_regs
+      before sys
+      files
+        extensions/Stateen/stateen_csrs.sail,
+        extensions/Stateen/stateen_access_checks.sail,
     }
   }
 
