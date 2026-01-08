@@ -299,7 +299,10 @@ private function check_pma_regions_zicclsm(pmas : list(PMA_Region)) -> bool =
     [||] => true,
     pma :: rest => {
       let attr = pma.attributes;
-      if attr.cacheable & attr.coherent & attr.misaligned_fault != NoFault then {
+      if attr.cacheable & attr.coherent
+      & attr.readable & attr.writable
+      & attr.read_idempotent & attr.write_idempotent
+      & attr.misaligned_fault != NoFault then {
         return false;
       };
       check_pma_regions_zicclsm(rest)
@@ -321,7 +324,7 @@ private function check_extension_param_constraints() -> bool = {
   };
   if hartSupports(Ext_Zicclsm) & not(check_pma_regions_zicclsm(pma_regions)) then {
     valid = false;
-    print_endline("The extension Zicclsm is enabled but at least one main memory region that is cacheable and coherent and has misaligned_fault = NoFault is required.");
+    print_endline("The Zicclsm extension is enabled but at least one main memory region that is cacheable and coherent does not support misaligned accesses (misaligned_fault is not NoFault).");
   };
   valid
 }
