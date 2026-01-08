@@ -87,6 +87,11 @@ function clause hartSupports(Ext_Zicbop) = config extensions.Zicbop.supported
 enum clause extension = Ext_Zicboz
 mapping clause extensionName = Ext_Zicboz <-> "zicboz"
 function clause hartSupports(Ext_Zicboz) = config extensions.Zicboz.supported
+// Main memory supports misaligned loads/stores
+enum clause extension = Ext_Zicclsm
+mapping clause extensionName = Ext_Zicclsm <-> "zicclsm"
+function clause hartSupports(Ext_Zicclsm) = config extensions.Zicclsm.supported
+function clause currentlyEnabled(Ext_Zicclsm) = hartSupports(Ext_Zicclsm)
 // Control-flow Integrity: Landing Pad
 enum clause extension = Ext_Zicfilp
 mapping clause extensionName = Ext_Zicfilp <-> "zicfilp"
@@ -580,6 +585,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicbom,
   Ext_Zicbop,
   Ext_Zicboz,
+  Ext_Zicclsm,
   Ext_Zicfilp,
   Ext_Zicntr,
   Ext_Zicond,

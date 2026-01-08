@@ -63,6 +63,11 @@ mapping misaligned_fault_str : misaligned_fault <-> string = {
 }
 overload to_str = {misaligned_fault_str}
 
+enum MemoryRegionType = {
+  MainMemory,
+  IOMemory,
+}
+
 // Physical Memory Attributes for a region.
 struct PMA = {
   // These have no effect on the model currently but they are affected
@@ -121,6 +126,13 @@ function matching_pma_bits_range(pmas : list(PMA_Region), base : bits(64), size 
 function matching_pma(pmas : list(PMA_Region), addr : physaddr, width : mem_access_width) -> option(PMA_Region) = {
   matching_pma_bits_range(pmas, zero_extend(bits_of(addr)), to_bits(width))
 }
+
+// Technically you can have a region that satisfies these properties
+// but is still declared as IOMemory but we don't support that yet.
+function memory_region_type(pma : PMA) -> MemoryRegionType =
+  if pma.readable & pma.writable & pma.read_idempotent & pma.write_idempotent then
+    MainMemory
+  else IOMemory
 
 function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.cacheable then " cacheable" else "") ^
