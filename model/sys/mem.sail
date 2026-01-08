@@ -72,20 +72,6 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => internal_error(__FILE__, __LINE__, "Store-conditional with acquire semantics should be unreachable"),
   }
 
-private function accessFaultFromAccessType(access : MemoryAccessType(ext_access_type)) -> ExceptionType =
-  match access {
-    InstructionFetch() => E_Fetch_Access_Fault(),
-    Load(_)            => E_Load_Access_Fault(),
-    _                  => E_SAMO_Access_Fault(),
-  }
-
-private function alignmentFaultFromAccessType(access : MemoryAccessType(ext_access_type)) -> ExceptionType =
-  match access {
-    InstructionFetch() => E_Fetch_Addr_Align(),
-    Load(_)            => E_Load_Addr_Align(),
-    _                  => E_SAMO_Addr_Align(),
-  }
-
 private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 (
   paddr      : physaddr,

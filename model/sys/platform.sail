@@ -121,11 +121,7 @@ function clint_load(access, Physaddr(addr), width) = {
   else {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> <not-mapped>");
-    match access {
-      InstructionFetch() => Err(E_Fetch_Access_Fault()),
-      Load(_)            => Err(E_Load_Access_Fault()),
-      _                  => Err(E_SAMO_Access_Fault())
-    }
+    Err(accessFaultFromAccessType(access))
   }
 }
 
@@ -264,11 +260,7 @@ function htif_load(access, Physaddr(paddr), width) = {
   then    Ok(zero_extend(32, htif_tohost[31..0]))  // FIXME: Redundant zero_extend currently required by Lem backend
   else if width == 4 & paddr == base + 4
   then    Ok(zero_extend(32, htif_tohost[63..32])) // FIXME: Redundant zero_extend currently required by Lem backend
-  else match access {
-    InstructionFetch() => Err(E_Fetch_Access_Fault()),
-    Load(_)            => Err(E_Load_Access_Fault()),
-    _                  => Err(E_SAMO_Access_Fault())
-  }
+  else    Err(accessFaultFromAccessType(access))
 }
 
 private val htif_store : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
@@ -350,11 +342,7 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessT
   then clint_load(access, paddr, width)
   else if within_htif_readable(paddr, width)
   then htif_load(access, paddr, width)
-  else match access {
-    InstructionFetch() => Err(E_Fetch_Access_Fault()),
-    Load(_)            => Err(E_Load_Access_Fault()),
-    _                  => Err(E_SAMO_Access_Fault())
-  }
+  else Err(accessFaultFromAccessType(access))
 
 function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)
