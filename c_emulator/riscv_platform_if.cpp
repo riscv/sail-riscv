@@ -89,6 +89,14 @@ unit PlatformInterface::instret_callback(unit) {
   return UNIT;
 }
 
+unit PlatformInterface::trigger_match_callback([[maybe_unused]] sail_int index) {
+  return UNIT;
+}
+
+unit PlatformInterface::trigger_fire_callback([[maybe_unused]] sail_int index) {
+  return UNIT;
+}
+
 unit PlatformInterface::ptw_start_callback(
   [[maybe_unused]] uint64_t vpn,
   [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
@@ -196,6 +204,10 @@ bool PlatformInterface::get_config_print_exception(unit) {
 }
 
 bool PlatformInterface::get_config_print_interrupt(unit) {
+  return false;
+}
+
+bool PlatformInterface::get_config_print_trigger(unit) {
   return false;
 }
 
