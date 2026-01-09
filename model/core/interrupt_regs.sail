@@ -85,8 +85,13 @@ bitfield Medeleg : bits(64) = {
 }
 
 private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
-  // M-EnvCalls delegation is not supported
-  [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with MEnvCall = 0b0]
+  let v = Mk_Medeleg(v & plat_medeleg_delegatable_bits);
+  [v with
+    // M-EnvCalls delegation is not supported
+    MEnvCall = 0b0,
+    // medeleg[3] is hardwired to 0 when using `tcontrol`-based reentrancy handling for breakpoints.
+    Breakpoint = if sdtrig_breakpoint_reentrancy == Use_tcontrol then 0b0 else v[Breakpoint],
+  ]
 }
 
 // Note that mip's MEIP and SEIP had special handling. MEIP is always
