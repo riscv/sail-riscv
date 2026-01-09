@@ -571,6 +571,8 @@ function clause execute MRET() = {
   else if not(ext_check_xret_priv(Machine))
   then Ext_XRET_Priv_Failure()
   else {
+    match_icount_triggers(cur_privilege);
+
     let prev_priv = cur_privilege;
 
     mstatus[MIE]  = mstatus[MPIE];
@@ -586,6 +588,9 @@ function clause execute MRET() = {
 
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(mRET, prev_priv, cur_privilege);
+
+    if hartSupports(Ext_Sdtrig)
+    then tcontrol_mret_from_mmode();
 
     long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
@@ -626,6 +631,8 @@ function clause execute SRET() = {
   else if   not(ext_check_xret_priv(Supervisor))
   then      Ext_XRET_Priv_Failure()
   else {
+    match_icount_triggers(cur_privilege);
+
     let prev_priv = cur_privilege;
     let ret =
       // SRET in VS-Mode

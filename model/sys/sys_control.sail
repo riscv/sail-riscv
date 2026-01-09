@@ -282,6 +282,12 @@ function trap_handler(
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
+  match_icount_triggers(cur_privilege);
+  match c {
+    Interrupt(intr) => match_itrigger_triggers(cur_privilege, intr),
+    Exception(struct ExceptionContext { trap = exc, _ }) => match_etrigger_triggers(cur_privilege, exc),
+  };
+
   match (del_priv) {
     Machine => {
       mcause[IsInterrupt] = bool_to_bit(is_interrupt);
