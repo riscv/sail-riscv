@@ -1,13 +1,11 @@
 #include <cassert>
 #include <climits>
 #include <cstring>
-#include <ctype.h>
 #include <errno.h>
 #include <exception>
 #include <fcntl.h>
 #include <iostream>
 #include <optional>
-#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -24,6 +22,7 @@
 #include "sail.h"
 #include "sail_config.h"
 #include "symbol_table.h"
+#include "trace_output_jsonl.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
@@ -45,11 +44,13 @@ bool do_print_isa = false;
 
 std::string config_file;
 std::string term_log;
-std::string trace_log_path;
+std::string trace_text_path;
+std::string trace_jsonl_path;
 FILE *trace_log = stdout;
 std::string dtb_file;
 int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
+std::optional<trace_output_jsonl> trace_jsonl;
 std::vector<std::string> elfs;
 
 // The address of the HTIF tohost port, if it is enabled.
@@ -144,7 +145,14 @@ static void setup_options(CLI::App &app) {
   app.add_option("--terminal-log", term_log, "Terminal log output file")->option_text("<file>");
   app.add_option("--test-signature", sig_file, "Test signature file")->option_text("<file>");
   app.add_option("--config", config_file, "Configuration file")->check(CLI::ExistingFile)->option_text("<file>");
-  app.add_option("--trace-output", trace_log_path, "Trace output file")->option_text("<file>");
+  app
+    .add_option(
+      "--trace-text-output",
+      trace_text_path,
+      "Trace output file (human-readable text format; do not parse). Defaults to stdout."
+    )
+    ->option_text("<file>");
+  app.add_option("--trace-jsonl-output", trace_jsonl_path, "Trace output file (JSONL format)")->option_text("<file>");
 
   app.add_option("--signature-granularity", signature_granularity, "Signature granularity")->option_text("<uint>");
   app.add_option("--rvfi-dii", rvfi_dii_port, "RVFI DII port")
@@ -495,10 +503,10 @@ void init_logs() {
     exit(EXIT_FAILURE);
   }
 
-  if (!trace_log_path.empty()) {
-    trace_log = fopen(trace_log_path.c_str(), "w+");
+  if (!trace_text_path.empty()) {
+    trace_log = fopen(trace_text_path.c_str(), "w+");
     if (trace_log == nullptr) {
-      fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_log_path.c_str(), strerror(errno));
+      fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_text_path.c_str(), strerror(errno));
       exit(EXIT_FAILURE);
     }
   }
@@ -568,8 +576,11 @@ int inner_main(int argc, char **argv) {
     fprintf(stderr, "enabling unratified extensions.\n");
     g_model.set_enable_experimental_extensions(true);
   }
-  if (!trace_log_path.empty()) {
-    fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
+  if (!trace_text_path.empty()) {
+    fprintf(stderr, "using %s for text trace output.\n", trace_text_path.c_str());
+  }
+  if (!trace_jsonl_path.empty()) {
+    fprintf(stderr, "using %s for JSONL trace output.\n", trace_jsonl_path.c_str());
   }
 
   // Always validate the schema conformance of the config.
@@ -622,6 +633,12 @@ int inner_main(int argc, char **argv) {
   init_logs();
   log_callbacks log_cbs(config_print_reg, config_print_mem_access, config_print_ptw, config_use_abi_names, trace_log);
   g_model.register_callback(&log_cbs);
+
+  if (!trace_jsonl_path.empty()) {
+    trace_jsonl = trace_output_jsonl();
+    trace_jsonl->open(trace_jsonl_path);
+    g_model.register_callback(&*trace_jsonl);
+  }
 
   if (gettimeofday(&init_start, nullptr) < 0) {
     fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
