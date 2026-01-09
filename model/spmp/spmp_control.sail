@@ -581,6 +581,9 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    * and this function should allow all accesses to proceed */
   if not(sys_spmp_enabled) then return None();  // SPMP not implemented
 
+  /* SSPMP bit in mseccfg controls enablement. If 0, SPMP checks are disabled. */
+  if mseccfg[SSPMP] == 0b0 then return None();
+
   /* Check SPMP and Paging interaction:
    * - Machine mode: Always uses SPMP if implemented (Machine mode doesn't use virtual memory)
    * - Supervisor/User modes: SPMP is only active when satp.mode == Bare
@@ -665,7 +668,12 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
     let match_type = spmpAddrMatchType_of_bits(cfg[A]);
 
     /* Check if this entry is active (considering spmpswitch optimization) */
-    if spmpEntryActive(hw_idx, cfg) then {
+    let active = spmpEntryActive(hw_idx, cfg);
+    // if hw_idx == 63 then {
+    //   print_endline("DEBUG: Checking entry 63. Active=" ^ (if active then "T" else "F") ^ " Addr=" ^ hex_bits_str(spmpaddr) ^ " Prev=" ^ hex_bits_str(prev_spmpaddr) ^ " A=" ^ bits_str(cfg[A]) ^ " U=" ^ bits_str(cfg[U]) ^ " L=" ^ bits_str(cfg[L]));
+    // };
+
+    if active then {
       /* Calculate address range for this entry.
        *
        * IMPORTANT (per Sspmpsw spec):
@@ -690,6 +698,7 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
         },
         SPMP_PartialMatch => {
           /* Partial match is a violation - deny access */
+          print_endline("SPMP Partial Match Deny: " ^ hex_bits_str(paddr));
           return Some(accessToSpmpFault(acc))
         },
         SPMP_Match => {
@@ -699,6 +708,7 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
             return None()
           } else {
             /* Permission denied */
+            print_endline("SPMP Perm Deny: " ^ hex_bits_str(paddr));
             return Some(accessToSpmpFault(acc))
           }
         }
@@ -721,6 +731,8 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    * not that entries are configured (A != OFF). This is a security-first approach. */
   if has_implemented_entries then {
     /* At least one SPMP entry is implemented, deny unmatched access */
+    // let Physaddr(paddr) = addr;
+    // print_endline("SPMP No Match Deny: " ^ hex_bits_str(paddr));
     Some(accessToSpmpFault(acc))
   } else {
     /* No SPMP entries implemented (all resources allocated to PMP), allow access */
@@ -750,6 +762,7 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 function reset_spmp() -> unit = {
   /* Reset only hardware resources allocated to SPMP (from getPmpNum() to 63) */
   let spmp_start = getPmpNum();
+  // print_endline("DEBUG: reset_spmp called.");
   foreach (hw_idx from spmp_start to 63) {
     spmpcfg_n[hw_idx] = Mk_Spmpcfg_ent(0b0000000000);  // All bits cleared (A=OFF, L=0, etc.)
     spmpaddr_n[hw_idx] = zeros();
@@ -760,7 +773,45 @@ function reset_spmp() -> unit = {
 
   /* After reset, SPMP allows all access by default.
    * Software must explicitly configure SPMP entries to restrict access.
-   * This provides backward compatibility with systems that don't use SPMP. */
+   * This provides backward compatibility with systems that don't use SPMP.
+   *
+   * To achieve this, we configure the last SPMP entry (63) to allow all access
+   * to U-mode (accessing U-mode requires U=1).
+   * We use TOR mode from 0 to MAX.
+   * We enable this entry in spmpswitch.
+   *
+   * Note: This assumes we have at least one SPMP entry (spmp_start <= 63).
+   */
+  if spmp_start <= 63 then {
+    /* Configure entry 63:
+       Access Match: TOR (01)
+       Permissions: RWX (111)
+       User Mode: U=1
+       Locked: L=0
+       Shared: SHARED=0 (U-mode allowed, S-mode needs SUM=1 but we care about U-mode here)
+       
+       Encoding: SHARED(0) U(1) L(0) RSV(00) A(01) X(1) W(1) R(1)
+       Bits: 0 1 0 00 01 111 = 0b0100001111
+    */
+    spmpcfg_n[63] = Mk_Spmpcfg_ent(0b0100001111);
+    
+    /* Address: All ones (MAX_UINT)
+       With prev_addr (entry 62) being 0 (from reset loop above),
+       TOR [0, MAX) covers the entire address space.
+    */
+    spmpaddr_n[63] = ones();
+
+    /* Enable entry 63 in spmpswitch */
+    if xlen == 64 then {
+      /* Set bit 63 in spmpswitch (xlenbits) */
+      let one : xlenbits = zero_extend(0b1);
+      spmpswitch = one << 63;
+    } else {
+      /* RV32: Set bit 31 in spmpswitchh (bits(32)) */
+      let one : bits(32) = zero_extend(0b1);
+      spmpswitchh = one << 31;
+    }
+  }
 }
 
 

@@ -200,3 +200,6 @@ enum FflagsDirtyPolicy = {
 }
 
 let fflags_dirty_policy : FflagsDirtyPolicy = config extensions.F.fflags_dirty_policy
+
+// Platform SPMP support
+let sys_spmp_enabled : bool = config memory.spmp.enabled

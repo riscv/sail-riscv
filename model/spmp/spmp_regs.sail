@@ -29,7 +29,7 @@
 
 /* SPMP platform configuration parameters.
  * These values are typically set at build time based on platform capabilities. */
-let sys_spmp_enabled : bool = config memory.spmp.enabled  // Platform SPMP support
+// let sys_spmp_enabled : bool = config memory.spmp.enabled  // Platform SPMP support
 let sys_spmp_count : nat = config memory.spmp.count       // Number of SPMP entries
 
 /* G parameter that specifies the SPMP grain size. The grain size is 2^(G+2), e.g.
