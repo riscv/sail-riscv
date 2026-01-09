@@ -305,6 +305,8 @@ bitfield Seccfg : bits(64) = {
   SSEED  : 9,
   // Enable access to SEED in U-mode
   USEED  : 8,
+  // Enable SPMP
+  SSPMP  : 6,
 }
 
 private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
@@ -322,6 +324,7 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
     MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
     USEED = if useed_read_only_zero then 0b0 else v[USEED],
+    SSPMP = if sys_spmp_enabled then v[SSPMP] else 0b0,
   ]
 }
 
@@ -331,8 +334,8 @@ mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) // mseccfg
-function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32 // mseccfgh
+function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | sys_spmp_enabled // mseccfg
+function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | sys_spmp_enabled) & xlen == 32 // mseccfgh
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]

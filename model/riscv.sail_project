@@ -63,7 +63,6 @@ spmp {
   files
     spmp/spmp_regs.sail,
     spmp/spmp_control.sail,
-    spmp/spmp_switch_test.sail,
 }
 
 sys {
@@ -487,10 +486,10 @@ postlude {
 
 unit_tests {
   after postlude
-  requires prelude, core, sys, exceptions, postlude
+  requires prelude, core, sys, exceptions, postlude, pmp, spmp
 
   files
-    unit_tests/test_mstatus.sail,
+    unit_tests/test_mstatus.sail
 }
 
 main {

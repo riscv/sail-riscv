@@ -71,3 +71,6 @@ overload to_str = {AmocasOddRegisterReservedBehavior_str}
 // "Fatal"   – raise a Sail exception, stopping execution.
 // "Illegal" – treat it as an illegal instruction.
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
+
+// Platform SPMP support
+let sys_spmp_enabled : bool = config memory.spmp.enabled
