@@ -57,20 +57,30 @@ let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_
 
 // Defines the policy for handling reserved behaviors.
 enum AmocasOddRegisterReservedBehavior = {
-  Fatal,
-  Illegal,
+  AMOCAS_Fatal,
+  AMOCAS_Illegal,
 }
 
 mapping AmocasOddRegisterReservedBehavior_str : AmocasOddRegisterReservedBehavior <-> string = {
-  Fatal   <-> "Fatal",
-  Illegal <-> "Illegal",
+  AMOCAS_Fatal   <-> "AMOCAS_Fatal",
+  AMOCAS_Illegal <-> "AMOCAS_Illegal",
 }
 overload to_str = {AmocasOddRegisterReservedBehavior_str}
 
-// The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
-// "Fatal"   – raise a Sail exception, stopping execution.
-// "Illegal" – treat it as an illegal instruction.
+enum PmpWriteOnlyReservedBehavior = {
+  PMP_Fatal,
+  PMP_ClearPermissions,
+}
+
+mapping PmpWriteOnlyReservedBehavior_str : PmpWriteOnlyReservedBehavior <-> string = {
+  PMP_Fatal <-> "PMP_Fatal",
+  PMP_ClearPermissions <-> "PMP_ClearPermissions",
+}
+overload to_str = {PmpWriteOnlyReservedBehavior_str}
+
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
 
 // Platform SPMP support
 let sys_spmp_enabled : bool = config memory.spmp.enabled
+let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
+

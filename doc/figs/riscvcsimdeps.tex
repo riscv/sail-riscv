@@ -31,8 +31,8 @@
 
   \pgfonlayer{main}
 
-  \node (cmodel)     [cmodel]                        {\textbf{C translation}\\
-                                                         \texttt{sail\_riscv\_model}};
+  \node (cmodel)     [cmodel]                        {\textbf{C++ translation}\\
+                                                         \texttt{sail\_riscv\_model.\{h,cpp\}}};
 
   \node (csim)       [c, above left=of cmodel]       {\textbf{C++ Simulator}\\
                                                          \texttt{sail\_riscv\_sim}\\
@@ -40,17 +40,13 @@
                                                          initialization\\
                                                          exit code};
 
-  \node (callbacks)  [c, below left=of cmodel]       {\textbf{Callbacks}\\
-                                                         \texttt{riscv\_callbacks.\{sail,cpp\}}\\
-                                                         state-change callbacks\\
-                                                         logging};
   \coordinate (smloc) at ($(cmodel)+(0,4.5)$);
   \node (sailmodel)  [sail] at (smloc)               {\textbf{Sail model}\\
                                                          \texttt{*.sail}};
 
-  \node (plat)       [c, below right=of cmodel]      {\textbf{C platform interface}\\
-                                                         \texttt{riscv\_platform}\\
-                                                         \textsc{lr/sc} reservation};
+  \node (plat)       [c, below right=of cmodel]      {\textbf{C++ platform interface}\\
+                                                         \texttt{riscv\_platform\_if.\{h,cpp\}}\\
+                                                         handler declarations};
 
   \node (cfg)        [cfg, above=of plat]            {\textbf{Model configuration}\\
                                                          ISA options\\
@@ -61,8 +57,19 @@
                                                          \texttt{sail\_riscv\_config\_schema.json}\\
                                                          legal configuration values};
 
-  \node (platimpl)   [c, below=of plat]              {\textbf{C platform implementation}\\
-                                                         \texttt{riscv\_platform\_impl}};
+  \node (callbacks)  [c, below=of plat]              {\textbf{Callbacks}\\
+                                                         \texttt{callbacks.sail}\\
+                                                         \texttt{riscv\_callbacks\_if.\{h,cpp\}}\\
+                                                         state-change callbacks};
+
+  \node (platimpl)   [c, below=of callbacks]         {\textbf{C++ platform implementation}\\
+                                                         \texttt{riscv\_model\_impl.\{h,cpp\}}\\
+                                                         handler implementations};
+
+  \coordinate (log)  at ($(csim |- callbacks)$);
+  \node (logging)    [c] at (log)                    {\textbf{Execution Trace}\\
+                                                         \texttt{riscv\_callbacks\_log.\{h,cpp\}}\\
+                                                         log callbacks};
 
   \coordinate (clib) at ($(cmodel)!1.5!(cmodel |- platimpl)$);
   \node (csail)      [csail]  at (clib)              {\textbf{C Sail library}\\
@@ -81,17 +88,17 @@
 
   \draw[->,dep]  (cmodel)    edge                    (plat)
                              edge                    (csail)
-                             edge                    (callbacks)
                              edge                    (cfg);
 
-  \draw[->,dep]  (plat)      edge                    (platimpl);
+  \draw[->,dep]  (platimpl)  edge                    (csail)
+                             edge                    (callbacks);
 
-  \draw[->,dep]  (platimpl)  edge                    (csail);
+  \draw[->,dep]  (logging)   edge                    (callbacks);
 
   \draw[->,dep]  (csim)      edge                    (cmodel)
-                             edge                    (callbacks)
                              edge [out=-90,in=180]   (platimpl)
-                             edge [out=-90,in=135]   (csail);
+                             edge [out=-90,in=135]   (csail)
+                             edge                    (logging);
 
   \endpgfonlayer
 \end{tikzpicture}

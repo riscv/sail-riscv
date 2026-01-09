@@ -8,8 +8,8 @@
 
 // Machine-mode and supervisor-mode functionality.
 
-function effectivePrivilege(access_type : MemoryAccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
-  if   access_type != InstructionFetch() & m[MPRV] == 0b1
+function effectivePrivilege(access : MemoryAccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
+  if   access != InstructionFetch() & m[MPRV] == 0b1
   then privLevel_bits(m[MPP], bitzero) // TODO: use m[MPV] if hypervisor enabled
   else priv
 

@@ -37,3 +37,6 @@ To set up these hooks, install [pre-commit](https://pre-commit.com)
 
 For information on contributing an extension, please see
 [doc/AddingExtensions.md](doc/AddingExtensions.md).
+
+We _require_ any and all use of generative AI tools, e.g. for writing
+code, comments, documentation, or PR text, to be disclosed.

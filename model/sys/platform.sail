@@ -70,7 +70,7 @@ let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
 let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
 
 private val clint_load : forall 'n, 'n > 0. (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
-function clint_load(t, Physaddr(addr), width) = {
+function clint_load(access, Physaddr(addr), width) = {
   let addr = addr - plat_clint_base;
   // FIXME: For now, only allow exact aligned access.
   if addr == MSIP_BASE & ('n == 8 | 'n == 4)
@@ -121,11 +121,7 @@ function clint_load(t, Physaddr(addr), width) = {
   else {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> <not-mapped>");
-    match t {
-      InstructionFetch() => Err(E_Fetch_Access_Fault()),
-      Load(_)            => Err(E_Load_Access_Fault()),
-      _                  => Err(E_SAMO_Access_Fault())
-    }
+    Err(accessFaultFromAccessType(access))
   }
 }
 
@@ -248,7 +244,7 @@ private function reset_htif () -> unit = {
 // dispatched the address.
 
 private val htif_load : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
-function htif_load(acc, Physaddr(paddr), width) = {
+function htif_load(access, Physaddr(paddr), width) = {
   if   get_config_print_htif()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ bits_str(htif_tohost));
 
@@ -264,11 +260,7 @@ function htif_load(acc, Physaddr(paddr), width) = {
   then    Ok(zero_extend(32, htif_tohost[31..0]))  // FIXME: Redundant zero_extend currently required by Lem backend
   else if width == 4 & paddr == base + 4
   then    Ok(zero_extend(32, htif_tohost[63..32])) // FIXME: Redundant zero_extend currently required by Lem backend
-  else match acc {
-    InstructionFetch() => Err(E_Fetch_Access_Fault()),
-    Load(_)            => Err(E_Load_Access_Fault()),
-    _                  => Err(E_SAMO_Access_Fault())
-  }
+  else    Err(accessFaultFromAccessType(access))
 }
 
 private val htif_store : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
@@ -345,16 +337,12 @@ function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : phys
   then false
   else within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (t : MemoryAccessType(ext_access_type), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
+function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessType(ext_access_type), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
-  then clint_load(t, paddr, width)
+  then clint_load(access, paddr, width)
   else if within_htif_readable(paddr, width)
-  then htif_load(t, paddr, width)
-  else match t {
-    InstructionFetch() => Err(E_Fetch_Access_Fault()),
-    Load(_)            => Err(E_Load_Access_Fault()),
-    _                  => Err(E_SAMO_Access_Fault())
-  }
+  then htif_load(access, paddr, width)
+  else Err(accessFaultFromAccessType(access))
 
 function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)
