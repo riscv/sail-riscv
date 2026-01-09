@@ -187,6 +187,12 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
+  match_icount_triggers(cur_privilege);
+  match c {
+    Interrupt(intr) => match_itrigger_triggers(cur_privilege, intr),
+    Exception(exc)  => match_etrigger_triggers(cur_privilege, exc),
+  };
+
   match (del_priv) {
     Machine => {
       mcause[IsInterrupt] = bool_to_bit(is_interrupt);
@@ -201,6 +207,8 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
       cur_privilege = del_priv;
 
       handle_trap_extension(del_priv, pc, ext);
+
+      if currentlyEnabled(Ext_Sdtrig) then tcontrol_trap_into_mmode();
 
       track_trap(del_priv);
 
@@ -249,6 +257,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext)
     },
     CTL_MRET()  => {
+      match_icount_triggers(cur_privilege);
+
       let prev_priv = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
@@ -257,8 +267,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
-      if   hartSupports(Ext_Zicfilp)
-      then zicfilp_restore_elp_on_xret(mRET, cur_privilege);
+      if hartSupports(Ext_Zicfilp) then zicfilp_restore_elp_on_xret(mRET, cur_privilege);
+
+      if hartSupports(Ext_Sdtrig) then tcontrol_mret_from_mmode();
 
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
@@ -268,6 +279,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       prepare_xret_target(Machine)
     },
     CTL_SRET()  => {
+      match_icount_triggers(cur_privilege);
+
       let prev_priv = cur_privilege;
       mstatus[SIE]  = mstatus[SPIE];
       mstatus[SPIE] = 0b1;
@@ -276,8 +289,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
-      if   hartSupports(Ext_Zicfilp)
-      then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
+      if hartSupports(Ext_Zicfilp) then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
 
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 

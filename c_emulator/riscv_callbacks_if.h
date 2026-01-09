@@ -46,6 +46,9 @@ public:
 
   virtual void trap_callback(hart::Model &model, bool is_interrupt, fbits cause);
 
+  virtual void trigger_match_callback(hart::Model &model, sail_int trig_index);
+  virtual void trigger_fire_callback(hart::Model &model, sail_int trig_index);
+
   // Page table walk callbacks
   virtual void ptw_start_callback(
     hart::Model &model,

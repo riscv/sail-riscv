@@ -49,6 +49,9 @@ public:
 
   virtual unit trap_callback(bool is_interrupt, fbits cause);
 
+  virtual unit trigger_match_callback(sail_int index);
+  virtual unit trigger_fire_callback(sail_int index);
+
   // Page table walk callbacks
   virtual unit ptw_start_callback(
     uint64_t vpn,
@@ -81,6 +84,7 @@ public:
   virtual bool get_config_print_clint(unit);
   virtual bool get_config_print_exception(unit);
   virtual bool get_config_print_interrupt(unit);
+  virtual bool get_config_print_trigger(unit);
   virtual bool get_config_print_htif(unit);
   virtual bool get_config_print_pma(unit);
   virtual bool get_config_rvfi(unit);

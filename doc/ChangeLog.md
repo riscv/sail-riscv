@@ -2,6 +2,9 @@
 
 - The following extensions have been added:
   - Zicfiss
+  - Sdtrig (partial: only icount, itrigger, and etrigger triggers; tdata3 and {m,h,s}context are not yet supported)
+
+- A `--trace-trigger` command-line option has been added to track triggers in the execution trace.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in the execution trace
