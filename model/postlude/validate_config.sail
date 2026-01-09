@@ -524,6 +524,16 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
   };
+  if (config extensions.Sdtrig.supported : bool) then {
+    if sizeof(num_triggers) == 0 then {
+      print_endline("The Sdtrig extension is supported but `num_triggers` is 0: supporting Sdtrig requires at least 1 trigger.");
+      valid = false;
+    };
+    if (config extensions.Sdtrig.breakpoint_reentrancy : Sdtrig_breakpoint_reentrancy) == Use_tcontrol & not(config extensions.Sdtrig.tcontrol.supported : bool) then {
+      print_endline("Sdtrig breakpoint reentrancy is configured to `Use_tcontrol` but the `tcontrol` CSR is not supported: `Use_tcontrol` requires `tcontrol` to be supported.");
+      valid = false;
+    };
+  };
   valid
 }
 
