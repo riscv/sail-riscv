@@ -158,6 +158,20 @@ unit ModelImpl::instret_callback(unit) {
   return UNIT;
 }
 
+unit ModelImpl::trigger_match_callback(sail_int index) {
+  for (auto c : m_callbacks) {
+    c->trigger_match_callback(*this, index);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::trigger_fire_callback(sail_int index) {
+  for (auto c : m_callbacks) {
+    c->trigger_fire_callback(*this, index);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::ptw_start_callback(
   uint64_t vpn,
   hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
@@ -308,6 +322,10 @@ bool ModelImpl::get_config_print_interrupt(unit) {
   return m_config_print_interrupt;
 }
 
+bool ModelImpl::get_config_print_trigger(unit) {
+  return m_config_print_trigger;
+}
+
 bool ModelImpl::get_config_print_htif(unit) {
   return m_config_print_htif;
 }
@@ -338,6 +356,10 @@ void ModelImpl::set_config_print_exception(bool on) {
 
 void ModelImpl::set_config_print_interrupt(bool on) {
   m_config_print_interrupt = on;
+}
+
+void ModelImpl::set_config_print_trigger(bool on) {
+  m_config_print_trigger = on;
 }
 
 void ModelImpl::set_config_print_htif(bool on) {

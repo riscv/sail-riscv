@@ -493,6 +493,16 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
   };
+  if hartSupports(Ext_Sdtrig) then {
+    if sizeof(num_triggers) == 0 then {
+      print_endline("The Sdtrig extension is supported but `num_triggers` is 0: supporting Sdtrig requires at least 1 trigger.");
+      valid = false;
+    };
+    if sdtrig_breakpoint_reentrancy == Use_tcontrol & not(sdtrig_has_tcontrol) then {
+      print_endline("Sdtrig breakpoint reentrancy is configured to `Use_tcontrol` but the `tcontrol` CSR is not supported: `Use_tcontrol` requires `tcontrol` to be supported.");
+      valid = false;
+    }
+  };
   valid
 }
 

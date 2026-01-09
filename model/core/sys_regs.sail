@@ -720,9 +720,11 @@ private function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
 }
 
+function read_sstatus() -> Sstatus = lower_mstatus(mstatus)
+
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
-function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
+function clause read_CSR(0x100) = read_sstatus().bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0]) }
 
 // other non-VM related supervisor state
@@ -797,18 +799,6 @@ function legalize_satp(
     internal_error(__FILE__, __LINE__, "Unsupported xlen" ^ dec_str(xlen))
   }
 }
-
-// disabled trigger/debug module
-register tselect : xlenbits
-
-mapping clause csr_name_map = 0x7a0  <-> "tselect"
-mapping clause csr_name_map = 0x7a1  <-> "tdata1"
-mapping clause csr_name_map = 0x7a2  <-> "tdata2"
-mapping clause csr_name_map = 0x7a3  <-> "tdata3"
-
-function clause is_CSR_accessible(0x7a0, _, _) = true
-function clause read_CSR(0x7a0) = ~(tselect)  // this indicates we don't have any trigger support
-function clause write_CSR(0x7a0, value) = { tselect = value; Ok(tselect) }
 
 //
 // Entropy Source - Platform access to random bits.

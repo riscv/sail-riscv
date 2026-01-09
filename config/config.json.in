@@ -598,6 +598,31 @@
     "Ssccptr": {
       "supported": true
     },
+    "Sdtrig": {
+      "supported": true,
+      "num_triggers": 15,
+      // `breakpoint_reentrancy` must be one of the below strings:
+      // . `Use_tcontrol`: use the `mte` and `mpte` bits in the `tcontrol` CSR (this requires `Sdtrig.tcontrol.supported` to be true)
+      // . `Use_interrupt_enables`: use `mstatus.MIE` and the `SIE` bits in `sstatus` and `vsstatus`
+      // . `No_reentrancy_support`: no specific support for reentrancy
+      // Note: `Use_tcontrol` hardwires medeleg[3] to 0, which breaks the `sbreak` test in `riscv-tests`.
+      "breakpoint_reentrancy": "Use_interrupt_enables",
+      // CSRs
+      "tcontrol": {
+        "supported": true
+      },
+      // Triggers
+      "icount": {
+        "supported": true,
+        "count_hardwired_one": false
+      },
+      "etrigger": {
+        "supported": true
+      },
+      "itrigger": {
+        "supported": true
+      }
+    },
     "Sscofpmf": {
       "supported": true
     },

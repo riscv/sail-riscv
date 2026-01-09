@@ -198,6 +198,12 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
+  match_icount_triggers(cur_privilege);
+  match c {
+    Interrupt(intr) => match_itrigger_triggers(cur_privilege, intr),
+    Exception(exc)  => match_etrigger_triggers(cur_privilege, exc),
+  };
+
   match (del_priv) {
     Machine => {
       mcause[IsInterrupt] = bool_to_bit(is_interrupt);
@@ -212,6 +218,8 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
       cur_privilege = del_priv;
 
       handle_trap_extension(del_priv, pc, ext);
+
+      if currentlyEnabled(Ext_Sdtrig) then tcontrol_trap_into_mmode();
 
       track_trap(del_priv, is_interrupt, cause);
 
