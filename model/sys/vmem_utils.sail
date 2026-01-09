@@ -117,7 +117,7 @@ function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
 }
 
 val vmem_read_addr : forall 'width, is_mem_width('width).
-  (virtaddr, xlenbits, int('width), MemoryAccessType(ext_access_type), bool, bool, bool)
+  (virtaddr, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
 function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
@@ -176,7 +176,7 @@ function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
 termination_measure vmem_read_addr repeat n
 
 val vmem_write_addr : forall 'width, is_mem_width('width).
-  (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(ext_access_type), bool, bool, bool)
+  (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
@@ -234,7 +234,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 termination_measure vmem_write_addr repeat n
 
 val vmem_read : forall 'width, is_mem_width('width).
-  (regidx, xlenbits, int('width), MemoryAccessType(ext_access_type), bool, bool, bool)
+  (regidx, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
 function vmem_read(rs, offset, width, access, aq, rl, res) = {
@@ -249,7 +249,7 @@ function vmem_read(rs, offset, width, access, aq, rl, res) = {
 }
 
 val vmem_write : forall 'width, is_mem_width('width).
-  (regidx, xlenbits, int('width), bits(8 * 'width), MemoryAccessType(ext_access_type), bool, bool, bool)
+  (regidx, xlenbits, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bool, ExecutionResult)
 
 function vmem_write(rs_addr, offset, width, data, access, aq, rl, res) = {

@@ -9,12 +9,22 @@
 
 // permission checks
 
-private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(ext_access_type)) -> bool =
+private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_payload)) -> bool =
   match access {
-    Load(_)            => ent[R] == 0b1,
-    Store(_)           => ent[W] == 0b1,
-    LoadStore(_)       => ent[R] == 0b1 & ent[W] == 0b1,
-    InstructionFetch() => ent[X] == 0b1,
+    Load(_)             => ent[R] == 0b1,
+    LoadReserved(_)     => ent[R] == 0b1,
+    Store(_)            => ent[W] == 0b1,
+    StoreConditional(_) => ent[W] == 0b1,
+    Atomic(_)           => ent[R] == 0b1 & ent[W] == 0b1,
+    InstructionFetch()  => ent[X] == 0b1,
+
+    CacheAccess(CB_manage())    => bool_bits(ent[R]) | bool_bits(ent[W]),
+    CacheAccess(CB_zero())      => bool_bits(ent[W]),
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_I => bool_bits(ent[X]),
+      PREFETCH_R => bool_bits(ent[R]),
+      PREFETCH_W => bool_bits(ent[W]),
+    },
   }
 
 
@@ -83,13 +93,21 @@ private function pmpMatchAddr(
 function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   addr : physaddr,
   width : int('n),
-  access : MemoryAccessType(ext_access_type),
+  access : MemoryAccessType(mem_payload),
   priv : Privilege,
 ) -> option(ExceptionType) = {
 
   if sys_pmp_count == 0 then return None();
 
   let width : xlenbits = to_bits(width);
+
+  // TODO for accesses of type CacheAccess:
+  //
+  // The CMO extensions impose the following constraints on the
+  // physical addresses in a given cache block: The PMP access control
+  // bits shall be the same for all physical addresses in the cache
+  // block, and if write permission is granted by the PMP access
+  // control bits, read permission shall also be granted.
 
   foreach (i from 0 to sys_pmp_count - 1) {
     let prev_pmpaddr = if i > 0 then pmpReadAddrReg(i - 1) else zeros();
