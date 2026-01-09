@@ -622,6 +622,9 @@ function clause execute MRET() = {
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(mRET, prev_priv, cur_privilege);
 
+    if hartSupports(Ext_Sdtrig)
+    then tcontrol_mret_from_mmode();
+
     long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
     if   xret_modifies_vsstatus(prev_priv, cur_privilege)
     then csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0]);

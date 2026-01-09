@@ -60,6 +60,11 @@ function stateen_allows_CSR_access(csr : csreg, priv : Privilege, _access_type :
     // hedelegh
     (0x612, priv) => check_stateen_bit(priv, STATEEN_P1P13, 0),
 
+    // scontext
+    (0x5a8, priv) => check_stateen_bit(priv, STATEEN_CONTEXT, 0),
+    // hcontext
+    (0x6a8, priv) => check_stateen_bit(priv, STATEEN_CONTEXT, 0),
+
     // fflags
     (0x001, priv) => if hartSupports(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true,
     // frm

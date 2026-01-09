@@ -545,6 +545,12 @@ private function check_required_xtval_option(ext_name : string, name : string, v
   }
 }
 
+private function reserved_exception_mask() -> bits(64) =
+  if config extensions.H.supported : bool
+  // Hypervisor codes 10,20-23 are valid, not reserved
+  then zero_extend(0x0_FFFF_0002_4000)
+  else zero_extend(0x0_FFFF_00F2_4400)
+
 private function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
   if (config extensions.Zcf.supported : bool) & xlen == 64 then {
@@ -807,6 +813,32 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssdbltrp extension is enabled but S is disabled: supporting Ssdbltrp requires S.");
   };
+  if (config extensions.Sdtrig.supported : bool) then {
+    if num_triggers == 0 then {
+      valid = false;
+      print_endline("The Sdtrig extension is supported but `num_triggers` is 0: supporting Sdtrig requires at least 1 trigger.");
+    };
+    if (config extensions.Sdtrig.hcontext.supported : bool) & not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The `hcontext` CSR is supported but the H extension is not: `hcontext` requires H to be supported.");
+    };
+    if (config extensions.Sdtrig.hcontext.supported : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
+      valid = false;
+      print_endline("The `hcontext` CSR is supported but the `mcontext` CSR is not: `hcontext` requires `mcontext` to be supported.");
+    };
+
+    if (config extensions.Sdtrig.etrigger.supported : bool)
+      & ((config extensions.Sdtrig.etrigger.supported_exceptions : xlenbits & reserved_exception_mask()[xlen - 1 .. 0]) != zeros()) then {
+      valid = false;
+      print_endline("Bits for reserved exceptions are set in `extensions.Sdtrig.etrigger.supported_exceptions`.");
+    };
+    let reserved_interrupt_mask : xlenbits = zero_extend(0xc111);
+    if (config extensions.Sdtrig.itrigger.supported : bool)
+      & ((config extensions.Sdtrig.itrigger.supported_interrupts : xlenbits & reserved_interrupt_mask) != zeros()) then {
+      valid = false;
+      print_endline("Bits for reserved interrupts are set in `extensions.Sdtrig.itrigger.supported_interrupts`.");
+    };
+  };
   valid
 }
 
@@ -843,12 +875,7 @@ private function check_extension_param_constraints() -> bool = {
       valid = false;
       print_endline("Bit 11 (Environment call from M-mode) in `base.medeleg.delegatable_bits` is set; this environment call cannot be delegated.");
     };
-    let reserved_exception_mask : bits(64) =
-      if config extensions.H.supported : bool
-      // Hypervisor codes 10,20-23 are valid, not reserved
-      then zero_extend(0x0_FFFF_0002_4000)
-      else zero_extend(0x0_FFFF_00F2_4400);
-    if (medelegation.bits & reserved_exception_mask) != zeros() then {
+    if (medelegation.bits & reserved_exception_mask()) != zeros() then {
       valid = false;
       print_endline("Bits for reserved exceptions are set in `base.medeleg.delegatable_bits`.");
     };

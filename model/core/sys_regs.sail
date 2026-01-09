@@ -1018,12 +1018,17 @@ function clause is_CSR_accessible(0x200, _, _) = currentlyEnabled(Ext_H) // vsst
 function clause read_CSR(0x200) = lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]
 function clause write_CSR(0x200, value) = { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
 
+function read_real_sstatus() -> Sstatus =
+  lower_mstatus(mstatus, false)
+
+function read_nominal_sstatus() -> Sstatus =
+  if inVirtualPrivilege()
+  then lower_mstatus(vsstatus, true)
+  else lower_mstatus(mstatus, false)
+
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
-function clause read_CSR(0x100) =
-  if inVirtualPrivilege()
-  then lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]
-  else lower_mstatus(mstatus, false).bits[xlen - 1 .. 0]
+function clause read_CSR(0x100) = read_nominal_sstatus().bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) =
   if inVirtualPrivilege()
   then { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
@@ -1224,18 +1229,6 @@ function legalize_satp(
     internal_error(__FILE__, __LINE__, "Unsupported xlen" ^ dec_str(xlen))
   }
 }
-
-// disabled trigger/debug module
-register tselect : xlenbits
-
-mapping clause csr_name_map = 0x7a0  <-> "tselect"
-mapping clause csr_name_map = 0x7a1  <-> "tdata1"
-mapping clause csr_name_map = 0x7a2  <-> "tdata2"
-mapping clause csr_name_map = 0x7a3  <-> "tdata3"
-
-function clause is_CSR_accessible(0x7a0, _, _) = true
-function clause read_CSR(0x7a0) = ~(tselect)  // this indicates we don't have any trigger support
-function clause write_CSR(0x7a0, value) = { tselect = value; Ok(tselect) }
 
 //
 // Entropy Source - Platform access to random bits.

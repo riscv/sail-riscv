@@ -151,6 +151,32 @@ let software_check_exception_writes_xtval : bool = config base.xtval_nonzero.sof
 let hardware_error_exception_writes_xtval : bool = config base.xtval_nonzero.hardware_error
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
 
+// Sdtrig configuration
+let sdtrig_has_icount   : bool = config extensions.Sdtrig.icount.supported
+let sdtrig_has_etrigger : bool = config extensions.Sdtrig.etrigger.supported
+let sdtrig_has_itrigger : bool = config extensions.Sdtrig.itrigger.supported
+
+// Sdtrig context CSRs
+let sdtrig_has_mcontext : bool = config extensions.Sdtrig.mcontext.supported
+let sdtrig_has_hcontext : bool = config extensions.Sdtrig.hcontext.supported
+let sdtrig_has_scontext : bool = config extensions.Sdtrig.scontext.supported
+
+type num_triggers : Int = config extensions.Sdtrig.num_triggers
+// The number of bits to index the triggers needs to fit into `tselect`,
+// but for practical reasons is constrained to be much smaller.
+constraint 0 <= num_triggers <= 16
+let num_triggers = sizeof(num_triggers)
+
+enum Sdtrig_breakpoint_reentrancy = {
+  Use_tcontrol,
+  Use_interrupt_enables,
+  No_reentrancy_support,
+}
+let sdtrig_breakpoint_reentrancy : Sdtrig_breakpoint_reentrancy = config extensions.Sdtrig.breakpoint_reentrancy
+
+// tcontrol only exists for tcontrol-based reentrancy
+let sdtrig_has_tcontrol : bool = sdtrig_breakpoint_reentrancy == Use_tcontrol
+
 // Define the policy for handling reserved behaviors.
 
 enum AmocasOddRegisterReservedBehavior = {

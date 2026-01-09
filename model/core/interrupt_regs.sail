@@ -170,7 +170,6 @@ bitfield Medeleg : bits(64) = {
 }
 
 private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
-
   // Using `v` allows bits for custom exceptions to be set. This is
   // useful for bit-matching test frameworks like ACT, but these bits
   // do not affect the model as those exceptions are not known (see
@@ -183,8 +182,12 @@ private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
     Fetch_GPage_Fault = if currentlyEnabled(Ext_H) then v[Fetch_GPage_Fault] else 0b0,
     VSEnvCall         = if currentlyEnabled(Ext_H) then v[VSEnvCall]         else 0b0,
     // M-EnvCalls and DoubleTrap cannot be delegated.
-    Double_Trap = 0b0,
-    MEnvCall    = 0b0
+    Double_Trap       = 0b0,
+    MEnvCall          = 0b0,
+    // medeleg[3] is hardwired to 0 when using `tcontrol`-based
+    // reentrancy handling for breakpoints in Sdtrig.
+    Breakpoint        = if currentlyEnabled(Ext_Sdtrig) & sdtrig_breakpoint_reentrancy == Use_tcontrol
+                        then 0b0 else v[Breakpoint],
   ]
 }
 
