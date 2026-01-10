@@ -397,13 +397,15 @@ function spmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbit
      * For RV32: full 32-bit value, for RV64: bits [53:0] only (54-bit physical address)
      * Then mask low G bits to enforce minimum granularity. */
     let addr = if xlen == 32 then v else zero_extend(v[53..0]);
-
+    // print_endline("SPMP Write Addr: " ^ hex_bits_str(addr));
     /* Apply granularity mask: low G bits read as zeros.
      * This allows software to detect minimum granularity by writing all 1s. */
     if G == 0 then addr
     else {
       let mask : xlenbits = zero_extend(ones(min(G, xlen)));
-      addr & ~(mask)
+      let masked_addr = addr & ~(mask);
+      // print_endline("SPMP Write Addr Masked: " ^ hex_bits_str(masked_addr));
+      masked_addr
     }
   }
 }
@@ -460,7 +462,7 @@ function spmpWriteCfg(n: int, cfg: Spmpcfg_ent, v: bits(10), priv: Privilege) ->
   let is_machine_mode = (priv == Machine);
 
   // Extract fields for WARL validation
-  let rwx = new_cfg[X] @ new_cfg[W] @ new_cfg[R];
+  let rwx = new_cfg[R] @ new_cfg[W] @ new_cfg[X];
   let shared = new_cfg[SHARED];
   let u_bit = new_cfg[U];
   let new_l_bit = new_cfg[L];
@@ -607,6 +609,7 @@ function spmp_mmode_write_addr_indirect(entry_idx: int, value: xlenbits) -> unit
       spmpaddr_n[hw_idx] = spmpWriteAddr(false, false, spmpaddr_n[hw_idx], value);
     }
   }
+
   // else: out-of-range logical index - write is ignored
 }
 
