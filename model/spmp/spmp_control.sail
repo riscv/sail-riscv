@@ -613,10 +613,10 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    *   are subject to SPMP checks (not bypassed even though executed in M-mode)
    */
   let effective_priv : Privilege = match (priv, acc) {
-    (Machine, _) if mstatus[MPRV] == 0b1 =>
-      privLevel_bits((mstatus[MPP], bitzero)),
     (Machine, InstructionFetch(_)) =>
       Machine,  // Instruction fetches ignore MPRV
+    (Machine, _) if mstatus[MPRV] == 0b1 =>
+      privLevel_bits((mstatus[MPP], bitzero)),
     _ => priv
   };
 
@@ -708,7 +708,7 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
             return None()
           } else {
             /* Permission denied */
-            print_endline("SPMP Perm Deny: " ^ hex_bits_str(paddr));
+            // print_endline("SPMP Perm Deny: " ^ hex_bits_str(paddr));
             return Some(accessToSpmpFault(acc))
           }
         }
@@ -789,12 +789,12 @@ function reset_spmp() -> unit = {
        User Mode: U=1
        Locked: L=0
        Shared: SHARED=0 (U-mode allowed, S-mode needs SUM=1 but we care about U-mode here)
-       
+
        Encoding: SHARED(0) U(1) L(0) RSV(00) A(01) X(1) W(1) R(1)
        Bits: 0 1 0 00 01 111 = 0b0100001111
     */
     spmpcfg_n[63] = Mk_Spmpcfg_ent(0b0100001111);
-    
+
     /* Address: All ones (MAX_UINT)
        With prev_addr (entry 62) being 0 (from reset loop above),
        TOR [0, MAX) covers the entire address space.

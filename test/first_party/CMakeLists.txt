@@ -92,6 +92,7 @@ set(tests
     "test_max_pmp.c"
     "test_minstret.S"
     "test_pmp_access.c"
+    "test_spmp_access.c"
 )
 
 
