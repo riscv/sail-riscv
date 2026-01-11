@@ -1,0 +1,83 @@
+
+Discarded input sections
+
+ .text          0x0000000000000000        0x0 /tmp/cc4CzCYt.o
+ .data          0x0000000000000000        0x0 /tmp/cc4CzCYt.o
+ .bss           0x0000000000000000        0x0 /tmp/cc4CzCYt.o
+ .data          0x0000000000000000        0x0 /tmp/ccS5KxDq.o
+ .bss           0x0000000000000000        0x0 /tmp/ccS5KxDq.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+RAM              0x0000000080000000 0x0000000080000000 xrw
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x0000000080000000                . = ORIGIN (RAM)
+
+.text           0x0000000080000000      0x22a
+ *(.text.init)
+ .text.init     0x0000000080000000       0x84 /tmp/cc4CzCYt.o
+                0x0000000080000000                _start
+                0x0000000080000014                trap_entry
+ *(.text .text.*)
+ .text          0x0000000080000084      0x1a6 /tmp/ccS5KxDq.o
+                0x000000008000014e                main
+
+.rela.dyn       0x0000000080000230        0x0
+ .rela.text.init
+                0x0000000080000230        0x0 /tmp/cc4CzCYt.o
+
+.rodata
+ *(.rodata .rodata.*)
+
+.data
+ *(.data .data.*)
+
+.sdata          0x000000008000022a        0x0
+                0x0000000080000a2a                PROVIDE (__global_pointer$ = (. + 0x800))
+ *(.sdata .sdata.*)
+ *(.srodata .srodata.*)
+
+.bss            0x000000008000022c        0x8
+                0x000000008000022c                __bss_start = .
+ *(.sbss .sbss.*)
+ .sbss          0x000000008000022c        0x8 /tmp/ccS5KxDq.o
+                0x000000008000022c                g_irq_seen
+                0x0000000080000230                g_claim
+ *(.bss .bss.*)
+ *(COMMON)
+                0x0000000080000234                __bss_end = .
+                0x0000000080000238                . = ALIGN (0x8)
+
+.tohost         0x0000000080000238        0x8
+ *(.tohost)
+ .tohost        0x0000000080000238        0x8 /tmp/ccS5KxDq.o
+                0x0000000080000238                tohost
+
+.fromhost       0x0000000080000240        0x8
+ *(.fromhost)
+ .fromhost      0x0000000080000240        0x8 /tmp/ccS5KxDq.o
+                0x0000000080000240                fromhost
+                0x0000000080000250                . = ALIGN (0x10)
+
+.stack          0x0000000080000248     0x4000
+                0x0000000080004248                . = (. + 0x4000)
+ *fill*         0x0000000080000248     0x4000 
+                0x0000000080004248                PROVIDE (stack_top = .)
+LOAD /tmp/cc4CzCYt.o
+LOAD /tmp/ccS5KxDq.o
+OUTPUT(plic_mvp_test.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x2f
+ .riscv.attributes
+                0x0000000000000000       0x2d /tmp/cc4CzCYt.o
+ .riscv.attributes
+                0x000000000000002d       0x2f /tmp/ccS5KxDq.o
+
+.comment        0x0000000000000000        0xf
+ .comment       0x0000000000000000        0xf /tmp/ccS5KxDq.o
+                                         0x10 (size before relaxing)
