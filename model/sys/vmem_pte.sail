@@ -109,7 +109,7 @@ union PTE_Check = {
 }
 
 private function check_PTE_permission(
-  access    : MemoryAccessType(ext_access_type),
+  access    : MemoryAccessType(mem_payload),
   priv      : Privilege,
   // Make eXecutable Readable
   mxr       : bool,
@@ -153,7 +153,7 @@ private function check_PTE_permission(
 // Update PTE bits if needed; return new PTE if updated
 private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   pte : bits('pte_size),
-  access : MemoryAccessType(ext_access_type),
+  access : MemoryAccessType(mem_payload),
 ) -> option(bits('pte_size)) = {
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 

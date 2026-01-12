@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function accessFaultFromAccessType(access : MemoryAccessType(ext_access_type)) -> ExceptionType =
+function accessFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> ExceptionType =
   match access {
     InstructionFetch() => E_Fetch_Access_Fault(),
     Load(_)            => E_Load_Access_Fault(),
@@ -14,7 +14,7 @@ function accessFaultFromAccessType(access : MemoryAccessType(ext_access_type)) -
     LoadStore(_)       => E_SAMO_Access_Fault(),
   }
 
-function alignmentFaultFromAccessType(access : MemoryAccessType(ext_access_type)) -> ExceptionType =
+function alignmentFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> ExceptionType =
   match access {
     InstructionFetch() => E_Fetch_Addr_Align(),
     Load(_)            => E_Load_Addr_Align(),

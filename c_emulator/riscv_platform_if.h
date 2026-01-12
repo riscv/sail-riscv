@@ -8,7 +8,7 @@ namespace hart {
 
 class Model;
 
-struct zMemoryAccessTypezIuzK;
+struct zMemoryAccessTypezIEmem_payloadz5zK;
 struct ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
 struct zPTW_Error;
 
@@ -52,7 +52,7 @@ public:
   // Page table walk callbacks
   virtual unit ptw_start_callback(
     uint64_t vpn,
-    hart::zMemoryAccessTypezIuzK access_type,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
     hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
   );
   virtual unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte);

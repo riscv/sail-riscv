@@ -9,7 +9,7 @@
 
 // permission checks
 
-private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(ext_access_type)) -> bool =
+private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_payload)) -> bool =
   match access {
     Load(_)            => ent[R] == 0b1,
     Store(_)           => ent[W] == 0b1,
@@ -83,7 +83,7 @@ private function pmpMatchAddr(
 function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   addr : physaddr,
   width : int('n),
-  access : MemoryAccessType(ext_access_type),
+  access : MemoryAccessType(mem_payload),
   priv : Privilege,
 ) -> option(ExceptionType) = {
 

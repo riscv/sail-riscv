@@ -58,7 +58,7 @@ private function read_pte forall 'n, 'n in {4, 8} . (
 private val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  MemoryAccessType(ext_access_type),  // Memory Load/Store/LoadStore/InstructionFetch
+  MemoryAccessType(mem_payload),  // Memory Load/Store/LoadStore/InstructionFetch
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum
@@ -227,7 +227,7 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
   _asid     : asidbits,
   vpn       : vpn_bits('v),
-  access    : MemoryAccessType(ext_access_type),
+  access    : MemoryAccessType(mem_payload),
   priv      : Privilege,
   mxr       : bool,
   do_sum    : bool,
@@ -274,7 +274,7 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  access   : MemoryAccessType(ext_access_type),
+  access   : MemoryAccessType(mem_payload),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -332,7 +332,7 @@ private function translate forall 'v, is_sv_mode('v) . (
   asid     : asidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
-  access   : MemoryAccessType(ext_access_type),
+  access   : MemoryAccessType(mem_payload),
   priv     : Privilege,
   mxr      : bool,
   do_sum   : bool,
@@ -364,7 +364,7 @@ private function get_satp forall 'v, is_sv_mode('v). (
 // [postlude/fetch.sail, A/zaamo_insts.sail, Zicbo{zm}/zicbo{zm}_insts.sail].
 function translateAddr(
   vAddr : virtaddr,
-  access : MemoryAccessType(ext_access_type),
+  access : MemoryAccessType(mem_payload),
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
