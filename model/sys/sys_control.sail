@@ -30,7 +30,7 @@ function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> b
     check_CSR_priv(csr, p)
   & check_CSR_access(csr, access_type)
   & is_CSR_accessible(csr, p, access_type)
-  & is_CSR_accessible_via_stateen(csr, p, access_type)
+  & stateen_allows_CSR_access(csr, p, access_type)
 
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.

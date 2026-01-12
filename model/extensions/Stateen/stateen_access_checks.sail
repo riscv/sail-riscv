@@ -18,7 +18,7 @@
 // this would ideally allow the below checks to be inlined into the
 // `is_CSR_accessible` function.
 
-function is_CSR_accessible_via_stateen(csr : csreg, priv : Privilege, _access_type : CSRAccessType) -> bool =
+function stateen_allows_CSR_access(csr : csreg, priv : Privilege, _access_type : CSRAccessType) -> bool =
   match (csr, priv) {
     // hstateen0
     (0x60C, priv) => check_stateen_bit(priv, STATEEN_SE, 0),

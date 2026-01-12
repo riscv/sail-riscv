@@ -25,7 +25,7 @@ mapping clause csr_name_map = 0x002  <-> "frm"
 mapping clause csr_name_map = 0x003  <-> "fcsr"
 
 // These should ideally also check `xstateen.FCSR`, but due to module
-// interdependency issues, that is handled by `is_CSR_accessible_via_stateen`.
+// interdependency issues, that is handled by `stateen_allows_CSR_access`.
 function clause is_CSR_accessible (0x001, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 function clause is_CSR_accessible (0x002, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 function clause is_CSR_accessible (0x003, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
