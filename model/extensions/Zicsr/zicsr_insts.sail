@@ -40,10 +40,12 @@ function csr_access_type(op : csrop, rd_is_x0 : bool, rs1_imm_is_zero : bool) ->
     (CSRRC, _, false) => CSRReadWrite,
   }
 
-function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_type : CSRAccessType) -> ExecutionResult = {
-  if   not(check_CSR(csr, cur_privilege, access_type))
-  then Illegal_Instruction()
-  else if not(ext_check_CSR(csr, cur_privilege, access_type))
+function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_type: CSRAccessType) -> ExecutionResult = {
+  match check_CSR(csr, cur_privilege, access_type) {
+    CSRAccessSuccess() => (),
+    CSRAccessIllegal(_) => return Illegal_Instruction(),
+  };
+  if not(ext_check_CSR(csr, cur_privilege, access_type))
   then Ext_CSR_Check_Failure()
   else {
     // A pure write (i.e. CSRRW with rd == 0) should not generate read side-effects.

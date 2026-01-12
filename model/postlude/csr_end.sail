@@ -9,7 +9,7 @@
 mapping clause csr_name_map = reg <-> hex_bits_12(reg)
 end csr_name_map
 
-function clause is_CSR_accessible(_) = false
+function clause is_CSR_accessible(_) = CSRAccessIllegal(CSRNotDefined)
 end is_CSR_accessible
 
 function clause read_CSR(csr) = {
