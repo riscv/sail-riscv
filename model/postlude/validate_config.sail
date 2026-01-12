@@ -314,9 +314,9 @@ private function check_stateen_config() -> bool = {
     print_endline("Stateen SE0_readonly_zero is true but H extension is supported: SE0 must be writable when H is implemented.");
   };
   // TODO: Update when Zcmt is implemented
-  if config extensions.Stateen.SE0_readonly_zero : bool & (hartSupports(Ext_Zfinx) | config extensions.Stateen.C_writable : bool) then {
+  if config extensions.Stateen.SE0_readonly_zero : bool & (hartSupports(Ext_Zfinx) | not(config extensions.Stateen.C_readonly_zero : bool)) then {
     valid = false;
-    print_endline("Stateen SE0_readonly_zero is true but sstateen0 has writable bits (FCSR due to Zfinx support or C due to enabled C_writable): SE0 must be writable.");
+    print_endline("Stateen SE0_readonly_zero is true but sstateen0 has writable bits (FCSR due to Zfinx support or C due to disabled C_readonly_zero): SE0 must be writable.");
   };
   valid
 }

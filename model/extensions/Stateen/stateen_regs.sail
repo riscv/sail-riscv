@@ -66,7 +66,7 @@ function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
     SE0    = if config extensions.Stateen.SE0_readonly_zero then 0b0 else v[SE0],
     ENVCFG = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
     FCSR   = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
-    C      = if config extensions.Stateen.C_writable then v[C] else 0b0,
+    C      = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
   ];
 }
 
@@ -148,7 +148,7 @@ function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
   let mask = get_sstateen_mask(0);
   let legalized = [s with
     FCSR = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
-    C    = if config extensions.Stateen.C_writable then v[C] else 0b0,
+    C    = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
   ];
   Mk_Sstateen0(legalized.bits & mask[31..0])
 }
