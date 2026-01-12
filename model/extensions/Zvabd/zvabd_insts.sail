@@ -102,12 +102,16 @@ function clause execute VABD(funct6, vm, vs2, vs1, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        VV_VABD => {
-          if signed(vs2_val[i]) >= signed(vs1_val[i]) then vs2_val[i] - vs1_val[i] else vs1_val[i] - vs2_val[i]
-        },
-        VV_VABDU => {
-          if unsigned(vs2_val[i]) >= unsigned(vs1_val[i]) then vs2_val[i] - vs1_val[i] else vs1_val[i] - vs2_val[i]
-        },
+      VV_VABD => {
+        if signed(vs2_val[i]) >= signed(vs1_val[i]) 
+        then vs2_val[i] - vs1_val[i] 
+        else vs1_val[i] - vs2_val[i]
+      },
+      VV_VABDU => {
+        if unsigned(vs2_val[i]) >= unsigned(vs1_val[i]) 
+        then vs2_val[i] - vs1_val[i] 
+        else vs1_val[i] - vs2_val[i]
+      },
       }
     }
   }
