@@ -6,4 +6,8 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-enum vabdop = {VABS_V, VABD_VV, VABDU_VV, VWABDACC_VV, VWABDACCU_VV} 
+enum vabsop_zvabd ={V_VABS}
+
+enum vabdop_zvabd = {VV_VABD, VV_VABDU}
+
+enum vwabdaop_zvabd = {VV_VWABDACC, VV_VWABDACCU}
