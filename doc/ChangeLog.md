@@ -14,6 +14,7 @@
   - Sstvala
   - Sstvecd
   - Ssu64xl
+  - Zvzip
 
 - The model now requires the Sail 0.20.1 compiler version.
 
