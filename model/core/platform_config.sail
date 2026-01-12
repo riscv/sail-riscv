@@ -79,4 +79,7 @@ mapping PmpWriteOnlyReservedBehavior_str : PmpWriteOnlyReservedBehavior <-> stri
 overload to_str = {PmpWriteOnlyReservedBehavior_str}
 
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
+
+// Platform SPMP support
+let sys_spmp_enabled : bool = config memory.spmp.enabled
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
