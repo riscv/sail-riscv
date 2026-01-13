@@ -23,7 +23,7 @@ private function isRVC(h : half) -> bool = not(h[1 .. 0] == 0b11)
 
 private union FetchBytes_Result('width : Int), 'width >= 0 = {
   FetchBytes_Ext_Error : ext_fetch_addr_error,
-  FetchBytes_Exception : ExceptionType,
+  FetchBytes_Exception : Exception_Context,
   FetchBytes_Success   : bits('width * 8),
 }
 
@@ -42,7 +42,7 @@ private function fetch_bytes forall 'n, 'n in {2, 4} . (fetch_start : xlenbits, 
     Err(exc_addr, e) => {
       // Instruction fetches are not currently split at the physical memory layer.
       assert(exc_addr == paddr);
-      FetchBytes_Exception(e)
+      FetchBytes_Exception(exception_context(e, granule_start))
     },
     Ok(bytes) => FetchBytes_Success(bytes),
   }
@@ -62,7 +62,7 @@ private function fetch() -> FetchResult = {
   };
 
   if   (PC[0] != 0b0 | (PC[1] != 0b0 & not(currentlyEnabled(Ext_Zca))))
-  then return F_Error(E_Fetch_Addr_Align(), PC);
+  then return F_Error(exception_context(E_Fetch_Addr_Align(), PC));
 
   // For a PC aligned at ILEN=32, perform an atomic fetch for Ziccif.
   //
@@ -87,7 +87,7 @@ private function fetch() -> FetchResult = {
       // for simplicity we restrict PMA granularity to 4096
       // bytes. This situation may still occur if MMIO devices are
       // incorrectly configured, but this is not checked currently.
-      FetchBytes_Exception(e)   => F_Error(e, PC),
+      FetchBytes_Exception(e)   => F_Error(e),
       FetchBytes_Success(bytes) => if isRVC(bytes[15 .. 0]) then F_RVC(bytes[15 .. 0]) else F_Base(bytes),
     }
   } else {
@@ -96,13 +96,13 @@ private function fetch() -> FetchResult = {
     // exceptions.
     match fetch_bytes(PC, PC, 2) {
       FetchBytes_Ext_Error(e) => F_Ext_Error(e),
-      FetchBytes_Exception(e) => F_Error(e, PC),
+      FetchBytes_Exception(e) => F_Error(e),
       FetchBytes_Success(ilo) =>
         if   isRVC(ilo)
         then F_RVC(ilo)
         else match fetch_bytes(PC, PC + 2, 2) {
           FetchBytes_Ext_Error(e) => F_Ext_Error(e),
-          FetchBytes_Exception(e) => F_Error(e, PC + 2),
+          FetchBytes_Exception(e) => F_Error(e),
           FetchBytes_Success(ihi) => F_Base(append(ihi, ilo)),
         },
     }

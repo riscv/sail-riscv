@@ -60,7 +60,7 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   // If it is not 4-byte aligned and compressed instructions are
   // not enabled then raise an alignment exception.
   if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
-  then return memory_exception(Virtaddr(target), E_Fetch_Addr_Align());
+  then return Memory_Exception(exception_context(E_Fetch_Addr_Align(), target));
 
   set_next_pc(target);
   RETIRE_SUCCESS
@@ -539,19 +539,22 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
-  let exc_type : ExceptionType = match cur_privilege {
+  let trap : ExceptionType = match cur_privilege {
     User              => E_U_EnvCall(),
     Supervisor        => E_S_EnvCall(),
     Machine           => E_M_EnvCall(),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => E_U_EnvCall(),
+    VirtualSupervisor => E_VS_EnvCall(),
   };
-  let t : sync_exception = struct {
-    trap    = exc_type,
-    excinfo = None(),
-    ext     = None(),
+  let c : Exception_Context = struct {
+    trap           = trap,
+    excinfo_is_gva = false,
+    excinfo        = zeros(), // TODO should be option...
+    excinfo2       = None(),
+    excinst        = None(),
+    ext            = None(),
   };
-  trap(t)
+  Trap(cur_privilege, c, PC)
 }
 
 mapping clause assembly = ECALL() <-> "ecall"
@@ -569,10 +572,15 @@ function clause execute MRET() = {
   then Ext_XRET_Priv_Failure()
   else {
     let prev_priv = cur_privilege;
+
     mstatus[MIE]  = mstatus[MPIE];
     mstatus[MPIE] = 0b1;
-    cur_privilege = privLevel_bits(mstatus[MPP], 0b0); // TODO: use mstatus[MPV] if hypervisor enabled
+    // MPV is ignored when MPP=3, as there is no virtual machine mode
+    cur_privilege = privLevel_bits((mstatus[MPP], if mstatus[MPP] == 0b11 then 0b0 else mstatus[MPV]));
+
     mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
+    mstatus[MPV]  = 0b0;
+
     if   cur_privilege != Machine
     then mstatus[MPRV] = 0b0;
 
@@ -585,7 +593,6 @@ function clause execute MRET() = {
     then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
     set_next_pc(prepare_xret_target(Machine));
-
     xret_callback(true);
     RETIRE_SUCCESS
   }
@@ -604,33 +611,56 @@ function clause execute SRET() = {
     User              => true,
     Supervisor        => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
     Machine           => not(currentlyEnabled(Ext_S)),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => false,
+    VirtualSupervisor => false,
   };
-  if   sret_illegal
-  then Illegal_Instruction()
-  else if not(ext_check_xret_priv (Supervisor))
-  then Ext_XRET_Priv_Failure()
+  let sret_virtual : bool = match cur_privilege {
+    VirtualUser       => true,
+    VirtualSupervisor => hstatus[VTSR] == 0b1,
+    _                 => false,
+  };
+  if        sret_illegal
+  then      Illegal_Instruction()
+  else if   sret_virtual
+  then      Virtual_Instruction()
+  else if   not(ext_check_xret_priv(Supervisor))
+  then      Ext_XRET_Priv_Failure()
   else {
     let prev_priv = cur_privilege;
-    mstatus[SIE]  = mstatus[SPIE];
-    mstatus[SPIE] = 0b1;
-    cur_privilege = if mstatus[SPP] == 0b1 then Supervisor else User;
-    mstatus[SPP]  = 0b0;
-    if   cur_privilege != Machine
-    then mstatus[MPRV] = 0b0;
+    let ret =
+      // SRET in VS-Mode
+      if inVirtualPrivilege() then {
+        let new_priv = if vsstatus[SPP] == 0b1 then VirtualSupervisor else VirtualUser;
+        vsstatus[SPP]  = 0b0;
+        vsstatus[SIE]  = vsstatus[SPIE];
+        vsstatus[SPIE] = 0b1;
+        cur_privilege  = new_priv;
+        VirtualSupervisor
+      } else {
+        // SRET in HS-mode or M-mode
+        // SPV is only meaningful when H is enabled, otherwise treat as 0
+        let new_priv = privLevel_bits((0b0 @ mstatus[SPP], hstatus[SPV] & bool_to_bit(currentlyEnabled(Ext_H))));
+        hstatus[SPV]  = 0b0;
+        mstatus[SPP]  = 0b0;
+        mstatus[SIE]  = mstatus[SPIE];
+        mstatus[SPIE] = 0b1;
+        // TODO: Add Ssdbltrp part once supported
+        if new_priv != Machine
+        then mstatus[MPRV] = 0b0;
+        cur_privilege = new_priv;
+        Supervisor
+      };
 
+    // TODO/NOTE: This will probably fail without adding VS/VU case support. Potentially turn off this extension
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
 
     long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
     if   get_config_print_exception()
-    then print_log("ret-ing from " ^ to_str(prev_priv)
-                        ^ " to " ^ to_str(cur_privilege));
+    then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
-    set_next_pc(prepare_xret_target(Supervisor));
-
+    set_next_pc(prepare_xret_target(ret));
     xret_callback(false);
     RETIRE_SUCCESS
   }
@@ -644,8 +674,14 @@ union clause instruction = EBREAK : unit
 mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
-function clause execute EBREAK() =
-  trap(make_sync_exception(E_Breakpoint(Brk_Software), PC))
+function clause execute EBREAK() = {
+  let trap = E_Breakpoint(Brk_Software);
+  let excinfo : xlenbits = match xtval_exception_value(trap, PC) {
+    Some(excinfo) => excinfo,
+    None()        => zeros(),
+  };
+  Trap(cur_privilege, exception_context(trap, excinfo), PC)
+}
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
@@ -662,8 +698,15 @@ function clause execute WFI() =
     // `run_hart_waiting()`.
     Supervisor        => Enter_Wait(WAIT_WFI),
     User              => if plat_wfi_available_to_usermode then Enter_Wait(WAIT_WFI) else Illegal_Instruction(),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    // VU never waits. Raises virtual immediately when TW=0, illegal when TW=1
+    VirtualUser       => if mstatus[TW] == 0b1
+                         then Illegal_Instruction()
+                         else Virtual_Instruction(),
+    // VS raises illegal immediately when TW=1
+    // when TW=0, enters wait, VTW checked on timeout in run_hart_waiting()
+    VirtualSupervisor => if mstatus[TW] == 0b1
+                         then Illegal_Instruction()
+                         else Enter_Wait(WAIT_WFI),
   }
 
 mapping clause assembly = WFI() <-> "wfi"
@@ -681,15 +724,19 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   // In that case this asidlen would be incorrect because the maximum asidlen
   // is 9 but we always set it to 16 for RV64.
   let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
+  let vmid = if cur_privilege == VirtualSupervisor then Some(get_vmid(VS_Stage)) else None();
   match cur_privilege {
     User              => Illegal_Instruction(),
     Supervisor        => match mstatus[TVM] {
                            0b1 => Illegal_Instruction(),
-                           0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+                           0b0 => { flush_TLB(asid, vmid, addr, S_Stage); RETIRE_SUCCESS },
                          },
-    Machine           => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+    Machine           => { flush_TLB(asid, vmid, addr, S_Stage); RETIRE_SUCCESS },
     VirtualUser       => Virtual_Instruction(),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => match hstatus[VTVM] {
+                            0b1 => Virtual_Instruction(),
+                            0b0 => { flush_TLB(asid, vmid, addr, VS_Stage); RETIRE_SUCCESS },
+                         },
   }
 }
 

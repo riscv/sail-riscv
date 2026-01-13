@@ -86,7 +86,6 @@ add_custom_command(
         --output-schema ${schema_file}
 
         # Optimisations.
-        -O --Oconstant-fold
         # Cache Z3 results in z3_problems file to speed up incremental compilation.
         --memo-z3
         # Output C++ code.

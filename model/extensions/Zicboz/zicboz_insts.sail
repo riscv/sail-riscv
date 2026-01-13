@@ -22,8 +22,7 @@ mapping clause assembly = ZICBOZ(rs1)
   <-> "cbo.zero" ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 function clause execute ZICBOZ(rs1) = {
-  // TODO: Pass read_henvcfg()[CBZE] once henvcfg is implemented.
-  match feature_enabled_for_priv(cur_privilege, menvcfg[CBZE], read_senvcfg()[CBZE], 0b0) {
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBZE], read_senvcfg()[CBZE], henvcfg[CBZE]) {
     FEATURE_ENABLED => (),
     FEATURE_ILLEGAL => return Illegal_Instruction(),
     FEATURE_VIRTUAL => return Virtual_Instruction(),
@@ -49,13 +48,13 @@ function clause execute ZICBOZ(rs1) = {
         // was encoded in the instruction. We subtract the negative offset
         // (add the positive offset) to get it. Normally this will be
         // equal to rs1, but pointer masking can change that.
-        Err(e, _) => memory_exception(vaddr - negative_offset, e),
+        Err(e, _) => Memory_Exception({ e with excinfo = bits_of(vaddr - negative_offset) }),
         Ok(paddr, pbmt, _) => {
           match mem_write_ea(paddr, cache_block_size, access, pbmt, false, false, false) {
             Err(exc_addr, e) => {
               // Cache accesses should not get split.
               assert(exc_addr == paddr);
-              memory_exception(vaddr - negative_offset, e)
+              Memory_Exception(exception_context(e, bits_of(vaddr - negative_offset)))
             },
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {
@@ -64,7 +63,7 @@ function clause execute ZICBOZ(rs1) = {
                 Err(exc_addr, e) => {
                   // Cache accesses should not get split.
                   assert(exc_addr == paddr);
-                  memory_exception(vaddr - negative_offset, e)
+                  Memory_Exception(exception_context(e, bits_of(vaddr - negative_offset)))
                 },
               }
             }

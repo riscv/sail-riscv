@@ -1,0 +1,154 @@
+# This workflow is intended for internal testing only.
+# It is not meant to be pushed upstream.
+# Some steps may appear duplicated or unnecessary because
+# this workflow is designed to run with ACT in a containerized environment.
+# Dependent workflows (e.g., sail-setup) detect this context and may skip steps accordingly.
+
+name: Run hypervisor tests
+on: [push, pull_request, workflow_dispatch, merge_group]
+jobs:
+  run-hypervisor-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          # Git history is needed for `git describe` in the build to work.
+          fetch-depth: 0
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          install-clang: "true"
+
+      - name: Cache RISC-V toolchain
+        id: cache-riscv
+        uses: actions/cache@v4
+        with:
+          path: /opt/riscv
+          key: riscv-toolchain-2026.03.13
+
+      - name: Install RISC-V toolchains
+        if: steps.cache-riscv.outputs.cache-hit != 'true'
+        run: |
+          wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2026.03.13/riscv64-elf-ubuntu-22.04-gcc.tar.xz
+          mkdir -p /opt/riscv
+          tar -xf riscv64-elf-ubuntu-22.04-gcc.tar.xz --strip-components=1 -C /opt/riscv
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld ninja-build gcc g++ cmake
+
+      - name: Add toolchain to PATH
+        run: echo "/opt/riscv/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies
+        run: pip3 install pyyaml --break-system-packages
+
+      - name: Set environment variables
+        run: |
+          echo "RISCV=/opt/riscv" >> $GITHUB_ENV
+          echo "SAIL=$(pwd)/build/c_emulator/sail_riscv_sim" >> $GITHUB_ENV
+
+      - name: Checkout riscv-hypervisor-tests fork
+        shell: bash
+        run: |
+          git clone --recurse-submodules -b main https://github.com/nadime15/riscv-hypervisor-tests.git
+          make -C riscv-hypervisor-tests build
+
+      - name: Checkout riscv-test
+        shell: bash
+        run: |
+          git clone --recurse-submodules -b master https://github.com/riscv-software-src/riscv-tests
+          cd riscv-tests
+          autoconf
+          ./configure
+          make -C isa hypervisor hypervisor-svadu
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build all
+
+      - name: Run hypervisor tests
+        run: |
+          make -C riscv-hypervisor-tests run SAIL=${{ env.SAIL }}
+
+      - name: Run riscv-test hypervisor tests
+        shell: bash
+        run: |
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-p-2-stage_translation
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-p-2-stage_translation_implicit_load_error
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-p-2-stage_translation_implicit_load_error_hs
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-svadu-p-2-stage_translation_implicit_store_error
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-svadu-p-2-stage_translation_implicit_store_error_hs
+
+  Xvisor:
+    name: "Xvisor boot"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages
+        run: sudo apt-get install -y --no-install-recommends device-tree-compiler
+
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build
+
+      - name: Install RISC-V toolchains
+        run: |
+          wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2026.03.13/riscv64-elf-ubuntu-22.04-gcc.tar.xz
+          mkdir -p /opt/riscv
+          tar -xf riscv64-elf-ubuntu-22.04-gcc.tar.xz --strip-components=1 -C /opt/riscv
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld ninja-build gcc g++ cmake
+
+      - name: Add toolchain to PATH
+        run: echo "/opt/riscv/bin" >> $GITHUB_PATH
+
+      - name: Checkout Xvisor & build
+        shell: bash
+        run: |
+          git clone --recurse-submodules -b master https://github.com/xvisor/xvisor.git
+          cd xvisor
+          export ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf-
+          make generic-64b-defconfig
+          make -j$(nproc)
+          echo "XVISOR=$(pwd)/build/vmm.bin" >> $GITHUB_ENV
+
+      - name: Setup gcc and opensbi
+        run: |
+          make -C os-boot/linux build/gcc/bin/riscv64-buildroot-linux-gnu-gcc
+          make -C os-boot/linux build/opensbi/Makefile
+
+      - name: Generate DTB
+        run: make -C os-boot/linux build/sail.dtb
+
+      - name: Build OpenSBI with Xvisor as payload
+        run: |
+          CROSS=$(pwd)/os-boot/linux/build/gcc/bin/riscv64-buildroot-linux-gnu-
+          make -C os-boot/linux/build/opensbi \
+            FW_TEXT_START=0x80000000 \
+            FW_PAYLOAD=y \
+            FW_PAYLOAD_PATH=${{ env.XVISOR }} \
+            PLATFORM=generic \
+            CROSS_COMPILE=$CROSS
+          cp os-boot/linux/build/opensbi/build/platform/generic/firmware/fw_payload.elf build/fw_payload_xvisor.elf
+
+      - name: Xvisor boot
+        run: |
+          ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 40000000 \
+            --device-tree-blob os-boot/linux/build/sail.dtb \
+            build/fw_payload_xvisor.elf

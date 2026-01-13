@@ -101,6 +101,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
     Load(Data)             => {assert(not(res_or_con)); attributes.readable},
     Load(Vector)           => {assert(not(res_or_con)); attributes.readable},
     Load(PageTableEntry)   => {assert(not(res_or_con)); attributes.supports_pte_read},
+    LoadExecute(Data)      => {assert(not(res_or_con)); attributes.executable & attributes.readable},
     Store(Data)            => {assert(not(res_or_con)); attributes.writable},
     Store(Vector)          => {assert(not(res_or_con)); attributes.writable},
     Store(PageTableEntry)  => {assert(not(res_or_con)); attributes.supports_pte_write},
@@ -152,6 +153,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
       PREFETCH_I => attributes.executable,
     },
 
+    LoadExecute(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
     LoadReserved(_, _, p)          => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
     StoreConditional(_, _, p)      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
 
