@@ -175,9 +175,28 @@ termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 
 register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
-function clause is_CSR_accessible(0x180, priv, _) = currentlyEnabled(Ext_S) & not(priv == Supervisor & mstatus[TVM] == 0b1)
-function clause read_CSR(0x180) = satp
-function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(Supervisor), satp, value); Ok(satp) }
+
+function clause is_CSR_accessible(0x180, priv, _) = {
+  if not(currentlyEnabled(Ext_S)) then false
+  else if priv == Supervisor & mstatus[TVM] == 0b1 then false
+  // TODO: VS-mode with VTVM=1 should raise virtual instruction
+  // not illegal instruction. Needs refactoring of CSR access logic.
+  else if privLevel_is_virtual(priv) & hstatus[VTVM] == 0b1 then false
+  else true
+}
+
+function clause read_CSR(0x180) = if privLevel_is_virtual(cur_privilege) then vsatp else satp
+
+function clause write_CSR(0x180, value) = {
+  let arch = architecture(cur_privilege);
+  if privLevel_is_virtual(cur_privilege) then {
+    vsatp = legalize_satp(arch, vsatp, value);
+    Ok(vsatp)
+  } else {
+    satp = legalize_satp(arch, satp, value);
+    Ok(satp)
+  }
+}
 
 // ----------------
 // Fields of SATP
