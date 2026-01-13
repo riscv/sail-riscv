@@ -6,8 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function make_landing_pad_exception() -> sync_exception =
-  make_sync_exception(E_Software_Check(), zero_extend(software_check_cause(SWC_LANDING_PAD_FAULT)))
+function make_landing_pad_exception() -> Exception_Context = exception_context(E_Software_Check(), zero_extend(software_check_cause(SWC_LANDING_PAD_FAULT)))
 
 union clause instruction = LPAD : (landing_pad_label)
 
@@ -21,7 +20,7 @@ function clause execute LPAD(lpl) = {
     let unaligned_pc = get_arch_pc()[1 .. 0] != 0b00;
     let label_mismatch = X(Regno(7))[31 .. 12] != lpl & lpl != zeros();
     if unaligned_pc | label_mismatch then {
-      trap(make_landing_pad_exception())
+      Trap(cur_privilege, make_landing_pad_exception(), PC)
     } else {
       reset_elp();
       RETIRE_SUCCESS

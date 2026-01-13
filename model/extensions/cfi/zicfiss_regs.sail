@@ -36,8 +36,8 @@ private function is_ssp_accessible(priv : Privilege) -> bool =
     Machine           => true,
     Supervisor        => menvcfg[SSE] == 0b1,
     User              => menvcfg[SSE] == 0b1 & (read_senvcfg()[SSE] == 0b1 | not(currentlyEnabled(Ext_S))),
-    VirtualSupervisor => menvcfg[SSE] == 0b1 /* TODO: & read_henvcfg()[SSE] == 0b1 */,
-    VirtualUser       => menvcfg[SSE] == 0b1 /* TODO: & read_henvcfg()[SSE] == 0b1 & */ & read_senvcfg()[SSE] == 0b1,
+    VirtualSupervisor => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1,
+    VirtualUser       => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1 & read_senvcfg()[SSE] == 0b1,
   })
 
 register ssp : xlenbits = zeros()

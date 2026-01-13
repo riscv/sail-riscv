@@ -110,6 +110,7 @@ union MemoryAccessType ('a : Type) = {
   Load             : 'a,
   Store            : 'a,
   LoadReserved     : (bool, bool, 'a),
+  LoadExecute      : 'a,
   StoreConditional : (bool, bool, 'a),
   Atomic           : (amoop, bool, bool, 'a, 'a),
   InstructionFetch : unit,
@@ -122,6 +123,7 @@ function is_load_store forall ('a : Type) . (access : MemoryAccessType('a)) -> b
     Load(_)             => true,
     Store(_)            => true,
     LoadReserved(_)     => true,
+    LoadExecute(_)      => true,
     StoreConditional(_) => true,
     Atomic(_)           => true,
     InstructionFetch(_) => false,
@@ -142,6 +144,13 @@ function is_store_conditional forall ('a : Type) . (access : MemoryAccessType('a
 
 // CSR access types
 enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
+
+// CSR check results
+union CSRCheckResult = {
+  CSR_Check_OK : unit,
+  CSR_Illegal  : unit,
+  CSR_Virtual  : unit,
+}
 
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
 
@@ -312,16 +321,33 @@ function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
     LANDING_PAD_FAULT  => zero_extend(0b010),
   }
 
+// Sync Exception
+
+// default exception model
+
+type ext_exception = unit
+
+struct Exception_Context = {
+  trap           : ExceptionType,
+  excinfo_is_gva : bool,
+  excinfo        : xlenbits,
+  excinfo2       : option(xlenbits),
+  excinst        : option(xlenbits),
+  ext            : option(ext_exception)
+}
+
 // An architectural trap can be caused by either an interrupt or an exception
 
 union TrapCause = {
   Interrupt : InterruptType,
-  Exception : ExceptionType,
+  Exception : Exception_Context,
 }
 
-mapping trapCause_bits : TrapCause <-> exc_code = {
-  Interrupt(i) <-> interruptType_bits(i),
-  Exception(e) <-> exceptionType_bits(e),
+function trapCause_bits(c : TrapCause) -> exc_code = {
+  match c {
+    Interrupt(i) => interruptType_bits(i),
+    Exception(e) => exceptionType_bits(e.trap),
+  }
 }
 
 function trapCause_is_interrupt(t : TrapCause) -> bool = match t {
@@ -331,7 +357,7 @@ function trapCause_is_interrupt(t : TrapCause) -> bool = match t {
 
 function trapCause_to_str(t : TrapCause) -> string = match t {
   Interrupt(i) => "int#" ^ interruptType_to_str(i),
-  Exception(e) => "exc#" ^ exceptionType_to_str(e),
+  Exception(e) => "exc#" ^ exceptionType_to_str(e.trap),
 }
 
 overload to_str = {trapCause_to_str}
@@ -382,8 +408,21 @@ function legalize_extStatus(policy : ExtContextPolicy, status : ext_status) -> e
   }
 }
 
-// supervisor-level address translation modes
+// hypervisor-level address translation modes
+type hgatp_mode = bits(4)
+enum HGATPMode = {HBare, Sv32x4, Sv39x4, Sv48x4, Sv57x4}
 
+function hgatpMode_of_bits(a : Architecture, m : hgatp_mode) -> option(HGATPMode) =
+  match (a, m) {
+    (_,    0x0) => Some(HBare),
+    (RV32, 0x1) => Some(Sv32x4),
+    (RV64, 0x8) => Some(Sv39x4),
+    (RV64, 0x9) => Some(Sv48x4),
+    (RV64, 0xA) => Some(Sv57x4),
+    (_, _)      => None()
+  }
+
+// supervisor-level address translation modes
 type satp_mode = bits(4)
 enum SATPMode = {Bare, Sv32, Sv39, Sv48, Sv57}
 

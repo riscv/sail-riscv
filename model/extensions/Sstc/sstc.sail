@@ -15,8 +15,8 @@ private function is_stimecmp_accessible(priv : Privilege) -> bool =
     Machine           => true,
     Supervisor        => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1,
     User              => false,
-    VirtualSupervisor => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1,
-                         /* TODO: & hcounteren[TM] == 0b1 & henvcfg[STCE] == 0b1 */
+    VirtualSupervisor => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1 &
+                         hcounteren[TM] == 0b1 & henvcfg[STCE] == 0b1,
     VirtualUser       => false,
   })
 
