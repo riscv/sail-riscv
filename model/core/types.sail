@@ -70,11 +70,11 @@ type virt_mode_bit = bit
 enum Privilege  = {User, VirtualUser, Supervisor, VirtualSupervisor, Machine}
 
 mapping privLevel_bits : (nom_priv_bits, virt_mode_bit) <-> Privilege = {
-  (0b00, bitzero) <-> User,
-  (0b00, bitone ) <-> VirtualUser,
-  (0b01, bitzero) <-> Supervisor,
-  (0b01, bitone ) <-> VirtualSupervisor,
-  (0b11, bitzero) <-> Machine,
+  (0b00, 0b0) <-> User,
+  (0b00, 0b1 ) <-> VirtualUser,
+  (0b01, 0b0) <-> Supervisor,
+  (0b01, 0b1 ) <-> VirtualSupervisor,
+  (0b11, 0b0) <-> Machine,
   forwards _       => internal_error(__FILE__, __LINE__, "Invalid privilege level or virtual mode"),
 }
 

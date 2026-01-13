@@ -53,7 +53,7 @@ function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       sum = match funct6 {
         // currently ordered/unordered sum reductions do the same operations
         FVV_VFREDOSUM   => fp_add(rm_3b, sum, vs2_val[i]),
@@ -128,7 +128,7 @@ function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       // currently ordered/unordered sum reductions do the same operations
       sum = fp_add(rm_3b, sum, fp_widen(vs2_val[i]))
     }

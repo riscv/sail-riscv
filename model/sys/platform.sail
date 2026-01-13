@@ -234,7 +234,7 @@ register htif_payload_writes : bits(4)
 
 // Once a htif command has been processed, the port is reset.
 private function reset_htif () -> unit = {
-  htif_cmd_write = bitzero;
+  htif_cmd_write = 0b0;
   htif_payload_writes = 0x0;
   htif_tohost = zeros();
 }
@@ -276,7 +276,7 @@ function htif_store(Physaddr(paddr), width, data) = {
   // Store the written value so that we can ack it later.
   // Only aligned 4-byte and 8-byte accesses are supported.
   if      width == 8 & paddr == base
-  then    { htif_cmd_write = bitone;
+  then    { htif_cmd_write = 0b1;
             htif_payload_writes = htif_payload_writes + 1;
             htif_tohost = zero_extend(data) }
   else if width == 4 & paddr == base
@@ -288,13 +288,13 @@ function htif_store(Physaddr(paddr), width, data) = {
   then    { if   data[15 .. 0] == htif_tohost[47 .. 32]
             then htif_payload_writes = htif_payload_writes + 1
             else htif_payload_writes = 0x1;
-            htif_cmd_write = bitone;
+            htif_cmd_write = 0b1;
             htif_tohost = vector_update_subrange(htif_tohost, 63, 32, data) }
   else return Err(E_SAMO_Access_Fault());
 
   // Execute if there were repeated writes of the same payload without
   // a cmd (e.g. in riscv-tests), or we have a complete htif command.
-  if   (((htif_cmd_write == bitone) & (unsigned(htif_payload_writes) > 0))
+  if   (((htif_cmd_write == 0b1) & (unsigned(htif_payload_writes) > 0))
         | (unsigned(htif_payload_writes) > 2))
   then {
     let cmd = Mk_htif_cmd(htif_tohost);
@@ -302,7 +302,7 @@ function htif_store(Physaddr(paddr), width, data) = {
       0x00 => { // syscall-proxy
         if   get_config_print_htif()
         then print_log("htif-syscall-proxy cmd: " ^ bits_str(cmd[payload]));
-        if   cmd[payload][0] == bitone
+        if   cmd[payload][0] == 0b1
         then {
              htif_done = true;
              htif_exit_code = (zero_extend(64, cmd[payload]) >> 1)
@@ -357,7 +357,7 @@ function init_platform() -> unit = {
   htif_tohost = zeros();
   htif_done   = false;
   htif_exit_code = zeros();
-  htif_cmd_write = bitzero;
+  htif_cmd_write = 0b0;
   htif_payload_writes = zeros();
 }
 

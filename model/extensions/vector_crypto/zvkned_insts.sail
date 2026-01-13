@@ -305,7 +305,7 @@ function clause execute VAESKF2_VI(vs2, rnd, vd) = {
     let current_round_key = get_velem_quad_vec(vs2_val, i);
     let round_key_b       = get_velem_quad_vec(vd_val, i);
 
-    w[0] = if (rnd_val[0] == bitone)
+    w[0] = if (rnd_val[0] == 0b1)
            then aes_subword_fwd(current_round_key[3]) ^ round_key_b[0]
            else aes_subword_fwd(current_round_key[3] >>> 8) ^
                 aes_decode_rcon((rnd_val >> 1) - 1) ^ round_key_b[0];

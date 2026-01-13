@@ -20,7 +20,7 @@ $include <hex_bits_signed.sail>
 $include <dec_bits.sail>
 $include <float/interface.sail>
 
-function not_bit(b : bit) -> bit = if b == bitone then bitzero else bitone
+function not_bit(b : bit) -> bit = if b == 0b1 then 0b0 else 0b1
 
 overload ~ = {not_bool, not_vec, not_bit}
 
@@ -101,8 +101,8 @@ val trunc : forall 'm 'n, 'm >= 0 & 'm <= 'n. (implicit('m), bits('n)) -> bits('
 function trunc(m, v) = truncate(v, m)
 
 mapping bool_bit : bool <-> bit = {
-  true <-> bitone,
-  false <-> bitzero,
+  true <-> 0b1,
+  false <-> 0b0,
 }
 
 mapping bool_bits : bool <-> bits(1) = {

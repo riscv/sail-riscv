@@ -137,14 +137,14 @@ function f_is_pos_inf_S(x32 : bits(32)) -> bool = {
 function f_is_SNaN_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (exp == ones())
-   & (mant [22] == bitzero)
+   & (mant [22] == 0b0)
    & (mant != zeros()))
 }
 
 function f_is_QNaN_S(x32 : bits(32)) -> bool = {
   let (sign, exp, mant) = fsplit_S (x32);
   (  (exp == ones())
-   & (mant [22] == bitone))
+   & (mant [22] == 0b1))
 }
 
 // Either QNaN or SNan

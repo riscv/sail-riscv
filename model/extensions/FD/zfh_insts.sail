@@ -99,14 +99,14 @@ function f_is_pos_zero_H(xf16 : bits(16)) -> bool = {
 function f_is_SNaN_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (exp == ones())
-   & (mant [9] == bitzero)
+   & (mant [9] == 0b0)
    & (mant != zeros()))
 }
 
 function f_is_QNaN_H(xf16 : bits(16)) -> bool = {
   let (sign, exp, mant) = fsplit_H (xf16);
   (  (exp == ones())
-   & (mant [9] == bitone))
+   & (mant [9] == 0b1))
 }
 
 // Either QNaN or SNan

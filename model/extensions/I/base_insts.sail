@@ -56,7 +56,7 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   // Perform standard alignment check.
   // Check target is at least 2-byte aligned (callers must ensure
   // this so it can be an assertion).
-  assert(target[0] == bitzero);
+  assert(target[0] == 0b0);
   // If it is not 4-byte aligned and compressed instructions are
   // not enabled then raise an alignment exception.
   if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
@@ -191,13 +191,13 @@ mapping encdec_sop : sop <-> bits(3) = {
 
 mapping clause encdec = SHIFTIOP(shamt, rs1, rd, SLLI)
   <-> 0b000000 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
-  when xlen == 64 | shamt[5] == bitzero
+  when xlen == 64 | shamt[5] == 0b0
 mapping clause encdec = SHIFTIOP(shamt, rs1, rd, SRLI)
   <-> 0b000000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
-  when xlen == 64 | shamt[5] == bitzero
+  when xlen == 64 | shamt[5] == 0b0
 mapping clause encdec = SHIFTIOP(shamt, rs1, rd, SRAI)
   <-> 0b010000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
-  when xlen == 64 | shamt[5] == bitzero
+  when xlen == 64 | shamt[5] == 0b0
 
 $[split op]
 function clause execute SHIFTIOP(shamt, rs1, rd, op) = {

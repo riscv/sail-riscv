@@ -100,14 +100,14 @@ function f_is_pos_inf_D(x64 : bits(64)) -> bool = {
 function f_is_SNaN_D(x64 : bits(64)) -> bool = {
   let (sign, exp, mant) = fsplit_D (x64);
   (  (exp == ones())
-   & (mant [51] == bitzero)
+   & (mant [51] == 0b0)
    & (mant != zeros()))
 }
 
 function f_is_QNaN_D(x64 : bits(64)) -> bool = {
   let (sign, exp, mant) = fsplit_D (x64);
   (  (exp == ones())
-   & (mant [51] == bitone))
+   & (mant [51] == 0b1))
 }
 
 // Either QNaN or SNan
@@ -219,7 +219,7 @@ val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, fregidx)) -> 
 function validDoubleRegs(n, regs) = {
   if currentlyEnabled(Ext_Zdinx) & xlen == 32 then {
     foreach (i from 0 to (n - 1)) {
-      if (fregidx_bits(regs[i])[0] == bitone) then return false;
+      if (fregidx_bits(regs[i])[0] == 0b1) then return false;
     }
   };
   true

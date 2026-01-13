@@ -10,7 +10,7 @@
 
 function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus, priv : Privilege) -> Privilege =
   if   access != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_bits(m[MPP], bitzero) // TODO: use m[MPV] if hypervisor enabled
+  then privLevel_bits(m[MPP], 0b0) // TODO: use m[MPV] if hypervisor enabled
   else priv
 
 // CSR access control
@@ -232,7 +232,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
-      cur_privilege = privLevel_bits(mstatus[MPP], bitzero); // TODO: use mstatus[MPV] if hypervisor enabled
+      cur_privilege = privLevel_bits(mstatus[MPP], 0b0); // TODO: use mstatus[MPV] if hypervisor enabled
       mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;

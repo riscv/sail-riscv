@@ -24,7 +24,7 @@ private function fetch() -> FetchResult = {
     None()  => (),
   };
 
-  if   (PC[0] != bitzero | (PC[1] != bitzero & not(currentlyEnabled(Ext_Zca))))
+  if   (PC[0] != 0b0 | (PC[1] != 0b0 & not(currentlyEnabled(Ext_Zca))))
   then return F_Error(E_Fetch_Addr_Align(), PC);
 
   match translateAddr(Virtaddr(PC), InstructionFetch()) {

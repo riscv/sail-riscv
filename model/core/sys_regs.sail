@@ -102,7 +102,7 @@ val ext_veto_disable_C : unit -> bool
 private function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   let v = Mk_Misa(v);
   // Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes
-  if   not(sys_enable_writable_misa) | (v[C] == 0b0 & (nextPC[1] == bitone | ext_veto_disable_C()))
+  if   not(sys_enable_writable_misa) | (v[C] == 0b0 & (nextPC[1] == 0b1 | ext_veto_disable_C()))
   then m
   else [m with
     A = if hartSupports(Ext_A) then v[A] else 0b0,
@@ -602,7 +602,7 @@ register mepc : xlenbits
 // PUBLIC: invoked from set_xepc() [exceptions/sys_exceptions.sail]
 function legalize_xepc(v : xlenbits) -> xlenbits = {
   if   hartSupports(Ext_Zca)
-  then [v with 0 = bitzero]
+  then [v with 0 = 0b0]
   else [v with 1..0 = zeros()]
 }
 
@@ -610,7 +610,7 @@ function legalize_xepc(v : xlenbits) -> xlenbits = {
 // legalize xepc reads.
 function align_pc(addr : xlenbits) -> xlenbits = {
   if currentlyEnabled(Ext_Zca)
-  then [addr with 0 = bitzero]
+  then [addr with 0 = 0b0]
   else [addr with 1..0 = zeros()]
 }
 
@@ -969,8 +969,8 @@ val get_16_random_bits = impure {
 // bits (m/senvcfg, m/scounteren, etc.). This abstracts that logic.
 function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, supervisor_enable_bit : bit) -> bool = match p {
   Machine => true,
-  Supervisor => machine_enable_bit == bitone,
-  User => machine_enable_bit == bitone & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == bitone),
+  Supervisor => machine_enable_bit == 0b1,
+  User => machine_enable_bit == 0b1 & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == 0b1),
   VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
 }
