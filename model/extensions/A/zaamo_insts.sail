@@ -85,8 +85,8 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     // Check if the model is configured to raise an exception based on
     // the misaligned virtual address.
     match plat_misaligned_exception(access, false) {
-      Some(AccessFault)        => return memory_exception(vaddr, E_SAMO_Access_Fault()),
-      Some(AlignmentException) => return memory_exception(vaddr, E_SAMO_Addr_Align()),
+      Some(AccessFault)        => return Memory_Exception(exception_context(vaddr, E_SAMO_Access_Fault())),
+      Some(AlignmentException) => return Memory_Exception(exception_context(vaddr, E_SAMO_Addr_Align())),
       // No exception yet, but we may still get one based on the
       // physical address after address translation and checking PMAs.
       None()                   => (),
@@ -94,7 +94,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   };
 
   let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
-    Err(e, _) => return memory_exception(vaddr, e),
+    Err(e, _) => return Memory_Exception(e),
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
@@ -102,13 +102,13 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
-      return memory_exception(vaddr, e)
+      return Memory_Exception(exception_context(e, bits_of(vaddr)))
     },
     Ok(_)  => match mem_read(access, pbmt, addr, width, aq, aq & rl, true) {
       Err(exc_addr, e) => {
         // AMOs should not get split.
         assert(exc_addr == addr);
-        return memory_exception(vaddr, e)
+        return Memory_Exception(exception_context(e, bits_of(vaddr)))
       },
       Ok(loaded) => loaded,
     },
@@ -154,7 +154,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
-      memory_exception(vaddr, e)
+      Memory_Exception(exception_context(e, bits_of(vaddr)))
     }
   }
 }

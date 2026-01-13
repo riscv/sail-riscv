@@ -68,7 +68,7 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_
         //
         let dest_val : xlenbits = match csr {
           0x344 => read_mip(IncludePlatformInterrupts).bits,
-          0x144 => read_sip(IncludePlatformInterrupts).bits,
+          0x144 => read_sip(IncludePlatformInterrupts),
           _ => read_val,
         };
 

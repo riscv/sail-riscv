@@ -154,8 +154,8 @@ private function check_PTE_permission(
     // loads and stores; not instruction fetch.
     Supervisor => not(pte_U) | (do_sum & is_load_store(access)),
     Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser => pte_U,
+    VirtualSupervisor => not(pte_U) | (do_sum & is_load_store(access)),
   };
   if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
@@ -177,6 +177,7 @@ private function check_PTE_permission(
       Load(Data)               => true,
       Load(Vector)             => true,
       Load(ShadowStack)        => true,
+      LoadExecute(Data)        => true,
       LoadReserved(_, _, Data) => true,
 
       // "Memory mapped as an SS page cannot be written to by instructions other
@@ -193,6 +194,7 @@ private function check_PTE_permission(
       // exception."
       CacheAccess(_) => false,
 
+      LoadExecute(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
       LoadReserved(_, _, p)          => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
       StoreConditional(_, _, p)      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
       Atomic(_, _, _, rp, wp)        => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
@@ -220,6 +222,7 @@ private function check_PTE_permission(
     StoreConditional(_)         => pte_W,
     Atomic(_)                   => pte_W & pte_R,
     InstructionFetch(_)         => pte_X,
+    LoadExecute(_)              => pte_R & pte_X,
     CacheAccess(CB_zero())      => pte_W,
     CacheAccess(CB_prefetch(p)) => match p {
       PREFETCH_R => pte_R,
@@ -254,6 +257,7 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match access {
                              InstructionFetch()          => false,
+                             LoadExecute(_)              => false,
                              Load(_)                     => false,
                              LoadReserved(_)             => false,
                              Store(_)                    => true,

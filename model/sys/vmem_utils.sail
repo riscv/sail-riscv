@@ -74,8 +74,8 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(memory_exception(vaddr, E_Load_Access_Fault())),
-      Some(AlignmentException) => return Err(memory_exception(vaddr, E_Load_Addr_Align())),
+      Some(AccessFault)        => return Err(Memory_Exception(exception_context((E_Load_Access_Fault(), bits_of(vaddr))))),
+      Some(AlignmentException) => return Err(Memory_Exception(exception_context((E_Load_Addr_Align(), bits_of(vaddr))))),
       // Even if the CPU does support misaligned accesses, it might be
       // that the PMA doesn't support misaligned accesses so you can
       // still get a fault later, but this will be after address
@@ -103,12 +103,12 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
     // Do next page access first.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     match translateAddr(access_addr, access) {
-      Err(e,_) => return Err(memory_exception(access_addr, e)),
+      Err(e,_) => return Err(Memory_Exception(e)),
 
       Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, next_page_bytes, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
+          return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
         },
         Ok(v)  => data[8 * width - 1 .. 8 * in_page_bytes] = v,
       },
@@ -119,12 +119,12 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // accessed, otherwise all bytes should be accessed.
   let access_width = if do_split_access then in_page_bytes else width;
   match translateAddr(vaddr, access) {
-    Err(e, _) => return Err(memory_exception(vaddr, e)),
+    Err(e, _) => return Err(Memory_Exception(e)),
 
     Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, access_width, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        return Err(memory_exception(exc_vaddr, e))
+        return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
       },
       Ok(v)  => {
         if res then {
@@ -143,12 +143,12 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
     // Do next page access next.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     match translateAddr(access_addr, access) {
-      Err(e,_) => return Err(memory_exception(access_addr, e)),
+      Err(e,_) => return Err(Memory_Exception(e)),
 
       Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, next_page_bytes, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
+          return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
         },
         Ok(v)  => data[8 * width - 1 .. 8 * in_page_bytes] = v,
       },
@@ -166,8 +166,8 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(memory_exception(vaddr, E_SAMO_Access_Fault())),
-      Some(AlignmentException) => return Err(memory_exception(vaddr, E_SAMO_Addr_Align())),
+      Some(AccessFault)        => return Err(Memory_Exception(exception_context((E_SAMO_Access_Fault(), bits_of(vaddr))))),
+      Some(AlignmentException) => return Err(Memory_Exception(exception_context((E_SAMO_Addr_Align(), bits_of(vaddr))))),
       None()                   => (),
     };
   };
@@ -195,12 +195,12 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     match translateAddr(access_addr, access) {
-      Err(e, _) => return Err(memory_exception(access_addr, e)),
+      Err(e, _) => return Err(Memory_Exception(e)),
 
       Ok(paddr, pbmt, _) => match mem_write_ea(paddr, next_page_bytes, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
+          return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
         },
 
         Ok(()) => {
@@ -208,7 +208,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           match mem_write_value(paddr, next_page_bytes, write_value, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-              return Err(memory_exception(exc_vaddr, e))
+              return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
             },
             Ok(s)  => write_success = write_success & s,
           }
@@ -219,7 +219,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
   let access_width = if do_split_access then in_page_bytes else width;
   match translateAddr(vaddr, access) {
-    Err(e, _) => return Err(memory_exception(vaddr, e)),
+    Err(e, _) => return Err(Memory_Exception(e)),
 
     Ok(paddr, pbmt, _) => {
       // If res is true, the store should be aligned.
@@ -233,13 +233,13 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
         // access-fault exception."
         let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
         match phys_access_check(access, pbmt, effPriv, paddr, access_width, true) {
-          Err(e) => return Err(memory_exception(vaddr, e)),
+          Err(e) => return Err(Memory_Exception(exception_context((e, bits_of(vaddr))))),
           Ok(_)  => write_success = false,
         }
       } else match mem_write_ea(paddr, access_width, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
+          return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
         },
 
         Ok(()) => {
@@ -247,7 +247,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           match mem_write_value(paddr, access_width, write_value, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-              return Err(memory_exception(exc_vaddr, e))
+              return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
             },
             Ok(s)  => write_success = write_success & s,
           }
@@ -262,12 +262,12 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     match translateAddr(access_addr, access) {
-      Err(e, _) => return Err(memory_exception(access_addr, e)),
+      Err(e, _) => return Err(Memory_Exception(exception_context((e, bits_of(access_addr))))),
 
       Ok(paddr, pbmt, _) => match mem_write_ea(paddr, next_page_bytes, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
+          return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
         },
 
         Ok(()) => {
@@ -275,7 +275,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           match mem_write_value(paddr, next_page_bytes, write_value, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-              return Err(memory_exception(exc_vaddr, e))
+              return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
             },
             Ok(s)  => write_success = write_success & s,
           }

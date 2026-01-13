@@ -20,6 +20,7 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_pay
     Store(PageTableEntry)         => ent[W] == 0b1,
     StoreConditional(_, _, Data)  => ent[W] == 0b1,
     Atomic(_, _, _, Data, Data)   => ent[R] == 0b1 & ent[W] == 0b1,
+    LoadExecute(Data)             => ent[R] == 0b1 & ent[X] == 0b1,
     InstructionFetch()            => ent[X] == 0b1,
 
     // "The PMP checks are extended to require read-write permission
@@ -29,6 +30,7 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_pay
 
     Atomic(_, _, _, ShadowStack, ShadowStack) => ent[R] == 0b1 & ent[W] == 0b1,
 
+    LoadExecute(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
     LoadReserved(_, _, p)         => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
     StoreConditional(_, _, p)     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
     Atomic(_, _, _, rp, wp)       => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_str(wp) ^ ") for Atomic."),

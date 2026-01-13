@@ -144,6 +144,7 @@ function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_paylo
   let exceptions = pma.misaligned_exceptions;
   match access {
     Load(Data)             => exceptions.load_store,
+    LoadExecute(Data)      => exceptions.load_store,
     Store(Data)            => exceptions.load_store,
     Load(Vector)           => exceptions.vector,
     Store(Vector)          => exceptions.vector,
@@ -158,6 +159,7 @@ function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_paylo
     Load(ShadowStack)         => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned shadow-stack load."),
     Store(ShadowStack)        => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned shadow-stack store."),
     CacheAccess(_)            => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned cache-access."),
+    LoadExecute(p)            => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned load-execute (" ^ mem_payload_name(p) ^ ")."),
   }
 }
 
@@ -168,6 +170,7 @@ private function is_mag_applicable_access(access : MemoryAccessType(mem_payload)
     // Loads/stores need to be XLEN bits or less.
     Load(Data)                          => width <= xlen_bytes,
     Store(Data)                         => width <= xlen_bytes,
+    LoadExecute(Data)                   => width <= xlen_bytes,
     // Vector accesses use a separate MAG PMA; currently, this doesn't
     // condition the accesses on width like the scalar MAG does above.
     Load(Vector)                        => true,
@@ -192,6 +195,7 @@ private function is_mag_applicable_access(access : MemoryAccessType(mem_payload)
     Atomic(_, _, _, rp, wp)             => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
     LoadReserved(_, _, p)               => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
     StoreConditional(_, _, p)           => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    LoadExecute(p)                      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
   }
 
 function mag_of_pma(pma : PMA, is_vector : bool) -> option(range(1, 12)) = {
