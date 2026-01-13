@@ -41,17 +41,21 @@ let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 
 // which exceptions write information into `xtval`
 let illegal_instruction_writes_xtval : bool = config base.xtval_nonzero.illegal_instruction
+let virtual_instruction_writes_xtval : bool = config base.xtval_nonzero.virtual_instruction
 let software_breakpoint_writes_xtval : bool = config base.xtval_nonzero.software_breakpoint
 let hardware_breakpoint_writes_xtval : bool = config base.xtval_nonzero.hardware_breakpoint
 let misaligned_load_writes_xtval : bool = config base.xtval_nonzero.load_address_misaligned
 let load_access_fault_writes_xtval : bool = config base.xtval_nonzero.load_access_fault
 let load_page_fault_writes_xtval : bool = config base.xtval_nonzero.load_page_fault
+let load_guest_page_fault_writes_xtval : bool = config base.xtval_nonzero.load_guest_page_fault
 let misaligned_samo_writes_xtval : bool = config base.xtval_nonzero.samo_address_misaligned
 let samo_access_fault_writes_xtval : bool = config base.xtval_nonzero.samo_access_fault
 let samo_page_fault_writes_xtval : bool = config base.xtval_nonzero.samo_page_fault
+let samo_guest_page_fault_writes_xtval : bool = config base.xtval_nonzero.samo_guest_page_fault
 let misaligned_fetch_writes_xtval : bool = config base.xtval_nonzero.fetch_address_misaligned
 let fetch_access_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_access_fault
 let fetch_page_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_page_fault
+let fetch_guest_page_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_guest_page_fault
 let software_check_fault_writes_xtval : bool = config base.xtval_nonzero.software_check
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
 

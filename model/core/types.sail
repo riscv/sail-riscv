@@ -183,7 +183,7 @@ union ExceptionType = {
   E_SAMO_Access_Fault  : unit,
   E_U_EnvCall          : unit,
   E_S_EnvCall          : unit,
-  E_Reserved_10        : unit,
+  E_VS_EnvCall         : unit,
   E_M_EnvCall          : unit,
   E_Fetch_Page_Fault   : unit,
   E_Load_Page_Fault    : unit,
@@ -192,6 +192,11 @@ union ExceptionType = {
   E_Reserved_16        : unit,
   E_Reserved_17        : unit,
   E_Software_Check     : unit,
+  E_Reserved_19        : unit,
+  E_Fetch_GPage_Fault  : unit,
+  E_Load_GPage_Fault   : unit,
+  E_Virtual_Instr      : unit,
+  E_SAMO_GPage_Fault   : unit,
 
   // extensions
   E_Extension          : ext_exc_type
@@ -207,7 +212,7 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_SAMO_Access_Fault()  <-> 0b000111, // 7
   E_U_EnvCall()          <-> 0b001000, // 8
   E_S_EnvCall()          <-> 0b001001, // 9
-  E_Reserved_10()        <-> 0b001010, // 10
+  E_VS_EnvCall()         <-> 0b001010, // 10
   E_M_EnvCall()          <-> 0b001011, // 11
   E_Fetch_Page_Fault()   <-> 0b001100, // 12
   E_Load_Page_Fault()    <-> 0b001101, // 13
@@ -216,6 +221,11 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Reserved_16()        <-> 0b010000, // 16
   E_Reserved_17()        <-> 0b010001, // 17
   E_Software_Check()     <-> 0b010010, // 18
+  E_Reserved_19()        <-> 0b010011, // 19
+  E_Fetch_GPage_Fault()  <-> 0b010100, // 20
+  E_Load_GPage_Fault()   <-> 0b010101, // 21
+  E_Virtual_Instr()      <-> 0b010110, // 22
+  E_SAMO_GPage_Fault()   <-> 0b010111, // 23
 
   // breakpoints
   E_Breakpoint(Brk_Software) <-> 0b000011, // 3
@@ -236,7 +246,7 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_SAMO_Access_Fault()  => "store/amo-access-fault",
     E_U_EnvCall()          => "u-call",
     E_S_EnvCall()          => "s-call",
-    E_Reserved_10()        => "reserved-0",
+    E_VS_EnvCall()         => "vs-call",
     E_M_EnvCall()          => "m-call",
     E_Fetch_Page_Fault()   => "fetch-page-fault",
     E_Load_Page_Fault()    => "load-page-fault",
@@ -245,6 +255,11 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_Reserved_16()        => "reserved-2",
     E_Reserved_17()        => "reserved-3",
     E_Software_Check()     => "software-check-fault",
+    E_Reserved_19()        => "reserved-19",
+    E_Fetch_GPage_Fault()  => "fetch-guest-page-fault",
+    E_Load_GPage_Fault()   => "load-guest-page-fault",
+    E_Virtual_Instr()      => "virtual-instruction",
+    E_SAMO_GPage_Fault()   => "store/amo-guest-page-fault",
 
     // breakpoints
     E_Breakpoint(Brk_Software) => "software-breakpoint",
