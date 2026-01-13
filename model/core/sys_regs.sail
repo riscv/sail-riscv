@@ -967,7 +967,7 @@ val get_16_random_bits = impure {
 
 // There are several features that are controlled by machine/supervisor enable
 // bits (m/senvcfg, m/scounteren, etc.). This abstracts that logic.
-function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bit, supervisor_enable_bit : bit) -> bool = match p {
+function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), supervisor_enable_bit : bits(1)) -> bool = match p {
   Machine => true,
   Supervisor => machine_enable_bit == 0b1,
   User => machine_enable_bit == 0b1 & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == 0b1),

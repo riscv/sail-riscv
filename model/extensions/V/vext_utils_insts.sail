@@ -491,7 +491,7 @@ function get_fixed_rounding_incr(vec_elem, shift_amount) = {
     // TODO: Change the type signature to enforce this assertion.
     assert(shift_amount < 'm);
     match rounding_mode {
-      0b00 => bit_to_bits(vec_elem[shift_amount - 1]),
+      0b00 => vec_elem[shift_amount - 1],
       0b01 => {
         bool_to_bits(
           vec_elem[shift_amount - 1] == 0b1 &

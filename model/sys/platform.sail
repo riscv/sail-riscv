@@ -229,7 +229,7 @@ register htif_exit_code : bits(64)
 // intervening write to the control bytes, we process the whole htif
 // command anyway.
 
-register htif_cmd_write : bit
+register htif_cmd_write : bits(1)
 register htif_payload_writes : bits(4)
 
 // Once a htif command has been processed, the port is reset.

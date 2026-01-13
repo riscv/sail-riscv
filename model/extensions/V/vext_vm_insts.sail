@@ -54,7 +54,7 @@ function clause execute VVMTYPE(funct6, vs2, vs1, vd) = {
         VVM_VMADC    => unsigned(vs2_val[i]) + unsigned(vs1_val[i]) + (if vm_val[i] == 0b1 then 1 else 0) > 2 ^ SEW - 1,
         VVM_VMSBC    => unsigned(vs2_val[i]) - unsigned(vs1_val[i]) - (if vm_val[i] == 0b1 then 1 else 0) < 0
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -113,7 +113,7 @@ function clause execute VVMCTYPE(funct6, vs2, vs1, vd) = {
         VVMC_VMADC    => unsigned(vs2_val[i]) + unsigned(vs1_val[i]) > 2 ^ SEW - 1,
         VVMC_VMSBC    => unsigned(vs2_val[i]) - unsigned(vs1_val[i]) < 0
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -241,7 +241,7 @@ function clause execute VVCMPTYPE(funct6, vm, vs2, vs1, vd) = {
         VVCMP_VMSLEU   => unsigned(vs2_val[i]) <= unsigned(vs1_val[i]),
         VVCMP_VMSLE    => signed(vs2_val[i]) <= signed(vs1_val[i])
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -305,7 +305,7 @@ function clause execute VXMTYPE(funct6, vs2, rs1, vd) = {
         VXM_VMADC    => unsigned(vs2_val[i]) + unsigned(rs1_val) + (if vm_val[i] == 0b1 then 1 else 0) > 2 ^ SEW - 1,
         VXM_VMSBC    => unsigned(vs2_val[i]) - unsigned(rs1_val) - (if vm_val[i] == 0b1 then 1 else 0) < 0
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -364,7 +364,7 @@ function clause execute VXMCTYPE(funct6, vs2, rs1, vd) = {
         VXMC_VMADC    => unsigned(vs2_val[i]) + unsigned(rs1_val) > 2 ^ SEW - 1,
         VXMC_VMSBC    => unsigned(vs2_val[i]) - unsigned(rs1_val) < 0
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -496,7 +496,7 @@ function clause execute VXCMPTYPE(funct6, vm, vs2, rs1, vd) = {
         VXCMP_VMSGTU   => unsigned(vs2_val[i]) > unsigned(rs1_val),
         VXCMP_VMSGT    => signed(vs2_val[i]) > signed(rs1_val)
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -560,7 +560,7 @@ function clause execute VIMTYPE(funct6, vs2, simm, vd) = {
       let res : bool = match funct6 {
         VIM_VMADC    => unsigned(vs2_val[i]) + unsigned(imm_val) + (if vm_val[i] == 0b1 then 1 else 0) > 2 ^ SEW - 1
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -616,7 +616,7 @@ function clause execute VIMCTYPE(funct6, vs2, simm, vd) = {
       let res : bool = match funct6 {
         VIMC_VMADC    => unsigned(vs2_val[i]) + unsigned(imm_val) > 2 ^ SEW - 1
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -740,7 +740,7 @@ function clause execute VICMPTYPE(funct6, vm, vs2, simm, vd) = {
         VICMP_VMSGTU   => unsigned(vs2_val[i]) > unsigned(imm_val),
         VICMP_VMSGT    => signed(vs2_val[i]) > signed(imm_val)
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 

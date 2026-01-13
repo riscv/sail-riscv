@@ -59,7 +59,7 @@ function clause execute FVVMTYPE(funct6, vm, vs2, vs1, vd) = {
         FVVM_VMFLE    => fp_le(vs2_val[i], vs1_val[i]),
         FVVM_VMFLT    => fp_lt(vs2_val[i], vs1_val[i])
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 
@@ -130,7 +130,7 @@ function clause execute FVFMTYPE(funct6, vm, vs2, rs1, vd) = {
         VFM_VMFGE    => fp_ge(vs2_val[i], rs1_val),
         VFM_VMFGT    => fp_gt(vs2_val[i], rs1_val)
       };
-      result[i] = bool_to_bit(res)
+      result[i] = bool_to_bits(res)
     }
   };
 

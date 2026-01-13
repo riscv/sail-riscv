@@ -65,7 +65,7 @@ mapping architecture_bits : Architecture <-> arch_xlen = {
 type nom_priv_bits = bits(2)
 
 // virtualization modes
-type virt_mode_bit = bit
+type virt_mode_bit = bits(1)
 
 enum Privilege  = {User, VirtualUser, Supervisor, VirtualSupervisor, Machine}
 

@@ -59,7 +59,7 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   assert(target[0] == 0b0);
   // If it is not 4-byte aligned and compressed instructions are
   // not enabled then raise an alignment exception.
-  if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
+  if bits_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
   then return Memory_Exception(Virtaddr(target), E_Fetch_Addr_Align());
 
   set_next_pc(target);

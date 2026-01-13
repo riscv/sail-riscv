@@ -36,7 +36,7 @@ function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> b
 // it occurred, returns the privilege at which it should be handled.
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx = unsigned(exceptionType_bits(e));
-  let super = bit_to_bool(medeleg.bits[idx]);
+  let super = bits_to_bool(medeleg.bits[idx]);
   // TODO: check VS/VU-mode if hypervisor extension enabled
   let deleg = if currentlyEnabled(Ext_S) & super then Supervisor else Machine;
   // We cannot transition to a less-privileged mode.
