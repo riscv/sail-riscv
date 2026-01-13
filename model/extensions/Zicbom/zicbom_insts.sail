@@ -67,7 +67,7 @@ private function cbop_priv_check(p: Privilege) -> checked_cbop = {
   }
 }
 
-private function process_clean_inval(rs1 : regidx, _cbop : cbop_zicbom) -> ExecutionResult = {
+private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResult = {
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
 
@@ -78,9 +78,9 @@ private function process_clean_inval(rs1 : regidx, _cbop : cbop_zicbom) -> Execu
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match ext_data_get_addr(rs1, negative_offset, CacheAccess(CB_manage()), cache_block_size) {
+  match ext_data_get_addr(rs1, negative_offset, CacheAccess(CB_manage(cbop)), cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => match translateAddr(vaddr, CacheAccess(CB_manage())) {
+    Ext_DataAddr_OK(vaddr) => match translateAddr(vaddr, CacheAccess(CB_manage(cbop))) {
       Ok(_paddr, _) => {
           // The model has no caches so there's no action required.
           RETIRE_SUCCESS

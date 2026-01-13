@@ -375,14 +375,12 @@ extensions {
   }
 
   Zicbom {
-    requires core
-
     Zicbom_types {
-      before sys
+      before core
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
-      requires sys, Zicbom_types
+      requires core, sys, Zicbom_types
       files extensions/Zicbom/zicbom_insts.sail
     }
   }

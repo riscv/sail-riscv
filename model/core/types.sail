@@ -94,7 +94,7 @@ overload to_str = {privLevel_to_str}
 // memory access types
 
 union cacheop = {
-  CB_manage   : unit,
+  CB_manage   : cbop_zicbom,
   CB_zero     : unit,
   CB_prefetch : cbop_zicbop,
 }

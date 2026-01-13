@@ -108,6 +108,8 @@ union PTE_Check = {
   PTE_Check_Failure : (ext_ptw, pte_check_failure)
 }
 
+// This assumes that the PTE is valid; i.e. `pte_is_invalid` has been checked before
+// calling this function.
 private function check_PTE_permission(
   access    : MemoryAccessType(mem_payload),
   priv      : Privilege,
@@ -124,6 +126,11 @@ private function check_PTE_permission(
   let pte_W = bit_to_bool(pte_flags[W]);
   let pte_X = bit_to_bool(pte_flags[X]);
 
+  // Since we assume a valid PTE: Writable pages must be readable. Write-only
+  // pages are reserved.
+
+  assert(pte_W ==> pte_R);
+
   // Step 6 of VATP (see vmem.sail).
   let priv_ok : bool = match priv {
     User       => pte_U,
@@ -139,16 +146,19 @@ private function check_PTE_permission(
   // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
 
   // Step 8 of VATP (see vmem.sail).
+
+  // Handle `mxr` (Make eXecutable Readable).
+  let pte_R = pte_R | (pte_X & mxr);
   let access_ok : bool = match access {
-    Load(_)                     => pte_R | (pte_X & mxr),
-    LoadReserved(_)             => pte_R | (pte_X & mxr),
+    Load(_)                     => pte_R,
+    LoadReserved(_)             => pte_R,
     Store(_)                    => pte_W,
     StoreConditional(_)         => pte_W,
-    Atomic(_, _, _)             => pte_W & (pte_R | (pte_X & mxr)),
+    Atomic(_, _, _)             => pte_W & pte_R,
     InstructionFetch(_)         => pte_X,
     CacheAccess(CB_zero())      => pte_W,
     CacheAccess(CB_prefetch(p)) => match p {
-      PREFETCH_R => pte_R | (pte_X & mxr),
+      PREFETCH_R => pte_R,
       PREFETCH_W => pte_W,
       PREFETCH_I => pte_X,
     },
@@ -162,7 +172,7 @@ private function check_PTE_permission(
     // fetch is permitted to access the physical addresses, whether a
     // cache-block management instruction is permitted to access the
     // cache block is UNSPECIFIED."
-    CacheAccess(CB_manage())    => pte_R | (pte_X & mxr) | pte_W,
+    CacheAccess(CB_manage(_))   => pte_R | pte_W,
   };
   if not(access_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
@@ -183,13 +193,23 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
                              Load(_)                     => false,
                              LoadReserved(_)             => false,
                              Store(_)                    => true,
-                             // "For the purposes of memory protection, a
-                             // failed SC.W may be treated like a store."
+                             // NOTE: According to the spec: "it is UNSPECIFIED
+                             // whether any side effects of implicit address
+                             // translation and protection memory accesses (such
+                             // as setting a page-table entry D bit) occur on a
+                             // failed SC.W."  However, at this point, we do not
+                             // know whether the SC is going to succeed or fail,
+                             // since the PMA/PMP checks are done after address
+                             // translation.  In order to be correct for an SC
+                             // that succeeds, we update the D bit of the PTE
+                             // here.  TODO: support the alternative: i.e.,
+                             // _not_ update the D bit if the SC fails for
+                             // whatever reason.
                              StoreConditional(_)         => true,
                              Atomic(_, _, _)             => true,
                              // A cache-block management instruction
                              // does not affect the dirty bit.
-                             CacheAccess(CB_manage())    => false,
+                             CacheAccess(CB_manage(_))   => false,
                              // "During address translation, the
                              // [cache-block zero] instruction also
                              // checks the accessed and dirty bits and

@@ -109,7 +109,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             // is granted by the supported access type PMAs, read
             // permission shall also be granted.
             CacheAccess(CB_zero())      => attributes.writable & attributes.supports_cbo_zero,
-            CacheAccess(CB_manage())    => attributes.readable | attributes.writable,
+            CacheAccess(CB_manage(_))   => attributes.readable | attributes.writable,
             CacheAccess(CB_prefetch(p)) => match p {
               PREFETCH_R => attributes.readable,
               PREFETCH_W => attributes.writable,

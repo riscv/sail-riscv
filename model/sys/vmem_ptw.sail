@@ -53,26 +53,28 @@ function translationException(access : MemoryAccessType(mem_payload),
                               err : PTW_Error)
                              -> ExceptionType = {
   match (access, err) {
-    (_, PTW_Ext_Error(e))                     => E_Extension(ext_translate_exception(e)),
-    (Atomic(_), PTW_No_Access())              => E_SAMO_Access_Fault(),
-    (Atomic(_), _)                            => E_SAMO_Page_Fault(),
-    (Load(_), PTW_No_Access())                => E_Load_Access_Fault(),
-    (LoadReserved(_), PTW_No_Access())        => E_Load_Access_Fault(),
-    (Load(_), _)                              => E_Load_Page_Fault(),
-    (LoadReserved(_), _)                      => E_Load_Page_Fault(),
-    (Store(_), PTW_No_Access())               => E_SAMO_Access_Fault(),
-    (StoreConditional(_), PTW_No_Access())    => E_SAMO_Access_Fault(),
-    (Store(_), _)                             => E_SAMO_Page_Fault(),
-    (StoreConditional(_), _)                  => E_SAMO_Page_Fault(),
-    (InstructionFetch(), PTW_No_Access())     => E_Fetch_Access_Fault(),
-    (InstructionFetch(), _)                   => E_Fetch_Page_Fault(),
-    (CacheAccess(CB_manage()), _)             => E_SAMO_Page_Fault(),
-    (CacheAccess(CB_zero()), PTW_No_Access()) => E_SAMO_Access_Fault(),
-    (CacheAccess(CB_zero()), _)               => E_SAMO_Page_Fault(),
+    (_, PTW_Ext_Error(e))                        => E_Extension(ext_translate_exception(e)),
+    (Atomic(_), PTW_No_Access())                 => E_SAMO_Access_Fault(),
+    (Atomic(_), _)                               => E_SAMO_Page_Fault(),
+    (Load(_), PTW_No_Access())                   => E_Load_Access_Fault(),
+    (Load(_), _)                                 => E_Load_Page_Fault(),
+    (LoadReserved(_), PTW_No_Access())           => E_Load_Access_Fault(),
+    (LoadReserved(_), _)                         => E_Load_Page_Fault(),
+    (Store(_), PTW_No_Access())                  => E_SAMO_Access_Fault(),
+    (Store(_), _)                                => E_SAMO_Page_Fault(),
+    (StoreConditional(_), PTW_No_Access())       => E_SAMO_Access_Fault(),
+    (StoreConditional(_), _)                     => E_SAMO_Page_Fault(),
+    (InstructionFetch(), PTW_No_Access())        => E_Fetch_Access_Fault(),
+    (InstructionFetch(), _)                      => E_Fetch_Page_Fault(),
+
+    (CacheAccess(CB_manage(_)), PTW_No_Access()) => E_SAMO_Access_Fault(),
+    (CacheAccess(CB_manage(_)), _)               => E_SAMO_Page_Fault(),
+    (CacheAccess(CB_zero()), PTW_No_Access())    => E_SAMO_Access_Fault(),
+    (CacheAccess(CB_zero()), _)                  => E_SAMO_Page_Fault(),
     // Though prefetches don't raise exceptions, we return a nominal
     // exception here to propagate the failed address translation to
     // the execute of the calling instruction so that it can decide
     // whether to actually proceed with a prefetch.
-    (CacheAccess(CB_prefetch(_)), _)          => E_Load_Access_Fault(),
+    (CacheAccess(CB_prefetch(_)), _)             => E_Load_Access_Fault(),
   }
 }

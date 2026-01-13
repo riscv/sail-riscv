@@ -16,7 +16,7 @@ function accessFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> Ex
     Atomic(_)                   => E_SAMO_Access_Fault(),
     // Cache-block management (CB_manage) and zero (CB_zero)
     // instructions raise store faults.
-    CacheAccess(CB_manage())    => E_SAMO_Access_Fault(),
+    CacheAccess(CB_manage(_))   => E_SAMO_Access_Fault(),
     CacheAccess(CB_zero())      => E_SAMO_Access_Fault(),
     // Though prefetches don't raise exceptions, we return a nominal
     // exception here to propagate the failed address translation to
@@ -35,7 +35,7 @@ function alignmentFaultFromAccessType(access : MemoryAccessType(mem_payload)) ->
     Atomic(_)                   => E_SAMO_Addr_Align(),
     // Cache-block management (CB_manage) and zero (CB_zero)
     // instructions raise store faults.
-    CacheAccess(CB_manage())    => E_SAMO_Addr_Align(),
+    CacheAccess(CB_manage(_))   => E_SAMO_Addr_Align(),
     CacheAccess(CB_zero())      => E_SAMO_Addr_Align(),
     // Though prefetches don't raise exceptions, we return a nominal
     // exception here to propagate the failed address translation to
