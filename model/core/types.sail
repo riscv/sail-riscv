@@ -364,6 +364,20 @@ mapping extStatus_bits : ExtStatus <-> ext_status = {
 function extStatus_to_bits(e : ExtStatus) -> ext_status = extStatus_bits(e)
 function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
 
+// hypervisor-level address translation modes
+type hgatp_mode = bits(4)
+enum HGATPMode = {HBare, Sv32x4, Sv39x4, Sv48x4, Sv57x4}
+
+function hgatpMode_of_bits(a : Architecture, m : hgatp_mode) -> option(HGATPMode) =
+  match (a, m) {
+    (_,    0x0) => Some(HBare),
+    (RV32, 0x1) => Some(Sv32x4),
+    (RV64, 0x8) => Some(Sv39x4),
+    (RV64, 0x9) => Some(Sv48x4),
+    (RV64, 0xA) => Some(Sv57x4),
+    (_, _)      => None()
+  }
+
 // supervisor-level address translation modes
 
 type satp_mode = bits(4)

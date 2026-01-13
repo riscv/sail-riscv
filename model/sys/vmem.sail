@@ -171,13 +171,49 @@ function pt_walk(
 termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 
 // ****************************************************************
-// Architectural SATP CSR
+// Architectural HGATP CSR
+register hgatp : xlenbits
+mapping clause csr_name_map = 0x680 <-> "hgatp"
 
+// TODO: Should raise virtual instruction exception if accessed by VU/VS-Mode.
+// Needs refactoring of CSR access logic.
+function clause is_CSR_accessible(0x680, priv, _) = currentlyEnabled(Ext_H) & (priv == Machine | (priv == Supervisor & mstatus[TVM] == 0b0))
+function clause read_CSR(0x680) = hgatp
+function clause write_CSR(0x680, value) = { hgatp = legalize_hgatp(architecture(cur_privilege), hgatp, value); Ok(hgatp) }
+
+// Architectural VSATP CSR
+register vsatp : xlenbits
+mapping clause csr_name_map = 0x280 <-> "vsatp"
+
+function clause is_CSR_accessible(0x280, _, _) = currentlyEnabled(Ext_H)
+function clause read_CSR(0x280) = vsatp
+function clause write_CSR(0x280, value) = { vsatp = legalize_satp(architecture(cur_privilege), vsatp, value); Ok(vsatp) }
+
+// Architectural SATP CSR
 register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
-function clause is_CSR_accessible(0x180, priv, _) = currentlyEnabled(Ext_S) & not(priv == Supervisor & mstatus[TVM] == 0b1)
-function clause read_CSR(0x180) = satp
-function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(Supervisor), satp, value); Ok(satp) }
+
+function clause is_CSR_accessible(0x180, priv, _) = {
+  if not(currentlyEnabled(Ext_S)) then false
+  else if priv == Supervisor & mstatus[TVM] == 0b1 then false
+  // TODO: VS-mode with VTVM=1 should raise virtual instruction
+  // not illegal instruction. Needs refactoring of CSR access logic.
+  else if inVirtualPrivilege() & hstatus[VTVM] == 0b1 then false
+  else true
+}
+
+function clause read_CSR(0x180) = if inVirtualPrivilege() then vsatp else satp
+
+function clause write_CSR(0x180, value) = {
+  let arch = architecture(cur_privilege);
+  if inVirtualPrivilege() then {
+    vsatp = legalize_satp(arch, vsatp, value);
+    Ok(vsatp)
+  } else {
+    satp = legalize_satp(arch, satp, value);
+    Ok(satp)
+  }
+}
 
 // ----------------
 // Fields of SATP
