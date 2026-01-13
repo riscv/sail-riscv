@@ -57,3 +57,7 @@ function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
   }
 
 overload to_str = {accessType_to_str}
+
+// Stage of Address Translation
+
+enum TranslationStage = {S_Stage, VS_Stage, G_Stage}
