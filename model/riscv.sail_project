@@ -469,6 +469,8 @@ extensions {
   }
 
   Stateen {
+    requires core
+
     Stateen_regs {
       files extensions/Stateen/stateen_regs.sail
     }

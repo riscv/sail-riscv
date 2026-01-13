@@ -104,12 +104,35 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             // supports all AMO operations.
             Atomic(_, _, _)     => attributes.readable & attributes.writable,
 
-            // TODO: The PMAs shall be the same for all physical
-            // addresses in the cache block, and if write permission
-            // is granted by the supported access type PMAs, read
-            // permission shall also be granted.
+            // TODO for the CMO extensions: "The PMAs shall be the
+            // same for all physical addresses in the cache block, and
+            // if write permission is granted by the supported access
+            // type PMAs, read permission shall also be granted."
+
+            // "A cache-block zero instruction is permitted to access
+            // the specified cache block whenever a store instruction
+            // is permitted to access the corresponding physical
+            // addresses and when the PMAs indicate that cache-block
+            // zero instructions are a supported access type."
             CacheAccess(CB_zero())      => attributes.writable & attributes.supports_cbo_zero,
+
+            // "A cache-block management instruction is permitted to
+            // access the specified cache block whenever a load
+            // instruction or store instruction is permitted to access
+            // the corresponding physical addresses. If neither a load
+            // instruction nor store instruction is permitted to
+            // access the physical addresses, but an instruction fetch
+            // is permitted to access the physical addresses, whether
+            // a cache-block management instruction is permitted to
+            // access the cache block is UNSPECIFIED."
+            // TODO: handle the second sentence.
             CacheAccess(CB_manage(_))   => attributes.readable | attributes.writable,
+
+            // "A cache-block prefetch instruction is permitted to
+            // access the specified cache block whenever a load
+            // instruction, store instruction, or instruction fetch is
+            // permitted to access the corresponding physical
+            // addresses."
             CacheAccess(CB_prefetch(p)) => match p {
               PREFETCH_R => attributes.readable,
               PREFETCH_W => attributes.writable,

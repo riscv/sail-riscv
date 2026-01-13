@@ -207,8 +207,10 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
                              // whatever reason.
                              StoreConditional(_)         => true,
                              Atomic(_, _, _)             => true,
-                             // A cache-block management instruction
-                             // does not affect the dirty bit.
+                             // "As implied by omission, a cache-block
+                             // management instruction does not check the dirty
+                             // bit and neither raises an exception nor sets the
+                             // bit."
                              CacheAccess(CB_manage(_))   => false,
                              // "During address translation, the
                              // [cache-block zero] instruction also
@@ -216,9 +218,13 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
                              // may either raise an exception or set the
                              // bits as required."
                              CacheAccess(CB_zero())      => true,
+                             // "During address translation, the [cache-block
+                             // prefetch] instruction does not check the
+                             // accessed and dirty bits and neither raises an
+                             // exception nor sets the bits."
                              CacheAccess(CB_prefetch(_)) => false,
                            });
-  // Update 'accessed'-bit?
+  // Update 'accessed' bit?
   // Cache-block management and zero instructions update the accessed bit,
   // but cache-block prefetch instructions do not.
   let update_a = (pte_flags[A] == 0b0) & not(is_prefetch_access(access));

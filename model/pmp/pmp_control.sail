@@ -104,10 +104,10 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   // TODO for accesses of type CacheAccess:
   //
   // The CMO extensions impose the following constraints on the
-  // physical addresses in a given cache block: The PMP access control
+  // physical addresses in a given cache block: "The PMP access control
   // bits shall be the same for all physical addresses in the cache
   // block, and if write permission is granted by the PMP access
-  // control bits, read permission shall also be granted.
+  // control bits, read permission shall also be granted."
 
   foreach (i from 0 to sys_pmp_count - 1) {
     let prev_pmpaddr = if i > 0 then pmpReadAddrReg(i - 1) else zeros();
