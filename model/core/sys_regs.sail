@@ -444,14 +444,18 @@ function is_fiom_active() -> bool = {
 // interrupt processing state
 
 bitfield Minterrupts : xlenbits = {
-  MEI : 11, // external interrupts
-  SEI : 9,
+  SGEI : 12, // Supervisor guest external interrupt
+  MEI  : 11, // Machine external interrupt
+  VSEI : 10, // Virtual Supervisor external interrupt
+  SEI  : 9,  // Supervisor external interrupt
 
-  MTI : 7,  // timers interrupts
-  STI : 5,
+  MTI  : 7,  // Timer interrupt
+  VSTI : 6,  // Virtual supervisor timer interrupt
+  STI  : 5,  // Supervisor timer interrupt
 
-  MSI : 3,  // software interrupts
-  SSI : 1,
+  MSI  : 3,  // Software interrupt
+  VSSI : 2,  // Virtual supervisor software interrupt
+  SSI  : 1,  // Supervisor software interrupt
 }
 
 private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
