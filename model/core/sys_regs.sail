@@ -383,9 +383,9 @@ bitfield SEnvcfg : xlenbits = {
 }
 
 private function legalize_xenvcfg_cbie(cbie : bits(2)) -> bits(2) = {
-  if cbie != 0b10 then (
+  if cbie != 0b10 then {
     cbie
-  ) else match xenvcfg_cbie_reserved_behavior {
+  } else match xenvcfg_cbie_reserved_behavior {
       Xenvcfg_Fatal => reserved_behavior("xenvcfg.CBIE = 0b10"),
       Xenvcfg_ClearPermissions => 0b00,
     }
