@@ -39,7 +39,12 @@ function clause execute FVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+     not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -119,7 +124,12 @@ function clause execute FVVMATYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+     not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -337,7 +347,8 @@ function clause execute FWVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen))
+      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
+      not(valid_reg_group(vs2, LMUL_pow_widen))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -404,7 +415,11 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -800,7 +815,11 @@ function clause execute VFUNARY1(vm, vs2, vfunary1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -933,7 +952,11 @@ function clause execute FVFTYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -1028,7 +1051,11 @@ function clause execute FVFMATYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -1243,7 +1270,9 @@ function clause execute FWFTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen)
+  if illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_group(vs2, LMUL_pow_widen)) |
+     not(valid_reg_group(vd, LMUL_pow_widen))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1308,7 +1337,11 @@ function clause execute VFMERGE(vs2, rs1, vd) = {
   let num_elem      = get_num_elem(LMUL_pow, SEW); // max(VLMAX,VLEN/SEW))
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); // VLMAX
 
-  if illegal_fp_vd_masked(vd, SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_vd_masked(vd, SEW, rm_3b) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   let 'n = num_elem;
@@ -1359,7 +1392,10 @@ function clause execute VFMV(rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_vd_unmasked(SEW, rm_3b) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   let 'n = num_elem;

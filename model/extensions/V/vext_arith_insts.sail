@@ -51,7 +51,10 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -193,7 +196,8 @@ function clause execute NVSTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
+      not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) |
+      not(valid_reg_group(vs1, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
@@ -267,7 +271,8 @@ function clause execute NVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
+      not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) |
+      not(valid_reg_group(vs1, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
@@ -338,7 +343,11 @@ function clause execute MASKTYPEV(vs2, vs1, vd) = {
   let num_elem      = get_num_elem(LMUL_pow, SEW); // max(VLMAX,VLEN/SEW))
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); // VLMAX
 
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
+  if illegal_vd_masked(vd) |
+     not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -385,7 +394,10 @@ function clause execute MOVETYPEV(vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then return Illegal_Instruction();
+  if illegal_vd_unmasked() |
+     not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -447,7 +459,10 @@ function clause execute VXTYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -718,7 +733,10 @@ function clause execute VXSG(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -792,7 +810,10 @@ function clause execute MASKTYPEX(vs2, rs1, vd) = {
   let num_elem      = get_num_elem(LMUL_pow, SEW); // max(VLMAX,VLEN/SEW))
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); // VLMAX
 
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
+  if illegal_vd_masked(vd) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -839,7 +860,8 @@ function clause execute MOVETYPEX(rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then return Illegal_Instruction();
+  if illegal_vd_unmasked() | not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -893,7 +915,10 @@ function clause execute VITYPE(funct6, vm, vs2, simm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1140,7 +1165,19 @@ function clause execute VISG(funct6, vm, vs2, simm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  // For `vslideup` and `vrgather`, "the destination vector register
+  // group cannot overlap with the source vector register groups,
+  // otherwise the instruction encoding is reserved."
+  let group_overlap : bool = match funct6 {
+    VI_VSLIDEUP   => vd == vs2,
+    VI_VSLIDEDOWN => false,
+    VI_VRGATHER   => vd == vs2,
+  };
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow)) |
+     group_overlap
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1214,7 +1251,10 @@ function clause execute MASKTYPEI(vs2, simm, vd) = {
   let num_elem      = get_num_elem(LMUL_pow, SEW); // max(VLMAX,VLEN/SEW))
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); // VLMAX
 
-  if illegal_vd_masked(vd) then return Illegal_Instruction();
+  if illegal_vd_masked(vd) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1261,7 +1301,8 @@ function clause execute MOVETYPEI(vd, simm) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() then return Illegal_Instruction();
+  if illegal_vd_unmasked() | not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1322,6 +1363,10 @@ function clause execute VMVRTYPE(vs2, nreg, vd) = {
     4 => 2,
     8 => 3,
   };
+
+  if not(valid_reg_group(vs2, EMUL_pow)) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
   let num_elem = get_num_elem(EMUL_pow, SEW);
   let 'n = num_elem;
   let 'm = SEW;
@@ -1378,7 +1423,11 @@ function clause execute MVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1499,7 +1548,11 @@ function clause execute MVVMATYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -1645,7 +1698,8 @@ function clause execute WVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen))
+      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
+      not(valid_reg_group(vs2, LMUL_pow_widen))
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
@@ -1896,7 +1950,12 @@ function clause execute MVVCOMPRESS(vs2, vs1, vd) = {
   let num_elem    = get_num_elem(LMUL_pow, SEW);
 
   // vcompress should always be executed with a vstart of 0
-  if start_element != 0 | vs1 == vd | vs2 == vd | illegal_vd_unmasked()
+  if start_element != 0 |
+     vs1 == vd |
+     vs2 == vd |
+     illegal_vd_unmasked() |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -1970,7 +2029,10 @@ function clause execute MVXTYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -2102,7 +2164,10 @@ function clause execute MVXMATYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -2247,7 +2312,9 @@ function clause execute WXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen)
+  if illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_group(vs2, LMUL_pow_widen)) |
+     not(valid_reg_group(vd, LMUL_pow_widen))
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
