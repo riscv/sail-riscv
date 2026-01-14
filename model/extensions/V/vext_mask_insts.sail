@@ -197,7 +197,7 @@ function clause execute VMSBF_M(vm, vs2, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then {
       if vs2_val[i] == 0b1 then found_elem = true;
-      result[i] = bool_to_bits(not(found_elem))
+      result[i] = bool_to_bit(not(found_elem))
     }
   };
 
@@ -241,7 +241,7 @@ function clause execute VMSIF_M(vm, vs2, vd) = {
   var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then {
-      result[i] = bool_to_bits(not(found_elem));
+      result[i] = bool_to_bit(not(found_elem));
       if vs2_val[i] == 0b1 then found_elem = true
     }
   };

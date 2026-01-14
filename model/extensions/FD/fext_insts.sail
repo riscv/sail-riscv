@@ -810,7 +810,7 @@ function clause execute F_BIN_TYPE_X_S(rs2, rs1, rd, FEQ_S) = {
       riscv_f32Eq (rs1_val_S, rs2_val_S);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -822,7 +822,7 @@ function clause execute F_BIN_TYPE_X_S(rs2, rs1, rd, FLT_S) = {
       riscv_f32Lt (rs1_val_S, rs2_val_S);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -834,7 +834,7 @@ function clause execute F_BIN_TYPE_X_S(rs2, rs1, rd, FLE_S) = {
       riscv_f32Le (rs1_val_S, rs2_val_S);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 

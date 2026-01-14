@@ -126,9 +126,9 @@ function clint_load(access, Physaddr(addr), width) = {
 }
 
 private function clint_dispatch() -> unit = {
-  mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
+  mip[MTI] = bool_to_bit(mtimecmp <=_u mtime);
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
-    mip[STI] = bool_to_bits(stimecmp <=_u mtime);
+    mip[STI] = bool_to_bit(stimecmp <=_u mtime);
   };
   if get_config_print_clint()
   then print_log("clint mtime " ^ bits_str(mtime) ^ " (mip.MTI <- " ^ bits_str(mip[MTI]) ^

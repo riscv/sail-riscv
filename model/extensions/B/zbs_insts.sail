@@ -49,7 +49,7 @@ function clause execute ZBS_IOP(shamt, rs1, rd, op) = {
                         else zero_extend(0b1) << shamt;
   let result : xlenbits = match op {
     BCLRI => rs1_val & ~(mask),
-    BEXTI => zero_extend(bool_to_bits((rs1_val & mask) != zeros())),
+    BEXTI => zero_extend(bool_to_bit((rs1_val & mask) != zeros())),
     BINVI => rs1_val ^ mask,
     BSETI => rs1_val | mask
   };
@@ -99,7 +99,7 @@ function clause execute ZBS_RTYPE(rs2, rs1, rd, op) = {
                         else zero_extend(0b1) << rs2_val[5..0];
   let result : xlenbits = match op {
     BCLR => rs1_val & ~(mask),
-    BEXT => zero_extend(bool_to_bits((rs1_val & mask) != zeros())),
+    BEXT => zero_extend(bool_to_bit((rs1_val & mask) != zeros())),
     BINV => rs1_val ^ mask,
     BSET => rs1_val | mask
   };

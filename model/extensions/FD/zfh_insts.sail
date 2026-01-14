@@ -420,7 +420,7 @@ function clause execute F_BIN_X_TYPE_H(rs2, rs1, rd, FEQ_H) = {
       riscv_f16Eq (rs1_val_H, rs2_val_H);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -432,7 +432,7 @@ function clause execute F_BIN_X_TYPE_H(rs2, rs1, rd, FLT_H) = {
       riscv_f16Lt (rs1_val_H, rs2_val_H);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -444,7 +444,7 @@ function clause execute F_BIN_X_TYPE_H(rs2, rs1, rd, FLE_H) = {
       riscv_f16Le (rs1_val_H, rs2_val_H);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 

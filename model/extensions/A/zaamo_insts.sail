@@ -57,7 +57,7 @@ mapping encdec_amoop : amoop <-> bits(5) = {
 }
 
 mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ width_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
+  <-> encdec_amoop(op) @ bool_bit(aq) @ bool_bit(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ width_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when amo_encoding_valid(size, op, rs2, rd)
 
 // NOTE: Currently, we only EA if address translation is successful.

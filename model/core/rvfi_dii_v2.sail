@@ -46,8 +46,8 @@ function rvfi_get_exec_packet_v2() -> bits(512) = {
   let packet = update_magic(packet, 0x32762d6563617274); // ASCII "trace-v2" (BE)
   let packet = update_basic_data(packet, rvfi_inst_data.bits);
   let packet = update_pc_data(packet, rvfi_pc_data.bits);
-  let packet = update_integer_data_available(packet, bool_to_bits(rvfi_int_data_present));
-  let packet = update_memory_access_data_available(packet, bool_to_bits(rvfi_mem_data_present));
+  let packet = update_integer_data_available(packet, bool_to_bit(rvfi_int_data_present));
+  let packet = update_memory_access_data_available(packet, bool_to_bit(rvfi_mem_data_present));
   // To simplify the implementation (so that we can return a fixed-size vector)
   // we always return a max-size packet from this function, and the C emulator
   // ensures that only trace_size bits are sent over the socket.

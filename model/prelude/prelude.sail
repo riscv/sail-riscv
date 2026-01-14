@@ -100,7 +100,7 @@ function ones (n) = sail_ones(n)
 val trunc : forall 'm 'n, 'm >= 0 & 'm <= 'n. (implicit('m), bits('n)) -> bits('m)
 function trunc(m, v) = truncate(v, m)
 
-mapping bool_bits : bool <-> bits(1) = {
+mapping bool_bit : bool <-> bits(1) = {
   true   <-> 0b1,
   false  <-> 0b0,
 }
@@ -112,8 +112,8 @@ mapping bool_int : bool <-> {0, 1} = {
 }
 
 // These aliases make the conversion direction a bit clearer.
-function bool_to_bits(x : bool) -> bits(1) = bool_bits(x)
-function bits_to_bool(x : bits(1)) -> bool = bool_bits(x)
+function bool_to_bit(x : bool) -> bits(1) = bool_bit(x)
+function bit_to_bool(x : bits(1)) -> bool = bool_bit(x)
 
 // Convert an integer to bits. This requires that the integer is known to fit
 // inside the resulting bit vector. Note this only admits non-negative numbers.
