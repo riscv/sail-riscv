@@ -46,16 +46,36 @@ function valid_rd_mask(rd : vregidx, vm : bits(1)) -> bool = {
   vm != 0b0 | rd != zvreg
 }
 
+function valid_reg_group(r : vregidx, EMUL_pow : int) -> bool = {
+  let reg_group_size = if EMUL_pow > 0 then 2 ^ EMUL_pow else 1;
+  unsigned(vregidx_bits(r)) % reg_group_size == 0
+}
+
+// For whole register loads/stores: "The nf field encodes how many
+// vector registers to load and store using the NFIELDS encoding. The
+// encoded number of registers must be a power of 2 and the vector
+// register numbers must be aligned as with a vector register group,
+// otherwise the instruction encoding is reserved."
+
+function valid_whole_register(r : vregidx, nf : nfields_pow2) -> bool = {
+  unsigned(vregidx_bits(r)) % nf == 0
+}
+
 // Check for valid register overlap in vector widening/narrowing instructions:
 // In a widening instruction, the overlap is valid only in the highest-numbered part
 // of the destination register group, and the source EMUL is at least 1.
 // In a narrowing instruction, the overlap is valid only in the lowest-numbered part
 // of the source register group.
+// This also checks that the source and destination register groups are valid.
 function valid_reg_overlap(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_pow_rd : int) -> bool = {
   let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
   let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
   let rs_int = unsigned(vregidx_bits(rs));
   let rd_int = unsigned(vregidx_bits(rd));
+
+  if rs_int % rs_group != 0 | rd_int % rd_group != 0
+  then return false;
+
   if EMUL_pow_rs < EMUL_pow_rd then {
     (rs_int + rs_group <= rd_int) | (rs_int >= rd_int + rd_group) |
     ((rs_int + rs_group == rd_int + rd_group) & (EMUL_pow_rs >= 0))
