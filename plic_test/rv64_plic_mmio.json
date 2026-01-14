@@ -1,6 +1,6 @@
 {
   "base": {
-    "xlen": @CONFIG__BASE__XLEN@,
+    "xlen": 64,
     "E": false,
     "writable_misa": true,
     "writable_fiom": true,
@@ -29,13 +29,9 @@
     },
     "reserved_behavior": {
       // The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
-      // "AMOCAS_Fatal"  – raise a Sail exception, stopping execution.
-      // "AMOCAS_Illegal" – treat it as an illegal instruction.
-      "amocas_odd_register": "AMOCAS_Illegal",
-      // The configuration option determines how to handle the reserved behavior `pmpcfg_with_R0W1`.
-      // "PMP_Fatal"  – raise a Sail exception, stopping execution.
-      // "PMP_ClearPermissions" – convert a PMP entry with R=0, W=1 to R=0, W=0, X=0.
-      "pmpcfg_write_only": "PMP_ClearPermissions"
+      // "Fatal"  – raise a Sail exception, stopping execution.
+      // "Illegal" – treat it as an illegal instruction.
+      "amocas_odd_register": "Illegal"
     }
   },
   "memory": {
@@ -102,7 +98,7 @@
         },
         "size": {
           "len": 64,
-          "value": "0x2000000"
+          "value": "0xE000000"
         },
         "attributes": {
           "cacheable": false,
@@ -194,9 +190,9 @@
       // For e.g. Zve32x and Zve32f require `elen_exp` >= 5,
       // Zve64x, Zve64f, and Zve64d require `elen_exp` >= 6,
       // and V requires `elen_exp` >= 6 and `vlen_exp` >= 7.
-      "support_level": "@CONFIG__V__SUPPORT@",
-      "vlen_exp": @CONFIG__V__VLEN_EXP@,
-      "elen_exp": @CONFIG__V__ELEN_EXP@,
+      "support_level": "Full",
+      "vlen_exp": 9,
+      "elen_exp": 6,
       "vl_use_ceil": false
     },
     "B": {
@@ -296,7 +292,7 @@
       "supported": true
     },
     "Zcf": {
-      "supported": @CONFIG_XLEN_IS_32@
+      "supported": false
     },
     "Zcd": {
       "supported": true
@@ -375,7 +371,7 @@
       "supported": true
     },
     "Zvbc": {
-      "supported": @CONFIG_ELEN_IS_64@
+      "supported": true
     },
     "Zvkb": {
       "supported": false
@@ -390,7 +386,7 @@
       "supported": true
     },
     "Zvknhb": {
-      "supported": @CONFIG_ELEN_IS_64@
+      "supported": true
     },
     "Zvksed": {
       "supported": true
@@ -402,6 +398,9 @@
       "supported": true
     },
     "Sscofpmf": {
+      "supported": true
+    },
+    "Smcntrpmf": {
       "supported": true
     },
     "Sstc": {
@@ -416,9 +415,6 @@
       "supported": true
     },
     "Svrsw60t59b": {
-      "supported": @CONFIG_XLEN_IS_64@
-    },
-    "Smcntrpmf": {
       "supported": true
     },
     "Svbare": {
@@ -426,26 +422,16 @@
       "sfence_vma_illegal_if_svbare_only": true
     },
     "Sv32": {
-      "supported": @CONFIG_XLEN_IS_32@
+      "supported": false
     },
     "Sv39": {
-      "supported": @CONFIG_XLEN_IS_64@
+      "supported": true
     },
     "Sv48": {
-      "supported": @CONFIG_XLEN_IS_64@
+      "supported": true
     },
     "Sv57": {
-      "supported": @CONFIG_XLEN_IS_64@
-    },
-    "Stateen": {
-      "Smstateen": {
-        "supported": true
-      },
-      "Ssstateen": {
-        "supported": true
-      },
-      "C_readonly_zero": true,
-      "SE0_readonly_zero": false
+      "supported": true
     }
   }
 }
