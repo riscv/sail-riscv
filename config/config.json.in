@@ -36,6 +36,10 @@
       // "PMP_Fatal"  – raise a Sail exception, stopping execution.
       // "PMP_ClearPermissions" – convert a PMP entry with R=0, W=1 to R=0, W=0, X=0.
       "pmpcfg_write_only": "PMP_ClearPermissions"
+    },
+    "mstatus": {
+      "mstatus_fs_writable": false,
+      "mstatus_vs_writable": false
     }
   },
   "memory": {
