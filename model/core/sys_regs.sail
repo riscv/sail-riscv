@@ -382,6 +382,15 @@ bitfield SEnvcfg : xlenbits = {
   FIOM   : 0,
 }
 
+private function legalize_xenvcfg_cbie(cbie : bits(2)) -> bits(2) = {
+  if cbie != 0b10 then {
+    cbie
+  } else match xenvcfg_cbie_reserved_behavior {
+      Xenvcfg_Fatal => reserved_behavior("xenvcfg.CBIE = 0b10"),
+      Xenvcfg_ClearPermissions => 0b00,
+    }
+}
+
 private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
@@ -389,7 +398,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     LPE  = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
@@ -402,7 +411,7 @@ private function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
     LPE = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }
