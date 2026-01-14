@@ -22,7 +22,7 @@ private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : ins
   // successfully interrupted waits
   if shouldWakeForInterrupt() then {
     if   get_config_print_instr()
-    then print_log("interrupt exit from " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
+    then print_log("interrupt exit from " ^ wait_name(wr) ^ " state at PC " ^ bits_str(bits_of_virtaddr(PC)));
 
     // The waiting instruction retires successfully.  The
     // pending interrupts will be handled in the next step.
@@ -33,14 +33,14 @@ private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : ins
   match (wr, valid_reservation(), exit_wait) {
     (WAIT_WRS_STO, false, _) => {
       if   get_config_print_instr()
-      then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
+      then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(bits_of_virtaddr(PC)));
 
       hart_state = HART_ACTIVE();
       Step_Execute(Retire_Success(), instbits)
     },
     (WAIT_WRS_NTO, false, _) => {
       if   get_config_print_instr()
-      then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(PC));
+      then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(bits_of_virtaddr(PC)));
 
       hart_state = HART_ACTIVE();
       Step_Execute(Retire_Success(), instbits)
@@ -48,7 +48,7 @@ private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : ins
     // Transition out of waiting states as instructed.
     (WAIT_WFI, _, true) => {
       if   get_config_print_instr()
-      then print_log("forced exit from " ^ wait_name(WAIT_WFI) ^ " state at PC " ^ bits_str(PC));
+      then print_log("forced exit from " ^ wait_name(WAIT_WFI) ^ " state at PC " ^ bits_str(bits_of_virtaddr(PC)));
 
       hart_state = HART_ACTIVE();
       // "When TW=1, then if WFI is executed in any
@@ -61,14 +61,14 @@ private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : ins
     },
     (WAIT_WRS_STO, _, true) => {
       if   get_config_print_instr()
-      then print_log("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
+      then print_log("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(bits_of_virtaddr(PC)));
 
       hart_state = HART_ACTIVE();
       Step_Execute(Retire_Success(), instbits)
     },
     (WAIT_WRS_NTO, _, true) => {
       if   get_config_print_instr()
-      then print_log("timed-out exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(PC));
+      then print_log("timed-out exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(bits_of_virtaddr(PC)));
 
       hart_state = HART_ACTIVE();
       // TODO: This is similar to WFI above for now, but will change to handle
@@ -80,7 +80,7 @@ private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : ins
     // remain waiting
     (_, _, false) => {
       if   get_config_print_instr()
-      then print_log("remaining in " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
+      then print_log("remaining in " ^ wait_name(wr) ^ " state at PC " ^ bits_str(bits_of_virtaddr(PC)));
       Step_Waiting(wr)
     }
   }
@@ -102,17 +102,17 @@ private function run_hart_active(step_no: nat) -> Step = {
         let instruction = ext_decode_compressed(h);
         if   get_config_print_instr()
         then {
-          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
+          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(bits_of_virtaddr(PC)) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(bits_of_virtaddr(PC)));
         };
         // When ELP is set to LP_EXPECTED, the next instruction needs to be
         // the non-RVC `LPAD` instruction.
         if is_landing_pad_expected() then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), bits_of_virtaddr(PC));
           Step_Execute(r, instbits)
         }
         // check for RVC once here instead of every RVC execute clause.
         else if currentlyEnabled(Ext_Zca) then {
-          nextPC = PC + 2;
+          nextPC = bits_of_virtaddr(PC) + 2;
           let result : ExecutionResult = match execute(instruction) {
             ExecuteAs(other_inst) => execute(other_inst),
             result => result,
@@ -129,16 +129,16 @@ private function run_hart_active(step_no: nat) -> Step = {
         let instruction = ext_decode(w);
         if   get_config_print_instr()
         then {
-          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
+          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(bits_of_virtaddr(PC)) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(bits_of_virtaddr(PC)));
         };
         // When ELP is set to LP_EXPECTED, if the next instruction in
         // the instruction stream is not LPAD, then a software check
         // exception with a landing pad fault code is thrown.
         if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()),bits_of_virtaddr(PC));
           Step_Execute(r, instbits)
         } else {
-          nextPC = PC + 4;
+          nextPC = bits_of_virtaddr(PC) + 4;
           let result : ExecutionResult = match execute(instruction) {
             ExecuteAs(other_inst) => execute(other_inst),
             result => result,
@@ -211,8 +211,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     // This case was handled above when processing the fetch result.
     Step_Execute(ExecuteAs(_), _) => assert(false),
     // standard errors
-    Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e),
+    Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, mk_virtaddr(pc))),
+    Step_Execute(Memory_Exception(vaddr, e), _) =>
+      handle_exception(bits_of(vaddr), e),
     Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
     Step_Execute(Enter_Wait(wr), instbits) => {
       if wait_is_nop(wr) then {
@@ -221,7 +222,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       } else {
         // Transition into the wait state.
         if   get_config_print_instr()
-        then print_log("entering " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
+        then print_log("entering " ^ wait_name(wr) ^ " state at PC " ^ bits_str(bits_of_virtaddr(PC)));
 
         hart_state = HART_WAITING(wr, instbits);
       }

@@ -23,7 +23,7 @@ function clause execute LPAD(lpl) = {
     let unaligned_pc = get_arch_pc()[1 .. 0] != 0b00;
     let label_mismatch = X(Regno(7))[31 .. 12] != lpl & lpl != zeros();
     if unaligned_pc | label_mismatch then {
-      Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC)
+      Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), bits_of_virtaddr(PC))
     } else {
       reset_elp();
       RETIRE_SUCCESS

@@ -15,6 +15,8 @@ let physaddrbits_len = sizeof(physaddrbits_len)
 newtype physaddr = Physaddr : physaddrbits
 newtype virtaddr = Virtaddr : xlenbits
 
+function mk_virtaddr(x : xlenbits) -> virtaddr = Virtaddr(x)
+
 function bits_of_physaddr(Physaddr(paddr) : physaddr) -> physaddrbits = paddr
 
 function bits_of_virtaddr(Virtaddr(vaddr) : virtaddr) -> xlenbits = vaddr

@@ -74,7 +74,7 @@ mapping clause encdec = JAL(imm @ 0b0, rd)
 
 function clause execute JAL(imm, rd) = {
   let link_address = get_next_pc();
-  match jump_to(PC + sign_extend(imm)) {
+  match jump_to(bits_of_virtaddr(PC) + sign_extend(imm)) {
     Retire_Success() => { X(rd) = link_address; Retire_Success() },
     failure => failure,
   }
@@ -123,7 +123,7 @@ function clause execute BTYPE(imm, rs2, rs1, op) = {
     BGEU => X(rs1) >=_u X(rs2)
   };
   if taken
-  then jump_to(PC + sign_extend(imm))
+  then jump_to(bits_of_virtaddr(PC) + sign_extend(imm))
   else RETIRE_SUCCESS
 }
 
@@ -547,7 +547,7 @@ function clause execute ECALL() = {
     excinfo = (None() : option(xlenbits)),
     ext     = None(),
   };
-  Trap(cur_privilege, CTL_TRAP(t), PC)
+  Trap(cur_privilege, CTL_TRAP(t), bits_of_virtaddr(PC))
 }
 
 mapping clause assembly = ECALL() <-> "ecall"
@@ -604,7 +604,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() =
-  Memory_Exception(Virtaddr(PC), E_Breakpoint(Brk_Software))
+  Memory_Exception(PC, E_Breakpoint(Brk_Software))
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
