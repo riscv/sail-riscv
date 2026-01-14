@@ -14,7 +14,7 @@
 // the types (hart::zPrivilege etc.) in a separate header to hart::Model.
 // See https://github.com/rems-project/sail/issues/1560
 
-val ptw_start_callback = pure {cpp: "ptw_start_callback"} : (/* vpn */ bits(64), /* access type */ MemoryAccessType(ext_access_type), /* privilege */ (Privilege, unit)) -> unit
+val ptw_start_callback = pure {cpp: "ptw_start_callback"} : (/* vpn */ bits(64), /* access type */ MemoryAccessType(mem_payload), /* privilege */ (Privilege, unit)) -> unit
 function ptw_start_callback(_) = ()
 
 val ptw_step_callback = pure {cpp: "ptw_step_callback"} : (/* level */ range(0, 4), /* pte_addr */ physaddrbits, /* pte */ bits(64)) -> unit

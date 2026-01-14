@@ -116,7 +116,7 @@ void log_callbacks::vreg_write_callback(hart::Model &, unsigned reg, lbits value
 void log_callbacks::ptw_start_callback(
   hart::Model &model,
   uint64_t vpn,
-  hart::zMemoryAccessTypezIuzK access_type,
+  hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
   hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
 ) {
   if (trace_log != nullptr && config_print_ptw) {
