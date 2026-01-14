@@ -417,6 +417,9 @@ mapping clause csr_name_map = 0x10A  <-> "senvcfg"
 
 function clause is_CSR_accessible(0x30A, _, _) = currentlyEnabled(Ext_U) // menvcfg
 function clause is_CSR_accessible(0x31A, _, _) = currentlyEnabled(Ext_U) & (xlen == 32) // menvcfgh
+
+// This should ideally also check `xstateen.ENVCFG`, but due to module
+// interdependency issues, that is handled by `stateen_allows_CSR_access`.
 function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) // senvcfg
 
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]

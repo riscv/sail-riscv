@@ -399,9 +399,6 @@
     "Sscofpmf": {
       "supported": true
     },
-    "Smcntrpmf": {
-      "supported": true
-    },
     "Sstc": {
       "supported": true
     },
@@ -415,6 +412,9 @@
     },
     "Svrsw60t59b": {
       "supported": @CONFIG_XLEN_IS_64@
+    },
+    "Smcntrpmf": {
+      "supported": true
     },
     "Svbare": {
       "supported": true,
@@ -431,6 +431,16 @@
     },
     "Sv57": {
       "supported": @CONFIG_XLEN_IS_64@
+    },
+    "Stateen": {
+      "Smstateen": {
+        "supported": true
+      },
+      "Ssstateen": {
+        "supported": true
+      },
+      "C_readonly_zero": true,
+      "SE0_readonly_zero": false
     }
   }
 }
