@@ -14,7 +14,7 @@ main:
     csrs mstatus, t0
 
     # Set LMUL to 2
-    vsetivli zero, 0, e32, m2
+    vsetivli zero, 0, e32, m2, ta, ma
 
     # Set trap handler
     la t0, trap_handler
