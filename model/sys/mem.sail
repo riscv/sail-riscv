@@ -93,13 +93,14 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match access {
             InstructionFetch()  => attributes.executable,
-            // XXX: remove reservability check from Load/Store
-            Load(_)             => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
-            Store(_)            => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+            // TODO: assert(not(res_or_con)). This requires a slight refactor of the mem_write_* APIs,
+            // since the use of the default Store access conflicts with the passed in aq/rl/con flags.
+            Load(_)             => attributes.readable,
+            Store(_)            => attributes.writable,
             // TODO: For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
             // or absence (RsrvNonEventual) of an eventual success guarantee.
-            LoadReserved(_)     => attributes.readable & attributes.reservability != RsrvNone,
-            StoreConditional(_) => attributes.writable & attributes.reservability != RsrvNone,
+            LoadReserved(_)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
+            StoreConditional(_) => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
             // TODO: Extend MemoryAccessType with the specific type of AMO operation. For now we assume all memory
             // supports all AMO operations.
             Atomic(_, _, _)     => attributes.readable & attributes.writable,
