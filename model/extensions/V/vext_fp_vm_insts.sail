@@ -52,7 +52,7 @@ function clause execute FVVMTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
         FVVM_VMFEQ    => fp_eq(vs2_val[i], vs1_val[i]),
         FVVM_VMFNE    => ~(fp_eq(vs2_val[i], vs1_val[i])),
@@ -121,7 +121,7 @@ function clause execute FVFMTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
         VFM_VMFEQ    => fp_eq(vs2_val[i], rs1_val),
         VFM_VMFNE    => ~(fp_eq(vs2_val[i], rs1_val)),

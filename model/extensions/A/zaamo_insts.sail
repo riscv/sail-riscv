@@ -31,7 +31,7 @@ private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(
     width <= xlen_bytes | (
       (op == AMOCAS & width <= xlen_bytes * 2)
       &
-      (if   rs2[0] == bitone | rd[0] == bitone
+      (if   rs2[0] == 0b1 | rd[0] == 0b1
        then match amocas_odd_register_reserved_behavior {
          AMOCAS_Fatal   => reserved_behavior("AMOCAS.D/Q used odd-numbered register"),
          AMOCAS_Illegal => false,
@@ -57,7 +57,7 @@ mapping encdec_amoop : amoop <-> bits(5) = {
 }
 
 mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ width_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
+  <-> encdec_amoop(op) @ bool_bit(aq) @ bool_bit(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ width_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when amo_encoding_valid(size, op, rs2, rd)
 
 // NOTE: Currently, we only EA if address translation is successful.

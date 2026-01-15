@@ -10,7 +10,7 @@
 
 function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus, priv : Privilege) -> Privilege =
   if   access != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_bits(m[MPP], bitzero) // TODO: use m[MPV] if hypervisor enabled
+  then privLevel_bits(m[MPP], 0b0) // TODO: use m[MPV] if hypervisor enabled
   else priv
 
 // CSR access control
@@ -169,7 +169,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
   match (del_priv) {
     Machine => {
-      mcause[IsInterrupt] = bool_to_bits(is_interrupt);
+      mcause[IsInterrupt] = bool_to_bit(is_interrupt);
       mcause[Cause]       = zero_extend(cause);
 
       mstatus[MPIE] = mstatus[MIE];
@@ -189,7 +189,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
     Supervisor => {
       assert (currentlyEnabled(Ext_S), "no supervisor mode present for delegation");
 
-      scause[IsInterrupt] = bool_to_bits(is_interrupt);
+      scause[IsInterrupt] = bool_to_bit(is_interrupt);
       scause[Cause]       = zero_extend(cause);
 
       mstatus[SPIE] = mstatus[SIE];
@@ -232,7 +232,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
-      cur_privilege = privLevel_bits(mstatus[MPP], bitzero); // TODO: use mstatus[MPV] if hypervisor enabled
+      cur_privilege = privLevel_bits(mstatus[MPP], 0b0); // TODO: use mstatus[MPV] if hypervisor enabled
       mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
@@ -310,25 +310,25 @@ function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
-  misa[A]   = bool_to_bits(hartSupports(Ext_A));   // atomics
-  misa[C]   = bool_to_bits(hartSupports(Ext_C));   // RVC
-  misa[B]   = bool_to_bits(hartSupports(Ext_B));   // Bit-manipulation
-  misa[M]   = bool_to_bits(hartSupports(Ext_M));   // integer multiply/divide
-  misa[U]   = bool_to_bits(hartSupports(Ext_U));   // user-mode
-  misa[S]   = bool_to_bits(hartSupports(Ext_S));   // supervisor-mode
-  misa[V]   = bool_to_bits(hartSupports(Ext_V));   // vector extension
+  misa[A]   = bool_to_bit(hartSupports(Ext_A));   // atomics
+  misa[C]   = bool_to_bit(hartSupports(Ext_C));   // RVC
+  misa[B]   = bool_to_bit(hartSupports(Ext_B));   // Bit-manipulation
+  misa[M]   = bool_to_bit(hartSupports(Ext_M));   // integer multiply/divide
+  misa[U]   = bool_to_bit(hartSupports(Ext_U));   // user-mode
+  misa[S]   = bool_to_bit(hartSupports(Ext_S));   // supervisor-mode
+  misa[V]   = bool_to_bit(hartSupports(Ext_V));   // vector extension
 
   // Base integer ISA (disabled if we only support the 16-register E base).
-  misa[E] = bool_to_bits(base_E_enabled);
+  misa[E] = bool_to_bit(base_E_enabled);
   misa[I] = ~(misa[E]);
 
   if   hartSupports(Ext_F) & hartSupports(Ext_Zfinx)
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
 
   // We currently support both F and D
-  misa[F]   = bool_to_bits(hartSupports(Ext_F));      // single-precision
+  misa[F]   = bool_to_bit(hartSupports(Ext_F));      // single-precision
   misa[D]   = if   flen >= 64
-              then bool_to_bits(hartSupports(Ext_D))  // double-precision
+              then bool_to_bit(hartSupports(Ext_D))  // double-precision
               else 0b0;
   csr_write_callback("misa", misa.bits);
 }
@@ -382,8 +382,8 @@ function reset_sys() -> unit = {
 
   // "The [s,u]seed bits must have a defined reset value. The system must
   // not allow them to be in an undefined state after a reset."
-  mseccfg[SSEED] = bool_to_bits(config extensions.Zkr.sseed_reset_value : bool);
-  mseccfg[USEED] = bool_to_bits(config extensions.Zkr.useed_reset_value : bool);
+  mseccfg[SSEED] = bool_to_bit(config extensions.Zkr.sseed_reset_value : bool);
+  mseccfg[USEED] = bool_to_bit(config extensions.Zkr.useed_reset_value : bool);
 
   // If the Zicfilp extension is implemented, the mseccfg.MLPE field is reset to 0.
   if hartSupports(Ext_Zicfilp) then mseccfg[MLPE] = 0b0;

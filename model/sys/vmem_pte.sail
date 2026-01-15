@@ -119,10 +119,10 @@ private function check_PTE_permission(
   _ext      : PTE_Ext,
   _ext_ptw  : ext_ptw
 ) -> PTE_Check = {
-  let pte_U = bits_to_bool(pte_flags[U]);
-  let pte_R = bits_to_bool(pte_flags[R]);
-  let pte_W = bits_to_bool(pte_flags[W]);
-  let pte_X = bits_to_bool(pte_flags[X]);
+  let pte_U = bit_to_bool(pte_flags[U]);
+  let pte_R = bit_to_bool(pte_flags[R]);
+  let pte_W = bit_to_bool(pte_flags[W]);
+  let pte_X = bit_to_bool(pte_flags[X]);
 
   // Step 6 of VATP (see vmem.sail).
   let priv_ok : bool = match priv {

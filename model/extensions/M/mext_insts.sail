@@ -47,7 +47,7 @@ mapping clause assembly = MUL(rs2, rs1, rd, mul_op)
 union clause instruction = DIV : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIV(rs2, rs1, rd, is_unsigned)
-  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0110011
+  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bit(is_unsigned) @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_M)
 
 function clause execute DIV(rs2, rs1, rd, is_unsigned) = {
@@ -70,7 +70,7 @@ mapping clause assembly = DIV(rs2, rs1, rd, is_unsigned)
 union clause instruction = REM : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REM(rs2, rs1, rd, is_unsigned)
-  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0110011
+  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bit(is_unsigned) @ encdec_reg(rd) @ 0b0110011
   when currentlyEnabled(Ext_M)
 
 function clause execute REM(rs2, rs1, rd, is_unsigned) = {
@@ -114,7 +114,7 @@ mapping clause assembly = MULW(rs2, rs1, rd)
 union clause instruction = DIVW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = DIVW(rs2, rs1, rd, is_unsigned)
-  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0111011
+  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b10 @ bool_bit(is_unsigned) @ encdec_reg(rd) @ 0b0111011
   when xlen == 64 & currentlyEnabled(Ext_M)
 
 function clause execute DIVW(rs2, rs1, rd, is_unsigned) = {
@@ -138,7 +138,7 @@ mapping clause assembly = DIVW(rs2, rs1, rd, is_unsigned)
 union clause instruction = REMW : (regidx, regidx, regidx, bool)
 
 mapping clause encdec = REMW(rs2, rs1, rd, is_unsigned)
-  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bits(is_unsigned) @ encdec_reg(rd) @ 0b0111011
+  <-> 0b0000001 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b11 @ bool_bit(is_unsigned) @ encdec_reg(rd) @ 0b0111011
   when xlen == 64 & currentlyEnabled(Ext_M)
 
 function clause execute REMW(rs2, rs1, rd, is_unsigned) = {

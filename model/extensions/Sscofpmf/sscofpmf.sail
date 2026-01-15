@@ -44,7 +44,7 @@ mapping clause csr_name_map = 0xDA0  <-> "scountovf"
 private function read_mhpmeventh(index : hpmidx) -> bits(32) = mhpmevent[index].bits[63 .. 32]
 
 private function write_mhpmeventh(index : hpmidx, value : bits(32)) -> unit =
-  if sys_writable_hpm_counters[index] == bitone then
+  if sys_writable_hpm_counters[index] == 0b1 then
   mhpmevent[index] = legalize_hpmevent(Mk_HpmEvent(value @ mhpmevent[index].bits[31 .. 0]))
 
 // mhpmevent3..31h

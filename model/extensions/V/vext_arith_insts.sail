@@ -68,7 +68,7 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         VV_VADD          => vs2_val[i] + vs1_val[i],
         VV_VSUB          => vs2_val[i] - vs1_val[i],
@@ -214,7 +214,7 @@ function clause execute NVSTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         NVS_VNSRL  => {
                         let shift_amount = get_shift_amount(vs1_val[i], SEW_widen);
@@ -287,7 +287,7 @@ function clause execute NVTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let shift_amount = get_shift_amount(vs1_val[i], SEW_widen);
       let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
       result[i] = match funct6 {
@@ -358,7 +358,7 @@ function clause execute MASKTYPEV(vs2, vs1, vd) = {
       }
     } else {
       // the merge operates on all body elements
-      result[i] = if vm_val[i] == bitone then vs1_val[i] else vs2_val[i]
+      result[i] = if vm_val[i] == 0b1 then vs1_val[i] else vs2_val[i]
     }
   };
 
@@ -398,7 +398,7 @@ function clause execute MOVETYPEV(vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then result[i] = vs1_val[i]
+    if mask[i] == 0b1 then result[i] = vs1_val[i]
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -462,7 +462,7 @@ function clause execute VXTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         VX_VADD    => vs2_val[i] + rs1_val,
         VX_VSUB    => vs2_val[i] - rs1_val,
@@ -590,7 +590,7 @@ function clause execute NXSTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         NXS_VNSRL  => {
                         let shift_amount = get_shift_amount(rs1_val, SEW_widen);
@@ -663,7 +663,7 @@ function clause execute NXTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let shift_amount = get_shift_amount(rs1_val, SEW_widen);
       let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
       result[i] = match funct6 {
@@ -731,7 +731,7 @@ function clause execute VXSG(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         VX_VSLIDEUP    => {
                             if (vs2 == vd) then return Illegal_Instruction();
@@ -809,7 +809,7 @@ function clause execute MASKTYPEX(vs2, rs1, vd) = {
       }
     } else {
       // the merge operates on all body elements
-      result[i] = if vm_val[i] == bitone then rs1_val else vs2_val[i]
+      result[i] = if vm_val[i] == 0b1 then rs1_val else vs2_val[i]
     }
   };
 
@@ -849,7 +849,7 @@ function clause execute MOVETYPEX(rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then result[i] = rs1_val
+    if mask[i] == 0b1 then result[i] = rs1_val
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -905,7 +905,7 @@ function clause execute VITYPE(funct6, vm, vs2, simm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         VI_VADD    => vs2_val[i] + imm_val,
         VI_VRSUB   => imm_val - vs2_val[i],
@@ -1009,7 +1009,7 @@ function clause execute NISTYPE(funct6, vm, vs2, uimm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         NIS_VNSRL  => {
                         let shift_amount = get_shift_amount(imm_val, SEW_widen);
@@ -1082,7 +1082,7 @@ function clause execute NITYPE(funct6, vm, vs2, uimm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let shift_amount = get_shift_amount(imm_val, SEW_widen);
       let rounding_incr = get_fixed_rounding_incr(vs2_val[i], shift_amount);
       result[i] = match funct6 {
@@ -1150,7 +1150,7 @@ function clause execute VISG(funct6, vm, vs2, simm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         VI_VSLIDEUP    => {
                             if (vs2 == vd) then return Illegal_Instruction();
@@ -1228,7 +1228,7 @@ function clause execute MASKTYPEI(vs2, simm, vd) = {
       }
     } else {
       // the merge operates on all body elements
-      result[i] = if vm_val[i] == bitone then imm_val else vs2_val[i]
+      result[i] = if vm_val[i] == 0b1 then imm_val else vs2_val[i]
     }
   };
 
@@ -1268,7 +1268,7 @@ function clause execute MOVETYPEI(vd, simm) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then result[i] = imm_val
+    if mask[i] == 0b1 then result[i] = imm_val
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -1387,7 +1387,7 @@ function clause execute MVVTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         MVV_VAADDU   => {
                           let result_add = zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, vs1_val[i]);
@@ -1508,7 +1508,7 @@ function clause execute MVVMATYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         MVV_VMACC  => mult_to_bits_half(SEW, Signed, Signed, vs1_val[i], vs2_val[i], Low) + vd_val[i],
         MVV_VNMSAC => vd_val[i] - mult_to_bits_half(SEW, Signed, Signed, vs1_val[i], vs2_val[i], Low),
@@ -1581,7 +1581,7 @@ function clause execute WVVTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         WVV_VADD    => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) + signed(vs1_val[i])),
         WVV_VSUB    => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) - signed(vs1_val[i])),
@@ -1657,7 +1657,7 @@ function clause execute WVTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         WV_VADD  => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) + signed(vs1_val[i])),
         WV_VSUB  => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) - signed(vs1_val[i])),
@@ -1728,7 +1728,7 @@ function clause execute WMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         WMVV_VWMACC   => to_bits_unsafe(SEW_widen, signed(vs1_val[i]) * signed(vs2_val[i])) + vd_val[i],
         WMVV_VWMACCU  => to_bits_unsafe(SEW_widen, unsigned(vs1_val[i]) * unsigned(vs2_val[i])) + vd_val[i],
@@ -1805,7 +1805,7 @@ function clause execute VEXTTYPE(funct6, vm, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         VEXT2_ZVF2 => zero_extend(vs2_val[i]),
         VEXT2_SVF2 => sign_extend(vs2_val[i]),
@@ -1898,7 +1898,7 @@ function clause execute MVVCOMPRESS(vs2, vs1, vd) = {
   var vd_idx : nat = 0;
   foreach (i from 0 to (num_elem - 1)) {
     if i <= end_element then {
-      if vs1_val[i] == bitone then {
+      if vs1_val[i] == 0b1 then {
         let 'p = vd_idx;
         assert('p < 'n);
         result['p] = vs2_val[i];
@@ -1974,7 +1974,7 @@ function clause execute MVXTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         MVX_VAADDU       => {
                               let result_add = zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, rs1_val);
@@ -2106,7 +2106,7 @@ function clause execute MVXMATYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         MVX_VMACC  => mult_to_bits_half(SEW, Signed, Signed, rs1_val, vs2_val[i], Low) + vd_val[i],
         MVX_VNMSAC => vd_val[i] - mult_to_bits_half(SEW, Signed, Signed, rs1_val, vs2_val[i], Low),
@@ -2179,7 +2179,7 @@ function clause execute WVXTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         WVX_VADD    => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) + signed(rs1_val)),
         WVX_VSUB    => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) - signed(rs1_val)),
@@ -2254,7 +2254,7 @@ function clause execute WXTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         WX_VADD  => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) + signed(rs1_val)),
         WX_VSUB  => to_bits_unsafe(SEW_widen, signed(vs2_val[i]) - signed(rs1_val)),
@@ -2325,7 +2325,7 @@ function clause execute WMVXTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         WMVX_VWMACCU  => (to_bits_unsafe(SEW_widen, unsigned(rs1_val) * unsigned(vs2_val[i]) )) + vd_val[i],
         WMVX_VWMACC   => (to_bits_unsafe(SEW_widen, signed(rs1_val) * signed(vs2_val[i]) )) + vd_val[i],
@@ -2378,7 +2378,7 @@ function clause execute VMVSX(rs1, vd) = {
   var result = initial_result;
 
   // one body element
-  if mask[0] == bitone then result[0] = rs1_val;
+  if mask[0] == 0b1 then result[0] = rs1_val;
 
   // others treated as tail elements
   let tail_ag : agtype = get_vtype_vta();

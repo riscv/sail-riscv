@@ -586,7 +586,7 @@ function clause execute FLEQ_H(rs2, rs1, rd) = {
       riscv_f16Le_quiet   (rs1_val_H, rs2_val_H);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -611,7 +611,7 @@ function clause execute FLTQ_H(rs2, rs1, rd) = {
       riscv_f16Lt_quiet   (rs1_val_H, rs2_val_H);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -636,7 +636,7 @@ function clause execute FLEQ_S(rs2, rs1, rd) = {
       riscv_f32Le_quiet   (rs1_val_S, rs2_val_S);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -661,7 +661,7 @@ function clause execute FLTQ_S(rs2, rs1, rd) = {
       riscv_f32Lt_quiet   (rs1_val_S, rs2_val_S);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -687,7 +687,7 @@ function clause execute FLEQ_D(rs2, rs1, rd) = {
       riscv_f64Le_quiet   (rs1_val_D, rs2_val_D);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -712,7 +712,7 @@ function clause execute FLTQ_D(rs2, rs1, rd) = {
       riscv_f64Lt_quiet   (rs1_val_D, rs2_val_D);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 

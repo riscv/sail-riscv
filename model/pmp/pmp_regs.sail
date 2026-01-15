@@ -73,13 +73,13 @@ private function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
   let addr = pmpaddr_n[n];
 
   match match_type[1] {
-    bitone if G >= 2 => {
+    0b1 if G >= 2 => {
       // [G-2..0] read as all ones to form mask, therefore we need G-1 bits.
       let mask : xlenbits = zero_extend(ones(min(G - 1, xlen)));
       addr | mask
     },
 
-    bitzero if G >= 1 => {
+    0b0 if G >= 1 => {
       // [G-1..0] read as all zeros to form mask, therefore we need G bits.
       let mask : xlenbits = zero_extend(ones(min(G , xlen)));
       addr & ~(mask)
@@ -250,9 +250,9 @@ mapping clause csr_name_map = 0x3EE  <-> "pmpaddr62"
 mapping clause csr_name_map = 0x3EF  <-> "pmpaddr63"
 
 // pmpcfgN
-function clause is_CSR_accessible(0x3A @ idx : bits(4), _, _) = sys_pmp_count > 4 * unsigned(idx) & (idx[0] == bitzero | xlen == 32)
-function clause read_CSR(0x3A @ idx : bits(4) if idx[0] == bitzero | xlen == 32) = pmpReadCfgReg(unsigned(idx))
-function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == bitzero | xlen == 32) = {
+function clause is_CSR_accessible(0x3A @ idx : bits(4), _, _) = sys_pmp_count > 4 * unsigned(idx) & (idx[0] == 0b0 | xlen == 32)
+function clause read_CSR(0x3A @ idx : bits(4) if idx[0] == 0b0 | xlen == 32) = pmpReadCfgReg(unsigned(idx))
+function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == 0b0 | xlen == 32) = {
   let idx = unsigned(idx);
   pmpWriteCfgReg(idx, value);
   Ok(pmpReadCfgReg(idx))

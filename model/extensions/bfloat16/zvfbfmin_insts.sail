@@ -45,7 +45,7 @@ function clause execute (VFNCVTBF16_F_F_W(vm, vs2, vd)) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let (fflags, elem) = riscv_f32ToBF16(rm_3b, vs2_val[i]);
       accrue_fflags(fflags);
       result[i] = elem;
@@ -97,7 +97,7 @@ function clause execute (VFWCVTBF16_F_F_V(vm, vs2, vd)) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = bf16_to_f32_set_flags(vs2_val[i]);
     }
   };

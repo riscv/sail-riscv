@@ -49,10 +49,10 @@ function clause execute VVMTYPE(funct6, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
-        VVM_VMADC    => unsigned(vs2_val[i]) + unsigned(vs1_val[i]) + (if vm_val[i] == bitone then 1 else 0) > 2 ^ SEW - 1,
-        VVM_VMSBC    => unsigned(vs2_val[i]) - unsigned(vs1_val[i]) - (if vm_val[i] == bitone then 1 else 0) < 0
+        VVM_VMADC    => unsigned(vs2_val[i]) + unsigned(vs1_val[i]) + (if vm_val[i] == 0b1 then 1 else 0) > 2 ^ SEW - 1,
+        VVM_VMSBC    => unsigned(vs2_val[i]) - unsigned(vs1_val[i]) - (if vm_val[i] == 0b1 then 1 else 0) < 0
       };
       result[i] = bool_to_bit(res)
     }
@@ -108,7 +108,7 @@ function clause execute VVMCTYPE(funct6, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
         VVMC_VMADC    => unsigned(vs2_val[i]) + unsigned(vs1_val[i]) > 2 ^ SEW - 1,
         VVMC_VMSBC    => unsigned(vs2_val[i]) - unsigned(vs1_val[i]) < 0
@@ -171,10 +171,10 @@ function clause execute VVMSTYPE(funct6, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
-        VVMS_VADC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) + unsigned(vs1_val[i]) + (if vm_val[i] == bitone then 1 else 0)),
-        VVMS_VSBC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) - unsigned(vs1_val[i]) - (if vm_val[i] == bitone then 1 else 0))
+        VVMS_VADC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) + unsigned(vs1_val[i]) + (if vm_val[i] == 0b1 then 1 else 0)),
+        VVMS_VSBC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) - unsigned(vs1_val[i]) - (if vm_val[i] == 0b1 then 1 else 0))
       }
     }
   };
@@ -232,7 +232,7 @@ function clause execute VVCMPTYPE(funct6, vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
         VVCMP_VMSEQ    => vs2_val[i] == vs1_val[i],
         VVCMP_VMSNE    => vs2_val[i] != vs1_val[i],
@@ -300,10 +300,10 @@ function clause execute VXMTYPE(funct6, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
-        VXM_VMADC    => unsigned(vs2_val[i]) + unsigned(rs1_val) + (if vm_val[i] == bitone then 1 else 0) > 2 ^ SEW - 1,
-        VXM_VMSBC    => unsigned(vs2_val[i]) - unsigned(rs1_val) - (if vm_val[i] == bitone then 1 else 0) < 0
+        VXM_VMADC    => unsigned(vs2_val[i]) + unsigned(rs1_val) + (if vm_val[i] == 0b1 then 1 else 0) > 2 ^ SEW - 1,
+        VXM_VMSBC    => unsigned(vs2_val[i]) - unsigned(rs1_val) - (if vm_val[i] == 0b1 then 1 else 0) < 0
       };
       result[i] = bool_to_bit(res)
     }
@@ -359,7 +359,7 @@ function clause execute VXMCTYPE(funct6, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
         VXMC_VMADC    => unsigned(vs2_val[i]) + unsigned(rs1_val) > 2 ^ SEW - 1,
         VXMC_VMSBC    => unsigned(vs2_val[i]) - unsigned(rs1_val) < 0
@@ -422,10 +422,10 @@ function clause execute VXMSTYPE(funct6, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
-        VXMS_VADC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) + unsigned(rs1_val) + (if vm_val[i] == bitone then 1 else 0)),
-        VXMS_VSBC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) - unsigned(rs1_val) - (if vm_val[i] == bitone then 1 else 0))
+        VXMS_VADC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) + unsigned(rs1_val) + (if vm_val[i] == 0b1 then 1 else 0)),
+        VXMS_VSBC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) - unsigned(rs1_val) - (if vm_val[i] == 0b1 then 1 else 0))
       }
     }
   };
@@ -485,7 +485,7 @@ function clause execute VXCMPTYPE(funct6, vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
         VXCMP_VMSEQ    => vs2_val[i] == rs1_val,
         VXCMP_VMSNE    => vs2_val[i] != rs1_val,
@@ -556,9 +556,9 @@ function clause execute VIMTYPE(funct6, vs2, simm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
-        VIM_VMADC    => unsigned(vs2_val[i]) + unsigned(imm_val) + (if vm_val[i] == bitone then 1 else 0) > 2 ^ SEW - 1
+        VIM_VMADC    => unsigned(vs2_val[i]) + unsigned(imm_val) + (if vm_val[i] == 0b1 then 1 else 0) > 2 ^ SEW - 1
       };
       result[i] = bool_to_bit(res)
     }
@@ -612,7 +612,7 @@ function clause execute VIMCTYPE(funct6, vs2, simm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
         VIMC_VMADC    => unsigned(vs2_val[i]) + unsigned(imm_val) > 2 ^ SEW - 1
       };
@@ -672,9 +672,9 @@ function clause execute VIMSTYPE(funct6, vs2, simm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
-        VIMS_VADC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) + unsigned(imm_val) + (if vm_val[i] == bitone then 1 else 0))
+        VIMS_VADC     => to_bits_unsafe(SEW, unsigned(vs2_val[i]) + unsigned(imm_val) + (if vm_val[i] == 0b1 then 1 else 0))
       }
     }
   };
@@ -731,7 +731,7 @@ function clause execute VICMPTYPE(funct6, vm, vs2, simm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let res : bool = match funct6 {
         VICMP_VMSEQ    => vs2_val[i] == imm_val,
         VICMP_VMSNE    => vs2_val[i] != imm_val,

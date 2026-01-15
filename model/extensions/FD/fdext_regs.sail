@@ -283,7 +283,7 @@ function rF_or_X_D(i : fregidx) -> bits(64) = {
   then X(fregidx_to_regidx(i))[63..0]
   else {
     let ridx = fregidx_to_regidx(i);
-    assert(regidx_bits(ridx)[0] == bitzero);
+    assert(regidx_bits(ridx)[0] == 0b0);
     if ridx == zreg then zeros() else X(ridx + 1) @ X(ridx)
   }
 }
@@ -313,7 +313,7 @@ function wF_or_X_D(i : fregidx, data : bits(64)) -> unit = {
   then X(fregidx_to_regidx(i)) = sign_extend(data)
   else {
     let ridx = fregidx_to_regidx(i);
-    assert (regidx_bits(ridx)[0] == bitzero);
+    assert (regidx_bits(ridx)[0] == 0b0);
     if ridx != zreg then {
       X(ridx) = data[31..0];
       X(ridx + 1) = data[63..32];

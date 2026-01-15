@@ -43,7 +43,7 @@ mapping ma_flag : string <-> bits(1) = {
 mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
   // Mnemonics are preferable but there's no mnemonic for lmul=0b100.
   sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma) <-> (ma, ta, sew, lmul)
-    when sew[2] != bitone & lmul != 0b100,
+    when sew[2] != 0b1 & lmul != 0b100,
   // However that is still potentially a legal instruction so you can
   // use an integer for the whole vtype in that case.
   hex_bits_8(ma @ ta @ sew @ lmul)  <-> (ma, ta, sew, lmul),
