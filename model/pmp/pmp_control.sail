@@ -18,7 +18,13 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_pay
     Atomic(_)           => ent[R] == 0b1 & ent[W] == 0b1,
     InstructionFetch()  => ent[X] == 0b1,
 
+    // TODO: "If neither a load instruction nor store instruction is
+    // permitted to access the physical addresses, but an instruction
+    // fetch is permitted to access the physical addresses, whether a
+    // cache-block management instruction is permitted to access the
+    // cache block is UNSPECIFIED."
     CacheAccess(CB_manage(_))   => bool_bits(ent[R]) | bool_bits(ent[W]),
+
     CacheAccess(CB_zero())      => bool_bits(ent[W]),
     CacheAccess(CB_prefetch(p)) => match p {
       PREFETCH_I => bool_bits(ent[X]),
