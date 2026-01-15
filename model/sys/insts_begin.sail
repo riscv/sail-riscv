@@ -28,6 +28,7 @@ union ExecutionResult = {
 
   // Did not retire for a standard reason.
   Illegal_Instruction            : unit,
+  Virtual_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
   Memory_Exception               : (virtaddr, ExceptionType),
 
