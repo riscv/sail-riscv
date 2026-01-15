@@ -70,6 +70,7 @@ private function cbop_priv_check(p: Privilege) -> checked_cbop = {
 private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResult = {
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
+  let access : MemoryAccessType(mem_payload) = CacheAccess(CB_manage(cbop));
 
   // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
   // is aligned to the cache block, or negative if rs1 is misaligned.
@@ -78,19 +79,26 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match ext_data_get_addr(rs1, negative_offset, CacheAccess(CB_manage(cbop)), cache_block_size) {
+  match ext_data_get_addr(rs1, negative_offset, access, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => match translateAddr(vaddr, CacheAccess(CB_manage(cbop))) {
-      Ok(_paddr, _) => {
-          // The model has no caches so there's no action required.
-          RETIRE_SUCCESS
+    Ext_DataAddr_OK(vaddr) => {
+      // vaddr is the aligned address, but errors report the address that
+      // was encoded in the instruction. We subtract the negative offset
+      // (add the positive offset) to get it. Normally this will be
+      // equal to rs1, but pointer masking can change that.
+      let vaddr_for_error = vaddr - negative_offset;
+      match translateAddr(vaddr, access) {
+        Ok(paddr, _) => {
+          // Check PMA and PMP access controls.
+          let ep = effectivePrivilege(access, mstatus, cur_privilege);
+          match phys_access_check(access, ep, paddr, cache_block_size, false) {
+            Some(e) => Memory_Exception(vaddr_for_error, e),
+            // If there is no error, the model has no caches so there's no
+            // more action required.
+            None()  => RETIRE_SUCCESS
+          }
         },
-      Err(e, _) => {
-        // vaddr is the aligned address, but errors report the address that
-        // was encoded in the instruction. We subtract the negative offset
-        // (add the positive offset) to get it. Normally this will be
-        // equal to rs1, but pointer masking can change that.
-        Memory_Exception(vaddr - negative_offset, e)
+        Err(e, _) => Memory_Exception(vaddr_for_error, e),
       }
     }
   }

@@ -368,7 +368,7 @@ function translateAddr(
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
-  // See sys_regs.sail for effectivePrivilege() and cur_privilege
+  // See sys_control.sail for effectivePrivilege() and sys_regs.sail for cur_privilege.
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
 
   let mode = translationMode(effPriv);
