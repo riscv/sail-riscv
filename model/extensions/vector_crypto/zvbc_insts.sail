@@ -65,9 +65,8 @@ function clause execute VCLMUL_VX(vm, vs2, rs1, vd) = {
   let 'm = SEW;
 
   let vm_val  : bits('n) = read_vmask('n, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vd);
-
   let rs1_val : bits('m) = get_scalar(rs1, SEW);
+  let vd_val  : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
@@ -144,9 +143,8 @@ function clause execute VCLMULH_VX(vm, vs2, rs1, vd) = {
   let 'm = SEW;
 
   let vm_val  : bits('n) = read_vmask('n, vm, zvreg);
-  let vd_val  : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vd);
-
   let rs1_val : bits('m) = get_scalar(rs1, SEW);
+  let vd_val  : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
