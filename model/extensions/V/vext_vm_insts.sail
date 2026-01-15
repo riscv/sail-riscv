@@ -37,10 +37,10 @@ function clause execute VVMTYPE(funct6, vs2, vs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
+  let vm_val  : bits('n)             = read_vmask_carry(num_elem, 0b0, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
     Ok(v)   => v,
@@ -99,7 +99,7 @@ function clause execute VVMCTYPE(funct6, vs2, vs1, vd) = {
 
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
     Ok(v)   => v,
@@ -159,7 +159,7 @@ function clause execute VVMSTYPE(funct6, vs2, vs1, vd) = {
   // for bypassing normal masking in init_masked_result
   let vec_trues : bits('n) = ones();
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
+  let vm_val  : bits('n)             = read_vmask_carry(num_elem, 0b0, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -220,10 +220,10 @@ function clause execute VVCMPTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
@@ -288,10 +288,10 @@ function clause execute VXMTYPE(funct6, vs2, rs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : bits('n)             = read_vmask_carry(num_elem, 0b0, zvreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
     Ok(v)   => v,
@@ -350,7 +350,7 @@ function clause execute VXMCTYPE(funct6, vs2, rs1, vd) = {
 
   let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
     Ok(v)   => v,
@@ -410,8 +410,8 @@ function clause execute VXMSTYPE(funct6, vs2, rs1, vd) = {
   // for bypassing normal masking in init_masked_result
   let vec_trues : bits('n) = ones();
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : bits('n)             = read_vmask_carry(num_elem, 0b0, zvreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -473,10 +473,10 @@ function clause execute VXCMPTYPE(funct6, vm, vs2, rs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m)                  = get_scalar(rs1, SEW);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
+  let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
@@ -544,10 +544,10 @@ function clause execute VIMTYPE(funct6, vs2, simm, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : bits('n)             = read_vmask_carry(num_elem, 0b0, zvreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
     Ok(v)   => v,
@@ -603,7 +603,7 @@ function clause execute VIMCTYPE(funct6, vs2, simm, vd) = {
 
   let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
     Ok(v)   => v,
@@ -660,8 +660,8 @@ function clause execute VIMSTYPE(funct6, vs2, simm, vd) = {
   // for bypassing normal masking in init_masked_result
   let vec_trues : bits('n) = ones();
 
-  let vm_val  : bits('n)     = read_vmask_carry(num_elem, 0b0, zvreg);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : bits('n)             = read_vmask_carry(num_elem, 0b0, zvreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -719,10 +719,10 @@ function clause execute VICMPTYPE(funct6, vm, vs2, simm, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let imm_val : bits('m)                  = sign_extend(simm);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
+  let imm_val : bits('m)             = sign_extend(simm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  : bits('n)     = read_vmask(num_elem, 0b0, vd);
+  let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,

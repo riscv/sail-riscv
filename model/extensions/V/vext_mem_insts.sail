@@ -52,6 +52,7 @@ mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
 
 private function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
 

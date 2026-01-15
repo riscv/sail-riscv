@@ -56,7 +56,7 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -188,6 +188,7 @@ function clause execute NVSTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -202,7 +203,7 @@ function clause execute NVSTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
@@ -261,6 +262,7 @@ function clause execute NVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -275,7 +277,7 @@ function clause execute NVTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
@@ -341,7 +343,7 @@ function clause execute MASKTYPEV(vs2, vs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, 0b0, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, 0b0, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -564,6 +566,7 @@ function clause execute NXSTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -637,6 +640,7 @@ function clause execute NXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -781,6 +785,7 @@ function clause execute MASKTYPEX(vs2, rs1, vd) = {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
+
   let end_element   = get_end_element();
   let SEW           = get_sew();
   let LMUL_pow      = get_lmul_pow();
@@ -983,6 +988,7 @@ function clause execute NISTYPE(funct6, vm, vs2, uimm, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -1056,6 +1062,7 @@ function clause execute NITYPE(funct6, vm, vs2, uimm, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -1200,6 +1207,7 @@ function clause execute MASKTYPEI(vs2, simm, vd) = {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
+
   let end_element   = get_end_element();
   let SEW           = get_sew();
   let LMUL_pow      = get_lmul_pow();
@@ -1375,7 +1383,7 @@ function clause execute MVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -1554,6 +1562,7 @@ function clause execute WVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -1631,6 +1640,7 @@ function clause execute WVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -1701,6 +1711,7 @@ function clause execute WMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -1770,9 +1781,10 @@ mapping clause encdec = VEXTTYPE(funct6, vm, vs2, vd)
      | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute VEXTTYPE(funct6, vm, vs2, vd) = {
-  let SEW = get_sew();
+  let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_frac_pow : {1, 2, 3} = match funct6 {
     VEXT2_ZVF2  =>  1,
     VEXT2_SVF2  =>  1,
@@ -1849,6 +1861,7 @@ function clause execute VMVXS(vs2, rd) = {
   if illegal_vd_unmasked() then return Illegal_Instruction();
 
   assert(num_elem > 0);
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -1878,9 +1891,9 @@ function clause execute MVVCOMPRESS(vs2, vs1, vd) = {
     Err(()) => return Illegal_Instruction()
   };
   let end_element = get_end_element();
-  let SEW = get_sew();
-  let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let SEW         = get_sew();
+  let LMUL_pow    = get_lmul_pow();
+  let num_elem    = get_num_elem(LMUL_pow, SEW);
 
   // vcompress should always be executed with a vstart of 0
   if start_element != 0 | vs1 == vd | vs2 == vd | illegal_vd_unmasked()
@@ -2153,6 +2166,7 @@ function clause execute WVXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -2229,6 +2243,7 @@ function clause execute WXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -2299,6 +2314,7 @@ function clause execute WMVXTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -2313,7 +2329,7 @@ function clause execute WMVXTYPE(funct6, vm, vs2, rs1, vd) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
   let rs1_val : bits('m)             = get_scalar(rs1, SEW);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -2365,6 +2381,7 @@ function clause execute VMVSX(rs1, vd) = {
   if illegal_vd_unmasked() then return Illegal_Instruction();
 
   assert(num_elem > 0);
+
   let 'n = num_elem;
   let 'm = SEW;
 

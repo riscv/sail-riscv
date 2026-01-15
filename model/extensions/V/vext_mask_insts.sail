@@ -322,8 +322,8 @@ function clause execute VIOTA_M(vm, vs2, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : bits('n)     = read_vmask(num_elem, 0b0, vs2);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
+  let vs2_val : bits('n)             = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
@@ -366,7 +366,7 @@ function clause execute VID_V(vm, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {

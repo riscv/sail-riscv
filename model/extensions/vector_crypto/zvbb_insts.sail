@@ -144,7 +144,7 @@ function clause execute VBREV8_V(vm, vs2, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)= read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
