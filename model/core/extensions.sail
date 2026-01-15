@@ -318,6 +318,10 @@ function clause hartSupports(Ext_Zve64f) = sizeof(elen_exp) >= 6 & vector_suppor
 enum clause extension = Ext_Zve64x
 mapping clause extensionName = Ext_Zve64x <-> "zve64x"
 function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & vector_support_level >= Integer
+// Vector Integer Absolute Difference
+enum clause extension = Ext_Zvabd
+mapping clause extensionName = Ext_Zvabd <-> "zvabd"
+function clause hartSupports(Ext_Zvabd) = config extensions.Zvabd.supported
 // Vector BF16 Converts
 enum clause extension = Ext_Zvfbfmin
 mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"
@@ -343,12 +347,6 @@ function clause hartSupports(Ext_Zvbb) = config extensions.Zvbb.supported
 enum clause extension = Ext_Zvbc
 mapping clause extensionName = Ext_Zvbc <-> "zvbc"
 function clause hartSupports(Ext_Zvbc) = config extensions.Zvbc.supported
-
-// Vector Integer Absolute Difference
-enum clause extension = Ext_Zvabd
-mapping clause extensionName = Ext_Zvabd <-> "zvabd"
-function clause hartSupports(Ext_Zvabd) = config extensions.Zvabd.supported
-
 // Vector Cryptography Bit-manipulation
 enum clause extension = Ext_Zvkb
 mapping clause extensionName = Ext_Zvkb <-> "zvkb"

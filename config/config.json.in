@@ -341,6 +341,9 @@
     "Zhinxmin": {
       "supported": false
     },
+    "Zvabd": {
+      "supported": true
+    },
     "Zvfbfmin": {
       "supported": true
     },
@@ -358,9 +361,6 @@
     },
     "Zvbc": {
       "supported": @CONFIG_ELEN_IS_64@
-    },
-    "Zvabd": {
-      "supported": true
     },
     "Zvkb": {
       "supported": false

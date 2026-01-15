@@ -6,26 +6,19 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function clause currentlyEnabled(Ext_Zvabd) = hartSupports(Ext_Zvabd)
+function clause currentlyEnabled(Ext_Zvabd) = hartSupports(Ext_Zvabd) & currentlyEnabled(Ext_Zve32x)
 
-union clause instruction = VABSOP : (vabsop_zvabd, bits(1), vregidx, vregidx)
+union clause instruction = VABS_V : (zvabd_vabs_func6, bits(1), vregidx, vregidx)
 
-mapping encdec_vabsop_zvabd :vabsop_zvabd <-> bits(6) ={
-  V_VABS          <-> 0b010010
-}
-
-mapping clause encdec = VABS(funct6,vm,vs2,vd)
-  <->encdec_vabsop_zvabd(funct6) @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @encdec_vreg(vd) @ 0b1010111
+$[wavedrom "_ _ _ _ OPMVV _ OP-V"]
+mapping clause encdec = VABS_V(funct6,vm,vs2,vd)
+  <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvabd)
 
-mapping vabsop_mnemonic : vabsop_zvabd <-> string ={
-  V_VABS          <-> "vabs.v"
-}
+mapping clause assembly = VABS_V(funct6, vm, vs2, vd)
+  <-> "vabs.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
-mapping clause assembly = VABS(funct6, vm, vs2, vd)
-  <->vabsop_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
-
-function clause execute VABS(funct6, vm, vs2, vd) = {
+function clause execute VABS_V(funct6, vm, vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -34,7 +27,7 @@ function clause execute VABS(funct6, vm, vs2, vd) = {
 
   let 'n = num_elem;
   let 'm = SEW;
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -47,9 +40,7 @@ function clause execute VABS(funct6, vm, vs2, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-        V_VABS => {
-          if signed(vs2_val[i]) >= 0 then vs2_val[i] else - vs2_val[i]
-        }
+        V_VABS => abs_int(signed(vs2_val[i]))
       }
     }
   }
@@ -57,27 +48,28 @@ function clause execute VABS(funct6, vm, vs2, vd) = {
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
-// *****************************************************************
-union clause instruction = VABDOP :(vabdop_zvabd, bits(1), vregidx, vregidx, vregidx)
 
-mapping encdec_vabdop_zvabd : vabdop_zvabd <-> bits(6) = {
-  VV_VABD         <-> 0b010001,
-  VV_VABDU        <-> 0b010011
+union clause instruction = ZVABDTYPE :(zvabd_vabd_fun6, bits(1), vregidx, vregidx, vregidx)
+
+mapping encdec_vabd : zvabd_vabd_fun6 <-> bits(6) = {
+  VV_VABD  <-> 0b010001,
+  VV_VABDU <-> 0b010011
 }
 
-mapping clause encdec = VABD(funct6, vm, vs2, vs1, vd)
-  <->encdec_vabdop_zvabd(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
+$[wavedrom "_ _ _ _ OPIVV _ OP-V"]
+mapping clause encdec = ZVABDTYPE(funct6, vm, vs2, vs1, vd)
+  <->encdec_zvabd_vabd_fun6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvabd)
 
-mapping abdop_mnemonic : vabdop_zvabd <-> string = {
-  VV_VABD         <-> "vabd.vv",
-  VV_VABDU        <-> "vabdu.vv"
+mapping vabd_mnemonic : zvabd_vabd_fun6 <-> string = {
+  VV_VABD  <-> "vabd.vv",
+  VV_VABDU <-> "vabdu.vv"
 }
 
-mapping clause assembly = VABD(funct6, vm, vs2, vs1, vd)
-  <->abdop_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+mapping clause assembly = ZVABDTYPE(funct6, vm, vs2, vs1, vd)
+  <->vabd_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-function clause execute VABD(funct6, vm, vs2, vs1, vd) = {
+function clause execute ZVABDTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
@@ -88,7 +80,7 @@ function clause execute VABD(funct6, vm, vs2, vs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
@@ -102,16 +94,10 @@ function clause execute VABD(funct6, vm, vs2, vs1, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
-      VV_VABD => {
-        if signed(vs2_val[i]) >= signed(vs1_val[i]) 
-        then vs2_val[i] - vs1_val[i] 
-        else vs1_val[i] - vs2_val[i]
-      },
-      VV_VABDU => {
-        if unsigned(vs2_val[i]) >= unsigned(vs1_val[i]) 
-        then vs2_val[i] - vs1_val[i] 
-        else vs1_val[i] - vs2_val[i]
-      },
+        VV_VABD => abs_int(signed(vs2_val[i]) - signed(vs1_val[i])),
+        VV_VABDU => {
+          if unsigned(vs2_val[i]) >= unsigned(vs1_val[i]) then vs2_val[i] - vs1_val[i] else vs1_val[i] - vs2_val[i]
+        }
       }
     }
   }
@@ -120,27 +106,27 @@ function clause execute VABD(funct6, vm, vs2, vs1, vd) = {
   RETIRE_SUCCESS
 }
 
-// *****************************************************************
-union clause instruction = VWABDAOP :(vwabdaop_zvabd, bits(1), vregidx, vregidx, vregidx)
+union clause instruction = ZVWABDATYPE :(zvabd_vwabda_fun6, bits(1), vregidx, vregidx, vregidx)
 
-mapping encdec_vwabdaop_zvabd : vwabdaop_zvabd <-> bits(6) = {
+mapping encdec_zvwabd : zvabd_vwabda_fun6 <-> bits(6) = {
   VV_VWABDACC     <-> 0b010101,
   VV_VWABDACCU    <-> 0b010110
 }
 
-mapping clause encdec = VWABDA(funct6, vm, vs2, vs1, vd)
-  <-> encdec_vwabdaop_zvabd(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
+$[wavedrom "_ _ _ _ OPIVV _ OP-V"]
+mapping clause encdec = ZVWABDATYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_zvabd_vwabda_fun6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvabd)
 
-mapping vwabdaop_mnemonic : vwabdaop_zvabd <-> string = {
+mapping vwabda_mnemonic : zvabd_vwabda_fun6 <-> string = {
   VV_VWABDACC     <-> "vwabdacc.vv",
   VV_VWABDACCU    <-> "vwabdaccu.vv"
 }
 
-mapping clause assembly = VWABDA(funct6, vm, vs2, vs1, vd)
-  <-> vwabdaop_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+mapping clause assembly = ZVWABDATYPE(funct6, vm, vs2, vs1, vd)
+  <-> vwabda_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-function clause execute VWABDA(funct6, vm, vs2, vs1, vd) = {
+function clause execute ZVWABDATYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -175,8 +161,7 @@ function clause execute VWABDA(funct6, vm, vs2, vs1, vd) = {
       result[i] = match funct6 {
         VV_VWABDACC => {
           let diff = signed(vs2_val[i]) - signed(vs1_val[i]);
-          let abs_diff = if diff < 0 then 0 - diff else diff;
-          to_bits_unsafe(SEW_widen, signed(vd_val[i]) + abs_diff)
+          to_bits_unsafe(SEW_widen, signed(vd_val[i]) + abs_int(diff))
         },
         VV_VWABDACCU => {
           let abs_diff = if unsigned(vs2_val[i]) >= unsigned(vs1_val[i]) then
