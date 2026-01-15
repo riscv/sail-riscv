@@ -7,7 +7,7 @@ prelude {
 }
 
 core {
-  requires prelude
+  requires prelude, Zicbop_types
 
   files
     core/xlen.sail,

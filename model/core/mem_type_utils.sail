@@ -22,7 +22,11 @@ function accessFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> Ex
     // exception here to propagate the failed address translation to
     // the execute of the calling instruction so that it could decide
     // whether to actually proceed with a prefetch.
-    CacheAccess(CB_prefetch(_)) => E_Load_Access_Fault(),
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_R => E_Load_Access_Fault(),
+      PREFETCH_W => E_SAMO_Access_Fault(),
+      PREFETCH_I => E_Fetch_Access_Fault(),
+    },
   }
 
 function alignmentFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> ExceptionType =
@@ -41,5 +45,9 @@ function alignmentFaultFromAccessType(access : MemoryAccessType(mem_payload)) ->
     // exception here to propagate the failed address translation to
     // the execute of the calling instruction so that it could decide
     // whether to actually proceed with a prefetch.
-    CacheAccess(CB_prefetch(_)) => E_Load_Addr_Align(),
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_R => E_Load_Addr_Align(),
+      PREFETCH_W => E_SAMO_Addr_Align(),
+      PREFETCH_I => E_Fetch_Addr_Align(),
+    },
   }
