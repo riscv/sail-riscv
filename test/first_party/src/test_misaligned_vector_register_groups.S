@@ -39,8 +39,8 @@ trap_handler:
     li t1, CAUSE_ILLEGAL_INSTRUCTION
     bne t0, t1, 1f
 
-    # If mtval != `failing_instruction`, return to `fail`.
-    csrr t0, mtval
+    # If mepc != `failing_instruction`, return to `fail`.
+    csrr t0, mepc
     la t1, failing_instruction
     bne t0, t1, 1f
 
