@@ -27,19 +27,20 @@ function clause execute ZICBOZ(rs1) = {
   if cbo_zero_enabled(cur_privilege) then {
     let rs1_val = X(rs1);
     let cache_block_size = 2 ^ plat_cache_block_size_exp;
+    let access = Store(Data);
 
     // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
     // is aligned to the cache block, or negative if rs1 is misaligned.
     let negative_offset = (rs1_val & ~(zero_extend(ones(plat_cache_block_size_exp)))) - rs1_val;
 
-    match ext_data_get_addr(rs1, negative_offset, Store(Data), cache_block_size) {
+    match ext_data_get_addr(rs1, negative_offset, access, cache_block_size) {
       Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
       Ext_DataAddr_OK(vaddr) => {
         // "An implementation may update the bytes in any order and with any granularity
         //  and atomicity, including individual bytes."
         //
         // This implementation does a single atomic write.
-        match translateAddr(vaddr, Store(Data)) {
+        match translateAddr(vaddr, access) {
           // vaddr is the aligned address, but errors report the address that
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be

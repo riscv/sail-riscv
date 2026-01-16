@@ -92,16 +92,53 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
         _ => {
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match access {
-            InstructionFetch() => attributes.executable,
-            Load(_)            => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
-            Store(_)           => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
+            InstructionFetch()  => attributes.executable,
+            Load(_)             => {assert(not(res_or_con)); attributes.readable},
+            // TODO: assert(not(res_or_con)). This requires a slight refactor of the mem_write_* APIs,
+            // since the use of the default Store access conflicts with the passed in aq/rl/con flags.
+            Store(_)            => attributes.writable,
+            // TODO: For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
+            // or absence (RsrvNonEventual) of an eventual success guarantee.
+            LoadReserved(_)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
+            StoreConditional(_) => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
             // TODO: Extend MemoryAccessType with the specific type of AMO operation. For now we assume all memory
             // supports all AMO operations.
-            LoadStore(_, _)    => attributes.readable & attributes.writable,
-            // TODO: Extend MemoryAccessType with a Cache() option. See https://github.com/riscv/sail-riscv/pull/792
-            // Cache(Zero)     => attributes.writable & attributes.supports_cbo_zero,
-            // Cache(_)        => internal_error(__FILE__, __LINE__,
-            //                                   "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
+            Atomic(_, _, _)     => {assert(res_or_con); attributes.readable & attributes.writable},
+
+            // TODO for the CMO extensions: "The PMAs shall be the
+            // same for all physical addresses in the cache block, and
+            // if write permission is granted by the supported access
+            // type PMAs, read permission shall also be granted."
+
+            // "A cache-block zero instruction is permitted to access
+            // the specified cache block whenever a store instruction
+            // is permitted to access the corresponding physical
+            // addresses and when the PMAs indicate that cache-block
+            // zero instructions are a supported access type."
+            CacheAccess(CB_zero())      => attributes.writable & attributes.supports_cbo_zero,
+
+            // "A cache-block management instruction is permitted to
+            // access the specified cache block whenever a load
+            // instruction or store instruction is permitted to access
+            // the corresponding physical addresses. If neither a load
+            // instruction nor store instruction is permitted to
+            // access the physical addresses, but an instruction fetch
+            // is permitted to access the physical addresses, whether
+            // a cache-block management instruction is permitted to
+            // access the cache block is UNSPECIFIED."
+            // TODO: handle the second sentence.
+            CacheAccess(CB_manage(_))   => attributes.readable | attributes.writable,
+
+            // "A cache-block prefetch instruction is permitted to
+            // access the specified cache block whenever a load
+            // instruction, store instruction, or instruction fetch is
+            // permitted to access the corresponding physical
+            // addresses."
+            CacheAccess(CB_prefetch(p)) => match p {
+              PREFETCH_R => attributes.readable,
+              PREFETCH_W => attributes.writable,
+              PREFETCH_I => attributes.executable,
+            },
           };
 
           if get_config_print_pma() & not(canAccess)
