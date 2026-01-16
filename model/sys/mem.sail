@@ -93,9 +93,9 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match access {
             InstructionFetch()  => attributes.executable,
+            Load(_)             => {assert(not(res_or_con)); attributes.readable},
             // TODO: assert(not(res_or_con)). This requires a slight refactor of the mem_write_* APIs,
             // since the use of the default Store access conflicts with the passed in aq/rl/con flags.
-            Load(_)             => attributes.readable,
             Store(_)            => attributes.writable,
             // TODO: For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
             // or absence (RsrvNonEventual) of an eventual success guarantee.
@@ -103,7 +103,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             StoreConditional(_) => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
             // TODO: Extend MemoryAccessType with the specific type of AMO operation. For now we assume all memory
             // supports all AMO operations.
-            Atomic(_, _, _)     => attributes.readable & attributes.writable,
+            Atomic(_, _, _)     => {assert(res_or_con); attributes.readable & attributes.writable},
 
             // TODO for the CMO extensions: "The PMAs shall be the
             // same for all physical addresses in the cache block, and
