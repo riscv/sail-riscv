@@ -316,6 +316,10 @@ function clause hartSupports(Ext_Zve64f) = sizeof(elen_exp) >= 6 & vector_suppor
 enum clause extension = Ext_Zve64x
 mapping clause extensionName = Ext_Zve64x <-> "zve64x"
 function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & vector_support_level >= Integer
+// Vector Integer Absolute Difference
+enum clause extension = Ext_Zvabd
+mapping clause extensionName = Ext_Zvabd <-> "zvabd"
+function clause hartSupports(Ext_Zvabd) = config extensions.Zvabd.supported
 // Vector BF16 Converts
 enum clause extension = Ext_Zvfbfmin
 mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"
@@ -659,6 +663,7 @@ let extensions_ordered_for_isa_string = [
   // Zvb
   Ext_Zvbb,
   Ext_Zvbc,
+  Ext_Zvabd,
 
   // Zve
   Ext_Zve32f,
