@@ -101,6 +101,7 @@ function clause execute ZVABDTYPE(funct6, vm, vs2, vs1, vd) = {
       }
     }
   }
+
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
   RETIRE_SUCCESS
