@@ -952,9 +952,15 @@ function clause execute FVFTYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  // "The vslide1up instruction requires that the destination vector
+  // register group does not overlap the source vector register
+  // group. Otherwise, the instruction encoding is reserved."
+  let src_dst_overlap = funct6 == VF_VSLIDE1UP & vs2 == vd;
+
   if illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     src_dst_overlap
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -988,7 +994,6 @@ function clause execute FVFTYPE(funct6, vm, vs2, rs1, vd) = {
         VF_VSGNJN        => (0b1 ^ [rs1_val['m - 1]]) @ vs2_val[i][('m - 2)..0],
         VF_VSGNJX        => ([vs2_val[i]['m - 1]] ^ [rs1_val['m - 1]]) @ vs2_val[i][('m - 2)..0],
         VF_VSLIDE1UP     => {
-                              if vs2 == vd then return Illegal_Instruction();
                               if i == 0 then rs1_val else vs2_val[i - 1]
                             },
         VF_VSLIDE1DOWN   => {
