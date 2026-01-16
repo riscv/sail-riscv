@@ -733,9 +733,18 @@ function clause execute VXSG(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  // For `vslideup` and `vrgather`, "the destination vector register
+  // group cannot overlap with the source vector register groups,
+  // otherwise the instruction encoding is reserved."
+  let src_dst_overlap : bool = match funct6 {
+    VX_VSLIDEUP   => vd == vs2,
+    VX_VSLIDEDOWN => false,
+    VX_VRGATHER   => vd == vs2,
+  };
   if illegal_normal(vd, vm) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     src_dst_overlap
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -756,7 +765,6 @@ function clause execute VXSG(funct6, vm, vs2, rs1, vd) = {
     if mask[i] == 0b1 then {
       result[i] = match funct6 {
         VX_VSLIDEUP    => {
-                            if (vs2 == vd) then return Illegal_Instruction();
                             if i >= rs1_val then vs2_val[i - rs1_val] else vd_val[i]
                           },
         VX_VSLIDEDOWN  => {
@@ -766,7 +774,6 @@ function clause execute VXSG(funct6, vm, vs2, rs1, vd) = {
                             if i + rs1_val < VLMAX then vs2_val[i + rs1_val] else zeros()
                           },
         VX_VRGATHER    => {
-                            if (vs2 == vd) then return Illegal_Instruction();
                             assert(LMUL_pow + vlen_exp - SEW_pow >= 0);
                             let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
                             assert(VLMAX > 0 & VLMAX <= 'n);
@@ -1168,7 +1175,7 @@ function clause execute VISG(funct6, vm, vs2, simm, vd) = {
   // For `vslideup` and `vrgather`, "the destination vector register
   // group cannot overlap with the source vector register groups,
   // otherwise the instruction encoding is reserved."
-  let group_overlap : bool = match funct6 {
+  let src_dst_overlap : bool = match funct6 {
     VI_VSLIDEUP   => vd == vs2,
     VI_VSLIDEDOWN => false,
     VI_VRGATHER   => vd == vs2,
@@ -1176,7 +1183,7 @@ function clause execute VISG(funct6, vm, vs2, simm, vd) = {
   if illegal_normal(vd, vm) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow)) |
-     group_overlap
+     src_dst_overlap
   then return Illegal_Instruction();
 
   let 'n = num_elem;
