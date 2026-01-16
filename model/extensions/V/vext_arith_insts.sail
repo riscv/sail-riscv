@@ -76,9 +76,14 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'm = SEW;
 
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
+  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1); // not used for VV_VRGATHEREI16.
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+
+  // See above for the vs1 operand of vrgatherei16.vv.
+  let vs1_val_vrgatherei16 : vector('n, bits(16)) = if funct6 == VV_VRGATHEREI16
+                                                    then read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1)
+                                                    else vector_init(zeros());
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
     Ok(v)   => v,
@@ -143,9 +148,7 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
                               if idx < VLMAX then vs2_val[idx] else zeros()
                             },
         VV_VRGATHEREI16  => {
-                              // vrgatherei16.vv uses SEW/LMUL for the data in vs2 but EEW=16 and EMUL = (16/SEW)*LMUL for the indices in vs1
-                              let vs1_new : vector('n, bits(16)) = read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1);
-                              let idx = unsigned(vs1_new[i]);
+                              let idx = unsigned(vs1_val_vrgatherei16[i]);
                               assert(LMUL_pow + vlen_exp - SEW_pow >= 0);
                               let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
                               assert(VLMAX <= 'n);
