@@ -71,14 +71,18 @@ enum Privilege  = {User, VirtualUser, Supervisor, VirtualSupervisor, Machine}
 
 mapping privLevel_bits : (nom_priv_bits, virt_mode_bit) <-> Privilege = {
   (0b00, 0b0) <-> User,
-  (0b00, 0b1 ) <-> VirtualUser,
+  (0b00, 0b1) <-> VirtualUser,
   (0b01, 0b0) <-> Supervisor,
-  (0b01, 0b1 ) <-> VirtualSupervisor,
+  (0b01, 0b1) <-> VirtualSupervisor,
   (0b11, 0b0) <-> Machine,
   forwards _       => internal_error(__FILE__, __LINE__, "Invalid privilege level or virtual mode"),
 }
 
 function privLevel_to_bits(p : Privilege) -> nom_priv_bits = { let (p, _) = privLevel_bits(p); p }
+
+function privLevel_to_virt_bit(p : Privilege) -> virt_mode_bit = { let (_, v) = privLevel_bits(p); v }
+
+function privLevel_is_virtual(p : Privilege) -> bool = p == VirtualSupervisor | p == VirtualUser
 
 function privLevel_to_str (p : Privilege) -> string =
   match (p) {
