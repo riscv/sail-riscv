@@ -128,7 +128,6 @@ private function check_PTE_permission(
 
   // Since we assume a valid PTE: Writable pages must be readable. Write-only
   // pages are reserved.
-
   assert(pte_W ==> pte_R);
 
   // Step 6 of VATP (see vmem.sail).
