@@ -2051,9 +2051,14 @@ function clause execute MVXTYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  // "The vslide1up instruction requires that the destination vector
+  // register group does not overlap the source vector register
+  // group. Otherwise, the instruction encoding is reserved."
+  let src_dst_overlap = funct6 == MVX_VSLIDE1UP & vs2 == vd;
   if illegal_normal(vd, vm) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     src_dst_overlap
   then return Illegal_Instruction();
 
   let 'n = num_elem;
