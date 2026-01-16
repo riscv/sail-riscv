@@ -219,7 +219,7 @@ val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, fregidx)) -> 
 function validDoubleRegs(n, regs) = {
   if currentlyEnabled(Ext_Zdinx) & xlen == 32 then {
     foreach (i from 0 to (n - 1)) {
-      if (fregidx_bits(regs[i])[0] == 0b1)
+      if fregidx_bits(regs[i])[0] == 0b1
       then match rv32zdinx_odd_register_reserved_behavior {
         Zdinx_Fatal  => reserved_behavior("RV32Zdinx used odd-numbered register"),
         Zdinx_Illegal => return false,
