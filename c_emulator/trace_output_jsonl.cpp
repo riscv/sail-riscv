@@ -5,55 +5,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
-// Schema follows this Serde definition. Some notes:
-//
-//  * Tuples are represented as arrays.
-//  * Optional values that are None are simply omitted.
-//  * This uses unsigned 64-bit integers which some JSON libraries may not support.
-//    You need to use one that does. This works fine in Python, Rust (serde_json),
-//    and C++ (Nlohmann/JSON for Modern C++). For Javascript (JSON.parse) you
-//    need to use the `reviver` parameter and parse `context.source` into a BigInt.
-//
-// #[derive(Serialize, Deserialize)]
-// struct TraceEntry {
-//     /// PC when this step was executed. This is always known and must be always present.
-//     pc: u64,
-//     /// PC for the next step. This is mostly redundant but useful for verifying branches
-//     /// in verification flows where PC is forced every step.
-//     next_pc: u64,
-//     /// Whether this step involved a redirect (branch, jump, exception, etc).
-//     /// If omitted defaults to `false`.
-//     #[serde(default)]
-//     redirect: bool,
-//     /// Opcode may be missing e.g. for fetch faults.
-//     opcode: Option<u32>,
-//     /// On exception, this is equal to the cause. Mutually exclusive with interrupt.
-//     exception: Option<u64>,
-//     /// On interrupt, this is equal to the cause. Mutually exclusive with
-//     /// exception. The top 'interrupt' bit of mstatus is not included.
-//     interrupt: Option<u64>,
-//     /// List of x/f/v/csr register writes. May be missing if none.
-//     x: Vec<(u8, u64)>,
-//     f: Vec<(u8, u64)>,
-//     v: Vec<(u8, Vec<u8>)>,
-//     csr: Vec<(u16, u64)>,
-//     /// Loads and stores. May be missing if none.
-//     loads: Vec<MemAccess>,
-//     stores: Vec<MemAccess>,
-// }
-//
-// #[derive(Serialize, Deserialize)]
-// struct MemAccess {
-//     /// Physical address.
-//     paddr: u64,
-//     /// Virtual address. TODO: Not included yet.
-//     vaddr: u64,
-//     /// Access width in bytes.
-//     width: u8,
-//     /// Value read or written.
-//     value: Vec<u8>,
-// }
+// See `doc/jsonl` for the schema and documentation. Please update it if you make changes!
 
 void trace_output_jsonl::open(const std::string &filename) {
   m_ofs.open(filename);
@@ -146,9 +100,6 @@ void trace_output_jsonl::mem_read_callback(hart::Model &, const char *, sbits pa
   if (!m_loads.empty()) {
     m_loads += ',';
   }
-  assert(value.len % 8 == 0);
-  std::vector<uint8_t> data((value.len + 7) / 8);
-  mpz_export(data.data(), nullptr, -1, 1, 0, 0, *value.bits);
 
   m_loads += "{\"paddr\":" + std::to_string(paddr.bits) + ",\"width\":" + std::to_string(width) + ",\"value\":";
   append_lbits_array(m_loads, value);
