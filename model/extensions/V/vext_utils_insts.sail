@@ -46,6 +46,8 @@ function valid_rd_mask(rd : vregidx, vm : bits(1)) -> bool = {
   vm != 0b0 | rd != zvreg
 }
 
+// Check that a vector register number for a vector register group is
+// a multiple of its EMUL. Fractional EMULs are rounded up to 1.
 function valid_reg_group(r : vregidx, EMUL_pow : int) -> bool = {
   let reg_group_size = if EMUL_pow > 0 then 2 ^ EMUL_pow else 1;
   unsigned(vregidx_bits(r)) % reg_group_size == 0
@@ -56,7 +58,6 @@ function valid_reg_group(r : vregidx, EMUL_pow : int) -> bool = {
 // encoded number of registers must be a power of 2 and the vector
 // register numbers must be aligned as with a vector register group,
 // otherwise the instruction encoding is reserved."
-
 function valid_whole_register(r : vregidx, nf : nfields_pow2) -> bool = {
   unsigned(vregidx_bits(r)) % nf == 0
 }
