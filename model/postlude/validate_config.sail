@@ -299,8 +299,7 @@ private function check_pma_regions_for_zicclsm(pmas : list(PMA_Region)) -> bool 
     [||] => true,
     pma :: rest => {
       let attr = pma.attributes;
-      if memory_region_type(attr) == MainMemory & attr.cacheable & attr.coherent
-      & attr.misaligned_fault != NoFault then {
+      if memory_region_type(attr) == MainMemory & attr.cacheable & attr.coherent & attr.misaligned_fault != NoFault then {
         return false;
       };
       check_pma_regions_for_zicclsm(rest)
