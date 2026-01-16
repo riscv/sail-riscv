@@ -66,8 +66,10 @@ val read_vreg : forall 'n 'sew 'p, 'n >= 0 & is_sew_bitsize('sew) . (int('n), in
 function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
   let vrid_val = unsigned(vregidx_bits(vrid));
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
-  assert(vrid_val + 2 ^ LMUL_pow_reg <= 32, "invalid register group: vrid overflow the largest number");
-  assert(vrid_val % (2 ^ LMUL_pow_reg) == 0, "invalid register group: vrid is not a multiple of EMUL");
+  let vrid_end = vrid_val + 2 ^ LMUL_pow_reg;
+  let LMUL = 2 ^ LMUL_pow_reg;
+  assert(vrid_end <= 32, "invalid register group: group " ^ dec_str(vrid_val) ^ " ends at " ^ dec_str(vrid_end) ^ " and overflows the largest register number (32)");
+  assert(vrid_val % LMUL == 0, "invalid register group: group " ^ dec_str(vrid_val) ^ " is not a multiple of its EMUL " ^ dec_str(LMUL));
 
   var result : vector('n, bits('sew)) = vector_init(zeros());
 
