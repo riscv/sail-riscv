@@ -51,9 +51,25 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  // "The vrgatherei16.vv form uses SEW/LMUL for the data in vs2 but
+  // EEW=16 and EMUL = (16/SEW)*LMUL for the indices in vs1."  Other
+  // than that, all the other instructions here use a uniform SEW/LMUL
+  // for their vector operands.  Also, "For any vrgather instruction,
+  // the destination vector register group cannot overlap with the
+  // source vector register groups, otherwise the instruction encoding
+  // is reserved."
+
+  // Check for source destination overlaps for vrgather instructions.
+  let gather_src_dst_overlap : bool = if funct6 == VV_VRGATHER | funct6 == VV_VRGATHEREI16
+                                      then vs1 == vd | vs2 == vd
+                                      else false;
+
+  let vs1_emul_pow = if funct6 == VV_VRGATHEREI16 then 4 + LMUL_pow - SEW_pow else LMUL_pow;
+
   if illegal_normal(vd, vm) |
-     not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow)) |
-     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow))
+     not(valid_reg_overlap(vs1, vd, vs1_emul_pow, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     gather_src_dst_overlap
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -120,7 +136,6 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
         VV_VMAXU         => to_bits_unsafe(SEW, max(unsigned(vs2_val[i]), unsigned(vs1_val[i]))),
         VV_VMAX          => to_bits_unsafe(SEW, max(signed(vs2_val[i]), signed(vs1_val[i]))),
         VV_VRGATHER      => {
-                              if (vs1 == vd | vs2 == vd) then return Illegal_Instruction();
                               let idx = unsigned(vs1_val[i]);
                               assert(LMUL_pow + vlen_exp - SEW_pow >= 0);
                               let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
@@ -128,7 +143,6 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
                               if idx < VLMAX then vs2_val[idx] else zeros()
                             },
         VV_VRGATHEREI16  => {
-                              if (vs1 == vd | vs2 == vd) then return Illegal_Instruction();
                               // vrgatherei16.vv uses SEW/LMUL for the data in vs2 but EEW=16 and EMUL = (16/SEW)*LMUL for the indices in vs1
                               let vs1_new : vector('n, bits(16)) = read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1);
                               let idx = unsigned(vs1_new[i]);
