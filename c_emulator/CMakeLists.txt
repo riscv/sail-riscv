@@ -74,6 +74,8 @@ add_executable(sail_riscv_sim
     riscv_callbacks_log.h
     riscv_callbacks_rvfi.cpp
     riscv_callbacks_rvfi.h
+    trace_output_jsonl.cpp
+    trace_output_jsonl.h
 )
 
 # The generated C model is not warnings-clean, silence them.
