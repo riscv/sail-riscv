@@ -122,15 +122,15 @@ type is_mem_width('w) = 'w in {1, 2, 4, 8}
 // architectural interrupt definitions
 
 enum InterruptType = {
-  I_U_Software,
+  I_Reserved_0,
   I_S_Software,
   I_VS_Software,
   I_M_Software,
-  I_U_Timer,
+  I_Reserved_4,
   I_S_Timer,
   I_VS_Timer,
   I_M_Timer,
-  I_U_External,
+  I_Reserved_8,
   I_S_External,
   I_VS_External,
   I_M_External,
@@ -138,15 +138,15 @@ enum InterruptType = {
 }
 
 mapping interruptType_bits : InterruptType <-> exc_code = {
-  I_U_Software   <-> 0b000000, // 0
+  I_Reserved_0   <-> 0b000000, // 0
   I_S_Software   <-> 0b000001, // 1
   I_VS_Software  <-> 0b000010, // 2
   I_M_Software   <-> 0b000011, // 3
-  I_U_Timer      <-> 0b000100, // 4
+  I_Reserved_4   <-> 0b000100, // 4
   I_S_Timer      <-> 0b000101, // 5
   I_VS_Timer     <-> 0b000110, // 6
   I_M_Timer      <-> 0b000111, // 7
-  I_U_External   <-> 0b001000, // 8
+  I_Reserved_8   <-> 0b001000, // 8
   I_S_External   <-> 0b001001, // 9
   I_VS_External  <-> 0b001010, // 10
   I_M_External   <-> 0b001011, // 11
@@ -155,15 +155,15 @@ mapping interruptType_bits : InterruptType <-> exc_code = {
 
 function interruptType_to_str(i : InterruptType) -> string =
   match (i) {
-    I_U_Software  => "user-software-interrupt",
+    I_Reserved_0  => "reserved-interrupt-0",
     I_S_Software  => "supervisor-software-interrupt",
     I_VS_Software => "virtual-supervisor-software-interrupt",
     I_M_Software  => "machine-software-interrupt",
-    I_U_Timer     => "user-timer-interrupt",
+    I_Reserved_4  => "reserved-interrupt-4",
     I_S_Timer     => "supervisor-timer-interrupt",
     I_VS_Timer    => "virtual-supervisor-timer-interrupt",
     I_M_Timer     => "machine-timer-interrupt",
-    I_U_External  => "user-external-interrupt",
+    I_Reserved_8  => "reserved-interrupt-8",
     I_S_External  => "supervisor-external-interrupt",
     I_VS_External => "virtual-supervisor-external-interrupt",
     I_M_External  => "machine-external-interrupt",
