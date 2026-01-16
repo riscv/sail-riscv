@@ -425,7 +425,13 @@ bitfield Fcsr : bits(32) = {
 register fcsr : Fcsr
 
 function write_fcsr(frm : bits(3), fflags : bits(5)) -> unit = {
-  fcsr[FRM]    = frm;      // Note: frm can be an illegal value, 101, 110, 111
+  // Note: frm can be an reserved value, 101, 110, 111
+  if frm != 0b101 & frm != 0b110 & frm != 0b111 then {
+    fcsr[FRM] = frm;
+  } else match fcsr_rm_reserved_behavior {
+    Fcsr_RM_Fatal  => reserved_behavior("Dynamic floating-point rounding mode use reserved value, fcsr.FRM contains (0b101, 0b110 or 0b111)."),
+    Fcsr_RM_Illegal => fcsr[FRM] = frm,
+  };
   fcsr[FFLAGS] = fflags;
   dirty_fd_context_if_present();
 }
