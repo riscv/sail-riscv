@@ -1197,7 +1197,6 @@ function clause execute VISG(funct6, vm, vs2, simm, vd) = {
     if mask[i] == 0b1 then {
       result[i] = match funct6 {
         VI_VSLIDEUP    => {
-                            if (vs2 == vd) then return Illegal_Instruction();
                             if i >= imm_val then vs2_val[i - imm_val] else vd_val[i]
                           },
         VI_VSLIDEDOWN  => {
@@ -1207,7 +1206,6 @@ function clause execute VISG(funct6, vm, vs2, simm, vd) = {
                             if i + imm_val < VLMAX then vs2_val[i + imm_val] else zeros()
                           },
         VI_VRGATHER    => {
-                            if (vs2 == vd) then return Illegal_Instruction();
                             assert(LMUL_pow + vlen_exp - SEW_pow >= 0);
                             let VLMAX = 2 ^ (LMUL_pow + vlen_exp - SEW_pow);
                             assert(VLMAX > 0 & VLMAX <= 'n);
