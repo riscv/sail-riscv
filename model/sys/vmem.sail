@@ -58,7 +58,7 @@ private function read_pte forall 'n, 'n in {4, 8} . (
 private val pt_walk : forall 'v, is_sv_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
-  MemoryAccessType(mem_payload),  // Memory Load/Store/LoadStore/InstructionFetch
+  MemoryAccessType(mem_payload),  // Memory Load{Reserved}/Store{Conditional}/Atomic/InstructionFetch/CacheAccess
   Privilege,                    // User/Supervisor/Machine
   bool,                         // mstatus.MXR
   bool,                         // do_sum
@@ -368,7 +368,7 @@ function translateAddr(
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
-  // See sys_regs.sail for effectivePrivilege() and cur_privilege
+  // See sys_control.sail for effectivePrivilege() and sys_regs.sail for cur_privilege.
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
 
   let mode = translationMode(effPriv);
