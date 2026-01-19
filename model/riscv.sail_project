@@ -234,6 +234,10 @@ extensions {
         extensions/V/vext_red_insts.sail,
         extensions/V/vext_fp_red_insts.sail,
      }
+    Zvdot4a8i {
+      requires sys, V, V_core
+      files extensions/vector_dot/zvdot4a_insts.sail
+    }
   }
 
   // RISC-V Cryptography Extension

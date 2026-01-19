@@ -142,3 +142,7 @@ enum fvfmfunct6   = { VFM_VMFEQ, VFM_VMFLE, VFM_VMFLT, VFM_VMFNE, VFM_VMFGT, VFM
 enum vmlsop       = { VLM, VSM }
 
 enum indexed_mop  = { INDEXED_UNORDERED, INDEXED_ORDERED }
+
+enum vvd_funct6 = { VVD_VDOT4A, VVD_VDOT4AU, VVD_VDOT4SU }
+
+enum vxd_funct6 = { VXD_VDOT4A, VXD_VDOT4AU, VXD_VDOT4SU, VXD_VDOT4US }
