@@ -209,6 +209,9 @@ register htimedelta : bits(64)
 mapping clause csr_name_map = 0x605 <-> "htimedelta"
 mapping clause csr_name_map = 0x615 <-> "htimedeltah"
 
+// TODO: Should raise virtual instruction exception if accessed by VU/VS-Mode.
+// Needs refactoring of CSR access logic.
+// TODO: Time CSR needs to modified and shall return htimedelta + mtime
 function clause is_CSR_accessible(0x605, _, _) = currentlyEnabled(Ext_H) // htimedelta
 function clause is_CSR_accessible(0x615, _, _) = currentlyEnabled(Ext_H) & xlen == 32 // htimedeltah
 
