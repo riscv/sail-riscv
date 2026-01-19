@@ -307,8 +307,9 @@ register hgatp : xlenbits
 
 mapping clause csr_name_map = 0x680 <-> "hgatp"
 
-// TODO: HS-mode access with mstatus.TVM=1 should raise illegal instruction
-function clause is_CSR_accessible(0x680, _, _) = currentlyEnabled(Ext_H)
+// TODO: Should raise virtual instruction exception if accessed by VU/VS-Mode.
+// Needs refactoring of CSR access logic.
+function clause is_CSR_accessible(0x680, priv, _) = currentlyEnabled(Ext_H) & (priv == Machine | (priv == Supervisor & mstatus[TVM] == 0b0))
 function clause read_CSR(0x680) = hgatp
 function clause write_CSR(0x680, value) = { hgatp = legalize_hgatp(architecture(cur_privilege), hgatp, value); Ok(hgatp) }
 
