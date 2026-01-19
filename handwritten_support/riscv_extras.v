@@ -25,6 +25,8 @@ Definition shift_bits_right_arith {a b} (v : mword a) (n : mword b) : mword a :=
 Definition get_time_ns (_:unit) : Z := 0.
 (*declare ocaml target_rep function get_time_ns := `(fun () -> Big_int.of_int (int_of_float (1e9 *. Unix.gettimeofday ())))`*)
 
+Definition sys_enable_experimental_extensions (_:unit) : bool := false.
+
 (* Override the more general version *)
 
 Definition mults_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mults_vec l r.
