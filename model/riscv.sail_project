@@ -429,6 +429,7 @@ extensions {
   }
 
   Ssqosid {
+    requires core
     files extensions/Ssqosid/ssqosid.sail
   }
 
