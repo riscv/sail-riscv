@@ -363,6 +363,8 @@ bitfield MEnvcfg : bits(64) = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
+  // Shadow Stack Enable
+  SSE    : 3,
   // Landing Pad Enable
   LPE    : 2,
   // Fence of I/O implies Memory
@@ -376,6 +378,8 @@ bitfield SEnvcfg : xlenbits = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
+  // Shadow Stack Enable
+  SSE    : 3,
   // Landing Pad Enable
   LPE    : 2,
   // Fence of I/O implies Memory
@@ -396,6 +400,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     LPE  = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
+    SSE  = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
@@ -409,6 +414,10 @@ private function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     LPE = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
+    // In this implementation, menvcfg[SSE] does not control the writes to senvcfg[SSE],
+    // but does control the reads.  This way, senvcfg[SSE] does not have to be modified
+    // when menvcfg[SSE] is cleared.
+    SSE = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
@@ -418,7 +427,16 @@ private function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
 
 // Initialised to legal values in case some bits are hard-coded to 1.
 register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
-register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
+
+// This register is private to ensure that it is read using `read_senvcfg()`.
+private register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
+
+// "When menvcfg.SSE is 0, the henvcfg.SSE and senvcfg.SSE fields are read-only zero."
+// This function should be used for any read of the `senvcfg` CSR that includes the SSE bit.
+function read_senvcfg() -> SEnvcfg =
+  [senvcfg with SSE = if bool_bit(menvcfg[SSE]) then senvcfg[SSE] else 0b0]
+
+private function read_senvcfg_bits() -> xlenbits = read_senvcfg().bits
 
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
@@ -433,12 +451,12 @@ function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) // senv
 
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
-function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x10A) = read_senvcfg_bits()
 
 function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Ok(menvcfg.bits[31 .. 0]) }
 function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); Ok(menvcfg.bits) }
 function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Ok(menvcfg.bits[63 .. 32]) }
-function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(senvcfg.bits[xlen - 1 .. 0]) }
+function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(read_senvcfg_bits()) }
 
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences
