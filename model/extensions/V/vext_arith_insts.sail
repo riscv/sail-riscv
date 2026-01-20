@@ -60,16 +60,16 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   // is reserved."
 
   // Check for source destination overlaps for vrgather instructions.
-  let gather_src_dst_overlap : bool = if funct6 == VV_VRGATHER | funct6 == VV_VRGATHEREI16
-                                      then vs1 == vd | vs2 == vd
-                                      else false;
+  let src_dst_overlap : bool = if funct6 == VV_VRGATHER | funct6 == VV_VRGATHEREI16
+                               then vs1 == vd | vs2 == vd
+                               else false;
 
   let vs1_emul_pow = if funct6 == VV_VRGATHEREI16 then 4 + LMUL_pow - SEW_pow else LMUL_pow;
 
   if illegal_normal(vd, vm) |
      not(valid_reg_overlap(vs1, vd, vs1_emul_pow, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     gather_src_dst_overlap
+     src_dst_overlap
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -80,9 +80,10 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  // See above for the vs1 operand of vrgatherei16.vv.
+  // See above for the vs1 operand of vrgatherei16.vv.  This is a
+  // different variable from `vs1_val` due to its different type.
   let vs1_val_vrgatherei16 : vector('n, bits(16)) = if funct6 == VV_VRGATHEREI16
-                                                    then read_vreg(num_elem, 16, 4 + LMUL_pow - SEW_pow, vs1)
+                                                    then read_vreg(num_elem, 16, vs1_emul_pow, vs1)
                                                     else vector_init(zeros());
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
