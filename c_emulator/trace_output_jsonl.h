@@ -1,11 +1,11 @@
 #pragma once
 
 #include <fstream>
-#include <optional>
 #include <string>
-#include <vector>
 
 #include "riscv_callbacks_if.h"
+
+// See `doc/jsonl` for the schema and documentation. Please update it if you make changes!
 
 class trace_output_jsonl : public callbacks_if {
 public:
