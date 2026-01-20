@@ -10,16 +10,19 @@
 mapping clause csr_name_map = 0x14D  <-> "stimecmp"
 mapping clause csr_name_map = 0x15D  <-> "stimecmph"
 
-function sstc_CSRs_accessible(priv : Privilege) -> bool =
-    priv == Machine | (priv == Supervisor & mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1)
+function sstc_CSRs_accessible(priv : Privilege) -> CSRAccessResult =
+  if   (priv == Machine) | (priv == Supervisor & mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1)
+  then CSRAccess_Success()
+  else CSRAccess_Illegal(CSR_Illegal_Sstc())
 
 function clause is_CSR_accessible(0x14D, priv, _) =
-    currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) &
-    sstc_CSRs_accessible(priv)
+  csr_requires_ext(Ext_S) & csr_requires_ext(Ext_Sstc)
+  & sstc_CSRs_accessible(priv)
 
 function clause is_CSR_accessible(0x15D, priv, _) =
-    currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) & xlen == 32 &
-    sstc_CSRs_accessible(priv)
+  csr_requires_ext(Ext_S) & csr_requires_ext(Ext_Sstc)
+  & sstc_CSRs_accessible(priv)
+  & csr_requires_xlen_32()
 
 function clause read_CSR(0x14D) = stimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x15D if xlen == 32) = stimecmp[63 .. 32]
