@@ -111,42 +111,38 @@ void trace_output_jsonl::fetch_callback(hart::Model &, sbits opcode) {
   m_ofs << ",\"opcode\":" << opcode.bits;
 }
 
-void trace_output_jsonl::mem_write_callback(
-  hart::Model &model,
-  const char *type,
-  sbits paddr,
-  uint64_t width,
-  lbits value
-)
-
-{
-  if (!m_stores.empty()) {
-    m_stores += ',';
-  }
+// Append an lbits value as a JSON array of bytes to `out`. It must
+// be a multiple of 8 bits.
+static void append_lbits_array(std::string &out, lbits value) {
   assert(value.len % 8 == 0);
   std::vector<uint8_t> data((value.len + 7) / 8);
   mpz_export(data.data(), nullptr, -1, 1, 0, 0, *value.bits);
 
-  m_stores += "{" + std::string("\"paddr\":") + std::to_string(paddr.bits) + "," + std::string("\"width\":") +
-              std::to_string(width) + "," + std::string("\"value\":[");
-  bool comma = false;
-  for (unsigned v : data) {
-    if (comma) {
-      m_stores += ',';
-      comma = true;
+  out += '[';
+
+  bool first = true;
+  for (unsigned byte : data) {
+    if (!first) {
+      out += ',';
     }
-    m_stores += std::to_string(v);
+    first = false;
+    out += std::to_string(byte);
   }
-  m_stores += "]}";
+
+  out += ']';
 }
 
-void trace_output_jsonl::mem_read_callback(
-  hart::Model &model,
-  const char *type,
-  sbits paddr,
-  uint64_t width,
-  lbits value
-) {
+void trace_output_jsonl::mem_write_callback(hart::Model &, const char *, sbits paddr, uint64_t width, lbits value) {
+  if (!m_stores.empty()) {
+    m_stores += ',';
+  }
+
+  m_stores += "{\"paddr\":" + std::to_string(paddr.bits) + ",\"width\":" + std::to_string(width) + ",\"value\":";
+  append_lbits_array(m_stores, value);
+  m_stores += "}";
+}
+
+void trace_output_jsonl::mem_read_callback(hart::Model &, const char *, sbits paddr, uint64_t width, lbits value) {
   if (!m_loads.empty()) {
     m_loads += ',';
   }
@@ -154,17 +150,9 @@ void trace_output_jsonl::mem_read_callback(
   std::vector<uint8_t> data((value.len + 7) / 8);
   mpz_export(data.data(), nullptr, -1, 1, 0, 0, *value.bits);
 
-  m_loads += "{" + std::string("\"paddr\":") + std::to_string(paddr.bits) + "," + std::string("\"width\":") +
-             std::to_string(width) + "," + std::string("\"value\":[");
-  bool comma = false;
-  for (unsigned v : data) {
-    if (comma) {
-      m_loads += ',';
-      comma = true;
-    }
-    m_loads += std::to_string(v);
-  }
-  m_loads += "]}";
+  m_loads += "{\"paddr\":" + std::to_string(paddr.bits) + ",\"width\":" + std::to_string(width) + ",\"value\":";
+  append_lbits_array(m_loads, value);
+  m_loads += "}";
 }
 
 void trace_output_jsonl::xreg_full_write_callback(hart::Model &, const_sail_string, sbits reg, sbits value) {
@@ -181,31 +169,21 @@ void trace_output_jsonl::freg_write_callback(hart::Model &, unsigned reg, sbits 
   m_f_writes += "[" + std::to_string(reg) + "," + std::to_string(value.bits) + "]";
 }
 
-void trace_output_jsonl::csr_full_write_callback(hart::Model &, const_sail_string csr_name, unsigned reg, sbits value) {
+void trace_output_jsonl::csr_full_write_callback(hart::Model &, const_sail_string, unsigned reg, sbits value) {
   if (!m_csr_writes.empty()) {
     m_csr_writes += ',';
   }
   m_csr_writes += "[" + std::to_string(reg) + "," + std::to_string(value.bits) + "]";
 }
 
-void trace_output_jsonl::vreg_write_callback(hart::Model &model, unsigned reg, lbits value) {
+void trace_output_jsonl::vreg_write_callback(hart::Model &, unsigned reg, lbits value) {
   if (!m_v_writes.empty()) {
     m_v_writes += ',';
   }
-  assert(value.len % 8 == 0);
-  std::vector<uint8_t> data((value.len + 7) / 8);
-  mpz_export(data.data(), nullptr, -1, 1, 0, 0, *value.bits);
 
-  m_v_writes += "[" + std::to_string(reg) + ",[";
-  bool comma = false;
-  for (unsigned v : data) {
-    if (comma) {
-      m_v_writes += ',';
-      comma = true;
-    }
-    m_v_writes += std::to_string(v);
-  }
-  m_v_writes += "]]";
+  m_v_writes += "[" + std::to_string(reg) + ",";
+  append_lbits_array(m_v_writes, value);
+  m_v_writes += "]";
 }
 
 void trace_output_jsonl::pc_write_callback(hart::Model &, sbits new_pc) {
