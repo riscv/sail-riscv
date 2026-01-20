@@ -240,7 +240,7 @@ function clause write_CSR(0x64A, value) = { htinst = value; Ok(htinst) }
 
 // Hypervisor Guest Address Translation and Protection
 
-// TODO: Consilidate with SAPTMode to get rid of HBare
+// TODO: Consolidate with SATPMode to get rid of HBare
 type hgatp_mode = bits(4)
 enum HGATPMode = {HBare, Sv32x4, Sv39x4, Sv48x4, Sv57x4}
 
@@ -267,6 +267,7 @@ bitfield Hgatp32 : bits(32) = {
 }
 
 // TODO: Consolidate with legalize_satp
+// TODO: Add VMIDLEN config option and mask VMID field to implemented width
 function legalize_hgatp(
   arch : Architecture,
   prev_value : xlenbits,
