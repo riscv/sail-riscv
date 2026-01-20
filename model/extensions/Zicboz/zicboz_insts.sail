@@ -10,7 +10,7 @@
 
 function clause currentlyEnabled(Ext_Zicboz) = hartSupports(Ext_Zicboz)
 
-function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBZE][0], senvcfg[CBZE][0])
+function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBZE][0], read_senvcfg()[CBZE][0])
 
 // *****************************************************************
 union clause instruction = ZICBOZ : (regidx)

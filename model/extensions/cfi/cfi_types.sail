@@ -11,9 +11,11 @@ type landing_pad_label = bits(20)
 enum Software_Check_Code = {
   SWC_NO_INFO,
   SWC_LANDING_PAD_FAULT,
+  SWC_SHADOW_STACK_FAULT,
 }
 
 mapping software_check_cause : Software_Check_Code <-> bits(2) = {
-  SWC_NO_INFO           <-> 0b00,
-  SWC_LANDING_PAD_FAULT <-> 0b10,
+  SWC_NO_INFO            <-> 0b00,
+  SWC_LANDING_PAD_FAULT  <-> 0b10,
+  SWC_SHADOW_STACK_FAULT <-> 0b11,
 }

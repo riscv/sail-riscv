@@ -253,6 +253,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zicfilp extension is enabled but Zicsr is disabled: supporting Zicfilp requires Zicsr.");
   };
+  if hartSupports(Ext_Zicfiss) & not(hartSupports(Ext_Zicsr) & hartSupports(Ext_Zimop)) then {
+    valid = false;
+    print_endline("The Zicfiss extension is enabled but one or more of Zicsr and Zimop are disabled: supporting Zicfiss requires Zicsr and Zimop.");
+  };
   if hartSupports(Ext_Zfbfmin) & not(hartSupports(Ext_F)) then {
     valid = false;
     print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
