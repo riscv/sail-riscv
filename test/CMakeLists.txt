@@ -158,10 +158,4 @@ if (FIRST_PARTY_TESTS)
     add_subdirectory("first_party")
 endif()
 
-# This is off by default so we don't require people who
-# just want to build the model to have Clang or RISC-V GCC
-# installed.
-option(UNIT_TESTS "Compile & run unit tests (requires Clang or RISC-V GCC).")
-if (UNIT_TESTS)
-    add_subdirectory("unit_tests")
-endif()
+add_subdirectory("unit_tests")
