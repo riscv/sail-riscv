@@ -24,6 +24,12 @@ set(sail_common
     --memo-z3-path "${CMAKE_CURRENT_BINARY_DIR}/sail_smt_cache"
 )
 
+# Mirroring Sail's PRINT_EFFECTS flag
+option(PRINT_EFFECTS "Pass PRINT_EFFECTS to Sail (used in Lean and Rocq backends)" OFF)
+if(PRINT_EFFECTS)
+    list(APPEND sail_common -D PRINT_EFFECTS)
+endif()
+
 set(project_file "riscv.sail_project")
 
 # Reconfigure if the project file changes.

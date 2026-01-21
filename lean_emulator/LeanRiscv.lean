@@ -246,7 +246,7 @@ def initializeRegisters (elf: ELF64File): SailM PUnit :=
     writeReg htif_payload_writes (← (undefined_bitvector 4))
     writeReg satp (← (undefined_bitvector ((2 ^i 2) *i 8)))
 
-def my_main (elf: ELF64File) :=
+def my_main (elf: ELF64File) : SailM Int :=
   open LeanRV64DExecutable.Functions in
   open Sail in
   do
@@ -260,20 +260,32 @@ def my_main (elf: ELF64File) :=
       print_bits_effect "htif_tohost = " (← readReg htif_tohost)
       loop ()
     )
-    (λ the_exception ↦
+    (λ the_exception ↦ do
       match the_exception with
       | .Error_not_implemented s => (pure (print_string "Error: Not implemented: " s))
-      | .Error_internal_error () => (pure (print "Error: internal error"))
+      | .Error_internal_error s => (pure (print_string "Error: internal error: " s))
       | .Error_reserved_behavior s => (pure (print_string "Error: Reserved behavior: " s))
+      return 1
     )
 
 def runElf64 (elf : ELF64File) : IO UInt32 :=
   open Sail in
   open LeanRV64DExecutable.Functions in
-  let mem := initializeMemory MachineBits.B64 elf
-  let regs := Std.ExtDHashMap.emptyWithCapacity
-  let initialState := ⟨regs, (), mem, default, default, default⟩
-  main_of_sail_main initialState $ fun () => do
-    sail_model_init ()
-    initializeRegisters elf
-    my_main elf
+  do
+    let mem := initializeMemory MachineBits.B64 elf
+    let regs := Std.ExtDHashMap.emptyWithCapacity
+    let initialState := ⟨regs, (), mem, default, default, default⟩
+    let main := do
+      sail_model_init ()
+      initializeRegisters elf
+      my_main elf
+    match main.run initialState with
+    | .ok res s => do
+      for m in s.sailOutput do
+        IO.print m
+      IO.Process.exit $ UInt8.ofInt res
+    | .error e s => do
+      for m in s.sailOutput do
+        IO.print m
+      IO.eprintln s!"Error while running the sail program!: {e.print}"
+      IO.Process.exit 1

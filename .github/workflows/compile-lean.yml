@@ -51,3 +51,9 @@ jobs:
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: "build/model/Lean_RV64D/"
+
+      - name: Test the Lean emulator
+        run: |
+          eval $(opam config env)
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSAIL_MODULES="H;Zca;Zicbom_insts;Zicboz;Zicsr_insts;Zkr;Sscofpmf;postlude" -DPRINT_EFFECTS=true
+          cmake --build build --target test_lean_emulator

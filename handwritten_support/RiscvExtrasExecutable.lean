@@ -33,7 +33,7 @@ def plat_term_read : Unit → SailM String := λ _ => panic "TODO: plat_term_rea
 -- Reservations
 def load_reservation : Arch.pa → Nat → SailM Unit := λ _ => panic "TODO: load_reservation"
 def match_reservation : Arch.pa → Bool := λ _ => panic "TODO: match_reservation"
-def cancel_reservation : Unit → SailM Unit := λ _ => panic "TODO: cancel_reservation"
+def cancel_reservation : Unit → SailM Unit := λ _ => dbg_trace "TODO: cancel_reservation"; return ()
 def valid_reservation : Unit → Bool := λ _ => false
 
 def get_16_random_bits : Unit → SailM (BitVec 16) := λ _ => panic "TODO: get_16_random_bits"
@@ -112,6 +112,6 @@ def riscv_f64roundToInt : BitVec 3 → BitVec 64 → Bool → (BitVec 5 × BitVe
 
 -- Termination of extensionEnabled
 instance : SizeOf extension where
-  sizeOf := extension.toCtorIdx
+  sizeOf := extension.ctorIdx
 
 macro_rules | `(tactic| decreasing_trivial) => `(tactic| decide)
