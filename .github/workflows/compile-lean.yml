@@ -51,3 +51,56 @@ jobs:
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: "build/model/Lean_RV64D/"
+
+      # Now we want to test the Lean emulator, but it's much too slow if we
+      # extract all the RISC-V instructions, so we need to be more restrictive,
+      # replaying all the previous steps.
+      - name: Build the test ELF files
+        run: |
+          eval $(opam config env)
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_RISCV_TESTS=TRUE
+          ninja -C build all
+      - name: Build the reduced Sail RISCV model for Lean
+        run: |
+          eval $(opam config env)
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSAIL_MODULES="H;Zca;Zicbom_insts;Zicboz;Zicsr_insts;Zkr;postlude" -G Ninja
+          cmake --build build/ --target generated_lean_rv64d generated_lean_executable_rv64d
+
+      # Use a separate initial setup step so that we can run lake update before the build
+      - name: Setup Lean for reduced model
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          lake-package-directory: "build/model/Lean_RV64D/"
+
+      - name: Update Lean dependencies to include Sail support library
+        working-directory: ./build/model/Lean_RV64D
+        run: lake update
+
+      - name: Build the reduced model
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: "build/model/Lean_RV64D/"
+
+      - name: Build the emulator
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: "lean_emulator"
+
+      - name: Run the Lean emulator
+        working-directory: ./lean_emulator
+        # Note: the 2025-10-14 directory below is obtained by looking at
+        # TEST_DOWNLOAD_VERSION in sail-riscv/tests/CMakeLists.txt
+        # Not sure how to sync the two, so you might need to update it.
+        #
+        # Note: I picked an arbitrary set of ELF files, excluding specifically
+        # e.g. floating point operations that are currently not supported.
+        run: |
+          lake exec lean_riscv_emulator -- ../build/test/2025-10-14/riscv-tests/rv64ui-p-add
+          lake exec lean_riscv_emulator -- ../build/test/2025-10-14/riscv-tests/rv64ui-p-jal
+          lake exec lean_riscv_emulator -- ../build/test/2025-10-14/riscv-tests/rv64ui-p-sub
+          lake exec lean_riscv_emulator -- ../build/test/2025-10-14/riscv-tests/rv64ui-v-jal
+          lake exec lean_riscv_emulator -- ../build/test/2025-10-14/riscv-tests/rv64um-p-div
+          lake exec lean_riscv_emulator -- ../build/test/2025-10-14/riscv-tests/rv64um-p-mul
+          lake exec lean_riscv_emulator -- ../build/test/2025-10-14/riscv-tests/rv64um-v-div
+          lake exec lean_riscv_emulator -- ../build/test/2025-10-14/riscv-tests/rv64um-v-mul
