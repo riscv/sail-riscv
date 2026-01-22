@@ -280,24 +280,49 @@ function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_m
 function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); Ok(mstatus.bits[31 .. 0]) }
 function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); Ok(mstatus.bits[63 .. 32]) }
 
+bitfield Hstatus : bits(64) = {
+  HUPMM : 49 .. 48,
+  VSXL  : 33 .. 32,
+  VTSR  : 22,
+  VTW   : 21,
+  VTVM  : 20,
+  VGEIN : 17 .. 12,
+  HU    : 9,
+  SPVP  : 8,
+  SPV   : 7,
+  GVA   : 6,
+  VSBE  : 5,
+}
+
+function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
+  let v = Mk_Hstatus(v);
+  [h with
+    // HUPMM = if currentlyEnabled(Ext_Ssnpm) & xlen == 64 then v[HUPMM] else 0b00,
+    // We don't currently support changing VSXL
+    // VSXL = v[VSXL]
+    VTSR  = v[VTSR],
+    VTW   = v[VTW],
+    VTVM  = v[VTVM],
+    VGEIN = v[VGEIN], // TODO: Add config option
+    HU    = v[HU],
+    SPVP  = v[SPVP],
+    SPV   = v[SPV],
+    GVA   = v[GVA],
+    // We don't currently support changing VSBE
+    // VSBE  = v[VSBE],
+  ]
+}
+
+register hstatus : Hstatus = [Mk_Hstatus(zeros()) with
+  VSXL = architecture_bits(if xlen == 32 then RV32 else RV64)
+]
+
+mapping clause csr_name_map = 0x600 <-> "hstatus"
+function clause is_CSR_accessible(0x600, _, _) = currentlyEnabled(Ext_H) //hstatus
+function clause read_CSR(0x600) = hstatus.bits[xlen - 1 .. 0]
+function clause write_CSR(0x600, value) = { hstatus = legalize_hstatus(hstatus, zero_extend(value)); Ok(hstatus.bits[xlen - 1 .. 0]) }
+
 // architecture and extension checks
-
-function architecture(priv : Privilege) -> Architecture = {
-  if   xlen == 32
-  then return RV32;
-
-  architecture_bits(match priv {
-    Machine           => misa[MXL],
-    Supervisor        => mstatus[SXL],
-    User              => mstatus[UXL],
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-  })
-}
-
-function in32BitMode() -> bool = {
-  architecture(cur_privilege) == RV32
-}
 
 bitfield Seccfg : bits(64) = {
   // Enable Zicfilp in M-mode
@@ -1193,3 +1218,21 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), s
 // Return true if the counter is enabled.
 function counter_enabled(index: range(0, 31), priv : Privilege) -> bool =
   feature_enabled_for_priv(priv, mcounteren.bits[index], scounteren.bits[index])
+
+// Return the effective architecture for the given privilege mode
+function architecture(priv : Privilege) -> Architecture = {
+  if   xlen == 32
+  then return RV32;
+
+  architecture_bits(match priv {
+    Machine           => misa[MXL],
+    Supervisor        => mstatus[SXL],
+    User              => mstatus[UXL],
+    VirtualSupervisor => hstatus[VSXL],
+    VirtualUser       => vsstatus[UXL],
+  })
+}
+
+function in32BitMode() -> bool = {
+  architecture(cur_privilege) == RV32
+}
