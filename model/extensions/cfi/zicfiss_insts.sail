@@ -147,7 +147,7 @@ union clause instruction = SSAMOSWAP : (bool, bool, regidx, regidx, word_width, 
 $[wavedrom "SSAMOSWAP _ _ src addr funct3 dest AMO"]
 mapping clause encdec = SSAMOSWAP(aq, rl, rs2, rs1, width, rd)
   <-> 0b01001 @ bool_bit(aq) @ bool_bit(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
-  when (width == 4 | (xlen == 64 & width == 8)) & hartSupports(Ext_Zicfiss) & currentlyEnabled(Ext_Zicsr)
+  when (width == 4 | (xlen == 64 & width == 8)) & hartSupports(Ext_Zicfiss) & currentlyEnabled(Ext_Zicsr) & currentlyEnabled(Ext_Zaamo)
 
 function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // This instruction is not predicated by `xSSE`.

@@ -20,7 +20,8 @@ function clause currentlyEnabled(Ext_Zicfiss) =
 
 function zicfiss_xSSE(priv : Privilege) -> bool =
   match priv {
-    Machine           => false,
+    Machine           => // "Use of Zicfiss in M-mode is not supported."
+                         false,
     Supervisor        => { assert(currentlyEnabled(Ext_S)); bool_bit(menvcfg[SSE]) },
     // needs currentlyEnabled(Ext_H) & read_henvcfg()[SSE]
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
