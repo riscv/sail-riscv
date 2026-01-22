@@ -20,6 +20,7 @@ private union PTW_Error = {
   PTW_No_Permission    : unit,
   PTW_Misaligned       : unit,          // misaligned superpage
   PTW_PTE_Needs_Update : unit,          // PTE update needed but not enabled
+  PTW_Implicit_Error   : (ExceptionType, bits(64)), // fault during PTE access in VS-stage when translating the PTE address
   PTW_Ext_Error        : ext_ptw_error  // parameterized for errors from extensions
 }
 
@@ -31,6 +32,7 @@ private function ptw_error_to_str(e : PTW_Error) -> string = {
     PTW_No_Permission()    => "no-permission",
     PTW_Misaligned()       => "misaligned-superpage",
     PTW_PTE_Needs_Update() => "pte-update-needed",
+    PTW_Implicit_Error(_)  => "implicit-pte-vs-stage-fault",
     PTW_Ext_Error(_)       => "extension-error"
   }
 }
@@ -48,6 +50,19 @@ private function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
     // TODO: Zicfiss will map PTE_No_Access to PTW_Access
   }
 
+// TODO: Verify whether access faults are converted to G-stage page faults,
+// and whether alignment faults must be converted as well.
+function convertToGuestException(e: ExceptionType) -> ExceptionType = {
+  match (e) {
+    E_Fetch_Access_Fault() => E_Fetch_GPage_Fault(),
+    E_Fetch_Page_Fault()   => E_Fetch_GPage_Fault(),
+    E_Load_Access_Fault()  => E_Load_GPage_Fault(),
+    E_Load_Page_Fault()    => E_Load_GPage_Fault(),
+    E_SAMO_Access_Fault()  => E_SAMO_GPage_Fault(),
+    E_SAMO_Page_Fault()    => E_SAMO_GPage_Fault(),
+    _                      => e
+  }
+}
 // Convert translation/PTW failures into architectural exceptions
 function translationException(access : MemoryAccessType(mem_payload),
                               err : PTW_Error)
