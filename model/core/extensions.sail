@@ -496,11 +496,6 @@ enum clause extension = Ext_Ssqosid
 mapping clause extensionName = Ext_Ssqosid <-> "ssqosid"
 function clause hartSupports(Ext_Ssqosid) = config extensions.Ssqosid.supported
 
-// Main memory supports misaligned loads/stores
-enum clause extension = Ext_Zicclsm
-mapping clause extensionName = Ext_Zicclsm <-> "zicclsm"
-function clause hartSupports(Ext_ZicClsm) = config extensions.Zicclsm.supported
-
 // When adding a new extension X, we need to make sure that if X being supported
 // depends on Y being supported, then the value associated to X is _greater_ than
 // the value associated to Y. The default value is 0.

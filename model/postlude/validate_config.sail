@@ -299,7 +299,6 @@ private function check_pma_regions_for_zicclsm(pmas : list(PMA_Region)) -> bool 
     [||] => true,
     pma :: rest => {
       let attr = pma.attributes;
-      //
       if memory_region_type(attr) == MainMemory &
         attr.cacheable & attr.coherent &
         attr.misaligned_fault == AccessFault
@@ -307,16 +306,6 @@ private function check_pma_regions_for_zicclsm(pmas : list(PMA_Region)) -> bool 
       else check_pma_regions_for_zicclsm(rest)
     },
   }
-
-private function check_zicclsm() -> bool = {
-  var valid : bool = true;
-  if hartSupports(Ext_Zicclsm) then {
-    if not(check_pma_regions_for_zicclsm(pma_regions)) then {
-      valid = false;
-    };
-  };
-  valid
-}
 
 private function check_extension_param_constraints() -> bool = {
   var valid : bool = true;
