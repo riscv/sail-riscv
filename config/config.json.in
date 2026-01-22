@@ -60,7 +60,7 @@
     // loads and stores are fully supported, and so the software running inside
     // the execution environment will never experience a contained or fatal
     // address-misaligned trap."
-    // This parameter provides configures the model to provide this guarantee.
+    // This parameter configures the model to provide this guarantee.
     //
     // Note that the load/store misalignment here is checked before address translation,
     // while the `misaligned_fault` attribute of PMA regions in `regions` is checked
