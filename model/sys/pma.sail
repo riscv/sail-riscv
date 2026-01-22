@@ -126,8 +126,8 @@ function matching_pma(pmas : list(PMA_Region), addr : physaddr, width : mem_acce
 
 // Technically you can have a region that satisfies these properties
 // but is still declared as IOMemory but we don't support that yet.
+// TODO: We should add an explicit memory type PMA rather than inferring this.
 function memory_region_type(pma : PMA) -> MemoryRegionType =
-  // TODO: the memory ordering attribute needs to be considered here once it is implemented
   if pma.readable & pma.writable & pma.read_idempotent & pma.write_idempotent
   then MainMemory
   else IOMemory

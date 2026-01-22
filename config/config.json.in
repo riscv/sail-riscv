@@ -216,7 +216,23 @@
     "Zicboz": {
       "supported": true
     },
-    // This extension requires global support for misaligned accesses
+    // "Misaligned loads and stores to main memory regions with both the
+    //  cacheability and coherence PMAs must be supported."
+    //
+    // Since this is a user privilege requirement misaligned loads and stores
+    // can still be supported via trapping and emulation in software. The only
+    // time that *isn't* true is if misaligned accesses trap as access faults
+    // instead of misaligned address exceptions. Trapping as an access fault
+    // indicates to the execution environment that the access should not be
+    // emulated.
+    //
+    // Therefore the only thing that enabling this option does is verify
+    // that no main memory regions with cacheability and coherence have the
+    // `misaligned_fault` PMA set to `AccessFault`.
+    //
+    // Additionally we don't have an explicit PMA setting to determine which
+    // regions are main memory, so any region that has `readable`, `writable`,
+    // `read_idempotent` and `write_idempotent` is assumed to be main memory.
     "Zicclsm": {
       "supported": true
     },

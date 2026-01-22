@@ -87,7 +87,8 @@ function clause hartSupports(Ext_Zicbop) = config extensions.Zicbop.supported
 enum clause extension = Ext_Zicboz
 mapping clause extensionName = Ext_Zicboz <-> "zicboz"
 function clause hartSupports(Ext_Zicboz) = config extensions.Zicboz.supported
-// Main memory supports misaligned loads/stores
+// Misaligned loads and stores to main memory regions with both the cacheability
+// and coherence PMAs must be supported.
 enum clause extension = Ext_Zicclsm
 mapping clause extensionName = Ext_Zicclsm <-> "zicclsm"
 function clause hartSupports(Ext_Zicclsm) = config extensions.Zicclsm.supported
