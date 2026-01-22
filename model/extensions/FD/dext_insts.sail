@@ -221,7 +221,7 @@ function validDoubleRegs(n, regs) = {
     foreach (i from 0 to (n - 1)) {
       if fregidx_bits(regs[i])[0] == 0b1
       then match rv32zdinx_odd_register_reserved_behavior {
-        Zdinx_Fatal  => reserved_behavior("RV32Zdinx used odd-numbered register " ^ fregidx_to_str(regs[i])),
+        Zdinx_Fatal  => reserved_behavior("RV32Zdinx used odd-numbered register " ^ dec_str(unsigned(fregidx_bits(regs[i])))),
         Zdinx_Illegal => return false,
       }
     }
