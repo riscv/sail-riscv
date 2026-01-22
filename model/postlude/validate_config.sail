@@ -306,6 +306,21 @@ private function check_pma_regions_for_zicclsm(pmas : list(PMA_Region)) -> bool 
     },
   }
 
+private function check_zicclsm() -> bool = {
+  var valid : bool = true;
+  if hartSupports(Ext_Zicclsm) then {
+    if not(plat_enable_misaligned_access) then {
+      valid = false;
+      print_endline("Zicclsm is enabled but misaligned accesses are globally disabled.");
+    };
+    if not(check_pma_regions_for_zicclsm(pma_regions)) then {
+      valid = false;
+      print_endline("The Zicclsm extension is enabled but at least one main memory region that is cacheable and coherent does not support misaligned accesses (misaligned_fault is not NoFault).");
+    };
+  };
+  valid
+}
+
 private function check_extension_param_constraints() -> bool = {
   var valid : bool = true;
   if hartSupports(Ext_Zic64b) & (plat_cache_block_size_exp != 6) then {
@@ -319,9 +334,8 @@ private function check_extension_param_constraints() -> bool = {
                   " is too small; it should be at least 2^" ^ dec_str(min_rss_exp) ^
                   " for the LR/SC operands on this platform.");
   };
-  if hartSupports(Ext_Zicclsm) & not(check_pma_regions_for_zicclsm(pma_regions)) then {
+  if not(check_zicclsm()) then {
     valid = false;
-    print_endline("The Zicclsm extension is enabled but at least one main memory region that is cacheable and coherent does not support misaligned accesses (misaligned_fault is not NoFault).");
   };
   valid
 }

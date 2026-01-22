@@ -29,6 +29,10 @@ let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_s
 // whether the MMU should update dirty bits in PTEs
 let plat_enable_dirty_update : bool = config memory.translation.dirty_update
 
+// whether the platform supports misaligned accesses without trapping to M-mode. if false,
+// misaligned loads/stores are trapped to Machine mode.
+let plat_enable_misaligned_access : bool = config memory.misaligned.supported
+
 // Location of clock-interface, which should match with the spec in the DTB
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)

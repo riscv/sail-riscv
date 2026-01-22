@@ -60,6 +60,7 @@
     // checked before address translation. `misaligned_fault` in
     // `regions` is checked after address translation.
     "misaligned": {
+      "supported": true,
       "byte_by_byte": false,
       "order_decreasing": false,
       "allowed_within_exp": 0
@@ -215,6 +216,7 @@
     "Zicboz": {
       "supported": true
     },
+    // This extension requires global support for misaligned accesses
     "Zicclsm": {
       "supported": true
     },
