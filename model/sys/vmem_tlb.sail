@@ -14,7 +14,7 @@
 
 // Maximum number of Virtual/Physical Page Number bits. The same TLB
 // is used for all VM modes so these are the values for Sv57.
-type tlb_vpn_bits : Int = 57 - pagesize_bits
+type tlb_vpn_bits : Int = 59 - pagesize_bits
 let  tlb_vpn_bits = sizeof(tlb_vpn_bits)
 type tlb_ppn_bits : Int = 44
 let  tlb_ppn_bits = sizeof(tlb_ppn_bits)
@@ -23,6 +23,8 @@ let  tlb_ppn_bits = sizeof(tlb_ppn_bits)
 // Sv57-sized entries.
 private struct TLB_Entry = {
   asid       : asidbits,           // address-space id
+  vmid       : vmidbits,           // virtual machine id
+  stage      : TranslationStage,   // Address Translation Stage
   global     : bool,               // global translation
   vpn        : bits(tlb_vpn_bits), // Virtual Page Number. SvXX - 12 bits.
   levelMask  : bits(tlb_vpn_bits), // Mask for superpages. The lowest (level * level_bits) bits are 1s.
@@ -43,7 +45,7 @@ function tlb_set_pte forall 'n, 'n in {4, 8}. (
   pte : bits('n * 8),
 ) -> TLB_Entry = { ent with pte=zero_extend(pte) }
 
-function tlb_get_ppn forall 'v, is_sv_mode('v) . (
+function tlb_get_ppn forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   ent      : TLB_Entry,
   vpn      : vpn_bits('v),
@@ -73,7 +75,7 @@ type tlb_index_range = range(0, num_tlb_entries - 1)
 private register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
 // Indexed by the lowest bits of the VPN.
-function tlb_hash forall 'v, is_sv_mode('v) . (
+function tlb_hash forall 'v, is_sv_or_svx4_mode('v) . (
   _sv_mode : int('v),
   vpn     : vpn_bits('v),
 ) -> tlb_index_range =
@@ -87,64 +89,88 @@ function write_TLB(index : tlb_index_range, entry : TLB_Entry) -> unit =
   tlb[index] = Some(entry)
 
 private function match_TLB_Entry(
-  ent  : TLB_Entry,
-  asid : asidbits,
-  vpn  : bits(tlb_vpn_bits),
-) -> bool =
-  (ent.global | (ent.asid == asid)) & (ent.vpn == (vpn & ~(ent.levelMask)))
+  ent   : TLB_Entry,
+  asid  : asidbits,
+  vmid  : vmidbits,
+  vpn   : bits(tlb_vpn_bits),
+  stage : TranslationStage,
+) -> bool = {
+  let asid_matches  = (ent.global | (ent.asid == asid));
+  let vmid_matches  = ent.vmid == vmid;
+  let vpn_matches   = ent.vpn == (vpn & ~(ent.levelMask));
+  let stage_matches = ent.stage == stage;
+  match stage {
+    S_Stage  => asid_matches & vpn_matches  & stage_matches,
+    VS_Stage => asid_matches & vmid_matches & vpn_matches & stage_matches,
+    G_Stage  => vmid_matches & vpn_matches  & stage_matches,
+  }
+}
 
 private function flush_TLB_Entry(
   ent   : TLB_Entry,
   asid  : option(asidbits),
+  vmid  : option(vmidbits),
   vaddr : option(xlenbits),
+  stage : TranslationStage,
 ) -> bool = {
   let asid_matches : bool = match asid {
     Some(asid) => ent.asid == asid & not(ent.global),
     None() => true,
   };
+  let vmid_matches : bool = match vmid {
+    Some(vmid) => ent.vmid == vmid,
+    None()  => true,
+  };
   let addr_matches : bool = match vaddr {
     Some(vaddr) => {
       let vaddr : bits(64) = sign_extend(vaddr);
-      ent.vpn == (vaddr[56 .. pagesize_bits] & ~(ent.levelMask))
+      ent.vpn == (vaddr[58 .. pagesize_bits] & ~(ent.levelMask))
     },
     None() => true,
   };
-  asid_matches & addr_matches
+  let stage_matches = ent.stage == stage;
+  asid_matches & vmid_matches & addr_matches & stage_matches
 }
 
 // PUBLIC: invoked in translate() [vmem.sail]
-function lookup_TLB forall 'v, is_sv_mode('v) . (
+function lookup_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  vmid     : vmidbits,
   vpn      : vpn_bits('v),
+  stage    : TranslationStage,
 ) -> option((tlb_index_range, TLB_Entry)) = {
   let index = tlb_hash('v, vpn);
   match tlb[index] {
     None() => None(),
     Some(entry) => {
-      if match_TLB_Entry(entry, asid, sign_extend(vpn)) then Some((index, entry)) else None()
+      if match_TLB_Entry(entry, asid, vmid, sign_extend(vpn), stage) then Some((index, entry)) else None()
     },
   }
 }
 
 // PUBLIC: invoked in translate_TLB_miss() [vmem.sail]
-function add_to_TLB forall 'v, is_sv_mode('v) . (
+function add_to_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  vmid     : vmidbits,
   vpn      : vpn_bits('v),
   ppn      : ppn_bits('v),
   pte      : pte_bits('v),
   pteAddr  : physaddr,
   level    : level_range('v),
   global   : bool,
+  stage   : TranslationStage
 ) -> unit = {
-  let shift = level * (if 'v == 32 then 10 else 9);
+  let shift = level * get_vpn_level_size(sv_width);
   let levelMask = ones(shift);
   // Clear bits below the level.
   let vpn = vpn & ~(zero_extend(levelMask));
   let ppn = ppn & ~(zero_extend(levelMask));
 
   let entry : TLB_Entry = struct{asid      = asid,
+                                 vmid      = vmid,
+                                 stage     = stage,
                                  global    = global,
                                  pte       = zero_extend(pte),
                                  pteAddr   = pteAddr,
@@ -162,12 +188,16 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 
 // Top-level TLB flush function
 // PUBLIC: invoked from SFENCE_VMA [extensions/I/insts_base.sail]
-function flush_TLB(asid : option(asidbits),
-                   addr : option(xlenbits)) -> unit = {
+function flush_TLB(
+  asid  : option(asidbits),
+  vmid  : option(vmidbits),
+  addr  : option(xlenbits),
+  stage : TranslationStage,
+) -> unit = {
   foreach (i from 0 to (length(tlb) - 1)) {
     match tlb[i] {
       None()  => (),
-      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then { tlb[i] = None(); },
+      Some(entry) => if flush_TLB_Entry(entry, asid, vmid, addr, stage) then { tlb[i] = None(); },
     }
   }
 }

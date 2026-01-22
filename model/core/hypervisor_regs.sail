@@ -174,10 +174,6 @@ function clause write_CSR(0x64A, value) = { htinst = value; Ok(htinst) }
 
 // Hypervisor Guest Address Translation and Protection
 
-// TODO: Consolidate with SATPMode to get rid of HBare
-type hgatp_mode = bits(4)
-enum HGATPMode = {HBare, Sv32x4, Sv39x4, Sv48x4, Sv57x4}
-
 function hgatpMode_of_bits(a : Architecture, m : hgatp_mode) -> option(HGATPMode) =
   match (a, m) {
     (_,    0x0) => Some(HBare),
@@ -207,7 +203,6 @@ let Sv39x4_supported : bool = HBare_supported  & xlen == 64
 let Sv48x4_supported : bool = Sv39x4_supported & xlen == 64
 let Sv57x4_supported : bool = Sv48x4_supported & xlen == 64
 
-// TODO: Consolidate with legalize_satp
 // TODO: Add VMIDLEN config option and mask VMID field to implemented width
 function legalize_hgatp(
   arch : Architecture,
@@ -221,8 +216,8 @@ function legalize_hgatp(
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
-        HBare  if HBare_supported  => h.bits,
-        Sv32x4 if Sv32x4_supported => h.bits,
+        HBare  if currentlyEnabled(Ext_Svbare) => h.bits,
+        Sv32x4 if currentlyEnabled(Ext_Sv32)   => h.bits,
         _ => prev_value,
       }
     }
@@ -233,10 +228,10 @@ function legalize_hgatp(
     match hgatpMode_of_bits(arch, h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
-        HBare  if HBare_supported  => h.bits,
-        Sv39x4 if Sv39x4_supported => h.bits,
-        Sv48x4 if Sv48x4_supported => h.bits,
-        Sv57x4 if Sv57x4_supported => h.bits,
+        HBare  if currentlyEnabled(Ext_Svbare) => h.bits,
+        Sv39x4 if currentlyEnabled(Ext_Sv39)   => h.bits,
+        Sv48x4 if currentlyEnabled(Ext_Sv48)   => h.bits,
+        Sv57x4 if currentlyEnabled(Ext_Sv57)   => h.bits,
         _ => prev_value,
       }
     }
