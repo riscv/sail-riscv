@@ -898,6 +898,7 @@ private function legalize_vsstatus(o : Sstatus, v : xlenbits) -> Sstatus = {
     SD   = bool_to_bit(dirty),
     // UXL
     UXL  = s[UXL],
+    // SDT = if currentlyEnabled(Ext_Ssdbltrp) then s[SDT] else 0b0,
     MXR  = s[MXR],
     SUM  = s[SUM],
     XS   = s[XS],
