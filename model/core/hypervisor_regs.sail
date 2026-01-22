@@ -8,48 +8,6 @@
 
 // HS-Mode register
 
-bitfield Hstatus : bits(64) = {
-  HUPMM : 49 .. 48,
-  VSXL  : 33 .. 32,
-  VTSR  : 22,
-  VTW   : 21,
-  VTVM  : 20,
-  VGEIN : 17 .. 12,
-  HU    : 9,
-  SPVP  : 8,
-  SPV   : 7,
-  GVA   : 6,
-  VSBE  : 5,
-}
-
-function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
-  let v = Mk_Hstatus(v);
-  [h with
-    // HUPMM = if currentlyEnabled(Ext_Ssnpm) & xlen == 64 then v[HUPMM] else 0b00,
-    // We don't currently support changing VSXL
-    // VSXL = v[VSXL]
-    VTSR  = v[VTSR],
-    VTW   = v[VTW],
-    VTVM  = v[VTVM],
-    VGEIN = v[VGEIN], // TODO: Add config option
-    HU    = v[HU],
-    SPVP  = v[SPVP],
-    SPV   = v[SPV],
-    GVA   = v[GVA],
-    // We don't currently support changing VSBE
-    // VSBE  = v[VSBE],
-  ]
-}
-
-register hstatus : Hstatus = [Mk_Hstatus(zeros()) with
-  VSXL = architecture_bits(if xlen == 32 then RV32 else RV64)
-]
-
-mapping clause csr_name_map = 0x600 <-> "hstatus"
-function clause is_CSR_accessible(0x600, _, _) = currentlyEnabled(Ext_H) //hstatus
-function clause read_CSR(0x600) = hstatus.bits[xlen - 1 .. 0]
-function clause write_CSR(0x600, value) = { hstatus = legalize_hstatus(hstatus, zero_extend(value)); Ok(hstatus.bits[xlen - 1 .. 0]) }
-
 // Hypervisor Interrupt Registers
 
 function legalize_hvip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
