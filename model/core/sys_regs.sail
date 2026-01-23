@@ -433,6 +433,7 @@ private register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros
 
 // "When menvcfg.SSE is 0, the henvcfg.SSE and senvcfg.SSE fields are read-only zero."
 // This function should be used for any read of the `senvcfg` CSR that includes the SSE bit.
+// TODO: When henvcfg.SSE is 0, the senvcfg.SSE field will read as zero and is read-only.
 function read_senvcfg() -> SEnvcfg =
   [senvcfg with SSE = if bool_bit(menvcfg[SSE]) then senvcfg[SSE] else 0b0]
 

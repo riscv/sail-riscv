@@ -27,7 +27,7 @@ function zicfiss_xSSE(priv : Privilege) -> bool =
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     User              => currentlyEnabled(Ext_S) & bool_bit(read_senvcfg()[SSE]),
     // TODO: read_henvcfg()[SSE]
-    VirtualUser       => currentlyEnabled(Ext_H) & bool_bit(read_senvcfg()[SSE]),
+    VirtualUser       => { assert(currentlyEnabled(Ext_H)); bool_bit(read_senvcfg()[SSE]) }
   }
 
 // See "Shadow Stack Pointer (ssp) CSR access control".
