@@ -36,7 +36,7 @@ function clause execute SSPUSH(rs2) = {
 
   // If xlen is changed dynamically, `ssp` could be misaligned.  TODO:
   // get the dynamic xlen here.
-  let width = if xlen == 32 then 4 else 8;
+  let width = xlen_bytes;
   if   not(is_aligned_addr(vaddr, width))
   then return Memory_Exception(vaddr, E_SAMO_Access_Fault());
 

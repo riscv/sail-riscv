@@ -375,11 +375,10 @@ function translateAddr(
 
   // "If satp.MODE (or vsatp.MODE when V=1) is set to Bare and the
   // effective privilege mode is less than M, shadow stack
-  // instructions raise a store/AMO access-fault exception. When the
-  // effective privilege mode is M, memory access by an SSAMOSWAP.W/D
-  // instruction results in a store/AMO access-fault exception."
+  // instructions raise a store/AMO access-fault exception."
+  // "Use of Zicfiss in M-mode is not supported."
   if is_shadow_stack_access(access) then {
-    if (mode == Bare & effPriv != Machine) | (effPriv == Machine & is_shadow_stack_amo(access))
+    if (mode == Bare & effPriv != Machine) | effPriv == Machine
     then return Err(E_SAMO_Access_Fault(), init_ext_ptw);
   };
 
