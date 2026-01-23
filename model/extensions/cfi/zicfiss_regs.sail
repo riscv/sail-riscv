@@ -7,7 +7,7 @@
 // =======================================================================================
 
 function clause currentlyEnabled(Ext_Zicfiss) =
-  hartSupports(Ext_Zicfiss) & currentlyEnabled(Ext_Zicsr) & currentlyEnabled(Ext_Zimop)
+  hartSupports(Ext_Zicfiss) & currentlyEnabled(Ext_Zicsr) & currentlyEnabled(Ext_Zimop) & currentlyEnabled(Ext_Zaamo)
 
 // The term `xSSE` is used to determine if backward-edge CFI using
 // shadow stacks provided by the Zicfiss extension is enabled at a
