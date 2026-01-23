@@ -548,7 +548,6 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zaamo => 1, // > A
     Ext_Zalrsc => 1, // > A
     Ext_Zca => 1, // > C
-    Ext_Zicfiss => 1, // > Zicsr, Zimop
     Ext_Zicntr => 1, // > Zicsr
     Ext_Zihpm => 1, // > Zicsr
     Ext_Zve32x => 1, // > Zvl32b
@@ -563,6 +562,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zve32f => 2, // > Zve32x
     Ext_Zve64x => 2, // > Zve32x
     Ext_Zcmop => 2, // > Zca
+    Ext_Zicfiss => 2, // > Zaamo
 
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh

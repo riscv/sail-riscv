@@ -139,15 +139,12 @@ mapping clause assembly = SSRDP(rd)
 
 union clause instruction = SSAMOSWAP : (bool, bool, regidx, regidx, word_width, regidx)
 
-// This instruction does not use Zimop encodings unlike others in
-// Zicfiss, but since `currentlyEnabled(Ext_Zicfiss)` includes a
-// dependence on Zimop, we explicitly specify the dependency
-// predicates in the decode clause.
-
+// This instruction decoding is not in the Zimop encoding space
+// and is not predicated by xSSE.
 $[wavedrom "SSAMOSWAP _ _ src addr funct3 dest AMO"]
 mapping clause encdec = SSAMOSWAP(aq, rl, rs2, rs1, width, rd)
   <-> 0b01001 @ bool_bit(aq) @ bool_bit(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
-  when (width == 4 | (xlen == 64 & width == 8)) & hartSupports(Ext_Zicfiss) & currentlyEnabled(Ext_Zicsr) & currentlyEnabled(Ext_Zaamo)
+  when (width == 4 | (xlen == 64 & width == 8)) & currentlyEnabled(Ext_Zicfiss)
 
 function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // This instruction is not predicated by `xSSE`.
