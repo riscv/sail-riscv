@@ -67,6 +67,8 @@ function print_step() = ()
 
 val get_config_print_instr = pure {cpp:"get_config_print_instr"} : unit -> bool
 val get_config_print_clint = pure {cpp:"get_config_print_clint"} : unit -> bool
+val get_config_plic_nsrc = pure {cpp:"get_config_plic_nsrc"} : unit -> bits(64)
+val get_config_plic_nctx = pure {cpp:"get_config_plic_nctx"} : unit -> bits(64)
 val get_config_print_exception = pure {cpp:"get_config_print_exception"} : unit -> bool
 val get_config_print_interrupt = pure {cpp:"get_config_print_interrupt"} : unit -> bool
 val get_config_print_htif = pure {cpp:"get_config_print_htif"} : unit -> bool
@@ -76,6 +78,8 @@ val get_config_use_abi_names = pure {cpp:"get_config_use_abi_names"} : unit -> b
 // defaults for other backends
 function get_config_print_instr () = false
 function get_config_print_clint () = false
+function get_config_plic_nsrc() = (0x0000000000000040 : bits(64))
+function get_config_plic_nctx() = (0x0000000000000002 : bits(64))
 function get_config_print_exception () = false
 function get_config_print_interrupt () = false
 function get_config_print_htif () = false

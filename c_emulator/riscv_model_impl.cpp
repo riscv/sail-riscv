@@ -4,6 +4,7 @@
 #include <random>
 #include <unistd.h>
 
+#include "config_utils.h"
 #include "riscv_callbacks_if.h"
 #include "riscv_config.h"
 #include "symbol_table.h"
@@ -239,6 +240,17 @@ bool ModelImpl::get_config_print_instr(unit) {
 bool ModelImpl::get_config_print_clint(unit) {
   return config_print_clint;
 }
+
+uint64_t ModelImpl::get_config_plic_nsrc(unit) {
+  std::vector<const char *> keypath = {"platform", "plic", "nsrc"};
+  return config_get_u64_default(keypath, 64);
+}
+
+uint64_t ModelImpl::get_config_plic_nctx(unit) {
+  std::vector<const char *> keypath = {"platform", "plic", "nctx"};
+  return config_get_u64_default(keypath, 2);
+}
+
 bool ModelImpl::get_config_print_exception(unit) {
   return config_print_exception;
 }

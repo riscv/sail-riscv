@@ -110,7 +110,7 @@
         },
         "size": {
           "len": 64,
-          "value": "0x2000000"
+          "value": "0xE000000"
         },
         "attributes": {
           "cacheable": false,
@@ -171,7 +171,9 @@
     "plic": {
       // This must be in a suitable memory region (see `memory.regions`).
       "base": 201326592,
-      "size": 67108864
+      "size": 67108864,
+      "nsrc": 64,
+      "nctx": 2
     },
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
