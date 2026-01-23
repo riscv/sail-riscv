@@ -373,6 +373,9 @@
     "Zhinxmin": {
       "supported": false
     },
+    "Zvabd": {
+      "supported": true
+    },
     "Zvfbfmin": {
       "supported": true
     },
