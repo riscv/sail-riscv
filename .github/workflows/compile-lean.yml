@@ -36,6 +36,17 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -G Ninja
           cmake --build build/ --target generated_lean_rv64d generated_lean_executable_rv64d
 
+      # Use a separate initial setup step so that we can run lake update before the build
+      - name: Setup Lean
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          lake-package-directory: "build/model/Lean_RV64D/"
+
+      - name: Update Lean dependencies to include Sail support library
+        working-directory: ./build/model/Lean_RV64D
+        run: lake update
+
       - name: Use Lean to build the model and report errors
         uses: leanprover/lean-action@v1
         with:

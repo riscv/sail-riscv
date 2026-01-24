@@ -6,7 +6,7 @@
 --   SPDX-License-Identifier: BSD-2-Clause
 -- =======================================================================================
 
-import THE_MODULE_NAME.Sail.Sail
+import Sail.Sail
 import THE_MODULE_NAME.Defs
 
 open Sail
