@@ -32,7 +32,8 @@ mapping clause encdec = SFENCE_W_INVAL()
 function clause execute SFENCE_W_INVAL() = {
   if cur_privilege == User
   then Illegal_Instruction()
-  // TODO: VU-mode raises a virtual-instruction exception
+  else if cur_privilege == VirtualUser
+  then Virtual_Instruction()
   else RETIRE_SUCCESS // Implemented as no-op as all memory operations are visible immediately the current Sail model
 }
 
@@ -49,7 +50,8 @@ mapping clause encdec = SFENCE_INVAL_IR()
 function clause execute SFENCE_INVAL_IR() = {
   if cur_privilege == User
   then Illegal_Instruction()
-  // TODO: VU-mode raises a virtual-instruction exception
+  else if cur_privilege == VirtualUser
+  then Virtual_Instruction()
   else RETIRE_SUCCESS // Implemented as no-op as all memory operations are visible immediately in current Sail model
 }
 
