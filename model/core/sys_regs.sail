@@ -630,9 +630,9 @@ function legalize_hedeleg(_m: Medeleg, v: bits(64)) -> Medeleg = {
 function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
-    VSEI = v[VSEI],
-    VSTI = v[VSTI],
-    VSSI = v[VSSI],
+    VSEI = if mideleg[SEI] == 0b1 then v[VSEI] else 0b0,
+    VSTI = if mideleg[STI] == 0b1 then v[VSTI] else 0b0,
+    VSSI = if mideleg[SSI] == 0b1 then v[VSSI] else 0b0,
   ]
 }
 
