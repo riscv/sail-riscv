@@ -22,17 +22,17 @@ function legalize_hvip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
 function legalize_hie(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
-    SGEI = v[SGEI],
-    VSEI = v[VSEI],
-    VSTI = v[VSTI],
-    VSSI = v[VSSI],
+    SGEI = if mideleg[SGEI] == 0b1 then v[SGEI] else 0b0,
+    VSEI = if mideleg[SEI]  == 0b1 then v[VSEI] else 0b0,
+    VSTI = if mideleg[STI]  == 0b1 then v[VSTI] else 0b0,
+    VSSI = if mideleg[SSI]  == 0b1 then v[VSSI] else 0b0,
   ]
 }
 
-// Only VSSI is writable in hip (VSEI, VSTI, SGEI are read-only)
+// NOTE: Only VSSI is writable in hip (VSEI, VSTI, SGEI are read-only)
 function legalize_hip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  [m with VSSI = v[VSSI]]
+  [m with VSSI = if mideleg[SSI] == 0b1 then v[VSSI] else 0b0]
 }
 
 function lower_mip_to_hvip(m : Minterrupts) -> Minterrupts = {
@@ -45,21 +45,22 @@ function lower_mip_to_hvip(m : Minterrupts) -> Minterrupts = {
 
 function lower_mie_to_hie(m : Minterrupts) -> Minterrupts = {
   [Mk_Minterrupts(zeros()) with
-    SGEI = m[SGEI],
-    VSEI = m[VSEI],
-    VSTI = m[VSTI],
-    VSSI = m[VSSI],
+    SGEI = if mideleg[SGEI] == 0b1 then m[SGEI] else 0b0,
+    VSEI = if mideleg[SEI]  == 0b1 then m[VSEI] else 0b0,
+    VSTI = if mideleg[STI]  == 0b1 then m[VSTI] else 0b0,
+    VSSI = if mideleg[SSI]  == 0b1 then m[VSSI] else 0b0,
   ]
 }
 
 function lower_mip_to_hip(m : Minterrupts) -> Minterrupts = {
   [Mk_Minterrupts(zeros()) with
-    SGEI = m[SGEI],
-    VSEI = m[VSEI],
-    VSTI = m[VSTI],
-    VSSI = m[VSSI],
+    SGEI = if mideleg[SGEI] == 0b1 then m[SGEI] else 0b0,
+    VSEI = if mideleg[SEI]  == 0b1 then m[VSEI] else 0b0,
+    VSTI = if mideleg[STI]  == 0b1 then m[VSTI] else 0b0,
+    VSSI = if mideleg[SSI]  == 0b1 then m[VSSI] else 0b0,
   ]
 }
+
 
 mapping clause csr_name_map = 0x645 <-> "hvip"
 mapping clause csr_name_map = 0x604 <-> "hie"
