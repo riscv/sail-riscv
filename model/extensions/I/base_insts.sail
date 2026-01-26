@@ -60,7 +60,7 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   // If it is not 4-byte aligned and compressed instructions are
   // not enabled then raise an alignment exception.
   if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
-  then return Memory_Exception(Virtaddr(target), E_Fetch_Addr_Align());
+  then return memory_exception_with_gva(E_Fetch_Addr_Align(), Virtaddr(target));
 
   set_next_pc(target);
   RETIRE_SUCCESS
@@ -539,15 +539,11 @@ function clause execute ECALL() = {
     User              => E_U_EnvCall(),
     Supervisor        => E_S_EnvCall(),
     Machine           => E_M_EnvCall(),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => E_U_EnvCall(),
+    VirtualSupervisor => E_VS_EnvCall(),
   };
-  let t : sync_exception = struct {
-    trap    = trap,
-    excinfo = (None() : option(xlenbits)),
-    ext     = None(),
-  };
-  Trap(cur_privilege, CTL_TRAP(t), PC)
+  let c : ExceptionContext = empty_exception_context();
+  Trap(cur_privilege, CTL_TRAP(trap, c), PC)
 }
 
 mapping clause assembly = ECALL() <-> "ecall"
@@ -578,20 +574,30 @@ mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
-  let sret_illegal : bool = match cur_privilege {
-    User              => true,
-    Supervisor        => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
-    Machine           => not(currentlyEnabled(Ext_S)),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  let sret_illegal : option(ExecutionResult) = match cur_privilege {
+    User              => Some(Illegal_Instruction()),
+    VirtualUser       => Some(Illegal_Instruction()),
+    Supervisor        => if not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1
+                         then Some(Illegal_Instruction())
+                         else None(),
+    VirtualSupervisor => if hstatus[VTSR] == 0b1
+                         then Some(Virtual_Instruction())
+                         else None(),
+    Machine           => if not(currentlyEnabled(Ext_S))
+                         then Some(Illegal_Instruction())
+                         else None(),
   };
-  if   sret_illegal
-  then Illegal_Instruction()
-  else if not(ext_check_xret_priv (Supervisor))
-  then Ext_XRET_Priv_Failure()
-  else {
-    set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
-    RETIRE_SUCCESS
+  match sret_illegal {
+    Some(e) => e,
+    None() => {
+      if not(ext_check_xret_priv (Supervisor))
+      then Ext_XRET_Priv_Failure()
+      else {
+        let pc = exception_handler(cur_privilege, CTL_SRET(), PC);
+        set_next_pc(pc);
+        RETIRE_SUCCESS
+      }
+    }
   }
 }
 
@@ -604,7 +610,7 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() =
-  Memory_Exception(Virtaddr(PC), E_Breakpoint(Brk_Software))
+  memory_exception_with_gva(E_Breakpoint(Brk_Software), Virtaddr(PC))
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
@@ -620,9 +626,17 @@ function clause execute WFI() =
     Supervisor        => if   mstatus[TW] == 0b1
                          then Illegal_Instruction()
                          else Enter_Wait(WAIT_WFI),
-    User              => Illegal_Instruction(),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    User              => if mstatus[TW] == 0b1 | currentlyEnabled(Ext_S)
+                         then Illegal_Instruction()
+                         else Enter_Wait(WAIT_WFI), // FIXME: WFI is "optionally available for U-mode" according to spec
+    VirtualUser       => if mstatus[TW] == 0b1 | currentlyEnabled(Ext_S)
+                         then Virtual_Instruction()
+                         else Enter_Wait(WAIT_WFI),
+    VirtualSupervisor => if mstatus[TW] == 0b1
+                         then Illegal_Instruction()
+                         else if hstatus[VTW] == 0b1
+                         then Virtual_Instruction() // Maybe bug here
+                         else Enter_Wait(WAIT_WFI),
   }
 
 mapping clause assembly = WFI() <-> "wfi"
@@ -639,16 +653,19 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   // Note, the Sail model does not currently support Sv32 & SXLEN=32 on RV64.
   // In that case this asidlen would be incorrect because the maximum asidlen
   // is 9 but we always set it to 16 for RV64.
-  let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
+  let asid : option(bits(16)) = if rs2 != zreg then Some(zero_extend(X(rs2)[asidlen - 1 .. 0])) else None();
   match cur_privilege {
     User              => Illegal_Instruction(),
     Supervisor        => match mstatus[TVM] {
                            0b1 => Illegal_Instruction(),
-                           0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+                           0b0 => { flush_TLB(asid, Stage_S, addr); RETIRE_SUCCESS },
                          },
-    Machine           => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+    Machine           => { flush_TLB(asid, Stage_S, addr); RETIRE_SUCCESS },
     VirtualUser       => Virtual_Instruction(),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => match hstatus[VTVM] {
+                          0b1 => Virtual_Instruction(),
+                          0b0 => { flush_TLB(asid, Stage_VS, addr); RETIRE_SUCCESS },
+                         },
   }
 }
 

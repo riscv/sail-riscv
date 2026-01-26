@@ -42,7 +42,11 @@ function csr_access_type(op : csrop, rd_is_x0 : bool, rs1_imm_is_zero : bool) ->
 
 function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_type : CSRAccessType) -> ExecutionResult = {
   if   not(check_CSR(csr, cur_privilege, access_type))
-  then Illegal_Instruction()
+  then {
+    if currentlyEnabled(Ext_H) & csr_access_raises_virtual_instr(csr, cur_privilege, access_type)
+    then Virtual_Instruction()
+    else Illegal_Instruction()
+  }
   else if not(ext_check_CSR(csr, cur_privilege, access_type))
   then Ext_CSR_Check_Failure()
   else {
