@@ -18,9 +18,24 @@ function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus,
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> nom_priv_bits = csr[9..8]
 
+// When hypervisor is enabled, `Supervisor` (HS-mode) and
+// `VirtualSupervisor` (VS-mode) privileges are encoded as `0b01` in
+// `privLevel_bits()`, but the CSR addresses for hypervisor and VS
+// CSRs encode the required privilege as `0b10`.  This overrides
+// the encoding in `privLevel_bits()` for the purposes of CSR privilege
+// checks.
+private function privLevel_to_CSR_privbits(p : Privilege) -> nom_priv_bits =
+  match p {
+    User              => 0b00,
+    VirtualUser       => 0b00,
+    Supervisor        => if currentlyEnabled(Ext_H) then 0b10 else 0b01,
+    VirtualSupervisor => 0b10,
+    Machine           => 0b11,
+  }
+
 // Check that the CSR access is made with sufficient privilege.
 function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
-  privLevel_to_bits(p) >=_u csrPriv(csr)
+  privLevel_to_CSR_privbits(p) >=_u csrPriv(csr)
 
 // Check that the CSR access isn't a write to a read-only CSR.
 function check_CSR_access(csr : csreg, access_type : CSRAccessType) -> bool =
