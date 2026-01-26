@@ -896,8 +896,8 @@ private function legalize_vsstatus(o : Sstatus, v : xlenbits) -> Sstatus = {
               extStatus_of_bits(s[VS]) == Dirty;
   [o with
     SD   = bool_to_bit(dirty),
-    // UXL
-    UXL  = s[UXL],
+    // We don't support dynamic changes to UXL.
+    // UXL  = s[UXL],
     // SDT = if currentlyEnabled(Ext_Ssdbltrp) then s[SDT] else 0b0,
     MXR  = s[MXR],
     SUM  = s[SUM],
@@ -910,7 +910,9 @@ private function legalize_vsstatus(o : Sstatus, v : xlenbits) -> Sstatus = {
   ]
 }
 
-register vsstatus : Sstatus
+register vsstatus : Sstatus = [Mk_Sstatus(zeros()) with
+  UXL = architecture_bits(if xlen == 32 then RV32 else RV64)
+]
 
 mapping clause csr_name_map = 0x200  <-> "vsstatus"
 function clause is_CSR_accessible(0x200, _, _) = currentlyEnabled(Ext_H) // vsstatus
