@@ -119,7 +119,7 @@ register henvcfg : HEnvcfg
 function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
   let v = Mk_HEnvcfg(v);
   [h with
-    STCE  = if currentlyEnabled(Ext_Sstc)    then v[STCE]  else 0b0,
+    STCE  = if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then v[STCE]  else 0b0,
     PBMTE = if currentlyEnabled(Ext_Svpbmt)  then v[PBMTE] else 0b0,
     // ADUE  = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
     // DTE   = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
