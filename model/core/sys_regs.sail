@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// Machine-mode and supervisor-mode state definitions.
+// Machine-mode, supervisor-mode and hypervisor-mode state definitions.
 
 // privilege level
 
