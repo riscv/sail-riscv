@@ -53,7 +53,11 @@ function select_instr_or_fcsr_rm(instr_rm : rounding_mode) -> option(rounding_mo
   then {
     let fcsr_rm = fcsr[FRM];
     if (valid_rounding_mode(fcsr_rm) & fcsr_rm != encdec_rounding_mode(RM_DYN))
-      then Some(encdec_rounding_mode(fcsr_rm)) else None()
+    then Some(encdec_rounding_mode(fcsr_rm))
+    else match fcsr_rm_reserved_behavior {
+      Fcsr_RM_Fatal  => reserved_behavior("static floating-point rounding mode reserved behavior: fcsr.FRM contains reserved value (0b101, 0b110 or 0b111)."),
+      Fcsr_RM_Illegal => None(),
+    }
   }
   else Some(instr_rm)
 
