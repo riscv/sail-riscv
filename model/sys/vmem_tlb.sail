@@ -14,15 +14,15 @@
 
 // Maximum number of Virtual/Physical Page Number bits. The same TLB
 // is used for all VM modes so these are the values for Sv57.
-type tlb_vpn_bits : Int = 57 - pagesize_bits
+type tlb_vpn_bits : Int = 59 - pagesize_bits
 let  tlb_vpn_bits = sizeof(tlb_vpn_bits)
 type tlb_ppn_bits : Int = 44
 let  tlb_ppn_bits = sizeof(tlb_ppn_bits)
 
 // We use a single TLB for all virtual memory modes, so it can store up to
 // Sv57-sized entries.
-private struct TLB_Entry = {
-  asid       : asidbits,           // address-space id
+struct TLB_Entry = {
+  asid       : xxidbits,           // address-space id
   global     : bool,               // global translation
   vpn        : bits(tlb_vpn_bits), // Virtual Page Number. SvXX - 12 bits.
   levelMask  : bits(tlb_vpn_bits), // Mask for superpages. The lowest (level * level_bits) bits are 1s.
@@ -43,7 +43,7 @@ function tlb_set_pte forall 'n, 'n in {4, 8}. (
   pte : bits('n * 8),
 ) -> TLB_Entry = { ent with pte=zero_extend(pte) }
 
-function tlb_get_ppn forall 'v, is_sv_mode('v) . (
+function tlb_get_ppn forall 'v, is_xv_mode('v) . (
   sv_width : int('v),
   ent      : TLB_Entry,
   vpn      : vpn_bits('v),
@@ -70,33 +70,44 @@ let  num_tlb_entries_exp = sizeof(num_tlb_entries_exp)
 type num_tlb_entries : Int = 2 ^ num_tlb_entries_exp
 type tlb_index_range = range(0, num_tlb_entries - 1)
 
-private register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
+// PRIVATE
+register tlb_S  : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
+register tlb_VS : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
+register tlb_G  : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
 // Indexed by the lowest bits of the VPN.
-function tlb_hash forall 'v, is_sv_mode('v) . (
+function tlb_hash forall 'v, is_xv_mode('v) . (
   _sv_mode : int('v),
-  vpn     : vpn_bits('v),
+  vpn      : vpn_bits('v),
 ) -> tlb_index_range =
   unsigned(vpn[num_tlb_entries_exp - 1 .. 0])
 
 // PUBLIC: invoked in reset_vmem() [vmem.sail]
-function reset_TLB() -> unit = tlb = vector_init(None())
+function reset_TLB() -> unit = {
+  tlb_S  = vector_init(None());
+  tlb_VS = vector_init(None());
+  tlb_G  = vector_init(None());
+}
 
 // PUBLIC: invoked in translate_TLB_hit() [vmem.sail]
-function write_TLB(index : tlb_index_range, entry : TLB_Entry) -> unit =
-  tlb[index] = Some(entry)
+function write_TLB(index : tlb_index_range, entry : TLB_Entry, stage : AddressTranslationStage) -> unit =
+   match stage {
+    Stage_S  => tlb_S[index]  = Some(entry),
+    Stage_G  => tlb_G[index]  = Some(entry),
+    Stage_VS => tlb_VS[index] = Some(entry),
+  }
 
 private function match_TLB_Entry(
   ent  : TLB_Entry,
-  asid : asidbits,
+  asid : xxidbits,
   vpn  : bits(tlb_vpn_bits),
 ) -> bool =
   (ent.global | (ent.asid == asid)) & (ent.vpn == (vpn & ~(ent.levelMask)))
 
 private function flush_TLB_Entry(
   ent   : TLB_Entry,
-  asid  : option(asidbits),
-  vaddr : option(xlenbits),
+  asid  : option(xxidbits),
+  vaddr : option(bits(64))
 ) -> bool = {
   let asid_matches : bool = match asid {
     Some(asid) => ent.asid == asid & not(ent.global),
@@ -105,7 +116,7 @@ private function flush_TLB_Entry(
   let addr_matches : bool = match vaddr {
     Some(vaddr) => {
       let vaddr : bits(64) = sign_extend(vaddr);
-      ent.vpn == (vaddr[56 .. pagesize_bits] & ~(ent.levelMask))
+      ent.vpn == (vaddr[58 .. pagesize_bits] & ~(ent.levelMask))
     },
     None() => true,
   };
@@ -113,13 +124,19 @@ private function flush_TLB_Entry(
 }
 
 // PUBLIC: invoked in translate() [vmem.sail]
-function lookup_TLB forall 'v, is_sv_mode('v) . (
+function lookup_TLB forall 'v, is_xv_mode('v) . (
   sv_width : int('v),
-  asid     : asidbits,
+  asid     : xxidbits,
   vpn      : vpn_bits('v),
+  stage : AddressTranslationStage,
 ) -> option((tlb_index_range, TLB_Entry)) = {
   let index = tlb_hash('v, vpn);
-  match tlb[index] {
+  let tlb_slot : option(TLB_Entry) = match stage {
+    Stage_S  => tlb_S[index],
+    Stage_G  => tlb_G[index],
+    Stage_VS => tlb_VS[index],
+  };
+  match tlb_slot {
     None() => None(),
     Some(entry) => {
       if match_TLB_Entry(entry, asid, sign_extend(vpn)) then Some((index, entry)) else None()
@@ -128,9 +145,10 @@ function lookup_TLB forall 'v, is_sv_mode('v) . (
 }
 
 // PUBLIC: invoked in translate_TLB_miss() [vmem.sail]
-function add_to_TLB forall 'v, is_sv_mode('v) . (
+function add_to_TLB forall 'v, is_xv_mode('v) . (
   sv_width : int('v),
-  asid     : asidbits,
+  asid     : xxidbits,
+  stage    : AddressTranslationStage,
   vpn      : vpn_bits('v),
   ppn      : ppn_bits('v),
   pte      : pte_bits('v),
@@ -138,7 +156,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
   level    : level_range('v),
   global   : bool,
 ) -> unit = {
-  let shift = level * (if 'v == 32 then 10 else 9);
+  let shift = level * (if 'v == 32 | 'v == 34 then 10 else 9);
   let levelMask = ones(shift);
   // Clear bits below the level.
   let vpn = vpn & ~(zero_extend(levelMask));
@@ -157,17 +175,43 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
   // lookup_TLB looks it up. For superpages will just end up with the same
   // TLB entry in multiple slots.
   let index = tlb_hash('v, vpn);
-  tlb[index] = Some(entry);
+  match stage {
+    Stage_S  => tlb_S[index]  = Some(entry),
+    Stage_VS => tlb_VS[index] = Some(entry),
+    Stage_G  => tlb_G[index]  = Some(entry),
+  };
 }
 
 // Top-level TLB flush function
 // PUBLIC: invoked from SFENCE_VMA [extensions/I/insts_base.sail]
-function flush_TLB(asid : option(asidbits),
-                   addr : option(xlenbits)) -> unit = {
-  foreach (i from 0 to (length(tlb) - 1)) {
-    match tlb[i] {
-      None()  => (),
-      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then { tlb[i] = None(); },
-    }
+function flush_TLB(
+  xxid : option(xxidbits),
+  stage : AddressTranslationStage,
+  addr : option(xlenbits)
+) -> unit = {
+  let addr_64b : option(bits(64)) =
+    match addr {
+      None()  => None(),
+      Some(a) => Some(zero_extend(a))
+    };
+  match stage {
+    Stage_S  => foreach (i from 0 to (length(tlb_S) - 1)) {
+                  match tlb_S[i] {
+                    Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_S[i] = None(); },
+                    None()  => (),
+                  }
+                },
+    Stage_VS => foreach (i from 0 to (length(tlb_VS) - 1)) {
+                  match tlb_VS[i] {
+                    Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_VS[i] = None(); },
+                    None()  => (),
+                  }
+                },
+    Stage_G  => foreach (i from 0 to (length(tlb_G) - 1)) {
+                  match tlb_G[i] {
+                    Some(e) => if flush_TLB_Entry(e, xxid, addr_64b) then { tlb_G[i] = None(); },
+                    None()  => (),
+                  }
+                }
   }
 }

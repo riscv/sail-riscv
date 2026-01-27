@@ -215,6 +215,17 @@ function rotate_bits_left (value, shift) = rotatel(value, unsigned(shift))
 overload operator >>> = {rotate_bits_right, rotater}
 overload operator <<< = {rotate_bits_left, rotatel}
 
+/* helpers for bitvector option type */
+
+val some_or : forall 'n, 'n >= 0 . (option(bits('n)), bits('n)) -> bits('n)
+function some_or(o, d) = match o {
+  Some(v) => v,
+  None()  => d,
+}
+
+val some_or_zero : forall 'n, 'n >= 0. (implicit('n), option(bits('n))) -> bits('n)
+function some_or_zero(n, o) = some_or(o, zeros(n))
+
 val reverse_bits : forall 'n, 'n > 0. bits('n) -> bits('n)
 function reverse_bits (xs)  = {
   var ys : bits('n) = zeros();

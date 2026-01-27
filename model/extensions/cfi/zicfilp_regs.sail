@@ -27,9 +27,12 @@ function get_xLPE(p : Privilege) -> bool =
     User              => if   currentlyEnabled(Ext_S)
                          then bool_bit(senvcfg[LPE])
                          else bool_bit(menvcfg[LPE]),
-    // TODO: check henvcfg for VS mode
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => if   currentlyEnabled(Ext_H)
+                         then bool_bit(henvcfg[LPE])
+                         else bool_bit(menvcfg[LPE]),
+    VirtualUser       => if   currentlyEnabled(Ext_H)
+                         then bool_bit(senvcfg[LPE])
+                         else bool_bit(menvcfg[LPE]),
   }
 
 // This measure needs to be > currentlyEnabled_measure(Ext_S), currently equal
@@ -73,9 +76,9 @@ function zicfilp_preserve_elp_on_trap(x : Privilege) -> unit = {
     Machine           => { mstatus[MPELP] = elp; },
     Supervisor        => { mstatus[SPELP] = elp; },
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-};
+    VirtualSupervisor => { vsstatus[SPELP] = elp; },
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+  };
   reset_elp();
 }
 
@@ -91,7 +94,11 @@ function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = 
     },
     sRET => {
       let pelp = mstatus[SPELP];
-      mstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
+      if privLevel_is_virtual(cur_privilege) then {
+        vsstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
+      } else {
+        mstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
+      };
       pelp
     },
   };
