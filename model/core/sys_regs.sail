@@ -583,8 +583,15 @@ bitfield Medeleg : bits(64) = {
 }
 
 private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
-  // M-EnvCalls delegation is not supported
-  [Mk_Medeleg(v) with MEnvCall = 0b0]
+  let v = Mk_Medeleg(v);
+  [v with
+    SAMO_GPage_Fault  = if currentlyEnabled(Ext_H) then v[SAMO_GPage_Fault]  else 0b0,
+    Virtual_Instr     = if currentlyEnabled(Ext_H) then v[Virtual_Instr]     else 0b0,
+    Load_GPage_Fault  = if currentlyEnabled(Ext_H) then v[Load_GPage_Fault]  else 0b0,
+    Fetch_GPage_Fault = if currentlyEnabled(Ext_H) then v[Fetch_GPage_Fault] else 0b0,
+    VSEnvCall         = if currentlyEnabled(Ext_H) then v[VSEnvCall]         else 0b0,
+    MEnvCall = 0b0
+  ]
 }
 
 register mie     : Minterrupts // Enabled
@@ -837,6 +844,8 @@ function clause read_CSR(0xF14) = mhartid
 function clause read_CSR(0xF15) = mconfigptr
 
 // Additional M-mode registers
+
+// TODO: Add config options and legalization functions for mtinst and mtval2
 register mtinst : xlenbits
 register mtval2 : xlenbits
 
@@ -1058,7 +1067,7 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 mapping clause csr_name_map = 0x144  <-> "sip"
 function clause is_CSR_accessible(0x144, _, _) = currentlyEnabled(Ext_S) // sip
 function clause read_CSR(0x144) =
-if privLevel_is_virtual(cur_privilege)
+  if privLevel_is_virtual(cur_privilege)
   then lower_mip_to_vsip(mip, hideleg).bits
   else lower_mip(mip, mideleg).bits
 function clause write_CSR(0x144, value) =
