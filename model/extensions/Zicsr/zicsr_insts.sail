@@ -40,33 +40,35 @@ function csr_access_type(op : csrop, rd_is_x0 : bool, rs1_imm_is_zero : bool) ->
     (CSRRC, _, false) => CSRReadWrite,
   }
 
-function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_type : CSRAccessType) -> ExecutionResult = {
-  if   not(check_CSR(csr, cur_privilege, access_type))
-  then Illegal_Instruction()
-  else if not(ext_check_CSR(csr, cur_privilege, access_type))
-  then Ext_CSR_Check_Failure()
-  else {
-    // A pure write (i.e. CSRRW with rd == 0) should not generate read side-effects.
-    let csr_val : xlenbits = if access_type != CSRWrite then read_CSR(csr) else zeros();
-    if access_type != CSRRead then {
-      let new_val : xlenbits = match op {
-        CSRRW => rs1_val,
-        CSRRS => csr_val | rs1_val,
-        CSRRC => csr_val & ~(rs1_val)
-      };
-      match write_CSR(csr, new_val) {
-        Ok(final_val) => {
-          csr_write_callback(csr, final_val);
-          X(rd) = csr_val;
-          RETIRE_SUCCESS
-        },
-        Err(()) => Illegal_Instruction()
-      }
-    } else {
-      csr_read_callback(csr, csr_val);
-      X(rd) = csr_val;
-      RETIRE_SUCCESS
+function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_type: CSRAccessType) -> ExecutionResult = {
+  match check_CSR(csr, cur_privilege, access_type) {
+    CSRAccess_Success() => (),
+    CSRAccess_Illegal(_) => return Illegal_Instruction(),
+    CSRAccess_Virtual(_) => return Virtual_Instruction(),
+  };
+
+  if not(ext_check_CSR(csr, cur_privilege, access_type)) then return Ext_CSR_Check_Failure();
+
+  // A pure write (i.e. CSRRW with rd == 0) should not generate read side-effects.
+  let csr_val : xlenbits = if access_type != CSRWrite then read_CSR(csr) else zeros();
+  if access_type != CSRRead then {
+    let new_val : xlenbits = match op {
+      CSRRW => rs1_val,
+      CSRRS => csr_val | rs1_val,
+      CSRRC => csr_val & ~(rs1_val)
+    };
+    match write_CSR(csr, new_val) {
+      Ok(final_val) => {
+        csr_write_callback(csr, final_val);
+        X(rd) = csr_val;
+        RETIRE_SUCCESS
+      },
+      Err(()) => Illegal_Instruction()
     }
+  } else {
+    csr_read_callback(csr, csr_val);
+    X(rd) = csr_val;
+    RETIRE_SUCCESS
   }
 }
 
