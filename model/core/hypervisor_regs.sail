@@ -121,16 +121,16 @@ function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
   let v = Mk_HEnvcfg(v);
   [h with
     STCE  = if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then v[STCE]  else 0b0,
-    PBMTE = if currentlyEnabled(Ext_Svpbmt)  then v[PBMTE] else 0b0,
-    // ADUE  = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
-    // DTE   = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
-    // PMM   = if currentlyEnabled(Ext_Ssnpm) then v[PMM] else 0b0,
-    CBZE  = if currentlyEnabled(Ext_Zicboz)  then v[CBZE]  else 0b0,
-    CBCFE = if currentlyEnabled(Ext_Zicbom)  then v[CBCFE] else 0b0,
-    CBIE  = if currentlyEnabled(Ext_Zicbom)  then v[CBIE]  else 0b00,
-    // SSE = if currentlyEnabled(Ext_Zicfiss) then v[SSE] else 0b0,
-    LPE   = if currentlyEnabled(Ext_Zicfilp) then v[LPE]   else 0b0,
-    FIOM  = if sys_enable_writable_fiom      then v[FIOM]  else 0b0,
+    PBMTE = if currentlyEnabled(Ext_Svpbmt) then v[PBMTE] else 0b0,
+    // ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
+    // DTE  = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
+    // PMM  = if currentlyEnabled(Ext_Ssnpm) then v[PMM] else 0b0,
+    CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
+    CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
+    CBIE  = if currentlyEnabled(Ext_Zicbom) then v[CBIE]  else 0b00,
+    // SSE  = if currentlyEnabled(Ext_Zicfiss) then v[SSE] else 0b0,
+    LPE   = if hartSupports(Ext_Zicfilp) then v[LPE]  else 0b0,
+    FIOM  = if sys_enable_writable_fiom  then v[FIOM] else 0b0,
   ]
 }
 
@@ -170,7 +170,6 @@ mapping clause csr_name_map = 0x615 <-> "htimedeltah"
 
 // TODO: Should raise virtual instruction exception if accessed by VU/VS-Mode.
 // Needs refactoring of CSR access logic.
-// TODO: Time CSR needs to modified and shall return htimedelta + mtime
 function clause is_CSR_accessible(0x605, _, _) = currentlyEnabled(Ext_H) // htimedelta
 function clause is_CSR_accessible(0x615, _, _) = currentlyEnabled(Ext_H) & xlen == 32 // htimedeltah
 
@@ -226,8 +225,9 @@ bitfield Hgatp32 : bits(32) = {
 }
 
 // TODO: Add these options to config file once Hypervisor supported is added
-let Sv32x4_supported : bool = xlen == 32
-let Sv39x4_supported : bool = xlen == 64
+let HBare_supported  : bool = true
+let Sv32x4_supported : bool = HBare_supported  & xlen == 32
+let Sv39x4_supported : bool = HBare_supported  & xlen == 64
 let Sv48x4_supported : bool = Sv39x4_supported & xlen == 64
 let Sv57x4_supported : bool = Sv48x4_supported & xlen == 64
 
@@ -245,7 +245,7 @@ function legalize_hgatp(
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
-        HBare => h.bits,
+        HBare  if HBare_supported  => h.bits,
         Sv32x4 if Sv32x4_supported => h.bits,
         _ => prev_value,
       }
@@ -257,7 +257,7 @@ function legalize_hgatp(
     match hgatpMode_of_bits(arch, h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
-        HBare => h.bits,
+        HBare  if HBare_supported  => h.bits,
         Sv39x4 if Sv39x4_supported => h.bits,
         Sv48x4 if Sv48x4_supported => h.bits,
         Sv57x4 if Sv57x4_supported => h.bits,
