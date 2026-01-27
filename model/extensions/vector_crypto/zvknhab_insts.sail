@@ -24,6 +24,11 @@ function clause execute VSHA2MS_VV(vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW == 32 | SEW == 64);
 
   let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
@@ -91,6 +96,11 @@ function clause execute ZVKSHA2TYPE(funct6, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   assert(SEW == 32 | SEW == 64);
 
