@@ -215,6 +215,7 @@ extensions {
       requires FD_core
       files
         extensions/V/vreg_type.sail,
+        extensions/V/zvdot4a_types.sail,
         extensions/V/vext_regs.sail,
         extensions/V/vext_control.sail,
     }
