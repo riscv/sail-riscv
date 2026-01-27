@@ -32,6 +32,11 @@
       // "AMOCAS_Fatal"  – raise a Sail exception, stopping execution.
       // "AMOCAS_Illegal" – treat it as an illegal instruction.
       "amocas_odd_register": "AMOCAS_Illegal",
+      // Here, the floating-point rounding mode (fcsr.FRM) is dynamic FRM , the floating-point rounding mode in the instruction is considered static FRM, and it is configured in another setting.
+      // The configuration option determines how to handle the reserved behavior `fcsr.FRM` with 0b101,0b110,0b111.
+      // "Fcsr_RM_Fatal"  – raise a Sail exception, stopping execution.
+      // "Fcsr_RM_Illegal" – treat it as an illegal instruction.
+      "fcsr_rm": "Fcsr_RM_Illegal",
       // The configuration option determines how to handle the reserved behavior `pmpcfg_with_R0W1`.
       // "PMP_Fatal"  – raise a Sail exception, stopping execution.
       // "PMP_ClearPermissions" – convert a PMP entry with R=0, W=1 to R=0, W=0, X=0.

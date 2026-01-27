@@ -71,6 +71,17 @@ mapping AmocasOddRegisterReservedBehavior_str : AmocasOddRegisterReservedBehavio
 }
 overload to_str = {AmocasOddRegisterReservedBehavior_str}
 
+enum FcsrRmReservedBehavior = {
+  Fcsr_RM_Fatal,
+  Fcsr_RM_Illegal,
+}
+
+mapping FcsrRmReservedBehavior_str : FcsrRmReservedBehavior <-> string = {
+  Fcsr_RM_Fatal   <-> "Fcsr_RM_Fatal",
+  Fcsr_RM_Illegal <-> "Fcsr_RM_Illegal",
+}
+overload to_str = {FcsrRmReservedBehavior_str}
+
 enum PmpWriteOnlyReservedBehavior = {
   PMP_Fatal,
   PMP_ClearPermissions,
@@ -105,6 +116,7 @@ mapping RV32ZdinxOddRegisterReservedBehavior_str : RV32ZdinxOddRegisterReservedB
 overload to_str = {RV32ZdinxOddRegisterReservedBehavior_str}
 
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
+let fcsr_rm_reserved_behavior : FcsrRmReservedBehavior = config base.reserved_behavior.fcsr_rm
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
