@@ -8,6 +8,27 @@
 
 // HS-Mode register
 
+// Guest External Interrupt Registers
+
+function legalize_hgeie(v : xlenbits) -> xlenbits = {
+  [v with 0 = bitzero]
+}
+
+register hgeie : xlenbits
+register hgeip : xlenbits
+
+// TODO: Add GEILEN config
+mapping clause csr_name_map = 0x607 <-> "hgeie"
+mapping clause csr_name_map = 0xE12 <-> "hgeip"
+
+function clause is_CSR_accessible(0x607, _, _) = currentlyEnabled(Ext_H) // hgeie
+function clause is_CSR_accessible(0xE12, _, _) = currentlyEnabled(Ext_H) // hgeip
+
+function clause read_CSR(0x607) = hgeie
+function clause read_CSR(0xE12) = hgeip
+
+function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hgeie) }
+
 // Hypervisor Interrupt Registers
 
 function legalize_hvip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -54,13 +75,12 @@ function lower_mie_to_hie(m : Minterrupts) -> Minterrupts = {
 
 function lower_mip_to_hip(m : Minterrupts) -> Minterrupts = {
   [Mk_Minterrupts(zeros()) with
-    SGEI = if mideleg[SGEI] == 0b1 then m[SGEI] else 0b0,
+    SGEI = if mideleg[SGEI] == 0b1 then bool_to_bit((hgeip & hgeie) != zeros()) else 0b0,
     VSEI = if mideleg[SEI]  == 0b1 then m[VSEI] else 0b0,
     VSTI = if mideleg[STI]  == 0b1 then m[VSTI] else 0b0,
     VSSI = if mideleg[SSI]  == 0b1 then m[VSSI] else 0b0,
   ]
 }
-
 
 mapping clause csr_name_map = 0x645 <-> "hvip"
 mapping clause csr_name_map = 0x604 <-> "hie"
@@ -77,27 +97,6 @@ function clause read_CSR(0x644) = lower_mip_to_hip(mip).bits
 function clause write_CSR(0x645, value) = { mip = legalize_hvip(mip, value); Ok(lower_mip_to_hvip(mip).bits) }
 function clause write_CSR(0x604, value) = { mie = legalize_hie(mie, value); Ok(lower_mie_to_hie(mie).bits) }
 function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(mip).bits) }
-
-// Guest External Interrupt Registers
-
-function legalize_hgeie(v : xlenbits) -> xlenbits = {
-  [v with 0 = bitzero]
-}
-
-register hgeie : xlenbits
-register hgeip : xlenbits
-
-// TODO: Add GEILEN config
-mapping clause csr_name_map = 0x607 <-> "hgeie"
-mapping clause csr_name_map = 0xE12 <-> "hgeip"
-
-function clause is_CSR_accessible(0x607, _, _) = currentlyEnabled(Ext_H) // hgeie
-function clause is_CSR_accessible(0xE12, _, _) = currentlyEnabled(Ext_H) // hgeip
-
-function clause read_CSR(0x607) = hgeie
-function clause read_CSR(0xE12) = hgeip
-
-function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hgeie) }
 
 // Hypervisor Environment Configuration
 
