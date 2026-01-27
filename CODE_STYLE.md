@@ -61,7 +61,7 @@ for example, Python should follow the standard PEP-8 style.
 
 ```
 mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, size, false, false)
-  <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ size_enc(size) @ encdec_reg(rd) @ 0b0000011
+  <-> imm @ encdec_reg(rs1) @ bool_bit(is_unsigned) @ size_enc(size) @ encdec_reg(rd) @ 0b0000011
   when (size_bytes(size) < xlen_bytes) | (not(is_unsigned) & size_bytes(size) <= xlen_bytes)
 ```
 

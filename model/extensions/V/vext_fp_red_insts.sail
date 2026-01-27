@@ -28,10 +28,10 @@ mapping clause encdec = RFVVTYPE(funct6, vm, vs2, vs1, vd)
      | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
 
 function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
-  let SEW      = get_sew();
-  let LMUL_pow = get_lmul_pow();
+  let SEW         = get_sew();
+  let LMUL_pow    = get_lmul_pow();
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
-  let rm_3b = fcsr[FRM];
+  let rm_3b       = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
 
   if illegal_fp_reduction(SEW, rm_3b) then return Illegal_Instruction();
@@ -43,17 +43,18 @@ function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'd = num_elem_vd;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem_vs, vm, zvreg);
   let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
+
+  let mask : bits('n) = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       sum = match funct6 {
         // currently ordered/unordered sum reductions do the same operations
         FVV_VFREDOSUM   => fp_add(rm_3b, sum, vs2_val[i]),
@@ -100,8 +101,8 @@ mapping clause encdec = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
 // only implements the ordered variant, as it is a valid
 // implementation of the unordered variant; hence `funct6` is ignored.
 function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
-  let SEW      = get_sew();
-  let LMUL_pow = get_lmul_pow();
+  let SEW         = get_sew();
+  let LMUL_pow    = get_lmul_pow();
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let rm_3b       = fcsr[FRM];
   let SEW_widen   = SEW * 2;
@@ -118,17 +119,18 @@ function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem_vs, vm, zvreg);
   let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
+
+  let mask : bits('n) = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       // currently ordered/unordered sum reductions do the same operations
       sum = fp_add(rm_3b, sum, fp_widen(vs2_val[i]))
     }

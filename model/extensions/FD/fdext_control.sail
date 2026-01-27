@@ -17,13 +17,15 @@
 
 function clause currentlyEnabled(Ext_F) = hartSupports(Ext_F) & (misa[F] == 0b1) & (mstatus[FS] != 0b00) & currentlyEnabled(Ext_Zicsr)
 function clause currentlyEnabled(Ext_D) = hartSupports(Ext_D) & (misa[D] == 0b1) & (mstatus[FS] != 0b00) & flen >= 64 & currentlyEnabled(Ext_Zicsr)
-function clause currentlyEnabled(Ext_Zfinx) = hartSupports(Ext_Zfinx) & currentlyEnabled(Ext_Zicsr)
+function clause currentlyEnabled(Ext_Zfinx) = hartSupports(Ext_Zfinx) & currentlyEnabled(Ext_Zicsr) & is_zfinx_enabled_by_stateen()
 
 // Floating Point CSRs
 mapping clause csr_name_map = 0x001  <-> "fflags"
 mapping clause csr_name_map = 0x002  <-> "frm"
 mapping clause csr_name_map = 0x003  <-> "fcsr"
 
+// These should ideally also check `xstateen.FCSR`, but due to module
+// interdependency issues, that is handled by `stateen_allows_CSR_access`.
 function clause is_CSR_accessible (0x001, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 function clause is_CSR_accessible (0x002, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 function clause is_CSR_accessible (0x003, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)

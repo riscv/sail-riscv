@@ -22,11 +22,11 @@ function get_xLPE(p : Privilege) -> bool =
   //   U         menvcfg.LPE
   //
   match p {
-    Machine           => bool_bits(mseccfg[MLPE]),
-    Supervisor        => bool_bits(menvcfg[LPE]),
+    Machine           => bool_bit(mseccfg[MLPE]),
+    Supervisor        => bool_bit(menvcfg[LPE]),
     User              => if   currentlyEnabled(Ext_S)
-                         then bool_bits(senvcfg[LPE])
-                         else bool_bits(menvcfg[LPE]),
+                         then bool_bit(senvcfg[LPE])
+                         else bool_bit(menvcfg[LPE]),
     // TODO: check henvcfg for VS mode
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
@@ -54,7 +54,7 @@ function update_elp_state(rs1 : regidx) -> unit =
   if currentlyEnabled(Ext_Zicfilp) then {
     let is_software_guarded_branch = rs1 == Regidx(zero_extend(0x7));
     let is_return = rs1 == Regidx(zero_extend(0x1)) | rs1 == Regidx(zero_extend(0x5));
-    elp = bool_to_bits(not(is_software_guarded_branch) & not(is_return))
+    elp = bool_to_bit(not(is_software_guarded_branch) & not(is_return))
   }
 
 function is_landing_pad_expected() -> bool =

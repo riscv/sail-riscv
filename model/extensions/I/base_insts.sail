@@ -56,7 +56,7 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   // Perform standard alignment check.
   // Check target is at least 2-byte aligned (callers must ensure
   // this so it can be an assertion).
-  assert(target[0] == bitzero);
+  assert(target[0] == 0b0);
   // If it is not 4-byte aligned and compressed instructions are
   // not enabled then raise an alignment exception.
   if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
@@ -159,8 +159,8 @@ function clause execute ITYPE(imm, rs1, rd, op) = {
   let immext : xlenbits = sign_extend(imm);
   X(rd) = match op {
     ADDI  => X(rs1) + immext,
-    SLTI  => zero_extend(bool_to_bits(X(rs1) <_s immext)),
-    SLTIU => zero_extend(bool_to_bits(X(rs1) <_u immext)),
+    SLTI  => zero_extend(bool_to_bit(X(rs1) <_s immext)),
+    SLTIU => zero_extend(bool_to_bit(X(rs1) <_u immext)),
     ANDI  => X(rs1) & immext,
     ORI   => X(rs1) | immext,
     XORI  => X(rs1) ^ immext
@@ -191,13 +191,13 @@ mapping encdec_sop : sop <-> bits(3) = {
 
 mapping clause encdec = SHIFTIOP(shamt, rs1, rd, SLLI)
   <-> 0b000000 @ shamt @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0010011
-  when xlen == 64 | shamt[5] == bitzero
+  when xlen == 64 | shamt[5] == 0b0
 mapping clause encdec = SHIFTIOP(shamt, rs1, rd, SRLI)
   <-> 0b000000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
-  when xlen == 64 | shamt[5] == bitzero
+  when xlen == 64 | shamt[5] == 0b0
 mapping clause encdec = SHIFTIOP(shamt, rs1, rd, SRAI)
   <-> 0b010000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
-  when xlen == 64 | shamt[5] == bitzero
+  when xlen == 64 | shamt[5] == 0b0
 
 $[split op]
 function clause execute SHIFTIOP(shamt, rs1, rd, op) = {
@@ -237,8 +237,8 @@ $[split op]
 function clause execute RTYPE(rs2, rs1, rd, op) = {
   X(rd) = match op {
     ADD  => X(rs1) + X(rs2),
-    SLT  => zero_extend(bool_to_bits(X(rs1) <_s X(rs2))),
-    SLTU => zero_extend(bool_to_bits(X(rs1) <_u X(rs2))),
+    SLT  => zero_extend(bool_to_bit(X(rs1) <_s X(rs2))),
+    SLTU => zero_extend(bool_to_bit(X(rs1) <_u X(rs2))),
     AND  => X(rs1) & X(rs2),
     OR   => X(rs1) | X(rs2),
     XOR  => X(rs1) ^ X(rs2),
@@ -279,7 +279,7 @@ function extend_value(is_unsigned, value) = if is_unsigned then zero_extend(valu
 
 $[wavedrom "offset[11:0] base _ width dest LOAD"]
 mapping clause encdec = LOAD(imm, rs1, rd, is_unsigned, width)
-  <-> imm @ encdec_reg(rs1) @ bool_bits(is_unsigned) @ width_enc(width) @ encdec_reg(rd) @ 0b0000011
+  <-> imm @ encdec_reg(rs1) @ bool_bit(is_unsigned) @ width_enc(width) @ encdec_reg(rd) @ 0b0000011
   when valid_load_encdec(width, is_unsigned)
 
 function clause execute LOAD(imm, rs1, rd, is_unsigned, width) = {
@@ -647,7 +647,7 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
                            0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
                          },
     Machine           => { flush_TLB(asid, addr); RETIRE_SUCCESS },
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => Virtual_Instruction(),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 }

@@ -52,6 +52,7 @@ mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
 
 private function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
 
@@ -63,7 +64,7 @@ private function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_wi
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { // active segments
+    if mask[i] == 0b1 then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
@@ -129,7 +130,7 @@ private function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_
   var trimmed : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
     if not(trimmed) then {
-      if mask[i] == bitone then { // active segments
+      if mask[i] == 0b1 then { // active segments
         foreach (j from 0 to (nf - 1)) {
           let elem_offset = (i * nf + j) * load_width_bytes;
           match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Data), false, false, false) {
@@ -205,7 +206,7 @@ private function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_w
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { // active segments
+    if mask[i] == 0b1 then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
@@ -267,7 +268,7 @@ private function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_w
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { // active segments
+    if mask[i] == 0b1 then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
@@ -330,7 +331,7 @@ private function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_
   };
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { // active segments
+    if mask[i] == 0b1 then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
@@ -396,7 +397,7 @@ private function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_in
 
   // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { // active segments
+    if mask[i] == 0b1 then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
@@ -462,7 +463,7 @@ private function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_i
 
   // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then { // active segments
+    if mask[i] == 0b1 then { // active segments
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;

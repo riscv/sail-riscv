@@ -15,7 +15,7 @@ register nextPC   : xlenbits
 
 mapping encdec_reg : regidx <-> bits(5) = {
   forwards Regidx(r) => zero_extend(r),
-  backwards r if not(base_E_enabled) | r[4] == bitzero => Regidx(r[regidx_bit_width - 1 .. 0]),
+  backwards r if not(base_E_enabled) | r[4] == 0b0 => Regidx(r[regidx_bit_width - 1 .. 0]),
 }
 
 mapping encdec_creg : cregidx <-> bits(3) = { Cregidx(r) <-> r }

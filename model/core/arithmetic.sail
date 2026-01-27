@@ -20,7 +20,7 @@ val carryless_mul : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits(2 * 'n)
 function carryless_mul(a, b) = {
   var result : bits(2 * 'n) = zeros();
   foreach (i from 0 to ('n - 1)) {
-    if   a[i] == bitone
+    if   a[i] == 0b1
     then result = result ^ (zero_extend(b) << i);
   };
   result
@@ -31,7 +31,7 @@ val carryless_mulr : forall 'n, 'n > 0. (bits('n), bits('n)) -> bits('n)
 function carryless_mulr(a, b) = {
   var result : bits('n) = zeros();
   foreach (i from 0 to ('n - 1)) {
-    if   a[i] == bitone
+    if   a[i] == 0b1
     then result = result ^ (b >> ('n - i - 1));
   };
   result
@@ -80,7 +80,7 @@ val count_ones : forall 'n, 'n >= 0. (bits('n)) -> range(0, 'n)
 function count_ones(x) = {
   var count : range(0, 'n) = 0;
   foreach (i from 0 to ('n - 1)) {
-    if x[i] == bitone then {
+    if x[i] == 0b1 then {
       let new_count = count + 1;
       assert(new_count <= 'n);
       count = new_count;

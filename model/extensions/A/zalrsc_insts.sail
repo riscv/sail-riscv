@@ -24,7 +24,7 @@ function lrsc_width_valid(width : word_width) -> bool = {
 union clause instruction = LOADRES : (bool, bool, regidx, word_width, regidx)
 
 mapping clause encdec = LOADRES(aq, rl, rs1, width, rd)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
+  <-> 0b00010 @ bool_bit(aq) @ bool_bit(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
   when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(width)
 
 // We could set load-reservations on physical or virtual addresses.
@@ -40,7 +40,7 @@ function clause execute LOADRES(aq, rl, rs1, width, rd) = {
   // This is checked during decoding.
   assert(width <= xlen_bytes);
 
-  match vmem_read(rs1, zeros(), width, Load(Data), aq, aq & rl, true) {
+  match vmem_read(rs1, zeros(), width, LoadReserved(Data), aq, aq & rl, true) {
     Ok(data) => {
       X(rd) = sign_extend(data);
       RETIRE_SUCCESS
@@ -57,7 +57,7 @@ mapping clause assembly = LOADRES(aq, rl, rs1, width, rd)
 union clause instruction = STORECON : (bool, bool, regidx, regidx, word_width, regidx)
 
 mapping clause encdec = STORECON(aq, rl, rs2, rs1, width, rd)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
+  <-> 0b00011 @ bool_bit(aq) @ bool_bit(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
   when currentlyEnabled(Ext_Zalrsc) & lrsc_width_valid(width)
 
 // NOTE: Currently, we only EA if address translation is successful. This may need revisiting.
@@ -68,9 +68,9 @@ function clause execute STORECON(aq, rl, rs2, rs1, width, rd) = {
   // normal non-rmem case
   // RMEM: SC is allowed to succeed (but might fail later)
   let data = X(rs2)[width * 8 - 1 .. 0];
-  match vmem_write(rs1, zeros(), width, data, Store(Data), aq & rl, rl, true) {
+  match vmem_write(rs1, zeros(), width, data, StoreConditional(Data), aq & rl, rl, true) {
     Ok(b) => {
-      X(rd) = zero_extend(bool_bits(~(b)));
+      X(rd) = zero_extend(bool_bit(~(b)));
       cancel_reservation();
       RETIRE_SUCCESS
     },

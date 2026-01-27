@@ -43,17 +43,18 @@ function clause execute RIVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'm = SEW;
   let 'o = SEW_widen;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem_vs, vm, zvreg);
   let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
+
+  let mask : bits('n) = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let elem : bits('o) = match funct6 {
         IVV_VWREDSUMU  => to_bits_unsafe(SEW_widen, unsigned(vs2_val[i])),
         IVV_VWREDSUM   => to_bits_unsafe(SEW_widen, signed(vs2_val[i]))
@@ -97,8 +98,8 @@ mapping clause encdec = RMVVTYPE(funct6, vm, vs2, vs1, vd)
      | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64)
 
 function clause execute RMVVTYPE(funct6, vm, vs2, vs1, vd) = {
-  let SEW      = get_sew();
-  let LMUL_pow = get_lmul_pow();
+  let SEW         = get_sew();
+  let LMUL_pow    = get_lmul_pow();
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
 
@@ -110,17 +111,18 @@ function clause execute RMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'd = num_elem_vd;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem_vs, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem_vs, vm, zvreg);
   let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
-  let mask    : bits('n)     = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
+
+  let mask : bits('n) = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
   };
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       sum = match funct6 {
         MVV_VREDSUM   => sum + vs2_val[i],
         MVV_VREDAND   => sum & vs2_val[i],

@@ -29,6 +29,9 @@ set(project_file "riscv.sail_project")
 # Reconfigure if the project file changes.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${project_file})
 
+# Get a semicolon-separated list of source files. This is not strictly correct
+# because it will fail if a file contains a semicolon, but hopefully that's
+# quite unlikely.
 execute_process(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND
@@ -36,13 +39,11 @@ execute_process(
         ${project_file}
         --require-version ${SAIL_REQUIRED_VER}
         --all-modules
-        --list-files
-    OUTPUT_VARIABLE sail_list_files
+        --list-files-separated ";"
+    OUTPUT_VARIABLE sail_srcs
     OUTPUT_STRIP_TRAILING_WHITESPACE
     COMMAND_ERROR_IS_FATAL ANY
 )
-
-separate_arguments(sail_srcs UNIX_COMMAND "${sail_list_files}")
 
 ############# C++ #############
 

@@ -65,20 +65,24 @@ mapping architecture_bits : Architecture <-> arch_xlen = {
 type nom_priv_bits = bits(2)
 
 // virtualization modes
-type virt_mode_bit = bit
+type virt_mode_bit = bits(1)
 
 enum Privilege  = {User, VirtualUser, Supervisor, VirtualSupervisor, Machine}
 
 mapping privLevel_bits : (nom_priv_bits, virt_mode_bit) <-> Privilege = {
-  (0b00, bitzero) <-> User,
-  (0b00, bitone ) <-> VirtualUser,
-  (0b01, bitzero) <-> Supervisor,
-  (0b01, bitone ) <-> VirtualSupervisor,
-  (0b11, bitzero) <-> Machine,
+  (0b00, 0b0) <-> User,
+  (0b00, 0b1) <-> VirtualUser,
+  (0b01, 0b0) <-> Supervisor,
+  (0b01, 0b1) <-> VirtualSupervisor,
+  (0b11, 0b0) <-> Machine,
   forwards _       => internal_error(__FILE__, __LINE__, "Invalid privilege level or virtual mode"),
 }
 
 function privLevel_to_bits(p : Privilege) -> nom_priv_bits = { let (p, _) = privLevel_bits(p); p }
+
+function privLevel_to_virt_bit(p : Privilege) -> virt_mode_bit = { let (_, v) = privLevel_bits(p); v }
+
+function privLevel_is_virtual(p : Privilege) -> bool = p == VirtualSupervisor | p == VirtualUser
 
 function privLevel_to_str (p : Privilege) -> string =
   match (p) {
@@ -93,77 +97,94 @@ overload to_str = {privLevel_to_str}
 
 // memory access types
 
+union cacheop = {
+  CB_manage   : cbop_zicbom,
+  CB_zero     : unit,
+  CB_prefetch : cbop_zicbop,
+}
+
 union MemoryAccessType ('a : Type) = {
   Load             : 'a,
   Store            : 'a,
-  LoadStore        : ('a, 'a),
-  InstructionFetch : unit
+  LoadReserved     : 'a,
+  StoreConditional : 'a,
+  Atomic           : (amoop, 'a, 'a),
+  InstructionFetch : unit,
+  CacheAccess      : cacheop
 }
 
-// CSR access types
-
-enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
-
-// Some features only affect loads/stores; not instruction fetch.
+// Some useful predicates on the kind of memory access
 function is_load_store forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
   match access {
     Load(_)             => true,
     Store(_)            => true,
-    LoadStore(_)        => true,
+    LoadReserved(_)     => true,
+    StoreConditional(_) => true,
+    Atomic(_)           => true,
     InstructionFetch(_) => false,
+    CacheAccess(_)      => true,
   }
+
+function is_prefetch_access forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
+  match access {
+    CacheAccess(CB_prefetch(_)) => true,
+    _ => false,
+  }
+
+// CSR access types
+enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
 
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
 
 // architectural interrupt definitions
 
 enum InterruptType = {
-  I_U_Software,
+  I_Reserved_0,
   I_S_Software,
+  I_VS_Software,
   I_M_Software,
-  // I_VS_Software,
-  I_U_Timer,
+  I_Reserved_4,
   I_S_Timer,
-  // I_VS_Timer,
+  I_VS_Timer,
   I_M_Timer,
-  I_U_External,
+  I_Reserved_8,
   I_S_External,
-  // I_VS_External,
+  I_VS_External,
   I_M_External,
-  // I_G_External,
+  I_SG_External,
 }
 
 mapping interruptType_bits : InterruptType <-> exc_code = {
-  I_U_Software <-> 0b000000, // 0
-  I_S_Software <-> 0b000001, // 1
-  // I_VS_Software <-> 0b00010, // 2
-  I_M_Software <-> 0b000011, // 3
-  I_U_Timer    <-> 0b000100, // 4
-  I_S_Timer    <-> 0b000101, // 5
-  // I_VS_Timer    <-> 0b00110, // 6
-  I_M_Timer    <-> 0b000111, // 7
-  I_U_External <-> 0b001000, // 8
-  I_S_External <-> 0b001001, // 9
-  // I_VS_External <-> 0b001010, // 10
-  I_M_External <-> 0b001011, // 11
-  // I_G_External  <-> 0b001100, // 12
+  I_Reserved_0   <-> 0b000000, // 0
+  I_S_Software   <-> 0b000001, // 1
+  I_VS_Software  <-> 0b000010, // 2
+  I_M_Software   <-> 0b000011, // 3
+  I_Reserved_4   <-> 0b000100, // 4
+  I_S_Timer      <-> 0b000101, // 5
+  I_VS_Timer     <-> 0b000110, // 6
+  I_M_Timer      <-> 0b000111, // 7
+  I_Reserved_8   <-> 0b001000, // 8
+  I_S_External   <-> 0b001001, // 9
+  I_VS_External  <-> 0b001010, // 10
+  I_M_External   <-> 0b001011, // 11
+  I_SG_External  <-> 0b001100, // 12
 }
 
 function interruptType_to_str(i : InterruptType) -> string =
   match (i) {
-    I_U_Software  => "user-software-interrupt",
+    I_Reserved_0  => "reserved-interrupt-0",
     I_S_Software  => "supervisor-software-interrupt",
-    // I_VS_Software => "virtual-supervisor-software-interrupt",
+    I_VS_Software => "virtual-supervisor-software-interrupt",
     I_M_Software  => "machine-software-interrupt",
-    I_U_Timer     => "user-timer-interrupt",
+    I_Reserved_4  => "reserved-interrupt-4",
     I_S_Timer     => "supervisor-timer-interrupt",
-    // I_VS_Timer    => "virtual-supervisor-timer-interrupt",
+    I_VS_Timer    => "virtual-supervisor-timer-interrupt",
     I_M_Timer     => "machine-timer-interrupt",
-    I_U_External  => "user-external-interrupt",
+    I_Reserved_8  => "reserved-interrupt-8",
     I_S_External  => "supervisor-external-interrupt",
-    // I_VS_External => "virtual-supervisor-external-interrupt",
+    I_VS_External => "virtual-supervisor-external-interrupt",
     I_M_External  => "machine-external-interrupt",
-    // I_G_External  => "guest-external-interrupt"
+    I_SG_External => "supervisor guest-external-interrupt"
   }
 
 overload to_str = {interruptType_to_str}
@@ -183,7 +204,7 @@ union ExceptionType = {
   E_SAMO_Access_Fault  : unit,
   E_U_EnvCall          : unit,
   E_S_EnvCall          : unit,
-  E_Reserved_10        : unit,
+  E_VS_EnvCall         : unit,
   E_M_EnvCall          : unit,
   E_Fetch_Page_Fault   : unit,
   E_Load_Page_Fault    : unit,
@@ -193,12 +214,10 @@ union ExceptionType = {
   E_Reserved_17        : unit,
   E_Software_Check     : unit,
   E_Reserved_19        : unit,
-  // Hypervisor extension guest page faults (codes 20, 21, 23)
-  // Used by SPMP when V=1 and hgatp.MODE=Bare
-  E_Fetch_Guest_Page_Fault : unit,  // 20
-  E_Load_Guest_Page_Fault  : unit,  // 21
-  E_Reserved_20             : unit,  // 22 (VS-mode environment call)
-  E_SAMO_Guest_Page_Fault  : unit,  // 23
+  E_Fetch_GPage_Fault  : unit,
+  E_Load_GPage_Fault   : unit,
+  E_Virtual_Instr      : unit,
+  E_SAMO_GPage_Fault   : unit,
 
   // extensions
   E_Extension          : ext_exc_type
@@ -214,7 +233,7 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_SAMO_Access_Fault()  <-> 0b000111, // 7
   E_U_EnvCall()          <-> 0b001000, // 8
   E_S_EnvCall()          <-> 0b001001, // 9
-  E_Reserved_10()        <-> 0b001010, // 10
+  E_VS_EnvCall()         <-> 0b001010, // 10
   E_M_EnvCall()          <-> 0b001011, // 11
   E_Fetch_Page_Fault()   <-> 0b001100, // 12
   E_Load_Page_Fault()    <-> 0b001101, // 13
@@ -224,11 +243,10 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Reserved_17()        <-> 0b010001, // 17
   E_Software_Check()     <-> 0b010010, // 18
   E_Reserved_19()        <-> 0b010011, // 19
-  // Hypervisor extension guest page faults
-  E_Fetch_Guest_Page_Fault() <-> 0b010100, // 20
-  E_Load_Guest_Page_Fault()  <-> 0b010101, // 21
-  E_Reserved_20()            <-> 0b010110, // 22
-  E_SAMO_Guest_Page_Fault()  <-> 0b010111, // 23
+  E_Fetch_GPage_Fault()  <-> 0b010100, // 20
+  E_Load_GPage_Fault()   <-> 0b010101, // 21
+  E_Virtual_Instr()      <-> 0b010110, // 22
+  E_SAMO_GPage_Fault()   <-> 0b010111, // 23
 
   // breakpoints
   E_Breakpoint(Brk_Software) <-> 0b000011, // 3
@@ -249,7 +267,7 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_SAMO_Access_Fault()  => "store/amo-access-fault",
     E_U_EnvCall()          => "u-call",
     E_S_EnvCall()          => "s-call",
-    E_Reserved_10()        => "reserved-0",
+    E_VS_EnvCall()         => "vs-call",
     E_M_EnvCall()          => "m-call",
     E_Fetch_Page_Fault()   => "fetch-page-fault",
     E_Load_Page_Fault()    => "load-page-fault",
@@ -258,12 +276,12 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_Reserved_16()        => "reserved-2",
     E_Reserved_17()        => "reserved-3",
     E_Software_Check()     => "software-check-fault",
-    E_Reserved_19()        => "reserved-4",
-    // Guest page faults (Hypervisor extension)
-    E_Fetch_Guest_Page_Fault() => "fetch-guest-page-fault",
-    E_Load_Guest_Page_Fault()  => "load-guest-page-fault",
-    E_Reserved_20()            => "reserved-5",
-    E_SAMO_Guest_Page_Fault()  => "store/amo-guest-page-fault",
+
+    E_Reserved_19()        => "reserved-19",
+    E_Fetch_GPage_Fault()  => "fetch-guest-page-fault",
+    E_Load_GPage_Fault()   => "load-guest-page-fault",
+    E_Virtual_Instr()      => "virtual-instruction",
+    E_SAMO_GPage_Fault()   => "store/amo-guest-page-fault",
 
     // breakpoints
     E_Breakpoint(Brk_Software) => "software-breakpoint",

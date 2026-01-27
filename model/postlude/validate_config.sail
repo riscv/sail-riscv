@@ -287,6 +287,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_required_sstvala_option("hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
     valid = valid & check_required_sstvala_option("illegal instruction exceptions", illegal_instruction_writes_xtval);
   };
+  if hartSupports(Ext_Ssqosid) & not(hartSupports(Ext_Zicsr)) then {
+    valid = false;
+    print_endline("The Ssqosid extensions is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
+  };
   valid
 }
 
@@ -306,6 +310,21 @@ private function check_extension_param_constraints() -> bool = {
   valid
 }
 
+private function check_stateen_config() -> bool = {
+  if not(hartSupports(Ext_Smstateen)) & not(hartSupports(Ext_Ssstateen)) then return true;
+  var valid : bool = true;
+  if config extensions.Stateen.SE0_readonly_zero : bool & hartSupports(Ext_H) then {
+    valid = false;
+    print_endline("Stateen SE0_readonly_zero is true but H extension is supported: SE0 must be writable when H is implemented.");
+  };
+  // TODO: Update when Zcmt is implemented
+  if config extensions.Stateen.SE0_readonly_zero : bool & (hartSupports(Ext_Zfinx) | not(config extensions.Stateen.C_readonly_zero : bool)) then {
+    valid = false;
+    print_endline("Stateen SE0_readonly_zero is true but sstateen0 has writable bits (FCSR due to Zfinx support or C due to disabled C_readonly_zero): SE0 must be writable.");
+  };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -315,4 +334,5 @@ function config_is_valid() -> bool = {
   & check_pmp()
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
+  & check_stateen_config()
 }

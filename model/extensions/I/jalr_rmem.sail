@@ -13,6 +13,6 @@ function clause execute JALR(imm, rs1, rd) = {
   // write rd before anything else to prevent unintended strength
   X(rd) = nextPC; // compatible with JALR, C.JR and C.JALR
   let newPC : xlenbits = X(rs1) + sign_extend(imm);
-  nextPC = [newPC with 0 = bitzero];  // Clear newPC[0]
+  nextPC = [newPC with 0 = 0b0];  // Clear newPC[0]
   RETIRE_SUCCESS
 }

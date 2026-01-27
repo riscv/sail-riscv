@@ -51,7 +51,7 @@ function clause execute MMTYPE(funct6, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = match funct6 {
         MM_VMAND     => (vs2_val & vs1_val)[i],
         MM_VMNAND    => ~(vs2_val & vs1_val)[i],
@@ -112,7 +112,7 @@ function clause execute VCPOP_M(vm, vs2, rd) = {
 
   var count : nat = 0;
   foreach (i from 0 to (num_elem - 1)) {
-    if (mask & vs2_val)[i] == bitone then count = count + 1;
+    if (mask & vs2_val)[i] == 0b1 then count = count + 1;
   };
 
   X(rd) = to_bits_unsafe(xlen, count);
@@ -152,7 +152,7 @@ function clause execute VFIRST_M(vm, vs2, rd) = {
   var index : int = -1;
   foreach (i from 0 to (num_elem - 1)) {
     if index == -1 then {
-      if (mask & vs2_val)[i] == bitone then index = i;
+      if (mask & vs2_val)[i] == 0b1 then index = i;
     };
   };
 
@@ -195,8 +195,8 @@ function clause execute VMSBF_M(vm, vs2, vd) = {
 
   var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
-      if vs2_val[i] == bitone then found_elem = true;
+    if mask[i] == 0b1 then {
+      if vs2_val[i] == 0b1 then found_elem = true;
       result[i] = bool_to_bit(not(found_elem))
     }
   };
@@ -240,9 +240,9 @@ function clause execute VMSIF_M(vm, vs2, vd) = {
 
   var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = bool_to_bit(not(found_elem));
-      if vs2_val[i] == bitone then found_elem = true
+      if vs2_val[i] == 0b1 then found_elem = true
     }
   };
 
@@ -285,12 +285,12 @@ function clause execute VMSOF_M(vm, vs2, vd) = {
 
   var found_elem : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
-      if (vs2_val[i] == bitone) & not(found_elem) then {
-        result[i] = bitone;
+    if mask[i] == 0b1 then {
+      if (vs2_val[i] == 0b1) & not(found_elem) then {
+        result[i] = 0b1;
         found_elem = true
       } else {
-        result[i] = bitzero
+        result[i] = 0b0
       }
     }
   };
@@ -322,8 +322,8 @@ function clause execute VIOTA_M(vm, vs2, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
-  let vs2_val : bits('n)     = read_vmask(num_elem, 0b0, vs2);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
+  let vs2_val : bits('n)             = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
@@ -334,9 +334,9 @@ function clause execute VIOTA_M(vm, vs2, vd) = {
 
   var sum : int = 0;
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = to_bits_unsafe(SEW, sum);
-      if vs2_val[i] == bitone then sum = sum + 1
+      if vs2_val[i] == 0b1 then sum = sum + 1
     }
   };
 
@@ -366,7 +366,7 @@ function clause execute VID_V(vm, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)     = read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
@@ -376,7 +376,7 @@ function clause execute VID_V(vm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then result[i] = to_bits_unsafe(SEW, i)
+    if mask[i] == 0b1 then result[i] = to_bits_unsafe(SEW, i)
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);

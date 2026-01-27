@@ -83,7 +83,7 @@ unit PlatformInterface::trap_callback([[maybe_unused]] bool is_interrupt, [[mayb
 
 unit PlatformInterface::ptw_start_callback(
   [[maybe_unused]] uint64_t vpn,
-  [[maybe_unused]] hart::zMemoryAccessTypezIuzK access_type,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
   [[maybe_unused]] hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
 ) {
   return UNIT;

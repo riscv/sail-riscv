@@ -69,7 +69,7 @@ let MTIMECMP_BASE_HI : physaddrbits = zero_extend(0x04004)
 let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
 let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
 
-private val clint_load : forall 'n, 'n > 0. (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+private val clint_load : forall 'n, 'n > 0. (MemoryAccessType(mem_payload), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function clint_load(access, Physaddr(addr), width) = {
   let addr = addr - plat_clint_base;
   // FIXME: For now, only allow exact aligned access.
@@ -126,9 +126,9 @@ function clint_load(access, Physaddr(addr), width) = {
 }
 
 private function clint_dispatch() -> unit = {
-  mip[MTI] = bool_to_bits(mtimecmp <=_u mtime);
+  mip[MTI] = bool_to_bit(mtimecmp <=_u mtime);
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
-    mip[STI] = bool_to_bits(stimecmp <=_u mtime);
+    mip[STI] = bool_to_bit(stimecmp <=_u mtime);
   };
   if get_config_print_clint()
   then print_log("clint mtime " ^ bits_str(mtime) ^ " (mip.MTI <- " ^ bits_str(mip[MTI]) ^
@@ -229,12 +229,12 @@ register htif_exit_code : bits(64)
 // intervening write to the control bytes, we process the whole htif
 // command anyway.
 
-register htif_cmd_write : bit
+register htif_cmd_write : bits(1)
 register htif_payload_writes : bits(4)
 
 // Once a htif command has been processed, the port is reset.
 private function reset_htif () -> unit = {
-  htif_cmd_write = bitzero;
+  htif_cmd_write = 0b0;
   htif_payload_writes = 0x0;
   htif_tohost = zeros();
 }
@@ -243,7 +243,7 @@ private function reset_htif () -> unit = {
 // we'll assume here that physical memory model has correctly
 // dispatched the address.
 
-private val htif_load : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(ext_access_type), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+private val htif_load : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function htif_load(access, Physaddr(paddr), width) = {
   if   get_config_print_htif()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ bits_str(htif_tohost));
@@ -276,7 +276,7 @@ function htif_store(Physaddr(paddr), width, data) = {
   // Store the written value so that we can ack it later.
   // Only aligned 4-byte and 8-byte accesses are supported.
   if      width == 8 & paddr == base
-  then    { htif_cmd_write = bitone;
+  then    { htif_cmd_write = 0b1;
             htif_payload_writes = htif_payload_writes + 1;
             htif_tohost = zero_extend(data) }
   else if width == 4 & paddr == base
@@ -288,13 +288,13 @@ function htif_store(Physaddr(paddr), width, data) = {
   then    { if   data[15 .. 0] == htif_tohost[47 .. 32]
             then htif_payload_writes = htif_payload_writes + 1
             else htif_payload_writes = 0x1;
-            htif_cmd_write = bitone;
+            htif_cmd_write = 0b1;
             htif_tohost = vector_update_subrange(htif_tohost, 63, 32, data) }
   else return Err(E_SAMO_Access_Fault());
 
   // Execute if there were repeated writes of the same payload without
   // a cmd (e.g. in riscv-tests), or we have a complete htif command.
-  if   (((htif_cmd_write == bitone) & (unsigned(htif_payload_writes) > 0))
+  if   (((htif_cmd_write == 0b1) & (unsigned(htif_payload_writes) > 0))
         | (unsigned(htif_payload_writes) > 2))
   then {
     let cmd = Mk_htif_cmd(htif_tohost);
@@ -302,7 +302,7 @@ function htif_store(Physaddr(paddr), width, data) = {
       0x00 => { // syscall-proxy
         if   get_config_print_htif()
         then print_log("htif-syscall-proxy cmd: " ^ bits_str(cmd[payload]));
-        if   cmd[payload][0] == bitone
+        if   cmd[payload][0] == 0b1
         then {
              htif_done = true;
              htif_exit_code = (zero_extend(64, cmd[payload]) >> 1)
@@ -337,7 +337,7 @@ function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : phys
   then false
   else within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessType(ext_access_type), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
+function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessType(mem_payload), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
   then clint_load(access, paddr, width)
   else if within_htif_readable(paddr, width)
@@ -357,7 +357,7 @@ function init_platform() -> unit = {
   htif_tohost = zeros();
   htif_done   = false;
   htif_exit_code = zeros();
-  htif_cmd_write = bitzero;
+  htif_cmd_write = 0b0;
   htif_payload_writes = zeros();
 }
 

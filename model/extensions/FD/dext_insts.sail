@@ -100,14 +100,14 @@ function f_is_pos_inf_D(x64 : bits(64)) -> bool = {
 function f_is_SNaN_D(x64 : bits(64)) -> bool = {
   let (sign, exp, mant) = fsplit_D (x64);
   (  (exp == ones())
-   & (mant [51] == bitzero)
+   & (mant [51] == 0b0)
    & (mant != zeros()))
 }
 
 function f_is_QNaN_D(x64 : bits(64)) -> bool = {
   let (sign, exp, mant) = fsplit_D (x64);
   (  (exp == ones())
-   & (mant [51] == bitone))
+   & (mant [51] == 0b1))
 }
 
 // Either QNaN or SNan
@@ -219,7 +219,11 @@ val validDoubleRegs : forall 'n, 'n > 0. (implicit('n), vector('n, fregidx)) -> 
 function validDoubleRegs(n, regs) = {
   if currentlyEnabled(Ext_Zdinx) & xlen == 32 then {
     foreach (i from 0 to (n - 1)) {
-      if (fregidx_bits(regs[i])[0] == bitone) then return false;
+      if fregidx_bits(regs[i])[0] == 0b1
+      then match rv32zdinx_odd_register_reserved_behavior {
+        Zdinx_Fatal  => reserved_behavior("RV32Zdinx used odd-numbered register " ^ dec_str(unsigned(fregidx_bits(regs[i])))),
+        Zdinx_Illegal => return false,
+      }
     }
   };
   true
@@ -759,7 +763,7 @@ function clause execute F_BIN_X_TYPE_D(rs2, rs1, rd, FEQ_D) = {
       riscv_f64Eq (rs1_val_D, rs2_val_D);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -771,7 +775,7 @@ function clause execute F_BIN_X_TYPE_D(rs2, rs1, rd, FLT_D) = {
       riscv_f64Lt (rs1_val_D, rs2_val_D);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 
@@ -783,7 +787,7 @@ function clause execute F_BIN_X_TYPE_D(rs2, rs1, rd, FLE_D) = {
       riscv_f64Le (rs1_val_D, rs2_val_D);
 
   accrue_fflags(fflags);
-  X(rd) = zero_extend(bool_to_bits(rd_val));
+  X(rd) = zero_extend(bool_to_bit(rd_val));
   RETIRE_SUCCESS
 }
 

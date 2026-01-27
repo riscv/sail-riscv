@@ -220,7 +220,7 @@ union clause instruction = C_SRLI : (bits(6), cregidx)
 // c.srli with shamt=0 are hints.
 mapping clause encdec_compressed = C_SRLI(shamt, rsd)
   <-> 0b100 @ shamt[5] @ 0b00 @ encdec_creg(rsd) @ shamt[4..0] @ 0b01
-  when (xlen == 64 | shamt[5] == bitzero) & currentlyEnabled(Ext_Zca)
+  when (xlen == 64 | shamt[5] == 0b0) & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SRLI(shamt, rsd) = {
   let rsd = creg2reg_idx(rsd);
@@ -236,7 +236,7 @@ union clause instruction = C_SRAI : (bits(6), cregidx)
 // c.srai with shamt=0 are hints.
 mapping clause encdec_compressed = C_SRAI(shamt, rsd)
   <-> 0b100 @ shamt[5] @ 0b01 @ encdec_creg(rsd) @ shamt[4..0] @ 0b01
-  when (xlen == 64 | shamt[5] == bitzero) & currentlyEnabled(Ext_Zca)
+  when (xlen == 64 | shamt[5] == 0b0) & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SRAI(shamt, rsd) = {
   let rsd = creg2reg_idx(rsd);
@@ -406,7 +406,7 @@ union clause instruction = C_SLLI : (bits(6), regidx)
 $[wavedrom "C.SLLI shamt[5] dest!=0 shamt[4:0] C2"]
 mapping clause encdec_compressed = C_SLLI(shamt, rsd)
   <-> 0b000 @ shamt[5] @ encdec_reg(rsd) @ shamt[4..0] @ 0b10
-  when (xlen == 64 | shamt[5] == bitzero) & currentlyEnabled(Ext_Zca)
+  when (xlen == 64 | shamt[5] == 0b0) & currentlyEnabled(Ext_Zca)
 
 function clause execute C_SLLI(shamt, rsd) =
   ExecuteAs(SHIFTIOP(shamt, rsd, rsd, SLLI))

@@ -20,6 +20,7 @@ function clause execute (VFNCVTBF16_F_F_W(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -45,7 +46,7 @@ function clause execute (VFNCVTBF16_F_F_W(vm, vs2, vd)) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let (fflags, elem) = riscv_f32ToBF16(rm_3b, vs2_val[i]);
       accrue_fflags(fflags);
       result[i] = elem;
@@ -72,6 +73,7 @@ function clause execute (VFWCVTBF16_F_F_V(vm, vs2, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -97,7 +99,7 @@ function clause execute (VFWCVTBF16_F_F_V(vm, vs2, vd)) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = bf16_to_f32_set_flags(vs2_val[i]);
     }
   };

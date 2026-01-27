@@ -170,7 +170,9 @@ For booting operating system images, see the information under the
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
+- Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
+- Ssqosid extension for Quality-of-Service (QoS) Identifiers, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Sstvala extension for `stval` provides all needed values, v1.0
 - Sstvecd extension for Direct mode support in `stvec.MODE`, v1.0
@@ -218,8 +220,8 @@ function clause execute ITYPE(imm, rs1, rd, op) = {
   let immext : xlenbits = sign_extend(imm);
   X(rd) = match op {
     ADDI  => X(rs1) + immext,
-    SLTI  => zero_extend(bool_to_bits(X(rs1) <_s immext)),
-    SLTIU => zero_extend(bool_to_bits(X(rs1) <_u immext)),
+    SLTI  => zero_extend(bool_to_bit(X(rs1) <_s immext)),
+    SLTIU => zero_extend(bool_to_bit(X(rs1) <_u immext)),
     ANDI  => X(rs1) & immext,
     ORI   => X(rs1) | immext,
     XORI  => X(rs1) ^ immext

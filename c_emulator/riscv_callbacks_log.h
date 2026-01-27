@@ -26,7 +26,7 @@ public:
   void ptw_start_callback(
     hart::Model &model,
     uint64_t vpn,
-    hart::zMemoryAccessTypezIuzK access_type,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
     hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
   ) override;
   void ptw_step_callback(hart::Model &model, int64_t level, sbits pte_addr, uint64_t pte) override;

@@ -31,7 +31,7 @@ private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(
     width <= xlen_bytes | (
       (op == AMOCAS & width <= xlen_bytes * 2)
       &
-      (if   rs2[0] == bitone | rd[0] == bitone
+      (if   rs2[0] == 0b1 | rd[0] == 0b1
        then match amocas_odd_register_reserved_behavior {
          AMOCAS_Fatal   => reserved_behavior("AMOCAS.D/Q used odd-numbered register"),
          AMOCAS_Illegal => false,
@@ -57,7 +57,7 @@ mapping encdec_amoop : amoop <-> bits(5) = {
 }
 
 mapping clause encdec = AMO(op, aq, rl, rs2, rs1, size, rd)
-  <-> encdec_amoop(op) @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ width_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
+  <-> encdec_amoop(op) @ bool_bit(aq) @ bool_bit(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ width_enc_wide(size) @ encdec_reg(rd) @ 0b0101111
   when amo_encoding_valid(size, op, rs2, rd)
 
 // NOTE: Currently, we only EA if address translation is successful.
@@ -69,9 +69,11 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   // This is checked during decoding.
   assert(width <= xlen_bytes * 2);
 
+  let access = Atomic(op, Data, Data);
+
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
-  let vaddr : virtaddr = match ext_data_get_addr(rs1, zeros(), LoadStore(Data, Data), width) {
+  let vaddr : virtaddr = match ext_data_get_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
@@ -79,7 +81,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   if not(is_aligned_addr(vaddr, width))
   then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
 
-  let addr : physaddr = match translateAddr(vaddr, LoadStore(Data, Data)) {
+  let addr : physaddr = match translateAddr(vaddr, access) {
     Err(e, _) => return Memory_Exception(vaddr, e),
     Ok(addr, _) => addr,
   };
@@ -91,7 +93,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
 
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, aq & rl, rl, true) {
     Err(e) => return Memory_Exception(vaddr, e),
-    Ok(_)  => match mem_read(LoadStore(Data, Data), addr, width, aq, aq & rl, true) {
+    Ok(_)  => match mem_read(access, addr, width, aq, aq & rl, true) {
       Err(e)     => return Memory_Exception(vaddr, e),
       Ok(loaded) => loaded,
     },

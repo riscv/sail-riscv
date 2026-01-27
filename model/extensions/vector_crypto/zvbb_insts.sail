@@ -39,7 +39,7 @@ function clause execute VANDN_VV(vm, vs1, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then
+    if mask[i] == 0b1 then
       result[i] = ~(vs1_val[i]) & vs2_val[i];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -77,7 +77,7 @@ function clause execute VANDN_VX(vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem- 1)) {
-    if mask[i] == bitone then
+    if mask[i] == 0b1 then
       result[i] = ~(rs1_val) & vs2_val[i];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -114,7 +114,7 @@ function clause execute VBREV_V(vm, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       var output : bits('m) = zeros();
       foreach (j from 0 to (SEW - 1))
         output[SEW - 1 - j] = vs2_val[i][j];
@@ -144,7 +144,7 @@ function clause execute VBREV8_V(vm, vs2, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
-  let vm_val  : bits('n)= read_vmask(num_elem, vm, zvreg);
+  let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
@@ -155,7 +155,7 @@ function clause execute VBREV8_V(vm, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = brev8(vs2_val[i]);
     };
   };
@@ -193,7 +193,7 @@ function clause execute VREV8_V(vm, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = rev8(vs2_val[i]);
     };
   };
@@ -231,7 +231,7 @@ function clause execute VCLZ_V(vm, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let clz = count_leading_zeros(vs2_val[i]);
       result[i] = to_bits(clz);
     };
@@ -270,7 +270,7 @@ function clause execute VCTZ_V(vm, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let ctz = count_trailing_zeros(vs2_val[i]);
       result[i] = to_bits(ctz);
     };
@@ -309,9 +309,9 @@ function clause execute VCPOP_V(vm, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       foreach (j from 0 to (SEW - 1)) {
-        if vs2_val[i][j] == bitone then {
+        if vs2_val[i][j] == 0b1 then {
           result[i] = result[i] + 1;
         };
       }
@@ -353,7 +353,7 @@ function clause execute VROL_VV(vm, vs1, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then
+    if mask[i] == 0b1 then
       result[i] = vs2_val[i] <<< vs1_val[i][SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -392,7 +392,7 @@ function clause execute VROL_VX(vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then
+    if mask[i] == 0b1 then
       result[i] = vs2_val[i] <<< rs1_val[SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -431,7 +431,7 @@ function clause execute VROR_VV(vm, vs1, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then
+    if mask[i] == 0b1 then
       result[i] = vs2_val[i] >>> vs1_val[i][SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -470,7 +470,7 @@ function clause execute VROR_VX(vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then
+    if mask[i] == 0b1 then
       result[i] = vs2_val[i] >>> rs1_val[SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -509,7 +509,7 @@ function clause execute VROR_VI(vm, vs2, uimm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then
+    if mask[i] == 0b1 then
       result[i] = vs2_val[i] >>> uimm_val[SEW_pow - 1 .. 0];
   };
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
@@ -559,7 +559,7 @@ function clause execute VWSLL_VV(vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let vs1_val : bits('o) = zero_extend(vs1_val_vec[i]);
       let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
       result[i] = vs2_val << (vs1_val & zero_extend(SEW_widen_bits - 1));
@@ -611,7 +611,7 @@ function clause execute VWSLL_VX(vm, vs2, rs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
       result[i] = vs2_val << (rs1_val & zero_extend(SEW_widen_bits - 1));
     };
@@ -662,7 +662,7 @@ function clause execute VWSLL_VI(vm, vs2, uimm, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
         let vs2_val : bits('o) = zero_extend(vs2_val_vec[i]);
         result[i] = vs2_val << (uimm_val & zero_extend(SEW_widen_bits - 1));
     };

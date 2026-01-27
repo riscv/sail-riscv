@@ -31,7 +31,7 @@ union clause instruction = RORI : (bits(6), regidx, regidx)
 $[wavedrom "RORI _ _ RORI _ OP-IMM"]
 mapping clause encdec = RORI(shamt, rs1, rd)
   <-> 0b011000 @ shamt @ encdec_reg(rs1) @ 0b101 @ encdec_reg(rd) @ 0b0010011
-  when (currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)) & (xlen == 64 | shamt[5] == bitzero)
+  when (currentlyEnabled(Ext_Zbb) | currentlyEnabled(Ext_Zbkb)) & (xlen == 64 | shamt[5] == 0b0)
 
 mapping clause assembly = RORI(shamt, rs1, rd)
   <-> "rori" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ hex_bits_6(shamt)

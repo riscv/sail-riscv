@@ -35,7 +35,15 @@
       // The configuration option determines how to handle the reserved behavior `pmpcfg_with_R0W1`.
       // "PMP_Fatal"  – raise a Sail exception, stopping execution.
       // "PMP_ClearPermissions" – convert a PMP entry with R=0, W=1 to R=0, W=0, X=0.
-      "pmpcfg_write_only": "PMP_ClearPermissions"
+      "pmpcfg_write_only": "PMP_ClearPermissions",
+      // The configuration option determines how to handle the reserved behavior `xenvcfg.CBIE` with 0b10.
+      // "Xenvcfg_Fatal"  – raise a Sail exception, stopping execution.
+      // "Xenvcfg_ClearPermissions" – convert CBIE with 0b10 to 0b00.
+      "xenvcfg_cbie": "Xenvcfg_ClearPermissions",
+      // The configuration option determines how to handle the reserved behavior: Odd-numbered registers for RV32Zdinx.
+      // "Zdinx_Fatal"  – raise a Sail exception, stopping execution.
+      // "Zdinx_Illegal" – treat it as an illegal instruction.
+      "rv32zdinx_odd_register": "Zdinx_Illegal"
     }
   },
   "memory": {
@@ -407,9 +415,6 @@
     "Sscofpmf": {
       "supported": true
     },
-    "Smcntrpmf": {
-      "supported": true
-    },
     "Sstc": {
       "supported": true
     },
@@ -423,6 +428,9 @@
     },
     "Svrsw60t59b": {
       "supported": @CONFIG_XLEN_IS_64@
+    },
+    "Smcntrpmf": {
+      "supported": true
     },
     "Svbare": {
       "supported": true,
@@ -439,6 +447,21 @@
     },
     "Sv57": {
       "supported": @CONFIG_XLEN_IS_64@
+    },
+    "Stateen": {
+      "Smstateen": {
+        "supported": true
+      },
+      "Ssstateen": {
+        "supported": true
+      },
+      "C_readonly_zero": true,
+      "SE0_readonly_zero": false
+    },
+    "Ssqosid": {
+      "supported": true,
+      "rcid_length": 12,
+      "mcid_length": 12
     }
   }
 }

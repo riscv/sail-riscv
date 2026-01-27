@@ -20,6 +20,7 @@ function clause execute VFWMACCBF16_VV(vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
@@ -47,7 +48,7 @@ function clause execute VFWMACCBF16_VV(vm, vs2, vs1, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), bf16_to_f32_set_flags(vs1_val[i]), vd_val[i]);
     }
   };
@@ -72,8 +73,10 @@ function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
+
   assert(LMUL_pow_widen <= 3);
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
@@ -99,7 +102,7 @@ function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   let rs1_val = bf16_to_f32_set_flags(F_BF16(rs1));
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == bitone then {
+    if mask[i] == 0b1 then {
       result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), rs1_val, vd_val[i]);
     }
   };

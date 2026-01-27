@@ -40,9 +40,9 @@ function clause execute VGHSH_VV(vs2, vs1, vd) = {
     let S : bits(128) = brev8(Y ^ X);
 
     foreach (b from 0 to 127) {
-      if S[b] == bitone then Z = Z ^ H;
+      if S[b] == 0b1 then Z = Z ^ H;
 
-      let reduce = H[127] == bitone;
+      let reduce = H[127] == 0b1;
       H = H << 1;
       if reduce then H = H[127..8] @ (H[7..0] ^ 0x87);
     };
@@ -85,9 +85,9 @@ function clause execute VGMUL_VV(vs2, vd) = {
     var Z : bits(128) = zeros();
 
     foreach (b from 0 to 127) {
-      if Y[b] == bitone then Z = Z ^ H;
+      if Y[b] == 0b1 then Z = Z ^ H;
 
-      let reduce = H[127] == bitone;
+      let reduce = H[127] == 0b1;
       H = H << 1;
       if reduce then H = H[127..8] @ (H[7..0] ^ 0x87);
     };
