@@ -679,6 +679,9 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvfbfmin,
   Ext_Zvfbfwma,
 
+  // Zvdot
+  Ext_Zvdot4a8i,
+
   // Zvfh
   Ext_Zvfh,
   Ext_Zvfhmin,
