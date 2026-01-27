@@ -29,7 +29,7 @@ private function privLevel_to_CSR_privbits(p : Privilege) -> nom_priv_bits =
     User              => 0b00,
     VirtualUser       => 0b00,
     Supervisor        => if currentlyEnabled(Ext_H) then 0b10 else 0b01,
-    VirtualSupervisor => 0b10,
+    VirtualSupervisor => 0b01,
     Machine           => 0b11,
   }
 
