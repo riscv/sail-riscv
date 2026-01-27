@@ -175,13 +175,15 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   width : int('n),
   res_or_con : bool,
 ) -> option(ExceptionType) = {
+  let spmpError : option(ExceptionType) = spmpCheck(paddr, width, access, priv);
   let pmpError : option(ExceptionType) = pmpCheck(paddr, width, access, priv);
   let pmaError : option(ExceptionType) = pmaCheck(paddr, width, access, res_or_con);
-  match (pmpError, pmaError) {
-    (None(), None())     => None(),
-    (Some(e), None())    => Some(e),
-    (None(), Some(e))    => Some(e),
-    (Some(e0), Some(e1)) => Some(highestPriorityAlignmentOrAccessFault(e0, e1)),
+  match (spmpError, pmpError, pmaError) {
+    (None(), None(), None())         => None(),
+    (Some(e), _, _)                  => Some(e),
+    (None(), Some(e), None())        => Some(e),
+    (None(), None(), Some(e))        => Some(e),
+    (None(), Some(e0), Some(e1))     => Some(highestPriorityAlignmentOrAccessFault(e0, e1)),
   }
 }
 

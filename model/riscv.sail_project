@@ -58,8 +58,16 @@ pmp {
     pmp/pmp_control.sail,
 }
 
+spmp {
+  requires prelude, core, pmp
+
+  files
+    spmp/spmp_regs.sail,
+    spmp/spmp_control.sail,
+}
+
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types
+  requires prelude, core, exceptions, pmp, spmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types
 
   files
     sys/sys_reservation.sail,
@@ -534,10 +542,10 @@ postlude {
 
 unit_tests {
   after postlude
-  requires prelude, core, sys, exceptions, postlude
+  requires prelude, core, sys, exceptions, postlude, pmp, spmp
 
   files
-    unit_tests/test_mstatus.sail,
+    unit_tests/test_mstatus.sail
 }
 
 main {

@@ -105,6 +105,9 @@ mapping RV32ZdinxOddRegisterReservedBehavior_str : RV32ZdinxOddRegisterReservedB
 overload to_str = {RV32ZdinxOddRegisterReservedBehavior_str}
 
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
+
+// Platform SPMP support
+let sys_spmp_enabled : bool = config memory.spmp.enabled
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register

@@ -276,6 +276,7 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_Reserved_16()        => "reserved-2",
     E_Reserved_17()        => "reserved-3",
     E_Software_Check()     => "software-check-fault",
+
     E_Reserved_19()        => "reserved-19",
     E_Fetch_GPage_Fault()  => "fetch-guest-page-fault",
     E_Load_GPage_Fault()   => "load-guest-page-fault",
