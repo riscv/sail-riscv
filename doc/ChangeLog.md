@@ -8,6 +8,10 @@
 - A configuration parameter to specify the size of the reservation set
   for Zalrsc atomics has been added.
 
+- The `memory.misaligned.*` configuration parameters were renamed to
+  `memory.misaligned_load_store.*` to clarify that they affected only
+  load and store accesses, and not others (e.g. atomics).
+
 - The following extensions have been added:
   - Za64rs, Za128rs
   - Zic64b
@@ -16,6 +20,7 @@
   - Ssu64xl
   - Smstateen, Sstateen
   - Ssqosid
+  - Zicclsm
 
 - The model now requires the Sail 0.20.1 compiler version.
 
