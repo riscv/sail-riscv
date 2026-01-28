@@ -12,7 +12,7 @@ main:
   # permissions set in crt0.S:init_pmp.  The linker script sets the RAM region
   # to start at 0x80000000 with a size of 512m, while the default RAM size in the
   # PMA config is 128m, so use the smaller one. To fit in a 32-bit range for RV32, take
-  # the last page of RAM as the test region.
+  # the last page of RAM as the test region, and shrink the computed size of RAM.
   # Assume a PMP grain of 0 as in the default config.
 #define PMP_SHIFT 2
 #define RAM_START 0x80000000
@@ -33,8 +33,6 @@ reinit_pmp:
   # Set a temporary handler that would just jump to 1:, in case PMPs or S-mode are not supported
   la t0, 1f
   csrw mtvec, t0
-  # Disable address translation
-  csrw satp, zero
   # Contract the first PMP region.  This works because the subsequent
   # entries set up by crt0.S:init_pmp will still allow access.
   la t0, TEST_REGION_PMP_ADDR
@@ -49,6 +47,8 @@ reinit_pmp:
   # Configure the two regions.
   or t0, t1, t2
   csrw pmpcfg0, t0
+  # Disable address translation
+  csrw satp, zero
 1:
   # Set trap handler for the test.
   la t0, test_trap_handler
@@ -72,11 +72,11 @@ test2:
   lr.w t1, (a4)
   la t0, UNRESERVED_ADDR
   sc.w t1, a3, (t0)
-  # This should fail without exception.
+  # This should fail without an exception.
   beq t1, x0, fail
 
 test3:
-  # Do a LR within region A, cancel the reservation, then do a matched SC.
+  # Do a LR, cancel the reservation, then do a SC to the same address.
   lr.w t1, (a4)
   sc.w t1, a3, (a4)
   # This should succeed and cancel the reservation.
