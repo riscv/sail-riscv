@@ -35,12 +35,12 @@ reinit_pmp:
   csrw mtvec, t0
   # Contract the first PMP region.  This works because the subsequent
   # entries set up by crt0.S:init_pmp will still allow access.
-  la t0, TEST_REGION_PMP_ADDR
+  li t0, TEST_REGION_PMP_ADDR
   csrw pmpaddr0, t0
   # Set this to have full access (redundant with crt0.S:init_pmp)
   li t1, PMP_TOR | PMP_R | PMP_W | PMP_X
   # Set the second PMP region to match the rest of memory
-  la t0, -1
+  li t0, -1
   csrw pmpaddr1, t0
   # Remove all permissions, and enforce it on M-mode.
   li t2, (PMP_L | PMP_TOR) << 8
@@ -58,7 +58,7 @@ reinit_pmp:
   # Token value
   li a3, -1
   # Default reservation address
-  la a4, RESERVE_ADDR
+  li a4, RESERVE_ADDR
 
 test1:
   # Do a LR followed by a matching SC.
@@ -70,7 +70,7 @@ test1:
 test2:
   # Do a LR followed by an unmatched SC.
   lr.w t1, (a4)
-  la t0, UNRESERVED_ADDR
+  li t0, UNRESERVED_ADDR
   sc.w t1, a3, (t0)
   # This should fail without an exception.
   beq t1, x0, fail
@@ -88,7 +88,7 @@ test3:
 test4:
   # There is no reservation now, so any SC should fail.  Do an SC to
   # a disallowed address.
-  la t0, TEST_ADDR
+  li t0, TEST_ADDR
 failing_instruction:
   sc.w t1, a3, (t0)
   # This should fail with an Store-AMO exception, so we should not get here.
