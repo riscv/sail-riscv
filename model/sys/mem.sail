@@ -112,7 +112,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 
             // TODO: "The SSAMOSWAP.W/D instructions require the PMA of the accessed memory range to provide
             // AMOSwap level."  See AMO support needed above.
-            Atomic(_, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable},
+            Atomic(_, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent},
 
 
             // TODO for the CMO extensions: "The PMAs shall be the
