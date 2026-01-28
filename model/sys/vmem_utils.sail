@@ -203,9 +203,20 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
       // NOTE: Currently, we only announce the effective address if address translation is successful.
       // This may need revisiting, particularly in the misaligned case.
       Ok(paddr, _) => {
-        // If res is true, the load should be aligned, and this loop should only execute once
+        // If res is true, the load should be aligned, and this loop should only execute once.
+        assert(res == is_store_conditional(access));
         if res & not(match_reservation(bits_of(paddr))) then {
-          write_success = false
+          // Check PMA and PMP access controls before reporting the
+          // cancelled reservation.
+          // "Attempting to execute a store, store-conditional, or AMO
+          // instruction which accesses a physical address within a
+          // PMP region without write permissions raises a store
+          // access-fault exception."
+          let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
+          match phys_access_check(access, effPriv, paddr, bytes, true) {
+            Some(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+            None()  => write_success = false,
+          }
         } else match mem_write_ea(paddr, bytes, aq, rl, res) {
           Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
