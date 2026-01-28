@@ -131,6 +131,12 @@ function is_prefetch_access forall ('a : Type) . (access : MemoryAccessType('a))
     _ => false,
   }
 
+function is_store_conditional forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
+  match access {
+    StoreConditional(_) => true,
+    _ => false,
+  }
+
 // CSR access types
 enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
 
