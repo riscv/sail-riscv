@@ -25,7 +25,7 @@ function clause execute SSPUSH(rs2) = {
   // match the pseudo-code in the specification.
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
-  let vaddr_bits = ssp - to_bits(xlen / 8);
+  let vaddr_bits = ssp - xlen_bytes;
   let vaddr = Virtaddr(vaddr_bits);
   // "If the virtual address in ssp is not XLEN aligned, then the
   // SSPUSH/C.SSPUSH/SSPOPCHK/C.SSPOPCHK instructions cause a
@@ -81,7 +81,7 @@ function clause execute SSPOPCHK(rs1) = {
   let ssp_addr = Virtaddr(ssp);
   // See above on checking alignment.
   // TODO: get the dynamic xlen here.
-  let width = if xlen == 32 then 4 else 8;
+  let width = xlen_bytes;
   if   not(is_aligned_addr(ssp_addr, width))
   then return Memory_Exception(ssp_addr, E_SAMO_Access_Fault());
 
@@ -90,7 +90,7 @@ function clause execute SSPOPCHK(rs1) = {
       if X(rs1) != data then {
         Trap(cur_privilege, CTL_TRAP(make_shadow_stack_exception()), PC)
       } else {
-        ssp = ssp + to_bits(xlen / 8);
+        ssp = ssp + width;
         RETIRE_SUCCESS
       }
     },
