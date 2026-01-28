@@ -10,7 +10,7 @@
 
 function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 
-private function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
+private function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], read_senvcfg()[CBCFE][0])
 
 // *****************************************************************
 union clause instruction = ZICBOM : (cbop_zicbom, regidx)
@@ -53,7 +53,7 @@ private function cbop_priv_check(p: Privilege) -> checked_cbop = {
   let mCBIE : cbie = encdec_cbie(menvcfg[CBIE]);
   // TODO: check henvcfg after hypervisor is implemented
   let sCBIE : cbie = if   currentlyEnabled(Ext_S)
-                     then encdec_cbie(senvcfg[CBIE])
+                     then encdec_cbie(read_senvcfg()[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
   match (p, mCBIE, sCBIE) {
     (VirtualUser, _, _)       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),

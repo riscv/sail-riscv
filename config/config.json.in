@@ -229,6 +229,9 @@
     "Zicfilp": {
       "supported": true
     },
+    "Zicfiss": {
+      "supported": true
+    },
     "Zicond": {
       "supported": true
     },
@@ -257,7 +260,7 @@
       "supported": false
     },
     "Zaamo": {
-      "supported": false
+      "supported": true
     },
     "Zabha": {
       "supported": true
