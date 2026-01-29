@@ -153,7 +153,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
                          then return Illegal_Instruction(),
     Supervisor        => { if not(bool_bit(menvcfg[SSE]))
                            then return Illegal_Instruction() },
-    User              => if not(currentlyEnabled(Ext_S)) | not(bool_bit(menvcfg[SSE])) | not(bool_bit(read_senvcfg()[SSE]))
+    User              => if not(currentlyEnabled(Ext_S)) | not(bool_bit(read_senvcfg()[SSE]))
                          then return Illegal_Instruction(),
     VirtualSupervisor => { if not(bool_bit(menvcfg[SSE]))
                            then return Illegal_Instruction();
