@@ -398,6 +398,11 @@ extensions {
     }
   }
 
+  Zibi {
+    requires core, sys
+    files extensions/Zibi/zibi_insts.sail
+  }
+
   Zicboz {
     requires core, sys
     files extensions/Zicboz/zicboz_insts.sail
