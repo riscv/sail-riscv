@@ -484,6 +484,27 @@ function is_fiom_active() -> bool = {
   }
 }
 
+// Guest External Interrupt Registers
+
+function legalize_hgeie(v : xlenbits) -> xlenbits = {
+  [v with 0 = bitzero]
+}
+
+register hgeie : xlenbits
+register hgeip : xlenbits
+
+// TODO: Add GEILEN config
+mapping clause csr_name_map = 0x607 <-> "hgeie"
+mapping clause csr_name_map = 0xE12 <-> "hgeip"
+
+function clause is_CSR_accessible(0x607, _, _) = currentlyEnabled(Ext_H) // hgeie
+function clause is_CSR_accessible(0xE12, _, _) = currentlyEnabled(Ext_H) // hgeip
+
+function clause read_CSR(0x607) = hgeie
+function clause read_CSR(0xE12) = hgeip
+
+function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hgeie) }
+
 // interrupt processing state
 
 bitfield Minterrupts : xlenbits = {
@@ -506,19 +527,30 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
   [o with
+<<<<<<< HEAD
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
     STI = if currentlyEnabled(Ext_S) then (
+=======
+    SEI  = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
+    SSI  = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
+    STI  = if currentlyEnabled(Ext_S) then (
+>>>>>>> 25b4a3d6 (Address feedback from Prashanth)
       // STI is read only if Sstc is enabled and STCE is set (it is equal to stimecmp <= mtime).
       if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
     ) else 0b0,
+    SGEI = if currentlyEnabled(Ext_H) then bool_to_bit((hgeip & hgeie) != zeros()) else 0b0,
+    VSEI = if currentlyEnabled(Ext_H) then v[VSEI] else 0b0,
+    VSTI = if currentlyEnabled(Ext_H) then v[VSTI] else 0b0,
+    VSSI = if currentlyEnabled(Ext_H) then v[VSSI] else 0b0,
   ]
 }
 
 private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [o with
+<<<<<<< HEAD
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     MEI = v[MEI],
     MTI = v[MTI],
@@ -526,6 +558,18 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     STI = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
     SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
+=======
+    MEI  = v[MEI],
+    MTI  = v[MTI],
+    MSI  = v[MSI],
+    SEI  = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
+    STI  = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
+    SSI  = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
+    SGEI = if currentlyEnabled(Ext_H) then v[SGEI] else 0b0,
+    VSEI = if currentlyEnabled(Ext_H) then v[VSEI] else 0b0,
+    VSTI = if currentlyEnabled(Ext_H) then v[VSTI] else 0b0,
+    VSSI = if currentlyEnabled(Ext_H) then v[VSSI] else 0b0,
+>>>>>>> 25b4a3d6 (Address feedback from Prashanth)
   ]
 }
 
@@ -642,9 +686,9 @@ function legalize_hedeleg(_m: Medeleg, v: bits(64)) -> Medeleg = {
 function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
-    VSEI = if mideleg[SEI] == 0b1 then v[VSEI] else 0b0,
-    VSTI = if mideleg[STI] == 0b1 then v[VSTI] else 0b0,
-    VSSI = if mideleg[SSI] == 0b1 then v[VSSI] else 0b0,
+    VSEI = v[VSEI],
+    VSTI = v[VSTI],
+    VSSI = v[VSSI],
   ]
 }
 
@@ -1011,7 +1055,7 @@ private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   ]
 }
 
-// ! Returns vsie view of mie (m) as delegated by hideleg (d)
+// Returns vsie view of mie (m) as delegated by hideleg (d)
 function lower_mie_to_vsie(m : Minterrupts, d : Minterrupts) -> Minterrupts = {
   let vs = Mk_Minterrupts(zeros());
   // Standard S-mode bits in vsie are aliases of corresponding VS-mode bits in

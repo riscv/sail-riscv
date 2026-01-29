@@ -8,27 +8,6 @@
 
 // HS-Mode register
 
-// Guest External Interrupt Registers
-
-function legalize_hgeie(v : xlenbits) -> xlenbits = {
-  [v with 0 = bitzero]
-}
-
-register hgeie : xlenbits
-register hgeip : xlenbits
-
-// TODO: Add GEILEN config
-mapping clause csr_name_map = 0x607 <-> "hgeie"
-mapping clause csr_name_map = 0xE12 <-> "hgeip"
-
-function clause is_CSR_accessible(0x607, _, _) = currentlyEnabled(Ext_H) // hgeie
-function clause is_CSR_accessible(0xE12, _, _) = currentlyEnabled(Ext_H) // hgeip
-
-function clause read_CSR(0x607) = hgeie
-function clause read_CSR(0xE12) = hgeip
-
-function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hgeie) }
-
 // Hypervisor Interrupt Registers
 
 function legalize_hvip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -43,17 +22,17 @@ function legalize_hvip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
 function legalize_hie(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
-    SGEI = if mideleg[SGEI] == 0b1 then v[SGEI] else 0b0,
-    VSEI = if mideleg[SEI]  == 0b1 then v[VSEI] else 0b0,
-    VSTI = if mideleg[STI]  == 0b1 then v[VSTI] else 0b0,
-    VSSI = if mideleg[SSI]  == 0b1 then v[VSSI] else 0b0,
+    SGEI = v[SGEI],
+    VSEI = v[VSEI],
+    VSTI = v[VSTI],
+    VSSI = v[VSSI],
   ]
 }
 
 // NOTE: Only VSSI is writable in hip (VSEI, VSTI, SGEI are read-only)
 function legalize_hip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  [m with VSSI = if mideleg[SSI] == 0b1 then v[VSSI] else 0b0]
+  [m with VSSI = v[VSSI]]
 }
 
 function lower_mip_to_hvip(m : Minterrupts) -> Minterrupts = {
@@ -66,19 +45,19 @@ function lower_mip_to_hvip(m : Minterrupts) -> Minterrupts = {
 
 function lower_mie_to_hie(m : Minterrupts) -> Minterrupts = {
   [Mk_Minterrupts(zeros()) with
-    SGEI = if mideleg[SGEI] == 0b1 then m[SGEI] else 0b0,
-    VSEI = if mideleg[SEI]  == 0b1 then m[VSEI] else 0b0,
-    VSTI = if mideleg[STI]  == 0b1 then m[VSTI] else 0b0,
-    VSSI = if mideleg[SSI]  == 0b1 then m[VSSI] else 0b0,
+    SGEI = m[SGEI],
+    VSEI = m[VSEI],
+    VSTI = m[VSTI],
+    VSSI = m[VSSI],
   ]
 }
 
 function lower_mip_to_hip(m : Minterrupts) -> Minterrupts = {
   [Mk_Minterrupts(zeros()) with
-    SGEI = if mideleg[SGEI] == 0b1 then bool_to_bit((hgeip & hgeie) != zeros()) else 0b0,
-    VSEI = if mideleg[SEI]  == 0b1 then m[VSEI] else 0b0,
-    VSTI = if mideleg[STI]  == 0b1 then m[VSTI] else 0b0,
-    VSSI = if mideleg[SSI]  == 0b1 then m[VSSI] else 0b0,
+    SGEI = m[SGEI],
+    VSEI = m[VSEI],
+    VSTI = m[VSTI],
+    VSSI = m[VSSI],
   ]
 }
 
