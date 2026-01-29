@@ -34,8 +34,8 @@ function clause execute SSPUSH(rs2) = {
   // `vmem_write_addr` throws a SAMO_Addr_Align exception,
   // so handle alignment checking here.
 
-  // If xlen is changed dynamically, `ssp` could be misaligned.  TODO:
-  // get the dynamic xlen here.
+  // If xlen is changed dynamically, `ssp` could be misaligned.
+  // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if   not(is_aligned_addr(vaddr, width))
   then return Memory_Exception(vaddr, E_SAMO_Access_Fault());
