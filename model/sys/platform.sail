@@ -252,43 +252,52 @@ private function plic_bit_clear64(b: bits(plic_nsrc), idx:int) -> bits(plic_nsrc
 // PLIC arbitration (Lean-friendly termination):
 // scan IDs 1..(plic_nsrc_active-1) using a fuel list (structural recursion)
 // -------------------------
+private function plic_best_id_from(ctx:int, i:int, fuel:nat, best_id:int, best_pr:int) -> int = {
+  var idx : int = i;
+  var k   : int = fuel;
+  var bid : int = best_id;
+  var bpr : int = best_pr;
 
-private function plic_fuel_init(n:nat) -> list(unit) = {
-  if n == 0 then [||]
-  else () :: plic_fuel_init(n - 1)
-}
-
-private function plic_best_id_from(ctx:int, i:int, fuel:list(unit), best_id:int, best_pr:int) -> int = {
-  match fuel {
-    [||] => best_id,
-    _ :: fuel' => {
+  repeat {
+    if k > 0 then {
       let en = plic_enable_of_ctx(ctx);
       let th = unsigned(plic_threshold_of_ctx(ctx));
-      let pr = unsigned(plic_priority_get(i));
+      let pr = unsigned(plic_priority_get(idx));
 
       let cand =
-        plic_bit_get64(en, i) &
-        plic_bit_get64(plic_pending, i) &
-        (not(plic_bit_get64(plic_claimed, i))) &
+        plic_bit_get64(en, idx) &
+        plic_bit_get64(plic_pending, idx) &
+        (not(plic_bit_get64(plic_claimed, idx))) &
         (pr > th);
 
       if cand then {
         let better =
-          (pr > best_pr) |
-          ((pr == best_pr) & ((best_id == 0) | (i < best_id)));
-        if better then
-          plic_best_id_from(ctx, i + 1, fuel', i, pr)
-        else
-          plic_best_id_from(ctx, i + 1, fuel', best_id, best_pr)
-      } else
-        plic_best_id_from(ctx, i + 1, fuel', best_id, best_pr)
+          (pr > bpr) |
+          ((pr == bpr) & ((bid == 0) | (idx < bid)));
+        if better then {
+          bid = idx;
+          bpr = pr;
+        } else {
+          ()
+        }
+      } else {
+        ()
+      };
+
+      idx = idx + 1;
+      k = k - 1;
+    } else {
+      ()
     }
-  }
+  } until k == 0;
+
+  bid
 }
+termination_measure plic_best_id_from repeat fuel
 
 private function plic_best_id(ctx:int) -> int = {
   // use type-level max fuel, avoid int_to_nat visibility issues in Lean backend
-  plic_best_id_from(ctx, 1, plic_fuel_init(PLIC_NSRC_MAX - 1), 0, 0)
+  plic_best_id_from(ctx, 1, (PLIC_NSRC_MAX - 1), 0, 0)
 }
 
 
