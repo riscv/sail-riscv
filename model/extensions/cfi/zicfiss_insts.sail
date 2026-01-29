@@ -18,7 +18,7 @@ union clause instruction = SSPUSH : regidx
 $[wavedrom "SSPUSH _ rs1 funct3 rd SYSTEM"]
 mapping clause encdec = SSPUSH(rs2)
   <-> 0b1100111 @ encdec_reg(rs2) @ 0b00000 @ 0b100 @ 0b00000 @ 0b1110011
-  when (rs2 == ra | rs2 == Regidx(zero_extend(0b101))) & currentlyEnabled(Ext_Zicfiss) & zicfiss_xSSE(cur_privilege)
+  when (rs2 == ra | rs2 == t0) & currentlyEnabled(Ext_Zicfiss) & zicfiss_xSSE(cur_privilege)
 
 function clause execute SSPUSH(rs2) = {
   // This is redundant with the decoding predicate, but is here to
@@ -71,7 +71,7 @@ union clause instruction = SSPOPCHK : regidx
 $[wavedrom "SSPOPCHK rs1 funct3 rd SYSTEM"]
 mapping clause encdec = SSPOPCHK(rs1)
   <-> 0b110011011100  @ encdec_reg(rs1) @ 0b100 @ 0b00000 @ 0b1110011
-  when (rs1 == ra | rs1 == Regidx(zero_extend(0b101))) & currentlyEnabled(Ext_Zicfiss) & zicfiss_xSSE(cur_privilege)
+  when (rs1 == ra | rs1 == t0) & currentlyEnabled(Ext_Zicfiss) & zicfiss_xSSE(cur_privilege)
 
 function clause execute SSPOPCHK(rs1) = {
   // This is redundant with the decoding predicate, but is here to
@@ -111,7 +111,7 @@ mapping clause encdec_compressed = C_SSPOPCHK()
   when currentlyEnabled(Ext_Zicfiss) & currentlyEnabled(Ext_Zcmop) & zicfiss_xSSE(cur_privilege)
 
 function clause execute C_SSPOPCHK() =
-  ExecuteAs(SSPOPCHK(Regidx(zero_extend(0b101))))
+  ExecuteAs(SSPOPCHK(t0))
 
 mapping clause assembly = C_SSPOPCHK()
   <-> "c.sspopchk" ^ spc() ^ reg_name(encdec_reg(0b00101))
