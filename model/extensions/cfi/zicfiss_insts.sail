@@ -151,20 +151,17 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   match cur_privilege {
     Machine           => if   not(currentlyEnabled(Ext_S))
                          then return Illegal_Instruction(),
-    Supervisor        => { assert(currentlyEnabled(Ext_S));
-                           if not(bool_bit(menvcfg[SSE]))
+    Supervisor        => { if not(bool_bit(menvcfg[SSE]))
                            then return Illegal_Instruction() },
     User              => if not(currentlyEnabled(Ext_S)) | not(bool_bit(menvcfg[SSE])) | not(bool_bit(read_senvcfg()[SSE]))
                          then return Illegal_Instruction(),
-    VirtualSupervisor => { assert(currentlyEnabled(Ext_S));
-                           if not(bool_bit(menvcfg[SSE]))
+    VirtualSupervisor => { if not(bool_bit(menvcfg[SSE]))
                            then return Illegal_Instruction();
                            // TODO:
                            // else if not(bool_bit(read_henvcfg()[SSE]))
                            // then return Virtual_Instruction();
                            internal_error(__FILE__, __LINE__, "Hypervisor extension not supported") },
-    VirtualUser       => { assert(currentlyEnabled(Ext_S));
-                           if not(bool_bit(menvcfg[SSE]))
+    VirtualUser       => { if not(bool_bit(menvcfg[SSE]))
                            then return Illegal_Instruction()
                            else if not(bool_bit(read_senvcfg()[SSE]))
                            then return Virtual_Instruction() },
