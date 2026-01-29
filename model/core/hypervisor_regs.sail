@@ -29,7 +29,7 @@ function legalize_hie(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   ]
 }
 
-// NOTE: Only VSSI is writable in hip (VSEI, VSTI, SGEI are read-only)
+// NOTE: Only VSSI is writable in hip (SGEI, VSEI, VSTI are read-only)
 function legalize_hip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with VSSI = v[VSSI]]
