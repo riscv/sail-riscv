@@ -253,9 +253,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zicfilp extension is enabled but Zicsr is disabled: supporting Zicfilp requires Zicsr.");
   };
-  if hartSupports(Ext_Zicfiss) & not(hartSupports(Ext_Zicsr) & hartSupports(Ext_Zimop) & hartSupports(Ext_Zaamo)) then {
+  // See https://github.com/riscv/sail-riscv/issues/1508
+  if hartSupports(Ext_Zicfiss) & not(hartSupports(Ext_Zicsr) & hartSupports(Ext_Zimop) & (hartSupports(Ext_Zaamo) | hartSupports(Ext_A))) then {
     valid = false;
-    print_endline("The Zicfiss extension is enabled but one or more of Zicsr, Zimop and Zaamo are disabled: supporting Zicfiss requires Zicsr, Zimop and Zaamo.");
+    print_endline("The Zicfiss extension is enabled but one or more of Zicsr, Zimop and (Zaamo or A) are disabled: supporting Zicfiss requires Zicsr, Zimop and (Zaamo or A).");
   };
   if hartSupports(Ext_Zfbfmin) & not(hartSupports(Ext_F)) then {
     valid = false;
