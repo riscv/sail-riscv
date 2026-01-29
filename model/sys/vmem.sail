@@ -181,15 +181,15 @@ function clause is_CSR_accessible(0x180, priv, _) = {
   else if priv == Supervisor & mstatus[TVM] == 0b1 then false
   // TODO: VS-mode with VTVM=1 should raise virtual instruction
   // not illegal instruction. Needs refactoring of CSR access logic.
-  else if privLevel_is_virtual(priv) & hstatus[VTVM] == 0b1 then false
+  else if inVirtualPrivilege() & hstatus[VTVM] == 0b1 then false
   else true
 }
 
-function clause read_CSR(0x180) = if privLevel_is_virtual(cur_privilege) then vsatp else satp
+function clause read_CSR(0x180) = if inVirtualPrivilege() then vsatp else satp
 
 function clause write_CSR(0x180, value) = {
   let arch = architecture(cur_privilege);
-  if privLevel_is_virtual(cur_privilege) then {
+  if inVirtualPrivilege() then {
     vsatp = legalize_satp(arch, vsatp, value);
     Ok(vsatp)
   } else {

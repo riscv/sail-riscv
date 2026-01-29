@@ -150,6 +150,8 @@ function virtual_memory_supported() -> bool = {
   currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
 }
 
+function inVirtualPrivilege() -> bool = privLevel_is_virtual(cur_privilege)
+
 // This measure needs to be > currentlyEnabled_measure(Ext_Sv{32,39,48,57}),
 // currently all equal to 2, see currentlyEnabled_measure in extensions.sail
 termination_measure virtual_memory_supported(_) = 3
@@ -958,9 +960,9 @@ private function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
 
-function clause read_CSR(0x100) = if privLevel_is_virtual(cur_privilege) then vsstatus.bits[xlen - 1 .. 0] else lower_mstatus(mstatus).bits[xlen - 1 .. 0]
+function clause read_CSR(0x100) = if inVirtualPrivilege() then vsstatus.bits[xlen - 1 .. 0] else lower_mstatus(mstatus).bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) =
-  if privLevel_is_virtual(cur_privilege)
+  if inVirtualPrivilege()
   then { vsstatus = legalize_vsstatus(vsstatus, zero_extend(value)); Ok(vsstatus.bits[xlen - 1 .. 0]) }
   else { mstatus  = legalize_sstatus(mstatus, value); Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0]) }
 
@@ -1067,11 +1069,11 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 mapping clause csr_name_map = 0x144  <-> "sip"
 function clause is_CSR_accessible(0x144, _, _) = currentlyEnabled(Ext_S) // sip
 function clause read_CSR(0x144) =
-  if privLevel_is_virtual(cur_privilege)
+  if inVirtualPrivilege()
   then lower_mip_to_vsip(mip, hideleg).bits
   else lower_mip(mip, mideleg).bits
 function clause write_CSR(0x144, value) =
-  if privLevel_is_virtual(cur_privilege)
+  if inVirtualPrivilege()
   then { mip = legalize_vsip(mip, hideleg, value); Ok(lower_mip_to_vsip(mip, hideleg).bits) }
   else { mip = legalize_sip(mip, mideleg, value); Ok(lower_mip(mip, mideleg).bits) }
 
@@ -1093,11 +1095,11 @@ private function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 mapping clause csr_name_map = 0x104  <-> "sie"
 function clause is_CSR_accessible(0x104, _, _) = currentlyEnabled(Ext_S) // sie
 function clause read_CSR(0x104) =
-  if privLevel_is_virtual(cur_privilege)
+  if inVirtualPrivilege()
   then lower_mie_to_vsie(mie, hideleg).bits
   else lower_mie(mie, mideleg).bits
 function clause write_CSR(0x104, value) =
-  if privLevel_is_virtual(cur_privilege)
+  if inVirtualPrivilege()
   then { mie = legalize_vsie(mie, hideleg, value); Ok(lower_mie_to_vsie(mie, hideleg).bits) }
   else { mie = legalize_sie(mie, mideleg, value); Ok(lower_mie(mie, mideleg).bits) }
 
@@ -1137,13 +1139,13 @@ function clause is_CSR_accessible(0x140, _, _) = currentlyEnabled(Ext_S) // sscr
 function clause is_CSR_accessible(0x142, _, _) = currentlyEnabled(Ext_S) // scause
 function clause is_CSR_accessible(0x143, _, _) = currentlyEnabled(Ext_S) // stval
 
-function clause read_CSR(0x140) = if privLevel_is_virtual(cur_privilege) then vsscratch else sscratch
-function clause read_CSR(0x142) = if privLevel_is_virtual(cur_privilege) then vscause.bits else scause.bits
-function clause read_CSR(0x143) = if privLevel_is_virtual(cur_privilege) then vstval else stval
+function clause read_CSR(0x140) = if inVirtualPrivilege() then vsscratch else sscratch
+function clause read_CSR(0x142) = if inVirtualPrivilege() then vscause.bits else scause.bits
+function clause read_CSR(0x143) = if inVirtualPrivilege() then vstval else stval
 
-function clause write_CSR(0x140, value) = if privLevel_is_virtual(cur_privilege) then { vsscratch = value; Ok(vsscratch) } else { sscratch = value; Ok(sscratch) }
-function clause write_CSR(0x142, value) = if privLevel_is_virtual(cur_privilege) then { vscause.bits = value; Ok(vscause.bits) } else { scause.bits = value; Ok(scause.bits) }
-function clause write_CSR(0x143, value) = if privLevel_is_virtual(cur_privilege) then { vstval = value; Ok(vstval) } else { stval = value; Ok(stval) }
+function clause write_CSR(0x140, value) = if inVirtualPrivilege() then { vsscratch = value; Ok(vsscratch) } else { sscratch = value; Ok(sscratch) }
+function clause write_CSR(0x142, value) = if inVirtualPrivilege() then { vscause.bits = value; Ok(vscause.bits) } else { scause.bits = value; Ok(scause.bits) }
+function clause write_CSR(0x143, value) = if inVirtualPrivilege() then { vstval = value; Ok(vstval) } else { stval = value; Ok(stval) }
 
 //
 // S-mode address translation and protection (satp) layout.

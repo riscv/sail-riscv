@@ -104,14 +104,14 @@ function clause is_CSR_accessible(0x341, _, _) = true // mepc
 
 function clause read_CSR(0x205) = get_vstvec()
 function clause read_CSR(0x241) = get_xepc(VirtualSupervisor)
-function clause read_CSR(0x105) = if privLevel_is_virtual(cur_privilege) then get_vstvec() else get_stvec()
-function clause read_CSR(0x141) = get_xepc(if privLevel_is_virtual(cur_privilege) then VirtualSupervisor else Supervisor)
+function clause read_CSR(0x105) = if inVirtualPrivilege() then get_vstvec() else get_stvec()
+function clause read_CSR(0x141) = get_xepc(if inVirtualPrivilege() then VirtualSupervisor else Supervisor)
 function clause read_CSR(0x305) = get_mtvec()
 function clause read_CSR(0x341) = get_xepc(Machine)
 
 function clause write_CSR(0x205, value) = { Ok(set_vstvec(value)) }
 function clause write_CSR(0x241, value) = { Ok(set_xepc(VirtualSupervisor, value)) }
-function clause write_CSR(0x105, value) = { Ok(if privLevel_is_virtual(cur_privilege) then set_vstvec(value) else set_stvec(value)) }
-function clause write_CSR(0x141, value) = { Ok(set_xepc(if privLevel_is_virtual(cur_privilege) then VirtualSupervisor else Supervisor, value)) }
+function clause write_CSR(0x105, value) = { Ok(if inVirtualPrivilege() then set_vstvec(value) else set_stvec(value)) }
+function clause write_CSR(0x141, value) = { Ok(set_xepc(if inVirtualPrivilege() then VirtualSupervisor else Supervisor, value)) }
 function clause write_CSR(0x305, value) = { Ok(set_mtvec(value)) }
 function clause write_CSR(0x341, value) = { Ok(set_xepc(Machine, value)) }
