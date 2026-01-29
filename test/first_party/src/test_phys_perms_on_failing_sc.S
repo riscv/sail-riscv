@@ -14,7 +14,6 @@ main:
   # PMA config is 128m, so use the smaller one. To fit in a 32-bit range for RV32, take
   # the last page of RAM as the test region, and shrink the computed size of RAM.
   # Assume a PMP grain of 0 as in the default config.
-#define PMP_SHIFT 2
 #define RAM_START 0x80000000
 #define RAM_SIZE  (0x80000000 - 0x1000)
   # The forbidden test region starts beyond RAM.
