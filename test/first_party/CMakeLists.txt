@@ -91,6 +91,7 @@ set(tests
     "test_hello_world.c"
     "test_max_pmp.c"
     "test_minstret.S"
+    "test_misaligned_vector_register_groups.S"
     "test_pmp_access.c"
     "test_phys_perms_on_failing_sc.S"
 )
@@ -113,7 +114,11 @@ foreach (xlen IN ITEMS 32 64)
             DEPENDS ${common_deps} "src/${test_source}"
             COMMAND ${CROSS_COMPILER_COMMAND_RV${xlen}}
                 # The ISA string to compile for.
-                -march=rv${xlen}gc
+                # TODO: We should get this from running sail_riscv_sim `--print-isa-string`
+                # but it isn't quite usable with Clang directly yet due to some
+                # unsupported supervisor extensions and because Clang requires version
+                # for experimental extensions.
+                -march=rv${xlen}gcv
                 # Calling convention to use. Valid values are 'ilp32' or 'lp64' for 32/64-bit,
                 # optionally followed by 'f' or 'd' for hard-float. All combinations are valid.
                 -mabi=${mabi}d
