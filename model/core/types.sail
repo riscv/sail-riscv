@@ -11,8 +11,10 @@
 type half = bits(16)
 type word = bits(32)
 
-// Bit-vector of an uncompressed instruction.
 type instbits = bits(32)
+
+// Bit-vector of an uncompressed instruction.
+register instbits_transformed : bits(32)
 
 type pagesize_bits : Int = 12
 let  pagesize_bits = sizeof(pagesize_bits)
@@ -75,7 +77,7 @@ mapping privLevel_bits : (nom_priv_bits, virt_mode_bit) <-> Privilege = {
   (0b01, 0b0) <-> Supervisor,
   (0b01, 0b1) <-> VirtualSupervisor,
   (0b11, 0b0) <-> Machine,
-  forwards _       => internal_error(__FILE__, __LINE__, "Invalid privilege level or virtual mode"),
+  forwards _   => internal_error(__FILE__, __LINE__, "Invalid privilege level or virtual mode"),
 }
 
 function privLevel_to_bits(p : Privilege) -> nom_priv_bits = { let (p, _) = privLevel_bits(p); p }
@@ -176,7 +178,8 @@ mapping interruptType_bits : InterruptType <-> exc_code = {
   I_SG_External  <-> 0b001100, // 12
 }
 
-function interruptType_to_str(i : InterruptType) -> string =
+val interruptType_to_str : InterruptType -> string
+function interruptType_to_str (i) =
   match (i) {
     I_Reserved_0  => "reserved-interrupt-0",
     I_S_Software  => "supervisor-software-interrupt",
@@ -277,10 +280,10 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_M_EnvCall()          => "m-call",
     E_Fetch_Page_Fault()   => "fetch-page-fault",
     E_Load_Page_Fault()    => "load-page-fault",
-    E_Reserved_14()        => "reserved-1",
+    E_Reserved_14()        => "reserved-14",
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
-    E_Reserved_16()        => "reserved-2",
-    E_Reserved_17()        => "reserved-3",
+    E_Reserved_16()        => "reserved-16",
+    E_Reserved_17()        => "reserved-17",
     E_Software_Check()     => "software-check-fault",
     E_Reserved_19()        => "reserved-19",
     E_Fetch_GPage_Fault()  => "fetch-guest-page-fault",
@@ -305,6 +308,87 @@ function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
   match (c) {
     LANDING_PAD_FAULT  => zero_extend(0b010),
   }
+
+// Update exception type with a given memory access type.
+// Note: could probably be modeled in a nicer, more intuitive manner
+
+union AccessExceptionType = {
+  AccessExceptionLoad  : unit,
+  AccessExceptionSAMO  : unit,
+  AccessExceptionFetch : unit,
+}
+
+val AccessType_to_AccessException : forall 'a . (MemoryAccessType('a)) -> AccessExceptionType
+function AccessType_to_AccessException(access) -> AccessExceptionType = {
+  match access {
+    Atomic(_)                  => AccessExceptionSAMO(),
+    Load(_)                    => AccessExceptionLoad(),
+    LoadReserved(_)            => AccessExceptionLoad(),
+    Store(_)                   => AccessExceptionSAMO(),
+    StoreConditional(_)        => AccessExceptionSAMO(),
+    InstructionFetch(_)        => AccessExceptionFetch(),
+
+    CacheAccess(CB_manage(_))  => AccessExceptionSAMO(),
+    CacheAccess(CB_zero())     => AccessExceptionSAMO(),
+    // Though prefetches don't raise exceptions, we return a nominal
+    // exception here to propagate the failed address translation to
+    // the execute of the calling instruction so that it can decide
+    // whether to actually proceed with a prefetch.
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_R => AccessExceptionLoad(),
+      PREFETCH_W => AccessExceptionSAMO(),
+      PREFETCH_I => AccessExceptionFetch(),
+    }
+  }
+}
+
+function E_Addr_Align_of_AccessException(e: AccessExceptionType) -> ExceptionType =
+  match e {
+    AccessExceptionLoad(_)  => E_Load_Addr_Align(),
+    AccessExceptionSAMO(_)  => E_SAMO_Addr_Align(),
+    AccessExceptionFetch(_) => E_Fetch_Addr_Align(),
+  }
+
+function E_Access_Fault_of_AccessException(e : AccessExceptionType) -> ExceptionType =
+  match e {
+    AccessExceptionLoad(_)  => E_Load_Access_Fault(),
+    AccessExceptionSAMO(_)  => E_SAMO_Access_Fault(),
+    AccessExceptionFetch(_) => E_Fetch_Access_Fault(),
+  }
+
+function E_Page_Fault_of_AccessException(e : AccessExceptionType) -> ExceptionType =
+  match e {
+    AccessExceptionLoad(_)  => E_Load_Page_Fault(),
+    AccessExceptionSAMO(_)  => E_SAMO_Page_Fault(),
+    AccessExceptionFetch(_) => E_Fetch_Page_Fault(),
+  }
+
+function E_GPage_Fault_of_AccessException(e : AccessExceptionType) -> ExceptionType =
+  match e {
+    AccessExceptionLoad(_)  => E_Load_GPage_Fault(),
+    AccessExceptionSAMO(_)  => E_SAMO_GPage_Fault(),
+    AccessExceptionFetch(_) => E_Fetch_GPage_Fault(),
+  }
+
+val exceptionType_update_AccessType : forall 'a . (ExceptionType, MemoryAccessType('a)) -> ExceptionType
+function exceptionType_update_AccessType(e, a) = {
+  let a = AccessType_to_AccessException(a);
+  match(e) {
+    E_Fetch_Addr_Align()   => E_Addr_Align_of_AccessException(a),
+    E_Load_Addr_Align()    => E_Addr_Align_of_AccessException(a),
+    E_SAMO_Addr_Align()    => E_Addr_Align_of_AccessException(a),
+    E_Fetch_Access_Fault() => E_Access_Fault_of_AccessException(a),
+    E_Load_Access_Fault()  => E_Access_Fault_of_AccessException(a),
+    E_SAMO_Access_Fault()  => E_Access_Fault_of_AccessException(a),
+    E_Fetch_Page_Fault()   => E_Page_Fault_of_AccessException(a),
+    E_Load_Page_Fault()    => E_Page_Fault_of_AccessException(a),
+    E_SAMO_Page_Fault()    => E_Page_Fault_of_AccessException(a),
+    E_Fetch_GPage_Fault()  => E_GPage_Fault_of_AccessException(a),
+    E_Load_GPage_Fault()   => E_GPage_Fault_of_AccessException(a),
+    E_SAMO_GPage_Fault()   => E_GPage_Fault_of_AccessException(a),
+    _ => e // Other exceptions are not access type specific
+  }
+}
 
 // An architectural trap can be caused by either an interrupt or an exception
 
@@ -361,18 +445,63 @@ mapping extStatus_bits : ExtStatus <-> ext_status = {
 function extStatus_to_bits(e : ExtStatus) -> ext_status = extStatus_bits(e)
 function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
 
+// address translation stages & modes
+// We model 3 stages:
+//   - Stage_S:  va --> pa  (V=0)
+//   - Stage_VS: va --> gpa (V=1)
+//   - Stage_G:  gpa -> spa (V=1)
+enum AddressTranslationStage = {Stage_S, Stage_VS, Stage_G}
+
+function AddressTranslationStage_to_str(s : AddressTranslationStage) -> string =
+  match s {
+    Stage_S  => "S",
+    Stage_VS => "VS",
+    Stage_G  => "G"
+  }
+
+overload to_str = {AddressTranslationStage_to_str}
+
+type atp64_mode = bits(4)
+type atp32_mode = bits(4)
+
 // supervisor-level address translation modes
 
 type satp_mode = bits(4)
-enum SATPMode = {Bare, Sv32, Sv39, Sv48, Sv57}
+enum XATPMode = {Bare, Sv32, Sv39, Sv48, Sv57, Sv32x4, Sv39x4, Sv48x4, Sv57x4}
 
-function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
+mapping XATPMode_str : XATPMode <-> string = {
+  Bare   <-> "Bare",
+  Sv32   <-> "Sv32",
+  Sv39   <-> "Sv39",
+  Sv48   <-> "Sv48",
+  Sv57   <-> "Sv57",
+  Sv32x4 <-> "Sv32x4",
+  Sv39x4 <-> "Sv39x4",
+  Sv48x4 <-> "Sv48x4",
+  Sv57x4 <-> "Sv57x4"
+}
+
+function XATPMode_to_str(m : XATPMode) -> string = XATPMode_str(m)
+
+overload to_str = {XATPMode_to_str}
+
+function satpMode_of_bits(a : Architecture, m : atp64_mode) -> option(XATPMode) =
   match (a, m) {
     (_,    0x0) => Some(Bare),
     (RV32, 0x1) => Some(Sv32),
     (RV64, 0x8) => Some(Sv39),
     (RV64, 0x9) => Some(Sv48),
     (RV64, 0xA) => Some(Sv57),
+    (_, _)      => None()
+  }
+
+function hgatp64Mode_of_bits(a : Architecture, m : atp64_mode) -> option(XATPMode) =
+  match (a, m) {
+    (_,    0x0) => Some(Bare),
+    (RV32, 0x1) => Some(Sv32x4),
+    (RV64, 0x8) => Some(Sv39x4),
+    (RV64, 0x9) => Some(Sv48x4),
+    (RV64, 0xA) => Some(Sv57x4),
     (_, _)      => None()
   }
 

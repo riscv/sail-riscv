@@ -126,10 +126,10 @@ function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
     // "LR faults like a normal load, even though it's in the AMO major opcode space."
     // - Andrew Waterman, isa-dev, 10 Jul 2018.
     if   not(is_aligned_addr(vaddr, width))
-    then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
+    then return Err(memory_exception_with_gva(E_Load_Addr_Align(), vaddr));
   } else {
     if check_misaligned(vaddr, width)
-    then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
+    then return Err(memory_exception_with_gva(E_Load_Addr_Align(), vaddr));
   };
 
   // If the load is misaligned or an allowed misaligned access, split into `n`
@@ -147,10 +147,10 @@ function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
     match translateAddr(Virtaddr(vaddr), access) {
-      Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+      Err((e, c), _) => return Err(Memory_Exception(e, c)),
 
       Ok(paddr, _) => match mem_read(access, paddr, bytes, aq, rl, res) {
-        Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+        Err(e) => return Err(memory_exception_with_gva(e, Virtaddr(vaddr))),
 
         Ok(v) => {
           if res then {
@@ -175,14 +175,29 @@ function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
 // This lets the Rocq extraction know why the repeat loop above terminates
 termination_measure vmem_read_addr repeat n
 
+val vmem_read : forall 'width, is_mem_width('width).
+  (regidx, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
+  -> result(bits(8 * 'width), ExecutionResult)
+
+function vmem_read(rs, offset, width, acc, aq, rl, res) = {
+  // Get the address, X(rs1) + offset.
+  // Extensions might perform additional checks on address validity.
+  let vaddr : virtaddr = match ext_data_get_addr(rs, offset, acc, width) {
+    Ext_DataAddr_OK(vaddr) => vaddr,
+    Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
+  };
+
+  vmem_read_addr(vaddr, offset, width, acc, aq, rl, res)
+}
+
+// This lets the Rocq extraction know why the repeat loop above terminates
+termination_measure vmem_write_addr repeat n
+
 val vmem_write_addr : forall 'width, is_mem_width('width).
   (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
-  if   check_misaligned(vaddr, width)
-  then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
-
   // If the store is misaligned or an allowed misaligned access, split into `n`
   // (single-copy-atomic) memory operations, each of `bytes` width. If the store is
   // aligned, then `n` = 1 and bytes will remain unchanged.
@@ -198,8 +213,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
     match translateAddr(Virtaddr(vaddr), access) {
-      Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
-
+      Err((e, c), _) => return Err(Memory_Exception(e, c)),
       // NOTE: Currently, we only announce the effective address if address translation is successful.
       // This may need revisiting, particularly in the misaligned case.
       Ok(paddr, _) => {
@@ -218,12 +232,12 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
             None()  => write_success = false,
           }
         } else match mem_write_ea(paddr, bytes, aq, rl, res) {
-          Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+          Err(e) => return Err(memory_exception_with_gva(e, Virtaddr(vaddr))),
 
           Ok(()) => {
             let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
             match mem_write_value(paddr, bytes, write_value, aq, rl, res) {
-              Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+              Err(e) => return Err(memory_exception_with_gva(e, Virtaddr(vaddr))),
               Ok(s)  => write_success = write_success & s,
             }
           }
@@ -239,24 +253,6 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   } until finished;
 
   Ok(write_success)
-}
-
-// This lets the Rocq extraction know why the repeat loop above terminates
-termination_measure vmem_write_addr repeat n
-
-val vmem_read : forall 'width, is_mem_width('width).
-  (regidx, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
-  -> result(bits(8 * 'width), ExecutionResult)
-
-function vmem_read(rs, offset, width, access, aq, rl, res) = {
-  // Get the address, X(rs1) + offset.
-  // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match ext_data_get_addr(rs, offset, access, width) {
-    Ext_DataAddr_OK(vaddr) => vaddr,
-    Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
-  };
-
-  vmem_read_addr(vaddr, offset, width, access, aq, rl, res)
 }
 
 val vmem_write : forall 'width, is_mem_width('width).
