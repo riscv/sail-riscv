@@ -18,18 +18,13 @@ mapping encdec_biop : biop <-> bits(3) = {
   BNEI  <-> 0b011
 }
 
-function b_imm5(cimm : bits(5)) -> bits(5) =
-  if cimm == 0b00000
-  then 0b11111
-  else cimm
-
 mapping clause encdec = BITYPE(imm @ 0b0, cimm, rs1, op)
   <-> imm[11] @ imm[9..4] @ cimm @ encdec_reg(rs1) @ encdec_biop(op) @ imm[3..0] @ imm[10] @ 0b1100011
   when currentlyEnabled(Ext_Zibi)
 
 $[split op]
 function clause execute BITYPE(imm, cimm, rs1, op) = {
-  let cimmext : xlenbits = sign_extend(b_imm5(cimm));
+  let cimmext : xlenbits = if cimm == zeros() then ones() else zero_extend(cimm);
   let taken : bool = match op {
     BEQI  => X(rs1) == cimmext,
     BNEI  => X(rs1) != cimmext
@@ -45,7 +40,7 @@ mapping bitype_mnemonic : biop <-> string = {
 }
 
 mapping clause assembly = BITYPE(imm, 0b00000, rs1, op)
-  <-> bitype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_5(0b11111) ^ sep() ^ hex_bits_signed_13(imm)
+  <-> bitype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ "-1" ^ sep() ^ hex_bits_signed_13(imm)
 mapping clause assembly = BITYPE(imm, cimm, rs1, op)
-  <-> bitype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_5(cimm) ^ sep() ^ hex_bits_signed_13(imm)
+  <-> bitype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ hex_bits_5(cimm) ^ sep() ^ hex_bits_signed_13(imm)
   when cimm != 0b00000

@@ -115,7 +115,6 @@ For booting operating system images, see the information under the
 - RV32I and RV64I base ISAs, v2.1
 - RV32E and RV64E base ISAs, v2.0
 - Zifencei extension for instruction-fetch fence, v2.0
-- Zibi extension for conditional branches with immediate operands, v0.6
 - Zicsr extension for CSR instructions, v2.0
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0
@@ -185,9 +184,9 @@ For booting operating system images, see the information under the
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 
-<!-- Uncomment the following section when unratified extensions are added
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
--  -->
+
+- Zibi extension for conditional branches with immediate operands, v0.6
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
