@@ -224,7 +224,7 @@ function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
   }))
 
 // Hardware Performance Monitoring event selection
-function clause is_CSR_accessible((0b0011001 /* 0x320 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) // mhpmevent3..31
+function clause is_CSR_accessible((0b0011001 /* 0x320 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = csr_requires_ext(Ext_Zihpm) // mhpmevent3..31
 function clause read_CSR(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmevent(hpmidx_from_bits(index))
 function clause write_CSR((0b0011001 /* 0x320 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
@@ -233,8 +233,8 @@ function clause write_CSR((0b0011001 /* 0x320 */ @ index : bits(5), value) if un
 }
 
 // Hardware Performance Monitoring machine mode counters
-function clause is_CSR_accessible((0b1011000 /* 0xB00 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) // mhpmcounter3..31
-function clause is_CSR_accessible((0b1011100 /* 0xB80 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) & xlen == 32 // mhpmcounterh3..31
+function clause is_CSR_accessible((0b1011000 /* 0xB00 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = csr_requires_ext(Ext_Zihpm) // mhpmcounter3..31
+function clause is_CSR_accessible((0b1011100 /* 0xB80 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = csr_requires_ext(Ext_Zihpm) & csr_requires_xlen_32() // mhpmcounterh3..31
 
 function clause read_CSR(0b1011000 /* 0xB00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
 function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))
@@ -251,8 +251,13 @@ function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xl
 }
 
 // Hardware Performance Monitoring user mode counters
-function clause is_CSR_accessible((0b1100000 /* 0xC00 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U) & counter_enabled(unsigned(index), priv) // hpmcounter3..31
-function clause is_CSR_accessible((0b1100100 /* 0xC80 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U) & xlen == 32 & counter_enabled(unsigned(index), priv) // hpmcounterh3..31
+function clause is_CSR_accessible((0b1100000 /* 0xC00 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) =
+  csr_requires_ext(Ext_Zihpm) & csr_requires_ext(Ext_U)
+  & csr_requires_counter(unsigned(index), priv) // hpmcounter3..31
+function clause is_CSR_accessible((0b1100100 /* 0xC80 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) =
+  csr_requires_ext(Ext_Zihpm) & csr_requires_ext(Ext_U)
+  & csr_requires_xlen_32()
+  & csr_requires_counter(unsigned(index), priv) // hpmcounterh3..31
 
 function clause read_CSR(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
 function clause read_CSR(0b1100100 /* 0xC80 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))

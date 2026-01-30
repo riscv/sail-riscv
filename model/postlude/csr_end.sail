@@ -9,17 +9,17 @@
 mapping clause csr_name_map = reg <-> hex_bits_12(reg)
 end csr_name_map
 
-function clause is_CSR_accessible(_) = false
+function clause is_CSR_accessible(_) = CSRAccess_Illegal(CSR_Illegal_NotDefined())
 end is_CSR_accessible
 
 function clause read_CSR(csr) = {
-   // This should be impossible because is_CSR_accessible() should have returned false.
+   // This should be impossible because is_CSR_accessible() should have returned CSRAccess_Illegal.
    internal_error(__FILE__, __LINE__, "Read from CSR that does not exist: " ^ bits_str(csr));
 }
 end read_CSR
 
 function clause write_CSR(csr, _) = {
-   // This should be impossible because is_CSR_accessible() should have returned false.
+   // This should be impossible because is_CSR_accessible() should have returned CSRAccess_Illegal.
    internal_error(__FILE__, __LINE__, "Write to CSR that does not exist: " ^ bits_str(csr));
 }
 end write_CSR
