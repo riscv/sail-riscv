@@ -338,7 +338,7 @@ function clause hartSupports(Ext_Zvfhmin) = config extensions.Zvfhmin.supported
 // Vector Extension for 4D Integer Dot Product
 enum clause extension = Ext_Zvdot4a8i
 mapping clause extensionName = Ext_Zvdot4a8i <-> "zvdot4a8i"
-function clause hartSupports(Ext_Zvdot4a8i) = config extensions.Zvdot4a8i.supported
+function clause hartSupports(Ext_Zvdot4a8i) = sys_enable_experimental_extensions() & config extensions.Zvdot4a8i.supported
 
 // Vector Basic Bit-manipulation
 enum clause extension = Ext_Zvbb
@@ -668,6 +668,9 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvbb,
   Ext_Zvbc,
 
+  // Zvdot
+  Ext_Zvdot4a8i,
+
   // Zve
   Ext_Zve32f,
   Ext_Zve32x,
@@ -678,9 +681,6 @@ let extensions_ordered_for_isa_string = [
   // Zvfbf
   Ext_Zvfbfmin,
   Ext_Zvfbfwma,
-
-  // Zvdot
-  Ext_Zvdot4a8i,
 
   // Zvfh
   Ext_Zvfh,
