@@ -17,6 +17,7 @@
   - Smstateen, Sstateen
   - Ssqosid
   - Zibi
+  - Zvdot4a8i (unratified)
 
 - The model now requires the Sail 0.20.1 compiler version.
 
