@@ -126,7 +126,6 @@
         },
         "include_in_device_tree": false
       },
-      
       // RAM
       {
         "base": {
