@@ -120,6 +120,7 @@ For booting operating system images, see the information under the
 - Zicond extension for integer conditional operations, v1.0
 - Zic64b extension for Cache block size is 64 bytes, v1.0
 - Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
+- Zicclsm extension for misaligned loads and stores to main memory regions, v1.0
 - Zicfilp extension for Landing Pad Control Flow Integrity, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
