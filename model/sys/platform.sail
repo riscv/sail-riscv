@@ -250,7 +250,7 @@ private function plic_bit_clear64(b: bits(plic_nsrc), idx:int) -> bits(plic_nsrc
 
 // -------------------------
 // PLIC arbitration (Lean-friendly termination):
-// scan IDs 1..(plic_nsrc_active-1) using a fuel list (structural recursion)
+// scan IDs 1..(plic_nsrc_active-1) using nat fuel + repeat loop
 // -------------------------
 private function plic_best_id_from(ctx:int, i:int, fuel:nat, best_id:int, best_pr:int) -> int = {
   var idx : int = i;
@@ -260,32 +260,37 @@ private function plic_best_id_from(ctx:int, i:int, fuel:nat, best_id:int, best_p
 
   repeat {
     if k > 0 then {
-      let en = plic_enable_of_ctx(ctx);
-      let th = unsigned(plic_threshold_of_ctx(ctx));
-      let pr = unsigned(plic_priority_get(idx));
+      // stop scanning once we reach configured active sources
+      if idx >= plic_nsrc_active then {
+        k = 0;
+      } else {
+        let en = plic_enable_of_ctx(ctx);
+        let th = unsigned(plic_threshold_of_ctx(ctx));
+        let pr = unsigned(plic_priority_get(idx));
 
-      let cand =
-        plic_bit_get64(en, idx) &
-        plic_bit_get64(plic_pending, idx) &
-        (not(plic_bit_get64(plic_claimed, idx))) &
-        (pr > th);
+        let cand =
+          plic_bit_get64(en, idx) &
+          plic_bit_get64(plic_pending, idx) &
+          (not(plic_bit_get64(plic_claimed, idx))) &
+          (pr > th);
 
-      if cand then {
-        let better =
-          (pr > bpr) |
-          ((pr == bpr) & ((bid == 0) | (idx < bid)));
-        if better then {
-          bid = idx;
-          bpr = pr;
+        if cand then {
+          let better =
+            (pr > bpr) |
+            ((pr == bpr) & ((bid == 0) | (idx < bid)));
+          if better then {
+            bid = idx;
+            bpr = pr;
+          } else {
+            ()
+          }
         } else {
           ()
-        }
-      } else {
-        ()
-      };
+        };
 
-      idx = idx + 1;
-      k = k - 1;
+        idx = idx + 1;
+        k = k - 1;
+      }
     } else {
       ()
     }

@@ -110,7 +110,7 @@
         },
         "size": {
           "len": 64,
-          "value": "0xE000000"
+          "value": "0x10000000"
         },
         "attributes": {
           "cacheable": false,
@@ -126,6 +126,7 @@
         },
         "include_in_device_tree": false
       },
+      
       // RAM
       {
         "base": {
