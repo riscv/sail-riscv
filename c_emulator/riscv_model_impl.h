@@ -72,6 +72,8 @@ private:
 
   bool get_config_print_instr(unit) override;
   bool get_config_print_clint(unit) override;
+  uint64_t get_config_plic_nsrc(unit) override;
+  uint64_t get_config_plic_nctx(unit) override;
   bool get_config_print_exception(unit) override;
   bool get_config_print_interrupt(unit) override;
   bool get_config_print_htif(unit) override;

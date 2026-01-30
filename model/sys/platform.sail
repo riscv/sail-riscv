@@ -31,6 +31,15 @@ private function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(ad
   & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
 }
 
+private function within_plic forall 'n, 0 < 'n <= max_mem_access .
+  (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
+  let addr_int = unsigned(addr);
+  let plic_base_int = unsigned(plat_plic_base);
+  let plic_size_int = unsigned(plat_plic_size);
+    plic_base_int <= addr_int
+  & (addr_int + sizeof('n)) <= (plic_base_int + plic_size_int)
+}
+
 private function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
   match htif_tohost_base {
     None() => false,
@@ -68,6 +77,71 @@ let MTIMECMP_BASE    : physaddrbits = zero_extend(0x04000)
 let MTIMECMP_BASE_HI : physaddrbits = zero_extend(0x04004)
 let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
 let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
+
+// Type-level maxima (can be used in bits()/vector())
+type plic_nsrc = 64        // IDs 0..63, ID0 reserved
+type plic_nctx = 2         // ctx0 = hart0/M, ctx1 = hart0/S
+
+// Term-level maxima derived from the type-level sizes
+let PLIC_NSRC_MAX = sizeof(plic_nsrc)
+let PLIC_NCTX_MAX = sizeof(plic_nctx)
+
+// Runtime active (from JSON, clamped to MAX)
+register plic_nsrc_active : int = PLIC_NSRC_MAX
+register plic_nctx_active : int = PLIC_NCTX_MAX
+
+private function clamp_int(x:int, lo:int, hi:int) -> int =
+  if x < lo then lo else if x > hi then hi else x
+
+register plic_priority : vector(plic_nsrc, bits(32)) = vector_init(PLIC_NSRC_MAX, (zeros() : bits(32)))
+register plic_pending  : bits(plic_nsrc)
+register plic_claimed  : bits(plic_nsrc)
+
+register plic_enable_m  : bits(plic_nsrc)
+register plic_enable_s  : bits(plic_nsrc)
+
+register plic_threshold_m : bits(32)
+register plic_threshold_s : bits(32)
+// PLIC MMIO offsets (as int)
+let PLIC_OFF_PRIORITY_END : int = unsigned(0x1000)
+let PLIC_OFF_PENDING_BASE : int = unsigned(0x1000)
+let PLIC_OFF_PENDING_END  : int = unsigned(0x2000)
+
+let PLIC_OFF_ENABLE_BASE  : int = unsigned(0x2000)
+let PLIC_OFF_ENABLE_END   : int = unsigned(0x3000)
+let PLIC_ENABLE_STRIDE    : int = unsigned(0x80)    // per-context enable stride
+
+let PLIC_OFF_CTX_BASE     : int = unsigned(0x200000)
+let PLIC_CTX_STRIDE       : int = unsigned(0x1000)  // per-context page
+let PLIC_OFF_THRESHOLD    : int = 0
+let PLIC_OFF_CLAIM        : int = 4
+
+// -------------------------
+// priority helpers (packed array: bits(32 * plic_nsrc))
+// -------------------------
+
+private function plic_prio_lo(id:int) -> int = id * 32
+private function plic_prio_hi(id:int) -> int = (id * 32) + 31
+
+private function plic_priority_get(id:int) -> bits(32) = {
+  // valid IDs are 1..(PLIC_NSRC_MAX-1) and also must be < active
+  if id > 0 & id < plic_nsrc_active & id < PLIC_NSRC_MAX then
+    plain_vector_access(plic_priority, id)
+  else
+    zeros()
+}
+
+private function plic_priority_set(id:int, v:bits(32)) -> unit = {
+  if id > 0 & id < plic_nsrc_active & id < PLIC_NSRC_MAX then
+    plic_priority = plain_vector_update(plic_priority, id, v)
+  else
+    ()
+}
+
+// keep as-is for now (we'll make it nctx_active-aware later)
+private function plic_enable_of_ctx(ctx:int) -> bits(plic_nsrc) = {
+  if ctx == 0 then plic_enable_m else plic_enable_s
+}
 
 private val clint_load : forall 'n, 'n > 0. (MemoryAccessType(mem_payload), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function clint_load(access, Physaddr(addr), width) = {
@@ -122,6 +196,287 @@ function clint_load(access, Physaddr(addr), width) = {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> <not-mapped>");
     Err(accessFaultFromAccessType(access))
+  }
+}
+
+// -------------------------
+// PLIC helpers: avoid b[i] style indexing (which causes quantifier issues)
+// -------------------------
+private function plic_threshold_of_ctx(ctx:int) -> bits(32) = {
+  if ctx == 0 then plic_threshold_m else plic_threshold_s
+}
+
+private function plic_mask32(idx:int) -> bits(32) = {
+  if idx < 0 | idx >= 32 then zeros()
+  else (zero_extend(32, 0b1) << idx)
+}
+
+private function plic_bit_get64(b: bits(plic_nsrc), idx:int) -> bool = {
+  if idx < 0 then false
+  else if idx < 32 then {
+    let lo : bits(32) = b[31..0];
+    (lo & plic_mask32(idx)) != zeros()
+  } else if idx < 64 then {
+    let hi : bits(32) = b[63..32];
+    (hi & plic_mask32(idx - 32)) != zeros()
+  } else false
+}
+
+private function plic_bit_set64(b: bits(plic_nsrc), idx:int) -> bits(plic_nsrc) = {
+  if idx < 0 then b
+  else if idx < 32 then {
+    let lo : bits(32) = b[31..0];
+    let hi : bits(32) = b[63..32];
+    hi @ (lo | plic_mask32(idx))
+  } else if idx < 64 then {
+    let lo : bits(32) = b[31..0];
+    let hi : bits(32) = b[63..32];
+    (hi | plic_mask32(idx - 32)) @ lo
+  } else b
+}
+
+private function plic_bit_clear64(b: bits(plic_nsrc), idx:int) -> bits(plic_nsrc) = {
+  if idx < 0 then b
+  else if idx < 32 then {
+    let lo : bits(32) = b[31..0];
+    let hi : bits(32) = b[63..32];
+    hi @ (lo & ~(plic_mask32(idx)))
+  } else if idx < 64 then {
+    let lo : bits(32) = b[31..0];
+    let hi : bits(32) = b[63..32];
+    (hi & ~(plic_mask32(idx - 32))) @ lo
+  } else b
+}
+
+// -------------------------
+// PLIC arbitration (Lean-friendly termination):
+// scan IDs 1..(plic_nsrc_active-1) using nat fuel + repeat loop
+// -------------------------
+private function plic_best_id_from(ctx:int, i:int, fuel:nat, best_id:int, best_pr:int) -> int = {
+  var idx : int = i;
+  var k   : int = fuel;
+  var bid : int = best_id;
+  var bpr : int = best_pr;
+
+  repeat {
+    if k > 0 then {
+      // stop scanning once we reach configured active sources
+      if idx >= plic_nsrc_active then {
+        k = 0;
+      } else {
+        let en = plic_enable_of_ctx(ctx);
+        let th = unsigned(plic_threshold_of_ctx(ctx));
+        let pr = unsigned(plic_priority_get(idx));
+
+        let cand =
+          plic_bit_get64(en, idx) &
+          plic_bit_get64(plic_pending, idx) &
+          (not(plic_bit_get64(plic_claimed, idx))) &
+          (pr > th);
+
+        if cand then {
+          let better =
+            (pr > bpr) |
+            ((pr == bpr) & ((bid == 0) | (idx < bid)));
+          if better then {
+            bid = idx;
+            bpr = pr;
+          } else {
+            ()
+          }
+        } else {
+          ()
+        };
+
+        idx = idx + 1;
+        k = k - 1;
+      }
+    } else {
+      ()
+    }
+  } until k == 0;
+
+  bid
+}
+termination_measure plic_best_id_from repeat fuel
+
+private function plic_best_id(ctx:int) -> int = {
+  // use type-level max fuel, avoid int_to_nat visibility issues in Lean backend
+  plic_best_id_from(ctx, 1, (PLIC_NSRC_MAX - 1), 0, 0)
+}
+
+
+private function plic_update_mip() -> unit = {
+  let bid_m = plic_best_id(0);
+  let bid_s = plic_best_id(1);
+
+  mip[MEI] = bool_to_bit(bid_m != 0);
+  if currentlyEnabled(Ext_S) then
+    mip[SEI] = bool_to_bit(bid_s != 0)
+  else
+    ();
+
+  print("PLIC: update_mip best(M)=" ^ dec_str(bid_m) ^
+            " MEI=" ^ bits_str(mip[MEI]) ^
+            (if currentlyEnabled(Ext_S) then " best(S)=" ^ dec_str(bid_s) ^ " SEI=" ^ bits_str(mip[SEI]) else ""));
+}
+
+
+private val plic_load : forall 'n, 'n > 0.
+  (MemoryAccessType(mem_payload), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+function plic_load(_, Physaddr(addr), width) = {
+  let off = unsigned(addr - plat_plic_base);
+
+  // MVP: only 32-bit accesses
+  if 'n != 4 then Ok(zeros())
+  else {
+    // priority: 0x000000 + 4*id
+    if off < PLIC_OFF_PRIORITY_END then {
+      let id = off / 4;
+      Ok(plic_priority_get(id))
+    }
+
+    // pending bitmap: only support two words for 64 sources
+    else if off == PLIC_OFF_PENDING_BASE then
+      Ok(zero_extend(32, plic_pending[31..0]))
+    else if off == (PLIC_OFF_PENDING_BASE + 4) then
+      Ok(zero_extend(32, plic_pending[63..32]))
+
+    // enable bitmap (MVP: ctx0 and ctx1 only, two words each)
+    else if off == PLIC_OFF_ENABLE_BASE then
+      Ok(zero_extend(32, plic_enable_m[31..0]))
+    else if off == (PLIC_OFF_ENABLE_BASE + 4) then
+      Ok(zero_extend(32, plic_enable_m[63..32]))
+    else if off == (PLIC_OFF_ENABLE_BASE + PLIC_ENABLE_STRIDE) then
+      Ok(zero_extend(32, plic_enable_s[31..0]))
+    else if off == (PLIC_OFF_ENABLE_BASE + PLIC_ENABLE_STRIDE + 4) then
+      Ok(zero_extend(32, plic_enable_s[63..32]))
+
+    // per-context threshold/claim (MVP: ctx0 and ctx1 only)
+    else if off == PLIC_OFF_CTX_BASE then
+      Ok(plic_threshold_m)
+    else if off == (PLIC_OFF_CTX_BASE + 4) then {
+      // claim ctx0 (M)
+      let id = plic_best_id(0);
+      if id != 0 then {
+        plic_pending = plic_bit_clear64(plic_pending, id);
+        plic_claimed = plic_bit_set64(plic_claimed, id);
+        plic_pending = plic_bit_clear64(plic_pending, 0);
+        plic_claimed = plic_bit_clear64(plic_claimed, 0);
+
+        plic_update_mip();
+        Ok(to_bits_checked(id : int) : bits(32))
+      } else {
+        plic_update_mip();
+        Ok(zeros())
+      }
+    }
+    else if off == (PLIC_OFF_CTX_BASE + PLIC_CTX_STRIDE) then
+      Ok(plic_threshold_s)
+    else if off == (PLIC_OFF_CTX_BASE + PLIC_CTX_STRIDE + 4) then {
+      // claim ctx1 (S)
+      let id = plic_best_id(1);
+      if id != 0 then {
+        plic_pending = plic_bit_clear64(plic_pending, id);
+        plic_claimed = plic_bit_set64(plic_claimed, id);
+        plic_pending = plic_bit_clear64(plic_pending, 0);
+        plic_claimed = plic_bit_clear64(plic_claimed, 0);
+        plic_update_mip();
+        Ok(to_bits_checked(id : int) : bits(32))
+      } else {
+        plic_update_mip();
+        Ok(zeros())
+      }
+    }
+
+    else Ok(zeros())
+  }
+}
+
+private val plic_store : forall 'n, 'n > 0.
+  (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
+function plic_store(Physaddr(addr), width, data) = {
+  let off = unsigned(addr - plat_plic_base);
+
+  // MVP: only 32-bit stores
+  if 'n != 4 then Ok(true)
+  else {
+    let wdata : bits(32) = data;
+
+    // priority: 0x000000 + 4*id
+    if off < PLIC_OFF_PRIORITY_END then {
+      let id = off / 4;
+      if id < plic_nsrc_active & id != 0 then {
+        plic_priority_set(id, wdata);
+        plic_update_mip()
+      } else ();
+      Ok(true)
+    }
+
+    // pending bitmap injection (non-standard, for bring-up)
+    else if off == PLIC_OFF_PENDING_BASE then {
+      plic_pending[31..0] = plic_pending[31..0] | wdata;
+      plic_pending = plic_bit_clear64(plic_pending, 0);
+      plic_update_mip();
+      Ok(true)
+    } else if off == (PLIC_OFF_PENDING_BASE + 4) then {
+      plic_pending[63..32] = plic_pending[63..32] | wdata;
+      plic_pending = plic_bit_clear64(plic_pending, 0);
+      plic_update_mip();
+      Ok(true)
+    }
+
+    // enable bitmap (ctx0=M, ctx1=S)
+    else if off == PLIC_OFF_ENABLE_BASE then {
+      plic_enable_m[31..0] = wdata;
+      plic_enable_m = plic_bit_clear64(plic_enable_m, 0);
+      plic_update_mip();
+      Ok(true)
+    } else if off == (PLIC_OFF_ENABLE_BASE + 4) then {
+      plic_enable_m[63..32] = wdata;
+      plic_enable_m = plic_bit_clear64(plic_enable_m, 0);
+      plic_update_mip();
+      Ok(true)
+    } else if off == (PLIC_OFF_ENABLE_BASE + PLIC_ENABLE_STRIDE) then {
+      plic_enable_s[31..0] = wdata;
+      plic_enable_s = plic_bit_clear64(plic_enable_s, 0);
+      plic_update_mip();
+      Ok(true)
+    } else if off == (PLIC_OFF_ENABLE_BASE + PLIC_ENABLE_STRIDE + 4) then {
+      plic_enable_s[63..32] = wdata;
+      plic_enable_s = plic_bit_clear64(plic_enable_s, 0);
+      plic_update_mip();
+      Ok(true)
+    }
+
+    // per-context threshold/complete (ctx0, ctx1)
+    else if off == PLIC_OFF_CTX_BASE then {
+      plic_threshold_m = wdata;
+      plic_update_mip();
+      Ok(true)
+    } else if off == (PLIC_OFF_CTX_BASE + 4) then {
+      let id = unsigned(wdata);
+      if id < plic_nsrc_active & id != 0 then {
+        plic_claimed = plic_bit_clear64(plic_claimed, id);
+        plic_claimed = plic_bit_clear64(plic_claimed, 0);
+        plic_update_mip()
+      } else ();
+      Ok(true)
+    } else if off == (PLIC_OFF_CTX_BASE + PLIC_CTX_STRIDE) then {
+      plic_threshold_s = wdata;
+      plic_update_mip();
+      Ok(true)
+    } else if off == (PLIC_OFF_CTX_BASE + PLIC_CTX_STRIDE + 4) then {
+      let id = unsigned(wdata);
+      if id < plic_nsrc_active & id != 0 then {
+        plic_claimed = plic_bit_clear64(plic_claimed, id);
+        plic_claimed = plic_bit_clear64(plic_claimed, 0);
+        plic_update_mip()
+      } else ();
+      Ok(true)
+    }
+
+    else Ok(true)
   }
 }
 
@@ -330,22 +685,28 @@ function htif_store(Physaddr(paddr), width, data) = {
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   if get_config_rvfi()
   then false
-  else within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
+  else within_clint(addr, width) | within_plic(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
 
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   if get_config_rvfi()
   then false
-  else within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
+  else within_clint(addr, width) | within_plic(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 
-function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessType(mem_payload), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
-  if   within_clint(paddr, width)
+function mmio_read forall 'n, 0 < 'n <= max_mem_access .
+  (access : MemoryAccessType(mem_payload), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
+  if   within_plic(paddr, width)
+  then plic_load(access, paddr, width)
+  else if within_clint(paddr, width)
   then clint_load(access, paddr, width)
   else if within_htif_readable(paddr, width)
   then htif_load(access, paddr, width)
   else Err(accessFaultFromAccessType(access))
 
-function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
-  if   within_clint(paddr, width)
+function mmio_write forall 'n, 0 < 'n <= max_mem_access .
+  (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
+  if   within_plic(paddr, width)
+  then plic_store(paddr, width, data)
+  else if within_clint(paddr, width)
   then clint_store(paddr, width, data)
   else if within_htif_writable(paddr, width)
   then htif_store(paddr, width, data)
@@ -359,6 +720,26 @@ function init_platform() -> unit = {
   htif_exit_code = zeros();
   htif_cmd_write = 0b0;
   htif_payload_writes = zeros();
+
+  // --- PLIC runtime config (JSON) ---
+  // read config values (C++ backend reads from JSON; other backends use defaults)
+  let nsrc_cfg = unsigned(get_config_plic_nsrc());
+  let nctx_cfg = unsigned(get_config_plic_nctx());
+
+  // clamp to type-level maxima to avoid out-of-range access
+  plic_nsrc_active = clamp_int(nsrc_cfg, 1, PLIC_NSRC_MAX);
+  plic_nctx_active = clamp_int(nctx_cfg, 1, PLIC_NCTX_MAX);
+
+  // reset PLIC state
+  plic_pending = zeros();
+  plic_claimed = zeros();
+  plic_enable_m = zeros();
+  plic_enable_s = zeros();
+  plic_threshold_m = zeros();
+  plic_threshold_s = zeros();
+
+  mtimecmp = zeros();
+  stimecmp = zeros();
 }
 
 // Platform-specific wait-for-interrupt

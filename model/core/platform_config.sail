@@ -37,6 +37,9 @@ let plat_enable_misaligned_access : bool = config memory.misaligned.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
+let plat_plic_base : physaddrbits = to_bits_checked(config platform.plic.base : int)
+let plat_plic_size : physaddrbits = to_bits_checked(config platform.plic.size : int)
+
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 
 // which exceptions write information into `xtval`
