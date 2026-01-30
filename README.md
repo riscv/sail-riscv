@@ -184,9 +184,12 @@ For booting operating system images, see the information under the
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 
-<!-- Uncomment the following section when unratified extensions are added
-The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
+<!-- Comment the following section when no unratified extensions are available
 -  -->
+
+The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
+
+- Zvdot4a8i extension for 4D 8-bit vector integer dot product, version 0.1
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
