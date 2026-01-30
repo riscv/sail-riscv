@@ -72,8 +72,7 @@ function clause hartSupports(Ext_H) = false
 
 enum clause extension = Ext_Zibi
 mapping clause extensionName = Ext_Zibi <-> "zibi"
-function clause hartSupports(Ext_Zibi) = config extensions.Zibi.supported
-function clause currentlyEnabled(Ext_Zibi) = hartSupports(Ext_Zibi)
+function clause hartSupports(Ext_Zibi) = sys_enable_experimental_extensions() & config extensions.Zibi.supported
 // Cache block size is 64 bytes
 enum clause extension = Ext_Zic64b
 mapping clause extensionName = Ext_Zic64b <-> "zic64b"

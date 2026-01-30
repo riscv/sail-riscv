@@ -115,6 +115,7 @@ For booting operating system images, see the information under the
 - RV32I and RV64I base ISAs, v2.1
 - RV32E and RV64E base ISAs, v2.0
 - Zifencei extension for instruction-fetch fence, v2.0
+- Zibi extension for conditional branches with immediate operands, v0.6
 - Zicsr extension for CSR instructions, v2.0
 - Zicntr and Zihpm extensions for counters, v2.0
 - Zicond extension for integer conditional operations, v1.0

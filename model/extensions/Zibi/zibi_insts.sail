@@ -9,6 +9,8 @@
 // The Zibi extension defines 2 instructions named BEQI and BNEI. BEQI and BNEI compare a register
 // with an immediate, and it takes the branch if registers rs1 and cimm are equal or unequal
 
+function clause currentlyEnabled(Ext_Zibi) = hartSupports(Ext_Zibi)
+
 union clause instruction = BITYPE : (bits(13), bits(5), regidx, biop)
 
 mapping encdec_biop : biop <-> bits(3) = {
@@ -17,8 +19,8 @@ mapping encdec_biop : biop <-> bits(3) = {
 }
 
 function b_imm5(cimm : bits(5)) -> bits(5) =
-  if cimm == 0b00000 then
-    0b11111
+  if cimm == 0b00000
+  then 0b11111
   else cimm
 
 mapping clause encdec = BITYPE(imm @ 0b0, cimm, rs1, op)
@@ -27,7 +29,7 @@ mapping clause encdec = BITYPE(imm @ 0b0, cimm, rs1, op)
 
 $[split op]
 function clause execute BITYPE(imm, cimm, rs1, op) = {
-let cimmext : xlenbits = sign_extend(b_imm5(cimm));
+  let cimmext : xlenbits = sign_extend(b_imm5(cimm));
   let taken : bool = match op {
     BEQI  => X(rs1) == cimmext,
     BNEI  => X(rs1) != cimmext
@@ -37,11 +39,13 @@ let cimmext : xlenbits = sign_extend(b_imm5(cimm));
   else RETIRE_SUCCESS
 }
 
-
 mapping bitype_mnemonic : biop <-> string = {
   BEQI  <-> "beqi",
   BNEI  <-> "bnei"
 }
 
+mapping clause assembly = BITYPE(imm, 0b00000, rs1, op)
+  <-> bitype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_5(0b11111) ^ sep() ^ hex_bits_signed_13(imm)
 mapping clause assembly = BITYPE(imm, cimm, rs1, op)
-  <-> bitype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_abi_name_raw(cimm) ^ sep() ^ hex_bits_signed_13(imm)
+  <-> bitype_mnemonic(op) ^ spc() ^ reg_name(rs1) ^ sep() ^ hex_bits_signed_5(cimm) ^ sep() ^ hex_bits_signed_13(imm)
+  when cimm != 0b00000
