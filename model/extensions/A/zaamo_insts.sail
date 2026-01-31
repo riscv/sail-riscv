@@ -32,11 +32,11 @@ private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(
       (op == AMOCAS & width <= xlen_bytes * 2)
       &
       (if   rs2[0] == 0b1 | rd[0] == 0b1
-       then match amocas_odd_register_reserved_behavior {
-         AMOCAS_Fatal   => reserved_behavior("AMOCAS.D/Q used odd-numbered register"),
-         AMOCAS_Illegal => false,
-       }
-       else true)
+      then match amocas_odd_register_reserved_behavior {
+        AMOCAS_Fatal   => reserved_behavior("AMOCAS.D/Q used an odd-numbered register (rs2 = " ^ dec_str(unsigned(rs2)) ^ ", rd = " ^ dec_str(unsigned(rd)) ^ ")."),
+        AMOCAS_Illegal => false,
+      }
+      else true)
     )))
 
 // *****************************************************************
