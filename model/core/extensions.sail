@@ -70,6 +70,9 @@ enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
 function clause hartSupports(Ext_H) = false
 
+enum clause extension = Ext_Zibi
+mapping clause extensionName = Ext_Zibi <-> "zibi"
+function clause hartSupports(Ext_Zibi) = sys_enable_experimental_extensions() & config extensions.Zibi.supported
 // Cache block size is 64 bytes
 enum clause extension = Ext_Zic64b
 mapping clause extensionName = Ext_Zic64b <-> "zic64b"
@@ -596,6 +599,7 @@ let extensions_ordered_for_isa_string = [
 
   // Z extensions, ordered by category and then alphabetically.
   // Zi
+  Ext_Zibi,
   Ext_Zicbom,
   Ext_Zicbop,
   Ext_Zicboz,
