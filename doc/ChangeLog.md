@@ -11,6 +11,7 @@
 - The following extensions have been added:
   - Za64rs, Za128rs
   - Zic64b
+  - Zvabd
   - Sstvala
   - Sstvecd
   - Ssu64xl

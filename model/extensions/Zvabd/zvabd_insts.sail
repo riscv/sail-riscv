@@ -8,17 +8,20 @@
 
 function clause currentlyEnabled(Ext_Zvabd) = hartSupports(Ext_Zvabd) & currentlyEnabled(Ext_Zve32x)
 
-union clause instruction = VABS_V : (zvabd_vabs_func6, bits(1), vregidx, vregidx)
+// Since the targeted use cases are mostly based on 8-bit and 16-bit integer,
+// `vabd/vabdu/vwabda/vwabdau` are designed for only SEW=8 and SEW=16.
+// Additionally, `vabs` is considered to support all the element sizes
+// as it is quite common used and simple to implement.
+function valid_zvabd_sew(sew : int) -> bool = sew == 8 | sew == 16
 
-$[wavedrom "_ _ _ _ OPMVV _ OP-V"]
-mapping clause encdec = VABS_V(V_VABS, vm, vs2, vd)
+union clause instruction = VABS_V : (bits(1), vregidx, vregidx)
+
+$[wavedrom "funct6 _ _ _ OPMVV _ OP-V"]
+mapping clause encdec = VABS_V(vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvabd)
 
-mapping clause assembly = VABS_V(V_VABS, vm, vs2, vd)
-  <-> "vabs.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
-
-function clause execute VABS_V(funct6, vm, vs2, vd) = {
+function clause execute VABS_V(vm, vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -39,17 +42,17 @@ function clause execute VABS_V(funct6, vm, vs2, vd) = {
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
-    if mask[i] == 0b1 then {
-      result[i] = match funct6 {
-        V_VABS => to_bits(SEW, abs_int(signed(vs2_val[i])))
-      };
-    }
+    if mask[i] == 0b1 then
+      result[i] = to_bits(SEW, abs_int(signed(vs2_val[i])))
   };
 
   write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
+
+mapping clause assembly = VABS_V(vm, vs2, vd)
+  <-> "vabs.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 union clause instruction = ZVABDTYPE : (zvabd_vabd_func6, bits(1), vregidx, vregidx, vregidx)
 
@@ -58,18 +61,10 @@ mapping encdec_zvabd_vabd_func6 : zvabd_vabd_func6 <-> bits(6) = {
   VV_VABDU <-> 0b010011
 }
 
-$[wavedrom "_ _ _ _ OPIVV _ OP-V"]
+$[wavedrom "funct6 _ _ _ OPIVV _ OP-V"]
 mapping clause encdec = ZVABDTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_zvabd_vabd_func6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvabd)
-
-mapping vabd_mnemonic : zvabd_vabd_func6 <-> string = {
-  VV_VABD  <-> "vabd.vv",
-  VV_VABDU <-> "vabdu.vv"
-}
-
-mapping clause assembly = ZVABDTYPE(funct6, vm, vs2, vs1, vd)
-  <-> vabd_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+  when currentlyEnabled(Ext_Zvabd) & valid_zvabd_sew(get_sew())
 
 function clause execute ZVABDTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -106,25 +101,25 @@ function clause execute ZVABDTYPE(funct6, vm, vs2, vs1, vd) = {
   RETIRE_SUCCESS
 }
 
+mapping vabd_mnemonic : zvabd_vabd_func6 <-> string = {
+  VV_VABD  <-> "vabd.vv",
+  VV_VABDU <-> "vabdu.vv"
+}
+
+mapping clause assembly = ZVABDTYPE(funct6, vm, vs2, vs1, vd)
+  <-> vabd_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+
 union clause instruction = ZVWABDATYPE : (zvabd_vwabda_func6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_zvabd_vwabda_func6 : zvabd_vwabda_func6 <-> bits(6) = {
-  VV_VWABDACC  <-> 0b010101,
-  VV_VWABDACCU <-> 0b010110
+  VV_VWABDA  <-> 0b010101,
+  VV_VWABDAU <-> 0b010110
 }
 
-$[wavedrom "_ _ _ _ OPIVV _ OP-V"]
+$[wavedrom "funct6 _ _ _ OPIVV _ OP-V"]
 mapping clause encdec = ZVWABDATYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_zvabd_vwabda_func6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
-  when currentlyEnabled(Ext_Zvabd)
-
-mapping vwabda_mnemonic : zvabd_vwabda_func6 <-> string = {
-  VV_VWABDACC  <-> "vwabdacc.vv",
-  VV_VWABDACCU <-> "vwabdaccu.vv"
-}
-
-mapping clause assembly = ZVWABDATYPE(funct6, vm, vs2, vs1, vd)
-  <-> vwabda_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+  when currentlyEnabled(Ext_Zvabd) & valid_zvabd_sew(get_sew())
 
 function clause execute ZVWABDATYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
@@ -138,7 +133,7 @@ function clause execute ZVWABDATYPE(funct6, vm, vs2, vs1, vd) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
 
-  assert(SEW_widen <= 64);
+  assert(SEW_widen == 16 | SEW_widen == 32);
   assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
@@ -159,11 +154,11 @@ function clause execute ZVWABDATYPE(funct6, vm, vs2, vs1, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then {
       result[i] = match funct6 {
-        VV_VWABDACC  => {
+        VV_VWABDA  => {
           let diff = signed(vs2_val[i]) - signed(vs1_val[i]);
           to_bits_unsafe(SEW_widen, signed(vd_val[i]) + abs_int(diff))
         },
-        VV_VWABDACCU => {
+        VV_VWABDAU => {
           let abs_diff = if unsigned(vs2_val[i]) >= unsigned(vs1_val[i])
                          then unsigned(vs2_val[i] - vs1_val[i])
                          else unsigned(vs1_val[i] - vs2_val[i]);
@@ -177,3 +172,11 @@ function clause execute ZVWABDATYPE(funct6, vm, vs2, vs1, vd) = {
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
+
+mapping vwabda_mnemonic : zvabd_vwabda_func6 <-> string = {
+  VV_VWABDA  <-> "vwabda.vv",
+  VV_VWABDAU <-> "vwabdau.vv"
+}
+
+mapping clause assembly = ZVWABDATYPE(funct6, vm, vs2, vs1, vd)
+  <-> vwabda_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
