@@ -28,6 +28,9 @@ private function privLevel_to_CSR_privbits(p : Privilege) -> nom_priv_bits =
   match p {
     User              => 0b00,
     VirtualUser       => 0b00,
+    // Note that this `if` is not strictly necessary. We could return
+    // 0b10 unconditionally if other checks ensure that hypervisor
+    // CSRs do not exist if H is not enabled.
     Supervisor        => if currentlyEnabled(Ext_H) then 0b10 else 0b01,
     VirtualSupervisor => 0b01,
     Machine           => 0b11,
