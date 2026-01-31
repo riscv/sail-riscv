@@ -188,6 +188,8 @@ For booting operating system images, see the information under the
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
 -  -->
 
+Zvabd extension for vector absolute difference, v0.5
+
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
 ## Example RISC-V instruction specifications
