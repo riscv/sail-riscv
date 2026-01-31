@@ -11,11 +11,10 @@ main:
   # Set up PMP bounds for a region.  This requires us to restrict the global
   # permissions set in crt0.S:init_pmp.  The linker script sets the RAM region
   # to start at 0x80000000 with a size of 512m, while the default RAM size in the
-  # PMA config is 128m, so use the smaller one. To fit in a 32-bit range for RV32, take
-  # the last page of RAM as the test region, and shrink the computed size of RAM.
+  # PMA config is 2g, so use the smaller one.
   # Assume a PMP grain of 0 as in the default config.
 #define RAM_START 0x80000000
-#define RAM_SIZE  (0x80000000 - 0x1000)
+#define RAM_SIZE  0x20000000
   # The forbidden test region starts beyond RAM.
 #define TEST_REGION_START (RAM_START + RAM_SIZE)
 #define TEST_REGION_PMP_ADDR (TEST_REGION_START >> PMP_SHIFT)
