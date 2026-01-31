@@ -24,6 +24,8 @@ type physaddrbits_len : Int = if xlen == 32 then 34 else 64
 // This is the maximum; designs can implement shorter ASIDLENs.
 // TODO: Allow configuring shorter ASIDLENs.
 type asidlen    : Int = if xlen == 32 then 9 else 16
+// TODO: Allow configuring shorter VMIDLENs.
+type vmidlen    : Int = if xlen == 32 then 7 else 14
 
 // Variable versions of the above types. Variables and types
 // are disjoint in Sail so they are allowed to have the same name.
@@ -32,6 +34,8 @@ let log2_xlen = sizeof(log2_xlen)
 let xlen_bytes = sizeof(xlen_bytes)
 let xlen = sizeof(xlen)
 let asidlen = sizeof(asidlen)
+let vmidlen = sizeof(vmidlen)
 
 type xlenbits = bits(xlen)
 type asidbits = bits(asidlen)
+type vmidbits = bits(vmidlen)
