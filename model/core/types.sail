@@ -48,6 +48,7 @@ function creg2reg_idx(Cregidx(i) : cregidx) -> regidx = Regidx(zero_extend(0b1 @
 let zreg : regidx = Regidx(zero_extend(0b00)) // x0, zero register
 let ra   : regidx = Regidx(zero_extend(0b01)) // x1, return address
 let sp   : regidx = Regidx(zero_extend(0b10)) // x2, stack pointer
+let t0   : regidx = Regidx(zero_extend(0b101)) // x5, alternate link register
 
 // base architecture definitions
 
