@@ -50,6 +50,9 @@ register mtimecmp : bits(64)
 // Unlike mtimecmp, stimecmp is a real CSR; not memory mapped.
 register stimecmp : bits(64)
 
+// vstimecmp CSR is also a real CSR; not memory mapped.
+register vstimecmp : bits(64)
+
 // CLINT memory-mapped IO
 
 // relative address map:

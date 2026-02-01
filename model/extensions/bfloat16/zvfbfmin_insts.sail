@@ -1,9 +1,9 @@
 //=======================================================================================
-//  This Sail RISC-V architecture model, comprising all files and
-//  directories except where otherwise noted is subject the BSD
-//  two-clause license in the LICENSE file.
+// This Sail RISC-V architecture model, comprising all files and
+// directories except where otherwise noted is subject the BSD
+// two-clause license in the LICENSE file.
 //
-//  SPDX-License-Identifier: BSD-2-Clause
+// SPDX-License-Identifier: BSD-2-Clause
 //=======================================================================================
 
 function clause currentlyEnabled(Ext_Zvfbfmin) = hartSupports(Ext_Zvfbfmin) & currentlyEnabled(Ext_Zve32f)

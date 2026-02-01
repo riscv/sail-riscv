@@ -30,7 +30,7 @@ union ExecutionResult = {
   Illegal_Instruction            : unit,
   Virtual_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
-  Memory_Exception               : (virtaddr, ExceptionType),
+  Memory_Exception               : (ExceptionType, ExceptionContext),
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,
@@ -46,6 +46,15 @@ union ExecutionResult = {
 
 let RETIRE_SUCCESS : ExecutionResult = Retire_Success()
 
+function memory_exception_with_gva(e : ExceptionType, vaddr : virtaddr) -> ExecutionResult = {
+  Memory_Exception(e, struct {
+    excinfo     = Some(bits_of(vaddr)),
+    info_is_gva = privLevel_is_virtual(cur_privilege),
+    excinfo2    = None(),
+    excinst     = None(),
+    ext         = None(),
+  })
+}
 
 // returns whether an instruction was retired, used for computing minstret
 val execute : instruction -> ExecutionResult
@@ -59,6 +68,10 @@ scattered mapping encdec
 
 val encdec_compressed : instruction <-> bits(16)
 scattered mapping encdec_compressed
+
+/* Function for transformed instructions as defined in the hypervisor extension */
+val enc_transformed : (instruction, bits(5)) -> bits(32)
+scattered function enc_transformed
 
 // We declare the ILLEGAL/C_ILLEGAL instruction clauses here instead of in
 // insts_end, so that model extensions can make use of them.

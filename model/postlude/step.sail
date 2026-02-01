@@ -13,7 +13,7 @@ register hart_state : HartState = HART_ACTIVE()
 private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
-  Step_Fetch_Failure      : (virtaddr, ExceptionType),
+  Step_Fetch_Failure      : (ExceptionType, ExceptionContext),
   Step_Execute            : (ExecutionResult, instbits),
   Step_Waiting            : WaitReason,
 }
@@ -93,13 +93,14 @@ private function run_hart_active(step_no: nat) -> Step = {
       // extension error
       F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
       // standard error
-      F_Error(e, addr) => Step_Fetch_Failure(Virtaddr(addr), e),
+      F_Error(e, c) => Step_Fetch_Failure(e, c),
       // non-error cases:
       F_RVC(h) => {
         sail_instr_announce(h);
         fetch_callback(h);
         let instbits : instbits = zero_extend(h);
         let instruction = ext_decode_compressed(h);
+        instbits_transformed = enc_transformed(instruction, zeros()); // BUG: Address offset may be nonzero for misaligned memory accesses
         if   get_config_print_instr()
         then {
           print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
@@ -107,7 +108,7 @@ private function run_hart_active(step_no: nat) -> Step = {
         // When ELP is set to LP_EXPECTED, the next instruction needs to be
         // the non-RVC `LPAD` instruction.
         if is_landing_pad_expected() then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+          let r = Trap(cur_privilege, make_landing_pad_exception(), PC);
           Step_Execute(r, instbits)
         }
         // check for RVC once here instead of every RVC execute clause.
@@ -127,6 +128,7 @@ private function run_hart_active(step_no: nat) -> Step = {
         fetch_callback(w);
         let instbits : instbits = zero_extend(w);
         let instruction = ext_decode(w);
+        instbits_transformed = enc_transformed(instruction, zeros()); // BUG: Address offset may be nonzero for misaligned memory accesses
         if   get_config_print_instr()
         then {
           print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
@@ -135,7 +137,7 @@ private function run_hart_active(step_no: nat) -> Step = {
         // the instruction stream is not LPAD, then a software check
         // exception with a landing pad fault code is thrown.
         if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+          let r = Trap(cur_privilege, make_landing_pad_exception(), PC);
           Step_Execute(r, instbits)
         } else {
           nextPC = PC + 4;
@@ -201,21 +203,21 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   match step_val {
     Step_Pending_Interrupt(intr, priv) => {
       if   get_config_print_instr()
-      then print_bits("Handling interrupt: ", interruptType_bits(intr));
+      then print_log("Step_Pending_Interrupt: interrupt = " ^ interruptType_to_str(intr));
       handle_interrupt(intr, priv)
     },
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
-    Step_Fetch_Failure(vaddr, e) => handle_exception(bits_of(vaddr), e),
+    Step_Fetch_Failure(e, c) => handle_exception(e, c),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
     Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
     // This case was handled above when processing the fetch result.
     Step_Execute(ExecuteAs(_), _) => assert(false),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e),
-    Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
+    Step_Execute(Memory_Exception(e, c), _) => handle_exception(e, c),
+    Step_Execute(Illegal_Instruction(), instbits) => handle_exception(E_Illegal_Instr(), instr_exception_context(zero_extend(instbits), false)),
     // NOTE: Virtual instructions exception cannot be triggered until Hypervisor integration is complete.
-    Step_Execute(Virtual_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Virtual_Instr()),
+    Step_Execute(Virtual_Instruction(), instbits) => handle_exception(E_Virtual_Instr(), instr_exception_context(zero_extend(instbits), false)),
     Step_Execute(Enter_Wait(wr), instbits) => {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.

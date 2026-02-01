@@ -23,10 +23,10 @@ function clause is_CSR_accessible(0xC81, priv, _) = currentlyEnabled(Ext_Zicntr)
 function clause is_CSR_accessible(0xC82, priv, _) = currentlyEnabled(Ext_Zicntr) & xlen == 32 & counter_enabled(2, priv) // instreth
 
 function clause read_CSR(0xC00) = mcycle[(xlen - 1) .. 0]
-function clause read_CSR(0xC01) = mtime[(xlen - 1) .. 0]
+function clause read_CSR(0xC01) = (if privLevel_is_virtual(cur_privilege) then mtime + htimedelta else mtime)[(xlen - 1) .. 0]
 function clause read_CSR(0xC02) = minstret[(xlen - 1) .. 0]
 function clause read_CSR(0xC80 if xlen == 32) = mcycle[63 .. 32]
-function clause read_CSR(0xC81 if xlen == 32) = mtime[63 .. 32]
+function clause read_CSR(0xC81 if xlen == 32) = (if privLevel_is_virtual(cur_privilege) then mtime + htimedelta else mtime)[63 .. 32]
 function clause read_CSR(0xC82 if xlen == 32) = minstret[63 .. 32]
 
 

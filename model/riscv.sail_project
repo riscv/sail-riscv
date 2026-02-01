@@ -104,7 +104,7 @@ extensions {
       files extensions/A/aext_types.sail
     }
     Zaamo {
-      requires core, sys, A_types
+      requires core, sys, A_types, exceptions
       files extensions/A/zaamo_insts.sail
     }
     Zalrsc {
@@ -171,8 +171,17 @@ extensions {
   H {
     requires core
 
-    files
-      extensions/H/hext_insts.sail
+    H_core {
+      requires exceptions
+      before sys
+      files
+        extensions/H/hext_control.sail,
+    }
+    H_insts {
+      requires sys, H_core, exceptions, I_insts, Zca, FD, Zalrsc, Zaamo
+      files
+        extensions/H/hext_insts.sail,
+    }
   }
 
   // Floating point (F and D extensions)
@@ -380,7 +389,7 @@ extensions {
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
-      requires core, sys, Zicbom_types
+      requires core, sys, Zicbom_types, exceptions
       files extensions/Zicbom/zicbom_insts.sail
     }
   }
@@ -393,13 +402,13 @@ extensions {
     Zicbop_insts {
       // PREFETCH.{I,R,W} instructions override ORI hints (rd=0)
       before I_insts
-      requires core, sys, Zicbop_types
+      requires core, sys, Zicbop_types, exceptions
       files extensions/Zicbop/zicbop_insts.sail
     }
   }
 
   Zicboz {
-    requires core, sys
+    requires core, sys, exceptions
     files extensions/Zicboz/zicboz_insts.sail
   }
 
