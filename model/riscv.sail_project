@@ -398,6 +398,18 @@ extensions {
     }
   }
 
+
+  Zibi {
+    Zibi_types {
+      before core
+      files extensions/Zibi/zibi_types.sail
+    }
+    Zibi_insts {
+      requires core, sys, I_insts, Zibi_types
+      files extensions/Zibi/zibi_insts.sail
+    }
+  }
+
   Zicboz {
     requires core, sys
     files extensions/Zicboz/zicboz_insts.sail

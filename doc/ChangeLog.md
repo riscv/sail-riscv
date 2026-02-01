@@ -16,6 +16,7 @@
   - Ssu64xl
   - Smstateen, Sstateen
   - Ssqosid
+  - Zibi
 
 - The model now requires the Sail 0.20.1 compiler version.
 
