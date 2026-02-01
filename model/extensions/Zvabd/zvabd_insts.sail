@@ -12,7 +12,7 @@ function clause currentlyEnabled(Ext_Zvabd) = hartSupports(Ext_Zvabd) & currentl
 // `vabd/vabdu/vwabda/vwabdau` are designed for only SEW=8 and SEW=16.
 // Additionally, `vabs` is considered to support all the element sizes
 // as it is quite common used and simple to implement.
-function valid_zvabd_sew(sew : int) -> bool = sew == 8 | sew == 16
+private function valid_zvabd_sew(sew : int) -> bool = sew == 8 | sew == 16
 
 union clause instruction = VABS_V : (bits(1), vregidx, vregidx)
 
