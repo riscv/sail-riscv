@@ -415,9 +415,9 @@ extensions {
     files extensions/Zicboz/zicboz_insts.sail
   }
 
-  Zifenci {
+  Zifencei {
     requires core, sys
-    files extensions/Zifenci/zifencei_insts.sail
+    files extensions/Zifencei/zifencei_insts.sail
   }
 
   Zihintntl {
