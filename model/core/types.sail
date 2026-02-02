@@ -158,6 +158,7 @@ enum InterruptType = {
   I_VS_External,
   I_M_External,
   I_SG_External,
+  I_COF,
 }
 
 mapping interruptType_bits : InterruptType <-> exc_code = {
@@ -174,6 +175,7 @@ mapping interruptType_bits : InterruptType <-> exc_code = {
   I_VS_External  <-> 0b001010, // 10
   I_M_External   <-> 0b001011, // 11
   I_SG_External  <-> 0b001100, // 12
+  I_COF          <-> 0b001101, // 13
 }
 
 function interruptType_to_str(i : InterruptType) -> string =
@@ -190,7 +192,8 @@ function interruptType_to_str(i : InterruptType) -> string =
     I_S_External  => "supervisor-external-interrupt",
     I_VS_External => "virtual-supervisor-external-interrupt",
     I_M_External  => "machine-external-interrupt",
-    I_SG_External => "supervisor guest-external-interrupt"
+    I_SG_External => "supervisor guest-external-interrupt",
+    I_COF         => "counter-overflow interrupt",
   }
 
 overload to_str = {interruptType_to_str}

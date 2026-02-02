@@ -44,8 +44,9 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   then p else deleg
 }
 
-// Interrupts are prioritized in privilege order, and for each
-// privilege, in the order: external, software, timers.
+// "Multiple simultaneous interrupts destined for M-mode are handled
+// in the following decreasing priority order: MEI, MSI, MTI, SEI,
+// SSI, STI, LCOFI."
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   let ip = Mk_Minterrupts(ip);
   if      ip[MEI] == 0b1 then Some(I_M_External)
@@ -54,6 +55,7 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else if ip[SEI] == 0b1 then Some(I_S_External)
   else if ip[SSI] == 0b1 then Some(I_S_Software)
   else if ip[STI] == 0b1 then Some(I_S_Timer)
+  else if ip[LCOFI] == 0b1 then Some(I_COF)
   else                        None()
 }
 
