@@ -68,8 +68,8 @@ function read_vreg(num_elem, SEW, LMUL_pow, vrid) = {
   let LMUL_pow_reg = if LMUL_pow < 0 then 0 else LMUL_pow;
   let LMUL = 2 ^ LMUL_pow_reg;
   let vrid_end = vrid_val + LMUL;
-  assert(vrid_end <= 32, "invalid register group: group " ^ dec_str(vrid_val) ^ " ends at " ^ dec_str(vrid_end) ^ " and overflows the largest register number (32)");
-  assert(vrid_val % LMUL == 0, "invalid register group: group " ^ dec_str(vrid_val) ^ " is not a multiple of its EMUL " ^ dec_str(LMUL));
+  assert(vrid_end <= 32, "Invalid register group: group " ^ dec_str(vrid_val) ^ " ends at " ^ dec_str(vrid_end) ^ " and overflows the largest register number (32).");
+  assert(vrid_val % LMUL == 0, "Invalid register group: group " ^ dec_str(vrid_val) ^ " is not a multiple of its EMUL " ^ dec_str(LMUL) ^ ".");
 
   var result : vector('n, bits('sew)) = vector_init(zeros());
 
