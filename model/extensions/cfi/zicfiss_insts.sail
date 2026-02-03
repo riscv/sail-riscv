@@ -37,7 +37,7 @@ function clause execute SSPUSH(rs2) = {
   // If xlen is changed dynamically, `ssp` could be misaligned.
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
-  if   not(is_aligned_addr(vaddr, width))
+  if not(is_aligned_addr(vaddr, width))
   then return Memory_Exception(vaddr, E_SAMO_Access_Fault());
 
   match vmem_write_addr(vaddr, width, X(rs2), Store(ShadowStack), false, false, false) {
@@ -82,7 +82,7 @@ function clause execute SSPOPCHK(rs1) = {
   // See above on checking alignment.
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
-  if   not(is_aligned_addr(ssp_addr, width))
+  if not(is_aligned_addr(ssp_addr, width))
   then return Memory_Exception(ssp_addr, E_SAMO_Access_Fault());
 
   match vmem_read_addr(ssp_addr, zeros(), width, Load(ShadowStack), false, false, false) {
@@ -125,7 +125,7 @@ mapping clause encdec = SSRDP(rd)
   when currentlyEnabled(Ext_Zicfiss) & zicfiss_xSSE(cur_privilege)
 
 function clause execute SSRDP(rd) = {
-  if   zicfiss_xSSE(cur_privilege)
+  if zicfiss_xSSE(cur_privilege)
   then X(rd) = ssp
   else X(rd) = zeros();
 
@@ -149,7 +149,7 @@ mapping clause encdec = SSAMOSWAP(aq, rl, rs2, rs1, width, rd)
 function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // This instruction is not predicated by `xSSE`.
   match cur_privilege {
-    Machine           => if   not(currentlyEnabled(Ext_S))
+    Machine           => if not(currentlyEnabled(Ext_S))
                          then return Illegal_Instruction(),
     Supervisor        => { if not(bool_bit(menvcfg[SSE]))
                            then return Illegal_Instruction() },
