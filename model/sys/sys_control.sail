@@ -10,7 +10,7 @@
 
 function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus, priv : Privilege) -> Privilege =
   if   access != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_bits(m[MPP], 0b0) // TODO: use m[MPV] if hypervisor enabled
+  then privLevel_bits(m[MPP], m[MPV])
   else priv
 
 // CSR access control
