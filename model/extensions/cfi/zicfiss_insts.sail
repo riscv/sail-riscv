@@ -151,8 +151,8 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   match cur_privilege {
     Machine           => if not(currentlyEnabled(Ext_S))
                          then return Illegal_Instruction(),
-    Supervisor        => { if not(bool_bit(menvcfg[SSE]))
-                           then return Illegal_Instruction() },
+    Supervisor        => if not(bool_bit(menvcfg[SSE]))
+                         then return Illegal_Instruction(),
     User              => if not(currentlyEnabled(Ext_S)) | not(bool_bit(read_senvcfg()[SSE]))
                          then return Illegal_Instruction(),
     VirtualSupervisor => { if not(bool_bit(menvcfg[SSE]))
@@ -161,10 +161,10 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
                            // else if not(bool_bit(read_henvcfg()[SSE]))
                            // then return Virtual_Instruction();
                            internal_error(__FILE__, __LINE__, "Hypervisor extension not supported") },
-    VirtualUser       => { if not(bool_bit(menvcfg[SSE]))
-                           then return Illegal_Instruction()
-                           else if not(bool_bit(read_senvcfg()[SSE]))
-                           then return Virtual_Instruction() },
+    VirtualUser       => if not(bool_bit(menvcfg[SSE]))
+                         then return Illegal_Instruction()
+                         else if not(bool_bit(read_senvcfg()[SSE]))
+                         then return Virtual_Instruction(),
   };
 
   let access = Atomic(AMOSWAP, ShadowStack, ShadowStack);
