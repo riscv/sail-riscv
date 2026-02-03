@@ -1,9 +1,18 @@
 # Release notes for the next version
 
+# Release notes for version 0.10
+
 - The highlight of this release is the switch to using the C++ backend
   of the Sail compiler. The generated model for the hart is wrapped
   in a C++ `class`, which opens up the possibility of instantiating
   multiple harts to simulate multicore platforms.
+
+- New configuration options to control reserved behavior have been
+  added. See the `reserved_behavior` section of the [config
+  file](../config/config.json.in) for details. More such options will
+  continue to be added in subsequent releases.
+
+- Read-only-zero PMP entries can now be configured.
 
 - A configuration parameter to specify the size of the reservation set
   for Zalrsc atomics has been added.
@@ -13,6 +22,7 @@
 
 - The following extensions have been added:
   - Za64rs, Za128rs
+  - Zibi
   - Zic64b
   - Zvabd
   - Sstvala
@@ -20,9 +30,18 @@
   - Ssu64xl
   - Smstateen, Sstateen
   - Ssqosid
-  - Zibi
+
+- Command-line options for finer-grained execution tracing have been
+  added. Use the `--help` option for details.
+
+- Weekly binary releases are now available for more up-to-date builds
+  of the model.
 
 - The model now requires the Sail 0.20.1 compiler version.
+
+- Testing in CI has been updated to the latest `riscv-tests` and
+  `riscv-vector-tests`, and the OS boot test to Linux 6.18.2 and
+  OpenSBI v1.8.1.
 
 # Release notes for version 0.9
 
