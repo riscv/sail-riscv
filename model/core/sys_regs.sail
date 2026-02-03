@@ -420,7 +420,8 @@ private function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
     LPE = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
     // In this implementation, menvcfg[SSE] does not control the writes to senvcfg[SSE],
     // but does control the reads.  This way, senvcfg[SSE] does not have to be modified
-    // when menvcfg[SSE] is cleared.
+    // when menvcfg[SSE] is cleared.  The "CSR Field Modulation" section of the
+    // privileged specification has relevant discussion.
     SSE = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
