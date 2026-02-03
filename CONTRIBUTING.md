@@ -43,7 +43,7 @@ any point during the [ratification
 lifecycle](https://tech.riscv.org/ratification-process)
 though later stages (e.g. Stabilization, Freezing, Ratification-Ready)
 are recommended. Small self-contained PRs may be merged at earlier
-stages (e.g. Stabilization), while more merging more intrusive PRs may
+stages (e.g. Stabilization), while merging more intrusive PRs may
 be deferred until Ratification-Ready or later.
 
 We _require_ any and all use of generative AI tools, e.g. for writing
