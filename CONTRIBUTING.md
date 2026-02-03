@@ -40,7 +40,7 @@ For information on contributing an extension, please see
 
 PRs for contributions of extensions under development can be made at
 any point during the [ratification
-lifecycle](https://riscv.atlassian.net/wiki/external/OTA5NGUxOTBjMDFmNDQ4YmI2NWU5NmIxNGQ2ZjQ4ZmU)
+lifecycle](https://tech.riscv.org/ratification-process)
 though later stages (e.g. Stabilization, Freezing, Ratification-Ready)
 are recommended. Small self-contained PRs may be merged at earlier
 stages (e.g. Stabilization), while more merging more intrusive PRs may
