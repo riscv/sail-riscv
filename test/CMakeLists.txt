@@ -1,6 +1,6 @@
 # CMake options for test downloads
 set(TEST_DOWNLOAD_URL "https://github.com/riscv-software-src/sail-riscv-tests/releases/download" CACHE STRING "Base URL to download precompiled riscv-tests and riscv-vector-tests from")
-set(TEST_DOWNLOAD_VERSION "2025-10-14" CACHE STRING "Version of precompiled tests to download")
+set(TEST_DOWNLOAD_VERSION "2026-02-03" CACHE STRING "Version of precompiled tests to download")
 
 # Function to download and extract test files
 function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME DOWNLOAD_URL)
