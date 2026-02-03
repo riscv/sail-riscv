@@ -41,7 +41,9 @@ function clause execute SSPUSH(rs2) = {
   then return Memory_Exception(vaddr, E_SAMO_Access_Fault());
 
   match vmem_write_addr(vaddr, width, X(rs2), Store(ShadowStack), false, false, false) {
-    Ok(_)  => { ssp = vaddr_bits; RETIRE_SUCCESS },
+    Ok(_)  => { ssp = vaddr_bits;
+                csr_write_callback("ssp", ssp);
+                RETIRE_SUCCESS },
     Err(e) => e,
   }
 }
@@ -91,6 +93,7 @@ function clause execute SSPOPCHK(rs1) = {
         Trap(cur_privilege, CTL_TRAP(make_shadow_stack_exception()), PC)
       } else {
         ssp = ssp + width;
+        csr_write_callback("ssp", ssp);
         RETIRE_SUCCESS
       }
     },
