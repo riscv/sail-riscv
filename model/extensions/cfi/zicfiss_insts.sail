@@ -20,9 +20,9 @@ mapping clause encdec = SSPUSH(rs2)
   <-> 0b1100111 @ encdec_reg(rs2) @ 0b00000 @ 0b100 @ 0b00000 @ 0b1110011
   when (rs2 == ra | rs2 == t0) & currentlyEnabled(Ext_Zicfiss) & zicfiss_xSSE(cur_privilege)
 
+// The initial `zicfiss_xSSE` check is redundant with the decoding
+// predicate, but is there to match the pseudo-code in the specification.
 function clause execute SSPUSH(rs2) = {
-  // This is redundant with the decoding predicate, but is here to
-  // match the pseudo-code in the specification.
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
   let vaddr_bits = ssp - xlen_bytes;
@@ -75,9 +75,9 @@ mapping clause encdec = SSPOPCHK(rs1)
   <-> 0b110011011100  @ encdec_reg(rs1) @ 0b100 @ 0b00000 @ 0b1110011
   when (rs1 == ra | rs1 == t0) & currentlyEnabled(Ext_Zicfiss) & zicfiss_xSSE(cur_privilege)
 
+// The initial `zicfiss_xSSE` check is redundant with the decoding
+// predicate, but is there to match the pseudo-code in the specification.
 function clause execute SSPOPCHK(rs1) = {
-  // This is redundant with the decoding predicate, but is here to
-  // match the pseudo-code in the specification.
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
   let ssp_addr = Virtaddr(ssp);
@@ -149,8 +149,8 @@ mapping clause encdec = SSAMOSWAP(aq, rl, rs2, rs1, width, rd)
   <-> 0b01001 @ bool_bit(aq) @ bool_bit(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
   when (width == 4 | (xlen == 64 & width == 8)) & currentlyEnabled(Ext_Zicfiss)
 
+// This instruction is not predicated by `xSSE`.
 function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
-  // This instruction is not predicated by `xSSE`.
   match cur_privilege {
     Machine           => if not(currentlyEnabled(Ext_S))
                          then return Illegal_Instruction(),
