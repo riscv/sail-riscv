@@ -12,7 +12,7 @@ function clause currentlyEnabled(Ext_Zvabd) = hartSupports(Ext_Zvabd) & currentl
 // `vabd/vabdu/vwabda/vwabdau` are designed for only SEW=8 and SEW=16.
 // Additionally, `vabs` is considered to support all the element sizes
 // as it is quite common used and simple to implement.
-private function valid_zvabd_sew(sew : int) -> bool = sew == 8 | sew == 16
+private function valid_zvabd_sew(sew : sew_bitsize) -> bool = sew == 8 | sew == 16
 
 union clause instruction = VABS_V : (bits(1), vregidx, vregidx)
 
@@ -20,6 +20,7 @@ $[wavedrom "funct6 _ _ _ OPMVV _ OP-V"]
 mapping clause encdec = VABS_V(vm, vs2, vd)
   <-> 0b010010 @ vm @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvabd)
+    & ((get_sew() <= 32) | (currentlyEnabled(Ext_Zve64x) & get_sew() <= 64))
 
 function clause execute VABS_V(vm, vs2, vd) = {
   let SEW      = get_sew();
@@ -61,7 +62,7 @@ mapping encdec_zvabd_vabd_func6 : zvabd_vabd_func6 <-> bits(6) = {
   VV_VABDU <-> 0b010011
 }
 
-$[wavedrom "funct6 _ _ _ OPIVV _ OP-V"]
+$[wavedrom "funct6 _ _ _ OPMVV _ OP-V"]
 mapping clause encdec = ZVABDTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_zvabd_vabd_func6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvabd) & valid_zvabd_sew(get_sew())
@@ -116,7 +117,7 @@ mapping encdec_zvabd_vwabda_func6 : zvabd_vwabda_func6 <-> bits(6) = {
   VV_VWABDAU <-> 0b010110
 }
 
-$[wavedrom "funct6 _ _ _ OPIVV _ OP-V"]
+$[wavedrom "funct6 _ _ _ OPMVV _ OP-V"]
 mapping clause encdec = ZVWABDATYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_zvabd_vwabda_func6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1010111
   when currentlyEnabled(Ext_Zvabd) & valid_zvabd_sew(get_sew())
@@ -128,7 +129,7 @@ function clause execute ZVWABDATYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
+  if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
