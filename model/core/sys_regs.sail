@@ -522,6 +522,8 @@ bitfield Minterrupts : xlenbits = {
   SSI  : 1,  // Supervisor software interrupt
 }
 
+register hvip : Minterrupts
+
 private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
@@ -537,11 +539,11 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     // * bit VSEIP of hvip;"
     // * the bit of hgeip selected by hstatus.VGEI; and (TODO)
     // * any other platform-specific external interrupt signal directed to VS-Level (TODO)"
-    VSEI = if currentlyEnabled(Ext_H) then v[VSEI] else 0b0,
+    VSEI = if currentlyEnabled(Ext_H) then hvip[VSEI] else 0b0,
     // NOTE/TODO: "VSTIP is read-only in hip, and is the logical-OR of
     // * hvip.VSTIP; and
     // * any other platform-specfic timer interrupt signal directed to VS-Level (TODO)"
-    VSTI = if currentlyEnabled(Ext_H) then v[VSTI] else 0b0,
+    VSTI = if currentlyEnabled(Ext_H) then hvip[VSTI] else 0b0,
     VSSI = if currentlyEnabled(Ext_H) then v[VSSI] else 0b0,
   ]
 }
@@ -1057,7 +1059,8 @@ function legalize_vsie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minter
   ]
 }
 
-function legalize_vsip(m: Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
+// Returns new mip from previous mip (m) and the written vsip (v) as delegated by hideleg (d)
+function legalize_vsip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with VSSI = v[SSI] & d[VSSI]]
 }
