@@ -45,7 +45,7 @@ function tlb_set_pte forall 'n, 'n in {4, 8}. (
   pte : bits('n * 8),
 ) -> TLB_Entry = { ent with pte=zero_extend(pte) }
 
-function tlb_get_ppn forall 'v, is_sv_any_mode('v) . (
+function tlb_get_ppn forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   ent      : TLB_Entry,
   vpn      : vpn_bits('v),
@@ -75,7 +75,7 @@ type tlb_index_range = range(0, num_tlb_entries - 1)
 private register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
 // Indexed by the lowest bits of the VPN.
-function tlb_hash forall 'v, is_sv_any_mode('v) . (
+function tlb_hash forall 'v, is_sv_or_svx4_mode('v) . (
   _sv_mode : int('v),
   vpn     : vpn_bits('v),
 ) -> tlb_index_range =
@@ -118,7 +118,7 @@ private function flush_TLB_Entry(
 }
 
 // PUBLIC: invoked in translate() [vmem.sail]
-function lookup_TLB forall 'v, is_sv_any_mode('v) . (
+function lookup_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
   vmid     : vmidbits,
@@ -134,7 +134,7 @@ function lookup_TLB forall 'v, is_sv_any_mode('v) . (
 }
 
 // PUBLIC: invoked in translate_TLB_miss() [vmem.sail]
-function add_to_TLB forall 'v, is_sv_any_mode('v) . (
+function add_to_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
   vmid     : vmidbits,
