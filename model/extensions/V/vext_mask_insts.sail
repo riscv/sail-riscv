@@ -316,7 +316,10 @@ function clause execute VIOTA_M(vm, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
+  if illegal_normal(vd, vm) |
+     not(assert_vstart(0)) |
+     not(valid_reg_group(vd, LMUL_pow)) |
+     vd == vs2
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -361,7 +364,8 @@ function clause execute VID_V(vm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) | not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
