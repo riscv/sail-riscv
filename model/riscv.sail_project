@@ -304,6 +304,19 @@ extensions {
     }
   }
 
+  Zvabd {
+    requires core
+
+    Zvabd_types {
+      before sys
+      files extensions/Zvabd/zvabd_types.sail
+    }
+    Zvabd_insts {
+      requires sys, V, Zvabd_types
+      files extensions/Zvabd/zvabd_insts.sail
+    }
+  }
+
   // Control and Status Register (CSR) Instructions
   Zicsr {
     requires core
