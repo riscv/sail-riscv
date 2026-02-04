@@ -418,6 +418,11 @@ mapping clause extensionName = Ext_Zvksg <-> "zvksg"
 function clause hartSupports(Ext_Zvksg) = hartSupports(Ext_Zvks) & hartSupports(Ext_Zvkg)
 function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 
+// Zvzip Extension for Reordering Structured Data
+enum clause extension = Ext_Zvzip
+mapping clause extensionName = Ext_Zvzip <-> "zvzip"
+function clause hartSupports(Ext_Zvzip) = sys_enable_experimental_extensions() & config extensions.Zvzip.supported
+
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
@@ -561,6 +566,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvfbfmin => 3, // > Zve32f
     Ext_Zvkb => 3, // > Zvbb
     Ext_Zvknhb => 3, // > Zve64x
+    Ext_Zvzip => 3, // > Zve32x
 
     Ext_H => 4, // > virtual_mem_supported
     Ext_Zve64d => 4, // > Zve64f
@@ -702,6 +708,9 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl256b,
   Ext_Zvl512b,
   Ext_Zvl1024b,
+
+  // Zvzip
+  Ext_Zvzip,
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,

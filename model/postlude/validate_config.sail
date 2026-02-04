@@ -174,6 +174,10 @@ private function check_vext_config() -> bool = {
     valid = false;
     print_endline("Zvkt is enabled but Zve32x is disabled: Zvkt requires Zve32x.");
   };
+  if hartSupports(Ext_Zvzip) & not(hartSupports(Ext_Zve32x)) then {
+    valid = false;
+    print_endline("Zvzip is enabled but Zve32x is disabled: Zvzip requires Zve32x.");
+  };
   valid;
 }
 
