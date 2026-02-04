@@ -18,7 +18,7 @@
     such options will continue to be added in subsequent releases.
 
   - Read-only-zero PMP entries can now be configured; see the
-    `memory.pmp.usable_count` parameters.
+    `memory.pmp.usable_count` parameter.
 
   - The size of the reservation set for Zalrsc atomics can now be
     specified; see the `platform.reservation_set_size_exp` parameter.
