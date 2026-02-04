@@ -10,9 +10,9 @@
 
 // Hypervisor Interrupt Registers
 
-function legalize_hvip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
+function legalize_hvip(h : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  [m with
+  [h with
     VSEI = v[VSEI],
     VSTI = v[VSTI],
     VSSI = v[VSSI],
@@ -35,12 +35,10 @@ function legalize_hip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   [m with VSSI = v[VSSI]]
 }
 
-function lower_mip_to_hvip(m : Minterrupts) -> Minterrupts = {
-  [Mk_Minterrupts(zeros()) with
-    VSEI = m[VSEI],
-    VSTI = m[VSTI],
-    VSSI = m[VSSI],
-  ]
+// NOTE: hvip.vssi is an alias of mip.vssi, so always read the
+// actual value from mip. The remaining bits come from hvip.
+function lower_mip_to_hvip(m : Minterrupts, h : Minterrupts) -> Minterrupts = {
+  [h with VSSI = m[VSSI]]
 }
 
 function lower_mie_to_hie(m : Minterrupts) -> Minterrupts = {
@@ -69,11 +67,11 @@ function clause is_CSR_accessible(0x645, _, _) = currentlyEnabled(Ext_H) // hvip
 function clause is_CSR_accessible(0x604, _, _) = currentlyEnabled(Ext_H) // hie
 function clause is_CSR_accessible(0x644, _, _) = currentlyEnabled(Ext_H) // hip
 
-function clause read_CSR(0x645) = lower_mip_to_hvip(mip).bits
+function clause read_CSR(0x645) = lower_mip_to_hvip(mip, hvip).bits
 function clause read_CSR(0x604) = lower_mie_to_hie(mie).bits
 function clause read_CSR(0x644) = lower_mip_to_hip(mip).bits
 
-function clause write_CSR(0x645, value) = { mip = legalize_hvip(mip, value); Ok(lower_mip_to_hvip(mip).bits) }
+function clause write_CSR(0x645, value) = { hvip = legalize_hvip(hvip, value); mip[VSSI] = hvip[VSSI]; Ok(hvip.bits) }
 function clause write_CSR(0x604, value) = { mie = legalize_hie(mie, value); Ok(lower_mie_to_hie(mie).bits) }
 function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(mip).bits) }
 
