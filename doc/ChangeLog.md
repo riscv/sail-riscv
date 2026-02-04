@@ -26,7 +26,6 @@
 - The following extensions have been added:
   - Za64rs, Za128rs
   - Zic64b
-  - Zvabd
   - Sstvala
   - Sstvecd
   - Ssu64xl
@@ -35,6 +34,7 @@
 
 - The following unratified extensions have been added:
   - Zibi
+  - Zvabd
 
 - Command-line options for finer-grained execution tracing have been
   added. Use the `--help` option for details.
