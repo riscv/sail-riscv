@@ -40,7 +40,7 @@
 - The model now requires the Sail 0.20.1 compiler version.
 
 - Testing in CI has been updated to the latest `riscv-tests` and
-  `riscv-vector-tests`, and the OS boot test to Linux 6.18.2 and
+  `riscv-vector-tests`, and the OS boot test now uses Linux 6.18.2 and
   OpenSBI v1.8.1.
 
 # Release notes for version 0.9
