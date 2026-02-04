@@ -1,4 +1,5 @@
 #include <cassert>
+#include <chrono>
 #include <climits>
 #include <cstring>
 #include <ctype.h>
@@ -34,6 +35,12 @@
 #include "rvfi_dii.h"
 #include "sail_riscv_version.h"
 
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::steady_clock;
+
+namespace {
+
 bool do_show_times = false;
 bool do_print_version = false;
 bool do_print_build_info = false;
@@ -46,7 +53,6 @@ bool do_print_isa = false;
 std::string config_file;
 std::string term_log;
 std::string trace_log_path;
-FILE *trace_log = stdout;
 std::string dtb_file;
 int rvfi_dii_port = 0;
 std::optional<rvfi_handler> rvfi;
@@ -62,6 +68,24 @@ uint64_t mem_sig_start = 0;
 uint64_t mem_sig_end = 0;
 const int DEFAULT_SIGNATURE_GRANULARITY = 4;
 int signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
+
+steady_clock::time_point init_start;
+steady_clock::time_point init_end;
+
+uint64_t total_insns = 0;
+uint64_t insn_limit = 0;
+#ifdef SAILCOV
+char *sailcov_file = nullptr;
+#endif
+
+// Single global model instance.
+// TODO: This shouldn't be global, but it is to facilitate gradual transition
+// from the C Sail output which was necessarily global.
+ModelImpl g_model;
+
+} // namespace
+
+FILE *trace_log = stdout;
 
 bool config_print_instr = false;
 bool config_print_reg = false;
@@ -79,18 +103,6 @@ bool config_use_abi_names = false;
 bool config_enable_rvfi = false;
 
 bool config_enable_experimental_extensions = false;
-
-struct timeval init_start, init_end, run_end;
-uint64_t total_insns = 0;
-uint64_t insn_limit = 0;
-#ifdef SAILCOV
-char *sailcov_file = nullptr;
-#endif
-
-// Single global model instance.
-// TODO: This shouldn't be global, but it is to facilitate gradual transition
-// from the C Sail output which was necessarily global.
-ModelImpl g_model;
 
 static void print_dts(void) {
   char *dts = nullptr;
@@ -374,17 +386,14 @@ void finish() {
   g_model.model_fini();
 
   if (do_show_times) {
-    if (gettimeofday(&run_end, nullptr) < 0) {
-      fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-    int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000 + (init_end.tv_usec - init_start.tv_usec) / 1000;
-    int exec_msecs = (run_end.tv_sec - init_end.tv_sec) * 1000 + (run_end.tv_usec - init_end.tv_usec) / 1000;
-    double Kips = ((double)total_insns) / ((double)exec_msecs);
-    fprintf(stderr, "Initialization:   %d msecs\n", init_msecs);
-    fprintf(stderr, "Execution:        %d msecs\n", exec_msecs);
+    auto run_end = steady_clock::now();
+    uint64_t init_msecs = duration_cast<milliseconds>(init_end - init_start).count();
+    uint64_t exec_msecs = duration_cast<milliseconds>(run_end - init_end).count();
+    uint64_t kips = total_insns / exec_msecs;
+    fprintf(stderr, "Initialization:   %" PRIu64 " ms\n", init_msecs);
+    fprintf(stderr, "Execution:        %" PRIu64 " ms\n", exec_msecs);
     fprintf(stderr, "Instructions:     %" PRIu64 "\n", total_insns);
-    fprintf(stderr, "Perf:             %.3f Kips\n", Kips);
+    fprintf(stderr, "Performance:      %" PRIu64 " kIPS\n", kips);
   }
   close_logs();
   exit(EXIT_SUCCESS);
@@ -408,11 +417,7 @@ void run_sail(void) {
 
   uint64_t insns_per_tick = get_config_uint64({"platform", "instructions_per_tick"});
 
-  struct timeval interval_start;
-  if (gettimeofday(&interval_start, nullptr) < 0) {
-    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  auto interval_start = steady_clock::now();
 
   while (!g_model.zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
     if (rvfi) {
@@ -458,13 +463,12 @@ void run_sail(void) {
     }
 
     if (do_show_times && (total_insns & 0xfffff) == 0) {
-      uint64_t start_us = 1000000 * ((uint64_t)interval_start.tv_sec) + ((uint64_t)interval_start.tv_usec);
-      if (gettimeofday(&interval_start, nullptr) < 0) {
-        fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-      }
-      uint64_t end_us = 1000000 * ((uint64_t)interval_start.tv_sec) + ((uint64_t)interval_start.tv_usec);
-      fprintf(stdout, "kips: %" PRIu64 "\n", ((uint64_t)1000) * 0x100000 / (end_us - start_us));
+      const auto now = steady_clock::now();
+      const auto interval = now - interval_start;
+      interval_start = now;
+
+      uint64_t kips = 0x100000 / duration_cast<milliseconds>(interval).count();
+      fprintf(stdout, "kips: %" PRIu64 "\n", kips);
     }
 
     if (g_model.zhtif_done) {
@@ -623,10 +627,7 @@ int inner_main(int argc, char **argv) {
   log_callbacks log_cbs(config_print_reg, config_print_mem_access, config_print_ptw, config_use_abi_names, trace_log);
   g_model.register_callback(&log_cbs);
 
-  if (gettimeofday(&init_start, nullptr) < 0) {
-    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  init_start = steady_clock::now();
 
   if (rvfi) {
     if (!rvfi->setup_socket(config_print_rvfi)) {
@@ -653,10 +654,7 @@ int inner_main(int argc, char **argv) {
 
   init_sail(entry, config_file.c_str());
 
-  if (gettimeofday(&init_end, nullptr) < 0) {
-    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  init_end = steady_clock::now();
 
   do {
     run_sail();
