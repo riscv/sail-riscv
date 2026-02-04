@@ -184,9 +184,13 @@ For booting operating system images, see the information under the
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 
+<!-- Comment the following section when no unratified extensions are available
+-  -->
+
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
 
 - Zibi extension for conditional branches with immediate operands, v0.6
+- Zvdot4a8i extension for 4D 8-bit vector integer dot product, v0.1
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
