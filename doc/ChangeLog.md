@@ -17,11 +17,15 @@
     been added. See the `reserved_behavior` section for details. More
     such options will continue to be added in subsequent releases.
 
-  - Read-only-zero PMP entries can now be configured; see the
-    `memory.pmp.usable_count` parameter.
+  - Read-only-zero PMP entries can now be configured; see
+    `memory.pmp.usable_count`.
 
   - The size of the reservation set for Zalrsc atomics can now be
-    specified; see the `platform.reservation_set_size_exp` parameter.
+    specified; see `platform.reservation_set_size_exp`.
+
+  - Page faults can now also be configured to set `xtval` registers,
+    and `breakpoint` has been disambiguated into `hardware_breakpoint`
+    and `software_breakpoint`; see `base.xtval_non_zero`.
 
 - The following extensions have been added:
   - Za64rs, Za128rs
