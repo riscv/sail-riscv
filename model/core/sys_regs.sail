@@ -456,6 +456,7 @@ function is_fiom_active() -> bool = {
 // interrupt processing state
 
 bitfield Minterrupts : xlenbits = {
+  LCOFI: 13, // Local counter-overflow interrupt
   SGEI : 12, // Supervisor guest external interrupt
   MEI  : 11, // Machine external interrupt
   VSEI : 10, // Virtual Supervisor external interrupt
@@ -474,6 +475,7 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
   [o with
+    LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
     STI = if currentlyEnabled(Ext_S) then (
@@ -486,6 +488,7 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [o with
+    LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     MEI = v[MEI],
     MTI = v[MTI],
     MSI = v[MSI],
@@ -495,10 +498,20 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   ]
 }
 
-private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // M-mode interrupt delegation bits "should" be hardwired to 0.
-  // FIXME: needs verification against eventual spec language.
-  [Mk_Minterrupts(v) with MEI = 0b0, MTI = 0b0, MSI = 0b0]
+  // TODO: Configuration options specifying whether M-mode interrupts
+  // can be delegated.
+  let v = Mk_Minterrupts(v);
+  [o with
+    LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
+    MEI   = 0b0,
+    MTI   = 0b0,
+    MSI   = 0b0,
+    SEI   = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
+    STI   = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
+    SSI   = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
+  ]
 }
 
 // exception processing state
@@ -802,11 +815,12 @@ function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, 
 
 
 bitfield Sinterrupts : xlenbits = {
-  SEI : 9,  // external interrupts
+  LCOFI : 13, // local-counter-overflow interrupts
+  SEI   : 9,  // external interrupts
 
-  STI : 5,  // timers interrupts
+  STI   : 5,  // timers interrupts
 
-  SSI : 1,  // software interrupts
+  SSI   : 1,  // software interrupts
 }
 
 // sip
@@ -815,6 +829,7 @@ private function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
   [s with
+    LCOFI = m[LCOFI] & d[LCOFI],
     SEI = m[SEI] & d[SEI],
     STI = m[STI] & d[STI],
     SSI = m[SSI] & d[SSI],
@@ -826,6 +841,7 @@ private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   let s : Sinterrupts = Mk_Sinterrupts(zeros());
 
   [s with
+    LCOFI = m[LCOFI] & d[LCOFI],
     SEI = m[SEI] & d[SEI],
     STI = m[STI] & d[STI],
     SSI = m[SSI] & d[SSI],
@@ -834,9 +850,10 @@ private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 
 // Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d).
 private function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
-  let m : Minterrupts = o;
-  let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
-  m
+  [o with
+    SSI   = if d[SSI] == 0b1 then s[SSI] else o[SSI],
+    LCOFI = if d[LCOFI] == 0b1 then s[LCOFI] else o[LCOFI],
+  ]
 }
 
 private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -852,11 +869,11 @@ function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, val
 // sie
 // Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d).
 private function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
-  let m : Minterrupts = o;
-  [m with
-    SEI = if d[SEI] == 0b1 then s[SEI] else m[SEI],
-    STI = if d[STI] == 0b1 then s[STI] else m[STI],
-    SSI = if d[SSI] == 0b1 then s[SSI] else m[SSI],
+  [o with
+    SEI   = if d[SEI] == 0b1 then s[SEI] else o[SEI],
+    STI   = if d[STI] == 0b1 then s[STI] else o[STI],
+    SSI   = if d[SSI] == 0b1 then s[SSI] else o[SSI],
+    LCOFI = if d[LCOFI] == 0b1 then s[LCOFI] else o[LCOFI],
   ]
 }
 
