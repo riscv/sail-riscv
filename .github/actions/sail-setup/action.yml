@@ -1,5 +1,7 @@
 name: "sail-riscv CI setup"
 description: "Composite action to install packages, setup CMake, and install/build Sail"
+env:
+  CLANG_VARIABLE: 21
 inputs:
   cmake-version:
     description: "CMake version to install"
@@ -22,10 +24,11 @@ runs:
         # Install newer clang manually because current Ubuntu runners don't have
         # a clang version that supports newer RISC-V extensions.
 
-        wget https://apt.llvm.org/llvm.sh
+        curl -O https://apt.llvm.org/llvm.sh
         chmod +x llvm.sh
         sudo ./llvm.sh $CLANG_VERSION
-        echo "/usr/lib/llvm-$CLANG_VERSION/bin" >> $GITHUB_PATH
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
+        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$CLANG_VERSION 100
 
     - name: Install packages (macOS)
       if: runner.os == 'macOS'
