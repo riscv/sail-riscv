@@ -325,6 +325,25 @@ private function check_stateen_config() -> bool = {
   valid
 }
 
+private function check_fs_valid_values() -> bool = {
+  var valid : bool = true;
+  if hartSupports(Ext_F) then {
+    if not(match_fs_legal_values(mstatus_fs_legal_values, 3)) then {
+      print_endline("F extension is enabled but mstatus.FS = 3 is not allowed");
+      valid = false;
+    }
+  }
+  else if not(hartSupports(Ext_S)) then
+    match mstatus_fs_legal_values {
+      0 :: [||] => valid = true,
+      _ => {
+        print_endline("neither F nor S is enabled but mstatus.FS is not read-only zero");
+        valid = false;
+      }
+    };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -335,4 +354,5 @@ function config_is_valid() -> bool = {
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
   & check_stateen_config()
+  & check_fs_valid_values()
 }
