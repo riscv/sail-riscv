@@ -554,19 +554,19 @@ int inner_main(int argc, char **argv) {
 
   if (opts.do_print_version) {
     std::cout << version_info::release_version << std::endl;
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
   if (opts.do_print_build_info) {
     print_build_info();
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
   if (opts.do_print_default_config) {
     printf("%s", get_default_config());
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
   if (opts.do_print_config_schema) {
     printf("%s", get_config_schema());
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
   if (opts.rvfi_dii_port != 0) {
     config_enable_rvfi = true;
@@ -618,7 +618,7 @@ int inner_main(int argc, char **argv) {
       } else {
         fprintf(stderr, "Configuration in %s is %s.\n", opts.config_file.c_str(), s);
       }
-      exit(config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE);
+      return config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE;
     }
   }
 
@@ -626,17 +626,17 @@ int inner_main(int argc, char **argv) {
   // is validated above.
   if (opts.do_print_dts) {
     print_dts();
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
   if (opts.do_print_isa) {
     print_isa();
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
 
   // If we get here, we need to have ELF files to run.
   if (opts.elfs.empty()) {
     fprintf(stderr, "No elf file provided.\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   init_logs(opts);
@@ -685,7 +685,7 @@ int inner_main(int argc, char **argv) {
   flush_logs();
   close_logs();
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 int main(int argc, char **argv) {
@@ -695,5 +695,5 @@ int main(int argc, char **argv) {
   } catch (const std::exception &exc) {
     std::cerr << "Error: " << exc.what() << std::endl;
   }
-  return 1;
+  return EXIT_FAILURE;
 }
