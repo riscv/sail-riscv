@@ -187,6 +187,12 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
                       " is not above the end of the previous region starting at " ^
                       bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
         return false;
+      } else if pma.base + pma.size >_u zero_extend(ones(physaddr_bits)) + 1 then {
+          print_endline("Memory region starting at " ^ bits_str(pma.base) ^
+                        " exclusive ends at " ^ bits_str(pma.base + pma.size) ^
+                        " which is above the representable limit of the physical address bit size (" ^
+                        dec_str(physaddr_bits) ^ ").");
+          return false;
       };
       check_pma_regions(rest, pma.base, pma.size)
     },
@@ -325,6 +331,23 @@ private function check_stateen_config() -> bool = {
   valid
 }
 
+private function check_physaddr_bits() -> bool = {
+  let physaddr_bits_nat : nat = physaddr_bits;
+  if physaddr_bits_nat > 64 then {
+    print_endline("physaddr_bits is " ^ dec_str(physaddr_bits) ^ " but cannot be greater than 64.");
+    false
+  } else if physaddr_bits_nat > 34 & xlen == 32 then {
+    print_endline("physaddr_bits is " ^ dec_str(physaddr_bits) ^ " but cannot be bigger than 34 when xlen is 32.");
+    false
+  } else if physaddr_bits_nat > 32 & xlen == 32 & not(hartSupports(Ext_Sv32)) then {
+    print_endline("physaddr_bits is " ^ dec_str(physaddr_bits) ^ " but Sv32 is disabled: physaddr_bits greater than 32 requires Sv32 to be enabled.");
+    false
+  } else if physaddr_bits_nat < 13 then {
+    print_endline("physaddr_bits is  " ^ dec_str(physaddr_bits) ^ " but values smaller than 13 are not supported.");
+    false
+  } else { true }
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -335,4 +358,5 @@ function config_is_valid() -> bool = {
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
   & check_stateen_config()
+  & check_physaddr_bits()
 }
