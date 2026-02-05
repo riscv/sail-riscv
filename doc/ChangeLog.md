@@ -1,25 +1,52 @@
 # Release notes for the next version
 
-- The highlight of this release is the switch to using the C++ backend
-  of the Sail compiler. The generated model for the hart is wrapped
-  in a C++ `class`, which opens up the possibility of instantiating
-  multiple harts to simulate multicore platforms.
+# Release notes for version 0.10
 
-- A configuration parameter to specify the size of the reservation set
-  for Zalrsc atomics has been added.
+- The highlight of this release is the switch to using the C++ backend
+  of the Sail compiler. The generated model for the hart is wrapped in
+  a C++ `class`, which opens up the possibility of instantiating
+  multiple harts to simulate multicore platforms (though this is not
+  yet implemented).
+
+- Updates to the [configuration file](../config/config.json.in):
+  - New configuration parameters to control reserved behavior have
+    been added. See the `reserved_behavior` section for details. More
+    such options will continue to be added in subsequent releases.
+
+  - Read-only-zero PMP entries can now be configured; see
+    `memory.pmp.usable_count`.
+
+  - The size of the reservation set for Zalrsc atomics can now be
+    specified; see `platform.reservation_set_size_exp`.
+
+  - Page faults can now also be configured to set `xtval` registers,
+    and `breakpoint` has been disambiguated into `hardware_breakpoint`
+    and `software_breakpoint`; see `base.xtval_non_zero`.
 
 - The following extensions have been added:
   - Za64rs, Za128rs
   - Zic64b
-  - Zvabd
   - Sstvala
   - Sstvecd
   - Ssu64xl
   - Smstateen, Sstateen
   - Ssqosid
+
+- The following unratified extensions have been added:
   - Zibi
+  - Zvabd
+
+- Command-line options for finer-grained execution tracing have been
+  added. Use the `--help` option for details.
+
+- Weekly binary releases are now available for more up-to-date builds
+  of the model.
 
 - The model now requires the Sail 0.20.1 compiler version.
+
+- Testing in CI has been updated to the latest `riscv-tests` and
+  `riscv-vector-tests`, and the OS boot test now uses Linux 6.18.2 and
+  OpenSBI v1.8.1.
 
 # Release notes for version 0.9
 
