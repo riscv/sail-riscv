@@ -164,6 +164,14 @@ bool PlatformInterface::get_config_print_clint(unit) {
   return false;
 }
 
+uint64_t PlatformInterface::get_config_plic_nsrc(unit) {
+  return 64;
+}
+
+uint64_t PlatformInterface::get_config_plic_nctx(unit) {
+  return 2;
+}
+
 bool PlatformInterface::get_config_print_exception(unit) {
   return false;
 }

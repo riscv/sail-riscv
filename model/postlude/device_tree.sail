@@ -127,6 +127,11 @@ function generate_dts() -> string = {
   let clint_size_hi = unsigned(plat_clint_size >> 32);
   let clint_size_lo = unsigned(plat_clint_size[31 .. 0]);
 
+  let plic_base_hi = unsigned(plat_plic_base >> 32);
+  let plic_base_lo = unsigned(plat_plic_base[31 .. 0]);
+  let plic_size_hi = unsigned(plat_plic_size >> 32);
+  let plic_size_lo = unsigned(plat_plic_size[31 .. 0]);
+
   // `hex_str` is used for the unit-addresses of the `memory@` and `clint@` nodes
   // instead of `hex_bits_str` since they cannot have leading zeros.  These addresses
   // also cannot have a '0x' prefix which explains the `string_drop(., 2)`.
@@ -177,6 +182,15 @@ function generate_dts() -> string = {
 ^ "      interrupts-extended = <&CPU0_intc 3 &CPU0_intc 7>;\n"
 ^ "      reg = <" ^ hex_str(clint_base_hi) ^ " " ^ hex_str(clint_base_lo)
 ^ " " ^ hex_str(clint_size_hi) ^ " " ^ hex_str(clint_size_lo) ^ ">;\n"
+^ "    };\n"
+^ "    plic@" ^ string_drop(hex_str(unsigned(plat_plic_base)), 2) ^ " {\n"
+^ "      compatible = \"riscv,plic0\";\n"
+^ "      interrupt-controller;\n"
+^ "      #interrupt-cells = <1>;\n"
+^ "      reg = <" ^ hex_str(plic_base_hi) ^ " " ^ hex_str(plic_base_lo)
+^ " " ^ hex_str(plic_size_hi) ^ " " ^ hex_str(plic_size_lo) ^ ">;\n"
+^ "      riscv,ndev = <63>;\n"
+^ "      interrupts-extended = <&CPU0_intc 11 &CPU0_intc 9>;\n"
 ^ "    };\n"
 ^ "  };\n"
 ^ "  htif {\n"
