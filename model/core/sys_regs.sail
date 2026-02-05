@@ -578,12 +578,15 @@ register mtvec : Mtvec  // Trap Vector
 
 // PUBLIC: invoked from set_{ms}tvec() [exceptions/sys_exceptions.sail]
 function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
- let v = Mk_Mtvec(v);
- match (trapVectorMode_of_bits(v[Mode])) {
-   TV_Direct => v,
-   TV_Vector => v,
-   _         => [v with Mode = o[Mode]]
- }
+  let v = Mk_Mtvec(v);
+  match (trapVectorMode_of_bits(v[Mode])) {
+    TV_Direct => v,
+    TV_Vector => v,
+    _         => match mtvec_mode_reserved_behavior {
+      Mtvec_Fatal => reserved_behavior("Tried to write a reserved value to the MODE field of mtvec."),
+      Mtvec_UseOld => [v with Mode = o[Mode]],
+    },
+  }
 }
 
 bitfield Mcause : xlenbits = {
