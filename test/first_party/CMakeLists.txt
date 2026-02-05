@@ -88,6 +88,7 @@ set(common_deps
 )
 
 set(tests
+    "test_bf16_nan_boxing.S"
     "test_hello_world.c"
     "test_max_pmp.c"
     "test_minstret.S"
@@ -118,7 +119,7 @@ foreach (xlen IN ITEMS 32 64)
                 # but it isn't quite usable with Clang directly yet due to some
                 # unsupported supervisor extensions and because Clang requires version
                 # for experimental extensions.
-                -march=rv${xlen}gcv
+                -march=rv${xlen}gcv_zfbfmin
                 # Calling convention to use. Valid values are 'ilp32' or 'lp64' for 32/64-bit,
                 # optionally followed by 'f' or 'd' for hard-float. All combinations are valid.
                 -mabi=${mabi}d
