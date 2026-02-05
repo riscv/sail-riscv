@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,7 @@
 #include "CLI11.hpp"
 #include "elf_loader.h"
 #include "jsoncons/config/version.hpp"
+#include "jsoncons/json.hpp"
 #include "rts.h"
 #include "sail.h"
 #include "sail_config.h"
@@ -51,6 +53,7 @@ bool do_validate_config = false;
 bool do_print_isa = false;
 
 std::string config_file;
+std::vector<std::string> config_overrides;
 std::string term_log;
 std::string trace_log_path;
 std::string dtb_file;
@@ -133,6 +136,25 @@ std::vector<uint8_t> read_file(const std::string &file_path) {
   return {std::istreambuf_iterator<char>(instream), std::istreambuf_iterator<char>()};
 }
 
+std::string read_text_file(const std::string &path) {
+  std::ifstream in(path);
+  std::ostringstream ss;
+  ss << in.rdbuf();
+  return ss.str();
+}
+
+void deep_merge(jsoncons::json &base, const jsoncons::json &override) {
+  for (const auto &entry : override.object_range()) {
+    const auto &key = entry.key();
+    const auto &value = entry.value();
+    if (base.contains(key) && base[key].is_object() && value.is_object()) {
+      deep_merge(base[key], value);
+    } else {
+      base[key] = value;
+    }
+  }
+}
+
 // Set up command line option processing.
 static void setup_options(CLI::App &app) {
   app.add_flag("--show-times", do_show_times, "Show execution times");
@@ -156,6 +178,10 @@ static void setup_options(CLI::App &app) {
   app.add_option("--terminal-log", term_log, "Terminal log output file")->option_text("<file>");
   app.add_option("--test-signature", sig_file, "Test signature file")->option_text("<file>");
   app.add_option("--config", config_file, "Configuration file")->check(CLI::ExistingFile)->option_text("<file>");
+  app.add_option("--config-override", config_overrides, "Configuration override file")
+    ->check(CLI::ExistingFile)
+    ->option_text("<file>")
+    ->allow_extra_args(false);
   app.add_option("--trace-output", trace_log_path, "Trace output file")->option_text("<file>");
 
   app.add_option("--signature-granularity", signature_granularity, "Signature granularity")->option_text("<uint>");
@@ -576,15 +602,28 @@ int inner_main(int argc, char **argv) {
     fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
   }
 
+  auto options = jsoncons::json_options{}.allow_comments(true);
+  jsoncons::json config_json;
+  if (config_file.empty()) {
+    config_json = jsoncons::json::parse(get_default_config(), options);
+  } else {
+    config_json = jsoncons::json::parse(read_text_file(config_file), options);
+  }
+
+  for (const auto &override_path : config_overrides) {
+    jsoncons::json override_item = jsoncons::json::parse(read_text_file(override_path), options);
+    deep_merge(config_json, override_item);
+  }
+
+  std::ostringstream os;
+  os << jsoncons::pretty_print(config_json);
+  const std::string merged_config = os.str();
+
   // Always validate the schema conformance of the config.
-  validate_config_schema(config_file);
+  validate_config_schema_string(merged_config);
 
   // Initialize the model.
-  if (!config_file.empty()) {
-    sail_config_set_file(config_file.c_str());
-  } else {
-    sail_config_set_string(get_default_config());
-  }
+  sail_config_set_string(merged_config.c_str());
 
   // Initialize platform.
   init_platform_constants();
