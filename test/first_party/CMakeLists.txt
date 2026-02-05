@@ -10,7 +10,12 @@
 #    compiler. You can download a binary from https://github.com/riscv-collab/riscv-gnu-toolchain/releases
 # 3. GCC via riscv64-unknown-elf-gcc, but only if it has "multilib" support, so we'll try riscv32-... first.
 
-find_program(CLANG_BIN "clang")
+# Search PATH first so that CI can provide a newer clang via PATH,
+# then fall back to system paths for local builds.
+find_program(CLANG_BIN "clang" NO_CMAKE_SYSTEM_PATH)
+if (NOT CLANG_BIN)
+    find_program(CLANG_BIN "clang")
+endif()
 find_program(GCC_BIN_RV32 "riscv32-unknown-elf-gcc")
 find_program(GCC_BIN_RV64 "riscv64-unknown-elf-gcc")
 

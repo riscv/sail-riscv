@@ -19,6 +19,14 @@ runs:
       run: |
         sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
 
+        # Install newer clang manually because current Ubuntu runners don't have
+        # a clang version that supports newer RISC-V extensions.
+
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh $CLANG_VERSION
+        echo "/usr/lib/llvm-$CLANG_VERSION/bin" >> $GITHUB_PATH
+
     - name: Install packages (macOS)
       if: runner.os == 'macOS'
       shell: bash
