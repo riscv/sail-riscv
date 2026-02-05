@@ -211,6 +211,8 @@ function wF_bits(Fregidx(i) : fregidx, data: flenbits) -> unit = {
 overload F = {rF_bits, wF_bits, rF, wF}
 
 function rF_BF16(i : fregidx) -> bits(16) = {
+  // This is the same as `nan_unbox(F(i))` except that
+  // it returns the correct canonical NaN for BF16.
   let v = F(i);
   if v[flen - 1 .. 16] == ones()
   then v[15 .. 0]
