@@ -85,21 +85,21 @@ bool config_enable_rvfi = false;
 
 bool config_enable_experimental_extensions = false;
 
-static void print_dts(void) {
+static void print_dts() {
   char *dts = nullptr;
   g_model.zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
 }
 
-static void print_isa(void) {
+static void print_isa() {
   char *isa = nullptr;
   g_model.zgenerate_canonical_isa_string(&isa, UNIT);
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
 }
 
-static void print_build_info(void) {
+static void print_build_info() {
   std::cout << "Sail RISC-V release: " << version_info::release_version << std::endl;
   std::cout << "Sail RISC-V git: " << version_info::git_version << std::endl;
   std::cout << "Sail: " << version_info::sail_version << std::endl;
@@ -397,7 +397,7 @@ void write_signature(const std::string &file, unsigned signature_granularity) {
   fclose(f);
 }
 
-void close_logs(void) {
+void close_logs() {
 #ifdef SAILCOV
   if (sail_coverage_exit() != 0) {
     fprintf(stderr, "Could not write coverage information!\n");
@@ -432,7 +432,7 @@ void finish(const CLIOptions &opts) {
   exit(EXIT_SUCCESS);
 }
 
-void flush_logs(void) {
+void flush_logs() {
   if (config_print_instr) {
     fflush(stderr);
     fflush(stdout);
