@@ -122,6 +122,10 @@ function clause hartSupports(Ext_Zihintpause) = config extensions.Zihintpause.su
 enum clause extension = Ext_Zihpm
 mapping clause extensionName = Ext_Zihpm <-> "zihpm"
 function clause hartSupports(Ext_Zihpm) = config extensions.Zihpm.supported
+// Load/Store Pair for RV32
+enum clause extension = Ext_Zilsd
+mapping clause extensionName = Ext_Zilsd <-> "zilsd"
+function clause hartSupports(Ext_Zilsd) = config extensions.Zilsd.supported : bool & (xlen == 32)
 // May-Be-Operations
 enum clause extension = Ext_Zimop
 mapping clause extensionName = Ext_Zimop <-> "zimop"
@@ -243,6 +247,11 @@ function clause hartSupports(Ext_Zbkx) = config extensions.Zbkx.supported
 enum clause extension = Ext_Zbs
 mapping clause extensionName = Ext_Zbs <-> "zbs"
 function clause hartSupports(Ext_Zbs) = config extensions.Zbs.supported
+
+// Compressed Load/Store pair instructions
+enum clause extension = Ext_Zclsd
+mapping clause extensionName = Ext_Zclsd <-> "zclsd"
+function clause hartSupports(Ext_Zclsd) = config extensions.Zclsd.supported : bool & (xlen == 32)
 
 // Scalar & Entropy Source Instructions: NIST Suite: AES Decryption
 enum clause extension = Ext_Zknd
@@ -611,6 +620,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicntr,
   Ext_Zicond,
   Ext_Zicsr,
+  Ext_Zilsd,
   Ext_Zifencei,
   Ext_Zihintntl,
   Ext_Zihintpause,
@@ -644,6 +654,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zcb,
   Ext_Zcd,
   Ext_Zcf,
+  Ext_Zclsd,
   Ext_Zcmop,
 
   // Zb

@@ -325,6 +325,27 @@ private function check_stateen_config() -> bool = {
   valid
 }
 
+private function check_required_zilsd_zclsd_option() -> bool = {
+  var valid : bool = true;
+  if xlen != 32 & (hartSupports(Ext_Zilsd) | hartSupports(Ext_Zclsd)) then {
+    valid = false;
+    print_endline("Zilsd and Zclsd are only available on RV32");
+  };
+  if hartSupports(Ext_Zclsd) & not(hartSupports(Ext_Zilsd)) then {
+    valid = false;
+    print_endline("The Zclsd extensions is enabled but Zilsd is disabled: supporting Zclsd requires Zilsd.");
+  };
+  if hartSupports(Ext_Zclsd) & not(hartSupports(Ext_Zca)) then {
+    valid = false;
+    print_endline("The Zclsd extensions is enabled but Zca is disabled: supporting Zclsd requires Zca.");
+  };
+  if (hartSupports(Ext_Zclsd) & hartSupports(Ext_Zcf)) then {
+    valid = false;
+    print_endline("Both Zclsd and Zcf extensions are enabled: Zclsd is incompatible with Zcf.");
+  };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -335,4 +356,5 @@ function config_is_valid() -> bool = {
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
   & check_stateen_config()
+  & check_required_zilsd_zclsd_option()
 }

@@ -71,7 +71,7 @@ const char *get_config_schema() {
   return CONFIG_SCHEMA;
 }
 
-void validate_config_schema(const std::string &conf_file) {
+void validate_config_schema_string(const std::string &json_text) {
   using jsoncons::json;
   namespace jsonschema = jsoncons::jsonschema;
 
@@ -81,22 +81,14 @@ void validate_config_schema(const std::string &conf_file) {
   // Throws schema_error if compilation fails.
   jsonschema::json_schema<json> compiled = jsonschema::make_json_schema(std::move(schema), options);
 
-  std::string source = conf_file.empty() ? "default configuration" : "configuration in " + conf_file;
-
-  // Parse the config.
   json config;
   try {
-    if (conf_file.empty()) {
-      config = json::parse(get_default_config());
-    } else {
-      std::ifstream is(conf_file);
-      config = json::parse(is);
-    }
+    auto parse_options = jsoncons::json_options{}.allow_comments(true);
+    config = json::parse(json_text, parse_options);
   } catch (const std::exception &ex) {
-    throw std::runtime_error("Cannot parse " + source + ": " + ex.what() + ".");
+    throw std::runtime_error("Cannot parse configuration: " + std::string(ex.what()) + ".");
   }
 
-  // Validate.
   bool is_valid = true;
   auto report = [&is_valid](const jsonschema::validation_message &msg) -> jsonschema::walk_result {
     is_valid = false;
@@ -105,6 +97,22 @@ void validate_config_schema(const std::string &conf_file) {
   };
   compiled.validate(config, report);
   if (!is_valid) {
+    throw std::runtime_error("Schema conformance check failed for the configuration.");
+  }
+}
+
+void validate_config_schema(const std::string &source) {
+  try {
+    if (source.empty()) {
+      validate_config_schema_string(get_default_config());
+    } else {
+      std::ifstream is(source);
+      std::ostringstream os;
+      os << is.rdbuf();
+      validate_config_schema_string(os.str());
+    }
+  } catch (const std::exception &ex) {
+    std::string source = source.empty() ? "default configuration" : "configuration in " + source;
     throw std::runtime_error("Schema conformance check failed for the " + source + ".");
   }
 }
