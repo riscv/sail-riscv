@@ -26,6 +26,7 @@ jobs:
         uses: ./.github/actions/sail-setup
         with:
           cmake-version: "${{ matrix.cmake_version }}"
+          install-clang: "true"
 
       - name: Ensure pre-commit checks pass
         if: ${{ matrix.run_all_steps}}
