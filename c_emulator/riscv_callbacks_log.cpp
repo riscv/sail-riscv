@@ -1,5 +1,4 @@
 #include "riscv_callbacks_log.h"
-#include "riscv_config.h"
 #include "sail_riscv_model.h"
 #include <inttypes.h>
 #include <stdlib.h>

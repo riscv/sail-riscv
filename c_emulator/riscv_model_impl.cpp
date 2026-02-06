@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 #include "riscv_callbacks_if.h"
-#include "riscv_config.h"
 #include "symbol_table.h"
 
 int term_fd = 1; // set during startup
@@ -226,36 +225,76 @@ unit ModelImpl::print_log_instr(const_sail_string s, uint64_t pc) {
 }
 
 unit ModelImpl::print_step(unit) {
-  if (config_print_step) {
+  if (m_config_print_step) {
     fprintf(trace_log, "\n");
   }
   return UNIT;
 }
 
 bool ModelImpl::get_config_print_instr(unit) {
-  return config_print_instr;
+  return m_config_print_instr;
 }
 
 bool ModelImpl::get_config_print_clint(unit) {
-  return config_print_clint;
+  return m_config_print_clint;
 }
+
 bool ModelImpl::get_config_print_exception(unit) {
-  return config_print_exception;
+  return m_config_print_exception;
 }
+
 bool ModelImpl::get_config_print_interrupt(unit) {
-  return config_print_interrupt;
+  return m_config_print_interrupt;
 }
+
 bool ModelImpl::get_config_print_htif(unit) {
-  return config_print_htif;
+  return m_config_print_htif;
 }
+
 bool ModelImpl::get_config_print_pma(unit) {
-  return config_print_pma;
+  return m_config_print_pma;
 }
 
 bool ModelImpl::get_config_rvfi(unit) {
-  return config_enable_rvfi;
+  return m_config_rvfi;
 }
 
 bool ModelImpl::get_config_use_abi_names(unit) {
-  return config_use_abi_names;
+  return m_config_use_abi_names;
+}
+
+void ModelImpl::set_config_print_instr(bool on) {
+  m_config_print_instr = on;
+}
+
+void ModelImpl::set_config_print_clint(bool on) {
+  m_config_print_clint = on;
+}
+
+void ModelImpl::set_config_print_exception(bool on) {
+  m_config_print_exception = on;
+}
+
+void ModelImpl::set_config_print_interrupt(bool on) {
+  m_config_print_interrupt = on;
+}
+
+void ModelImpl::set_config_print_htif(bool on) {
+  m_config_print_htif = on;
+}
+
+void ModelImpl::set_config_print_pma(bool on) {
+  m_config_print_pma = on;
+}
+
+void ModelImpl::set_config_rvfi(bool on) {
+  m_config_rvfi = on;
+}
+
+void ModelImpl::set_config_use_abi_names(bool on) {
+  m_config_use_abi_names = on;
+}
+
+void ModelImpl::set_config_print_step(bool on) {
+  m_config_print_step = on;
 }
