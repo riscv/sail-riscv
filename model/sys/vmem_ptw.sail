@@ -20,7 +20,7 @@ private union PTW_Error = {
   PTW_No_Permission    : unit,
   PTW_Misaligned       : unit,          // misaligned superpage
   PTW_PTE_Needs_Update : unit,          // PTE update needed but not enabled
-  PTW_Implicit_Error   : (ExceptionType, bits(64)), // fault during PTE access in VS-stage when translating the PTE address
+  PTW_Implicit_Error   : (ExceptionType, gpabits), // fault during PTE access in VS-stage when translating the PTE address
   PTW_Ext_Error        : ext_ptw_error  // parameterized for errors from extensions
 }
 
