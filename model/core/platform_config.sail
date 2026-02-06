@@ -59,61 +59,32 @@ let fetch_guest_page_fault_writes_xtval : bool = false
 let software_check_fault_writes_xtval : bool = config base.xtval_nonzero.software_check
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
 
-// Defines the policy for handling reserved behaviors.
+// Define the policy for handling reserved behaviors.
+
 enum AmocasOddRegisterReservedBehavior = {
   AMOCAS_Fatal,
   AMOCAS_Illegal,
 }
-
-mapping AmocasOddRegisterReservedBehavior_str : AmocasOddRegisterReservedBehavior <-> string = {
-  AMOCAS_Fatal   <-> "AMOCAS_Fatal",
-  AMOCAS_Illegal <-> "AMOCAS_Illegal",
-}
-overload to_str = {AmocasOddRegisterReservedBehavior_str}
 
 enum FcsrRmReservedBehavior = {
   Fcsr_RM_Fatal,
   Fcsr_RM_Illegal,
 }
 
-mapping FcsrRmReservedBehavior_str : FcsrRmReservedBehavior <-> string = {
-  Fcsr_RM_Fatal   <-> "Fcsr_RM_Fatal",
-  Fcsr_RM_Illegal <-> "Fcsr_RM_Illegal",
-}
-overload to_str = {FcsrRmReservedBehavior_str}
-
 enum PmpWriteOnlyReservedBehavior = {
   PMP_Fatal,
   PMP_ClearPermissions,
 }
-
-mapping PmpWriteOnlyReservedBehavior_str : PmpWriteOnlyReservedBehavior <-> string = {
-  PMP_Fatal <-> "PMP_Fatal",
-  PMP_ClearPermissions <-> "PMP_ClearPermissions",
-}
-overload to_str = {PmpWriteOnlyReservedBehavior_str}
 
 enum XenvcfgCbieReservedBehavior = {
   Xenvcfg_Fatal,
   Xenvcfg_ClearPermissions,
 }
 
-mapping XenvcfgCbieReservedBehavior_str : XenvcfgCbieReservedBehavior <-> string = {
-  Xenvcfg_Fatal <-> "Xenvcfg_Fatal",
-  Xenvcfg_ClearPermissions <-> "Xenvcfg_ClearPermissions",
-}
-overload to_str = {XenvcfgCbieReservedBehavior_str}
-
 enum RV32ZdinxOddRegisterReservedBehavior = {
   Zdinx_Fatal,
   Zdinx_Illegal,
 }
-
-mapping RV32ZdinxOddRegisterReservedBehavior_str : RV32ZdinxOddRegisterReservedBehavior <-> string = {
-  Zdinx_Fatal   <-> "Zdinx_Fatal",
-  Zdinx_Illegal <-> "Zdinx_Illegal",
-}
-overload to_str = {RV32ZdinxOddRegisterReservedBehavior_str}
 
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
 let fcsr_rm_reserved_behavior : FcsrRmReservedBehavior = config base.reserved_behavior.fcsr_rm
