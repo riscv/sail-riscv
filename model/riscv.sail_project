@@ -7,7 +7,7 @@ prelude {
 }
 
 core {
-  requires prelude, Zicbop_types
+  requires prelude, A_types, Zicbop_types, Zicbom_types
 
   files
     core/xlen.sail,
@@ -100,7 +100,6 @@ extensions {
 
   A {
     A_types {
-      before core
       files extensions/A/aext_types.sail
     }
     Zaamo {
@@ -389,7 +388,6 @@ extensions {
 
   Zicbom {
     Zicbom_types {
-      before core
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
