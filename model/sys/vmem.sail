@@ -647,18 +647,18 @@ function translate_g_stage(
 // CSR's according to the effective privilege mode and given faulting stage.
 function build_exception_context(
   gva          : virtaddr,
-  faulting_gpa : physaddr,
+  gpa : physaddr,
   access       : MemoryAccessType(mem_payload),
   ptw_error    : PTW_Error,
   stage        : TranslationStage
 ) -> Exception_Context = {
   match stage {
-    S_Stage  => {
+    S_Stage => {
     // S-Stage failure
       struct {
-        trap = translationException(access, ptw_error),
-        stval = zero_extend(bits_of(gva)),
-        htval = zeros(),
+        trap  = translationException(access, ptw_error),
+        tval  = zero_extend(bits_of(gva)),
+        tval2 = zeros(),
         is_gstage_fault = false,
       }
     },
@@ -667,18 +667,18 @@ function build_exception_context(
         PTW_Implicit_Error(e, pte_addr) => {
           // Implicit VS-Stage failure
           struct {
-            trap = convertToGuestException(e),
-            stval = zero_extend(bits_of(gva)),
-            htval = pte_addr,
+            trap  = convertToGuestException(e),
+            tval  = zero_extend(bits_of(gva)),
+            tval2 = truncate(pte_addr >> 2, xlen),
             is_gstage_fault = true
           }
         },
         _ => {
           // Explicit VS-Stage failure
           struct {
-            trap = translationException(access, ptw_error),
-            stval = zero_extend(bits_of(gva)),
-            htval = zeros(),
+            trap  = translationException(access, ptw_error),
+            tval  = zero_extend(bits_of(gva)),
+            tval2 = zeros(),
             is_gstage_fault = false
           }
         }
@@ -687,9 +687,9 @@ function build_exception_context(
     G_Stage => {
       // G-Stage failure
       struct {
-        trap = convertToGuestException(translationException(access, ptw_error)),
-        stval = zero_extend(bits_of(gva)),
-        htval = zero_extend(bits_of(faulting_gpa)),
+        trap  = convertToGuestException(translationException(access, ptw_error)),
+        tval  = zero_extend(bits_of(gva)),
+        tval2 = truncate(bits_of(gpa) >> 2, xlen),
         is_gstage_fault = true
       }
     }

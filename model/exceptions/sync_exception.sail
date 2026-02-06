@@ -16,7 +16,7 @@ struct sync_exception = {
 
 struct Exception_Context = {
   trap            : ExceptionType,
-  stval           : bits(64),
-  htval           : bits(64),
+  tval            : xlenbits,
+  tval2           : xlenbits,
   is_gstage_fault : bool,
 }
