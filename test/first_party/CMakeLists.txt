@@ -94,6 +94,7 @@ set(tests
     "test_misaligned_vector_register_groups.S"
     "test_pmp_access.c"
     "test_phys_perms_on_failing_sc.S"
+    "test_mret_u.S"
 )
 
 

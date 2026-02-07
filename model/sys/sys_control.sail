@@ -238,6 +238,17 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
   };
 }
 
+private function legalize_xret_privilege(p : Privilege) -> Privilege =
+  match p {
+    Machine           => Machine,
+    // If S-mode is not legal, then go to M-mode.
+    Supervisor        => if currentlyEnabled(Ext_S) then Supervisor else Machine,
+    // If U-mode is not legal, nor is S-mode.
+    User              => if currentlyEnabled(Ext_U) then User else Machine,
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  }
+
 function exception_handler(cur_priv : Privilege, ctl : ctl_result,
                            pc: xlenbits) -> xlenbits = {
   match ctl {
@@ -252,7 +263,8 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv = cur_privilege;
       mstatus[MIE]  = mstatus[MPIE];
       mstatus[MPIE] = 0b1;
-      cur_privilege = privLevel_bits(mstatus[MPP], 0b0); // TODO: use mstatus[MPV] if hypervisor enabled
+      cur_privilege = legalize_xret_privilege(privLevel_bits(mstatus[MPP], 0b0)); // TODO: use mstatus[MPV] if hypervisor enabled
+      // "xPP is set to the least-privileged supported mode (U if U-mode is implemented, else M)."
       mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
@@ -271,8 +283,9 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       let prev_priv = cur_privilege;
       mstatus[SIE]  = mstatus[SPIE];
       mstatus[SPIE] = 0b1;
-      cur_privilege = if mstatus[SPP] == 0b1 then Supervisor else User;
-      mstatus[SPP]  = 0b0;
+      cur_privilege = legalize_xret_privilege(if mstatus[SPP] == 0b1 then Supervisor else User);
+      // "xPP is set to the least-privileged supported mode (U if U-mode is implemented, else M)."
+      mstatus[SPP]  = if currentlyEnabled(Ext_U) then 0b0 else 0b1;
       if   cur_privilege != Machine
       then mstatus[MPRV] = 0b0;
 
@@ -282,8 +295,7 @@ function exception_handler(cur_priv : Privilege, ctl : ctl_result,
       long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 
       if   get_config_print_exception()
-      then print_log("ret-ing from " ^ to_str(prev_priv)
-                          ^ " to " ^ to_str(cur_privilege));
+      then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
       prepare_xret_target(Supervisor)
     },
@@ -347,8 +359,8 @@ function reset_misa() -> unit = {
   misa[E] = bool_to_bit(base_E_enabled);
   misa[I] = ~(misa[E]);
 
-  if   hartSupports(Ext_F) & hartSupports(Ext_Zfinx)
-  then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
+  // This should be guaranteed by config validation.
+  assert(not(hartSupports(Ext_F) & hartSupports(Ext_Zfinx)));
 
   // We currently support both F and D
   misa[F]   = bool_to_bit(hartSupports(Ext_F));      // single-precision
