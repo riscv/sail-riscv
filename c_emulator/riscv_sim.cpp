@@ -68,23 +68,6 @@ ModelImpl g_model;
 
 FILE *trace_log = stdout;
 
-bool config_print_instr = false;
-bool config_print_reg = false;
-bool config_print_mem_access = false;
-bool config_print_clint = false;
-bool config_print_exception = false;
-bool config_print_interrupt = false;
-bool config_print_htif = false;
-bool config_print_pma = false;
-bool config_print_rvfi = false;
-bool config_print_step = false;
-bool config_print_ptw = false;
-
-bool config_use_abi_names = false;
-bool config_enable_rvfi = false;
-
-bool config_enable_experimental_extensions = false;
-
 static void print_dts() {
   char *dts = nullptr;
   g_model.zgenerate_dts(&dts, UNIT);
@@ -140,6 +123,22 @@ struct CLIOptions {
 #ifdef SAILCOV
   std::string sailcov_file;
 #endif
+
+  bool config_print_instr = false;
+  bool config_print_reg = false;
+  bool config_print_mem_access = false;
+  bool config_print_clint = false;
+  bool config_print_exception = false;
+  bool config_print_interrupt = false;
+  bool config_print_htif = false;
+  bool config_print_pma = false;
+  bool config_print_rvfi = false;
+  bool config_print_step = false;
+  bool config_print_ptw = false;
+
+  bool config_use_abi_names = false;
+
+  bool config_enable_experimental_extensions = false;
 };
 
 // Parse CLI options. This calls `exit()` on failure.
@@ -164,10 +163,10 @@ static CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag("--print-isa-string", opts.do_print_isa, "Print ISA string");
   app.add_flag(
     "--enable-experimental-extensions",
-    config_enable_experimental_extensions,
+    opts.config_enable_experimental_extensions,
     "Enable experimental extensions"
   );
-  app.add_flag("--use-abi-names", config_use_abi_names, "Use ABI register names in trace log");
+  app.add_flag("--use-abi-names", opts.config_use_abi_names, "Use ABI register names in trace log");
 
   app.add_option("--device-tree-blob", opts.dtb_file, "Device tree blob file")
     ->check(CLI::ExistingFile)
@@ -186,44 +185,44 @@ static CLIOptions parse_cli(int argc, char **argv) {
   app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")->option_text("<file>");
 #endif
 
-  app.add_flag("--trace-instr", config_print_instr, "Enable trace output for instruction execution");
-  app.add_flag("--trace-ptw", config_print_ptw, "Enable trace output for Page Table walk");
-  app.add_flag("--trace-reg", config_print_reg, "Enable trace output for register access");
-  app.add_flag("--trace-mem", config_print_mem_access, "Enable trace output for memory accesses");
-  app.add_flag("--trace-rvfi", config_print_rvfi, "Enable trace output for RVFI");
-  app.add_flag("--trace-clint", config_print_clint, "Enable trace output for CLINT memory accesses and status");
-  app.add_flag("--trace-exception", config_print_exception, "Enable trace output for exceptions");
-  app.add_flag("--trace-interrupt", config_print_interrupt, "Enable trace output for interrupts");
-  app.add_flag("--trace-htif", config_print_htif, "Enable trace output for HTIF operations");
-  app.add_flag("--trace-pma", config_print_pma, "Enable trace output for PMA checks");
+  app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
+  app.add_flag("--trace-ptw", opts.config_print_ptw, "Enable trace output for Page Table walk");
+  app.add_flag("--trace-reg", opts.config_print_reg, "Enable trace output for register access");
+  app.add_flag("--trace-mem", opts.config_print_mem_access, "Enable trace output for memory accesses");
+  app.add_flag("--trace-rvfi", opts.config_print_rvfi, "Enable trace output for RVFI");
+  app.add_flag("--trace-clint", opts.config_print_clint, "Enable trace output for CLINT memory accesses and status");
+  app.add_flag("--trace-exception", opts.config_print_exception, "Enable trace output for exceptions");
+  app.add_flag("--trace-interrupt", opts.config_print_interrupt, "Enable trace output for interrupts");
+  app.add_flag("--trace-htif", opts.config_print_htif, "Enable trace output for HTIF operations");
+  app.add_flag("--trace-pma", opts.config_print_pma, "Enable trace output for PMA checks");
   app.add_flag_callback(
     "--trace-platform",
-    [] {
-      config_print_clint = true;
-      config_print_exception = true;
-      config_print_interrupt = true;
-      config_print_htif = true;
-      config_print_pma = true;
+    [&opts] {
+      opts.config_print_clint = true;
+      opts.config_print_exception = true;
+      opts.config_print_interrupt = true;
+      opts.config_print_htif = true;
+      opts.config_print_pma = true;
     },
     "Enable trace output for platform-level events (MMIO, interrupts, "
     "exceptions, CLINT, HTIF, PMA)"
   );
-  app.add_flag("--trace-step", config_print_step, "Add a blank line between steps in the trace output");
+  app.add_flag("--trace-step", opts.config_print_step, "Add a blank line between steps in the trace output");
 
   app.add_flag_callback(
     "--trace-all",
-    [] {
-      config_print_instr = true;
-      config_print_reg = true;
-      config_print_mem_access = true;
-      config_print_rvfi = true;
-      config_print_clint = true;
-      config_print_exception = true;
-      config_print_interrupt = true;
-      config_print_htif = true;
-      config_print_pma = true;
-      config_print_step = true;
-      config_print_ptw = true;
+    [&opts] {
+      opts.config_print_instr = true;
+      opts.config_print_reg = true;
+      opts.config_print_mem_access = true;
+      opts.config_print_rvfi = true;
+      opts.config_print_clint = true;
+      opts.config_print_exception = true;
+      opts.config_print_interrupt = true;
+      opts.config_print_htif = true;
+      opts.config_print_pma = true;
+      opts.config_print_step = true;
+      opts.config_print_ptw = true;
     },
     "Enable all trace output"
   );
@@ -433,11 +432,9 @@ void finish(const CLIOptions &opts) {
 }
 
 void flush_logs() {
-  if (config_print_instr) {
-    fflush(stderr);
-    fflush(stdout);
-    fflush(trace_log);
-  }
+  fflush(stderr);
+  fflush(stdout);
+  fflush(trace_log);
 }
 
 void run_sail(const CLIOptions &opts) {
@@ -454,7 +451,7 @@ void run_sail(const CLIOptions &opts) {
 
   while (!g_model.zhtif_done && (opts.insn_limit == 0 || total_insns < opts.insn_limit)) {
     if (rvfi.has_value()) {
-      switch (rvfi->pre_step(config_print_rvfi)) {
+      switch (rvfi->pre_step(opts.config_print_rvfi)) {
       case RVFI_prestep_continue:
         continue;
       case RVFI_prestep_eof:
@@ -477,17 +474,19 @@ void run_sail(const CLIOptions &opts) {
       if (g_model.have_exception) {
         break;
       }
-      flush_logs();
+      if (opts.config_print_instr) {
+        flush_logs();
+      }
       KILL(sail_int)(&sail_step);
       if (rvfi) {
-        rvfi->send_trace(config_print_rvfi);
+        rvfi->send_trace(opts.config_print_rvfi);
       }
     }
 
     g_model.call_post_step_callbacks(is_waiting);
 
     if (!is_waiting) {
-      if (config_print_step) {
+      if (opts.config_print_step) {
         fprintf(trace_log, "\n");
       }
       step_no++;
@@ -569,7 +568,6 @@ int inner_main(int argc, char **argv) {
     return EXIT_SUCCESS;
   }
   if (opts.rvfi_dii_port != 0) {
-    config_enable_rvfi = true;
     rvfi.emplace(opts.rvfi_dii_port, g_model);
   }
   if (opts.do_show_times) {
@@ -584,13 +582,24 @@ int inner_main(int argc, char **argv) {
   if (opts.signature_granularity != DEFAULT_SIGNATURE_GRANULARITY) {
     fprintf(stderr, "setting signature-granularity to %d bytes\n", opts.signature_granularity);
   }
-  if (config_enable_experimental_extensions) {
+  if (opts.config_enable_experimental_extensions) {
     fprintf(stderr, "enabling unratified extensions.\n");
     g_model.set_enable_experimental_extensions(true);
   }
   if (!opts.trace_log_path.empty()) {
     fprintf(stderr, "using %s for trace output.\n", opts.trace_log_path.c_str());
   }
+
+  g_model.set_config_print_instr(opts.config_print_instr);
+  g_model.set_config_print_clint(opts.config_print_clint);
+  g_model.set_config_print_exception(opts.config_print_exception);
+  g_model.set_config_print_interrupt(opts.config_print_interrupt);
+  g_model.set_config_print_htif(opts.config_print_htif);
+  g_model.set_config_print_pma(opts.config_print_pma);
+  g_model.set_config_rvfi(rvfi.has_value());
+  g_model.set_config_use_abi_names(opts.config_use_abi_names);
+
+  g_model.set_config_print_step(opts.config_print_step);
 
   // Always validate the schema conformance of the config.
   validate_config_schema(opts.config_file);
@@ -640,13 +649,19 @@ int inner_main(int argc, char **argv) {
   }
 
   init_logs(opts);
-  log_callbacks log_cbs(config_print_reg, config_print_mem_access, config_print_ptw, config_use_abi_names, trace_log);
+  log_callbacks log_cbs(
+    opts.config_print_reg,
+    opts.config_print_mem_access,
+    opts.config_print_ptw,
+    opts.config_use_abi_names,
+    trace_log
+  );
   g_model.register_callback(&log_cbs);
 
   init_start = steady_clock::now();
 
   if (rvfi) {
-    if (!rvfi->setup_socket(config_print_rvfi)) {
+    if (!rvfi->setup_socket(opts.config_print_rvfi)) {
       return 1;
     }
     g_model.register_callback(&rvfi_cbs);

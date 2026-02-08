@@ -30,7 +30,6 @@ add_library(riscv_model
     elf_loader.h
     riscv_callbacks_if.cpp
     riscv_callbacks_if.h
-    riscv_config.h
     riscv_platform_if.cpp
     riscv_platform_if.h
     riscv_model_impl.cpp
