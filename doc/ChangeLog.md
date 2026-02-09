@@ -18,7 +18,7 @@
     such options will continue to be added in subsequent releases.
 
   - Read-only-zero PMP entries can now be configured; see
-    `memory.pmp.usable_count`.
+    `memory.pmp.usable_count` (see #1111).
 
   - The size of the reservation set for Zalrsc atomics can now be
     specified; see `platform.reservation_set_size_exp`.
@@ -51,6 +51,12 @@
 - Testing in CI has been updated to the latest `riscv-tests` and
   `riscv-vector-tests`, and the OS boot test now uses Linux 6.18.2 and
   OpenSBI v1.8.1.
+
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1014 : reserved fences were treated as illegal instructions
+  - https://github.com/riscv/sail-riscv/issues/1239 : missed PMA access control checks for failing store-conditionals.
+  - https://github.com/riscv/sail-riscv/issues/1434 : missing write to `rd` for some cases of `vset{i}vl{i}`.
+  - https://github.com/riscv/sail-riscv/issues/1455 : missing source-destination overlap checks for vector instructions
 
 # Release notes for version 0.9
 
