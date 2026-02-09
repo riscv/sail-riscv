@@ -54,8 +54,8 @@
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1014 : reserved fences were treated as illegal instructions
-  - https://github.com/riscv/sail-riscv/issues/1239 : missed PMA access control checks for failing store-conditionals.
-  - https://github.com/riscv/sail-riscv/issues/1434 : missing write to `rd` for some cases of `vset{i}vl{i}`.
+  - https://github.com/riscv/sail-riscv/issues/1239 : missed PMA access control checks for failing store-conditionals
+  - https://github.com/riscv/sail-riscv/issues/1434 : missing write to `rd` for some cases of `vset{i}vl{i}`
   - https://github.com/riscv/sail-riscv/issues/1455 : missing source-destination overlap checks for vector instructions
 
 # Release notes for version 0.9
