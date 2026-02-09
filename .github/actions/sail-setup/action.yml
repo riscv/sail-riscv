@@ -14,17 +14,62 @@ inputs:
     required: false
     default: "false"
 
+# This is the current CI Platform/Target support matrix:
+#
+#                          | RISC-V Model                 |sail-riscv-tests|first-party-tests| Rocq |   Lean         | Linux boot
+#---------------------------------------------------------------------------------------------------------------------------------
+# ubuntu-22.04 (x86_64):   | Sail:  0.20.1 (binary)       |      all       |      all        |      |                |
+#                          | CMake: 4.1.2 + 3.20.0        |                |                 |      |                |
+#                          | Clang: latest (apt.llvm.org) |                |                 |      |                |
+#---------------------------------------------------------------------------------------------------------------------------------
+# ubuntu-24.04-arm:        | Sail:  0.20.1 (binary)       |                |                 |      |                |
+#                          | CMake: 4.1.2 + 3.20.0        |      all       |      all        |      |                |
+#                          | Clang: latest (apt.llvm.org) |                |                 |      |                |
+#---------------------------------------------------------------------------------------------------------------------------------
+# macos-latest:            | Sail:  0.20.1 (opam)         |                |                 |      |                |
+#                          | CMake: 4.1.2 + 3.20.0        |      all       |      all        |      |                |
+#                          | Clang: brew versions         |                |                 |      |                |
+#---------------------------------------------------------------------------------------------------------------------------------
+# ubuntu-latest:           | Sail: 0.20.1 (binary)        |                |                 |      | Sail: latest   |
+#                          | CMake: (4.1.2)               |      all       |      all        |      | CMake: (4.1.2) |    x
+#                          | Clang: latest (apt.llvm.org) |                |                 |      | Clang: -       |
+#---------------------------------------------------------------------------------------------------------------------------------
+# (Container builds)       |                              |                |                 |      |                |
+# ------------------       |                              |                |                 |      |                |
+#                          |                              |                |                 |      |                |
+# rockylinux:8.9           | Sail: 0.20.1                 |                |                 |      |                |
+# runner: ubuntu-latest    | CMake: 3.20.0                |      all       |                 |      |                |
+#                          | Clang: -                     |                |                 |      |                |
+#---------------------------------------------------------------------------------------------------------------------------------
+# rockylinux:8.9           | Sail: 0.20.1                 |                |                 |      |                |
+# runner: ubuntu-24.04-arm | CMake: 3.20.0                |      all       |                 |      |                |
+#                          | Clang: -                     |                |                 |      |                |
+#---------------------------------------------------------------------------------------------------------------------------------
+# rocq/rocq-prover:9.0.1   | Sail:  (0.20.1)              |                |                 |      |                |
+# runner: ubuntu-latest    | CMake: (4.1.2)               |                |                 |   x  |                |
+#                          | Clang: -                     |                |                 |      |                |
+
 runs:
   using: "composite"
   steps:
-    - name: Install packages (Linux)
-      if: runner.os == 'Linux'
+    - name: Install packages (Linux runner)
+      if: runner.os == 'Linux' && job.container == null
       shell: bash
       run: |
         sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
 
-    - name: Install latest Clang (Linux)
-      if: runner.os == 'Linux' && inputs.install-clang == 'true'
+    - name: Install packages (Linux container)
+      if: runner.os == 'Linux' && job.container != null
+      shell: bash
+      # This could be a Rocq or Rocky container.
+      run: |
+        # sudo needed for compatibility with other steps using sudo
+        if [ -f /usr/bin/dnf ]; then
+          dnf install -y --enablerepo=devel libstdc++-static make gcc gcc-c++ pkg-config gmp-static ninja-build sudo
+        fi
+
+    - name: Install latest Clang (Linux runner)
+      if: runner.os == 'Linux' && inputs.install-clang == 'true' && job.container == null
       shell: bash
       run: |
         # Install newer clang manually because current Ubuntu runners don't have
@@ -34,6 +79,29 @@ runs:
         CLANG_VERSION=21
         sudo ./llvm.sh $CLANG_VERSION
         echo "CLANG_VERSION=$CLANG_VERSION" >> $GITHUB_ENV
+
+    - name: Install Clang (Rocky Linux container)
+      if: runner.os == 'Linux' && inputs.install-clang == 'true' && job.container != null
+      shell: bash
+      # This does not apply to the Rocq container.
+      #
+      # Clang on Rocky Linux 8.9 also does not support the RISC-V targets, while it does on Rocky 9.
+      #
+      # Rocky uses the 'epel-8-x86_64' repository not available in @fedora-llvm-team/llvm-snapshots
+      # So "dnf -y copr enable @fedora-llvm-team/llvm-snapshots" does not work.
+      #
+      # The latest Clang releases from https://github.com/llvm/llvm-project/releases are built against
+      # GLIBCXX_3.4.30, whereas Rocky 8.9 only has GLIBCXX_3.4.25 and Rocky 9 only has GLIBCXX_3.4.29.
+      # So the below does not work:
+      # CLANG_VERSION=21.1.8
+      # curl --location https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}/LLVM-${CLANG_VERSION}-Linux-X64.tar.xz | xz -c -d | sudo tar xv --directory=/usr/local --strip-components=1
+      #
+      # So just use whatever the platform has for now, since we cannot run first-party tests anyway
+      # until we upgrade to much newer versions of Rocky.
+      run: |
+        if [ -f /usr/bin/dnf ]; then
+          dnf install -y clang llvm lld
+        fi
 
     - name: Install packages (macOS)
       if: runner.os == 'macOS'
