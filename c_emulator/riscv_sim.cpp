@@ -21,6 +21,7 @@
 #include "CLI11.hpp"
 #include "elf_loader.h"
 #include "jsoncons/config/version.hpp"
+#include "jsoncons/json.hpp"
 #include "rts.h"
 #include "sail.h"
 #include "sail_config.h"
@@ -29,6 +30,7 @@
 #include "sail_coverage.h"
 #endif
 #include "config_utils.h"
+#include "file_utils.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
 #include "riscv_model_impl.h"
@@ -87,9 +89,29 @@ static void print_build_info() {
   std::cout << "JSONCONS: " << jsoncons::version() << std::endl;
 }
 
-std::vector<uint8_t> read_file(const std::string &file_path) {
-  std::ifstream instream(file_path, std::ios::in | std::ios::binary);
-  return {std::istreambuf_iterator<char>(instream), std::istreambuf_iterator<char>()};
+static jsoncons::json parse_json_or_exit(const std::string &json_text, const std::string &source_desc) {
+  try {
+    return jsoncons::json::parse(json_text);
+  } catch (const jsoncons::json_exception &e) {
+    std::cerr << "JSON parse error in " << source_desc << ":\n" << e.what() << "\n\n";
+    exit(EXIT_FAILURE);
+  }
+}
+
+// JSON objects are merged by replacing/adding fields from the override config.
+// If a given field is an object in the base and override then instead of
+// replacing the field entirely the merging process recurses into it.
+// All other field types (including arrays) are simply replaced.
+void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override) {
+  for (const auto &entry : json_override.object_range()) {
+    const auto &key = entry.key();
+    const auto &value = entry.value();
+    if (base.contains(key) && base[key].is_object() && value.is_object()) {
+      deep_merge_json(base[key], value);
+    } else {
+      base[key] = value;
+    }
+  }
 }
 
 const unsigned DEFAULT_SIGNATURE_GRANULARITY = 4;
@@ -105,6 +127,7 @@ struct CLIOptions {
   bool do_print_isa = false;
 
   std::string config_file;
+  std::vector<std::string> config_overrides;
   std::string term_log;
   std::string trace_log_path;
   std::string dtb_file;
@@ -169,6 +192,16 @@ static CLIOptions parse_cli(int argc, char **argv) {
   app.add_option("--terminal-log", opts.term_log, "Terminal log output file")->option_text("<file>");
   app.add_option("--test-signature", opts.sig_file, "Test signature file")->option_text("<file>");
   app.add_option("--config", opts.config_file, "Configuration file")->check(CLI::ExistingFile)->option_text("<file>");
+  app
+    .add_option(
+      "--config-override",
+      opts.config_overrides,
+      "Configuration override file (repeatable; later files override earlier ones). Use this when you only want to "
+      "change a small part of the base configuration."
+    )
+    ->check(CLI::ExistingFile)
+    ->option_text("<file>")
+    ->allow_extra_args(false);
   app.add_option("--trace-output", opts.trace_log_path, "Trace output file")->option_text("<file>");
 
   app.add_option("--signature-granularity", opts.signature_granularity, "Signature granularity")->option_text("<uint>");
@@ -598,15 +631,39 @@ int inner_main(int argc, char **argv) {
 
   model.set_config_print_step(opts.config_print_step);
 
+  std::string config_json_string;
+  if (!opts.config_file.empty()) {
+    config_json_string = read_file_to_string(opts.config_file);
+  } else {
+    config_json_string = get_default_config();
+  }
+
+  // Check json config and merge overrides
+  const std::string base_source_desc =
+    opts.config_file.empty() ? "default configuration" : "configuration file " + opts.config_file;
+  jsoncons::json config_json = parse_json_or_exit(config_json_string, base_source_desc);
+  for (const auto &override_path : opts.config_overrides) {
+    std::string override_json_string = read_file_to_string(override_path);
+    jsoncons::json override_item = parse_json_or_exit(override_json_string, "override file " + override_path);
+    deep_merge_json(config_json, override_item);
+  }
+
+  std::ostringstream os;
+  os << config_json;
+  config_json_string = os.str();
+
   // Always validate the schema conformance of the config.
-  validate_config_schema(opts.config_file);
+  std::string config_source_desc = opts.config_file.empty() ? "default configuration" : opts.config_file;
+  if (!opts.config_overrides.empty()) {
+    config_source_desc = "merged configuration from " + config_source_desc;
+    for (const auto &override_path : opts.config_overrides) {
+      config_source_desc = config_source_desc + ", " + override_path;
+    }
+  }
+  validate_config_schema(config_json, config_source_desc);
 
   // Initialize the model.
-  if (!opts.config_file.empty()) {
-    sail_config_set_file(opts.config_file.c_str());
-  } else {
-    sail_config_set_string(get_default_config());
-  }
+  sail_config_set_string(config_json_string.c_str());
 
   // Initialize platform.
   init_platform_constants(model);

@@ -7,6 +7,9 @@
 
 - A configuration parameter to specify the size of the reservation set
   for Zalrsc atomics has been added.
+- A `--config-override` cli option has been added to specify one or more
+  additional JSON configuration files that override the corresponding fields
+  in a configuration.
 
 - The following extensions have been added:
   - Za64rs, Za128rs

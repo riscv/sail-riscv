@@ -38,6 +38,8 @@ add_library(riscv_model
     riscv_softfloat.h
     config_utils.cpp
     config_utils.h
+    file_utils.cpp
+    file_utils.h
     symbol_table.cpp
     symbol_table.h
     sail_riscv_version.h
