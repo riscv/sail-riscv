@@ -37,6 +37,8 @@ jobs:
           fetch-depth: 0
       - name: Common setup
         uses: ./.github/actions/sail-setup
+        with:
+          install-clang: "true"
       - name: Build simulator
         run: |
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_${{ matrix.TEST_SUITE }}=TRUE
