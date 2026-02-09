@@ -18,7 +18,7 @@
     such options will continue to be added in subsequent releases.
 
   - Read-only-zero PMP entries can now be configured; see
-    `memory.pmp.usable_count` (see #1111).
+    `memory.pmp.usable_count` (see https://github.com/riscv/sail-riscv/issues/1111).
 
   - The size of the reservation set for Zalrsc atomics can now be
     specified; see `platform.reservation_set_size_exp`.
