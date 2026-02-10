@@ -35,12 +35,23 @@ executable binary to give an RISC-V emulator.
 
 When running this emulator on a RISC-V ELF binary (`test.elf`), the
 emulator can also be a provided a configuration file in JSON format
-(named `dut_config.json` above); if no configuration file is provided,
-a default RV64 configuration is assumed. The Sail compiler also
-generates a JSON schema (`sail_riscv_config_schema.json`) for the
-configuration file from the Sail sources; every configuration file is
-validated against this schema before use. More information on using
-the emulator is available using its `-h` help command-line option.
+(named `dut_config.json` above). If no configuration file is
+provided, a default RV64 configuration is assumed; this default
+configuration can be printed using the `--print-default-config` option
+to the `sail_riscv_sim` emulator. A _template_ for the configuration
+files that are used to test the model is
+[here](config/config.json.in); this template will need to be edited to
+match a desired configuration.
+
+The Sail compiler also generates a JSON schema
+(`sail_riscv_config_schema.json`) for the configuration file from the
+Sail sources; every configuration file is validated against this
+schema before use. This file will be in the directory containing the
+build artifacts after a build of the model, and is also available in
+the [binary releases](#using-the-binary-releases) of the model.
+
+More information on using the emulator is available using its `-h`
+help command-line option.
 
 The Sail model can also be used to generate `JSON` and `HTML`
 artifacts for documentation. A prototype of their use to annotate the
