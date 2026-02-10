@@ -247,12 +247,9 @@ private function get_asid(stage : TranslationStage) -> asidbits = {
   }
 }
 
-function get_vmid(stage : TranslationStage) -> vmidbits = {
-  match stage {
-    G_Stage => if xlen == 32 then Mk_Hgatp32(hgatp)[VMID] else Mk_Hgatp64(hgatp)[VMID],
-    _       => zeros(),
-  }
-}
+function get_vmid() -> vmidbits =
+  if xlen == 32 then Mk_Hgatp32(hgatp)[VMID] else Mk_Hgatp64(hgatp)[VMID]
+
 
 private function xatp_to_ppn(stage : TranslationStage) -> bits(if xlen == 32 then 22 else 44) = {
   match stage {
@@ -356,6 +353,7 @@ function xatp_mode(priv : Privilege, stage : TranslationStage) -> SATPMode = {
 private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
   _asid     : asidbits,
+  _vmid     : vmidbits,
   vpn       : vpn_bits('v),
   access    : MemoryAccessType(mem_payload),
   priv      : Privilege,
@@ -403,6 +401,7 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
 private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  vmid     : vmidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
   access   : MemoryAccessType(mem_payload),
@@ -426,7 +425,7 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
       // by: 'Ok(ppn, ext_ptw)'    (see TLB NOTE above)
       match update_PTE_Bits(pte, access) {
         None() => {
-          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global, stage);
+          add_to_TLB(sv_width, asid, vmid, vpn, ppn, pte, pteAddr, level, global, stage);
           Ok(ppn, ext_ptw)
         },
         Some(pte) =>
@@ -438,7 +437,7 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
             // Writeback the PTE (which has new A/D bits)
             match write_pte(pteAddr, pte_size, pte) {
               Ok(_) => {
-                add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global, stage);
+                add_to_TLB(sv_width, asid, vmid, vpn, ppn, pte, pteAddr, level, global, stage);
                 Ok(ppn, ext_ptw)
               },
               Err(_) =>
@@ -464,6 +463,7 @@ function xatp_mode_width(mode : SATPMode) -> {32, 39, 48, 57} = satp_mode_width(
 private function translate forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  vmid     : vmidbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
   access   : MemoryAccessType(mem_payload),
@@ -475,10 +475,10 @@ private function translate forall 'v, is_sv_mode('v) . (
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB NOTE above)
-  match lookup_TLB(sv_width, asid, vpn, stage) {
-    Some(index, ent) => translate_TLB_hit(sv_width, asid, vpn, access, priv,
+  match lookup_TLB(sv_width, asid, vmid, vpn, stage) {
+    Some(index, ent) => translate_TLB_hit(sv_width, asid, vmid, vpn, access, priv,
                                           mxr, do_sum, index, ent, stage, ext_ptw),
-    None()           => translate_TLB_miss(sv_width, asid, base_ppn, vpn, access, priv,
+    None()           => translate_TLB_miss(sv_width, asid, vmid, base_ppn, vpn, access, priv,
                                            mxr, do_sum, stage, ext_ptw),
   }
 }
@@ -559,6 +559,7 @@ private function translate_stage(
   if not(valid_addr) then return Err(PTW_Invalid_Addr(), init_ext_ptw);
 
   let asid     = get_asid(stage);
+  let vmid     = if stage == G_Stage then get_vmid() else zeros();
   let vpn      = svAddr[sv_width - 1 .. pagesize_bits];
   let mxr      = get_mxr(stage);
   let do_sum   = get_sum(stage);
@@ -569,7 +570,7 @@ private function translate_stage(
   // G-stage address translation always uses User privilege for permission checking.
   let eff_priv = if stage == G_Stage then User else priv;
 
-  let res = translate(sv_width, asid, base_ppn, vpn,
+  let res = translate(sv_width, asid, vmid, base_ppn, vpn,
                       access, eff_priv, mxr, do_sum,
                       stage, init_ext_ptw);
 
@@ -619,11 +620,11 @@ function translate_g_stage(
 // We save all the information in Exception_Context in order to set the appropriate
 // CSR's according to the effective privilege mode and given faulting stage.
 function build_exception_context(
-  gva          : virtaddr,
-  gpa          : gpabits,
-  access       : MemoryAccessType(mem_payload),
-  ptw_error    : PTW_Error,
-  stage        : TranslationStage
+  gva       : virtaddr,
+  gpa       : gpabits,
+  access    : MemoryAccessType(mem_payload),
+  ptw_error : PTW_Error,
+  stage     : TranslationStage
 ) -> Exception_Context = {
   match stage {
     S_Stage => {

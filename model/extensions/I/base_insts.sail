@@ -640,15 +640,19 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   // In that case this asidlen would be incorrect because the maximum asidlen
   // is 9 but we always set it to 16 for RV64.
   let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
+  let vmid = if cur_privilege == VirtualSupervisor then Some(get_vmid()) else None();
   match cur_privilege {
     User              => Illegal_Instruction(),
     Supervisor        => match mstatus[TVM] {
                            0b1 => Illegal_Instruction(),
-                           0b0 => { flush_TLB(asid, addr); RETIRE_SUCCESS },
+                           0b0 => { flush_TLB(asid, vmid, addr, S_Stage); RETIRE_SUCCESS },
                          },
-    Machine           => { flush_TLB(asid, addr); RETIRE_SUCCESS },
-    VirtualUser       => Virtual_Instruction(),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    Machine           => { flush_TLB(asid, vmid, addr, S_Stage); RETIRE_SUCCESS },
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => match hstatus[VTVM] {
+                            0b1 => Virtual_Instruction(),
+                            0b0 => { flush_TLB(asid, vmid, addr, VS_Stage); RETIRE_SUCCESS },
+                         },
   }
 }
 

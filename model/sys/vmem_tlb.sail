@@ -24,7 +24,7 @@ let  tlb_ppn_bits = sizeof(tlb_ppn_bits)
 private struct TLB_Entry = {
   asid       : asidbits,           // address-space id
   vmid       : vmidbits,           // virtual machine id
-  stage      : TranslationStage,   // VS-Stage/G-Stage
+  stage      : TranslationStage,   // Address Translation Stage
   global     : bool,               // global translation
   vpn        : bits(tlb_vpn_bits), // Virtual Page Number. SvXX - 12 bits.
   levelMask  : bits(tlb_vpn_bits), // Mask for superpages. The lowest (level * level_bits) bits are 1s.
@@ -88,23 +88,38 @@ function reset_TLB() -> unit = tlb = vector_init(None())
 function write_TLB(index : tlb_index_range, entry : TLB_Entry) -> unit =
   tlb[index] = Some(entry)
 
-// TODO: Differiante between VS-Stage and G-Stage entries
 private function match_TLB_Entry(
-  ent  : TLB_Entry,
-  asid : asidbits,
-  vpn  : bits(tlb_vpn_bits),
-  _stage: TranslationStage,
-) -> bool =
-  (ent.global | (ent.asid == asid)) & (ent.vpn == (vpn & ~(ent.levelMask)))
+  ent   : TLB_Entry,
+  asid  : asidbits,
+  vmid  : vmidbits,
+  vpn   : bits(tlb_vpn_bits),
+  stage : TranslationStage,
+) -> bool = {
+  let asid_matches  = (ent.global | (ent.asid == asid));
+  let vmid_matches  = ent.vmid == vmid;
+  let vpn_matches   = ent.vpn == (vpn & ~(ent.levelMask));
+  let stage_matches = ent.stage == stage;
+  match stage {
+    S_Stage  => asid_matches & vpn_matches  & stage_matches,
+    VS_Stage => asid_matches & vmid_matches & vpn_matches & stage_matches,
+    G_Stage  => vmid_matches & vpn_matches  & stage_matches,
+  }
+}
 
 private function flush_TLB_Entry(
   ent   : TLB_Entry,
   asid  : option(asidbits),
+  vmid  : option(vmidbits),
   vaddr : option(xlenbits),
+  stage : TranslationStage,
 ) -> bool = {
   let asid_matches : bool = match asid {
     Some(asid) => ent.asid == asid & not(ent.global),
     None() => true,
+  };
+  let vmid_matches : bool = match vmid {
+    Some(vmid) => ent.vmid == vmid,
+    None()  => true,
   };
   let addr_matches : bool = match vaddr {
     Some(vaddr) => {
@@ -116,13 +131,15 @@ private function flush_TLB_Entry(
     },
     None() => true,
   };
-  asid_matches & addr_matches
+  let stage_matches = ent.stage == stage;
+  asid_matches & vmid_matches & addr_matches & stage_matches
 }
 
 // PUBLIC: invoked in translate() [vmem.sail]
 function lookup_TLB forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  vmid     : vmidbits,
   vpn      : vpn_bits('v),
   stage    : TranslationStage,
 ) -> option((tlb_index_range, TLB_Entry)) = {
@@ -130,7 +147,7 @@ function lookup_TLB forall 'v, is_sv_mode('v) . (
   match tlb[index] {
     None() => None(),
     Some(entry) => {
-      if match_TLB_Entry(entry, asid, sign_extend(vpn), stage) then Some((index, entry)) else None()
+      if match_TLB_Entry(entry, asid, vmid, sign_extend(vpn), stage) then Some((index, entry)) else None()
     },
   }
 }
@@ -139,13 +156,14 @@ function lookup_TLB forall 'v, is_sv_mode('v) . (
 function add_to_TLB forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  vmid     : vmidbits,
   vpn      : vpn_bits('v),
   ppn      : ppn_bits('v),
   pte      : pte_bits('v),
   pteAddr  : physaddr,
   level    : level_range('v),
   global   : bool,
-  _stage   : TranslationStage
+  stage   : TranslationStage
 ) -> unit = {
   let shift = level * (if 'v == 32 then 10 else 9);
   let levelMask = ones(shift);
@@ -154,8 +172,8 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
   let ppn = ppn & ~(zero_extend(levelMask));
 
   let entry : TLB_Entry = struct{asid      = asid,
-                                 vmid      = zeros(),  // TODO
-                                 stage     = VS_Stage, // TODO
+                                 vmid      = vmid,
+                                 stage     = stage,
                                  global    = global,
                                  pte       = zero_extend(pte),
                                  pteAddr   = pteAddr,
@@ -174,12 +192,16 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 // Top-level TLB flush function
 // PUBLIC: invoked from SFENCE_VMA [extensions/I/insts_base.sail]
 // TODO: Incorporate VMID
-function flush_TLB(asid : option(asidbits),
-                   addr : option(xlenbits)) -> unit = {
+function flush_TLB(
+  asid  : option(asidbits),
+  vmid  : option(vmidbits),
+  addr  : option(xlenbits),
+  stage : TranslationStage,
+) -> unit = {
   foreach (i from 0 to (length(tlb) - 1)) {
     match tlb[i] {
       None()  => (),
-      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then { tlb[i] = None(); },
+      Some(entry) => if flush_TLB_Entry(entry, asid, vmid, addr, stage) then { tlb[i] = None(); },
     }
   }
 }
