@@ -27,6 +27,9 @@
     and `breakpoint` has been disambiguated into `hardware_breakpoint`
     and `software_breakpoint`; see `base.xtval_non_zero`.
 
+  - Explicit configuration for the Zdinx extension was added; see `extensions.Zdinx`.
+    Previously, Zdinx was implicitly configured by the Zfinx extension.
+
 - The following extensions have been added:
   - Za64rs, Za128rs
   - Zic64b
@@ -57,6 +60,7 @@
   - https://github.com/riscv/sail-riscv/issues/1239 : missed PMA access control checks for failing store-conditionals
   - https://github.com/riscv/sail-riscv/issues/1434 : missing write to `rd` for some cases of `vset{i}vl{i}`
   - https://github.com/riscv/sail-riscv/issues/1455 : missing source-destination overlap checks for vector instructions
+  - https://github.com/riscv/sail-riscv/issues/1527 : incorrect NaN result from `fcvt.s.bf16` for improperly NaN-boxed inputs
 
 # Release notes for version 0.9
 
