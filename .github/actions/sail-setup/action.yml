@@ -33,9 +33,7 @@ runs:
         chmod +x llvm.sh
         CLANG_VERSION=21
         sudo ./llvm.sh $CLANG_VERSION
-        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
-        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-$CLANG_VERSION 100
-        sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-$CLANG_VERSION 100
+        echo "CLANG_VERSION=$CLANG_VERSION" >> $GITHUB_ENV
 
     - name: Install packages (macOS)
       if: runner.os == 'macOS'

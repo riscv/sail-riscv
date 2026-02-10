@@ -34,9 +34,14 @@ jobs:
 
       - name: Build simulators
         run: |
+          # CLANG_VERSION is set by the sail-setup action when install-clang is enabled.
+          CLANG_FLAG=""
+          if [ -n "$CLANG_VERSION" ]; then
+            CLANG_FLAG="-DCLANG_BIN=/usr/bin/clang-$CLANG_VERSION"
+          fi
           # Ninja is used because the CMake Makefile generator doesn't
           # build top-level targets in parallel unfortunately.
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE $CLANG_FLAG
           ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
 
       - name: Run tests
