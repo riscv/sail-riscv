@@ -30,18 +30,18 @@ inputs:
 #                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
 #                          | Clang: brew versions         |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# ubuntu-latest:           | Sail: 0.20.1 (binary)        |                |                 |           | Sail: latest   |
+# ubuntu-latest:           | Sail:  0.20.1 (binary)       |                |                 |           | Sail: latest   |
 #                          | CMake: (4.1.2)               |       x        |       x         |           | CMake: (4.1.2) |    x
 #                          | Clang: latest (apt.llvm.org) |                |                 |           | Clang: -       |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # (Container builds)       |                              |                |                 |           |                |
 # ------------------       |                              |                |                 |           |                |
 #                          |                              |                |                 |           |                |
-# rockylinux:8.9           | Sail: 0.20.1                 |                |                 |           |                |
+# rockylinux:8.9           | Sail:  0.20.1                |                |                 |           |                |
 # runner: ubuntu-latest    | CMake: 3.20.0                |       x        |                 |           |                |
 #                          | Clang: -                     |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# rockylinux:8.9           | Sail: 0.20.1                 |                |                 |           |                |
+# rockylinux:8.9           | Sail:  0.20.1                |                |                 |           |                |
 # runner: ubuntu-24.04-arm | CMake: 3.20.0                |       x        |                 |           |                |
 #                          | Clang: -                     |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ runs:
       shell: bash
       # This does not apply to the Rocq container.
       #
-      # Clang on Rocky Linux 8.9 also does not support the RISC-V targets, while it does on Rocky 9.
+      # Clang on Rocky Linux 8.9 does not support the RISC-V targets, while it does on Rocky 9.
       #
       # Rocky uses the 'epel-8-x86_64' repository not available in @fedora-llvm-team/llvm-snapshots
       # So "dnf -y copr enable @fedora-llvm-team/llvm-snapshots" does not work.
