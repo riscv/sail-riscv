@@ -17,6 +17,7 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_pay
     StoreConditional(_) => ent[W] == 0b1,
     Atomic(_)           => ent[R] == 0b1 & ent[W] == 0b1,
     InstructionFetch()  => ent[X] == 0b1,
+    ExecuteLoad()       => ent[X] == 0b1 & ent[R] == 0b1,
 
     // TODO: "If neither a load instruction nor store instruction is
     // permitted to access the physical addresses, but an instruction

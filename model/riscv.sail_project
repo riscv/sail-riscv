@@ -167,6 +167,19 @@ extensions {
     }
   }
 
+  // Hypervisor
+  H {
+    requires core
+    H_types {
+      before sys
+      files extensions/H/hext_types.sail
+    }
+    H_insts {
+      requires sys, exceptions, I_insts, H_types
+      files extensions/H/hext_insts.sail
+    }
+  }
+
   // Floating point (F and D extensions)
   FD {
     requires core

@@ -94,6 +94,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           let canAccess : bool = match access {
             InstructionFetch()  => attributes.executable,
             Load(_)             => {assert(not(res_or_con)); attributes.readable},
+            ExecuteLoad()       => {assert(not(res_or_con)); attributes.executable & attributes.readable},
             // TODO: assert(not(res_or_con)). This requires a slight refactor of the mem_write_* APIs,
             // since the use of the default Store access conflicts with the passed in aq/rl/con flags.
             Store(_)            => attributes.writable,

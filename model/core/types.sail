@@ -110,6 +110,7 @@ union MemoryAccessType ('a : Type) = {
   StoreConditional : 'a,
   Atomic           : (amoop, 'a, 'a),
   InstructionFetch : unit,
+  ExecuteLoad      : unit,
   CacheAccess      : cacheop
 }
 
@@ -122,6 +123,7 @@ function is_load_store forall ('a : Type) . (access : MemoryAccessType('a)) -> b
     StoreConditional(_) => true,
     Atomic(_)           => true,
     InstructionFetch(_) => false,
+    ExecuteLoad()       => true,
     CacheAccess(_)      => true,
   }
 

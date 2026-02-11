@@ -155,6 +155,7 @@ private function check_PTE_permission(
     StoreConditional(_)         => pte_W,
     Atomic(_, _, _)             => pte_W & pte_R,
     InstructionFetch(_)         => pte_X,
+    ExecuteLoad()               => pte_X & pte_R,
     CacheAccess(CB_zero())      => pte_W,
     CacheAccess(CB_prefetch(p)) => match p {
       PREFETCH_R => pte_R,
@@ -189,6 +190,7 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match access {
                              InstructionFetch()          => false,
+                             ExecuteLoad()               => false,
                              Load(_)                     => false,
                              LoadReserved(_)             => false,
                              Store(_)                    => true,
