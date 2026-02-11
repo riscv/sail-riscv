@@ -48,7 +48,6 @@ jobs:
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
 
       - name: Build simulator and first party tests
-        if: job.container == null
         run: |
           # CLANG_VERSION is set by the sail-setup action when install-clang is enabled.
           CLANG_FLAG=""
@@ -57,16 +56,8 @@ jobs:
           fi
           # Ninja is used because the CMake Makefile generator doesn't
           # build top-level targets in parallel unfortunately.
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE $CLANG_FLAG
-          ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
-
-      - name: Build simulator
-        # The Rocky Linux container cannot build first-party tests.
-        if: job.container != null
-        run: |
-          # Ninja is used because the CMake Makefile generator doesn't
-          # build top-level targets in parallel unfortunately.
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
+          # First party tests cannot be built in the Rocky container due to lack of a suitable toolchain.
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=${{ job.container == null }} -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE $CLANG_FLAG
           ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
 
       - name: Run tests
