@@ -1,9 +1,9 @@
 #pragma once
 
-#include "sail_config.h"
 #include <cstdint>
 #include <string>
 #include <vector>
+
 // Get a uint64_t from the JSON config file. This works with integers and
 // non-abstract bit vectors. Bit vectors over 64 bits throw an exception.
 // Integers over 64 bits are currently silently truncated, and the sign

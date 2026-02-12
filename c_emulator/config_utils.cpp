@@ -10,7 +10,6 @@
 #include "sail.h"
 #include "sail_config.h"
 #include "sail_riscv_model.h"
-#include <algorithm>
 
 std::string keypath_to_str(const std::vector<const char *> &keypath) {
   std::string s;

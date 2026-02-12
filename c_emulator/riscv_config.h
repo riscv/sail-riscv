@@ -12,5 +12,3 @@ extern bool config_print_htif;
 extern bool config_print_pma;
 extern bool config_enable_rvfi;
 extern bool config_use_abi_names;
-extern uint64_t config_plic_nsrc;
-extern uint64_t config_plic_nctx;

@@ -4,7 +4,6 @@
 #include <random>
 #include <unistd.h>
 
-#include "config_utils.h"
 #include "riscv_callbacks_if.h"
 #include "riscv_config.h"
 #include "symbol_table.h"
@@ -240,7 +239,6 @@ bool ModelImpl::get_config_print_instr(unit) {
 bool ModelImpl::get_config_print_clint(unit) {
   return config_print_clint;
 }
-
 bool ModelImpl::get_config_print_exception(unit) {
   return config_print_exception;
 }
