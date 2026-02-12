@@ -30,6 +30,7 @@ core {
     core/vmem_types.sail,
     core/mem_type_utils.sail,
     core/csr_begin.sail,
+    core/csr_access.sail,
     core/callbacks.sail,
     core/reg_type.sail,
     core/regs.sail,
@@ -337,7 +338,7 @@ extensions {
   }
 
   Zihpm {
-    requires core
+    requires core, Zicntr
     files extensions/Zihpm/zihpm.sail
   }
 

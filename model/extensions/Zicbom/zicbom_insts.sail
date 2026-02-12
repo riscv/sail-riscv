@@ -10,9 +10,6 @@
 
 function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 
-// TODO: Pass henvcfg.bits[CBCFE] once henvcfg is implemented.
-private function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv_bool(p, menvcfg[CBCFE], read_senvcfg()[CBCFE], 0b0)
-
 // *****************************************************************
 union clause instruction = ZICBOM : (cbop_zicbom, regidx)
 
@@ -105,15 +102,23 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
   }
 }
 
-function clause execute ZICBOM(CBO_CLEAN, rs1) =
-  if   cbo_clean_flush_enabled(cur_privilege)
-  then process_clean_inval(rs1, CBO_CLEAN)
-  else Illegal_Instruction()
+function clause execute ZICBOM(CBO_CLEAN, rs1) = {
+  // TODO: Pass read_henvcfg()[CBCFE] once henvcfg is implemented.
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], 0b0) {
+    FEATURE_ENABLED => process_clean_inval(rs1, CBO_CLEAN),
+    FEATURE_ILLEGAL => return Illegal_Instruction(),
+    FEATURE_VIRTUAL => return Virtual_Instruction(),
+  }
+}
 
-function clause execute ZICBOM(CBO_FLUSH, rs1) =
-  if   cbo_clean_flush_enabled(cur_privilege)
-  then process_clean_inval(rs1, CBO_FLUSH)
-  else Illegal_Instruction()
+function clause execute ZICBOM(CBO_FLUSH, rs1) = {
+  // TODO: Pass read_henvcfg()[CBCFE] once henvcfg is implemented.
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], 0b0) {
+    FEATURE_ENABLED => process_clean_inval(rs1, CBO_FLUSH),
+    FEATURE_ILLEGAL => return Illegal_Instruction(),
+    FEATURE_VIRTUAL => return Virtual_Instruction(),
+  }
+}
 
 function clause execute ZICBOM(CBO_INVAL, rs1) =
   match cbop_priv_check(cur_privilege) {

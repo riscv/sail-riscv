@@ -15,9 +15,17 @@ scattered mapping csr_name_map
 function csr_name(csr : csreg) -> string = csr_name_map(csr)
 overload to_str = {csr_name}
 
-// returns whether a CSR exists
-val is_CSR_accessible : (csreg, Privilege, CSRAccessType) -> bool
+// CSR access control
+enum csr_access_failure = { CSR_Access_Illegal, CSR_Access_Virtual }
+
+// returns the result of a CSR access check
+// TODO: change the function name
+val is_CSR_accessible : (csreg, Privilege, CSRAccessType) -> result(unit, csr_access_failure)
 scattered function is_CSR_accessible
+
+// declaration of functions in `extensions/Stateen/stateen_access_checks.sail`.
+val stateen_allows_CSR_access : (csreg, Privilege, CSRAccessType) -> bool
+scattered function stateen_allows_CSR_access
 
 // returns the value of the CSR if it is defined
 val read_CSR : csreg -> xlenbits
