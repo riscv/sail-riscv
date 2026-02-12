@@ -79,8 +79,6 @@ public:
 
   virtual bool get_config_print_instr(unit);
   virtual bool get_config_print_clint(unit);
-  virtual uint64_t get_config_plic_nsrc(unit);
-  virtual uint64_t get_config_plic_nctx(unit);
   virtual bool get_config_print_exception(unit);
   virtual bool get_config_print_interrupt(unit);
   virtual bool get_config_print_htif(unit);

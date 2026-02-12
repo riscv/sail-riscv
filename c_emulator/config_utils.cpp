@@ -11,7 +11,6 @@
 #include "sail_config.h"
 #include "sail_riscv_model.h"
 #include <algorithm>
-#include <gmp.h>
 
 std::string keypath_to_str(const std::vector<const char *> &keypath) {
   std::string s;
@@ -109,25 +108,4 @@ void validate_config_schema(const std::string &conf_file) {
   if (!is_valid) {
     throw std::runtime_error("Schema conformance check failed for the " + source + ".");
   }
-}
-
-uint64_t config_get_u64_default(const std::vector<const char *> &keypath, uint64_t def) {
-  sail_config_json j = sail_config_get(keypath.size(), keypath.data());
-  if (j == nullptr || !sail_config_is_int(j)) {
-    return def;
-  }
-
-  sail_int n;
-  CREATE(sail_int)(&n);
-  auto cleanup = [&]() { KILL(sail_int)(&n); };
-
-  sail_config_unwrap_int(&n, j);
-
-  uint64_t out = def;
-  if (mpz_sgn(n) >= 0 && mpz_fits_ulong_p(n)) {
-    out = (uint64_t)mpz_get_ui(n);
-  }
-
-  cleanup();
-  return out;
 }

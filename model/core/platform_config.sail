@@ -39,6 +39,8 @@ let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size 
 
 let plat_plic_base : physaddrbits = to_bits_checked(config platform.plic.base : int)
 let plat_plic_size : physaddrbits = to_bits_checked(config platform.plic.size : int)
+let plat_plic_nsrc : bits(64) = to_bits_checked(config platform.plic.nsrc : int)
+let plat_plic_nctx : bits(64) = to_bits_checked(config platform.plic.nctx : int)
 
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 

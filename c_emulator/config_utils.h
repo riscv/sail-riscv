@@ -14,5 +14,3 @@ const char *get_default_config();
 const char *get_config_schema();
 
 void validate_config_schema(const std::string &conf_file);
-
-uint64_t config_get_u64_default(const std::vector<const char *> &keypath, uint64_t def);

@@ -721,12 +721,10 @@ function init_platform() -> unit = {
   htif_cmd_write = 0b0;
   htif_payload_writes = zeros();
 
-  // --- PLIC runtime config (JSON) ---
-  // read config values (C++ backend reads from JSON; other backends use defaults)
-  let nsrc_cfg = unsigned(get_config_plic_nsrc());
-  let nctx_cfg = unsigned(get_config_plic_nctx());
+  // --- PLIC runtime config (from Sail JSON config) ---
+  let nsrc_cfg : int = unsigned(plat_plic_nsrc);
+  let nctx_cfg : int = unsigned(plat_plic_nctx);
 
-  // clamp to type-level maxima to avoid out-of-range access
   plic_nsrc_active = clamp_int(nsrc_cfg, 1, PLIC_NSRC_MAX);
   plic_nctx_active = clamp_int(nctx_cfg, 1, PLIC_NCTX_MAX);
 
