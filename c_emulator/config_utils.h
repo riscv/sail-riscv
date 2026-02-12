@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <jsoncons/json.hpp>
 #include <string>
 #include <vector>
 
@@ -13,4 +14,4 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath);
 const char *get_default_config();
 const char *get_config_schema();
 
-void validate_config_schema(const std::string &conf_file);
+void validate_config_schema(const jsoncons::json &json_config, const std::string &source_desc);

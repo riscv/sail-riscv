@@ -87,18 +87,33 @@ set(common_deps
     "src/common/runtime.h"
 )
 
-set(tests
-    "test_bf16_nan_boxing.S"
-    "test_hello_world.c"
-    "test_max_pmp.c"
-    "test_minstret.S"
-    "test_misaligned_vector_register_groups.S"
-    "test_pmp_access.c"
-    "test_phys_perms_on_failing_sc.S"
-)
+set(tests)
+macro(add_first_party_test_with_config name march xlen override_json_file)
+    list(APPEND tests "${name}" "${march}" "${xlen}" "${override_json_file}")
+endmacro()
+macro(add_first_party_test name)
+    set(isa_extension gcv_zfbfmin)
+    add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "no_override.json")
+    add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "no_override.json")
+endmacro()
 
+add_first_party_test("test_bf16_nan_boxing.S")
+add_first_party_test("test_hello_world.c")
+add_first_party_test("test_max_pmp.c")
+add_first_party_test("test_minstret.S")
+add_first_party_test("test_misaligned_vector_register_groups.S")
+add_first_party_test("test_pmp_access.c")
+add_first_party_test("test_phys_perms_on_failing_sc.S")
 
-foreach (xlen IN ITEMS 32 64)
+list(LENGTH tests tests_len)
+math(EXPR test_last "${tests_len} - 1")
+foreach(idx RANGE 0 ${test_last} 4)
+    list(SUBLIST tests ${idx} 4 entry)
+    list(GET entry 0 test_source)
+    list(GET entry 1 march)
+    list(GET entry 2 xlen)
+    list(GET entry 3 override_config)
+
     set(arch "rv${xlen}d")
     if (xlen EQUAL 32)
         set(mabi "ilp32")
@@ -106,60 +121,59 @@ foreach (xlen IN ITEMS 32 64)
         set(mabi "lp64")
     endif()
     set(config "${CMAKE_BINARY_DIR}/config/${arch}_v256_e${xlen}.json")
+    set(override_config "${CMAKE_CURRENT_SOURCE_DIR}/src/${override_config}")
 
-    foreach (test_source IN LISTS tests)
-        set(elf "${arch}_${test_source}.elf")
+    set(elf "${arch}_${test_source}.elf")
 
-        add_custom_command(
-            OUTPUT ${elf}
-            DEPENDS ${common_deps} "src/${test_source}"
-            COMMAND ${CROSS_COMPILER_COMMAND_RV${xlen}}
-                # The ISA string to compile for.
-                # TODO: We should get this from running sail_riscv_sim `--print-isa-string`
-                # but it isn't quite usable with Clang directly yet due to some
-                # unsupported supervisor extensions and because Clang requires version
-                # for experimental extensions.
-                -march=rv${xlen}gcv_zfbfmin
-                # Calling convention to use. Valid values are 'ilp32' or 'lp64' for 32/64-bit,
-                # optionally followed by 'f' or 'd' for hard-float. All combinations are valid.
-                -mabi=${mabi}d
-                # Required for compatibility with old versions of LLD. Otherwise you get an error
-                # "relocation R_RISCV_ALIGN requires unimplemented linker relaxation; recompile with -mno-relax"
-                -mno-relax
-                # Indicate we are building in a standalone environment. Implies -fno-builtin
-                # so the compiler won't assume that memcpy etc. are available.
-                -ffreestanding
-                # Don't try to link with libc or libm.
-                -nostdlib
-                # Generate a statically linked binary.
-                -static
-                # The relocation model. This compiles the code so that it can
-                # be linked at any address. This means the linker script
-                # doesn't have to e.g. put all code in the first 2GB of memory.
-                -mcmodel=medany
-                # Generate debug info.
-                -g
-                # Optimise code generation for a good debugging experience.
-                -Og
-                # Enable warnings and upgrade them to errors.
-                -Wall
-                -Werror
-                # The linker script.
-                -T "${CMAKE_CURRENT_SOURCE_DIR}/src/common/link.ld"
-                -o ${elf}
-                "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/src/common/crt0.S"
-                "${CMAKE_CURRENT_SOURCE_DIR}/src/common/nanoprintf.c"
-                "${CMAKE_CURRENT_SOURCE_DIR}/src/common/runtime.c"
-            VERBATIM
-            COMMENT "Compiling ${test_source}"
-        )
+    add_custom_command(
+        OUTPUT ${elf}
+        DEPENDS ${common_deps} "src/${test_source}"
+        COMMAND ${CROSS_COMPILER_COMMAND_RV${xlen}}
+            # The ISA string to compile for.
+            # TODO: We should get this from running sail_riscv_sim `--print-isa-string`
+            # but it isn't quite usable with Clang directly yet due to some
+            # unsupported supervisor extensions and because Clang requires version
+            # for experimental extensions.
+            -march=${march}
+            # Calling convention to use. Valid values are 'ilp32' or 'lp64' for 32/64-bit,
+            # optionally followed by 'f' or 'd' for hard-float. All combinations are valid.
+            -mabi=${mabi}d
+            # Required for compatibility with old versions of LLD. Otherwise you get an error
+            # "relocation R_RISCV_ALIGN requires unimplemented linker relaxation; recompile with -mno-relax"
+            -mno-relax
+            # Indicate we are building in a standalone environment. Implies -fno-builtin
+            # so the compiler won't assume that memcpy etc. are available.
+            -ffreestanding
+            # Don't try to link with libc or libm.
+            -nostdlib
+            # Generate a statically linked binary.
+            -static
+            # The relocation model. This compiles the code so that it can
+            # be linked at any address. This means the linker script
+            # doesn't have to e.g. put all code in the first 2GB of memory.
+            -mcmodel=medany
+            # Generate debug info.
+            -g
+            # Optimise code generation for a good debugging experience.
+            -Og
+            # Enable warnings and upgrade them to errors.
+            -Wall
+            -Werror
+            # The linker script.
+            -T "${CMAKE_CURRENT_SOURCE_DIR}/src/common/link.ld"
+            -o ${elf}
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/crt0.S"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/nanoprintf.c"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/runtime.c"
+        VERBATIM
+        COMMENT "Compiling ${test_source}"
+    )
 
-        add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config})
+    add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config} ${override_config})
 
-        add_test(
-            NAME "first_party_${arch}_${test_source}"
-            COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} ${elf}
-        )
-    endforeach()
+    add_test(
+        NAME "first_party_${arch}_${test_source}"
+        COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} --config-override ${override_config} ${elf}
+    )
 endforeach()
