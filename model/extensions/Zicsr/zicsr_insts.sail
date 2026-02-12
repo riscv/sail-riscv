@@ -41,9 +41,13 @@ function csr_access_type(op : csrop, rd_is_x0 : bool, rs1_imm_is_zero : bool) ->
   }
 
 function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_type : CSRAccessType) -> ExecutionResult = {
-  if   not(check_CSR(csr, cur_privilege, access_type))
-  then Illegal_Instruction()
-  else if not(ext_check_CSR(csr, cur_privilege, access_type))
+  match is_CSR_accessible(csr, cur_privilege, access_type) {
+    Err(CSR_Access_Illegal) => return Illegal_Instruction(),
+    Err(CSR_Access_Virtual) => return Virtual_Instruction(),
+    Ok()                    => (),
+  };
+
+  if not(ext_check_CSR(csr, cur_privilege, access_type))
   then Ext_CSR_Check_Failure()
   else {
     // A pure write (i.e. CSRRW with rd == 0) should not generate read side-effects.

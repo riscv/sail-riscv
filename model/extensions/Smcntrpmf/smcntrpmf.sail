@@ -28,10 +28,14 @@ mapping clause csr_name_map = 0x721  <-> "mcyclecfgh"
 mapping clause csr_name_map = 0x322  <-> "minstretcfg"
 mapping clause csr_name_map = 0x722  <-> "minstretcfgh"
 
-function clause is_CSR_accessible(0x321, _, _) = currentlyEnabled(Ext_Smcntrpmf) // mcyclecfg
-function clause is_CSR_accessible(0x721, _, _) = currentlyEnabled(Ext_Smcntrpmf) & xlen == 32 // mcyclecfgh
-function clause is_CSR_accessible(0x322, _, _) = currentlyEnabled(Ext_Smcntrpmf) // minstretcfg
-function clause is_CSR_accessible(0x722, _, _) = currentlyEnabled(Ext_Smcntrpmf) & xlen == 32 // minstretcfgh
+function clause is_CSR_accessible(0x321, p, access_type) = // mcyclecfg
+  check_CSR_access(0x321, p, access_type, currentlyEnabled(Ext_Smcntrpmf))
+function clause is_CSR_accessible(0x721, p, access_type) = // mcyclecfgh
+  check_CSR_access(0x721, p, access_type, currentlyEnabled(Ext_Smcntrpmf) & xlen == 32)
+function clause is_CSR_accessible(0x322, p, access_type) = // minstretcfg
+  check_CSR_access(0x322, p, access_type, currentlyEnabled(Ext_Smcntrpmf))
+function clause is_CSR_accessible(0x722, p, access_type) = // minstretcfgh
+  check_CSR_access(0x722, p, access_type, currentlyEnabled(Ext_Smcntrpmf) & xlen == 32)
 
 function clause read_CSR(0x321) = mcyclecfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x721 if xlen == 32) = mcyclecfg.bits[63 .. 32]

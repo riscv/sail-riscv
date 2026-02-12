@@ -9,8 +9,12 @@
 mapping clause csr_name_map = reg <-> hex_bits_12(reg)
 end csr_name_map
 
-function clause is_CSR_accessible(_) = false
+function clause is_CSR_accessible(_) = Err(CSR_Access_Illegal)
 end is_CSR_accessible
+
+// CSRs that are not governed by xstateen are not gated by this function.
+function clause stateen_allows_CSR_access(_, _, _) = true
+end stateen_allows_CSR_access
 
 function clause read_CSR(csr) = {
    // This should be impossible because is_CSR_accessible() should have returned false.
