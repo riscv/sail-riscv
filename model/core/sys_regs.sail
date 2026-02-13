@@ -534,8 +534,12 @@ bitfield Medeleg : bits(64) = {
 }
 
 private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
+  let v = Mk_Medeleg(v);
   // M-EnvCalls delegation is not supported
-  [Mk_Medeleg(v) with MEnvCall = 0b0]
+  [v with
+    MEnvCall = 0b0,
+    Fetch_Addr_Align = if currentlyEnabled(Ext_Zca) then 0b0 else v[Fetch_Addr_Align],
+  ]
 }
 
 register mie     : Minterrupts // Enabled
