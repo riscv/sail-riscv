@@ -29,7 +29,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu') && job.container != null
         run: |
           dnf update -y --enablerepo=devel
-          dnf install -y --enablerepo=devel git
+          dnf install -y git
 
       - name: Check out repository code
         uses: actions/checkout@v6
