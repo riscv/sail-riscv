@@ -7,13 +7,26 @@ jobs:
     name: "Build and test model (OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }})"
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04-arm, macos-latest]
-        cmake_version: ["3.20.0", "4.1.2"]
-        first_party_tests: [true]
         include:
           - os: ubuntu-22.04
+            cmake_version: "3.20.0"
+            first_party_tests: true
+          - os: ubuntu-22.04
             cmake_version: "4.1.2"
+            first_party_steps: true
             run_all_steps: true
+          - os: ubuntu-24.04-arm
+            cmake_version: "3.20.0"
+            first_party_tests: true
+          - os: ubuntu-24.04-arm
+            cmake_version: "4.1.2"
+            first_party_steps: true
+          - os: macos-latest
+            cmake_version: "3.20.0"
+            first_party_tests: true
+          - os: macos-latest
+            cmake_version: "4.1.2"
+            first_party_steps: true
           - os: ubuntu-latest
             container: rockylinux:8.9.20231119
             cmake_version: "3.20.0"
