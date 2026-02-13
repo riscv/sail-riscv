@@ -1,0 +1,58 @@
+#!/bin/bash
+# SPDX-FileCopyrightText: Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+help() {
+    echo "Location: $0"
+    script_name=$(basename "$0")
+    echo "Usage: $script_name test [dest-dir config]"
+    echo "This script creates a histogram of instruction mnemonics from a simulation trace"
+    echo "of the <test>"
+    echo "in the <dest-dir> directory"
+    echo "by simulating it on the given <config> of the Sail RISC-V model"
+    echo
+    echo "Arguments:"
+    echo "1: test - the test to simulate (e.g., sail-riscv-tests/riscv-vector-tests-v128x64/rv64vadd_vv-0)"
+    echo "2: dest-dir (optional, default: histograms)"
+    echo "3: config (optional, default: /opt/sail-riscv/share/sail-riscv/config/rv64d_v128_e64.json)"
+    exit 1
+}
+
+# The first argument is the test to simulate, required
+if [ -z "$1" ]; then
+    help
+fi
+
+test=$1
+
+
+# The second argument is the destination directory for the histogram,
+# optional, default is "histograms"
+if [ -z "$2" ]; then
+    dest_dir="histograms"
+else
+    dest_dir=$2
+fi
+
+if [ ! -d "$dest_dir" ]; then
+    mkdir "$dest_dir"
+fi
+
+# The third argument is the config file for the Sail RISC-V model,
+# optional, default is "/opt/sail-riscv/share/sail-riscv/config/rv64d_v128_e64.json"
+if [ -z "$3" ]; then
+    config="/opt/sail-riscv/share/sail-riscv/config/rv64d_v128_e64.json"
+else
+    config=$3
+fi
+
+
+# Finally, simulate the test and create the histogram
+hist_file=$(basename "$test").csv
+
+sail_riscv_sim \
+--trace-instr \
+--config $config $test \
+| grep '^\[' | awk '{print $5}' \
+| sort | uniq -c | sort -nrk1 | awk '{printf "%-22s, %d\n", $2, $1}' \
+> $dest_dir/$hist_file
