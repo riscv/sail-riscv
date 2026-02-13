@@ -4,7 +4,7 @@ inputs:
   cmake-version:
     description: "CMake version to install"
     required: false
-    default: "4.1.2"
+    default: "4.2.0"
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
     required: false
