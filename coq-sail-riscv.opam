@@ -9,7 +9,7 @@ license: "BSD-2-Clause"
 dev-repo: "git+https://github.com/riscv/sail-riscv.git"
 build: [
   # Turn off all downloads for sandboxing; they're not required for the Rocq build anyway
-  ["cmake" "-S" "." "-B" "build" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "-DDOWNLOAD_GMP=FALSE" "-DDOWNLOAD_JSONCONS=FALSE"]
+  ["cmake" "-S" "." "-B" "build" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "-DDOWNLOAD_GMP=FALSE" "-DDOWNLOAD_JSONCONS=FALSE" "-DDOWNLOAD_CLI11=FALSE"]
   ["cmake" "--build" "build" "--target" "build_rocq_rv64d" "build_rocq_rv32d"]
 ]
 install: [
