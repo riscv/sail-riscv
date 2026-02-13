@@ -14,17 +14,64 @@ inputs:
     required: false
     default: "false"
 
+# This is the current CI Platform/Target support matrix:
+#
+#                          | RISC-V Model                 |sail-riscv-tests|first-party-tests|   Rocq    |    Lean        | Linux boot
+#--------------------------------------------------------------------------------------------------------------------------------------
+# ubuntu-22.04 (x86_64):   | Sail:  0.20.1 (binary)       |                |                 |           |                |
+#                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
+#                          | Clang: latest (apt.llvm.org) |                |                 |           |                |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# ubuntu-24.04-arm:        | Sail:  0.20.1 (binary)       |                |                 |           |                |
+#                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
+#                          | Clang: latest (apt.llvm.org) |                |                 |           |                |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# macos-latest:            | Sail:  0.20.1 (opam)         |                |                 |           |                |
+#                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
+#                          | Clang: brew versions         |                |                 |           |                |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# ubuntu-latest:           | Sail:  0.20.1 (binary)       |                |                 |           | Sail: latest   |
+#                          | CMake: (4.1.2)               |       x        |       x         |           | CMake: (4.1.2) |    x
+#                          | Clang: latest (apt.llvm.org) |                |                 |           | Clang: -       |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# (Container builds)       |                              |                |                 |           |                |
+# ------------------       |                              |                |                 |           |                |
+#                          |                              |                |                 |           |                |
+# rockylinux:8.9           | Sail:  0.20.1                |                |                 |           |                |
+# runner: ubuntu-latest    | CMake: 3.20.0                |       x        |                 |           |                |
+#                          | Clang: -                     |                |                 |           |                |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# rockylinux:8.9           | Sail:  0.20.1                |                |                 |           |                |
+# runner: ubuntu-24.04-arm | CMake: 3.20.0                |       x        |                 |           |                |
+#                          | Clang: -                     |                |                 |           |                |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# rocq/rocq-prover:9.0.1   | Sail:  (0.20.1)              |                |                 |           |                |
+# runner: ubuntu-latest    | CMake: (4.1.2)               |                |                 | coq 9.0.1 |                |
+#                          | Clang: -                     |                |                 |           |                |
+
 runs:
   using: "composite"
   steps:
-    - name: Install packages (Linux)
-      if: runner.os == 'Linux'
+    - name: Install packages (Linux runner)
+      if: runner.os == 'Linux' && job.container == null
       shell: bash
       run: |
         sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
 
-    - name: Install latest Clang (Linux)
-      if: runner.os == 'Linux' && inputs.install-clang == 'true'
+    - name: Install packages (Linux container)
+      if: runner.os == 'Linux' && job.container != null
+      shell: bash
+      # This could be a Rocq or Rocky container.  Don't run this on
+      # the Rocq container because it is a Debian-based container and doesn't need
+      # these packages anyway.
+      run: |
+        # sudo needed for compatibility with other steps using sudo
+        if [ -f /usr/bin/dnf ]; then
+          dnf install -y --enablerepo=devel libstdc++-static make gcc gcc-c++ pkg-config gmp-static ninja-build sudo
+        fi
+
+    - name: Install latest Clang (Linux runner)
+      if: runner.os == 'Linux' && inputs.install-clang == 'true' && job.container == null
       shell: bash
       run: |
         # Install newer clang manually because current Ubuntu runners don't have

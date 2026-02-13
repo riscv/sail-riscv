@@ -4,18 +4,49 @@ on: [push, pull_request, workflow_dispatch, merge_group]
 
 jobs:
   build:
-    name: "Build and test model (OS: ${{ matrix.os }}, CMake Version: ${{ matrix.cmake_version }})"
-    runs-on: ${{ matrix.os }}
+    name: "Build and test model (OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }})"
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04-arm, macos-latest]
-        cmake_version: ["3.20.0", "4.1.2"]
         include:
           - os: ubuntu-22.04
+            cmake_version: "3.20.0"
+            first_party_tests: true
+          - os: ubuntu-22.04
             cmake_version: "4.1.2"
+            first_party_steps: true
             run_all_steps: true
+          - os: ubuntu-24.04-arm
+            cmake_version: "3.20.0"
+            first_party_tests: true
+          - os: ubuntu-24.04-arm
+            cmake_version: "4.1.2"
+            first_party_steps: true
+          - os: macos-latest
+            cmake_version: "3.20.0"
+            first_party_tests: true
+          - os: macos-latest
+            cmake_version: "4.1.2"
+            first_party_steps: true
+          - os: ubuntu-latest
+            container: rockylinux:8.9.20231119
+            cmake_version: "3.20.0"
+            first_party_tests: false
+          - os: ubuntu-24.04-arm
+            container: rockylinux:8.9.20231119
+            cmake_version: "3.20.0"
+            first_party_tests: false
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
 
     steps:
+      - name: Install Git (Rocky)
+        # This needs be done before the git checkout step.
+        if: startsWith(matrix.os, 'ubuntu') && job.container != null
+        run: |
+          dnf update -y --enablerepo=devel
+          dnf install -y git
+
       - name: Check out repository code
         uses: actions/checkout@v6
         with:
@@ -32,7 +63,7 @@ jobs:
         if: ${{ matrix.run_all_steps}}
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
 
-      - name: Build simulators
+      - name: Build simulator and first party tests
         run: |
           # CLANG_VERSION is set by the sail-setup action when install-clang is enabled.
           CLANG_FLAG=""
@@ -41,7 +72,8 @@ jobs:
           fi
           # Ninja is used because the CMake Makefile generator doesn't
           # build top-level targets in parallel unfortunately.
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE $CLANG_FLAG
+          # First party tests cannot be built in the Rocky container due to lack of a suitable toolchain.
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=${{ matrix.first_party_tests }} -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE $CLANG_FLAG
           ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
 
       - name: Run tests
