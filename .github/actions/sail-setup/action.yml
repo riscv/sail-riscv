@@ -61,7 +61,9 @@ runs:
     - name: Install packages (Linux container)
       if: runner.os == 'Linux' && job.container != null
       shell: bash
-      # This could be a Rocq or Rocky container.
+      # This could be a Rocq or Rocky container.  Don't run this on
+      # the Rocq container because it is a Debian and doesn't need
+      # these packages anyway.
       run: |
         # sudo needed for compatibility with other steps using sudo
         if [ -f /usr/bin/dnf ]; then
