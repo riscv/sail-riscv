@@ -1,4 +1,5 @@
 #include "cli_options.h"
+#include "mem_dump.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_model_impl.h"
 #include "riscv_sim.h"
@@ -8,7 +9,7 @@
 
 namespace {
 
-void run_model(CLIOptions &opts, ModelImpl &model, uint64_t, const elf_info &elf_info, run_info &run_info) {
+void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_info &elf_info, run_info &run_info) {
   auto loop_detector = std::make_shared<traploop_detector>();
   if (!opts.disable_trap_loop_detection) {
     model.register_callback(loop_detector);
@@ -28,8 +29,13 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t, const elf_info &elf
   model.register_callback(log_cbs);
 
   do {
-    run_sail(model, opts, loop_detector, elf_info, run_info);
+    run_sail(model, opts, loop_detector, elf_info, run_info, entry);
     // `run_sail` only returns in the case of rvfi.
+
+    if (opts.dump_memory) {
+      dump_memory_to_elf(model, "dump.elf", entry);
+    }
+
     if (run_info.rvfi) {
       /* Reset for next test */
       model.reinit_sail();

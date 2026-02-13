@@ -19,15 +19,21 @@ public:
   // exist or isn't a RISC-V ELF file.
   static ELF open(const std::string &filename);
 
+  // Create an empty RISC-V ELF file.
+  static ELF create(Architecture arch);
+
   // Return the architecture (RV32/64).
   Architecture architecture() const;
 
   // Return the entry point (where execution should begin).
   uint64_t entry() const;
 
+  // Set the entry point.
+  void set_entry(uint64_t addr);
+
   using ElfWriteFn = std::function<void(
     uint64_t,        // address
-    const uint8_t *, // data
+    const uint8_t *, // dataw
     uint64_t         // length
   )>;
 
@@ -41,11 +47,17 @@ public:
   // returned.
   std::map<std::string, uint64_t> symbols() const;
 
+  // Add a segment.
+  void add_segment(uint64_t address, const std::vector<uint8_t> &data);
+
+  // Save the ELF to disk.
+  void save(const std::string &filename) const;
+
 private:
-  explicit ELF(std::unique_ptr<ELFIO::elfio> reader);
+  explicit ELF(std::unique_ptr<ELFIO::elfio> elf);
 
   // Unfortunately there's a bug in ELFIO which means we can't std::move() it,
   // so we have to put it in a unique_ptr.
   // https://github.com/serge1/ELFIO/issues/157
-  std::unique_ptr<ELFIO::elfio> m_reader;
+  std::unique_ptr<ELFIO::elfio> m_elf;
 };

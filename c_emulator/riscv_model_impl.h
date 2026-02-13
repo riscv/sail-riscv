@@ -8,6 +8,7 @@
 #include <random>
 #include <vector>
 
+#include "mem.h"
 #include "sail.h"
 #include "sail_riscv_model.h"
 
@@ -59,6 +60,18 @@ public:
   void model_init();
   void model_fini();
 
+  // Use to override the memory used for the hart. This could be used for
+  // multicore simulations to set them to use the same memory. Note that
+  // `Memory` is not thread safe and neither is the C++ code Sail generates so
+  // you still can't actually execute the harts in parallel.
+  void set_memory(std::shared_ptr<Memory> mem) {
+    m_ram = mem;
+  }
+
+  Memory &memory() {
+    return *m_ram;
+  }
+
   // string conversions
 
   std::string memory_access_type_to_string(MemoryAccessType access_type);
@@ -98,6 +111,19 @@ private:
 
   // These functions are called by the Sail code.
 
+  // Built-in memory interface from rts.h. We override it here.
+  void emulator_read_mem(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) override;
+  void emulator_read_mem_ifetch(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) override;
+  void emulator_read_mem_exclusive(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) override;
+  bool emulator_write_mem(const uint64_t addr_size, const sbits addr, const mpz_t n, const lbits data) override;
+  bool emulator_write_mem_exclusive(
+    const uint64_t addr_size,
+    const sbits addr,
+    const mpz_t n,
+    const lbits data
+  ) override;
+
+  // Event callbacks defined by the RISC-V Sail model.
   unit fetch_callback(sbits opcode) override;
   unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
   unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
@@ -193,4 +219,8 @@ private:
 
   // Trace log file
   FILE *m_trace_log = stdout;
+
+  // Contents of memory. This is a shared pointer so it can be shared
+  // between multiple ModelImpl instances (e.g., for multiple harts).
+  std::shared_ptr<Memory> m_ram = std::make_shared<Memory>();
 };

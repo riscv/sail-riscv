@@ -27,6 +27,8 @@ struct CLIOptions {
   std::vector<std::string> elfs;
   uint64_t insn_limit = 0;
 
+  bool dump_memory = false;
+
   std::string sig_file = {};
   unsigned signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
 
