@@ -62,7 +62,7 @@ runs:
       if: runner.os == 'Linux' && job.container != null
       shell: bash
       # This could be a Rocq or Rocky container.  Don't run this on
-      # the Rocq container because it is a Debian and doesn't need
+      # the Rocq container because it is a Debian-based container and doesn't need
       # these packages anyway.
       run: |
         # sudo needed for compatibility with other steps using sudo
