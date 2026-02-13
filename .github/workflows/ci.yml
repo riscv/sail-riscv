@@ -9,6 +9,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-24.04-arm, macos-latest]
         cmake_version: ["3.20.0", "4.1.2"]
+        first_party_tests: [true]
         include:
           - os: ubuntu-22.04
             cmake_version: "4.1.2"
@@ -16,9 +17,11 @@ jobs:
           - os: ubuntu-latest
             container: rockylinux:8.9.20231119
             cmake_version: "3.20.0"
+            first_party_tests: false
           - os: ubuntu-24.04-arm
             container: rockylinux:8.9.20231119
             cmake_version: "3.20.0"
+            first_party_tests: false
 
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
@@ -57,7 +60,7 @@ jobs:
           # Ninja is used because the CMake Makefile generator doesn't
           # build top-level targets in parallel unfortunately.
           # First party tests cannot be built in the Rocky container due to lack of a suitable toolchain.
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=${{ job.container == null }} -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE $CLANG_FLAG
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=${{ matrix.first_party_tests }} -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE $CLANG_FLAG
           ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
 
       - name: Run tests
