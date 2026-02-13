@@ -8,6 +8,28 @@
 // A better solution is to allow passing in `hart::Model&` to `model_test()`.
 // See https://github.com/rems-project/sail/issues/1556
 
+// Use the built in Sail memory model as the default implementation, so at least
+// memory works for unit tests.
+void PlatformInterface::emulator_read_mem(lbits *data, uint64_t addr_size, sbits addr, const mpz_t n) {
+  ::emulator_read_mem(data, addr_size, addr, n);
+}
+
+void PlatformInterface::emulator_read_mem_ifetch(lbits *data, uint64_t addr_size, sbits addr, const mpz_t n) {
+  ::emulator_read_mem_ifetch(data, addr_size, addr, n);
+}
+
+void PlatformInterface::emulator_read_mem_exclusive(lbits *data, uint64_t addr_size, sbits addr, const mpz_t n) {
+  ::emulator_read_mem_exclusive(data, addr_size, addr, n);
+}
+
+bool PlatformInterface::emulator_write_mem(uint64_t addr_size, sbits addr, const mpz_t n, const lbits data) {
+  return ::emulator_write_mem(addr_size, addr, n, data);
+}
+
+bool PlatformInterface::emulator_write_mem_exclusive(uint64_t addr_size, sbits addr, const mpz_t n, const lbits data) {
+  return ::emulator_write_mem_exclusive(addr_size, addr, n, data);
+}
+
 unit PlatformInterface::fetch_callback([[maybe_unused]] sbits opcode) {
   return UNIT;
 }

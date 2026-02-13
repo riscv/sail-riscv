@@ -45,6 +45,8 @@ namespace {
 
 std::optional<rvfi_handler> rvfi;
 
+bool dump_memory = false;
+
 // The address of the HTIF tohost port, if it is enabled.
 std::optional<uint64_t> htif_tohost_address;
 
@@ -255,6 +257,8 @@ static CLIOptions parse_cli(int argc, char **argv) {
     "Enable all trace output"
   );
 
+  app.add_flag("--dump-memory", dump_memory, "Dump memory to ELF file at the end of the test");
+
   // All positional arguments are treated as ELF files.  All ELF files
   // are loaded into memory, but only the first is scanned for the
   // magic `tohost/{begin,end}_signature` symbols.
@@ -300,12 +304,8 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
   }
 
   // Load into memory.
-  elf.load([](uint64_t address, const uint8_t *data, uint64_t length) {
-    // TODO: We could definitely improve on rts.c's memory implementation
-    // (which is O(N^2)) and writing one byte at a time here.
-    for (uint64_t i = 0; i < length; ++i) {
-      write_mem(address + i, data[i]);
-    }
+  elf.load([&model](uint64_t address, const uint8_t *data, uint64_t length) {
+    model.memory().write_bytes(address, 64, data, length);
   });
 
   // Load the entire symbol table.
@@ -424,6 +424,36 @@ void write_signature(const std::string &file, unsigned signature_granularity) {
   fclose(f);
 }
 
+void dump_memory_to_elf(ModelImpl &model, const std::string &filename, uint64_t entry) {
+  // TODO: Put this in a function.
+  // TODO: This zxlen thing is kind of awful.
+  ELF elf = ELF::create(model.zxlen == 32 ? Architecture::RV32 : Architecture::RV64);
+  elf.set_entry(entry);
+  std::vector<uint8_t> segment;
+  uint64_t segment_addr = 0;
+  model.memory().for_each_byte(
+    [&](uint64_t addr, uint8_t value) {
+      if (segment_addr + segment.size() == addr) {
+        // Add to existing segment.
+        segment.push_back(value);
+      } else {
+        // New segment.
+        if (!segment.empty()) {
+          elf.add_segment(segment_addr, segment);
+        }
+        segment_addr = addr;
+        segment.clear();
+        segment.push_back(value);
+      }
+    },
+    false // skip_if_equal_uninitialized. TODO: Maybe remove that for now.
+  );
+  if (!segment.empty()) {
+    elf.add_segment(segment_addr, segment);
+  }
+  elf.save(filename);
+}
+
 void close_logs() {
 #ifdef SAILCOV
   if (sail_coverage_exit() != 0) {
@@ -465,7 +495,7 @@ void flush_logs() {
   fflush(trace_log);
 }
 
-void run_sail(ModelImpl &model, const CLIOptions &opts) {
+void run_sail(ModelImpl &model, const CLIOptions &opts, uint64_t entry) {
   bool is_waiting = false;
   bool exit_wait = true;
 
@@ -532,6 +562,9 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
     }
 
     if (model.zhtif_done) {
+      if (dump_memory) {
+        dump_memory_to_elf(model, "dump.elf", entry);
+      }
       /* check exit code */
       if (model.zhtif_exit_code == 0) {
         fprintf(stdout, "SUCCESS\n");
@@ -742,7 +775,13 @@ int inner_main(int argc, char **argv) {
   init_end = steady_clock::now();
 
   do {
-    run_sail(model, opts);
+    run_sail(model, opts, entry);
+    // TODO: run_sail() calls exit() in some cases so we never get here. Need to make the control flow less mental.
+
+    if (dump_memory) {
+      dump_memory_to_elf(model, "dump.elf", entry);
+    }
+
     // `run_sail` only returns in the case of rvfi.
     if (rvfi) {
       /* Reset for next test */
@@ -751,6 +790,7 @@ int inner_main(int argc, char **argv) {
   } while (rvfi);
 
   model.model_fini();
+
   flush_logs();
   close_logs();
 

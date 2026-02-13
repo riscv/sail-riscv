@@ -2,9 +2,11 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <memory>
 #include <random>
 #include <vector>
 
+#include "mem.h"
 #include "sail.h"
 #include "sail_riscv_model.h"
 
@@ -34,10 +36,32 @@ public:
   void set_config_use_abi_names(bool on);
 
   void set_config_print_step(bool on);
+  // Use to override the memory used for the hart, if you want to share it
+  // with another hart for example.
+  void set_memory(std::shared_ptr<Memory> mem) {
+    m_ram = mem;
+  }
+
+  Memory &memory() {
+    return *m_ram;
+  }
 
 private:
   // These functions are called by the Sail code.
 
+  // Built-in memory interface from rts.h (we use our own).
+  void emulator_read_mem(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) override;
+  void emulator_read_mem_ifetch(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) override;
+  void emulator_read_mem_exclusive(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) override;
+  bool emulator_write_mem(const uint64_t addr_size, const sbits addr, const mpz_t n, const lbits data) override;
+  bool emulator_write_mem_exclusive(
+    const uint64_t addr_size,
+    const sbits addr,
+    const mpz_t n,
+    const lbits data
+  ) override;
+
+  // Event callbacks defined by the RISC-V Sail model.
   unit fetch_callback(sbits opcode) override;
   unit mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;
   unit mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;
@@ -118,4 +142,8 @@ private:
 
   // Randomly seeded PRNG.
   std::mt19937_64 m_gen64{seed()};
+
+  // Contents of memory. This is a shared pointer so it can be shared
+  // between multiple ModelImpl instances (e.g., for multiple harts).
+  std::shared_ptr<Memory> m_ram = std::make_shared<Memory>();
 };
