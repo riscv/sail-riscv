@@ -34,6 +34,7 @@ type vmidlen    : Int = if xlen == 32 then 7 else 14
 let log2_xlen = sizeof(log2_xlen)
 let xlen_bytes = sizeof(xlen_bytes)
 let xlen = sizeof(xlen)
+let gpalen = sizeof(gpalen)
 let asidlen = sizeof(asidlen)
 let vmidlen = sizeof(vmidlen)
 

@@ -371,14 +371,8 @@ enum SATPMode = {Bare, Sv32, Sv39, Sv48, Sv57}
 
 // hypervisor-level address translation modes
 
-// TODO: Consolidate with SATPMode to get rid of HBare
 type hgatp_mode = bits(4)
 enum HGATPMode = {HBare, Sv32x4, Sv39x4, Sv48x4, Sv57x4}
-
-union XATPMode = {
-  XATP_S : SATPMode,
-  XATP_G : HGATPMode,
-}
 
 function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
   match (a, m) {

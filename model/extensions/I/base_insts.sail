@@ -640,7 +640,7 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   // In that case this asidlen would be incorrect because the maximum asidlen
   // is 9 but we always set it to 16 for RV64.
   let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
-  let vmid = if cur_privilege == VirtualSupervisor then Some(get_vmid()) else None();
+  let vmid = if cur_privilege == VirtualSupervisor then Some(get_vmid(VS_Stage)) else None();
   match cur_privilege {
     User              => Illegal_Instruction(),
     Supervisor        => match mstatus[TVM] {

@@ -14,7 +14,7 @@
 
 // Maximum number of Virtual/Physical Page Number bits. The same TLB
 // is used for all VM modes so these are the values for Sv57.
-type tlb_vpn_bits : Int = 57 - pagesize_bits
+type tlb_vpn_bits : Int = 59 - pagesize_bits
 let  tlb_vpn_bits = sizeof(tlb_vpn_bits)
 type tlb_ppn_bits : Int = 44
 let  tlb_ppn_bits = sizeof(tlb_ppn_bits)
@@ -45,7 +45,7 @@ function tlb_set_pte forall 'n, 'n in {4, 8}. (
   pte : bits('n * 8),
 ) -> TLB_Entry = { ent with pte=zero_extend(pte) }
 
-function tlb_get_ppn forall 'v, is_sv_mode('v) . (
+function tlb_get_ppn forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   ent      : TLB_Entry,
   vpn      : vpn_bits('v),
@@ -75,7 +75,7 @@ type tlb_index_range = range(0, num_tlb_entries - 1)
 private register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
 // Indexed by the lowest bits of the VPN.
-function tlb_hash forall 'v, is_sv_mode('v) . (
+function tlb_hash forall 'v, is_sv_or_svx4_mode('v) . (
   _sv_mode : int('v),
   vpn     : vpn_bits('v),
 ) -> tlb_index_range =
@@ -124,10 +124,7 @@ private function flush_TLB_Entry(
   let addr_matches : bool = match vaddr {
     Some(vaddr) => {
       let vaddr : bits(64) = sign_extend(vaddr);
-      // TODO/NOTE: In translate_stage, we add the 2 most significant bits from G_Stage directly to the base page table address
-      // (In RV32: (PPN + VPN[1][11:10])). As a result, our VPN is effectively 20 bits instead of 22,
-      // meaning the top two bits are not compared. Does this matter and we have to consider this, probably!?
-      ent.vpn == (vaddr[56 .. pagesize_bits] & ~(ent.levelMask))
+      ent.vpn == (vaddr[58 .. pagesize_bits] & ~(ent.levelMask))
     },
     None() => true,
   };
@@ -136,7 +133,7 @@ private function flush_TLB_Entry(
 }
 
 // PUBLIC: invoked in translate() [vmem.sail]
-function lookup_TLB forall 'v, is_sv_mode('v) . (
+function lookup_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
   vmid     : vmidbits,
@@ -153,7 +150,7 @@ function lookup_TLB forall 'v, is_sv_mode('v) . (
 }
 
 // PUBLIC: invoked in translate_TLB_miss() [vmem.sail]
-function add_to_TLB forall 'v, is_sv_mode('v) . (
+function add_to_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
   vmid     : vmidbits,
@@ -165,7 +162,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
   global   : bool,
   stage   : TranslationStage
 ) -> unit = {
-  let shift = level * (if 'v == 32 then 10 else 9);
+  let shift = level * (if 'v == 32 | 'v ==  34 then 10 else 9);
   let levelMask = ones(shift);
   // Clear bits below the level.
   let vpn = vpn & ~(zero_extend(levelMask));
@@ -191,7 +188,6 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 
 // Top-level TLB flush function
 // PUBLIC: invoked from SFENCE_VMA [extensions/I/insts_base.sail]
-// TODO: Incorporate VMID
 function flush_TLB(
   asid  : option(asidbits),
   vmid  : option(vmidbits),

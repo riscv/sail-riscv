@@ -27,7 +27,7 @@
 // The code in this file is structured and commented so you can easily
 // ignore TLB functionality at first reading.
 
-struct PTW_Output('v : Int), is_sv_mode('v) = {
+struct PTW_Output('v : Int), is_sv_or_svx4_mode('v) = {
   ppn     : ppn_bits('v),
   pte     : pte_bits('v),
   pteAddr : physaddr,
@@ -35,7 +35,7 @@ struct PTW_Output('v : Int), is_sv_mode('v) = {
   global  : bool,
 }
 
-private type PTW_Result('v : Int), is_sv_mode('v) = result((PTW_Output('v), ext_ptw), (PTW_Error, ext_ptw))
+private type PTW_Result('v : Int), is_sv_or_svx4_mode('v) = result((PTW_Output('v), ext_ptw), (PTW_Error, ext_ptw))
 
 // Result of address translation
 
@@ -86,7 +86,7 @@ private function translate_PTE_addr(
 }
 
 // 'v is the virtual address size.
-private val pt_walk : forall 'v, is_sv_mode('v) . (
+private val pt_walk : forall 'v, is_sv_or_svx4_mode('v) . (
   int('v),                      // Sv32, Sv39, Sv48, Sv57
   vpn_bits('v),                 // Virtual Page Number
   MemoryAccessType(mem_payload),  // Memory Load{Reserved}/Store{Conditional}/Atomic/InstructionFetch/CacheAccess
@@ -116,19 +116,31 @@ function pt_walk(
 ) = {
   ptw_start_callback(zero_extend(vpn), access, (priv, ()));
 
-  // Extract the PPN component for this level; 10 bits on Sv32, otherwise 9.
-  let 'vpn_i_size = if 'v == 32 then 10 else 9;
-  let vpn_i = vpn[(level + 1) * vpn_i_size - 1 .. level * vpn_i_size];
-  let 'log_pte_size_bytes = if 'v == 32 then 2 else 3;
+  let 'vpn_i_size = if ('v == 32 | 'v == 34) then 10 else 9;
+  let 'log_pte_size_bytes = if ('v == 32 | 'v == 34) then 2 else 3;
 
-  // Address of PTE in page table. This is 34 bits for Sv32, otherwise 56 bits.
-  let pte_addr = pt_base @ vpn_i @ zeros('log_pte_size_bytes);
+  // Root level depends on the mode
+  let root_level = if ('v == 32 | 'v == 34) then 1
+                   else if ('v == 39 | 'v == 41) then 2
+                   else if ('v == 48 | 'v == 50) then 3
+                   else 4;
+
+  // Svx4 root level has 2 extra bits
+  let is_svx4_root = ('v == 34 | 'v == 41 | 'v == 50 | 'v == 59) & (level == root_level);
+
+  let vpn_lo = level * vpn_i_size;
+  let vpn_hi = if is_svx4_root
+               then (level + 1) * vpn_i_size + 1
+               else (level + 1) * vpn_i_size - 1;
+
+  let pte_addr = (pt_base @ zeros(pagesize_bits))
+               + zero_extend(vpn[vpn_hi .. vpn_lo] @ zeros('log_pte_size_bytes));
 
   // Convert to a physical address (34 bits for RV32, 64 bits to RV64).
   // The assertion is required so Sail knows that we can't have a
   // pte_addr of 56 bits and physaddr of 34 bits (because you can't
   // use Sv39+ on RV32).
-  assert(sv_width == 32 | xlen == 64);
+  assert('v == 32 | 'v == 34 | xlen == 64);
 
   // Translate PTE address if performing a VS-stage access
   let pte_addr : physaddr = match translate_PTE_addr(zero_extend(pte_addr), access, stage, ext_ptw) {
@@ -169,7 +181,7 @@ function pt_walk(
             }
         } else {
           // Leaf PTE (Step 5 of VATP).
-          let ppn_size_bits = if 'v == 32 then 10 else 9;
+          let ppn_size_bits = if 'v == 32 | 'v == 34 then 10 else 9;
           if level > 0 then {
             // Check for misaligned superpage.
             let low_bits = ppn_size_bits * level;
@@ -247,9 +259,12 @@ private function get_asid(stage : TranslationStage) -> asidbits = {
   }
 }
 
-function get_vmid() -> vmidbits =
-  if xlen == 32 then Mk_Hgatp32(hgatp)[VMID] else Mk_Hgatp64(hgatp)[VMID]
-
+function get_vmid(stage : TranslationStage) -> vmidbits = {
+  match stage {
+    S_Stage => zeros(),
+    _       => if xlen == 32 then Mk_Hgatp32(hgatp)[VMID] else Mk_Hgatp64(hgatp)[VMID],
+  }
+}
 
 private function xatp_to_ppn(stage : TranslationStage) -> bits(if xlen == 32 then 22 else 44) = {
   match stage {
@@ -318,8 +333,8 @@ function vsatp_mode(priv : Privilege) -> SATPMode = {
 }
 
 // G-stage (HS-mode used for 2-stage addresses translation uses hgatp)
-function hgatp_mode(priv : Privilege) -> SATPMode = {
-  if priv == Machine then Bare
+function hgatp_mode(priv : Privilege) -> HGATPMode = {
+  if priv == Machine then HBare
   else {
     let arch = architecture(Supervisor);
     let mbits : hgatp_mode = match arch {
@@ -327,19 +342,11 @@ function hgatp_mode(priv : Privilege) -> SATPMode = {
       RV32 => 0b000 @ Mk_Hgatp32(hgatp[31..0])[Mode],
       RV128 => internal_error(__FILE__, __LINE__, "RV128 not supported"),
     };
-    match satpMode_of_bits(arch, mbits) {
+    match hgatpMode_of_bits(arch, mbits) {
       Some(m) => m,
       // The model does not support modifying SXL currently so this cannot happen.
       None()  => internal_error(__FILE__, __LINE__, "invalid translation mode in hgatp")
     }
-  }
-}
-
-function xatp_mode(priv : Privilege, stage : TranslationStage) -> SATPMode = {
-  match stage {
-    S_Stage  => satp_mode(priv),
-    VS_Stage => vsatp_mode(priv),
-    G_Stage  => hgatp_mode(priv),
   }
 }
 
@@ -350,7 +357,7 @@ function xatp_mode(priv : Privilege, stage : TranslationStage) -> SATPMode = {
 // This function can be ignored on first reading since TLBs are not
 // part of RISC-V architecture spec (see TLB NOTE above).
 // Translate on TLB hit, and maintenance of PTE in TLB
-private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
+private function translate_TLB_hit forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width  : int('v),
   _asid     : asidbits,
   _vmid     : vmidbits,
@@ -398,7 +405,7 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
 }
 
 // Translate on TLB miss (do a page-table walk)
-private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
+private function translate_TLB_miss forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
   vmid     : vmidbits,
@@ -411,10 +418,13 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   stage    : TranslationStage,
   ext_ptw  : ext_ptw,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
-  let initial_level = if 'v == 32 then 1 else (if 'v == 39 then 2 else (if 'v == 48 then 3 else 4));
+   let initial_level = if 'v == 32 | 'v == 34 then 1
+                      else if 'v == 39 | 'v == 41 then 2
+                      else if 'v == 48 | 'v == 50 then 3
+                      else 4;
 
   // Step 2 of VATP occurs in pt_walk().
-  let 'pte_size = if (sv_width == 32) then 4 else 8;
+  let 'pte_size = if 'v == 32 | 'v == 34 then 4 else 8;
   let ptw_result = pt_walk(sv_width, vpn, access, priv, mxr, do_sum,
                            base_ppn, initial_level, false, stage, ext_ptw);
   match ptw_result {
@@ -458,9 +468,14 @@ mapping satp_mode_width : SATPMode <-> {32, 39, 48, 57} = {
   Sv57 <-> 57,
 }
 
-function xatp_mode_width(mode : SATPMode) -> {32, 39, 48, 57} = satp_mode_width(mode)
+ mapping hgatp_mode_width : HGATPMode <-> {34, 41, 50, 59} = {
+  Sv32x4 <-> 34,
+  Sv39x4 <-> 41,
+  Sv48x4 <-> 50,
+  Sv57x4 <-> 59,
+}
 
-private function translate forall 'v, is_sv_mode('v) . (
+private function translate forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
   vmid     : vmidbits,
@@ -518,74 +533,58 @@ private function get_sum(stage : TranslationStage) -> bool = {
   }
 }
 
-private function translate_stage(
-  addr   : gpabits,
-  access : MemoryAccessType(mem_payload),
-  priv   : Privilege,
-  stage  : TranslationStage
+val validate_vs_input : forall 'v, is_sv_mode('v). (
+  xlenbits,
+  int('v),
+) -> result(bits('v), PTW_Error)
+
+function validate_vs_input(addr, sv_width) = {
+  assert('v <= xlen);
+  let truncated = truncate(addr, sv_width);
+  if addr == sign_extend(truncated)
+  then Ok(truncated)
+  else Err(PTW_Invalid_Addr())
+}
+
+val validate_g_input : forall 'v, is_svx4_mode('v). (
+  gpabits,
+  int('v),
+) -> result(bits('v), PTW_Error)
+
+function validate_g_input(addr, sv_width) = {
+  assert('v <= gpalen);
+  let truncated = truncate(addr, sv_width);
+  if addr == zero_extend(truncated)
+  then Ok(truncated)
+  else Err(PTW_Invalid_Addr())
+}
+
+private function translate_stage forall 'v, is_sv_or_svx4_mode('v). (
+  sv_width : int('v),
+  addr     : bits('v),
+  access   : MemoryAccessType(mem_payload),
+  priv     : Privilege,
+  stage    : TranslationStage
 ) -> TR_Result(gpabits, PTW_Error) = {
 
-  let mode = xatp_mode(priv, stage);
-
-  if mode == Bare then return Ok(addr, init_ext_ptw);
-
-  // TODO
-  let sv_width = xatp_mode_width(mode);
-
-  // TODO
-  // Cannot use Sv39(x4)+ on RV32 or Sv32(x4) on RV64.
   assert((xlen == 32 & (sv_width == 32 | sv_width == 34)) |
          (xlen == 64 &  sv_width != 32 & sv_width != 34));
 
-  // Cannot use Sv39+ on RV32.
-  //assert(sv_width == 32 | xlen == 64);
-
-  let svAddr = addr[sv_width - 1 .. 0];
-
-  let extra_x4_bits = addr[sv_width + 1 .. sv_width];
-  // TODO:
-  //assert(stage != G_Stage ==> extra_x4_bits == zeros());
-  let base_ppn = xatp_to_ppn(stage) + zero_extend(extra_x4_bits);
-
-  let valid_addr : bool = match stage {
-    G_Stage => addr == zero_extend(svAddr),
-    // In RV32, a GPA can be up to 34 bits wide, but in VS- and S-stage address
-    // translation we operate on XLEN-bit virtual addresses. Since 'addr' may
-    // be wider, we explicitly compare only XLEN bits to avoid mismatches
-    // caused by zero-extension.
-    _ => addr[xlen - 1 .. 0] == sign_extend(svAddr),
-  };
-
-  if not(valid_addr) then return Err(PTW_Invalid_Addr(), init_ext_ptw);
-
   let asid     = get_asid(stage);
-  let vmid     = if stage == G_Stage then get_vmid() else zeros();
-  let vpn      = svAddr[sv_width - 1 .. pagesize_bits];
+  let vmid     = get_vmid(stage);
+  let vpn      = addr[sv_width - 1 .. pagesize_bits];
   let mxr      = get_mxr(stage);
   let do_sum   = get_sum(stage);
-
-  // Step 1 of VATP.
   let base_ppn = xatp_to_ppn(stage);
-
-  // G-stage address translation always uses User privilege for permission checking.
   let eff_priv = if stage == G_Stage then User else priv;
 
   let res = translate(sv_width, asid, vmid, base_ppn, vpn,
-                      access, eff_priv, mxr, do_sum,
-                      stage, init_ext_ptw);
+                      access, eff_priv, mxr, do_sum, stage, init_ext_ptw);
 
-  // Fixup result addr or exception.
   match res {
     Ok(ppn, ext_ptw) => {
-      // Step 10 of VATP.
-      // Append the page offset. This is now a 34 or 56 bit address.
-      let addr = ppn @ addr[pagesize_bits - 1 .. 0];
-
-      // TODO: Rewrite the comment below
-      // On RV64 paddr can be 34 or 56 bits, so we zero extend to 64.
-      // On RV32 paddr can only be 34 bits. Sail knows this due to
-      // the assertion above.
-      Ok(zero_extend(addr), ext_ptw)
+      let pa = ppn @ addr[pagesize_bits - 1 .. 0];
+      Ok(zero_extend(pa), ext_ptw)
     },
     Err(f, ext_ptw) => Err(f, ext_ptw)
   }
@@ -597,17 +596,33 @@ function translate_vs_stage(
   access : MemoryAccessType(mem_payload),
   p      : Privilege
 ) -> TR_Result(gpabits, PTW_Error) = {
-  let stage = if privLevel_is_virtual(p) then VS_Stage else S_Stage;
-  translate_stage(zero_extend(bits_of(vaddr)), access, p, stage)
+  let stage = if inVirtualPrivilege() then VS_Stage else S_Stage;
+  let mode  = if inVirtualPrivilege() then vsatp_mode(p) else satp_mode(p);
+
+  if mode == Bare then return Ok(zero_extend(bits_of(vaddr)), init_ext_ptw);
+
+  let sv_width = satp_mode_width(mode);
+  match validate_vs_input(bits_of(vaddr), sv_width) {
+    Err(e)       => Err(e, init_ext_ptw),
+    Ok(valid_va) => translate_stage(sv_width, valid_va, access, p, stage),
+  }
 }
 
 // Wrapper for G-stage translation (takes physaddr)
 function translate_g_stage(
-  addr   : gpabits,
+  gpa    : gpabits,
   access : MemoryAccessType(mem_payload),
   p      : Privilege
 ) -> TR_Result(gpabits, PTW_Error) = {
-  translate_stage(addr, access, p, G_Stage)
+  let mode = hgatp_mode(p);
+
+  if mode == HBare then return Ok(gpa, init_ext_ptw);
+
+  let sv_width = hgatp_mode_width(mode);
+  match validate_g_input(gpa, sv_width) {
+    Err(e)        => Err(e, init_ext_ptw),
+    Ok(valid_gpa) => translate_stage(sv_width, valid_gpa, access, p, G_Stage),
+  }
 }
 
 // There are three cases in which an access can fail during two-stage address translation.
@@ -677,7 +692,7 @@ function translateAddr_eff_priv(
   access : MemoryAccessType(mem_payload),
   p      : Privilege
 ) -> TR_Result(physaddr, Exception_Context) = {
-  let is_virtual = privLevel_is_virtual(p);
+  let is_virtual = inVirtualPrivilege();
   // First stage: GVA -> GPA (or VA -> PA for single-stage)
   match translate_vs_stage(gva, access, p) {
     Ok(gpa, ext_ptw) => {

@@ -174,15 +174,15 @@ function clause write_CSR(0x64A, value) = { htinst = value; Ok(htinst) }
 
 // Hypervisor Guest Address Translation and Protection
 
-//function hgatpMode_of_bits(a : Architecture, m : hgatp_mode) -> option(HGATPMode) =
-//  match (a, m) {
-//    (_,    0x0) => Some(HBare),
-//    (RV32, 0x1) => Some(Sv32x4),
-//    (RV64, 0x8) => Some(Sv39x4),
-//    (RV64, 0x9) => Some(Sv48x4),
-//    (RV64, 0xA) => Some(Sv57x4),
-//    (_, _)      => None()
-//  }
+function hgatpMode_of_bits(a : Architecture, m : hgatp_mode) -> option(HGATPMode) =
+  match (a, m) {
+    (_,    0x0) => Some(HBare),
+    (RV32, 0x1) => Some(Sv32x4),
+    (RV64, 0x8) => Some(Sv39x4),
+    (RV64, 0x9) => Some(Sv48x4),
+    (RV64, 0xA) => Some(Sv57x4),
+    (_, _)      => None()
+  }
 
 bitfield Hgatp64 : bits(64) = {
   Mode : 63 .. 60,
@@ -203,7 +203,6 @@ let Sv39x4_supported : bool = HBare_supported  & xlen == 64
 let Sv48x4_supported : bool = Sv39x4_supported & xlen == 64
 let Sv57x4_supported : bool = Sv48x4_supported & xlen == 64
 
-// TODO: Consolidate with legalize_satp
 // TODO: Add VMIDLEN config option and mask VMID field to implemented width
 function legalize_hgatp(
   arch : Architecture,
@@ -214,11 +213,11 @@ function legalize_hgatp(
     let v = Mk_Hgatp32(written_value);
     // Force 16 KiB alignment with PPN[1:0] = 0b00
     let h = Mk_Hgatp32(v[Mode] @ 0b00 @ v[VMID] @ v[PPN][21 .. 2] @ 0b00);
-    match satpMode_of_bits(arch, 0b000 @ h[Mode]) {
+    match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
-        Bare if currentlyEnabled(Ext_Svbare) => h.bits,
-        Sv32 if currentlyEnabled(Ext_Sv32)   => h.bits,
+        HBare  if currentlyEnabled(Ext_Svbare) => h.bits,
+        Sv32x4 if currentlyEnabled(Ext_Sv32)   => h.bits,
         _ => prev_value,
       }
     }
@@ -226,13 +225,13 @@ function legalize_hgatp(
     let v = Mk_Hgatp64(written_value);
     // Force 16 KiB alignment with PPN[1:0] = 0b00
     let h = Mk_Hgatp64(v[Mode] @ 0b00 @ v[VMID] @ v[PPN][43 .. 2] @ 0b00);
-    match satpMode_of_bits(arch, h[Mode]) {
+    match hgatpMode_of_bits(arch, h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
-        Bare if currentlyEnabled(Ext_Svbare) => h.bits,
-        Sv39 if currentlyEnabled(Ext_Sv39)   => h.bits,
-        Sv48 if currentlyEnabled(Ext_Sv48)   => h.bits,
-        Sv57 if currentlyEnabled(Ext_Sv57)   => h.bits,
+        HBare  if currentlyEnabled(Ext_Svbare) => h.bits,
+        Sv39x4 if currentlyEnabled(Ext_Sv39)   => h.bits,
+        Sv48x4 if currentlyEnabled(Ext_Sv48)   => h.bits,
+        Sv57x4 if currentlyEnabled(Ext_Sv57)   => h.bits,
         _ => prev_value,
       }
     }
