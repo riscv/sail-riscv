@@ -1,7 +1,7 @@
 # Release notes for the next version
 
 - Important issues addressed and bugs fixed:
-  - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in execution trace
+  - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in the execution trace
 
 # Release notes for version 0.10
 
