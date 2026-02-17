@@ -498,6 +498,7 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
       is_waiting = model.ztry_step(sail_step, exit_wait);
       if (model.have_exception) {
+        model.print_current_exception();
         break;
       }
       if (opts.config_print_instr) {

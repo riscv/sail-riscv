@@ -24,4 +24,12 @@ function internal_error(file, line, s) = {
 }
 
 val reserved_behavior : forall ('a : Type). string -> 'a
-function reserved_behavior(message) = throw(Error_reserved_behavior("Reserved behavior: " ^ message))
+function reserved_behavior(message) =
+  throw(Error_reserved_behavior(message))
+
+function print_exception(e : exception) -> unit =
+  match e {
+    Error_not_implemented(s)   => print_endline("Not implemented error: " ^ s),
+    Error_internal_error()     => print_endline("Internal error."),
+    Error_reserved_behavior(s) => print_endline("Reserved behavior error: " ^ s),
+  }

@@ -35,6 +35,8 @@ public:
 
   void set_config_print_step(bool on);
 
+  void print_current_exception();
+
 private:
   // These functions are called by the Sail code.
 

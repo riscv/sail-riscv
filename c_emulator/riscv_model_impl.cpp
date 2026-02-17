@@ -44,6 +44,12 @@ void ModelImpl::set_reservation_set_size_exp(uint64_t exponent) {
   m_reservation_set_addr_mask = ~((1 << exponent) - 1);
 }
 
+void ModelImpl::print_current_exception() {
+  if (current_exception) {
+    zprint_exception(*current_exception);
+  }
+}
+
 unit ModelImpl::fetch_callback(sbits opcode) {
   for (auto c : m_callbacks) {
     c->fetch_callback(*this, opcode);
