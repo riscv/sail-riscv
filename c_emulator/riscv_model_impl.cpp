@@ -45,7 +45,7 @@ void ModelImpl::set_reservation_set_size_exp(uint64_t exponent) {
 }
 
 void ModelImpl::print_current_exception() {
-  if (current_exception) {
+  if (current_exception != nullptr) {
     zprint_exception(*current_exception);
   }
 }
