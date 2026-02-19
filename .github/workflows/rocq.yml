@@ -27,6 +27,8 @@ jobs:
 
       - name: Common setup
         uses: ./.github/actions/sail-setup
+        with:
+          sail-version: "latest"
 
       - name: Install Rocq-specific opam packages
         run: |
@@ -37,6 +39,7 @@ jobs:
 
       - name: Generate Rocq model
         run: |
+          eval `opam env --safe`
           cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_GMP=FALSE
           cmake --build build --target generated_rocq_rv64d
 

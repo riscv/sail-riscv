@@ -31,7 +31,7 @@ register srmcfg : Srmcfg
 // Ssqosid - Quality-of-Service (Qos) Identifiers
 mapping clause csr_name_map = 0x181  <-> "srmcfg"
 
-function clause is_CSR_accessible(0x181, _, _) = currentlyEnabled(Ext_Ssqosid)
+function clause is_CSR_accessible(0x181, _, _) = csr_requires_ext(Ext_Ssqosid)
 
 function clause read_CSR(0x181) = srmcfg.bits
 

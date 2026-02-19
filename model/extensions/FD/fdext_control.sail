@@ -24,11 +24,16 @@ mapping clause csr_name_map = 0x001  <-> "fflags"
 mapping clause csr_name_map = 0x002  <-> "frm"
 mapping clause csr_name_map = 0x003  <-> "fcsr"
 
+function fcsr_accessible() -> CSRAccessResult =
+  if   (currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx))
+  then CSRAccess_Success()
+  else CSRAccess_Illegal(CSR_Illegal_FCSR())
+
 // These should ideally also check `xstateen.FCSR`, but due to module
 // interdependency issues, that is handled by `stateen_allows_CSR_access`.
-function clause is_CSR_accessible (0x001, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
-function clause is_CSR_accessible (0x002, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
-function clause is_CSR_accessible (0x003, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
+function clause is_CSR_accessible (0x001, _, _) = fcsr_accessible()
+function clause is_CSR_accessible (0x002, _, _) = fcsr_accessible()
+function clause is_CSR_accessible (0x003, _, _) = fcsr_accessible()
 
 function clause read_CSR (0x001) = zero_extend(fcsr[FFLAGS])
 function clause read_CSR (0x002) = zero_extend(fcsr[FRM])
