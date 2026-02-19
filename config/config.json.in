@@ -63,6 +63,10 @@
       // "Zdinx_Fatal"  – raise a Sail exception, stopping execution.
       // "Zdinx_Illegal" – treat it as an illegal instruction.
       "rv32zdinx_odd_register": "Zdinx_Illegal"
+    },
+    "mstatus": {
+      "mstatus_fs_legal_values": [0, 1, 2, 3],
+      "mstatus_vs_writable": false
     }
   },
   "memory": {
