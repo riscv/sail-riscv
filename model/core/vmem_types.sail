@@ -53,7 +53,12 @@ function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
     StoreConditional(p) => "W" ^ mem_payload_str(p),
     Atomic(_, lp, sp)   => "R" ^ mem_payload_str(lp) ^ "W" ^ mem_payload_str(sp),
     InstructionFetch()  => "X",
+    ExecuteLoad()       => "XR",
     CacheAccess(_)      => "C",
   }
 
 overload to_str = {accessType_to_str}
+
+// Stage of Address Translation
+
+enum TranslationStage = {S_Stage, VS_Stage, G_Stage}

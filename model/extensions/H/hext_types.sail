@@ -6,17 +6,4 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// model context for synchronous exceptions, parameterized for extensions
-
-struct sync_exception = {
-  trap    : ExceptionType,
-  excinfo : option(xlenbits),
-  ext     : option(ext_exception)   // for extensions
-}
-
-struct Exception_Context = {
-  trap            : ExceptionType,
-  tval            : xlenbits,
-  tval2           : xlenbits,
-  is_gstage_fault : bool,
-}
+enum hlvop = {HLV, HLVX}

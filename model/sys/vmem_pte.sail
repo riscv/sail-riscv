@@ -137,8 +137,8 @@ private function check_PTE_permission(
     // loads and stores; not instruction fetch.
     Supervisor => not(pte_U) | (do_sum & is_load_store(access)),
     Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
-    VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser => pte_U,
+    VirtualSupervisor => not(pte_U) | (do_sum & is_load_store(access)),
   };
   if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
@@ -155,6 +155,7 @@ private function check_PTE_permission(
     StoreConditional(_)         => pte_W,
     Atomic(_, _, _)             => pte_W & pte_R,
     InstructionFetch(_)         => pte_X,
+    ExecuteLoad()               => pte_X & pte_R,
     CacheAccess(CB_zero())      => pte_W,
     CacheAccess(CB_prefetch(p)) => match p {
       PREFETCH_R => pte_R,
@@ -189,6 +190,7 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match access {
                              InstructionFetch()          => false,
+                             ExecuteLoad()               => false,
                              Load(_)                     => false,
                              LoadReserved(_)             => false,
                              Store(_)                    => true,

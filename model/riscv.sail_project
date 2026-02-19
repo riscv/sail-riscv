@@ -36,6 +36,7 @@ core {
     core/pc_access.sail,
     core/sys_regs.sail,
     core/ext_regs.sail,
+    core/hypervisor_regs.sail,
     core/addr_checks_common.sail,
     core/addr_checks.sail,
     core/misa_ext.sail,
@@ -169,9 +170,14 @@ extensions {
   // Hypervisor
   H {
     requires core
-
-    files
-      extensions/H/hext_insts.sail
+    H_types {
+      before sys
+      files extensions/H/hext_types.sail
+    }
+    H_insts {
+      requires sys, exceptions, I_insts, H_types
+      files extensions/H/hext_insts.sail
+    }
   }
 
   // Floating point (F and D extensions)
