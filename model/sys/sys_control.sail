@@ -338,6 +338,7 @@ function reset_misa() -> unit = {
   misa[A]   = bool_to_bit(hartSupports(Ext_A));   // atomics
   misa[C]   = bool_to_bit(hartSupports(Ext_C));   // RVC
   misa[B]   = bool_to_bit(hartSupports(Ext_B));   // Bit-manipulation
+  misa[H]   = bool_to_bit(hartSupports(Ext_H));   // hypervisor
   misa[M]   = bool_to_bit(hartSupports(Ext_M));   // integer multiply/divide
   misa[U]   = bool_to_bit(hartSupports(Ext_U));   // user-mode
   misa[S]   = bool_to_bit(hartSupports(Ext_S));   // supervisor-mode
