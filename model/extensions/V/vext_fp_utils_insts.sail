@@ -415,49 +415,55 @@ function riscv_f32ToUi16(rm : bits_rm, v : bits_S) -> (bits_fflags, bits(16)) = 
   else (flag, sig32[15 .. 0]);
 }
 
-val rsqrt7 : forall 'm, 'm in {16, 32, 64}. (bits('m), bool) -> bits_D
-function rsqrt7 (v, sub) = {
-  let (sig, exp, sign, e, s) : (bits(64), bits(64), bits(1), {5, 8, 11}, {10, 23, 52}) = match 'm {
-    16 => (zero_extend(64, v[9 .. 0]), zero_extend(64, v[14 .. 10]), [v[15]], 5, 10),
-    32 => (zero_extend(64, v[22 .. 0]), zero_extend(64, v[30 .. 23]), [v[31]], 8, 23),
-    64 => (zero_extend(64, v[51 .. 0]), zero_extend(64, v[62 .. 52]), [v[63]], 11, 52)
-  };
-  let table : vector(128, int) = [
-      52, 51, 50, 48, 47, 46, 44, 43,
-      42, 41, 40, 39, 38, 36, 35, 34,
-      33, 32, 31, 30, 30, 29, 28, 27,
-      26, 25, 24, 23, 23, 22, 21, 20,
-      19, 19, 18, 17, 16, 16, 15, 14,
-      14, 13, 12, 12, 11, 10, 10, 9,
-      9, 8, 7, 7, 6, 6, 5, 4,
-      4, 3, 3, 2, 2, 1, 1, 0,
-      127, 125, 123, 121, 119, 118, 116, 114,
-      113, 111, 109, 108, 106, 105, 103, 102,
-      100, 99, 97, 96, 95, 93, 92, 91,
-      90, 88, 87, 86, 85, 84, 83, 82,
-      80, 79, 78, 77, 76, 75, 74, 73,
-      72, 71, 70, 70, 69, 68, 67, 66,
-      65, 64, 63, 63, 62, 61, 60, 59,
-      59, 58, 57, 56, 56, 55, 54, 53];
+// Calculate the inverse square root accurate to 7 bits.
+val rsqrt7 : forall 'n, 'n in {16, 32, 64}. (bits('n), bool) -> bits('n)
+function rsqrt7 (v, is_subnormal) = {
+  // sig_out from the "vfrsqrt7.v common-case lookup table contents" table in the spec.
+  let sig_out_lut : vector(128, range(0, 127)) = [
+    52, 51, 50, 48, 47, 46, 44, 43,
+    42, 41, 40, 39, 38, 36, 35, 34,
+    33, 32, 31, 30, 30, 29, 28, 27,
+    26, 25, 24, 23, 23, 22, 21, 20,
+    19, 19, 18, 17, 16, 16, 15, 14,
+    14, 13, 12, 12, 11, 10, 10, 9,
+    9, 8, 7, 7, 6, 6, 5, 4,
+    4, 3, 3, 2, 2, 1, 1, 0,
+    127, 125, 123, 121, 119, 118, 116, 114,
+    113, 111, 109, 108, 106, 105, 103, 102,
+    100, 99, 97, 96, 95, 93, 92, 91,
+    90, 88, 87, 86, 85, 84, 83, 82,
+    80, 79, 78, 77, 76, 75, 74, 73,
+    72, 71, 70, 70, 69, 68, 67, 66,
+    65, 64, 63, 63, 62, 61, 60, 59,
+    59, 58, 57, 56, 56, 55, 54, 53,
+  ];
 
-  let (normalized_exp, normalized_sig) =
-      if sub then {
-        let nr_leadingzeros = count_leading_zeros(sig[s - 1 .. 0]);
-        assert(nr_leadingzeros >= 0);
-        (to_bits_unsafe(64, (0 - nr_leadingzeros)), zero_extend(64, sig[(s - 1) .. 0] << (1 + nr_leadingzeros)))
+  let v = float_decompose(v);
+
+  let 'e = length(v.exp);
+  let 'm = length(v.mantissa);
+
+  let (normalized_exp, normalized_mant_top_5_bits) =
+      if is_subnormal then {
+        let nr_leadingzeros = count_leading_zeros(v.mantissa);
+        let mant = v.mantissa @ zeros(1 + nr_leadingzeros);
+        let f : bits(5) = mant[length(mant) - 1 .. length(mant) - 5];
+        (zeros('e) - nr_leadingzeros, f)
       } else {
-        (exp, sig)
+        let f : bits(5) = v.mantissa[length(v.mantissa) - 1 .. length(v.mantissa) - 5];
+        (v.exp, f)
       };
 
-  let idx : nat = match 'm {
-    16 => unsigned([normalized_exp[0]] @ normalized_sig[9 .. 4]),
-    32 => unsigned([normalized_exp[0]] @ normalized_sig[22 .. 17]),
-    64 => unsigned([normalized_exp[0]] @ normalized_sig[51 .. 46])
-  };
-  assert(idx >= 0 & idx < 128);
-  let out_sig = to_bits_unsafe(s, table[(127 - idx)]) << (s - 7);
-  let out_exp = to_bits_unsafe(e, quot_round_zero(3 * (2 ^ (e - 1) - 1) - 1 - signed(normalized_exp), 2));
-  zero_extend(64, sign @ out_exp @ out_sig)
+  let idx = unsigned(normalized_exp[0..0] @ normalized_mant_top_5_bits);
+
+  float_compose(struct {
+    sign = v.sign,
+    exp = to_bits_truncate('e, quot_round_zero(3 * (2 ^ ('e - 1) - 1) - 1 - signed(normalized_exp), 2)),
+    // Note the 127 - idx is because the table was written out in little endian order
+    // but Sail is configured for big endian array literals.
+    // See https://github.com/rems-project/sail/issues/1519
+    mantissa = to_bits(7, sig_out_lut[127 - idx]) @ zeros('m - 7),
+  })
 }
 
 function riscv_f16Rsqrte7(_rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = {
@@ -471,8 +477,8 @@ function riscv_f16Rsqrte7(_rm : bits_rm, v : bits_H) -> (bits_fflags, bits_H) = 
     float_class_negative_zero      => (dzFlag(), 0xfc00),
     float_class_positive_zero      => (dzFlag(), 0x7c00),
     float_class_positive_inf       => (zeros(5), 0x0000),
-    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)[15 .. 0]),
-    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)[15 .. 0])
+    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)),
+    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)),
   }
 }
 
@@ -486,8 +492,8 @@ function riscv_f32Rsqrte7(_rm : bits_rm, v : bits_S) -> (bits_fflags, bits_S) = 
     float_class_negative_zero      => (dzFlag(), 0xff800000),
     float_class_positive_zero      => (dzFlag(), 0x7f800000),
     float_class_positive_inf       => (zeros(5), 0x00000000),
-    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)[31 .. 0]),
-    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)[31 .. 0])
+    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)),
+    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)),
   }
 }
 
@@ -501,8 +507,8 @@ function riscv_f64Rsqrte7(_rm : bits_rm, v : bits_D) -> (bits_fflags, bits_D) = 
     float_class_negative_zero      => (dzFlag(), 0xfff0000000000000),
     float_class_positive_zero      => (dzFlag(), 0x7ff0000000000000),
     float_class_positive_inf       => (zeros(5), zeros(64)),
-    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)[63 .. 0]),
-    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)[63 .. 0])
+    float_class_positive_subnormal => (zeros(5), rsqrt7(v, true)),
+    float_class_positive_normal    => (zeros(5), rsqrt7(v, false)),
   }
 }
 
