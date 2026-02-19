@@ -16,8 +16,9 @@ function main() : unit -> unit = {
     sail_end_cycle();
     loop()
   } catch {
-    Error_not_implemented(s) => print_string("Error: Not implemented: ", s),
-    Error_internal_error() => print("Error: internal error")
+    Error_not_implemented(s) => print_string("Error: not implemented: ", s),
+    Error_internal_error(s) => print_string("Error: internal error: ", s),
+    Error_reserved_behavior(s) => print_string("Error: reserved behavior: ", s),
   }
 }
 
