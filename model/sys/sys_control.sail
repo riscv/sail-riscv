@@ -13,42 +13,8 @@ function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus,
   then privLevel_bits(m[MPP], 0b0) // TODO: use m[MPV] if hypervisor enabled
   else priv
 
-// CSR access control
-
-function csrAccess(csr : csreg) -> csrRW = csr[11..10]
-function csrPriv(csr : csreg) -> nom_priv_bits = csr[9..8]
-
-// When hypervisor is enabled, `Supervisor` (HS-mode) and
-// `VirtualSupervisor` (VS-mode) privileges are encoded as `0b01` in
-// `privLevel_bits()`, but the CSR addresses for hypervisor and VS
-// CSRs encode the required privilege as `0b10`.  This overrides
-// the encoding in `privLevel_bits()` for the purposes of CSR privilege
-// checks.
-private function privLevel_to_CSR_privbits(p : Privilege) -> nom_priv_bits =
-  match p {
-    User              => 0b00,
-    VirtualUser       => 0b00,
-    // Note that this `if` is not strictly necessary. We could return
-    // 0b10 unconditionally if other checks ensure that hypervisor
-    // CSRs do not exist if H is not enabled.
-    Supervisor        => if currentlyEnabled(Ext_H) then 0b10 else 0b01,
-    VirtualSupervisor => 0b01,
-    Machine           => 0b11,
-  }
-
-// Check that the CSR access is made with sufficient privilege.
-function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
-  privLevel_to_CSR_privbits(p) >=_u csrPriv(csr)
-
-// Check that the CSR access isn't a write to a read-only CSR.
-function check_CSR_access(csr : csreg, access_type : CSRAccessType) -> bool =
-  not((access_type == CSRWrite | access_type == CSRReadWrite) & (csrAccess(csr) == 0b11))
-
-function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> bool =
-    check_CSR_priv(csr, p)
-  & check_CSR_access(csr, access_type)
-  & is_CSR_accessible(csr, p, access_type)
-  & stateen_allows_CSR_access(csr, p, access_type)
+function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> result(unit, csr_access_failure) =
+  is_CSR_accessible(csr, p, access_type)
 
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.
