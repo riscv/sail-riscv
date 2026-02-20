@@ -156,3 +156,45 @@ foreach (xlen IN ITEMS 32 64)
         )
     endforeach()
 endforeach()
+
+# ------------------------------------------------------------
+# PLIC MVP smoke test (bare-metal, RV64 only)
+# Sources live in test/plic/
+# ------------------------------------------------------------
+
+set(plic_dir "${CMAKE_CURRENT_SOURCE_DIR}/../plic")
+set(plic_elf "rv64d_plic_basic.elf")
+set(plic_config "${CMAKE_BINARY_DIR}/config/rv64d_v256_e64.json")
+
+add_custom_command(
+  OUTPUT ${plic_elf}
+  DEPENDS
+    "${plic_dir}/plic_basic.c"
+    "${plic_dir}/crt0.S"
+    "${plic_dir}/link.ld"
+  COMMAND ${CROSS_COMPILER_COMMAND_RV64}
+    -march=rv64imac
+    -mabi=lp64
+    -mno-relax
+    -ffreestanding
+    -nostdlib
+    -static
+    -mcmodel=medany
+    -g
+    -Og
+    -Wall
+    -Werror
+    -T "${plic_dir}/link.ld"
+    -o ${plic_elf}
+    "${plic_dir}/plic_basic.c"
+    "${plic_dir}/crt0.S"
+  VERBATIM
+  COMMENT "Compiling PLIC MVP smoke test"
+)
+
+add_custom_target(build_rv64d_plic_basic ALL DEPENDS ${plic_elf} ${plic_config})
+
+add_test(
+  NAME "first_party_rv64d_plic_basic"
+  COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${plic_config} ${plic_elf}
+)
