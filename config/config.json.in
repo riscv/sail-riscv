@@ -13,7 +13,6 @@
   "base": {
     "xlen": @CONFIG__BASE__XLEN@,
     "E": false,
-    "writable_misa": true,
     "writable_fiom": true,
     "writable_hpm_counters": {
       "len": 32,
@@ -193,16 +192,25 @@
   },
   "extensions": {
     "M": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "A": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "F": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "D": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
+    },
+    "C": {
+      // There is no supported option for C. It is automatically
+      // marked as supported based on Zca, Zcf, and Zcd
+      "mutable_misa": true
     },
     "V": {
       // `support_level` must be one of the below strings:
@@ -219,16 +227,20 @@
       "support_level": "@CONFIG__V__SUPPORT@",
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
-      "vl_use_ceil": false
+      "vl_use_ceil": false,
+      "mutable_misa": true
     },
     "B": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "S": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "U": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "Zibi": {
       "supported": true
