@@ -187,9 +187,9 @@ overload operator << = {shift_bits_left, shiftl}
 // Ideally this would be sail builtin. This implementation is not efficient for large shifts.
 
 // 'n >= 1 is required due to https://github.com/rems-project/sail/issues/471
-val shift_right_arith : forall 'm 'n, 'n >= 1 & 'm >= 0 . (bits('n), int('m)) -> bits('n)
-function shift_right_arith(value, shift) =
-  sign_extend('n + shift, value)[('n - 1 + shift) .. shift]
+function shift_right_arith (v : bits(xlen), shift : bits(log2_xlen)) -> bits(xlen) =
+    let v2 : bits(xlen * 2) = sign_extend(v) in
+    (v2 >> shift)[xlen - 1 ..0]
 
 val shift_bits_right_arith : forall 'm 'n, 'n >= 1 . (bits('n), bits('m)) -> bits('n)
 function shift_bits_right_arith(value, shift) =
