@@ -434,7 +434,7 @@ function clause is_CSR_accessible(0x30A, p, access_type) = // menvcfg
 function clause is_CSR_accessible(0x31A, p, access_type) = // menvcfgh
   check_CSR_access(0x31A, p, access_type, currentlyEnabled(Ext_U) & xlen == 32)
 function clause is_CSR_accessible(0x10A, p, access_type) = // senvcfg
-  check_stateen_guarded_CSR_access(0x10A, p, access_type, currentlyEnabled(Ext_S))
+  check_CSR_access(0x10A, p, access_type, currentlyEnabled(Ext_S))
 
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
