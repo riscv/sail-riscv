@@ -39,46 +39,20 @@ function check_CSR_access_type(csr : csreg, access_type : CSRAccessType) -> bool
 function default_CSR_access_allowed(csr : csreg, p : Privilege, access_type : CSRAccessType) -> bool =
   check_CSR_priv(csr, p) & check_CSR_access_type(csr, access_type)
 
-function check_machine_CSR_access(csr : csreg, p : Privilege, access_type : CSRAccessType, condition : bool) -> result(unit, csr_access_failure) =
-  if condition & default_CSR_access_allowed(csr, p, access_type)
-  then Ok(())
-  else Err(CSR_Access_Illegal)
-
-function check_hs_qualified_CSR_access(csr : csreg, p : Privilege, access_type : CSRAccessType, condition : bool) -> result(unit, csr_access_failure) = {
+// This is the default CSR access checker which implements HS-qualified checks
+// by default.  It cannot be used for CSRs that do not use HS-qualification.
+function check_CSR_access(csr : csreg, p : Privilege, access_type : CSRAccessType, condition : bool) -> result(unit, csr_access_failure) = {
   if not(condition) then return Err(CSR_Access_Illegal);
+
+  // Stateen defaults to allowing CSRs that are not gated by the xstateen registers.
+  if not(stateen_allows_CSR_access(csr, p, access_type)) then {
+    return Err(if privLevel_is_virtual(p) & stateen_allows_CSR_access(csr, Supervisor, access_type)
+               then CSR_Access_Virtual else CSR_Access_Illegal)
+  };
 
   if default_CSR_access_allowed(csr, p, access_type)
   then return Ok(());
 
-  // Check HS-qualification.
-  let is_hs_qualified = default_CSR_access_allowed(csr, Supervisor, access_type);
-
-  Err(if privLevel_is_virtual(p) & is_hs_qualified then CSR_Access_Virtual else CSR_Access_Illegal);
-}
-
-// This is the default CSR access checker.
-function check_CSR_access(csr : csreg, p : Privilege, access_type : CSRAccessType, condition : bool) -> result(unit, csr_access_failure) = {
-  if csrPriv(csr) == 0b11
-  then check_machine_CSR_access(csr, p, access_type, condition)
-  // CSRs at other privileges need HS-qualification checks by default.
-  else check_hs_qualified_CSR_access(csr, p, access_type, condition)
-}
-
-// Helper for CSRs guarded by Stateen.
-function check_stateen_guarded_CSR_access(csr : csreg, p : Privilege, access_type : CSRAccessType, condition : bool) -> result(unit, csr_access_failure) = {
-  if not(condition) then return Err(CSR_Access_Illegal);
-
-  let default_allowed = default_CSR_access_allowed(csr, p, access_type);
-  let allowed_by_stateen = stateen_allows_CSR_access(csr, p, access_type);
-
-  if default_allowed & allowed_by_stateen then return Ok(());
-
-  if privLevel_is_virtual(p) then {
-    // Check HS-qualification.
-    let hs_allowed = default_CSR_access_allowed(csr, Supervisor, access_type)
-                   & stateen_allows_CSR_access(csr, Supervisor, access_type);
-    Err(if hs_allowed then CSR_Access_Virtual else CSR_Access_Illegal)
-  } else {
-    Err(CSR_Access_Illegal)
-  }
+  Err(if privLevel_is_virtual(p) & default_CSR_access_allowed(csr, Supervisor, access_type)
+      then CSR_Access_Virtual else CSR_Access_Illegal)
 }
