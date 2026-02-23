@@ -304,3 +304,64 @@ void ModelImpl::set_config_use_abi_names(bool on) {
 void ModelImpl::set_config_print_step(bool on) {
   m_config_print_step = on;
 }
+
+void ModelImpl::emulator_read_mem(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) {
+  // The call here comes from `phys_mem_interface.sail` in this repo, then it goes to
+  // `lib/concurrency_interface/read_write_v1.sail` in the Sail repo where you get a call to `write_mem#`
+  // and so on which call these functions.
+  //
+  // `addr_size` will be 32 if physaddrbits is 32 bits, otherwise 64. This is wrong, but we don't
+  // actually need it anyway since addr`
+
+  // `addr_size` is the width of the address, which should be consistent with `addr.len` - it's only
+  // there because Sail needs you to pass that in for its type checking.
+
+  // `n` is the width of the access (which should be consistent with `data->len`). It's provided for the same reason.
+
+  // TODO: I think there's some stuff in the memory interface that incorrectly assumes all memory accesses have 32 or 64
+  // bit addresses.
+  assert(addr.len == addr_size);
+
+  uint64_t data_size = mpz_get_ui(n);
+  data->len = data_size * 8;
+
+  // TODO: Use smallvector here for performance.
+  std::vector<uint8_t> output(data_size);
+  m_ram->read_bytes(addr.bits, addr.len, output.data(), output.size());
+
+  mpz_import(*(data->bits), data_size, -1, 1, 0, 0, output.data());
+}
+
+void ModelImpl::emulator_read_mem_ifetch(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) {
+  // Delegate; this isn't treated specially.
+  emulator_read_mem(data, addr_size, addr, n);
+}
+
+void ModelImpl::emulator_read_mem_exclusive(lbits *data, const uint64_t addr_size, const sbits addr, const mpz_t n) {
+  // Delegate; this isn't treated specially.
+  emulator_read_mem(data, addr_size, addr, n);
+}
+
+bool ModelImpl::emulator_write_mem(const uint64_t addr_size, const sbits addr, const mpz_t n, const lbits data) {
+  assert(addr.len == addr_size);
+  assert((data.len % 8) == 0);
+  (void)n;
+
+  // TODO: Actually verify the length of data->bits.
+  // TODO: Use smallvector here for performance.
+  std::vector<uint8_t> output(data.len / 8);
+  mpz_export(output.data(), nullptr, -1, 1, 0, 0, *data.bits);
+
+  m_ram->write_bytes(addr.bits, addr.len, output.data(), output.size());
+  return true;
+}
+
+bool ModelImpl::emulator_write_mem_exclusive(
+  const uint64_t addr_size,
+  const sbits addr,
+  const mpz_t n,
+  const lbits data
+) {
+  // Delegate; this isn't treated specially.
+  return emulator_write_mem(addr_size, addr, n, data);
+}

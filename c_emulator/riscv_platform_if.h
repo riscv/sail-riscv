@@ -25,6 +25,13 @@ struct zPTW_Error;
 
 class PlatformInterface {
 public:
+  // Built-in memory interface from rts.h (we use our own).
+  virtual void emulator_read_mem(lbits *data, uint64_t addr_size, sbits addr, const mpz_t n);
+  virtual void emulator_read_mem_ifetch(lbits *data, uint64_t addr_size, sbits addr, const mpz_t n);
+  virtual void emulator_read_mem_exclusive(lbits *data, uint64_t addr_size, sbits addr, const mpz_t n);
+  virtual bool emulator_write_mem(uint64_t addr_size, sbits addr, const mpz_t n, const lbits data);
+  virtual bool emulator_write_mem_exclusive(uint64_t addr_size, sbits addr, const mpz_t n, const lbits data);
+
   virtual unit fetch_callback(sbits opcode);
 
   virtual unit mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value);
