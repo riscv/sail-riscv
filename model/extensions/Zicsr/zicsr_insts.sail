@@ -42,9 +42,9 @@ function csr_access_type(op : csrop, rd_is_x0 : bool, rs1_imm_is_zero : bool) ->
 
 function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_type : CSRAccessType) -> ExecutionResult = {
   match is_CSR_accessible(csr, cur_privilege, access_type) {
-    Err(CSR_Access_Illegal) => return Illegal_Instruction(),
-    Err(CSR_Access_Virtual) => return Virtual_Instruction(),
-    Ok()                    => (),
+    Err(CSR_Access_Illegal, _) => return Illegal_Instruction(),
+    Err(CSR_Access_Virtual, _) => return Virtual_Instruction(),
+    Ok()                       => (),
   };
 
   if not(ext_check_CSR(csr, cur_privilege, access_type))

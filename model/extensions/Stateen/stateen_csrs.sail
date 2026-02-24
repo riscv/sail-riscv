@@ -54,12 +54,13 @@ function clause write_CSR((0x31D, value) if xlen == 32) = { mstateen1 = legalize
 function clause write_CSR((0x31E, value) if xlen == 32) = { mstateen2 = legalize_mstateen2(mstateen2, value @ mstateen2.bits[31 .. 0]); Ok(mstateen2.bits[63 .. 32]) }
 function clause write_CSR((0x31F, value) if xlen == 32) = { mstateen3 = legalize_mstateen3(mstateen3, value @ mstateen3.bits[31 .. 0]); Ok(mstateen3.bits[63 .. 32]) }
 
-private function check_hs_stateen_CSR_access(csr : csreg, p : Privilege, access_type : CSRAccessType, accessible : bool, stateen : bool) -> result(unit, csr_access_failure) = {
-  if not(accessible) then return Err(CSR_Access_Illegal);
+private function check_hs_stateen_CSR_access(csr : csreg, p : Privilege, access_type : CSRAccessType, accessible : bool, stateen : bool) -> result(unit, (csr_access_failure, csr_access_failure_reason)) = {
+  if not(accessible) then return Err(CSR_Access_Illegal, CSR_Access_Failed_Condition());
 
   // Accesses to {hs}stateen* registers are valid in HS-mode, hence they are HS-qualified.
   if not(default_CSR_access_allowed(csr, p, access_type) & stateen)
-  then return Err(if privLevel_is_virtual(p) then CSR_Access_Virtual else CSR_Access_Illegal);
+  then return Err((if privLevel_is_virtual(p) then CSR_Access_Virtual else CSR_Access_Illegal),
+                  CSR_Access_Failed_Default_Check());
 
   return Ok(())
 }

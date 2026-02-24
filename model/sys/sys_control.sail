@@ -13,7 +13,7 @@ function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus,
   then privLevel_bits(m[MPP], 0b0) // TODO: use m[MPV] if hypervisor enabled
   else priv
 
-function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> result(unit, csr_access_failure) =
+function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> result(unit, (csr_access_failure, csr_access_failure_reason)) =
   is_CSR_accessible(csr, p, access_type)
 
 // Exception delegation: given an exception and the privilege at which

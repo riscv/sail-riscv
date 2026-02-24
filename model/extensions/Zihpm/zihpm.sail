@@ -255,16 +255,16 @@ function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xl
 
 // Hardware Performance Monitoring user mode counters
 function clause is_CSR_accessible((0b1100000 /* 0xC00 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) = {
-  if not(currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U)) then return Err(CSR_Access_Illegal);
+  if not(currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U)) then return Err(CSR_Access_Illegal, CSR_Access_Disabled_Extension());
   if not(privLevel_is_virtual(priv)) & counter_enabled(unsigned(index), priv) then return Ok(());
   // TODO: For VS/VU, check hcounteren and mcounteren.
-  Err(CSR_Access_Illegal)
+  Err(CSR_Access_Illegal, CSR_Access_Failed_Condition())
 }
 function clause is_CSR_accessible((0b1100100 /* 0xC80 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) = {
-  if not(currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U) & xlen == 32) then return Err(CSR_Access_Illegal);
+  if not(currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U) & xlen == 32) then return Err(CSR_Access_Illegal, CSR_Access_Disabled_Extension());
   if not(privLevel_is_virtual(priv)) & counter_enabled(unsigned(index), priv) then return Ok(());
   // TODO: For VS/VU, check hcounteren and mcounteren.
-  Err(CSR_Access_Illegal)
+  Err(CSR_Access_Illegal, CSR_Access_Failed_Condition())
 }
 
 function clause read_CSR(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))

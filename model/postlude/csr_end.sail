@@ -9,7 +9,7 @@
 mapping clause csr_name_map = reg <-> hex_bits_12(reg)
 end csr_name_map
 
-function clause is_CSR_accessible(_) = Err(CSR_Access_Illegal)
+function clause is_CSR_accessible(_) = Err(CSR_Access_Illegal, CSR_Access_Invalid_Address())
 end is_CSR_accessible
 
 // CSRs that are not governed by xstateen are not gated by this function.
