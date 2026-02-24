@@ -131,12 +131,11 @@ private function clint_dispatch(mip_was_written : bool) -> unit = {
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
     mip[STI] = bool_to_bit(stimecmp <=_u mtime);
   };
+  if get_config_print_clint()
+  then print_log("clint mtime " ^ bits_str(mtime));
   if old_mip != mip.bits | mip_was_written then {
     csr_write_callback("mip", mip.bits);
   };
-  if get_config_print_clint()
-  then print_log("clint mtime " ^ bits_str(mtime) ^ " (mip.MTI <- " ^ bits_str(mip[MTI]) ^
-    (if currentlyEnabled(Ext_Sstc) then ", mip.STI <- " ^ bits_str(mip[STI]) else "") ^ ")");
 }
 
 private val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
