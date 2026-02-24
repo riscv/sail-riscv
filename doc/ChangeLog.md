@@ -2,6 +2,7 @@
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in the execution trace
+  - https://github.com/riscv/sail-riscv/issues/1560 : Updates to `mip` were not captured in the trace file
 
 # Release notes for version 0.10
 
