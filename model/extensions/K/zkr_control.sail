@@ -41,17 +41,26 @@ private function write_seed_csr () -> xlenbits = zeros()
 
 // CSR mapping
 mapping clause csr_name_map = 0x015  <-> "seed"
-function clause is_CSR_accessible(0x015, priv, access_type) =
-  currentlyEnabled(Ext_Zkr) &
-  // Read-only access is not allowed.
-  (access_type != CSRRead) &
-  (match priv {
-    Machine => true,
-    Supervisor => mseccfg[SSEED] == 0b1,
-    User => mseccfg[USEED] == 0b1,
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-  })
+
+// This implements the "Entropy Source Access Control" Table in the manual.
+function clause is_CSR_accessible(0x015, priv, access_type) = {
+  if not(currentlyEnabled(Ext_Zkr)) | access_type == CSRRead
+  then return Err(CSR_Access_Illegal, CSR_Access_Failed_Condition());
+
+  match priv {
+    Machine           => Ok(()),
+    User              => if mseccfg[USEED] == 0b1 then Ok(()) else Err((CSR_Access_Illegal, CSR_Access_Illegal_SEED_Privilege())),
+    Supervisor        => if mseccfg[SSEED] == 0b1 then Ok(()) else Err((CSR_Access_Illegal, CSR_Access_Illegal_SEED_Privilege())),
+    VirtualSupervisor => if mseccfg[SSEED] == 0b1
+                         then Err((if access_type == CSRReadWrite then CSR_Access_Virtual else CSR_Access_Illegal),
+                                  CSR_Access_Illegal_SEED_Access())
+                         else Err(CSR_Access_Illegal, CSR_Access_Illegal_SEED_Privilege()),
+    VirtualUser       => if mseccfg[SSEED] == 0b1
+                         then Err((if access_type == CSRReadWrite then CSR_Access_Virtual else CSR_Access_Illegal),
+                                  CSR_Access_Illegal_SEED_Access())
+                         else Err(CSR_Access_Illegal, CSR_Access_Illegal_SEED_Privilege()),
+  }
+}
 
 function clause read_CSR(0x015) = read_seed_csr()
 function clause write_CSR(0x015, _value) = Ok(write_seed_csr())

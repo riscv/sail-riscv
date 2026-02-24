@@ -15,12 +15,42 @@ mapping clause csr_name_map = 0xC80  <-> "cycleh"
 mapping clause csr_name_map = 0xC81  <-> "timeh"
 mapping clause csr_name_map = 0xC82  <-> "instreth"
 
-function clause is_CSR_accessible(0xC00, priv, _) = currentlyEnabled(Ext_Zicntr) & counter_enabled(0, priv) // cycle
-function clause is_CSR_accessible(0xC01, priv, _) = currentlyEnabled(Ext_Zicntr) & counter_enabled(1, priv) // time
-function clause is_CSR_accessible(0xC02, priv, _) = currentlyEnabled(Ext_Zicntr) & counter_enabled(2, priv) // instret
-function clause is_CSR_accessible(0xC80, priv, _) = currentlyEnabled(Ext_Zicntr) & xlen == 32 & counter_enabled(0, priv) // cycleh
-function clause is_CSR_accessible(0xC81, priv, _) = currentlyEnabled(Ext_Zicntr) & xlen == 32 & counter_enabled(1, priv) // timeh
-function clause is_CSR_accessible(0xC82, priv, _) = currentlyEnabled(Ext_Zicntr) & xlen == 32 & counter_enabled(2, priv) // instreth
+function clause is_CSR_accessible(0xC00, priv, access_type) = {
+  if not(currentlyEnabled(Ext_Zicntr)) then return Err(CSR_Access_Illegal, CSR_Access_Disabled_Extension());
+  if not(privLevel_is_virtual(priv)) & default_CSR_access_allowed(0xC00, priv, access_type) & counter_enabled(0, priv) then return Ok(());
+  // TODO: For VS/VU, check hcounteren and mcounteren.
+  Err(CSR_Access_Illegal, CSR_Access_Failed_Condition())
+}
+function clause is_CSR_accessible(0xC01, priv, access_type) = {
+  if not(currentlyEnabled(Ext_Zicntr)) then return Err(CSR_Access_Illegal, CSR_Access_Disabled_Extension());
+  if not(privLevel_is_virtual(priv)) & default_CSR_access_allowed(0xC01, priv, access_type) & counter_enabled(1, priv) then return Ok(());
+  // TODO: For VS/VU, check hcounteren and mcounteren.
+  Err(CSR_Access_Illegal, CSR_Access_Failed_Condition())
+}
+function clause is_CSR_accessible(0xC02, priv, access_type) = {
+  if not(currentlyEnabled(Ext_Zicntr)) then return Err(CSR_Access_Illegal, CSR_Access_Disabled_Extension());
+  if not(privLevel_is_virtual(priv)) & default_CSR_access_allowed(0xC02, priv, access_type) & counter_enabled(2, priv) then return Ok(());
+  // TODO: For VS/VU, check hcounteren and mcounteren.
+  Err(CSR_Access_Illegal, CSR_Access_Failed_Condition())
+}
+function clause is_CSR_accessible(0xC80, priv, access_type) = {
+  if not(currentlyEnabled(Ext_Zicntr) & xlen == 32) then return Err(CSR_Access_Illegal, CSR_Access_Disabled_Extension());
+  if not(privLevel_is_virtual(priv)) & default_CSR_access_allowed(0xC80, priv, access_type) & counter_enabled(0, priv) then return Ok(());
+  // TODO: For VS/VU, check hcounteren and mcounteren.
+  Err(CSR_Access_Illegal, CSR_Access_Failed_Condition())
+}
+function clause is_CSR_accessible(0xC81, priv, access_type) = {
+  if not(currentlyEnabled(Ext_Zicntr) & xlen == 32) then return Err(CSR_Access_Illegal, CSR_Access_Disabled_Extension());
+  if not(privLevel_is_virtual(priv)) & default_CSR_access_allowed(0xC81, priv, access_type) & counter_enabled(1, priv) then return Ok(());
+  // TODO: For VS/VU, check hcounteren and mcounteren.
+  Err(CSR_Access_Illegal, CSR_Access_Failed_Condition())
+}
+function clause is_CSR_accessible(0xC82, priv, access_type) = {
+  if not(currentlyEnabled(Ext_Zicntr) & xlen == 32) then return Err(CSR_Access_Illegal, CSR_Access_Disabled_Extension());
+  if not(privLevel_is_virtual(priv)) & default_CSR_access_allowed(0xC82, priv, access_type) & counter_enabled(2, priv) then return Ok(());
+  // TODO: For VS/VU, check hcounteren and mcounteren.
+  Err(CSR_Access_Illegal, CSR_Access_Failed_Condition())
+}
 
 function clause read_CSR(0xC00) = mcycle[(xlen - 1) .. 0]
 function clause read_CSR(0xC01) = mtime[(xlen - 1) .. 0]
@@ -36,10 +66,14 @@ mapping clause csr_name_map = 0xB02  <-> "minstret"
 mapping clause csr_name_map = 0xB80  <-> "mcycleh"
 mapping clause csr_name_map = 0xB82  <-> "minstreth"
 
-function clause is_CSR_accessible(0xB00, _, _) = currentlyEnabled(Ext_Zicntr) // mcycle
-function clause is_CSR_accessible(0xB02, _, _) = currentlyEnabled(Ext_Zicntr) // minstret
-function clause is_CSR_accessible(0xB80, _, _) = currentlyEnabled(Ext_Zicntr) & xlen == 32 // mcycleh
-function clause is_CSR_accessible(0xB82, _, _) = currentlyEnabled(Ext_Zicntr) & xlen == 32 // minstreth
+function clause is_CSR_accessible(0xB00, priv, access_type) = // mcycle
+  check_CSR_access(0xB00, priv, access_type, currentlyEnabled(Ext_Zicntr))
+function clause is_CSR_accessible(0xB02, priv, access_type) = // minstret
+  check_CSR_access(0xB02, priv, access_type, currentlyEnabled(Ext_Zicntr))
+function clause is_CSR_accessible(0xB80, priv, access_type) = // mcycleh
+  check_CSR_access(0xB80, priv, access_type, currentlyEnabled(Ext_Zicntr) & xlen == 32)
+function clause is_CSR_accessible(0xB82, priv, access_type) = // minstreth
+  check_CSR_access(0xB82, priv, access_type, currentlyEnabled(Ext_Zicntr) & xlen == 32)
 
 function clause read_CSR(0xB00) = mcycle[(xlen - 1) .. 0]
 function clause read_CSR(0xB02) = minstret[(xlen - 1) .. 0]

@@ -31,7 +31,14 @@ register srmcfg : Srmcfg
 // Ssqosid - Quality-of-Service (Qos) Identifiers
 mapping clause csr_name_map = 0x181  <-> "srmcfg"
 
-function clause is_CSR_accessible(0x181, _, _) = currentlyEnabled(Ext_Ssqosid)
+function clause is_CSR_accessible(0x181, priv, access_type) = {
+  // When Smstateen is not implemented, VS/VU accesses always raise
+  // virtual-instruction exceptions.
+  if privLevel_is_virtual(priv) & not(currentlyEnabled(Ext_Smstateen))
+  then return Err(CSR_Access_Virtual, CSR_Access_Failed_Stateen());
+
+  check_CSR_access(0x181, priv, access_type, currentlyEnabled(Ext_Ssqosid))
+}
 
 function clause read_CSR(0x181) = srmcfg.bits
 
