@@ -10,24 +10,43 @@
 type is_sv_mode('v) -> Bool = 'v in {32, 39, 48, 57}
 type is_svx4_mode('v) -> Bool = 'v in {34, 41, 50, 59}
 type is_sv_or_svx4_mode('v : Int) -> Bool = is_sv_mode('v) | is_svx4_mode('v)
+type is_sv32_mode('v : Int) -> Bool = 'v == 32 | 'v == 34
+
+// Index of the root page table level, depending on the virtual mode.
+type root_level('v : Int), is_sv_or_svx4_mode('v) =
+  if      'v == 32 | 'v == 34 then 1
+  else if 'v == 39 | 'v == 41 then 2
+  else if 'v == 48 | 'v == 50 then 3
+  else 4
+
+val get_root_level : forall 'v, is_sv_or_svx4_mode('v). int('v) -> int(root_level('v))
+function get_root_level(sv_width) = sizeof(root_level('v))
 
 // Range of possible page levels depending on the virtual memory mode:
 //
-//   Sv32 = range(0, 1)
-//   Sv39 = range(0, 2)
-//   Sv48 = range(0, 3)
-//   Sv57 = range(0, 4)
+//   Sv32/Sv32x4 = range(0, 1)
+//   Sv39/Sv39x4 = range(0, 2)
+//   Sv48/Sv48x4 = range(0, 3)
+//   Sv57/Sv57x4 = range(0, 4)
 //
-type level_range('v : Int), is_sv_or_svx4_mode('v) = range(0, if 'v == 32 | 'v == 34 then 1
-                                                              else if 'v == 39 | 'v == 41 then 2
-                                                              else if 'v == 48 | 'v == 50 then 3
-                                                              else 4)
+type level_range('v : Int), is_sv_or_svx4_mode('v) = range(0, root_level('v))
+
+// Log2 of the PTE size in bytes, depending on the virtual mode.
+type log_pte_size_bytes('v : Int), is_sv_or_svx4_mode('v) = if is_sv32_mode('v) then 2 else 3
+
+// Number of VPN bits per page table level, depending on the virtual mode.
+// This is the size for regular levels only. The root level for G-stage
+// modes has 2 extra bits.
+type vpn_level_size('v : Int), is_sv_or_svx4_mode('v) = pagesize_bits - log_pte_size_bytes('v)
+
+val get_vpn_level_size : forall 'v, is_sv_or_svx4_mode('v). int('v) -> int(vpn_level_size('v))
+function get_vpn_level_size(sv_width) = sizeof(vpn_level_size('v))
 
 // Size of a Page Table Entry, depending on the virtual memory mode.
-type pte_bits('v), is_sv_or_svx4_mode('v) = bits(if 'v == 32 | 'v == 34 then 32 else 64)
+type pte_bits('v), is_sv_or_svx4_mode('v) = bits(if is_sv32_mode('v) then 32 else 64)
 
 // Number of Physical Page Number bits, depending on the virtual memory mode.
-type ppn_bits('v), is_sv_or_svx4_mode('v) = bits(if 'v == 32 | 'v == 34 then 22 else 44)
+type ppn_bits('v), is_sv_or_svx4_mode('v) = bits(if is_sv32_mode('v) then 22 else 44)
 
 // Number of Virtual Page Number bits, depending on the virtual memory mode.
 type vpn_bits('v), is_sv_or_svx4_mode('v) = bits('v - pagesize_bits)

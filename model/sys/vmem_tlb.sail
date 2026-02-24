@@ -162,7 +162,7 @@ function add_to_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   global   : bool,
   stage   : TranslationStage
 ) -> unit = {
-  let shift = level * (if 'v == 32 | 'v ==  34 then 10 else 9);
+  let shift = level * get_vpn_level_size(sv_width);
   let levelMask = ones(shift);
   // Clear bits below the level.
   let vpn = vpn & ~(zero_extend(levelMask));
