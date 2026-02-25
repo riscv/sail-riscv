@@ -71,7 +71,7 @@ function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
   write_single_element(SEW, 0, vd, sum);
   // other elements in vd are treated as tail elements, currently remain unchanged
   // TODO: configuration support for agnostic behavior
-  set_vstart(zeros());
+  // illegal_fp_reduction checks vstart == 0, and raises illegal-instruction otherwise.
   RETIRE_SUCCESS
 }
 
@@ -145,7 +145,7 @@ function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
   write_single_element(SEW_widen, 0, vd, sum);
   // other elements in vd are treated as tail elements, currently remain unchanged
   // TODO: configuration support for agnostic behavior
-  set_vstart(zeros());
+  // illegal_fp_widening_reduction checks vstart == 0, and raises illegal-instruction otherwise.
   RETIRE_SUCCESS
 }
 
