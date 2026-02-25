@@ -369,6 +369,11 @@ function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
 type satp_mode = bits(4)
 enum SATPMode = {Bare, Sv32, Sv39, Sv48, Sv57}
 
+// hypervisor-level address translation modes
+
+type hgatp_mode = bits(4)
+enum HGATPMode = {HBare, Sv32x4, Sv39x4, Sv48x4, Sv57x4}
+
 function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
   match (a, m) {
     (_,    0x0) => Some(Bare),

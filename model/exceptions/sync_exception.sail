@@ -13,3 +13,10 @@ struct sync_exception = {
   excinfo : option(xlenbits),
   ext     : option(ext_exception)   // for extensions
 }
+
+struct Exception_Context = {
+  trap            : ExceptionType,
+  tval            : xlenbits,
+  tval2           : xlenbits,
+  is_gstage_fault : bool,
+}
