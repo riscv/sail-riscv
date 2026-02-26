@@ -400,10 +400,6 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     LPE  = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
-    // TODO: add a config option to clear senvcfg.SSE directly when menvcfg.SSE is cleared.
-    // For now, `senvcfg` is marked private and the same effect is achieved by
-    // using a `read_senvcfg` accessor.  This might matter if there are alternate ways
-    // to access the CSR, e.g. directly from the C++ harness.
     SSE  = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
