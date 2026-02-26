@@ -181,8 +181,6 @@ val "shift_bits_left"  : forall 'n 'm. (bits('n), bits('m)) -> bits('n)
 overload operator >> = {shift_bits_right, sail_shiftright}
 overload operator << = {shift_bits_left, sail_shiftleft}
 
-// Ideally this would be sail builtin. This implementation is not efficient for large shifts.
-
 val shift_bits_right_arith : forall 'm 'n, 'n >= 1 . (bits('n), bits('m)) -> bits('n)
 function shift_bits_right_arith(value, shift) =
   sail_arith_shiftright(value, unsigned(shift))
