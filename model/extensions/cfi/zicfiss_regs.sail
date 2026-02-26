@@ -38,7 +38,7 @@ function is_ssp_accessible(priv : Privilege) -> bool =
     // needs bool_bit(read_henvcfg()[SSE])
     // raises virtual instruction otherwise
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    // needs bool_bit(read_henvcfg()[SSE]) & bool_bit(read_senvcfg()[SSE])
+    // needs bool_bit(read_senvcfg()[SSE])
     // raises virtual instruction otherwise
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     // handle the special case of M+U systems

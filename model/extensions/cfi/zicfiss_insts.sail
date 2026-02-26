@@ -158,10 +158,8 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
                          then return Illegal_Instruction(),
     User              => if not(currentlyEnabled(Ext_S)) | read_senvcfg()[SSE] == 0b0
                          then return Illegal_Instruction(),
-    VirtualSupervisor => { if menvcfg[SSE] == 0b0
-                           then return Illegal_Instruction();
-                           // TODO:
-                           // else if read_henvcfg()[SSE] == 0b0
+    VirtualSupervisor => { // TODO:
+                           // if read_henvcfg()[SSE] == 0b0
                            // then return Virtual_Instruction();
                            internal_error(__FILE__, __LINE__, "Hypervisor extension not supported") },
     VirtualUser       => if menvcfg[SSE] == 0b0
