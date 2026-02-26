@@ -217,9 +217,9 @@ bitfield htif_cmd : bits(64) = {
 }
 
 // Current value of the HTIF tohost register.
-register htif_tohost : bits(64)
-register htif_done   : bool
-register htif_exit_code : bits(64)
+register htif_tohost : bits(64) = zeros()
+register htif_done : bool = false
+register htif_exit_code : bits(64) = zeros()
 
 // Applications sometimes write the lower 32-bit payload bytes without
 // writing the control bytes; this is seen in the riscv-tests suite.
@@ -229,8 +229,8 @@ register htif_exit_code : bits(64)
 // intervening write to the control bytes, we process the whole htif
 // command anyway.
 
-register htif_cmd_write : bits(1)
-register htif_payload_writes : bits(4)
+register htif_cmd_write : bits(1) = zeros()
+register htif_payload_writes : bits(4) = zeros()
 
 // Once a htif command has been processed, the port is reset.
 private function reset_htif () -> unit = {
@@ -350,16 +350,3 @@ function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, wid
   else if within_htif_writable(paddr, width)
   then htif_store(paddr, width, data)
   else Err(E_SAMO_Access_Fault())
-
-// Platform initialization and ticking.
-
-function init_platform() -> unit = {
-  htif_tohost = zeros();
-  htif_done   = false;
-  htif_exit_code = zeros();
-  htif_cmd_write = 0b0;
-  htif_payload_writes = zeros();
-}
-
-// Platform-specific wait-for-interrupt
-function platform_wfi() -> unit = ()
