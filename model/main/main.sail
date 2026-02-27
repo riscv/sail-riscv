@@ -14,7 +14,8 @@ function main() : unit -> unit = {
     init_model("");
     print_bits("PC = ", PC);
     sail_end_cycle();
-    loop()
+    let _ = loop();
+    return ()
   } catch {
     Error_not_implemented(s) => print_string("Error: not implemented: ", s),
     Error_internal_error(s) => print_string("Error: internal error: ", s),
