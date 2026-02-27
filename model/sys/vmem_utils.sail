@@ -40,7 +40,7 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 // (as atomic events) are allowed provided the access occurs within a
 // naturally aligned 2^N byte region.  This region must be smaller than
 // the page size (i.e. 2^12 = 4096 bytes).
-let sys_misaligned_allowed_within_exp : range(0, 11) = config memory.misaligned.allowed_within_exp
+let sys_misaligned_translation_tolerance_exp : range(0, 11) = config memory.misaligned.translation_tolerance_exp
 
 // Check if an 'n byte access for an address is within an aligned 2^'r byte region
 private val access_within : forall 'width 'n ('r : Nat), 'r <= 'width & 1 <= 'n <= 2^'r.
@@ -68,7 +68,7 @@ private function prop_access_within_single(addr : bits(32)) -> bool = {
 private val allowed_misaligned : forall 'width, 'width > 0. (xlenbits, int('width)) -> bool
 
 function allowed_misaligned(vaddr, width) = {
-  let region_width_exp = sys_misaligned_allowed_within_exp;
+  let region_width_exp = sys_misaligned_translation_tolerance_exp;
   let region_width = 2 ^ region_width_exp;
 
   if width > region_width then return false;
