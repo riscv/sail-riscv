@@ -26,21 +26,21 @@
 //   vmem_write       - writes a specified data payload
 
 // This is a external option that controls the order in which the model
-// performs misaligned accesses.
-let sys_misaligned_order_decreasing : bool = config memory.misaligned.order_decreasing
+// performs misaligned load/store accesses.
+let sys_misaligned_order_decreasing : bool = config memory.misaligned_load_store.order_decreasing
 
-// This is an external option that, when true, causes all misaligned accesses
-// to be split into single byte operations.  Otherwise, misaligned accesses
+// This is an external option that, when true, causes all misaligned load/store accesses
+// to be split into single byte operations.  Otherwise, such misaligned accesses
 // are split into multiple accesses of smaller widths such that each of the latter
 // accesses is aligned.
-let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
+let sys_misaligned_byte_by_byte : bool = config memory.misaligned_load_store.byte_by_byte
 
 // This is an external option that returns an integer N, such that
-// when N is greater than zero, misaligned accesses to physical memory
+// when N is greater than zero, misaligned load/store accesses to physical memory
 // (as atomic events) are allowed provided the access occurs within a
 // naturally aligned 2^N byte region.  This region must be smaller than
 // the page size (i.e. 2^12 = 4096 bytes).
-let sys_misaligned_allowed_within_exp : range(0, 11) = config memory.misaligned.allowed_within_exp
+let sys_misaligned_allowed_within_exp : range(0, 11) = config memory.misaligned_load_store.allowed_within_exp
 
 // Check if an 'n byte access for an address is within an aligned 2^'r byte region
 private val access_within : forall 'width 'n ('r : Nat), 'r <= 'width & 1 <= 'n <= 2^'r.
@@ -109,7 +109,7 @@ function misaligned_order(n) = {
 // External API
 
 function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
-  if plat_enable_misaligned_access then {
+  if plat_enable_misaligned_load_store then {
     false
   } else {
     not(is_aligned_addr(vaddr, width))

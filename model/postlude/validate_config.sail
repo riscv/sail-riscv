@@ -294,6 +294,19 @@ private function check_misc_extension_dependencies() -> bool = {
   valid
 }
 
+private function check_pma_regions_for_zicclsm(pmas : list(PMA_Region)) -> bool =
+  match pmas {
+    [||] => true,
+    pma :: rest => {
+      let attr = pma.attributes;
+      if memory_region_type(attr) == MainMemory &
+        attr.cacheable & attr.coherent &
+        attr.misaligned_fault == AccessFault
+      then false
+      else check_pma_regions_for_zicclsm(rest)
+    },
+  }
+
 private function check_extension_param_constraints() -> bool = {
   var valid : bool = true;
   if hartSupports(Ext_Zic64b) & (plat_cache_block_size_exp != 6) then {
@@ -306,6 +319,14 @@ private function check_extension_param_constraints() -> bool = {
     print_endline("The A or Zalrsc extensions are enabled, but the reservation set size of 2^" ^ dec_str(plat_reservation_set_size_exp) ^
                   " is too small; it should be at least 2^" ^ dec_str(min_rss_exp) ^
                   " for the LR/SC operands on this platform.");
+  };
+  if hartSupports(Ext_Zicclsm) & not(check_pma_regions_for_zicclsm(pma_regions)) then {
+    valid = false;
+    print_endline(
+      "The Zicclsm extension is enabled but at least one main memory region " ^
+      "that is cacheable and coherent does not support misaligned accesses " ^
+      " - either in hardware or emulated - because misaligned_fault is AccessFault."
+    );
   };
   valid
 }

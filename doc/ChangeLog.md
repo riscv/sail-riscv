@@ -34,6 +34,10 @@
   - Explicit configuration for the Zdinx extension was added; see `extensions.Zdinx`.
     Previously, Zdinx was implicitly configured by the Zfinx extension.
 
+- The `memory.misaligned.*` configuration parameters were renamed to
+  `memory.misaligned_load_store.*` to clarify that they affected only
+  load and store accesses, and not others (e.g. atomics).
+
 - The following extensions have been added:
   - Za64rs, Za128rs
   - Zic64b
@@ -42,6 +46,7 @@
   - Ssu64xl
   - Smstateen, Sstateen
   - Ssqosid
+  - Zicclsm
 
 - The following unratified extensions have been added:
   - Zibi
