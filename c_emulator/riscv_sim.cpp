@@ -465,7 +465,8 @@ void flush_logs() {
 
 void run_sail(ModelImpl &model, const CLIOptions &opts) {
   bool is_waiting = false;
-  bool exit_wait = true;
+  uint64_t max_wait_steps = get_config_uint64({"platform", "max_steps_to_wait"});
+  uint64_t wait_steps_remaining = 0;
 
   /* initialize the step number */
   mach_int step_no = 0;
@@ -496,7 +497,10 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      is_waiting = model.ztry_step(sail_step, exit_wait);
+      bool was_waiting = is_waiting;
+      is_waiting = model.ztry_step(sail_step, wait_steps_remaining == 0);
+      KILL(sail_int)(&sail_step);
+
       if (model.have_exception) {
         model.print_current_exception();
         break;
@@ -504,9 +508,15 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
       if (opts.config_print_instr) {
         flush_logs();
       }
-      KILL(sail_int)(&sail_step);
       if (rvfi) {
         rvfi->send_trace(opts.config_print_rvfi);
+      }
+      if (!was_waiting && is_waiting) {
+        wait_steps_remaining = max_wait_steps;
+      } else if (!is_waiting) {
+        wait_steps_remaining = 0;
+      } else if (wait_steps_remaining > 0) {
+        wait_steps_remaining--;
       }
     }
 
@@ -542,6 +552,8 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
 
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
+      model.ztick_clock(UNIT);
+    } else if (wait_steps_remaining > 0) {
       model.ztick_clock(UNIT);
     }
   }

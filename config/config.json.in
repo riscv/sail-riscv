@@ -189,7 +189,10 @@
     },
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
-    "wfi_is_nop": true
+    "wfi_is_nop": false,
+    // The maximum number of steps before a wait instruction (e.g. WFI, NTO, STO)
+    // that is not a nop expires its wait.  It is not possible to wait indefinitely.
+    "max_steps_to_wait": 10
   },
   "extensions": {
     "M": {
