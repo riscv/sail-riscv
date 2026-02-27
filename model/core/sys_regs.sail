@@ -124,7 +124,8 @@ private function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
 }
 
 mapping clause csr_name_map = 0x301  <-> "misa"
-function clause is_CSR_accessible(0x301, _, _) = true // misa
+function clause is_CSR_accessible(0x301, p, access_type) = // misa
+  check_CSR_access(0x301, p, access_type, true)
 function clause read_CSR(0x301) = misa.bits
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); Ok(misa.bits) }
 
@@ -269,8 +270,10 @@ register mstatus : Mstatus = {
 mapping clause csr_name_map = 0x300  <-> "mstatus"
 mapping clause csr_name_map = 0x310  <-> "mstatush"
 
-function clause is_CSR_accessible(0x300, _, _) = true // mstatus
-function clause is_CSR_accessible(0x310, _, _) = xlen == 32 // mstatush
+function clause is_CSR_accessible(0x300, p, access_type) = // mstatus
+  check_CSR_access(0x300, p, access_type, true)
+function clause is_CSR_accessible(0x310, p, access_type) = // mstatush
+  check_CSR_access(0x310, p, access_type, xlen == 32)
 
 function clause read_CSR(0x300) = mstatus.bits[xlen - 1 .. 0]
 function clause read_CSR(0x310 if xlen == 32) = mstatus.bits[63 .. 32]
@@ -331,8 +334,10 @@ mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) // mseccfg
-function clause is_CSR_accessible(0x757, _, _) = (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32 // mseccfgh
+function clause is_CSR_accessible(0x747, p, access_type) = // mseccfg
+  check_CSR_access(0x747, p, access_type, currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp))
+function clause is_CSR_accessible(0x757, p, access_type) =  // mseccfgh
+  check_CSR_access(0x757, p, access_type, (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32)
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
@@ -424,12 +429,12 @@ mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
 mapping clause csr_name_map = 0x10A  <-> "senvcfg"
 
-function clause is_CSR_accessible(0x30A, _, _) = currentlyEnabled(Ext_U) // menvcfg
-function clause is_CSR_accessible(0x31A, _, _) = currentlyEnabled(Ext_U) & (xlen == 32) // menvcfgh
-
-// This should ideally also check `xstateen.ENVCFG`, but due to module
-// interdependency issues, that is handled by `stateen_allows_CSR_access`.
-function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) // senvcfg
+function clause is_CSR_accessible(0x30A, p, access_type) = // menvcfg
+  check_CSR_access(0x30A, p, access_type, currentlyEnabled(Ext_U))
+function clause is_CSR_accessible(0x31A, p, access_type) = // menvcfgh
+  check_CSR_access(0x31A, p, access_type, currentlyEnabled(Ext_U) & xlen == 32)
+function clause is_CSR_accessible(0x10A, p, access_type) = // senvcfg
+  check_CSR_access(0x10A, p, access_type, currentlyEnabled(Ext_S))
 
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
@@ -477,7 +482,8 @@ bitfield Mcause : xlenbits = {
 }
 register mcause : Mcause
 mapping clause csr_name_map = 0x342  <-> "mcause"
-function clause is_CSR_accessible(0x342, _, _) = true // mcause
+function clause is_CSR_accessible(0x342, p, access_type) = // mcause
+  check_CSR_access(0x342, p, access_type, true)
 function clause read_CSR(0x342) = mcause.bits
 function clause write_CSR(0x342, value) = { mcause.bits = value; Ok(mcause.bits) }
 
@@ -524,8 +530,10 @@ register mscratch : xlenbits
 mapping clause csr_name_map = 0x343  <-> "mtval"
 mapping clause csr_name_map = 0x340  <-> "mscratch"
 
-function clause is_CSR_accessible(0x343, _, _) = true // mtval
-function clause is_CSR_accessible(0x340, _, _) = true // mscratch
+function clause is_CSR_accessible(0x343, p, access_type) = // mtval
+  check_CSR_access(0x343, p, access_type, true)
+function clause is_CSR_accessible(0x340, p, access_type) = // mscratch
+  check_CSR_access(0x340, p, access_type, true)
 
 function clause read_CSR(0x343) = mtval
 function clause read_CSR(0x340) = mscratch
@@ -550,7 +558,8 @@ private function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren 
 
 register scounteren : Counteren
 mapping clause csr_name_map = 0x106  <-> "scounteren"
-function clause is_CSR_accessible(0x106, _, _) = currentlyEnabled(Ext_S) // scounteren
+function clause is_CSR_accessible(0x106, p, access_type) = // scounteren
+  check_CSR_access(0x106, p, access_type, currentlyEnabled(Ext_S))
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); Ok(zero_extend(scounteren.bits)) }
 
@@ -562,10 +571,10 @@ function legalize_mcounteren(_c : Counteren, v : xlenbits) -> Counteren = {
 
 register mcounteren : Counteren
 mapping clause csr_name_map = 0x306  <-> "mcounteren"
-function clause is_CSR_accessible(0x306, _, _) = currentlyEnabled(Ext_U) // mcounteren
+function clause is_CSR_accessible(0x306, p, access_type) = // mcounteren
+  check_CSR_access(0x306, p, access_type, currentlyEnabled(Ext_U))
 function clause read_CSR(0x306) = zero_extend(mcounteren.bits)
 function clause write_CSR(0x306, value) = { mcounteren = legalize_mcounteren(mcounteren, value); Ok(zero_extend(mcounteren.bits)) }
-
 
 // mcountinhibit
 bitfield Counterin : bits(32) = {
@@ -582,7 +591,8 @@ private function legalize_mcountinhibit(_c : Counterin, v : xlenbits) -> Counter
 
 register mcountinhibit : Counterin
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
-function clause is_CSR_accessible(0x320, _, _) = true // mcountinhibit
+function clause is_CSR_accessible(0x320, p, access_type) = // mcountinhibit
+  check_CSR_access(0x320, p, access_type, true)
 function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Ok(zero_extend(mcountinhibit.bits)) }
 
@@ -618,11 +628,16 @@ mapping clause csr_name_map = 0xF13  <-> "mimpid"
 mapping clause csr_name_map = 0xF14  <-> "mhartid"
 mapping clause csr_name_map = 0xF15  <-> "mconfigptr"
 
-function clause is_CSR_accessible(0xf11, _, _) = true // mvendorid
-function clause is_CSR_accessible(0xf12, _, _) = true // marchdid
-function clause is_CSR_accessible(0xf13, _, _) = true // mimpid
-function clause is_CSR_accessible(0xf14, _, _) = true // mhartid
-function clause is_CSR_accessible(0xf15, _, _) = true // mconfigptr
+function clause is_CSR_accessible(0xF11, p, access_type) = // mvendorid
+  check_CSR_access(0xF11, p, access_type, true)
+function clause is_CSR_accessible(0xF12, p, access_type) = // marchdid
+  check_CSR_access(0xF12, p, access_type, true)
+function clause is_CSR_accessible(0xF13, p, access_type) = // mimpid
+  check_CSR_access(0xF13, p, access_type, true)
+function clause is_CSR_accessible(0xF14, p, access_type) = // mhartid
+  check_CSR_access(0xF14, p, access_type, true)
+function clause is_CSR_accessible(0xF15, p, access_type) = // mconfigptr
+  check_CSR_access(0xF15, p, access_type, true)
 
 function clause read_CSR(0xF11) = zero_extend(mvendorid)
 function clause read_CSR(0xF12) = marchid
@@ -694,7 +709,9 @@ private function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
 }
 
 mapping clause csr_name_map = 0x100  <-> "sstatus"
-function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
+function clause is_CSR_accessible(0x100, p, access_type) = // sstatus
+  check_CSR_access(0x100, p, access_type, currentlyEnabled(Ext_S))
+
 function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0]) }
 
@@ -709,9 +726,12 @@ mapping clause csr_name_map = 0x140  <-> "sscratch"
 mapping clause csr_name_map = 0x142  <-> "scause"
 mapping clause csr_name_map = 0x143  <-> "stval"
 
-function clause is_CSR_accessible(0x140, _, _) = currentlyEnabled(Ext_S) // sscratch
-function clause is_CSR_accessible(0x142, _, _) = currentlyEnabled(Ext_S) // scause
-function clause is_CSR_accessible(0x143, _, _) = currentlyEnabled(Ext_S) // stval
+function clause is_CSR_accessible(0x140, p, access_type) = // sscratch
+  check_CSR_access(0x140, p, access_type, currentlyEnabled(Ext_S))
+function clause is_CSR_accessible(0x142, p, access_type) = // scause
+  check_CSR_access(0x142, p, access_type, currentlyEnabled(Ext_S))
+function clause is_CSR_accessible(0x143, p, access_type) = // stval
+  check_CSR_access(0x143, p, access_type, currentlyEnabled(Ext_S))
 
 function clause read_CSR(0x140) = sscratch
 function clause read_CSR(0x142) = scause.bits
@@ -779,7 +799,8 @@ mapping clause csr_name_map = 0x7a1  <-> "tdata1"
 mapping clause csr_name_map = 0x7a2  <-> "tdata2"
 mapping clause csr_name_map = 0x7a3  <-> "tdata3"
 
-function clause is_CSR_accessible(0x7a0, _, _) = true
+function clause is_CSR_accessible(0x7a0, p, access_type) = // tselect
+  check_CSR_access(0x7a0, p, access_type, true)
 function clause read_CSR(0x7a0) = ~(tselect)  // this indicates we don't have any trigger support
 function clause write_CSR(0x7a0, value) = { tselect = value; Ok(tselect) }
 

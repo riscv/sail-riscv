@@ -250,7 +250,8 @@ mapping clause csr_name_map = 0x3EE  <-> "pmpaddr62"
 mapping clause csr_name_map = 0x3EF  <-> "pmpaddr63"
 
 // pmpcfgN
-function clause is_CSR_accessible(0x3A @ idx : bits(4), _, _) = sys_pmp_count > 4 * unsigned(idx) & (idx[0] == 0b0 | xlen == 32)
+function clause is_CSR_accessible(0x3A @ idx : bits(4), p, access_type) =
+  check_CSR_access(0x3A @ idx, p, access_type, sys_pmp_count > 4 * unsigned(idx) & (idx[0] == 0b0 | xlen == 32))
 function clause read_CSR(0x3A @ idx : bits(4) if idx[0] == 0b0 | xlen == 32) = pmpReadCfgReg(unsigned(idx))
 function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == 0b0 | xlen == 32) = {
   let idx = unsigned(idx);
@@ -259,10 +260,14 @@ function clause write_CSR((0x3A @ idx : bits(4), value) if idx[0] == 0b0 | xlen 
 }
 
 // pmpaddrN. Unfortunately the PMP index does not nicely align with the CSR index bits.
-function clause is_CSR_accessible(0x3B @ idx : bits(4), _, _) = sys_pmp_count > unsigned(0b00 @ idx)
-function clause is_CSR_accessible(0x3C @ idx : bits(4), _, _) = sys_pmp_count > unsigned(0b01 @ idx)
-function clause is_CSR_accessible(0x3D @ idx : bits(4), _, _) = sys_pmp_count > unsigned(0b10 @ idx)
-function clause is_CSR_accessible(0x3E @ idx : bits(4), _, _) = sys_pmp_count > unsigned(0b11 @ idx)
+function clause is_CSR_accessible(0x3B @ idx : bits(4), p, access_type) =
+  check_CSR_access(0x3B @ idx, p, access_type, sys_pmp_count > unsigned(0b00 @ idx))
+function clause is_CSR_accessible(0x3C @ idx : bits(4), p, access_type) =
+  check_CSR_access(0x3C @ idx, p, access_type, sys_pmp_count > unsigned(0b01 @ idx))
+function clause is_CSR_accessible(0x3D @ idx : bits(4), p, access_type) =
+  check_CSR_access(0x3D @ idx, p, access_type, sys_pmp_count > unsigned(0b10 @ idx))
+function clause is_CSR_accessible(0x3E @ idx : bits(4), p, access_type) =
+  check_CSR_access(0x3E @ idx, p, access_type, sys_pmp_count > unsigned(0b11 @ idx))
 
 function clause read_CSR(0x3B @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b00 @ idx))
 function clause read_CSR(0x3C @ idx : bits(4)) = pmpReadAddrReg(unsigned(0b01 @ idx))
