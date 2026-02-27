@@ -309,6 +309,64 @@ function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
     LANDING_PAD_FAULT  => zero_extend(0b010),
   }
 
+union AccessException = {
+  AccessExceptionLoad  : unit,
+  AccessExceptionSAMO  : unit,
+  AccessExceptionFetch : unit,
+}
+
+function AccessType_to_AccessException forall 'a . (access : MemoryAccessType('a)) -> AccessException = {
+  match access {
+    Atomic(_)                   => AccessExceptionSAMO(),
+    Load(_)                     => AccessExceptionLoad(),
+    LoadReserved(_)             => AccessExceptionLoad(),
+    Store(_)                    => AccessExceptionSAMO(),
+    StoreConditional(_)         => AccessExceptionSAMO(),
+    InstructionFetch(_)         => AccessExceptionFetch(),
+
+    // Though prefetches don't raise exceptions, we return a nominal
+    // exception here to propagate the failed address translation to
+    // the execute of the calling instruction so that it can decide
+    // whether to actually proceed with a prefetch.
+    CacheAccess(CB_manage(_))   => AccessExceptionSAMO(),
+    CacheAccess(CB_zero())      => AccessExceptionSAMO(),
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_R => AccessExceptionLoad(),
+      PREFETCH_W => AccessExceptionSAMO(),
+      PREFETCH_I => AccessExceptionFetch(),
+    }
+  }
+}
+
+function AccessException_to_E_Addr_Align(e: AccessException) -> ExceptionType =
+  match e {
+    AccessExceptionLoad(_)  => E_Load_Addr_Align(),
+    AccessExceptionSAMO(_)  => E_SAMO_Addr_Align(),
+    AccessExceptionFetch(_) => E_Fetch_Addr_Align(),
+  }
+
+function AccessException_to_E_Access_Fault(e : AccessException) -> ExceptionType =
+  match e {
+    AccessExceptionLoad(_)  => E_Load_Access_Fault(),
+    AccessExceptionSAMO(_)  => E_SAMO_Access_Fault(),
+    AccessExceptionFetch(_) => E_Fetch_Access_Fault(),
+  }
+
+function AccessException_to_E_Page_Fault(e : AccessException) -> ExceptionType =
+  match e {
+    AccessExceptionLoad(_)  => E_Load_Page_Fault(),
+    AccessExceptionSAMO(_)  => E_SAMO_Page_Fault(),
+    AccessExceptionFetch(_) => E_Fetch_Page_Fault(),
+  }
+
+// TODO: Wait for Hypervisor Extension
+// function AccessException_to_E_GPage_Fault(e : AccessException) -> ExceptionType =
+//   match e {
+//     AccessExceptionLoad(_)  => E_Load_GPage_Fault(),
+//     AccessExceptionSAMO(_)  => E_SAMO_GPage_Fault(),
+//     AccessExceptionFetch(_) => E_Fetch_GPage_Fault(),
+//   }
+
 // An architectural trap can be caused by either an interrupt or an exception
 
 union TrapCause = {
