@@ -11,9 +11,9 @@ main:
 
 # Ensure at least 10 steps for an uninterrupted WFI.
 test1:
-  csrr t0, mcycle
+  csrr t0, time
   wfi
-  csrr t1, mcycle
+  csrr t1, time
   addi t2, t0, 10
   blt t1, t2, fail
 
@@ -47,7 +47,7 @@ test2:
   li t0, MIP_STIP
   csrs mie, t0
   # Set timer for STI to fire 10 steps from now, during WFI.
-  csrr t0, mcycle
+  csrr t0, time
   addi t0, t0, 10
   csrw stimecmp, t0
   # Enable interrupts.
