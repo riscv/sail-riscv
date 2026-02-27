@@ -1,8 +1,8 @@
 # Release notes for the next version
 
 - Updates to the [configuration file](../config/config.json.in):
-  - The maximum number of steps that wait instructions (e.g. WFI, NTO,
-    STO) can wait for is now configurable; see `platform.max_steps_to_wait`
+  - The maximum number of steps that wait instructions (e.g. WFI, WRS.NTO,
+    WRS.STO) can wait for is now configurable; see `platform.max_steps_to_wait`
     (see also https://github.com/riscv/sail-riscv/issues/1564).
     The default setting for `platform.wfi_is_nop` was also changed from
     `true` to `false`.
