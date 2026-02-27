@@ -23,8 +23,8 @@ function prepare_trap_vector(p : Privilege, cause : Mcause) -> xlenbits = {
     Machine           => mtvec,
     Supervisor        => stvec,
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualSupervisor => vstvec,
   };
   match tvec_addr(tvec, cause) {
     Some(epc) => epc,
@@ -43,8 +43,8 @@ function get_xepc(p : Privilege) -> xlenbits =
     Machine           => align_pc(mepc),
     Supervisor        => align_pc(sepc),
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualSupervisor => align_pc(vsepc),
   }
 
 function set_xepc(p : Privilege, value : xlenbits) -> xlenbits = {
@@ -53,8 +53,8 @@ function set_xepc(p : Privilege, value : xlenbits) -> xlenbits = {
     Machine           => mepc = target,
     Supervisor        => sepc = target,
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualSupervisor => vsepc = target,
   };
   target
 }
@@ -70,6 +70,9 @@ function get_mtvec() -> xlenbits =
 function get_stvec() -> xlenbits =
   stvec.bits
 
+function get_vstvec() -> xlenbits =
+  vstvec.bits
+
 function set_mtvec(value : xlenbits) -> xlenbits = {
   mtvec = legalize_tvec(mtvec, value);
   mtvec.bits
@@ -80,22 +83,35 @@ function set_stvec(value : xlenbits) -> xlenbits = {
   stvec.bits
 }
 
+function set_vstvec(value : xlenbits) -> xlenbits = {
+  vstvec = legalize_tvec(vstvec, value);
+  vstvec.bits
+}
+
+mapping clause csr_name_map = 0x205  <-> "vstvec"
+mapping clause csr_name_map = 0x241  <-> "vsepc"
 mapping clause csr_name_map = 0x105  <-> "stvec"
 mapping clause csr_name_map = 0x141  <-> "sepc"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
 mapping clause csr_name_map = 0x341  <-> "mepc"
 
+function clause is_CSR_accessible(0x205, _, _) = currentlyEnabled(Ext_H) // vstvec
+function clause is_CSR_accessible(0x241, _, _) = currentlyEnabled(Ext_H) // vsepc
 function clause is_CSR_accessible(0x105, _, _) = currentlyEnabled(Ext_S) // stvec
 function clause is_CSR_accessible(0x141, _, _) = currentlyEnabled(Ext_S) // sepc
 function clause is_CSR_accessible(0x305, _, _) = true // mtvec
 function clause is_CSR_accessible(0x341, _, _) = true // mepc
 
-function clause read_CSR(0x105) = get_stvec()
-function clause read_CSR(0x141) = get_xepc(Supervisor)
+function clause read_CSR(0x205) = get_vstvec()
+function clause read_CSR(0x241) = get_xepc(VirtualSupervisor)
+function clause read_CSR(0x105) = if inVirtualPrivilege() then get_vstvec() else get_stvec()
+function clause read_CSR(0x141) = get_xepc(if inVirtualPrivilege() then VirtualSupervisor else Supervisor)
 function clause read_CSR(0x305) = get_mtvec()
 function clause read_CSR(0x341) = get_xepc(Machine)
 
-function clause write_CSR(0x105, value) = { Ok(set_stvec(value)) }
-function clause write_CSR(0x141, value) = { Ok(set_xepc(Supervisor, value)) }
+function clause write_CSR(0x205, value) = { Ok(set_vstvec(value)) }
+function clause write_CSR(0x241, value) = { Ok(set_xepc(VirtualSupervisor, value)) }
+function clause write_CSR(0x105, value) = { Ok(if inVirtualPrivilege() then set_vstvec(value) else set_stvec(value)) }
+function clause write_CSR(0x141, value) = { Ok(set_xepc(if inVirtualPrivilege() then VirtualSupervisor else Supervisor, value)) }
 function clause write_CSR(0x305, value) = { Ok(set_mtvec(value)) }
 function clause write_CSR(0x341, value) = { Ok(set_xepc(Machine, value)) }

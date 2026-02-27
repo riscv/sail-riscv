@@ -5,6 +5,3 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
-
-// TODO: Ext_H depends on RV32I or RV64I, not RV32E or RV64E.
-function clause currentlyEnabled(Ext_H) = hartSupports(Ext_H) & misa[H] == 0b1 & virtual_memory_supported()

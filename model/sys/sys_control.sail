@@ -167,8 +167,12 @@ function track_trap(p : Privilege) -> unit = {
       csr_write_callback("sepc", sepc);
     },
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualSupervisor => {
+      csr_write_callback("vscause", vscause.bits);
+      csr_write_callback("vstval", vstval);
+      csr_write_callback("vsepc", vsepc);
+    },
   };
 }
 
@@ -338,6 +342,7 @@ function reset_misa() -> unit = {
   misa[A]   = bool_to_bit(hartSupports(Ext_A));   // atomics
   misa[C]   = bool_to_bit(hartSupports(Ext_C));   // RVC
   misa[B]   = bool_to_bit(hartSupports(Ext_B));   // Bit-manipulation
+  misa[H]   = bool_to_bit(hartSupports(Ext_H));   // hypervisor
   misa[M]   = bool_to_bit(hartSupports(Ext_M));   // integer multiply/divide
   misa[U]   = bool_to_bit(hartSupports(Ext_U));   // user-mode
   misa[S]   = bool_to_bit(hartSupports(Ext_S));   // supervisor-mode
