@@ -27,6 +27,8 @@ test2:
   csrw mcause, 0
   # Don't delegate STI
   csrw mideleg, 0
+  # Don't inhibit counters.
+  csrw mcountinhibit, 0
 
   # Disable stimecmp until we need it
   li t0, -1
