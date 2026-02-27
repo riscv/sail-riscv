@@ -23,6 +23,12 @@ foreach(CONFIG__BASE__XLEN IN ITEMS 32 64)
               set(CONFIG__V__SUPPORT "Full")
             endif()
 
+            if(CONFIG_XLEN_IS_32 STREQUAL true)
+                set(CONFIG__PHYSADDR__BITS 34)
+            elseif(CONFIG_XLEN_IS_64 STREQUAL true)
+                set(CONFIG__PHYSADDR__BITS 56)
+            endif()
+
             configure_file(config.json.in ${CMAKE_CURRENT_BINARY_DIR}/${config_filename})
 
             install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${config_filename}
