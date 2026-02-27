@@ -29,6 +29,7 @@ test2:
   csrw mideleg, 0
   # Don't inhibit counters.
   csrw mcountinhibit, 0
+  csrw mcyclecfg, 0
 
   # Disable stimecmp until we need it
   li t0, -1
