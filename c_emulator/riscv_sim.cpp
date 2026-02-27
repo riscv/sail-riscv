@@ -497,7 +497,6 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      bool was_waiting = is_waiting;
       is_waiting = model.ztry_step(sail_step, wait_steps_remaining == 0);
       KILL(sail_int)(&sail_step);
 
@@ -511,12 +510,14 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
       if (rvfi) {
         rvfi->send_trace(opts.config_print_rvfi);
       }
-      if (!was_waiting && is_waiting) {
-        wait_steps_remaining = max_wait_steps;
-      } else if (!is_waiting) {
+      if (is_waiting) {
+        if (wait_steps_remaining == 0) {
+          wait_steps_remaining = max_wait_steps;
+        } else {
+          --wait_steps_remaining;
+        }
+      } else {
         wait_steps_remaining = 0;
-      } else if (wait_steps_remaining > 0) {
-        wait_steps_remaining--;
       }
     }
 
