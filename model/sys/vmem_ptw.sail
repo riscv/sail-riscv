@@ -10,7 +10,7 @@
 // PTW exceptions
 
 // 'ext_ptw' supports (non-standard) extensions to the default addr-translation and PTW.
-// See types_ext.sail for definitions.
+// See `core/types_ext.sail` for definitions.
 
 // Failure modes for address-translation/page-table-walks
 private union PTW_Error = {
@@ -44,8 +44,8 @@ overload to_str = {ptw_error_to_str}
 private function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
   match failure {
     PTE_No_Permission() => PTW_No_Permission(),
+    PTE_No_Access()     => PTW_No_Access(),
     PTE_Ext_Failure(_)  => PTW_No_Permission(),
-    // TODO: Zicfiss will map PTE_No_Access to PTW_Access
   }
 
 // Convert translation/PTW failures into architectural exceptions
@@ -54,16 +54,32 @@ function translationException(access : MemoryAccessType(mem_payload),
                              -> ExceptionType = {
   match (access, err) {
     (_, PTW_Ext_Error(e))                        => E_Extension(ext_translate_exception(e)),
-    (Atomic(_), PTW_No_Access())                 => E_SAMO_Access_Fault(),
-    (Atomic(_), _)                               => E_SAMO_Page_Fault(),
-    (Load(_), PTW_No_Access())                   => E_Load_Access_Fault(),
-    (Load(_), _)                                 => E_Load_Page_Fault(),
-    (LoadReserved(_), PTW_No_Access())           => E_Load_Access_Fault(),
-    (LoadReserved(_), _)                         => E_Load_Page_Fault(),
-    (Store(_), PTW_No_Access())                  => E_SAMO_Access_Fault(),
-    (Store(_), _)                                => E_SAMO_Page_Fault(),
-    (StoreConditional(_), PTW_No_Access())       => E_SAMO_Access_Fault(),
-    (StoreConditional(_), _)                     => E_SAMO_Page_Fault(),
+    (Atomic(_, Data, Data), PTW_No_Access())     => E_SAMO_Access_Fault(),
+    (Atomic(_, Data, Data), _)                   => E_SAMO_Page_Fault(),
+
+    (Load(Data), PTW_No_Access())                => E_Load_Access_Fault(),
+    (Load(Data), _)                              => E_Load_Page_Fault(),
+    (LoadReserved(Data), PTW_No_Access())        => E_Load_Access_Fault(),
+    (LoadReserved(Data), _)                      => E_Load_Page_Fault(),
+
+    (Store(Data), PTW_No_Access())               => E_SAMO_Access_Fault(),
+    (Store(Data), _)                             => E_SAMO_Page_Fault(),
+    (StoreConditional(Data), PTW_No_Access())    => E_SAMO_Access_Fault(),
+    (StoreConditional(Data), _)                  => E_SAMO_Page_Fault(),
+
+    // "For shadow stack instructions, the reported instruction type is
+    // always as though it were a store or AMO, even for instructions
+    // SSPOPCHK and C.SSPOPCHK that only read from memory and do not
+    // write to it."
+    (Atomic(_, ShadowStack, ShadowStack), PTW_No_Access()) => E_SAMO_Access_Fault(),
+    (Atomic(_, ShadowStack, ShadowStack), _)               => E_SAMO_Page_Fault(),
+
+    (Load(ShadowStack), PTW_No_Access())         => E_SAMO_Access_Fault(),
+    (Load(ShadowStack), _)                       => E_SAMO_Page_Fault(),
+
+    (Store(ShadowStack), PTW_No_Access())        => E_SAMO_Access_Fault(),
+    (Store(ShadowStack), _)                      => E_SAMO_Page_Fault(),
+
     (InstructionFetch(), PTW_No_Access())        => E_Fetch_Access_Fault(),
     (InstructionFetch(), _)                      => E_Fetch_Page_Fault(),
 
@@ -85,5 +101,10 @@ function translationException(access : MemoryAccessType(mem_payload),
       PREFETCH_W => E_SAMO_Page_Fault(),
       PREFETCH_I => E_Fetch_Page_Fault(),
     },
+
+    (LoadReserved(ShadowStack), _)      => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for LoadReserved."),
+    (StoreConditional(ShadowStack), _)  => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for StoreConditional."),
+    (Atomic(_, ShadowStack, Data), _)   => internal_error(__FILE__, __LINE__, "Invalid payloads (ShadowStack, Data) for Atomic."),
+    (Atomic(_, Data, ShadowStack), _)   => internal_error(__FILE__, __LINE__, "Invalid payloads (Data, ShadowStack) for Atomic."),
   }
 }

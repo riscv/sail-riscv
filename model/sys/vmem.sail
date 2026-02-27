@@ -142,7 +142,7 @@ function pt_walk(
               return Err(PTW_Misaligned(), ext_ptw);
             };
           };
-          // Steps 6, 7 (TODO: shadow stack protection), 8 of VATP.
+          // Steps 6, 7 and 8 of VATP.
           match check_PTE_permission(access, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, pte_failure) => {
               ptw_fail_callback(ext_get_ptw_error(pte_failure), level, bits_of(pte_addr));
@@ -372,6 +372,15 @@ function translateAddr(
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
 
   let mode = translationMode(effPriv);
+
+  // "If satp.MODE (or vsatp.MODE when V=1) is set to Bare and the
+  // effective privilege mode is less than M, shadow stack
+  // instructions raise a store/AMO access-fault exception."
+  // "Use of Zicfiss in M-mode is not supported."
+  if is_shadow_stack_access(access) then {
+    if (mode == Bare & effPriv != Machine) | effPriv == Machine
+    then return Err(E_SAMO_Access_Fault(), init_ext_ptw);
+  };
 
   if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), init_ext_ptw);
 

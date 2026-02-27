@@ -94,6 +94,10 @@ function clause hartSupports(Ext_Zicboz) = config extensions.Zicboz.supported
 enum clause extension = Ext_Zicfilp
 mapping clause extensionName = Ext_Zicfilp <-> "zicfilp"
 function clause hartSupports(Ext_Zicfilp) = config extensions.Zicfilp.supported
+// Control-flow Integrity: Shadow Stack
+enum clause extension = Ext_Zicfiss
+mapping clause extensionName = Ext_Zicfiss <-> "zicfiss"
+function clause hartSupports(Ext_Zicfiss) = config extensions.Zicfiss.supported
 // Base Counters and Timers
 enum clause extension = Ext_Zicntr
 mapping clause extensionName = Ext_Zicntr <-> "zicntr"
@@ -536,6 +540,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvl128b => 0,
     Ext_Zvl32b => 0,
     Ext_Zvl64b => 0,
+    Ext_Zimop => 0,
 
     Ext_D => 1, // > Zicsr
     Ext_F => 1, // > Zicsr
@@ -556,6 +561,8 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvbb => 2, // > Zve32x
     Ext_Zve32f => 2, // > Zve32x
     Ext_Zve64x => 2, // > Zve32x
+    Ext_Zcmop => 2, // > Zca
+    Ext_Zicfiss => 2, // > Zaamo
 
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh
@@ -608,6 +615,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicbop,
   Ext_Zicboz,
   Ext_Zicfilp,
+  Ext_Zicfiss,
   Ext_Zicntr,
   Ext_Zicond,
   Ext_Zicsr,
