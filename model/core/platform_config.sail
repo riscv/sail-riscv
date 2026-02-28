@@ -81,22 +81,10 @@ enum XenvcfgCbieReservedBehavior = {
   Xenvcfg_ClearPermissions,
 }
 
-mapping XenvcfgCbieReservedBehavior_str : XenvcfgCbieReservedBehavior <-> string = {
-  Xenvcfg_Fatal <-> "Xenvcfg_Fatal",
-  Xenvcfg_ClearPermissions <-> "Xenvcfg_ClearPermissions",
-}
-overload to_str = {XenvcfgCbieReservedBehavior_str}
-
 enum XtvecModeReservedBehavior = {
   Xtvec_Fatal,
   Xtvec_Ignore,
 }
-
-mapping XtvecModeReservedBehavior_str : XtvecModeReservedBehavior <-> string = {
-  Xtvec_Fatal <-> "Xtvec_Fatal",
-  Xtvec_Ignore <-> "Xtvec_Ignore",
-}
-overload to_str = {XtvecModeReservedBehavior_str}
 
 enum RV32ZdinxOddRegisterReservedBehavior = {
   Zdinx_Fatal,
