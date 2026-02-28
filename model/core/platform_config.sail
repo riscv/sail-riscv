@@ -81,6 +81,11 @@ enum XenvcfgCbieReservedBehavior = {
   Xenvcfg_ClearPermissions,
 }
 
+enum VsewReservedBehavior = {
+  Vsew_Fatal,
+  Vsew_Illegal,
+}
+
 enum RV32ZdinxOddRegisterReservedBehavior = {
   Zdinx_Fatal,
   Zdinx_Illegal,
@@ -90,4 +95,5 @@ let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = 
 let fcsr_rm_reserved_behavior : FcsrRmReservedBehavior = config base.reserved_behavior.fcsr_rm
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
+let v_sew_reserved_behavior : VsewReservedBehavior = config base.reserved_behavior.v_sew
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register

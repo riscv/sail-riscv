@@ -247,7 +247,12 @@ type SEW_pow = range(3, 6)
 type LMUL_pow = range(-3, 3)
 
 function is_invalid_sew_pow(v : bits(3)) -> bool =
-  v >_u 0b011
+  if v >_u 0b011
+  then match v_sew_reserved_behavior {
+    Vsew_Fatal => reserved_behavior("vsew contains reserved value: " ^ bits_str(v) ^ "."),
+    // The caller will detect the return value and invoke handle_illegal_vtype().
+    Vsew_Illegal => true,
+  } else false
 
 function is_invalid_lmul_pow(v : bits(3)) -> bool =
   v == 0b100
