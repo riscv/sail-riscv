@@ -695,8 +695,8 @@ int inner_main(int argc, char **argv) {
     return EXIT_SUCCESS;
   }
 
-  // If we get here, we need to have ELF files to run.
-  if (opts.elfs.empty()) {
+  // If we get here, we need to have ELF files to run (except in RVFI mode).
+  if (opts.elfs.empty() && !rvfi.has_value()) {
     fprintf(stderr, "No elf file provided.\n");
     return EXIT_FAILURE;
   }
@@ -713,7 +713,7 @@ int inner_main(int argc, char **argv) {
 
   init_start = steady_clock::now();
 
-  if (rvfi) {
+  if (rvfi.has_value()) {
     if (!rvfi->setup_socket(opts.config_print_rvfi)) {
       return 1;
     }
@@ -725,13 +725,13 @@ int inner_main(int argc, char **argv) {
     write_dtb_to_rom(model, read_file(opts.dtb_file));
   }
 
-  const std::string &initial_elf_file = opts.elfs[0];
-  uint64_t entry = rvfi ? rvfi->get_entry() : load_sail(model, initial_elf_file, /*main_file=*/true);
+  uint64_t entry = rvfi.has_value() ? rvfi->get_entry() : load_sail(model, opts.elfs[0], /*main_file=*/true);
 
   fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
 
-  /* Load any additional ELF files into memory */
-  for (auto it = opts.elfs.cbegin() + 1; it != opts.elfs.cend(); it++) {
+  // Load any additional ELF files into memory. If RVFI was NOT used skip
+  // the first one because it was loaded above.
+  for (auto it = opts.elfs.cbegin() + (rvfi.has_value() ? 0 : 1); it != opts.elfs.cend(); it++) {
     fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
     (void)load_sail(model, *it, /*main_file=*/false);
   }
