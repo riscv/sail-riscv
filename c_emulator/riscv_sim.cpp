@@ -164,11 +164,6 @@ static CLIOptions parse_cli(int argc, char **argv) {
   CLI::App app("Sail RISC-V Model");
   argv = app.ensure_utf8(argv);
 
-  if (argc == 1) {
-    fprintf(stdout, "%s\n", app.help().c_str());
-    exit(EXIT_FAILURE);
-  }
-
   CLIOptions opts;
 
   app.add_flag("--show-times", opts.do_show_times, "Show execution times");
@@ -269,6 +264,11 @@ static CLIOptions parse_cli(int argc, char **argv) {
   std::size_t column_width = 45;
   app.get_formatter()->long_option_alignment_ratio(6.f / column_width);
   app.get_formatter()->column_width(column_width);
+
+  if (argc == 1) {
+    fprintf(stdout, "%s\n", app.help().c_str());
+    exit(EXIT_FAILURE);
+  }
 
   try {
     app.parse(argc, argv);
