@@ -232,7 +232,90 @@ function wX_bits(Regidx(i) : regidx, data : xlenbits) -> unit = {
   wX(Regno(unsigned(i))) = data
 }
 
-overload X = {rX_bits, wX_bits, rX, wX}
+$ifdef SYMBOLIC
+register x0 : regtype
+
+let GPRs : vector(32, dec, register(xlenbits)) = [
+	ref x31,
+    ref x30,
+    ref x29,
+    ref x28,
+    ref x27,
+    ref x26,
+    ref x25,
+    ref x24,
+    ref x23,
+    ref x22,
+    ref x21,
+    ref x20,
+    ref x19,
+    ref x18,
+    ref x17,
+    ref x16,
+    ref x15,
+    ref x14,
+    ref x13,
+    ref x12,
+    ref x11,
+    ref x10,
+    ref x9,
+    ref x8,
+    ref x7,
+    ref x6,
+    ref x5,
+    ref x4,
+    ref x3,
+    ref x2,
+    ref x1,
+    ref x0
+]
+
+register __isla_vector_gpr: bool = false
+
+val rX_from_vector = monadic "read_register_from_vector" : forall 'n, 0 <= 'n <= 31. (int('n), vector(32, dec, register(xlenbits))) -> xlenbits
+
+val get_X_bits : regidx -> xlenbits effect {rreg}
+
+function get_X_bits(Regidx(i) : regidx) = if __isla_vector_gpr then rX_from_vector(unsigned(i), GPRs) else rX_bits(Regidx(i))
+
+val get_X : regno -> xlenbits effect {rreg}
+
+function get_X(Regno(r) : regno) = if __isla_vector_gpr then rX_from_vector(r, GPRs) else rX(Regno(r))
+
+val wX_from_vector = monadic "write_register_from_vector" : forall 'n, 0 <= 'n <= 31. (int('n), xlenbits, vector(32, dec, register(xlenbits))) -> unit
+
+val set_X_bits : (regidx, xlenbits) -> unit effect {wreg}
+
+function set_X_bits(Regidx(i) : regidx, data : xlenbits) = {
+    if __isla_vector_gpr then wX_from_vector(unsigned(i), data, GPRs) else wX_bits(Regidx(i), data)
+}
+
+val set_X : (regno, xlenbits) -> unit effect {wreg}
+
+function set_X(Regno(r) : regno, v) = {
+    if __isla_vector_gpr then wX_from_vector(r, v, GPRs) else wX(Regno(r), v)
+}
+$else
+val get_X_bits : regidx -> xlenbits effect {rreg}
+
+function get_X_bits(Regidx(i) : regidx) = rX_bits(Regidx(i))
+
+val get_X : regno -> xlenbits effect {rreg}
+
+function get_X(Regno(r) : regno) = rX(Regno(r))
+
+val set_X_bits : (regidx, xlenbits) -> unit effect {wreg}
+
+function set_X_bits(Regidx(i) : regidx, data : xlenbits) = {
+    wX_bits(Regidx(i), data)
+}
+
+val set_X : (regno, xlenbits) -> unit effect {wreg}
+
+function set_X(Regno(r) : regno, v) = wX(Regno(r), v)
+$endif
+
+overload X = {get_X_bits, set_X_bits, get_X, set_X}
 
 // X_pair accesses a pair of registers. If the index is x0 then
 // it acts as if both registers in the pair are x0.
