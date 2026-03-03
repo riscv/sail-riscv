@@ -236,7 +236,7 @@ $ifdef SYMBOLIC
 register x0 : regtype
 
 let GPRs : vector(32, dec, register(xlenbits)) = [
-	ref x31,
+  ref x31,
     ref x30,
     ref x29,
     ref x28,
