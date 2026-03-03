@@ -137,6 +137,7 @@ For booting operating system images, see the information under the
 - Zic64b extension for Cache block size is 64 bytes, v1.0
 - Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
 - Zicfilp extension for Landing Pad Control Flow Integrity, v1.0
+- Zicfiss extension for Shadow Stack Control Flow Integrity, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
 - Zihintpause extension for Pause Hint, v2.0
