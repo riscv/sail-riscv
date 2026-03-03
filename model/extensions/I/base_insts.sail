@@ -604,9 +604,9 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() = {
-  let e = E_Breakpoint(Brk_Software);
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = xtval_exception_value(e, PC),
+  let trap = E_Breakpoint(Brk_Software);
+  let t : sync_exception = struct { trap    = trap,
+                                    excinfo = xtval_exception_value(trap, PC),
                                     ext     = None() };
   Trap(cur_privilege, CTL_TRAP(t), PC)
 }
