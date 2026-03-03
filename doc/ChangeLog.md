@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - Zicfiss
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in the execution trace
   - https://github.com/riscv/sail-riscv/issues/1560 : Updates to `mip` were not captured in the trace file
@@ -37,7 +40,6 @@
 - The following extensions have been added:
   - Za64rs, Za128rs
   - Zic64b
-  - Zicfiss
   - Sstvala
   - Sstvecd
   - Ssu64xl
