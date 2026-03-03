@@ -39,6 +39,10 @@ let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size 
 
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 
+// Maximum steps to wait for non-nop wait instructions.  This is not
+// used within the model but instead configures the external C++ harness.
+let max_wait_steps : nat = config platform.max_steps_to_wait
+
 // which exceptions write information into `xtval`
 let illegal_instruction_writes_xtval : bool = config base.xtval_nonzero.illegal_instruction
 let virtual_instruction_writes_xtval : bool = false
