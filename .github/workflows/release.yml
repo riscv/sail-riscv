@@ -97,7 +97,7 @@ jobs:
 
       - name: "Generate attestations (Linux-x86_64)"
         if: matrix.name == 'Linux-x86_64'
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             build/sail-riscv-*
@@ -106,7 +106,7 @@ jobs:
 
       - name: "Generate attestations (Linux-aarch64)"
         if: matrix.name == 'Linux-aarch64'
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             build/sail-riscv-*
