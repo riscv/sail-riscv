@@ -45,7 +45,7 @@ private function write_pte forall 'n, 'n in {4, 8} . (
   pte_size : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, false, false, false)
+  mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(Data), false, false, false)
 
 // Read a Page Table Entry.
 private function read_pte forall 'n, 'n in {4, 8} . (

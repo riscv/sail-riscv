@@ -222,7 +222,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
           Ok(()) => {
             let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
-            match mem_write_value(paddr, bytes, write_value, aq, rl, res) {
+            match mem_write_value(paddr, bytes, write_value, access, aq, rl, res) {
               Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
               Ok(s)  => write_success = write_success & s,
             }

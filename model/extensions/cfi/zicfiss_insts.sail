@@ -202,7 +202,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // This constraint is ensured by the instruction decode clause.
   assert('width == 4 | (xlen == 64 & width == 8));
   let write_val : bits('width * 8) = X(rs2)['width * 8 - 1 .. 0];
-  match mem_write_value(paddr, width, write_val, aq & rl, rl, true) {
+  match mem_write_value(paddr, width, write_val, access, aq & rl, rl, true) {
     Ok(true)  => X(rd) = sign_extend(mem_val),
     Ok(false) => internal_error(__FILE__, __LINE__, "AMOSWAP_SS got false from mem_write_value"),
     Err(e)    => return Memory_Exception(vaddr, e),
