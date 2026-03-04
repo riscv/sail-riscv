@@ -97,23 +97,17 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             // TODO: assert(not(res_or_con)). This requires a slight refactor of the mem_write_* APIs,
             // since the use of the default Store access conflicts with the passed in aq/rl/con flags.
             Store(Data)            => attributes.writable,
-            // TODO: For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
+            // For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
             // or absence (RsrvNonEventual) of an eventual success guarantee.
             LoadReserved(Data)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
             StoreConditional(Data) => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
-            // TODO: Extend MemoryAccessType with the specific type of AMO operation. For now we assume all memory
-            // supports all AMO operations.
-            Atomic(_, Data, Data)  => {assert(res_or_con); attributes.readable & attributes.writable},
+            Atomic(op, Data, Data)  => {assert(res_or_con); attributes.readable & attributes.writable & pma_allows_atomic_op(attributes.atomic_support, op)},
 
             // "The PMA checks are extended to require memory referenced by shadow stack instructions
             // to be idempotent."
             Load(ShadowStack)      => {assert(not(res_or_con)); attributes.readable & attributes.read_idempotent},
             Store(ShadowStack)     => {assert(not(res_or_con)); attributes.writable & attributes.write_idempotent},
-
-            // TODO: "The SSAMOSWAP.W/D instructions require the PMA of the accessed memory range to provide
-            // AMOSwap level."  See AMO support needed above.
-            Atomic(_, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent},
-
+            Atomic(AMOSWAP, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent & pma_allows_atomic_op(attributes.atomic_support, AMOSWAP)},
 
             // TODO for the CMO extensions: "The PMAs shall be the
             // same for all physical addresses in the cache block, and
@@ -154,6 +148,8 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             StoreConditional(ShadowStack)  => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for StoreConditional."),
             Atomic(_, ShadowStack, Data)   => internal_error(__FILE__, __LINE__, "Invalid payloads (ShadowStack, Data) for Atomic."),
             Atomic(_, Data, ShadowStack)   => internal_error(__FILE__, __LINE__, "Invalid payloads (Data, ShadowStack) for Atomic."),
+
+            Atomic(op, ShadowStack, ShadowStack) => internal_error(__FILE__, __LINE__, "Invalid op (" ^ amo_mnemonic(op) ^ ") for ShadowStack Atomic."),
           };
 
           if get_config_print_pma() & not(canAccess)
@@ -182,7 +178,6 @@ private function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : 
   if alignmentOrAccessFaultPriority(l) > alignmentOrAccessFaultPriority(r) then l else r
 
 // Check if access is permitted according to PMPs and PMAs.
-// TODO: this can be marked private after https://github.com/riscv/sail-riscv/pull/1405
 function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
   priv : Privilege,

@@ -120,6 +120,7 @@
           "read_idempotent": true,
           "write_idempotent": true,
           "misaligned_fault": "NoFault",
+          "atomic_support": "AMONone",
           "reservability": "RsrvNone",
           "supports_cbo_zero": false
         },
@@ -144,6 +145,7 @@
           "read_idempotent": false,
           "write_idempotent": false,
           "misaligned_fault": "AlignmentFault",
+          "atomic_support": "AMONone",
           "reservability": "RsrvNone",
           "supports_cbo_zero": false
         },
@@ -168,6 +170,7 @@
           "read_idempotent": true,
           "write_idempotent": true,
           "misaligned_fault": "NoFault",
+          "atomic_support": "AMOCASQ",
           "reservability": "RsrvEventual",
           "supports_cbo_zero": true
         },
