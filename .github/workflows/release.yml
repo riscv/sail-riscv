@@ -97,7 +97,7 @@ jobs:
 
       - name: "Generate attestations (Linux-x86_64)"
         if: matrix.name == 'Linux-x86_64'
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             build/sail-riscv-*
@@ -106,13 +106,13 @@ jobs:
 
       - name: "Generate attestations (Linux-aarch64)"
         if: matrix.name == 'Linux-aarch64'
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             build/sail-riscv-*
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.name }}
           path: |
@@ -129,7 +129,7 @@ jobs:
       contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
 
       - name: Prepare release inputs
         id: params
