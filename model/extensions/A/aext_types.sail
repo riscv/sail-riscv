@@ -8,12 +8,7 @@
 
 // These enums are arranged according to the level of PMA support they require:
 // AMOSwap < AMOLogical < AMOArithmetic < AMOCASW < AMOCASD < AMOCASQ
-enum amoop = {
-  AMOSWAP,
-  AMOAND, AMOOR, AMOXOR,
-  AMOADD, AMOMIN, AMOMAX, AMOMINU, AMOMAXU,
-  AMOCAS
-}
+enum amoop = { AMOSWAP, AMOAND, AMOOR, AMOXOR, AMOADD, AMOMIN, AMOMAX, AMOMINU, AMOMAXU, AMOCAS }
 
 mapping amo_mnemonic : amoop <-> string = {
   AMOSWAP <-> "amoswap",
