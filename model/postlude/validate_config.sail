@@ -294,7 +294,17 @@ private function check_misc_extension_dependencies() -> bool = {
   };
   if hartSupports(Ext_Ssqosid) & not(hartSupports(Ext_Zicsr)) then {
     valid = false;
-    print_endline("The Ssqosid extensions is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
+    print_endline("The Ssqosid extension is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
+  };
+  if (config extensions.Svnapot.supported : bool) then {
+    if xlen == 32 then {
+      valid = false;
+      print_endline("The Svnapot extension is enabled: Svnapot is not supported on RV32");
+    };
+    if not(config extensions.Sv39.supported : bool) then {
+      valid = false;
+      print_endline("The Svnapot extension is enabled but Sv39 is disabled: supporting Svnapot requires Sv39.");
+    };
   };
   valid
 }

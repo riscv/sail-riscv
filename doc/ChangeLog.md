@@ -2,6 +2,7 @@
 
 - The following extensions have been added:
   - Zicfiss
+  - Svnapot
 
 - A Mac ARM binary release is now available.
 

@@ -71,15 +71,15 @@ private function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
   & pte_flags[W] == 0b0
   & pte_flags[R] == 0b0
 
+function clause currentlyEnabled(Ext_Svnapot) = hartSupports(Ext_Svnapot) & currentlyEnabled(Ext_Sv39)
 // Not supported in the model yet.
-function clause currentlyEnabled(Ext_Svnapot) = false
 function clause currentlyEnabled(Ext_Svpbmt) = false
 
 // Svrsw60t59b: PTE Reserved for software bits 60-59
 function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b) & currentlyEnabled(Ext_Sv39)
 
 // Check if a PTE is valid
-private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
+private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext, level : range(0, 4)) -> bool =
     pte_flags[V] == 0b0
   // The encoding R=0, W=1, and X=0, is defined to represent an SS
   // page. When menvcfg.SSE=0, this encoding remains reserved.
@@ -89,7 +89,7 @@ private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> boo
   // Note, the following requirements depend on the privileged spec version.
   // Early versions do not require this check. This will need to be behind
   // a flag when the Sail model allows specifying the spec version.
-  | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
+  | (pte_ext[N] != 0b0 & (not(currentlyEnabled(Ext_Svnapot)) | level > 0))
   | (pte_ext[PBMT] != zeros() & not(currentlyEnabled(Ext_Svpbmt)))
   | (pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b)))
   | pte_ext[reserved] != zeros()

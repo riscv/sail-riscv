@@ -453,6 +453,9 @@
     "Svrsw60t59b": {
       "supported": @CONFIG_XLEN_IS_64@
     },
+    "Svnapot": {
+      "supported": @CONFIG_XLEN_IS_64@
+    },
     "Smcntrpmf": {
       "supported": true
     },
