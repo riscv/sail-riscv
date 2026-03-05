@@ -544,7 +544,7 @@ function clause execute ECALL() = {
   };
   let t : sync_exception = struct {
     trap    = trap,
-    excinfo = (None() : option(xlenbits)),
+    excinfo = None(),
     ext     = None(),
   };
   Trap(cur_privilege, CTL_TRAP(t), PC)
@@ -603,8 +603,13 @@ union clause instruction = EBREAK : unit
 mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
-function clause execute EBREAK() =
-  Memory_Exception(Virtaddr(PC), E_Breakpoint(Brk_Software))
+function clause execute EBREAK() = {
+  let trap = E_Breakpoint(Brk_Software);
+  let t : sync_exception = struct { trap    = trap,
+                                    excinfo = xtval_exception_value(trap, PC),
+                                    ext     = None() };
+  Trap(cur_privilege, CTL_TRAP(t), PC)
+}
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
