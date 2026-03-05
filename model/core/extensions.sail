@@ -247,6 +247,10 @@ function clause hartSupports(Ext_Zbkx) = config extensions.Zbkx.supported
 enum clause extension = Ext_Zbs
 mapping clause extensionName = Ext_Zbs <-> "zbs"
 function clause hartSupports(Ext_Zbs) = config extensions.Zbs.supported
+// Bit Manipulation: CRC instructions
+enum clause extension = Ext_Zbr
+mapping clause extensionName = Ext_Zbr <-> "zbr"
+function clause hartSupports(Ext_Zbr) = config extensions.Zbr.supported
 
 // Scalar & Entropy Source Instructions: NIST Suite: AES Decryption
 enum clause extension = Ext_Zknd
@@ -662,6 +666,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zbkc,
   Ext_Zbkx,
   Ext_Zbs,
+  Ext_Zbr,
 
   // Zk
   Ext_Zknd,

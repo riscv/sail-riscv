@@ -150,6 +150,9 @@ extensions {
       Zbs {
         files extensions/B/zbs_insts.sail
       }
+      Zbr {
+        files extensions/B/zbr_insts.sail
+      }
     }
   }
 
