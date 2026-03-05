@@ -12,6 +12,9 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 OLD)
 endif()
 
+# This sets -mmacosx-version-min. It must be done before project() (see the CMake docs).
+set (CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
+
 include(cmake/project_version.cmake)
 project(sail-riscv
   VERSION ${sail_riscv_release_version}
@@ -80,16 +83,16 @@ if (STATIC)
         list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .lib .a)
     else()
         set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+
         check_linker_flag(CXX "-static-libstdc++" HAVE_STATIC_LIBSTDCXX)
-        if (NOT HAVE_STATIC_LIBSTDCXX)
-            message(FATAL_ERROR "Building with -DSTATIC=TRUE requires static C++ std library installation")
+        if (HAVE_STATIC_LIBSTDCXX)
+            add_link_options(-static-libstdc++)
         endif()
-        add_link_options(-static-libstdc++)
+
         check_linker_flag(CXX "-static-libgcc" HAVE_STATIC_LIBGCC)
-        if (NOT HAVE_STATIC_LIBGCC)
-            message(FATAL_ERROR "Building with -DSTATIC=TRUE requires static libgcc installation")
+        if (HAVE_STATIC_LIBGCC)
+            add_link_options(-static-libgcc)
         endif()
-        add_link_options(-static-libgcc)
     endif()
 endif()
 

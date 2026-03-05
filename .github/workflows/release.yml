@@ -43,10 +43,9 @@ jobs:
             os: ubuntu-24.04-arm
             container: rockylinux:8.9.20231119
 
-          # TODO: Mac. We need a Mac binary release of the Sail compiler first.
-          # - name: mac-arm64
-          #   os: macos-latest
-          #   container: ""
+          - name: mac-arm64
+            os: macos-latest
+            container: ""
 
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
@@ -66,12 +65,6 @@ jobs:
         run: |
           dnf install -y git
 
-      # TODO: Mac
-      # - name: Install dependencies (Mac)
-      #   if: startsWith(matrix.os, 'macos')
-      #   run: |
-      #     brew install --force --overwrite ...
-
       - name: Check out repository code
         uses: actions/checkout@v6
 
@@ -86,7 +79,7 @@ jobs:
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
           cd build
           ninja all
-          ctest
+          ctest -j2
           cpack
 
       - name: Build JSON and HTML
@@ -169,6 +162,7 @@ jobs:
           files: |
             release-Linux-x86_64/sail-riscv-Linux-x86_64.tar.gz
             release-Linux-aarch64/sail-riscv-Linux-aarch64.tar.gz
+            release-mac-arm64/sail-riscv-mac-arm64.tar.gz
             release-Linux-x86_64/model/sail_riscv_model.json
             release-Linux-x86_64/model/sail_riscv_html.tgz
           fail_on_unmatched_files: true
