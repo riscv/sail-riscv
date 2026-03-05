@@ -101,13 +101,13 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             // or absence (RsrvNonEventual) of an eventual success guarantee.
             LoadReserved(Data)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
             StoreConditional(Data) => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
-            Atomic(op, Data, Data)  => {assert(res_or_con); attributes.readable & attributes.writable & pma_allows_atomic_op(attributes.atomic_support, op)},
+            Atomic(op, Data, Data)  => {assert(res_or_con); attributes.readable & attributes.writable & pma_allows_atomic_op(attributes.atomic_support, op, width)},
 
             // "The PMA checks are extended to require memory referenced by shadow stack instructions
             // to be idempotent."
             Load(ShadowStack)      => {assert(not(res_or_con)); attributes.readable & attributes.read_idempotent},
             Store(ShadowStack)     => {assert(not(res_or_con)); attributes.writable & attributes.write_idempotent},
-            Atomic(AMOSWAP, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent & pma_allows_atomic_op(attributes.atomic_support, AMOSWAP)},
+            Atomic(AMOSWAP, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent & pma_allows_atomic_op(attributes.atomic_support, AMOSWAP, width)},
 
             // TODO for the CMO extensions: "The PMAs shall be the
             // same for all physical addresses in the cache block, and

@@ -42,16 +42,15 @@ mapping atomic_support_str : AtomicSupport <-> string = {
 }
 overload to_str = {atomic_support_str}
 
-function pma_allows_atomic_op(pma : AtomicSupport, op : amoop) -> bool =
+function pma_allows_atomic_op forall 'n, 0 < 'n <= max_mem_access . (pma : AtomicSupport, op : amoop, width : int('n)) -> bool =
   match pma {
     AMONone       => false,
     AMOSwap       => op == AMOSWAP,
     AMOLogical    => op == AMOSWAP | op == AMOAND | op == AMOOR | op == AMOXOR,
     AMOArithmetic => op != AMOCAS,
-    // TODO: the Atomic memory access does not carry AMOCAS widths
-    AMOCASW       => true,
-    AMOCASD       => true,
-    AMOCASQ       => true,
+    AMOCASW       => op != AMOCAS | width == 4,
+    AMOCASD       => op != AMOCAS | width == 8,
+    AMOCASQ       => op != AMOCAS | width == 16,
   }
 
 enum Reservability = { RsrvNone, RsrvNonEventual, RsrvEventual }
