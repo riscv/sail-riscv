@@ -49,8 +49,8 @@ function pma_allows_atomic_op forall 'n, 0 < 'n <= max_mem_access . (pma : Atomi
     AMOLogical    => op == AMOSWAP | op == AMOAND | op == AMOOR | op == AMOXOR,
     AMOArithmetic => op != AMOCAS,
     AMOCASW       => op != AMOCAS | width == 4,
-    AMOCASD       => op != AMOCAS | width == 8,
-    AMOCASQ       => op != AMOCAS | width == 16,
+    AMOCASD       => op != AMOCAS | width == 4 | width == 8,
+    AMOCASQ       => op != AMOCAS | width == 4 | width == 8 | width == 16,
   }
 
 enum Reservability = { RsrvNone, RsrvNonEventual, RsrvEventual }
