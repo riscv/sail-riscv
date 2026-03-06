@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - PMAs now have an additional `atomic_support` attribute for the level
+    of atomicity supported in the memory region; see `memory.regions`.
+
 - The following extensions have been added:
   - Zicfiss
 

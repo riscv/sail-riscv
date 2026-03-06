@@ -132,18 +132,5 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   }
 }
 
-mapping amo_mnemonic : amoop <-> string = {
-  AMOSWAP <-> "amoswap",
-  AMOADD  <-> "amoadd",
-  AMOXOR  <-> "amoxor",
-  AMOAND  <-> "amoand",
-  AMOOR   <-> "amoor",
-  AMOMIN  <-> "amomin",
-  AMOMAX  <-> "amomax",
-  AMOMINU <-> "amominu",
-  AMOMAXU <-> "amomaxu",
-  AMOCAS  <-> "amocas",
-}
-
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)
   <-> amo_mnemonic(op) ^ "." ^ width_mnemonic_wide(width) ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs2) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"

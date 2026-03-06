@@ -42,6 +42,17 @@ mapping atomic_support_str : AtomicSupport <-> string = {
 }
 overload to_str = {atomic_support_str}
 
+function pma_allows_atomic_op forall 'n, 0 < 'n <= max_mem_access . (pma : AtomicSupport, op : amoop, width : int('n)) -> bool =
+  match pma {
+    AMONone       => false,
+    AMOSwap       => op == AMOSWAP,
+    AMOLogical    => op == AMOSWAP | op == AMOAND | op == AMOOR | op == AMOXOR,
+    AMOArithmetic => op != AMOCAS,
+    AMOCASW       => op != AMOCAS | width == 4,
+    AMOCASD       => op != AMOCAS | width == 4 | width == 8,
+    AMOCASQ       => op != AMOCAS | width == 4 | width == 8 | width == 16,
+  }
+
 enum Reservability = { RsrvNone, RsrvNonEventual, RsrvEventual }
 
 mapping reservability_str : Reservability <-> string = {
@@ -80,9 +91,7 @@ struct PMA = {
   write_idempotent : bool,
   // Optionally cause an access/alignment fault on misaligned access.
   misaligned_fault : misaligned_fault,
-  // TODO: Atomicity PMA. This is not supported yet because
-  // the MemoryAccessType needs to be extended to indicate the AMO type.
-  // atomic_support   : AtomicSupport,
+  atomic_support   : AtomicSupport,
   reservability    : Reservability,
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
   // have this set.
