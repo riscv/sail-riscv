@@ -817,16 +817,35 @@ val get_16_random_bits = impure {
 } : unit -> bits(16)
 
 
-// There are several features that are controlled by machine/supervisor enable
-// bits (m/senvcfg, m/scounteren, etc.). This abstracts that logic.
-function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), supervisor_enable_bit : bits(1)) -> bool = match p {
-  Machine => true,
-  Supervisor => machine_enable_bit == 0b1,
-  User => machine_enable_bit == 0b1 & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == 0b1),
-  VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-  VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+enum FeatureEnabledResult = {FEATURE_ENABLED, FEATURE_ILLEGAL, FEATURE_VIRTUAL}
+
+// Several features are controlled by enable bits in machine/supervisor/hypervisor
+// CSRs (m/s/henvcfg, m/s/hcounteren, etc.). This function abstracts that logic,
+// returning whether the feature is enabled, and if not, whether the failure should
+// raise an illegal-instruction or virtual-instruction exception.
+function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), supervisor_enable_bit : bits(1), hypervisor_enable_bit : bits(1)) -> FeatureEnabledResult = match p {
+  Machine           => FEATURE_ENABLED,
+  Supervisor        => if machine_enable_bit == 0b1 then FEATURE_ENABLED else FEATURE_ILLEGAL,
+  User              => if machine_enable_bit == 0b1 & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == 0b1)
+                       then FEATURE_ENABLED else FEATURE_ILLEGAL,
+  VirtualSupervisor => if machine_enable_bit == 0b0 then FEATURE_ILLEGAL
+                       else if hypervisor_enable_bit == 0b0 then FEATURE_VIRTUAL
+                       else FEATURE_ENABLED,
+  VirtualUser       => if machine_enable_bit == 0b0 then FEATURE_ILLEGAL
+                       else if hypervisor_enable_bit == 0b0 | supervisor_enable_bit == 0b0 then FEATURE_VIRTUAL
+                       else FEATURE_ENABLED,
 }
 
+// Backward-compatible wrapper around feature_enabled_for_priv for callers that
+// do not yet distinguish between illegal-instruction and virtual-instruction
+// exceptions. Required for upcoming Hypervisor extension support.
+function feature_enabled_for_priv_bool(p : Privilege, m : bits(1), s : bits(1), h : bits(1)) -> bool =
+  match feature_enabled_for_priv(p, m, s, h) {
+    FEATURE_ENABLED => true,
+    _               => false,
+  }
+
 // Return true if the counter is enabled.
+// TODO: Pass hcounteren.bits[index] once hcounteren is implemented.
 function counter_enabled(index: range(0, 31), priv : Privilege) -> bool =
-  feature_enabled_for_priv(priv, mcounteren.bits[index], scounteren.bits[index])
+  feature_enabled_for_priv_bool(priv, mcounteren.bits[index], scounteren.bits[index], 0b0)

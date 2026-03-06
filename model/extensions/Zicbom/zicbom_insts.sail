@@ -10,7 +10,8 @@
 
 function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 
-private function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], read_senvcfg()[CBCFE][0])
+// TODO: Pass hcounteren.bits[index] once hcounteren is implemented.
+private function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv_bool(p, menvcfg[CBCFE][0], read_senvcfg()[CBCFE][0], 0b0)
 
 // *****************************************************************
 union clause instruction = ZICBOM : (cbop_zicbom, regidx)
