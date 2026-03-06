@@ -329,7 +329,7 @@ function make_sync_exception(e : ExceptionType, xtval : xlenbits) -> sync_except
            ext     = None() }
 
 function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
-  let t : sync_exception = make_sync_exception(e, xtval);
+  let t = make_sync_exception(e, xtval);
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 
