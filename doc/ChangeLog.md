@@ -8,7 +8,8 @@
   - Zicfiss
 
 - D, A, U and other bits that are reserved in non-leaf PTEs now raise a page-fault exception.
-  This is a backwards incompatible change.
+  This is a backwards incompatible change, and is required since version 1.12 (also known as version 20211203)
+  of the privileged specification.
 
 - A Mac ARM binary release is now available.
 
