@@ -57,6 +57,11 @@ private function check_mmu_config() -> bool = {
     valid = false;
     print_endline("Svrsw60t59b is enabled but Sv39 is disabled: supporting Svrsw60t59b requires supporting Sv39.");
   };
+  if (config extensions.Svade.supported : bool) & not(config extensions.Svadu.supported : bool)
+    & (config memory.translation.enable_pte_update : bool) then {
+    valid = false;
+    print_endline("Svade is enabled but `enable_pte_update` is also enabled: supporting Svade requires disabling `enable_pte_update`.");
+  };
   valid
 }
 

@@ -93,7 +93,11 @@
       "allowed_within_exp": 0
     },
     "translation": {
-      "dirty_update": false
+      // Whether A/D bits in a PTE are updated by hardware.  If neither
+      // Svade or Svadu is supported, this controls whether any A/D changes
+      // unconditionally trap (false) or are set by hardware (true).
+      // If Svade is supported but Svadu is not, this cannot be set to true.
+      "enable_pte_update": false
     },
     // Address to write DTB to (if provided).
     "dtb_address": {
@@ -448,6 +452,12 @@
     // Enabling Sstvala requires that the exceptions specified in the extension
     // have their appropriate settings under `base.xtval_nonzero`.
     "Sstvala": {
+      "supported": true
+    },
+    "Svade": {
+      "supported": true
+    },
+    "Svadu": {
       "supported": true
     },
     "Svinval": {
