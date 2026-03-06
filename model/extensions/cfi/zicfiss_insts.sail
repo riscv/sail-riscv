@@ -7,7 +7,7 @@
 // =======================================================================================
 
 function make_shadow_stack_exception() -> sync_exception =
-  make_sync_exception(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)), None())
+  make_sync_exception(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)))
 
 // *****************************************************************
 

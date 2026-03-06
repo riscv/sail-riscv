@@ -7,7 +7,7 @@
 // =======================================================================================
 
 function make_landing_pad_exception() -> sync_exception =
-  make_sync_exception(E_Software_Check(), zero_extend(software_check_cause(SWC_LANDING_PAD_FAULT)), None())
+  make_sync_exception(E_Software_Check(), zero_extend(software_check_cause(SWC_LANDING_PAD_FAULT)))
 
 union clause instruction = LPAD : (landing_pad_label)
 
