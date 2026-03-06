@@ -66,7 +66,11 @@
       // The configuration option determines how to handle the reserved behavior: Odd-numbered registers for RV32Zdinx.
       // "Zdinx_Fatal"  – raise a Sail exception, stopping execution.
       // "Zdinx_Illegal" – treat it as an illegal instruction.
-      "rv32zdinx_odd_register": "Zdinx_Illegal"
+      "rv32zdinx_odd_register": "Zdinx_Illegal",
+      // The configuration option determines how to handle the reserved behavior: Odd-numbered registers for Zilsd and Zclsd.
+      // "LoadStorePair_Fatal"  – raise a Sail exception, stopping execution.
+      // "LoadStorePair_Illegal" – treat it as an illegal instruction.
+      "rv32load_store_pair_odd_register": "LoadStorePair_Illegal"
     }
   },
   "memory": {
@@ -282,6 +286,9 @@
     "Zihpm": {
       "supported": true
     },
+    "Zilsd": {
+      "supported": @CONFIG_XLEN_IS_32@
+    },
     "Zimop": {
       "supported": true
     },
@@ -338,6 +345,9 @@
     },
     "Zcb": {
       "supported": true
+    },
+    "Zclsd": {
+      "supported": false
     },
     "Zcmop": {
       "supported": true
