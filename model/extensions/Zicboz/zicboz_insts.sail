@@ -10,7 +10,8 @@
 
 function clause currentlyEnabled(Ext_Zicboz) = hartSupports(Ext_Zicboz)
 
-function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBZE][0], read_senvcfg()[CBZE][0])
+// TODO: Pass hcounteren.bits[index] once hcounteren is implemented.
+function cbo_zero_enabled(p : Privilege) -> bool = feature_enabled_for_priv_bool(p, menvcfg[CBZE][0], read_senvcfg()[CBZE][0], 0b0)
 
 // *****************************************************************
 union clause instruction = ZICBOZ : (regidx)
