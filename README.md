@@ -200,6 +200,8 @@ For booting operating system images, see the information under the
 - Sstvecd extension for Direct mode support in `stvec.MODE`, v1.0
 - Ssu64xl extension to ensure `sstatus.UXL` is capable of supporting UXLEN=64, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
+- Svadu extension for Hardware Updating of A/D Bits, Version 1.0
+- Svade extension for Raise exceptions on improper A/D bits, Version 1.0
 - Svbare extension for Bare mode virtual-memory translation
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Svnapot extension for NAPOT Translation Contiguity, v1.0

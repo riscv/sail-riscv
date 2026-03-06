@@ -11,6 +11,10 @@
     default setting for `platform.wfi_is_nop` was also changed from
     `true` to `false`.
 
+  - The `dirty_update` attribute of `memory.translation` has been renamed
+    to `enable_pte_update` to clarify that it controls the hardware
+    update of the A and D bits of a PTE.
+
 - The following extensions have been added:
   - Ziccamoa
   - Ziccamoc
@@ -18,6 +22,8 @@
   - Zicfiss
   - Ssccptr
   - Sscounterenw
+  - Svade
+  - Svadu
   - Svnapot
   - Svvptc
 
