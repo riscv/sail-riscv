@@ -43,8 +43,6 @@ mapping mem_payload_str : mem_payload <-> string = {
   ShadowStack <-> ".ss",
 }
 
-let default_write_acc : mem_payload = Data
-
 function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
   match access {
     Load(p)             => "R" ^ mem_payload_str(p),

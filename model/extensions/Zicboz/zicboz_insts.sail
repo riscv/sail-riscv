@@ -50,7 +50,7 @@ function clause execute ZICBOZ(rs1) = {
             match mem_write_ea(paddr, cache_block_size, false, false, false) {
               Err(e) => Memory_Exception(vaddr - negative_offset, e),
               Ok(_)  => {
-                match mem_write_value(paddr, cache_block_size, zeros(), false, false, false) {
+                match mem_write_value(paddr, cache_block_size, zeros(), access, false, false, false) {
                   Ok(true)  => RETIRE_SUCCESS,
                   Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                   Err(e)    => Memory_Exception(vaddr - negative_offset, e)
