@@ -542,6 +542,7 @@ function clause execute ECALL() = {
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
+  // No need for the `make_sync_exception` wrapper since there is no excinfo for tval.
   let t : sync_exception = struct {
     trap    = trap,
     excinfo = None(),
@@ -605,10 +606,7 @@ mapping clause encdec = EBREAK()
 
 function clause execute EBREAK() = {
   let trap = E_Breakpoint(Brk_Software);
-  let t : sync_exception = struct { trap    = trap,
-                                    excinfo = xtval_exception_value(trap, PC),
-                                    ext     = None() };
-  Trap(cur_privilege, CTL_TRAP(t), PC)
+  Trap(cur_privilege, CTL_TRAP(make_sync_exception(trap, PC)), PC)
 }
 
 mapping clause assembly = EBREAK() <-> "ebreak"
