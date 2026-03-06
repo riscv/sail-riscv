@@ -13,6 +13,9 @@
   - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in the execution trace
   - https://github.com/riscv/sail-riscv/issues/1560 : Updates to `mip` were not captured in the trace file
 
+- The following unratified extensions have been added:
+  - Zvfbfa
+
 # Release notes for version 0.10
 
 - The highlight of this release is the switch to using the C++ backend
