@@ -86,10 +86,10 @@ private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> boo
   // TODO: handle V=1 and henvcfg.SSE=0 at VS/VU levels
   | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b0 & menvcfg[SSE] == 0b0)
   | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b1)
-  | (pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1))
   // Note, the following requirements depend on the privileged spec version.
   // Early versions do not require this check. This will need to be behind
   // a flag when the Sail model allows specifying the spec version.
+  | (pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1 | pte_ext.bits != zeros()))
   | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
   | (pte_ext[PBMT] != zeros() & not(currentlyEnabled(Ext_Svpbmt)))
   | (pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b)))

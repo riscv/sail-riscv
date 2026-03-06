@@ -7,7 +7,7 @@
 - The following extensions have been added:
   - Zicfiss
 
-- D, A, U bits set in a non-leaf PTE now raise a page-fault exception.
+- D, A, U and other bits that are reserved in non-leaf PTEs now raise a page-fault exception.
   This is a backwards incompatible change.
 
 - A Mac ARM binary release is now available.
