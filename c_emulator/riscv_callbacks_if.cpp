@@ -91,6 +91,12 @@ void callbacks_if::trap_callback(
 ) {
 }
 
+void callbacks_if::trigger_match_callback([[maybe_unused]] hart::Model &model, [[maybe_unused]] sail_int trig_index) {
+}
+
+void callbacks_if::trigger_fire_callback([[maybe_unused]] hart::Model &model, [[maybe_unused]] sail_int trig_index) {
+}
+
 // Page table walk callbacks
 void callbacks_if::ptw_start_callback(
   [[maybe_unused]] hart::Model &model,

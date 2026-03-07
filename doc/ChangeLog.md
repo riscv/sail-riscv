@@ -6,6 +6,9 @@
 
 - The following extensions have been added:
   - Zicfiss
+  - Sdtrig (partial: only icount, itrigger, and etrigger triggers; tdata3 and {m,h,s}context are not yet supported)
+
+- A `--trace-trigger` command-line option has been added to track triggers in the execution trace.
 
 - A Mac ARM binary release is now available.
 

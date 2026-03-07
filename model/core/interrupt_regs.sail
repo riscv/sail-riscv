@@ -87,8 +87,13 @@ bitfield Medeleg : bits(64) = {
 }
 
 private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
-  // M-EnvCalls delegation is not supported
-  [Mk_Medeleg(v) with MEnvCall = 0b0]
+  let v = Mk_Medeleg(v);
+  [v with
+    // M-EnvCalls delegation is not supported
+    MEnvCall = 0b0,
+    // medeleg[3] is hardwired to 0 when using `tcontrol`-based reentrancy handling for breakpoints.
+    Breakpoint = if sdtrig_breakpoint_reentrancy == Use_tcontrol then 0b0 else v[Breakpoint],
+  ]
 }
 
 register mie     : Minterrupts // Enabled

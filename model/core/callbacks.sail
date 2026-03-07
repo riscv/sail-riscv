@@ -56,6 +56,12 @@ function redirect_callback(_) = ()
 val trap_callback = pure {cpp: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code) -> unit
 function trap_callback(_) = ()
 
+/// Called when triggers match and fire, respectively, with the index of the relevant trigger.
+val trigger_match_callback = pure {cpp: "trigger_match_callback"} : (nat) -> unit
+function trigger_match_callback(_) = ()
+val trigger_fire_callback = pure {cpp: "trigger_fire_callback"} : (nat) -> unit
+function trigger_fire_callback(_) = ()
+
 // Overloads for easier use of callbacks
 function csr_name_write_callback(name : string, value : xlenbits) -> unit = {
   let csr = csr_name_map(name);
