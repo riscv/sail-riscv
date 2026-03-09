@@ -840,10 +840,7 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), s
 // do not yet distinguish between illegal-instruction and virtual-instruction
 // exceptions. Required for upcoming Hypervisor extension support.
 function feature_enabled_for_priv_bool(p : Privilege, m : bits(1), s : bits(1), h : bits(1)) -> bool =
-  match feature_enabled_for_priv(p, m, s, h) {
-    FEATURE_ENABLED => true,
-    _               => false,
-  }
+  feature_enabled_for_priv(p, m, s, h) == FEATURE_ENABLED
 
 // Return true if the counter is enabled.
 // TODO: Pass hcounteren.bits[index] once hcounteren is implemented.
