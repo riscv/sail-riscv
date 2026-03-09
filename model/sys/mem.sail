@@ -94,9 +94,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           let canAccess : bool = match access {
             InstructionFetch()     => attributes.executable,
             Load(Data)             => {assert(not(res_or_con)); attributes.readable},
-            // TODO: assert(not(res_or_con)). This requires a slight refactor of the mem_write_* APIs,
-            // since the use of the default Store access conflicts with the passed in aq/rl/con flags.
-            Store(Data)            => attributes.writable,
+            Store(Data)            => {assert(not(res_or_con)); attributes.writable},
             // For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
             // or absence (RsrvNonEventual) of an eventual success guarantee.
             LoadReserved(Data)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
@@ -302,21 +300,20 @@ function mem_write_value_priv_meta (paddr, width, value, access, priv, meta, aq,
   }
 }
 
-// Memory write with explicit Privilege, implicit MemoryAccessType and metadata
-val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_priv (paddr, width, value, priv, aq, rl, con) =
-  mem_write_value_priv_meta(paddr, width, value, Store(default_write_acc), priv, default_meta, aq, rl, con)
+// Memory write with explicit Privilege and MemoryAccessType, and implicit metadata
+val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, MemoryAccessType(mem_payload), bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value_priv (paddr, width, value, priv, access, aq, rl, con) =
+  mem_write_value_priv_meta(paddr, width, value, access, priv, default_meta, aq, rl, con)
 
-// Memory write with explicit metadata and MemoryAccessType, implicit and Privilege
-val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), mem_payload, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_meta (paddr, width, value, payload, meta, aq, rl, con) = {
-  let access = Store(payload);
+// Memory write with explicit metadata and MemoryAccessType, and implicit Privilege
+val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value_meta (paddr, width, value, access, meta, aq, rl, con) = {
   let ep = effectivePrivilege(access, mstatus, cur_privilege);
   mem_write_value_priv_meta(paddr, width, value, access, ep, meta, aq, rl, con)
 }
 
-// Memory write with default MemoryAccessType, Privilege, and metadata
-val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value (paddr, width, value, aq, rl, con) = {
-  mem_write_value_meta(paddr, width, value, default_write_acc, default_meta, aq, rl, con)
+// Memory write with explicit MemoryAccessType, default metadata and implicit Privilege
+val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value (paddr, width, value, access, aq, rl, con) = {
+  mem_write_value_meta(paddr, width, value, access, default_meta, aq, rl, con)
 }
