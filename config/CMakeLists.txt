@@ -39,7 +39,7 @@ set(generated_config_filenames "${generated_config_filenames}" PARENT_SCOPE)
 
 # Embed the default configs in a C header.
 file(READ "${CMAKE_CURRENT_BINARY_DIR}/rv64d_v256_e64.json" DEFAULT_JSON)
-file(READ "${CMAKE_CURRENT_BINARY_DIR}/rv32d_v128_e32.json" DEFAULT_JSON_RV32)
+file(READ "${CMAKE_CURRENT_BINARY_DIR}/rv32d_v256_e64.json" DEFAULT_JSON_RV32)
 configure_file("default_config.h.in" "default_config.h" @ONLY)
 
 add_library(default_config INTERFACE
