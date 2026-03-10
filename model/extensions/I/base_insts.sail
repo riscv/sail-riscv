@@ -619,9 +619,9 @@ mapping clause encdec = WFI()
 function clause execute WFI() =
   match cur_privilege {
     Machine           => Enter_Wait(WAIT_WFI),
-    Supervisor        => if   mstatus[TW] == 0b1
-                         then Illegal_Instruction()
-                         else Enter_Wait(WAIT_WFI),
+    // mstatus[TW] is checked when the wait times out in
+    // `run_hart_waiting()`.
+    Supervisor        => Enter_Wait(WAIT_WFI),
     User              => Illegal_Instruction(),
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
