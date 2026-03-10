@@ -7,9 +7,7 @@
 // =======================================================================================
 
 function make_shadow_stack_exception() -> sync_exception =
-  struct { trap    = E_Software_Check(),
-           excinfo = Some(zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT))),
-           ext     = None() }
+  make_sync_exception(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)))
 
 // *****************************************************************
 
