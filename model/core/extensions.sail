@@ -470,6 +470,14 @@ enum clause extension = Ext_Sv57
 mapping clause extensionName = Ext_Sv57 <-> "sv57"
 function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool & (xlen == 64)
 
+// Raise exceptions on improper A/D bits
+enum clause extension = Ext_Svade
+mapping clause extensionName = Ext_Svade <-> "svade"
+function clause hartSupports(Ext_Svade) = config extensions.Svade.supported
+// Hardware Updating of A/D Bits
+enum clause extension = Ext_Svadu
+mapping clause extensionName = Ext_Svadu <-> "svadu"
+function clause hartSupports(Ext_Svadu) = config extensions.Svadu.supported
 // Fine-Grained Address-Translation Cache Invalidation
 enum clause extension = Ext_Svinval
 mapping clause extensionName = Ext_Svinval <-> "svinval"
@@ -726,8 +734,8 @@ let extensions_ordered_for_isa_string = [
   Ext_Sstvala,
   Ext_Sstvecd,
   Ext_Ssu64xl,
-  // Ext_Svade,
-  // Ext_Svadu,
+  Ext_Svade,
+  Ext_Svadu,
   Ext_Svinval,
   Ext_Svnapot,
   Ext_Svpbmt,

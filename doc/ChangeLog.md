@@ -4,8 +4,14 @@
   - PMAs now have an additional `atomic_support` attribute for the level
     of atomicity supported in the memory region; see `memory.regions`.
 
+  - The `dirty_update` attribute of `memory.translation` has been renamed
+    to `enable_pte_update` to clarify that it controls the hardware
+    update of the A and D bits of a PTE.
+
 - The following extensions have been added:
   - Zicfiss
+  - Svade
+  - Svadu
 
 - D, A, U and other bits that are reserved in non-leaf PTEs now raise a page-fault exception.
   This is a backwards incompatible change, and is required since version 1.12 (also known as version 20211203)

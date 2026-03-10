@@ -196,6 +196,8 @@ For booting operating system images, see the information under the
 - Ssu64xl extension to ensure `sstatus.UXL` is capable of supporting UXLEN=64, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Svbare extension for Bare mode virtual-memory translation
+- Svadu extension for Hardware Updating of A/D Bits, Version 1.0
+- Svade extension for Raise exceptions on improper A/D bits, Version 1.0
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
 - Physical Memory Protection (PMP)

@@ -124,7 +124,7 @@ void log_callbacks::ptw_start_callback(
     CREATE(sail_string)(&str_pr);
     model.zaccessType_to_str(&str_ac, access_type);
     model.zprivLevel_to_str(&str_pr, privilege.ztup0);
-    fprintf(trace_log, "PTW: Start, vpn=0x%" PRIx64 ", access_type=%s, privilege=%s", vpn, str_ac, str_pr);
+    fprintf(trace_log, "PTW: Start, vpn=0x%" PRIx64 ", access_type=%s, privilege=%s\n", vpn, str_ac, str_pr);
     KILL(sail_string)(&str_ac);
     KILL(sail_string)(&str_pr);
   }
@@ -144,7 +144,7 @@ void log_callbacks::ptw_step_callback(hart::Model & /*model*/, int64_t level, sb
 
 void log_callbacks::ptw_success_callback(hart::Model & /*model*/, uint64_t final_ppn, int64_t level) {
   if (trace_log != nullptr && config_print_ptw) {
-    fprintf(trace_log, "PTW: Success, final_ppn=0x%" PRIx64 ", level=%" PRId64, final_ppn, level);
+    fprintf(trace_log, "PTW: Success, final_ppn=0x%" PRIx64 ", level=%" PRId64 "\n", final_ppn, level);
   }
 }
 
