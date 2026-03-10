@@ -126,6 +126,7 @@ struct CLIOptions {
   bool do_validate_config = false;
   bool do_print_isa = false;
 
+  bool use_rv32_default = false;
   std::string config_file;
   std::vector<std::string> config_overrides;
   std::string term_log;
@@ -180,13 +181,17 @@ static CLIOptions parse_cli(int argc, char **argv) {
     "Enable experimental extensions"
   );
   app.add_flag("--use-abi-names", opts.config_use_abi_names, "Use ABI register names in trace log");
+  app.add_flag("--rv32", opts.use_rv32_default, "Use the default RV32 configuration");
 
   app.add_option("--device-tree-blob", opts.dtb_file, "Device tree blob file")
     ->check(CLI::ExistingFile)
     ->option_text("<file>");
   app.add_option("--terminal-log", opts.term_log, "Terminal log output file")->option_text("<file>");
   app.add_option("--test-signature", opts.sig_file, "Test signature file")->option_text("<file>");
-  app.add_option("--config", opts.config_file, "Configuration file")->check(CLI::ExistingFile)->option_text("<file>");
+  app.add_option("--config", opts.config_file, "Configuration file")
+    ->check(CLI::ExistingFile)
+    ->option_text("<file>")
+    ->excludes("--rv32");
   app
     .add_option(
       "--config-override",
@@ -589,7 +594,7 @@ int inner_main(int argc, char **argv) {
     return EXIT_SUCCESS;
   }
   if (opts.do_print_default_config) {
-    printf("%s", get_default_config());
+    printf("%s", opts.use_rv32_default ? get_default_rv32_config() : get_default_config());
     return EXIT_SUCCESS;
   }
   if (opts.do_print_config_schema) {
@@ -634,7 +639,7 @@ int inner_main(int argc, char **argv) {
   if (!opts.config_file.empty()) {
     config_json_string = read_file_to_string(opts.config_file);
   } else {
-    config_json_string = get_default_config();
+    config_json_string = opts.use_rv32_default ? get_default_rv32_config() : get_default_config();
   }
 
   // Check json config and merge overrides
