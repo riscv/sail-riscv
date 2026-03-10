@@ -29,6 +29,8 @@
     // counters are read-only zero. A set bit specifies that the
     // corresponding bit of `scounteren` is writable, otherwise
     // the bit is read-only zero.  The lowest 3 bits are ignored.
+    // If Sscounterenw is supported this must be a superset of
+    // `writable_hpm_counters`.
     "scounteren_writable_bits": {
       "len": 32,
       "value": "0xFFFF_FFFF"
