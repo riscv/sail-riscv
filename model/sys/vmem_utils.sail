@@ -104,8 +104,6 @@ function misaligned_order(n) = {
   }
 }
 
-// External API
-
 // Return true if the access to a virtual address will raise a misaligned exception.
 // This is checked before address translation. It is true if the address
 // is actually misaligned, and either it *must* be aligned (e.g. for LR/SC)
@@ -116,6 +114,8 @@ private function virtual_access_raises_misaligned_exception(
   must_be_aligned : bool,
 ) -> bool =
   not(is_aligned_addr(vaddr, width)) & (not(plat_enable_misaligned_access) | must_be_aligned)
+
+// External API
 
 val vmem_read_addr : forall 'width, is_mem_width('width).
   (virtaddr, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
