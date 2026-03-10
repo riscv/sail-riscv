@@ -490,6 +490,10 @@ function clause hartSupports(Ext_Svpbmt) = false // Not supported yet
 enum clause extension = Ext_Svrsw60t59b
 mapping clause extensionName = Ext_Svrsw60t59b <-> "svrsw60t59b"
 function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.supported
+// Obviating Memory-management Instructions after Marking PTEs valid
+enum clause extension = Ext_Svvptc
+mapping clause extensionName = Ext_Svvptc <-> "svvptc"
+function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
@@ -738,6 +742,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Svnapot,
   Ext_Svpbmt,
   Ext_Svrsw60t59b,
+  Ext_Svvptc,
 
   // Hypervisor extensions, ordered alphabetically.
 

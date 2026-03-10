@@ -508,6 +508,9 @@
       "supported": true,
       "rcid_length": 12,
       "mcid_length": 12
+    },
+    "Svvptc": {
+      "supported": true
     }
   }
 }

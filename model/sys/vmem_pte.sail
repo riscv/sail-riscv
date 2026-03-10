@@ -71,6 +71,8 @@ private function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
   & pte_flags[W] == 0b0
   & pte_flags[R] == 0b0
 
+function clause currentlyEnabled(Ext_Svvptc) = hartSupports(Ext_Svvptc)
+
 // Not supported in the model yet.
 function clause currentlyEnabled(Ext_Svnapot) = false
 function clause currentlyEnabled(Ext_Svpbmt) = false
