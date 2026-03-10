@@ -542,7 +542,6 @@ function clause execute ECALL() = {
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
-  // No need for the `make_sync_exception` wrapper since there is no excinfo for tval.
   let t : sync_exception = struct {
     trap    = trap,
     excinfo = None(),
