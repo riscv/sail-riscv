@@ -560,6 +560,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     // Note: even though these match the default case, making them explicit to
     // annotate the chain of dependencies
+    Ext_Sscounterenw => 2, // > S
     Ext_Sv39 => 2, // > S
     Ext_Zfh => 2, // > F
     Ext_Zvbb => 2, // > Zve32x
