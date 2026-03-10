@@ -188,6 +188,7 @@ For booting operating system images, see the information under the
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
+- Sscounterenw extension for writeable enables for any supported counter, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Ssqosid extension for Quality-of-Service (QoS) Identifiers, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0

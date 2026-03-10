@@ -563,14 +563,14 @@ bitfield Counteren : bits(32) = {
   CY   : 0
 }
 
-// Which bits of `scounteren` are read-only zero. Bits [2 .. 0] are ignored.
-let sys_scounteren_readonly_zero_bits : bits(32) = config base.scounteren_readonly_zero_bits
+function clause currentlyEnabled(Ext_Sscounterenw) = hartSupports(Ext_Sscounterenw)
+
+// Which bits of `scounteren` are writable. Bits [2 .. 0] are ignored.
+let sys_scounteren_writable_bits : bits(32) = config base.scounteren_writable_bits
 
 // scounteren
-private function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren = {
-  let writable_bits = ~(sys_scounteren_readonly_zero_bits[31 .. 3]) @ 0b111;
-  Mk_Counteren(v[31 .. 0] & writable_bits)
-}
+private function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren =
+  Mk_Counteren(v[31 .. 0] & (sys_scounteren_writable_bits[31 .. 3] @ 0b111))
 
 register scounteren : Counteren
 mapping clause csr_name_map = 0x106  <-> "scounteren"

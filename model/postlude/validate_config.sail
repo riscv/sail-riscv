@@ -296,9 +296,9 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssqosid extensions is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
   };
-  if (config extensions.Sscounterenw.supported : bool) & ((sys_writable_hpm_counters[31 .. 3] & sys_scounteren_readonly_zero_bits[31 .. 3]) != zeros()) then {
+  if (config extensions.Sscounterenw.supported : bool) & ((sys_writable_hpm_counters[31 .. 3] & sys_scounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3]) then {
     valid = false;
-    print_endline("The Sscounterenw extension is enabled but `scounteren` is read-only zero (via `base.scounteren_readonly_zero_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
+    print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
   };
   valid
 }

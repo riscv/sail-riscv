@@ -4,8 +4,8 @@
   - PMAs now have an additional `atomic_support` attribute for the level
     of atomicity supported in the memory region; see `memory.regions`.
 
-  - Read-only zero bits of the `scounteren` CSR can now be specifiedl;
-    see `base.scounteren_readonly_zero_bits`.
+  - Writable bits of the `scounteren` CSR can now be specified;
+    see `base.scounteren_writable_bits`.
 
 - The following extensions have been added:
   - Zicfiss
