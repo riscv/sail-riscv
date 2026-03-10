@@ -573,6 +573,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zcmop => 2, // > Zca
     Ext_Zicfiss => 2, // > Zaamo
 
+    Ext_Svvptc => 3, // > Sv39
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh
     Ext_Zicfilp => 3, // > get_xLPE
