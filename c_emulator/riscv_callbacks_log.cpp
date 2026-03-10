@@ -154,8 +154,7 @@ void log_callbacks::ptw_fail_callback(
   int64_t level,
   sbits pte_addr
 ) {
-  // failed trace is always available
-  if (trace_log != nullptr) {
+  if (trace_log != nullptr && config_print_ptw) {
     sail_string str_et;
     CREATE(sail_string)(&str_et);
     model.zptw_error_to_str(&str_et, error_type);
