@@ -15,9 +15,23 @@
     "E": false,
     "writable_misa": true,
     "writable_fiom": true,
+    // The top 29 bits in this value control whether the corresponding
+    // HPM counters (hpmcounter31 .. hpmcounter3) are supported
+    // (i.e. are not read-only zero). A set bit specifies that the
+    // corresponding counter is supported. The lowest 3 bits
+    // (writable_hpm_counters[2 .. 0]) are ignored.
     "writable_hpm_counters": {
       "len": 32,
       "value": "0xFFFF_FFFF"
+    },
+    // The top 29 bits set this value control whether the
+    // corresponding bits of the `scounteren` CSR that control HPM
+    // counters are read-only zero. A set bit specifies that the
+    // corresponding bit of `scounteren` is read-only zero, otherwise
+    // the bit is writable.  The lowest 3 bits are ignored.
+    "scounteren_readonly_zero_bits": {
+      "len": 32,
+      "value": "0x0000_0000"
     },
     // These settings control whether the specified exceptions
     // cause information to be written into the appropriate
@@ -440,6 +454,9 @@
       "supported": true
     },
     "Sscofpmf": {
+      "supported": true
+    },
+    "Sscounterenw": {
       "supported": true
     },
     "Sstc": {

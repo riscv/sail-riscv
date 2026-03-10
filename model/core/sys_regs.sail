@@ -563,10 +563,13 @@ bitfield Counteren : bits(32) = {
   CY   : 0
 }
 
+// Which bits of `scounteren` are read-only zero. Bits [2 .. 0] are ignored.
+let sys_scounteren_readonly_zero_bits : bits(32) = config base.scounteren_readonly_zero_bits
+
 // scounteren
 private function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren = {
-  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
-  Mk_Counteren(v[31 .. 0] & supported_counters)
+  let writable_bits = ~(sys_scounteren_readonly_zero_bits[31 .. 3]) @ 0b111;
+  Mk_Counteren(v[31 .. 0] & writable_bits)
 }
 
 register scounteren : Counteren
