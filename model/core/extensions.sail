@@ -430,6 +430,10 @@ function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
+// Support writeable enables for any supported counter
+enum clause extension = Ext_Sscounterenw
+mapping clause extensionName = Ext_Sscounterenw <-> "sscounterenw"
+function clause hartSupports(Ext_Sscounterenw) = config extensions.Sscounterenw.supported
 // Supervisor-mode view of the state-enable extension
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
@@ -556,6 +560,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     // Note: even though these match the default case, making them explicit to
     // annotate the chain of dependencies
+    Ext_Sscounterenw => 2, // > S
     Ext_Sv39 => 2, // > S
     Ext_Zfh => 2, // > F
     Ext_Zvbb => 2, // > Zve32x
@@ -720,6 +725,7 @@ let extensions_ordered_for_isa_string = [
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Sscofpmf,
+  Ext_Sscounterenw,
   Ext_Ssstateen,
   Ext_Ssqosid,
   Ext_Sstc,

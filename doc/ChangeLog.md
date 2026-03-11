@@ -4,8 +4,12 @@
   - PMAs now have an additional `atomic_support` attribute for the level
     of atomicity supported in the memory region; see `memory.regions`.
 
+  - Writable bits of the `scounteren` CSR can now be specified;
+    see `base.scounteren_writable_bits`.
+
 - The following extensions have been added:
   - Zicfiss
+  - Sscounterenw
 
 - D, A, U and other bits that are reserved in non-leaf PTEs now raise a page-fault exception.
   This is a backwards incompatible change, and is required since version 1.12 (also known as version 20211203)
