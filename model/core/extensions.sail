@@ -248,7 +248,7 @@ enum clause extension = Ext_Zbs
 mapping clause extensionName = Ext_Zbs <-> "zbs"
 function clause hartSupports(Ext_Zbs) = config extensions.Zbs.supported
 
-// Main memory supports all atomics in A
+// Main memory supports all AMOs in A
 enum clause extension = Ext_Ziccamoa
 mapping clause extensionName= Ext_Ziccamoa <-> "Ziccamoa"
 function clause hartSupports(Ext_Ziccamoa) = config extensions.Ziccamoa.supported
