@@ -108,7 +108,10 @@ function misaligned_order(n) = {
 // This is checked before address translation. It is true if the address
 // is actually misaligned, and either it *must* be aligned (e.g. for LR/SC)
 // or the hart does not support misaligned access to any address.
-private function virtual_access_raises_misaligned_exception(
+//
+// Even if this returns false, a misaligned exception can still be raised after
+// address translation depending on the PMAs.
+private function access_causes_misaligned_exception(
   vaddr : virtaddr,
   width : word_width,
   must_be_aligned : bool,
@@ -124,7 +127,7 @@ val vmem_read_addr : forall 'width, is_mem_width('width).
 function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
-  if virtual_access_raises_misaligned_exception(vaddr, width, res)
+  if access_causes_misaligned_exception(vaddr, width, res)
   then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
 
   // If the load is misaligned or an allowed misaligned access, split into `n`
@@ -175,7 +178,7 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
-  if virtual_access_raises_misaligned_exception(vaddr, width, res)
+  if access_causes_misaligned_exception(vaddr, width, res)
   then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
 
   // If the store is misaligned or an allowed misaligned access, split into `n`
