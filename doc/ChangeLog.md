@@ -8,6 +8,9 @@
     see `base.scounteren_writable_bits`.
 
 - The following extensions have been added:
+  - Ziccamoa
+  - Ziccamoc
+  - Ziccrse
   - Zicfiss
   - Sscounterenw
 

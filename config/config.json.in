@@ -129,7 +129,7 @@
         },
         "attributes": {
           "cacheable": true,
-          "coherent": true,
+          "coherent": false,
           "executable": false,
           "readable": true,
           "writable": false,
@@ -256,6 +256,12 @@
     "Zibi": {
       "supported": true
     },
+    // This extension just asserts that the cache block size is 64 bytes.
+    // If you enable this you also need to ensure `platform.cache_block_size_exp`
+    // is 6, otherwise you will get a config validation error.
+    "Zic64b": {
+      "supported": true
+    },
     "Zicbom": {
       "supported": true
     },
@@ -265,10 +271,13 @@
     "Zicboz": {
       "supported": true
     },
-    // This extension just asserts that the cache block size is 64 bytes.
-    // If you enable this you also need to ensure `platform.cache_block_size_exp`
-    // is 6, otherwise you will get a config validation error.
-    "Zic64b": {
+    "Ziccamoa": {
+      "supported": true
+    },
+    "Ziccamoc": {
+      "supported": true
+    },
+    "Ziccrse": {
       "supported": true
     },
     "Zicfilp": {
