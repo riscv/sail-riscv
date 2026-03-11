@@ -426,6 +426,10 @@ mapping clause extensionName = Ext_Zvksg <-> "zvksg"
 function clause hartSupports(Ext_Zvksg) = hartSupports(Ext_Zvks) & hartSupports(Ext_Zvkg)
 function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 
+// Triggers
+enum clause extension = Ext_Sdtrig
+mapping clause extensionName = Ext_Sdtrig <-> "sdtrig"
+function clause hartSupports(Ext_Sdtrig) = config extensions.Sdtrig.supported
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
@@ -719,6 +723,8 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
+  Ext_Sdtrig,
+
   Ext_Sscofpmf,
   Ext_Ssstateen,
   Ext_Ssqosid,

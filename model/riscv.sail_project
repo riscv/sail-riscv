@@ -60,7 +60,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, Sdtrig
 
   files
     sys/sys_reservation.sail,
@@ -356,6 +356,16 @@ extensions {
     files extensions/Sstc/sstc.sail
   }
 
+  Sdtrig {
+    requires core
+
+    files
+      extensions/Sdtrig/sdtrig_type_utils.sail,
+      extensions/Sdtrig/sdtrig_types.sail,
+      extensions/Sdtrig/sdtrig_regs.sail,
+      extensions/Sdtrig/sdtrig_control.sail,
+  }
+
   Zawrs {
     requires core
 
@@ -552,7 +562,7 @@ mops {
 postlude {
   after extensions, mops, core
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts, Sdtrig
 
   files
     postlude/insts_end.sail,
