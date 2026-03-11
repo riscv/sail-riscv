@@ -10,7 +10,10 @@ extern void model_test();
 
 bool config_print_instr = false;
 bool config_print_step = false;
-bool config_print_reg = false;
+bool config_print_gpr = false;
+bool config_print_fpr = false;
+bool config_print_vreg = false;
+bool config_print_csr = false;
 bool config_print_mem_access = false;
 bool config_print_clint = false;
 bool config_print_exception = false;
