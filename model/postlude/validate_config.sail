@@ -190,15 +190,9 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
       };
       let attributes = pma.attributes;
       if attributes.cacheable & attributes.coherent then {
-        if check_ziccamoa then {
-          if attributes.atomic_support < AMOArithmetic then {
-            print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
-            return false;
-          };
-          if attributes.reservability == RsrvNone then {
-            print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccamoa is enabled which requires RsrvNonEventual or RsrvEventual support.");
-            return false;
-          };
+        if check_ziccamoa & attributes.atomic_support < AMOArithmetic then {
+          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
+          return false;
         };
         if check_ziccamoc & attributes.atomic_support != AMOCASQ then {
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoc is enabled which requires AMOCASQ support.");
