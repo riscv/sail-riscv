@@ -126,10 +126,10 @@ function pt_walk(
             // follow the pointer to walk next level (i.e., go to Step 2)
             pt_walk(sv_width, vpn, access, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
           else {
-              // level 0 PTE, but contains a pointer instead of a leaf
-              ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
-              Err(PTW_Invalid_PTE(), ext_ptw)
-            }
+            // level 0 PTE, but contains a pointer instead of a leaf
+            ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
+            Err(PTW_Invalid_PTE(), ext_ptw)
+          }
         } else {
           // Leaf PTE (Step 5 of VATP).
           let ppn_size_bits = if 'v == 32 then 10 else 9;
@@ -150,10 +150,20 @@ function pt_walk(
             },
             PTE_Check_Success(ext_ptw) => {
               let ppn = if level > 0 then {
+                // NAPOT PTEs are currently reserved for level > 0.
+                if pte_ext[N] == 0b1 then return Err(PTW_Invalid_PTE(), ext_ptw);
+
                 // Compose final PA in superpage:
                 // Superpage PPN @ lower VPNs @ page-offset
                 let low_bits = ppn_size_bits * level;
                 ppn[length(ppn) - 1 .. low_bits] @ vpn[low_bits - 1 .. 0]
+              } else if currentlyEnabled(Ext_Svnapot) & pte_ext[N] == 0b1 then {
+                // Only 64K NAPOT PTEs are valid.
+                let pte_napot_bits = 4;
+                if ppn[pte_napot_bits - 1 .. 0] != 0b1000
+                then return Err(PTW_Invalid_PTE(), ext_ptw);
+
+                [ppn with (pte_napot_bits - 1) .. 0 = vpn[pte_napot_bits - 1 .. 0]]
               } else {
                 ppn
               };

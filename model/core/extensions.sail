@@ -481,7 +481,7 @@ function clause hartSupports(Ext_Svinval) = config extensions.Svinval.supported
 // NAPOT Translation Contiguity
 enum clause extension = Ext_Svnapot
 mapping clause extensionName = Ext_Svnapot <-> "svnapot"
-function clause hartSupports(Ext_Svnapot) = false // Not supported yet
+function clause hartSupports(Ext_Svnapot) = config extensions.Svnapot.supported : bool & (xlen == 64)
 // Page-Based Memory Types
 enum clause extension = Ext_Svpbmt
 mapping clause extensionName = Ext_Svpbmt <-> "svpbmt"
@@ -573,6 +573,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zcmop => 2, // > Zca
     Ext_Zicfiss => 2, // > Zaamo
 
+    Ext_Svnapot => 3, // > Sv39
     Ext_Svvptc => 3, // > Sv39
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh

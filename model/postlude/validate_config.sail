@@ -57,6 +57,25 @@ private function check_mmu_config() -> bool = {
     valid = false;
     print_endline("Svrsw60t59b is enabled but Sv39 is disabled: supporting Svrsw60t59b requires supporting Sv39.");
   };
+  if (config extensions.Svnapot.supported : bool) then {
+    if xlen == 32 then {
+      valid = false;
+      print_endline("The Svnapot extension is enabled: Svnapot is not supported on RV32");
+    };
+    if not(config extensions.Sv39.supported : bool) then {
+      valid = false;
+      print_endline("The Svnapot extension is enabled but Sv39 is disabled: supporting Svnapot requires Sv39.");
+    };
+  };
+  if (config extensions.Svvptc.supported : bool) then {
+    if xlen == 32 & not(config extensions.Sv32.supported : bool) then {
+      valid = false;
+      print_endline("The Svvptc extension is enabled but Sv32 is disabled: Svvptc depends on Sv32 on RV32.");
+    } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
+      valid = false;
+      print_endline("The Svvptc extension is enabled but Sv39 is disabled: Svvptc depends on Sv39 on RV64.");
+    };
+  };
   valid
 }
 
@@ -294,20 +313,11 @@ private function check_misc_extension_dependencies() -> bool = {
   };
   if hartSupports(Ext_Ssqosid) & not(hartSupports(Ext_Zicsr)) then {
     valid = false;
-    print_endline("The Ssqosid extensions is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
+    print_endline("The Ssqosid extension is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
   };
   if (config extensions.Sscounterenw.supported : bool) & ((sys_writable_hpm_counters[31 .. 3] & sys_scounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3]) then {
     valid = false;
     print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
-  };
-  if (config extensions.Svvptc.supported : bool) then {
-    if xlen == 32 & not(config extensions.Sv32.supported : bool) then {
-      valid = false;
-      print_endline("The Svvptc extension is enabled but Sv32 is disabled: Svvptc depends on Sv32 on RV32.");
-    } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
-      valid = false;
-      print_endline("The Svvptc extension is enabled but Sv39 is disabled: Svvptc depends on Sv39 on RV64.");
-    };
   };
   valid
 }
