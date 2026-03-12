@@ -30,7 +30,7 @@ void log_callbacks::mem_write_callback(hart::Model &model, const char *type, sbi
       static_cast<int>((model.zphysaddrbits_len + 3) / 4),
       paddr.bits
     );
-    gmp_fprintf(trace_log, "0x%*0ZX\n", value.len / 4, *value.bits);
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
 
@@ -45,7 +45,7 @@ void log_callbacks::mem_read_callback(hart::Model &model, const char *type, sbit
       static_cast<int>((model.zphysaddrbits_len + 3) / 4),
       paddr.bits
     );
-    gmp_fprintf(trace_log, "0x%*0ZX\n", value.len / 4, *value.bits);
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
 
@@ -97,7 +97,7 @@ void log_callbacks::csr_full_read_callback(hart::Model &, const_sail_string csr_
 void log_callbacks::vreg_write_callback(hart::Model &, unsigned reg, lbits value) {
   if (trace_log != nullptr && config_print_reg) {
     fprintf(trace_log, "v%d <- ", reg);
-    gmp_fprintf(trace_log, "0x%*0ZX\n", value.len / 4, *value.bits);
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
 
