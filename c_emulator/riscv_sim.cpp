@@ -470,7 +470,7 @@ void flush_logs() {
 
 void run_sail(ModelImpl &model, const CLIOptions &opts) {
   bool is_waiting = false;
-  // The emulator ticks increments time by 1 at every step, so the number
+  // The emulator tick increments time by 1 at every step, so the number
   // of steps to wait is equal to the needed increment in the time CSR.
   uint64_t max_wait_steps = get_config_uint64({"platform", "max_time_to_wait"});
   uint64_t wait_steps_remaining = 0;

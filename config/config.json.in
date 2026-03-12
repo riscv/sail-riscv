@@ -219,7 +219,7 @@
     //
     // If WFI or WRS.STO (Short TimeOut) exceed this limit in
     // non-machine privilege with mstatus[TW] set, an illegal
-    // instruction is raised. Otherwise they retires successfully.
+    // instruction is raised. Otherwise they retire successfully.
     //
     // Note: it is also legal for these instructions to spuriously
     // retire successfully at any point, but there is currently no
