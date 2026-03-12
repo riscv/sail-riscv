@@ -300,6 +300,15 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
   };
+  if (config extensions.Svvptc.supported : bool) then {
+    if xlen == 32 & not(config extensions.Sv32.supported : bool) then {
+      valid = false;
+      print_endline("The Svvptc extension is enabled but Sv32 is disabled: Svvptc depends on Sv32 on RV32.");
+    } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
+      valid = false;
+      print_endline("The Svvptc extension is enabled but Sv39 is disabled: Svvptc depends on Sv39 on RV64.");
+    };
+  };
   valid
 }
 
