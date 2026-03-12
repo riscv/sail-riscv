@@ -57,6 +57,15 @@ private function check_mmu_config() -> bool = {
     valid = false;
     print_endline("Svrsw60t59b is enabled but Sv39 is disabled: supporting Svrsw60t59b requires supporting Sv39.");
   };
+  if (config extensions.Ssccptr.supported : bool) then {
+    if xlen == 32 & not(config extensions.Sv32.supported : bool) then {
+      valid = false;
+      print_endline("The Sccptr extension is enabled but Sv32 is disabled: Ssccptr depends on Sv32 on RV32.");
+    } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
+      valid = false;
+      print_endline("The Sccptr extension is enabled but Sv39 is disabled: Ssccptr depends on Sv39 on RV64.");
+    };
+  };
   if (config extensions.Svnapot.supported : bool) then {
     if xlen == 32 then {
       valid = false;
@@ -74,7 +83,7 @@ private function check_mmu_config() -> bool = {
     } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
       valid = false;
       print_endline("The Svvptc extension is enabled but Sv39 is disabled: Svvptc depends on Sv39 on RV64.");
-    };
+    }
   };
   valid
 }
@@ -197,7 +206,7 @@ private function check_vext_config() -> bool = {
 }
 
 // Return true if a list of PMA regions are sorted and don't overlap.
-private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccrse : bool) -> bool =
+private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccrse : bool, check_ssccptr : bool) -> bool =
   match pmas {
     [||] => true,
     pma :: rest => {
@@ -221,8 +230,12 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
           return false;
         };
+        if check_ssccptr & not(attributes.supports_pte_read) then {
+          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable without hardware page-table read support, but Ssccptr is enabled which requires this support.");
+          return false;
+        };
       };
-      check_pma_regions(rest, pma.base, pma.size, check_ziccamoc, check_ziccamoa, check_ziccrse)
+      check_pma_regions(rest, pma.base, pma.size, check_ziccamoc, check_ziccamoa, check_ziccrse, check_ssccptr)
     },
   }
 
@@ -239,7 +252,8 @@ private function check_mem_layout() -> bool =
     let ziccamoa_is_supported : bool = config extensions.Ziccamoa.supported;
     let ziccamoc_is_supported : bool = config extensions.Ziccamoc.supported;
     let ziccrse_is_supported  : bool = config extensions.Ziccrse.supported;
-    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccrse_is_supported)
+    let ssccptr_is_supported  : bool = config extensions.Ssccptr.supported;
+    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccrse_is_supported, ssccptr_is_supported)
   }
 
 private function check_pmp() -> bool = {

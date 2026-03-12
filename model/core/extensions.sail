@@ -439,6 +439,10 @@ mapping clause extensionName = Ext_Zvksg <-> "zvksg"
 function clause hartSupports(Ext_Zvksg) = hartSupports(Ext_Zvks) & hartSupports(Ext_Zvkg)
 function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 
+// Main memory supports page table reads
+enum clause extension = Ext_Ssccptr
+mapping clause extensionName = Ext_Ssccptr <-> "ssccptr"
+function clause hartSupports(Ext_Ssccptr) = config extensions.Ssccptr.supported
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
@@ -586,6 +590,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zcmop => 2, // > Zca
     Ext_Zicfiss => 2, // > Zaamo
 
+    Ext_Ssccptr => 3, // > Sv39
     Ext_Svnapot => 3, // > Sv39
     Ext_Svvptc => 3, // > Sv39
     Ext_Svrsw60t59b => 3, // > Sv39
@@ -746,6 +751,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
+  Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
   Ext_Ssstateen,

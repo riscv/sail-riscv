@@ -47,6 +47,9 @@ private function write_pte forall 'n, 'n in {4, 8} . (
 ) -> MemoryOpResult(bool) =
   mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), false, false, false)
 
+// Sscptr: Main memory supports page table read
+function clause currentlyEnabled(Ext_Ssccptr) = hartSupports(Ext_Ssccptr) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
+
 // Read a Page Table Entry.
 private function read_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
