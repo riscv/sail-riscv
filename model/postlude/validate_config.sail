@@ -63,7 +63,7 @@ private function check_mmu_config() -> bool = {
       print_endline("The Sccptr extension is enabled but Sv32 is disabled: Ssccptr depends on Sv32 on RV32.");
     } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
       valid = false;
-      print_endline("The Sccptr extension is enabled but Sv64 is disabled: Ssccptr depends on Sv64 on RV64.");
+      print_endline("The Sccptr extension is enabled but Sv39 is disabled: Ssccptr depends on Sv39 on RV64.");
     };
   };
   valid
