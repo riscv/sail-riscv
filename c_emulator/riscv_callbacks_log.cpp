@@ -1,20 +1,6 @@
 #include "riscv_callbacks_log.h"
 #include "sail_riscv_model.h"
 #include <inttypes.h>
-#include <stdlib.h>
-#include <vector>
-
-void print_lbits_hex(FILE *trace_log, lbits val, int length = 0) {
-  if (length == 0) {
-    length = val.len;
-  }
-  std::vector<uint8_t> data(length);
-  mpz_export(data.data(), nullptr, -1, 1, 0, 0, *val.bits);
-  for (int i = length - 1; i >= 0; --i) {
-    fprintf(trace_log, "%02" PRIX8, data[i]);
-  }
-  fprintf(trace_log, "\n");
-}
 
 log_callbacks::log_callbacks(
   bool config_print_reg,
@@ -34,28 +20,32 @@ log_callbacks::log_callbacks(
 // The model assumes that these functions do not change the state of the model.
 
 void log_callbacks::mem_write_callback(hart::Model &model, const char *type, sbits paddr, uint64_t width, lbits value) {
+  // This is just passed due to Sail type system requirements.
+  (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
     fprintf(
       trace_log,
-      "mem[%s,0x%0*" PRIX64 "] <- 0x",
+      "mem[%s,0x%0*" PRIX64 "] <- ",
       type,
       static_cast<int>((model.zphysaddrbits_len + 3) / 4),
       paddr.bits
     );
-    print_lbits_hex(trace_log, value, width);
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
 
 void log_callbacks::mem_read_callback(hart::Model &model, const char *type, sbits paddr, uint64_t width, lbits value) {
+  // This is just passed due to Sail type system requirements.
+  (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
     fprintf(
       trace_log,
-      "mem[%s,0x%0*" PRIX64 "] -> 0x",
+      "mem[%s,0x%0*" PRIX64 "] -> ",
       type,
       static_cast<int>((model.zphysaddrbits_len + 3) / 4),
       paddr.bits
     );
-    print_lbits_hex(trace_log, value, width);
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
 
@@ -106,8 +96,8 @@ void log_callbacks::csr_full_read_callback(hart::Model &, const_sail_string csr_
 
 void log_callbacks::vreg_write_callback(hart::Model &, unsigned reg, lbits value) {
   if (trace_log != nullptr && config_print_reg) {
-    fprintf(trace_log, "v%d <- 0x", reg);
-    print_lbits_hex(trace_log, value);
+    fprintf(trace_log, "v%d <- ", reg);
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
 
