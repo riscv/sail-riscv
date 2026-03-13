@@ -6,7 +6,10 @@ class log_callbacks : public callbacks_if {
 
 public:
   explicit log_callbacks(
-    bool config_print_reg = true,
+    bool config_print_gpr = true,
+    bool config_print_fpr = true,
+    bool config_print_vreg = true,
+    bool config_print_csr = true,
     bool config_print_mem_access = true,
     bool config_print_ptw = true,
     bool config_use_abi_names = false,
@@ -39,7 +42,10 @@ public:
   ) override;
 
 private:
-  bool config_print_reg;
+  bool config_print_gpr;
+  bool config_print_fpr;
+  bool config_print_vreg;
+  bool config_print_csr;
   bool config_print_mem_access;
   bool config_use_abi_names;
   bool config_print_ptw;

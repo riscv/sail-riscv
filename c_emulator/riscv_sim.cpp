@@ -144,7 +144,10 @@ struct CLIOptions {
 #endif
 
   bool config_print_instr = false;
-  bool config_print_reg = false;
+  bool config_print_gpr = false;
+  bool config_print_fpr = false;
+  bool config_print_vreg = false;
+  bool config_print_csr = false;
   bool config_print_mem_access = false;
   bool config_print_clint = false;
   bool config_print_exception = false;
@@ -215,7 +218,38 @@ static CLIOptions parse_cli(int argc, char **argv) {
 
   app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
   app.add_flag("--trace-ptw", opts.config_print_ptw, "Enable trace output for Page Table walk");
-  app.add_flag("--trace-reg", opts.config_print_reg, "Enable trace output for register access");
+  app.add_flag(
+    "--trace-gpr",
+    opts.config_print_gpr,
+    "Enable trace output for general purpose register reads and writes"
+  );
+  app.add_flag(
+    "--trace-fpr",
+    opts.config_print_fpr,
+    "Enable trace output for floating-point registers reads and writes"
+  );
+  app.add_flag("--trace-vreg", opts.config_print_vreg, "Enable trace output for vector register reads and writes");
+  app.add_flag("--trace-csr", opts.config_print_csr, "Enable trace output for CSR reads and writes");
+  app.add_flag_callback(
+    "--trace-arch-regs",
+    [&opts] {
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+    },
+    "Enable trace output for architectural register reads and writes (i.e. general purpose, floating-point, and "
+    "vector registers)"
+  );
+  app.add_flag_callback(
+    "--trace-reg",
+    [&opts] {
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+      opts.config_print_csr = true;
+    },
+    "Enable trace output for register access"
+  );
   app.add_flag("--trace-mem", opts.config_print_mem_access, "Enable trace output for memory accesses");
   app.add_flag("--trace-rvfi", opts.config_print_rvfi, "Enable trace output for RVFI");
   app.add_flag("--trace-clint", opts.config_print_clint, "Enable trace output for CLINT memory accesses and status");
@@ -241,7 +275,10 @@ static CLIOptions parse_cli(int argc, char **argv) {
     "--trace-all",
     [&opts] {
       opts.config_print_instr = true;
-      opts.config_print_reg = true;
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+      opts.config_print_csr = true;
       opts.config_print_mem_access = true;
       opts.config_print_rvfi = true;
       opts.config_print_clint = true;
@@ -723,7 +760,10 @@ int inner_main(int argc, char **argv) {
 
   init_logs(opts);
   log_callbacks log_cbs(
-    opts.config_print_reg,
+    opts.config_print_gpr,
+    opts.config_print_fpr,
+    opts.config_print_vreg,
+    opts.config_print_csr,
     opts.config_print_mem_access,
     opts.config_print_ptw,
     opts.config_use_abi_names,
