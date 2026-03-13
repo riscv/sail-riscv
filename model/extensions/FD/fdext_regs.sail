@@ -208,7 +208,88 @@ function wF_bits(Fregidx(i) : fregidx, data: flenbits) -> unit = {
   wF(Fregno(unsigned(i))) = data
 }
 
-overload F = {rF_bits, wF_bits, rF, wF}
+$ifdef SYMBOLIC
+let FPRs : vector(32, dec, register(flenbits)) = [
+    ref f31,
+    ref f30,
+    ref f29,
+    ref f28,
+    ref f27,
+    ref f26,
+    ref f25,
+    ref f24,
+    ref f23,
+    ref f22,
+    ref f21,
+    ref f20,
+    ref f19,
+    ref f18,
+    ref f17,
+    ref f16,
+    ref f15,
+    ref f14,
+    ref f13,
+    ref f12,
+    ref f11,
+    ref f10,
+    ref f9,
+    ref f8,
+    ref f7,
+    ref f6,
+    ref f5,
+    ref f4,
+    ref f3,
+    ref f2,
+    ref f1,
+    ref f0
+]
+
+register __isla_vector_fpr: bool = false
+
+val rF_from_vector = monadic "read_register_from_vector" : forall 'n, 0 <= 'n <= 31. (int('n), vector(32, dec, register(flenbits))) -> flenbits
+
+val get_F_bits : fregidx -> flenbits effect {rreg}
+
+function get_F_bits(Fregidx(i) : fregidx) = if __isla_vector_fpr then rF_from_vector(unsigned(i), FPRs) else rF_bits(Fregidx(i))
+
+val get_F : fregno -> flenbits effect {rreg}
+
+function get_F(Fregno(r) : fregno) = if __isla_vector_fpr then rF_from_vector(r, FPRs) else rF(Fregno(r))
+
+val wF_from_vector = monadic "write_register_from_vector" : forall 'n, 0 <= 'n <= 31. (int('n), flenbits, vector(32, dec, register(flenbits))) -> unit
+
+val set_F_bits : (fregidx, flenbits) -> unit effect {wreg}
+
+function set_F_bits(Fregidx(i) : fregidx, data : flenbits) = {
+    if __isla_vector_fpr then wF_from_vector(unsigned(i), data, FPRs) else wF_bits(Fregidx(i), data)
+}
+
+val set_F : (fregno, flenbits) -> unit effect {wreg}
+
+function set_F(Fregno(r) : fregno, v) = {
+    if __isla_vector_fpr then wF_from_vector(r, v, FPRs) else wF(Fregno(r), v)
+}
+$else
+val get_F_bits : fregidx -> flenbits effect {rreg}
+
+function get_F_bits(Fregidx(i) : fregidx) = rF_bits(Fregidx(i))
+
+val get_F : fregno -> flenbits effect {rreg}
+
+function get_F(Fregno(r) : fregno) = rF(Fregno(r))
+
+val set_F_bits : (fregidx, flenbits) -> unit effect {wreg}
+
+function set_F_bits(Fregidx(i) : fregidx, data : flenbits) = {
+    wF_bits(Fregidx(i), data)
+}
+
+val set_F : (fregno, flenbits) -> unit effect {wreg}
+
+function set_F(Fregno(r) : fregno, v) = wF(Fregno(r), v)
+$endif
+
+overload F = {get_F_bits, set_F_bits, get_F, set_F}
 
 function rF_BF16(i : fregidx) -> bits(16) = {
   // This is the same as `nan_unbox(F(i))` except that
