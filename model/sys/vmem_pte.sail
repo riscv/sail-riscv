@@ -71,14 +71,15 @@ private function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
   & pte_flags[W] == 0b0
   & pte_flags[R] == 0b0
 
-function clause currentlyEnabled(Ext_Svvptc) = hartSupports(Ext_Svvptc) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
-
 // Not supported in the model yet.
-function clause currentlyEnabled(Ext_Svnapot) = false
 function clause currentlyEnabled(Ext_Svpbmt) = false
 
+// NAPOT Translation Contiguity
+function clause currentlyEnabled(Ext_Svnapot) = hartSupports(Ext_Svnapot) & currentlyEnabled(Ext_Sv39)
 // Svrsw60t59b: PTE Reserved for software bits 60-59
 function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b) & currentlyEnabled(Ext_Sv39)
+// Obviating Memory-management Instructions after Marking PTEs valid
+function clause currentlyEnabled(Ext_Svvptc) = hartSupports(Ext_Svvptc) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
 
 // Check if a PTE is valid
 private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
