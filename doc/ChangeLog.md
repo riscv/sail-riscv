@@ -3,9 +3,13 @@
 - Updates to the [configuration file](../config/config.json.in):
   - PMAs now have an additional `atomic_support` attribute for the level
     of atomicity supported in the memory region; see `memory.regions`.
-
   - Writable bits of the `scounteren` CSR can now be specified;
     see `base.scounteren_writable_bits`.
+  - The time limit that wait instructions (e.g. WFI, WRS.NTO, WRS.STO)
+    can wait for is now configurable; see `platform.max_time_to_wait`
+    (see also https://github.com/riscv/sail-riscv/issues/1564). The
+    default setting for `platform.wfi_is_nop` was also changed from
+    `true` to `false`.
 
 - The following extensions have been added:
   - Zicfiss
