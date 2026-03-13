@@ -31,6 +31,16 @@ enum AtomicSupport = {
   AMOCASQ,
 }
 
+function pma_atomicity_support_gt(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) > num_of_AtomicSupport(y)
+function pma_atomicity_support_lt(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) < num_of_AtomicSupport(y)
+function pma_atomicity_support_ge(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) >= num_of_AtomicSupport(y)
+function pma_atomicity_support_le(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) <= num_of_AtomicSupport(y)
+
+overload operator > = {pma_atomicity_support_gt}
+overload operator < = {pma_atomicity_support_lt}
+overload operator >= = {pma_atomicity_support_ge}
+overload operator <= = {pma_atomicity_support_le}
+
 mapping atomic_support_str : AtomicSupport <-> string = {
   AMONone       <-> "AMONone",
   AMOSwap       <-> "AMOSwap",

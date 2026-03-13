@@ -248,6 +248,19 @@ enum clause extension = Ext_Zbs
 mapping clause extensionName = Ext_Zbs <-> "zbs"
 function clause hartSupports(Ext_Zbs) = config extensions.Zbs.supported
 
+// Main memory supports all atomics in Zaamo
+enum clause extension = Ext_Ziccamoa
+mapping clause extensionName= Ext_Ziccamoa <-> "Ziccamoa"
+function clause hartSupports(Ext_Ziccamoa) = config extensions.Ziccamoa.supported
+// Main memory supports atomics in Zacas
+enum clause extension = Ext_Ziccamoc
+mapping clause extensionName= Ext_Ziccamoc <-> "Ziccamoc"
+function clause hartSupports(Ext_Ziccamoc) = config extensions.Ziccamoc.supported
+// Main memory supports forward progress on LR/SC sequences
+enum clause extension = Ext_Ziccrse
+mapping clause extensionName= Ext_Ziccrse <-> "Ziccrse"
+function clause hartSupports(Ext_Ziccrse) = config extensions.Ziccrse.supported
+
 // Scalar & Entropy Source Instructions: NIST Suite: AES Decryption
 enum clause extension = Ext_Zknd
 mapping clause extensionName = Ext_Zknd <-> "zknd"
@@ -625,6 +638,9 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicbom,
   Ext_Zicbop,
   Ext_Zicboz,
+  Ext_Ziccamoa,
+  Ext_Ziccamoc,
+  Ext_Ziccrse,
   Ext_Zicfilp,
   Ext_Zicfiss,
   Ext_Zicntr,

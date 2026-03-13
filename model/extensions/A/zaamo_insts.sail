@@ -11,6 +11,9 @@ function clause currentlyEnabled(Ext_Zaamo) = hartSupports(Ext_Zaamo) | currentl
 function clause currentlyEnabled(Ext_Zabha) = hartSupports(Ext_Zabha) & currentlyEnabled(Ext_Zaamo)
 function clause currentlyEnabled(Ext_Zacas) = hartSupports(Ext_Zacas) & currentlyEnabled(Ext_Zaamo)
 
+function clause currentlyEnabled(Ext_Ziccamoa) = hartSupports(Ext_Ziccamoa)
+function clause currentlyEnabled(Ext_Ziccamoc) = hartSupports(Ext_Ziccamoc)
+
 // Zaamo defines AMOs for 32-bit and 64-bit.
 // Zabha defines AMOs for 8-bit and 16-bit.
 //

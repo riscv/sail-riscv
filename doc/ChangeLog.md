@@ -12,6 +12,9 @@
     `true` to `false`.
 
 - The following extensions have been added:
+  - Ziccamoa
+  - Ziccamoc
+  - Ziccrse
   - Zicfiss
   - Sscounterenw
   - Svnapot
