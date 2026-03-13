@@ -388,6 +388,9 @@
     "Zbs": {
       "supported": false
     },
+    "Zbr": {
+      "supported": false
+    },
     "Zbc": {
       "supported": true
     },
