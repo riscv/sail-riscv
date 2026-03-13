@@ -307,13 +307,20 @@ mapping clause csr_name_map = 0xC20  <-> "vl"
 mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
 
-function clause is_CSR_accessible(0x008, _, _) = currentlyEnabled(Ext_Zve32x) // vstart
-function clause is_CSR_accessible(0x009, _, _) = currentlyEnabled(Ext_Zve32x) // vxsat
-function clause is_CSR_accessible(0x00A, _, _) = currentlyEnabled(Ext_Zve32x) // vxrm
-function clause is_CSR_accessible(0x00F, _, _) = currentlyEnabled(Ext_Zve32x) // vcsr
-function clause is_CSR_accessible(0xC20, _, _) = currentlyEnabled(Ext_Zve32x) // vl
-function clause is_CSR_accessible(0xC21, _, _) = currentlyEnabled(Ext_Zve32x) // vtype
-function clause is_CSR_accessible(0xC22, _, _) = currentlyEnabled(Ext_Zve32x) // vlenb
+function clause is_CSR_accessible(0x008, p, access_type) = // vstart
+  check_CSR_access(0x008, p, access_type, currentlyEnabled(Ext_Zve32x))
+function clause is_CSR_accessible(0x009, p, access_type) = // vxsat
+  check_CSR_access(0x009, p, access_type, currentlyEnabled(Ext_Zve32x))
+function clause is_CSR_accessible(0x00A, p, access_type) = // vxrm
+  check_CSR_access(0x00A, p, access_type, currentlyEnabled(Ext_Zve32x))
+function clause is_CSR_accessible(0x00F, p, access_type) = // vcsr
+  check_CSR_access(0x00F, p, access_type, currentlyEnabled(Ext_Zve32x))
+function clause is_CSR_accessible(0xC20, p, access_type) = // vl
+  check_CSR_access(0xC20, p, access_type, currentlyEnabled(Ext_Zve32x))
+function clause is_CSR_accessible(0xC21, p, access_type) = // vtype
+  check_CSR_access(0xC21, p, access_type, currentlyEnabled(Ext_Zve32x))
+function clause is_CSR_accessible(0xC22, p, access_type) = // vlenb
+  check_CSR_access(0xC22, p, access_type, currentlyEnabled(Ext_Zve32x))
 
 function clause read_CSR(0x008) = vstart
 function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])

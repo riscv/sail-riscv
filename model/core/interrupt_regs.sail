@@ -102,11 +102,16 @@ mapping clause csr_name_map = 0x302  <-> "medeleg"
 mapping clause csr_name_map = 0x312  <-> "medelegh"
 mapping clause csr_name_map = 0x303  <-> "mideleg"
 
-function clause is_CSR_accessible(0x304, _, _) = true // mie
-function clause is_CSR_accessible(0x344, _, _) = true // mip
-function clause is_CSR_accessible(0x302, _, _) = currentlyEnabled(Ext_S) // medeleg
-function clause is_CSR_accessible(0x312, _, _) = currentlyEnabled(Ext_S) & xlen == 32 // medelegh
-function clause is_CSR_accessible(0x303, _, _) = currentlyEnabled(Ext_S) // mideleg
+function clause is_CSR_accessible(0x304, p, access_type) = // mie
+  check_CSR_access(0x304, p, access_type, true)
+function clause is_CSR_accessible(0x344, p, access_type) = // mip
+  check_CSR_access(0x344, p, access_type, true)
+function clause is_CSR_accessible(0x302, p, access_type) = // medeleg
+  check_CSR_access(0x302, p, access_type, currentlyEnabled(Ext_S))
+function clause is_CSR_accessible(0x312, p, access_type) = // medelegh
+  check_CSR_access(0x312, p, access_type, currentlyEnabled(Ext_S) & xlen == 32)
+function clause is_CSR_accessible(0x303, p, access_type) = // mideleg
+  check_CSR_access(0x303, p, access_type, currentlyEnabled(Ext_S))
 
 function clause read_CSR(0x304) = mie.bits
 function clause read_CSR(0x344) = mip.bits
@@ -168,7 +173,8 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 }
 
 mapping clause csr_name_map = 0x144  <-> "sip"
-function clause is_CSR_accessible(0x144, _, _) = currentlyEnabled(Ext_S) // sip
+function clause is_CSR_accessible(0x144, p, access_type) = // sip
+  check_CSR_access(0x144, p, access_type, currentlyEnabled(Ext_S))
 function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
 function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); Ok(lower_mip(mip, mideleg).bits) }
 
@@ -188,6 +194,7 @@ private function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 }
 
 mapping clause csr_name_map = 0x104  <-> "sie"
-function clause is_CSR_accessible(0x104, _, _) = currentlyEnabled(Ext_S) // sie
+function clause is_CSR_accessible(0x104, p, access_type) =  // sie
+  check_CSR_access(0x104, p, access_type, currentlyEnabled(Ext_S))
 function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
 function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); Ok(lower_mie(mie, mideleg).bits) }

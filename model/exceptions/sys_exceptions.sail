@@ -85,10 +85,14 @@ mapping clause csr_name_map = 0x141  <-> "sepc"
 mapping clause csr_name_map = 0x305  <-> "mtvec"
 mapping clause csr_name_map = 0x341  <-> "mepc"
 
-function clause is_CSR_accessible(0x105, _, _) = currentlyEnabled(Ext_S) // stvec
-function clause is_CSR_accessible(0x141, _, _) = currentlyEnabled(Ext_S) // sepc
-function clause is_CSR_accessible(0x305, _, _) = true // mtvec
-function clause is_CSR_accessible(0x341, _, _) = true // mepc
+function clause is_CSR_accessible(0x105, p, access_type) = // stvec
+  check_CSR_access(0x105, p, access_type, currentlyEnabled(Ext_S))
+function clause is_CSR_accessible(0x141, p, access_type) = // sepc
+  check_CSR_access(0x141, p, access_type, currentlyEnabled(Ext_S))
+function clause is_CSR_accessible(0x305, p, access_type) = // mtvec
+  check_CSR_access(0x305, p, access_type, true)
+function clause is_CSR_accessible(0x341, p, access_type) = // mepc
+  check_CSR_access(0x341, p, access_type, true)
 
 function clause read_CSR(0x105) = get_stvec()
 function clause read_CSR(0x141) = get_xepc(Supervisor)
