@@ -159,9 +159,9 @@ private function check_PTE_permission(
     let shadow_stack_ok : bool = match access {
       // "Implicit accesses, including instruction fetches to an SS page, are not permitted.
       // Such accesses will raise an access-fault exception appropriate to the access type."
-      InstructionFetch() => false,
-      Load(PageTable)    => false,
-      Store(PageTable)   => false,
+      InstructionFetch()    => false,
+      Load(PageTableEntry)  => false,
+      Store(PageTableEntry) => false,
       // "the shadow stack is readable by all instructions that only load from
       // memory."
       Load(Data)         => true,

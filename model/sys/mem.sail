@@ -94,9 +94,9 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           let canAccess : bool = match access {
             InstructionFetch()     => attributes.executable,
             Load(Data)             => {assert(not(res_or_con)); attributes.readable},
-            Load(PageTable)        => {assert(not(res_or_con)); attributes.supports_pte_read},
+            Load(PageTableEntry)   => {assert(not(res_or_con)); attributes.supports_pte_read},
             Store(Data)            => {assert(not(res_or_con)); attributes.writable},
-            Store(PageTable)       => {assert(not(res_or_con)); attributes.supports_pte_write},
+            Store(PageTableEntry)  => {assert(not(res_or_con)); attributes.supports_pte_write},
             // For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
             // or absence (RsrvNonEventual) of an eventual success guarantee.
             LoadReserved(Data)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},

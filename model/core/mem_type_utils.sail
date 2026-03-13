@@ -10,10 +10,10 @@ function accessFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> Ex
   match access {
     InstructionFetch()                  => E_Fetch_Access_Fault(),
     Load(Data)                          => E_Load_Access_Fault(),
-    Load(PageTable)                     => E_Load_Access_Fault(),
+    Load(PageTableEntry)                => E_Load_Access_Fault(),
     LoadReserved(Data)                  => E_Load_Access_Fault(),
     Store(Data)                         => E_SAMO_Access_Fault(),
-    Store(PageTable)                    => E_SAMO_Access_Fault(),
+    Store(PageTableEntry)               => E_SAMO_Access_Fault(),
     StoreConditional(Data)              => E_SAMO_Access_Fault(),
     Atomic(_, Data, Data)               => E_SAMO_Access_Fault(),
 
@@ -48,10 +48,10 @@ function alignmentFaultFromAccessType(access : MemoryAccessType(mem_payload)) ->
   match access {
     InstructionFetch()                  => E_Fetch_Addr_Align(),
     Load(Data)                          => E_Load_Addr_Align(),
-    Load(PageTable)                     => E_Load_Addr_Align(),
+    Load(PageTableEntry)                => E_Load_Addr_Align(),
     LoadReserved(Data)                  => E_Load_Addr_Align(),
     Store(Data)                         => E_SAMO_Addr_Align(),
-    Store(PageTable)                    => E_SAMO_Addr_Align(),
+    Store(PageTableEntry)               => E_SAMO_Addr_Align(),
     StoreConditional(Data)              => E_SAMO_Addr_Align(),
     Atomic(_, Data, Data)               => E_SAMO_Addr_Align(),
 

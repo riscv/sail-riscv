@@ -45,14 +45,14 @@ private function write_pte forall 'n, 'n in {4, 8} . (
   pte_size : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTable), false, false, false)
+  mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), false, false, false)
 
 // Read a Page Table Entry.
 private function read_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
   pte_size : int('n),
 ) -> MemoryOpResult(bits(8 * 'n)) =
-  mem_read_priv(Load(PageTable), Supervisor, paddr, pte_size, false, false, false)
+  mem_read_priv(Load(PageTableEntry), Supervisor, paddr, pte_size, false, false, false)
 
 // 'v is the virtual address size.
 private val pt_walk : forall 'v, is_sv_mode('v) . (
