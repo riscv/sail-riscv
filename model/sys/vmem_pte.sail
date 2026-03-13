@@ -159,7 +159,9 @@ private function check_PTE_permission(
     let shadow_stack_ok : bool = match access {
       // "Implicit accesses, including instruction fetches to an SS page, are not permitted.
       // Such accesses will raise an access-fault exception appropriate to the access type."
-      InstructionFetch() => false,
+      InstructionFetch()    => false,
+      Load(PageTableEntry)  => false,
+      Store(PageTableEntry) => false,
       // "the shadow stack is readable by all instructions that only load from
       // memory."
       Load(Data)         => true,
@@ -179,10 +181,9 @@ private function check_PTE_permission(
       // exception."
       CacheAccess(_) => false,
 
-      LoadReserved(ShadowStack)      => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for LoadReserved."),
-      StoreConditional(ShadowStack)  => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for StoreConditional."),
-      Atomic(_, ShadowStack, Data)   => internal_error(__FILE__, __LINE__, "Invalid payloads (ShadowStack, Data) for Atomic."),
-      Atomic(_, Data, ShadowStack)   => internal_error(__FILE__, __LINE__, "Invalid payloads (Data, ShadowStack) for Atomic."),
+      LoadReserved(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+      StoreConditional(p)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+      Atomic(_, rp, wp)              => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
 
     };
     if not(shadow_stack_ok) then return PTE_Check_Failure((), PTE_No_Access());

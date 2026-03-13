@@ -36,11 +36,18 @@ type vpn_bits('v), is_sv_mode('v) = bits('v - pagesize_bits)
 // handled by adding ShadowStack{Load,Store,Atomic} variants to
 // MemoryAccessType and removing the ShadowStack variant here.
 
-enum mem_payload = { Data, ShadowStack }
+enum mem_payload = { Data, PageTableEntry, ShadowStack }
+
+mapping mem_payload_name : mem_payload <-> string = {
+  Data           <-> "Data",
+  PageTableEntry <-> "PageTableEntry",
+  ShadowStack    <-> "ShadowStack",
+}
 
 mapping mem_payload_str : mem_payload <-> string = {
-  Data        <-> "",
-  ShadowStack <-> ".ss",
+  Data            <-> "",
+  PageTableEntry  <-> "",
+  ShadowStack     <-> ".ss",
 }
 
 function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
@@ -64,26 +71,26 @@ function is_shadow_stack_access(access : MemoryAccessType(mem_payload)) -> bool 
 
     InstructionFetch()                  => false,
     Load(Data)                          => false,
+    Load(PageTableEntry)                => false,
     LoadReserved(Data)                  => false,
     Store(Data)                         => false,
+    Store(PageTableEntry)               => false,
     StoreConditional(Data)              => false,
     Atomic(_, Data, Data)               => false,
     CacheAccess(_)                      => false,
 
-    LoadReserved(ShadowStack)           => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for LoadReserved."),
-    StoreConditional(ShadowStack)       => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for StoreConditional."),
-    Atomic(_, ShadowStack, Data)        => internal_error(__FILE__, __LINE__, "Invalid payloads (ShadowStack, Data) for Atomic."),
-    Atomic(_, Data, ShadowStack)        => internal_error(__FILE__, __LINE__, "Invalid payloads (Data, ShadowStack) for Atomic."),
+    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
   }
 
 function is_shadow_stack_amo(access : MemoryAccessType(mem_payload)) -> bool =
   match access {
     Atomic(_, ShadowStack, ShadowStack) => true,
 
-    LoadReserved(ShadowStack)           => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for LoadReserved."),
-    StoreConditional(ShadowStack)       => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for StoreConditional."),
-    Atomic(_, ShadowStack, Data)        => internal_error(__FILE__, __LINE__, "Invalid payloads (ShadowStack, Data) for Atomic."),
-    Atomic(_, Data, ShadowStack)        => internal_error(__FILE__, __LINE__, "Invalid payloads (Data, ShadowStack) for Atomic."),
+    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
 
     _                                   => false,
   }
