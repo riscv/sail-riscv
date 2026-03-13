@@ -467,6 +467,9 @@
     "Zvkt": {
       "supported": true
     },
+    "Ssccptr": {
+      "supported": true
+    },
     "Sscofpmf": {
       "supported": true
     },

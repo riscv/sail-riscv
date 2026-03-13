@@ -57,6 +57,15 @@ private function check_mmu_config() -> bool = {
     valid = false;
     print_endline("Svrsw60t59b is enabled but Sv39 is disabled: supporting Svrsw60t59b requires supporting Sv39.");
   };
+  if (config extensions.Ssccptr.supported : bool) then {
+    if xlen == 32 & not(config extensions.Sv32.supported : bool) then {
+      valid = false;
+      print_endline("The Sccptr extension is enabled but Sv32 is disabled: Ssccptr depends on Sv32 on RV32.");
+    } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
+      valid = false;
+      print_endline("The Sccptr extension is enabled but Sv39 is disabled: Ssccptr depends on Sv39 on RV64.");
+    };
+  };
   valid
 }
 

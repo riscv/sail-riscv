@@ -13,6 +13,7 @@
 
 - The following extensions have been added:
   - Zicfiss
+  - Ssccptr
   - Sscounterenw
   - Svvptc
 
