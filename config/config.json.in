@@ -103,7 +103,7 @@
     // checked before address translation. `misaligned_fault` in
     // `regions` is checked after address translation.
     "misaligned": {
-      // If this is false then all misaligned accesses will raise a misaligned.
+      // If this is false then all misaligned accesses will raise a misaligned exception.
       "supported": true,
       // Memory accesses that span multiple naturally aligned
       // 2^allowed_within_exp sized regions will be split into multiple
