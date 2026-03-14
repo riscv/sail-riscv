@@ -36,9 +36,19 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 // This is an external option that returns an integer N, such that
 // when N is greater than zero, misaligned accesses to physical memory
 // (as atomic events) are allowed provided the access occurs within a
-// naturally aligned 2^N byte region.  This region must be smaller than
-// the page size (i.e. 2^12 = 4096 bytes).
-let sys_misaligned_allowed_within_exp : range(0, 11) = config memory.misaligned.allowed_within_exp
+// naturally aligned 2^N byte region. If the access spans more than one of these
+// regions it will be split into multiple memory operations.
+// For the current implementation this region must not be more than the page
+// size (i.e. 2^12 = 4096 bytes) so that accesses that span discontiguously
+// mapped pages work correctly.
+//
+// This is an over-constraint: it isn't necessary when virtual memory isn't
+// enabled, or for contiguously mapped pages, and in fact a memory operation
+// itself can be discontiguous, so even an access spanning discontiguously
+// mapped pages could still result in one memory operation.
+// However limiting this to 2^12 is an easy way to ensure that accesses
+// spanning pages always work.
+let sys_misaligned_allowed_within_exp : range(0, 12) = config memory.misaligned.allowed_within_exp
 
 // Check if an 'n byte access for an address is within an aligned 2^'r byte region
 private val access_within : forall 'width 'n ('r : Nat), 'r <= 'width & 1 <= 'n <= 2^'r.
