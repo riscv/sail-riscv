@@ -119,7 +119,7 @@
       // are done in increasing or decreasing address order. This is architecturally
       // observable because some store operations may succeed, and even for
       // loads the resulting `xtval` may depend on this setting.
-"order_decreasing": false
+      "order_decreasing": false
     },
     "translation": {
       "dirty_update": false
