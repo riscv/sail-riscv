@@ -12,8 +12,10 @@
 private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_payload)) -> bool =
   match access {
     Load(Data)                    => ent[R] == 0b1,
+    Load(PageTableEntry)          => ent[R] == 0b1,
     LoadReserved(Data)            => ent[R] == 0b1,
     Store(Data)                   => ent[W] == 0b1,
+    Store(PageTableEntry)         => ent[W] == 0b1,
     StoreConditional(Data)        => ent[W] == 0b1,
     Atomic(_, Data, Data)         => ent[R] == 0b1 & ent[W] == 0b1,
     InstructionFetch()            => ent[X] == 0b1,
@@ -22,11 +24,12 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_pay
     // for memory accessed by shadow stack instructions."
     Load(ShadowStack)             => ent[R] == 0b1 & ent[W] == 0b1,
     Store(ShadowStack)            => ent[R] == 0b1 & ent[W] == 0b1,
-    Atomic(_, ShadowStack, _)     => ent[R] == 0b1 & ent[W] == 0b1,
-    Atomic(_, _, ShadowStack)     => ent[R] == 0b1 & ent[W] == 0b1,
 
-    LoadReserved(ShadowStack)     => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for LoadReserved."),
-    StoreConditional(ShadowStack) => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for StoreConditional."),
+    Atomic(_, ShadowStack, ShadowStack) => ent[R] == 0b1 & ent[W] == 0b1,
+
+    LoadReserved(p)               => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(p)           => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    Atomic(_, rp, wp)             => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_str(wp) ^ ") for Atomic."),
 
     // TODO: "If neither a load instruction nor store instruction is
     // permitted to access the physical addresses, but an instruction

@@ -94,7 +94,9 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           let canAccess : bool = match access {
             InstructionFetch()     => attributes.executable,
             Load(Data)             => {assert(not(res_or_con)); attributes.readable},
+            Load(PageTableEntry)   => {assert(not(res_or_con)); attributes.supports_pte_read},
             Store(Data)            => {assert(not(res_or_con)); attributes.writable},
+            Store(PageTableEntry)  => {assert(not(res_or_con)); attributes.supports_pte_write},
             // For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
             // or absence (RsrvNonEventual) of an eventual success guarantee.
             LoadReserved(Data)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
@@ -142,12 +144,11 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
               PREFETCH_I => attributes.executable,
             },
 
-            LoadReserved(ShadowStack)      => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for LoadReserved."),
-            StoreConditional(ShadowStack)  => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for StoreConditional."),
-            Atomic(_, ShadowStack, Data)   => internal_error(__FILE__, __LINE__, "Invalid payloads (ShadowStack, Data) for Atomic."),
-            Atomic(_, Data, ShadowStack)   => internal_error(__FILE__, __LINE__, "Invalid payloads (Data, ShadowStack) for Atomic."),
+            LoadReserved(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+            StoreConditional(p)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
 
             Atomic(op, ShadowStack, ShadowStack) => internal_error(__FILE__, __LINE__, "Invalid op (" ^ amo_mnemonic(op) ^ ") for ShadowStack Atomic."),
+            Atomic(_, rp, wp)                    => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
           };
 
           if get_config_print_pma() & not(canAccess)

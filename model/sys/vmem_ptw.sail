@@ -59,11 +59,15 @@ function translationException(access : MemoryAccessType(mem_payload),
 
     (Load(Data), PTW_No_Access())                => E_Load_Access_Fault(),
     (Load(Data), _)                              => E_Load_Page_Fault(),
+    (Load(PageTableEntry), PTW_No_Access())      => E_Load_Access_Fault(),
+    (Load(PageTableEntry), _)                    => E_Load_Page_Fault(),
     (LoadReserved(Data), PTW_No_Access())        => E_Load_Access_Fault(),
     (LoadReserved(Data), _)                      => E_Load_Page_Fault(),
 
     (Store(Data), PTW_No_Access())               => E_SAMO_Access_Fault(),
     (Store(Data), _)                             => E_SAMO_Page_Fault(),
+    (Store(PageTableEntry), PTW_No_Access())     => E_SAMO_Access_Fault(),
+    (Store(PageTableEntry), _)                   => E_SAMO_Page_Fault(),
     (StoreConditional(Data), PTW_No_Access())    => E_SAMO_Access_Fault(),
     (StoreConditional(Data), _)                  => E_SAMO_Page_Fault(),
 
@@ -102,9 +106,8 @@ function translationException(access : MemoryAccessType(mem_payload),
       PREFETCH_I => E_Fetch_Page_Fault(),
     },
 
-    (LoadReserved(ShadowStack), _)      => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for LoadReserved."),
-    (StoreConditional(ShadowStack), _)  => internal_error(__FILE__, __LINE__, "Invalid payload (ShadowStack) for StoreConditional."),
-    (Atomic(_, ShadowStack, Data), _)   => internal_error(__FILE__, __LINE__, "Invalid payloads (ShadowStack, Data) for Atomic."),
-    (Atomic(_, Data, ShadowStack), _)   => internal_error(__FILE__, __LINE__, "Invalid payloads (Data, ShadowStack) for Atomic."),
+    (LoadReserved(p), _)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    (StoreConditional(p), _)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    (Atomic(_, rp, wp), _)              => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
   }
 }

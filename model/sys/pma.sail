@@ -106,6 +106,10 @@ struct PMA = {
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
   // have this set.
   supports_cbo_zero : bool,
+  // Flags whether this memory supports hardware page table reads.
+  supports_pte_read : bool,
+  // Flags whether this memory supports hardware page table writes.
+  supports_pte_write : bool,
   // TODO: Misaligned Atomicity Granule PMA
   // TODO: Memory Ordering PMA
 }
@@ -150,10 +154,11 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.read_idempotent then " read-idempotent" else "") ^
   (if attr.write_idempotent then " write-idempotent" else "") ^
   " misaligned_fault:" ^ to_str(attr.misaligned_fault) ^
-  // TODO: Atomicity PMA.
-  // " " ^ to_str(attr.atomic_support) ^
+  " " ^ to_str(attr.atomic_support) ^
   " " ^ to_str(attr.reservability) ^
-  (if attr.supports_cbo_zero then " supports_cbo_zero" else "")
+  (if attr.supports_cbo_zero then " supports-cbo-zero" else "") ^
+  (if attr.supports_pte_read then " supports-pte-read" else "") ^
+  (if attr.supports_pte_write then " supports-pte-write" else "")
 
 function pma_region_to_str(region : PMA_Region) -> string =
   "base: " ^ bits_str(region.base) ^ " size: " ^ bits_str(region.size)
