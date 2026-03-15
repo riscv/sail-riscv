@@ -99,14 +99,27 @@
       "na4_supported": true,
       "napot_supported": true
     },
-    // This controls global support for misaligned access so it is
+    // These settings control global support for misaligned access so they are
     // checked before address translation. `misaligned_fault` in
     // `regions` is checked after address translation.
     "misaligned": {
+      // If this is false then all misaligned accesses will raise a misaligned exception.
       "supported": true,
+      // Memory accesses that span multiple naturally aligned
+      // 2^allowed_within_exp sized regions will be split into multiple
+      // memory operations. 0 means all misaligned accesses will be split.
+      // The maximum value is 12 (one page).
+      "allowed_within_exp": 0,
+      // If the access gets split due to `allowed_within_exp` then the size
+      // of the operations will be one byte if `byte_by_byte` is set, otherwise
+      // they will be the maximum size possible based on the alignment. For
+      // example a 4-byte access to address 0x2 will use two 2-byte operations.
       "byte_by_byte": false,
-      "order_decreasing": false,
-      "allowed_within_exp": 0
+      // If multiple memory operations are needed, this controls whether they
+      // are done in increasing or decreasing address order. This is architecturally
+      // observable because some store operations may succeed, and even for
+      // loads the resulting `xtval` may depend on this setting.
+      "order_decreasing": false
     },
     "translation": {
       "dirty_update": false
