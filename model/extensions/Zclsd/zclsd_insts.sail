@@ -18,14 +18,8 @@ function validZclsdReg(reg : regidx) -> bool = {
   true
 }
 
-function validZclsdCReg(reg : cregidx) -> bool = {
-  if encdec_creg(reg)[0] == 0b1
-  then match rv32load_store_pair_odd_register_reserved_behavior {
-    LoadStorePair_Fatal   => reserved_behavior("Zclsd used odd-numbered register " ^ dec_str(unsigned(encdec_creg(reg)))),
-    LoadStorePair_Illegal => return false,
-  };
-  true
-}
+function validZclsdCReg(reg : cregidx) -> bool =
+  validZclsdReg(creg2reg_idx(reg))
 
 /* ****************************************************************** */
 union clause instruction = ZCLSD_C_LDSP : (bits(9), regidx)
