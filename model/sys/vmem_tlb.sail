@@ -29,6 +29,7 @@ private struct TLB_Entry = {
   ppn        : bits(tlb_ppn_bits), // Physical Page Number, 22 (Sv32), or 44 (Sv39+) bits.
   pte        : bits(64),           // PTE. This is only 32 bits for Sv32 so we zero extend.
   pteAddr    : physaddr,           // Physical address of PTE, for writing dirty/accessed bits.
+  pbmt       : page_based_mem_type,// Memory type override for the PMA containing the physical address
 }
 
 // PTE access functions, for reading flags, and for modifying the dirty and
@@ -62,6 +63,9 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
   // cached ppn.
   trunc(ppn | (vpn & levelMask))
 }
+
+function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type =
+  ent.pbmt
 
 // 64 entries is based on benchmarks of Linux boots and is where
 // you stop seeing performance improvements.
@@ -136,6 +140,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
   pte      : pte_bits('v),
   pteAddr  : physaddr,
   level    : level_range('v),
+  pbmt     : page_based_mem_type,
   global   : bool,
 ) -> unit = {
   let shift = level * (if 'v == 32 then 10 else 9);
@@ -150,7 +155,8 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
                                  pteAddr   = pteAddr,
                                  levelMask = zero_extend(levelMask),
                                  vpn       = sign_extend(vpn),
-                                 ppn       = zero_extend(ppn)};
+                                 ppn       = zero_extend(ppn),
+                                 pbmt      = pbmt};
 
   // Add the TLB entry. Note that this may be a super-page, but we still want
   // to add it to the index corresponding to the page because that is how

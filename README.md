@@ -205,6 +205,7 @@ For booting operating system images, see the information under the
 - Svbare extension for Bare mode virtual-memory translation
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
 - Svnapot extension for NAPOT Translation Contiguity, v1.0
+- Svpbmt extension for Page-Based Memory Types, v1.0
 - Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
 - Svvptc extension for Obviating Memory-management Instructions after Marking PTEs valid, v1.0
 - Physical Memory Protection (PMP)

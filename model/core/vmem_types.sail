@@ -94,3 +94,13 @@ function is_shadow_stack_amo(access : MemoryAccessType(mem_payload)) -> bool =
 
     _                                   => false,
   }
+
+// Memory attributes for Page-based Memory Types
+
+enum page_based_mem_type = { PBMT_PMA, PBMT_NC, PBMT_IO }
+
+mapping page_based_mem_type : bits(2) <-> page_based_mem_type = {
+  0b00 <-> PBMT_PMA,
+  0b01 <-> PBMT_NC,
+  0b10 <-> PBMT_IO,
+}

@@ -153,7 +153,7 @@ function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
     match translateAddr(Virtaddr(vaddr), access) {
       Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
-      Ok(paddr, _) => match mem_read(access, paddr, bytes, aq, rl, res) {
+      Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, bytes, aq, rl, res) {
         Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
         Ok(v) => {
@@ -209,7 +209,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
       // NOTE: Currently, we only announce the effective address if address translation is successful.
       // This may need revisiting, particularly in the misaligned case.
-      Ok(paddr, _) => {
+      Ok(paddr, pbmt, _) => {
         // If res is true, the load should be aligned, and this loop should only execute once.
         assert(res == is_store_conditional(access));
         if res & not(match_reservation(bits_of(paddr))) then {
@@ -220,7 +220,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           // PMP region without write permissions raises a store
           // access-fault exception."
           let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, effPriv, paddr, bytes, true) {
+          match phys_access_check(access, pbmt, effPriv, paddr, bytes, true) {
             Some(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
             None()  => write_success = false,
           }
@@ -229,7 +229,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
           Ok(()) => {
             let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
-            match mem_write_value(paddr, bytes, write_value, access, aq, rl, res) {
+            match mem_write_value(paddr, bytes, write_value, access, pbmt, aq, rl, res) {
               Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
               Ok(s)  => write_success = write_success & s,
             }
