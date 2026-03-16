@@ -236,7 +236,7 @@ $ifdef SYMBOLIC
 register x0 : regtype
 
 let GPRs : vector(32, dec, register(xlenbits)) = [
-  ref x31,
+    ref x31,
     ref x30,
     ref x29,
     ref x28,
@@ -267,7 +267,7 @@ let GPRs : vector(32, dec, register(xlenbits)) = [
     ref x3,
     ref x2,
     ref x1,
-    ref x0
+	ref x0,
 ]
 
 register __isla_vector_gpr: bool = false
@@ -276,25 +276,29 @@ val rX_from_vector = monadic "read_register_from_vector" : forall 'n, 0 <= 'n <=
 
 val get_X_bits : regidx -> xlenbits effect {rreg}
 
-function get_X_bits(Regidx(i) : regidx) = if __isla_vector_gpr then rX_from_vector(unsigned(i), GPRs) else rX_bits(Regidx(i))
-
 val get_X : regno -> xlenbits effect {rreg}
 
-function get_X(Regno(r) : regno) = if __isla_vector_gpr then rX_from_vector(r, GPRs) else rX(Regno(r))
+function get_X(Regno(r) : regno) = if __isla_vector_gpr then match r {
+    0 => zero_reg,
+    _ => rX_from_vector(r, GPRs),
+  } else rX(Regno(r))
+
+function get_X_bits(Regidx(i) : regidx) = if __isla_vector_gpr then get_X(Regno(unsigned(i))) else rX_bits(Regidx(i))
 
 val wX_from_vector = monadic "write_register_from_vector" : forall 'n, 0 <= 'n <= 31. (int('n), xlenbits, vector(32, dec, register(xlenbits))) -> unit
 
 val set_X_bits : (regidx, xlenbits) -> unit effect {wreg}
 
-function set_X_bits(Regidx(i) : regidx, data : xlenbits) = {
-    if __isla_vector_gpr then wX_from_vector(unsigned(i), data, GPRs) else wX_bits(Regidx(i), data)
-}
-
 val set_X : (regno, xlenbits) -> unit effect {wreg}
 
 function set_X(Regno(r) : regno, v) = {
-    if __isla_vector_gpr then wX_from_vector(r, v, GPRs) else wX(Regno(r), v)
+    if __isla_vector_gpr then match r {
+        0 => (),
+        _ => wX_from_vector(r, v, GPRs),
+      } else wX(Regno(r), v)
 }
+
+function set_X_bits(Regidx(i) : regidx, data : xlenbits) = if __isla_vector_gpr then set_X(Regno(unsigned(i)), data) else wX_bits(Regidx(i), data)
 $else
 val get_X_bits : regidx -> xlenbits effect {rreg}
 
@@ -306,13 +310,11 @@ function get_X(Regno(r) : regno) = rX(Regno(r))
 
 val set_X_bits : (regidx, xlenbits) -> unit effect {wreg}
 
-function set_X_bits(Regidx(i) : regidx, data : xlenbits) = {
-    wX_bits(Regidx(i), data)
-}
-
 val set_X : (regno, xlenbits) -> unit effect {wreg}
 
 function set_X(Regno(r) : regno, v) = wX(Regno(r), v)
+
+function set_X_bits(Regidx(i) : regidx, data : xlenbits) = set_X(Regno(unsigned(i)), data)
 $endif
 
 overload X = {get_X_bits, set_X_bits, get_X, set_X}
