@@ -15,6 +15,29 @@ private function check_privs() -> bool = {
   true
 }
 
+private function require_Sv32(ext_name : string) -> bool = {
+  if not(config extensions.Sv32.supported : bool) then {
+    print_endline("The " ^ ext_name ^ " extension is enabled but Sv32 is disabled: " ^ ext_name ^ " depends on Sv32 on RV32.");
+    return false;
+  };
+  true
+}
+
+private function require_Sv39(ext_name : string) -> bool = {
+  if not(config extensions.Sv39.supported : bool) then {
+    print_endline("The " ^ ext_name ^ " extension is enabled but Sv39 is disabled: " ^ ext_name ^ " depends on Sv39 on RV64.");
+    return false;
+  };
+  true
+}
+
+private function require_virtual_memory(ext_name : string) -> bool = {
+  if xlen == 32 then return require_Sv32(ext_name);
+
+  assert(xlen == 64);
+  require_Sv39(ext_name)
+}
+
 // This logic will need to change once MXL/SXL/UXL can differ.
 private function check_mmu_config() -> bool = {
   var valid : bool = true;
@@ -57,34 +80,22 @@ private function check_mmu_config() -> bool = {
     valid = false;
     print_endline("Svrsw60t59b is enabled but Sv39 is disabled: supporting Svrsw60t59b requires supporting Sv39.");
   };
-  if (config extensions.Ssccptr.supported : bool) then {
-    if xlen == 32 & not(config extensions.Sv32.supported : bool) then {
-      valid = false;
-      print_endline("The Sccptr extension is enabled but Sv32 is disabled: Ssccptr depends on Sv32 on RV32.");
-    } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
-      valid = false;
-      print_endline("The Sccptr extension is enabled but Sv39 is disabled: Ssccptr depends on Sv39 on RV64.");
-    };
-  };
+
+  if (config extensions.Ssccptr.supported : bool)
+  then valid = valid & require_virtual_memory("Ssccptr");
+
   if (config extensions.Svnapot.supported : bool) then {
     if xlen == 32 then {
       valid = false;
       print_endline("The Svnapot extension is enabled: Svnapot is not supported on RV32");
-    };
-    if not(config extensions.Sv39.supported : bool) then {
-      valid = false;
-      print_endline("The Svnapot extension is enabled but Sv39 is disabled: supporting Svnapot requires Sv39.");
-    };
-  };
-  if (config extensions.Svvptc.supported : bool) then {
-    if xlen == 32 & not(config extensions.Sv32.supported : bool) then {
-      valid = false;
-      print_endline("The Svvptc extension is enabled but Sv32 is disabled: Svvptc depends on Sv32 on RV32.");
-    } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
-      valid = false;
-      print_endline("The Svvptc extension is enabled but Sv39 is disabled: Svvptc depends on Sv39 on RV64.");
+    } else {
+      valid = valid & require_Sv39("Svnapot");
     }
   };
+
+  if (config extensions.Svvptc.supported : bool)
+  then valid = valid & require_virtual_memory("Svvptc");
+
   valid
 }
 
