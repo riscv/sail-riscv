@@ -31,6 +31,7 @@ struct PTW_Output('v : Int), is_sv_mode('v) = {
   pte     : pte_bits('v),
   pteAddr : physaddr,
   level   : level_range('v),
+  pbmt    : page_based_mem_type,
   global  : bool,
 }
 
@@ -45,7 +46,7 @@ private function write_pte forall 'n, 'n in {4, 8} . (
   pte_size : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), false, false, false)
+  mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), PBMT_PMA, false, false, false)
 
 // Sscptr: Main memory supports page table read
 function clause currentlyEnabled(Ext_Ssccptr) = hartSupports(Ext_Ssccptr) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
@@ -55,7 +56,7 @@ private function read_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
   pte_size : int('n),
 ) -> MemoryOpResult(bits(8 * 'n)) =
-  mem_read_priv(Load(PageTableEntry), Supervisor, paddr, pte_size, false, false, false)
+  mem_read_priv(Load(PageTableEntry), PBMT_PMA, Supervisor, paddr, pte_size, false, false, false)
 
 // Update a PTE's A/D bits and write it to memory if needed.  This returns
 // * Ok(Some(pte)) if a write was needed and was successful. pte is the new value.
@@ -195,9 +196,12 @@ function pt_walk(
               } else {
                 ppn
               };
+
+              let pbmt = if menvcfg[PBMTE] == 0b0 then PBMT_PMA else page_based_mem_type(pte_ext[PBMT]);
+
               ptw_success_callback(zero_extend(ppn), level);
 
-              Ok(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, global=global}, ext_ptw)
+              Ok(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, pbmt=pbmt, global=global}, ext_ptw)
             }
           }
         }
@@ -256,7 +260,7 @@ private function translationMode(priv : Privilege) -> SATPMode = {
 
 // Result of address translation
 
-type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, ext_ptw), ('failure, ext_ptw))
+type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, page_based_mem_type, ext_ptw), ('failure, ext_ptw))
 
 // This function can be ignored on first reading since TLBs are not
 // part of RISC-V architecture spec (see TLB NOTE above).
@@ -290,9 +294,9 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
         Ok(Some(pte)) => {
           // Writeback the PTE (which has new A/D bits).
           write_TLB(tlb_index, tlb_set_pte(ent, pte));
-          Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw)
+          Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw)
         },
-        Ok(None()) => Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
+        Ok(None()) => Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw),
         Err(PTW_PTE_Needs_Update()) => Err(PTW_PTE_Needs_Update(), ext_ptw),
         Err(e) => {
           let paddr : bits(64) = zero_extend(bits_of(ent.pteAddr));
@@ -322,21 +326,21 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
                            base_ppn, initial_level, false, ext_ptw);
   match ptw_result {
     Err(f, ext_ptw) => Err(f, ext_ptw),
-    Ok(struct {ppn, pte, pteAddr, level, global}, ext_ptw) => {
+    Ok(struct {ppn, pte, pteAddr, level, pbmt, global}, ext_ptw) => {
       let ext_pte = ext_bits_of_PTE(pte);
 
       // Step 9 of VATP.
       match update_and_write_pte(pteAddr, pte_size, pte, access) {
         Ok(Some(new_pte)) => {
           // Writeback the PTE (which has new A/D bits).
-          add_to_TLB(sv_width, asid, vpn, ppn, new_pte, pteAddr, level, global);
-          Ok(ppn, ext_ptw)
+          add_to_TLB(sv_width, asid, vpn, ppn, new_pte, pteAddr, level, pbmt, global);
+          Ok(ppn, pbmt, ext_ptw)
         },
         Ok(None()) => {
           // There was no change in the PTE, but it still needs to be added
           // to the TLB due to the TLB miss.
-          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
-          Ok(ppn, ext_ptw)
+          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, pbmt, global);
+          Ok(ppn, pbmt, ext_ptw)
         },
         Err(e) => Err(e, ext_ptw),
       }
@@ -408,7 +412,7 @@ function translateAddr(
     then return Err(E_SAMO_Access_Fault(), init_ext_ptw);
   };
 
-  if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), init_ext_ptw);
+  if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), PBMT_PMA, init_ext_ptw);
 
   // Sv39 -> 39, etc.
   let sv_width = satp_mode_width(mode);
@@ -438,7 +442,7 @@ function translateAddr(
                         init_ext_ptw);
     // Fixup result PA or exception
     match res {
-      Ok(ppn, ext_ptw) => {
+      Ok(ppn, pbmt, ext_ptw) => {
         // Step 10 of VATP.
         // Append the page offset. This is now a 34 or 56 bit address.
         let paddr = ppn @ bits_of(vAddr)[pagesize_bits - 1 .. 0];
@@ -446,7 +450,7 @@ function translateAddr(
         // On RV64 paddr can be 34 or 56 bits, so we zero extend to 64.
         // On RV32 paddr can only be 34 bits. Sail knows this due to
         // the assertion above.
-        Ok(Physaddr(zero_extend(paddr)), ext_ptw)
+        Ok(Physaddr(zero_extend(paddr)), pbmt, ext_ptw)
       },
       Err(f, ext_ptw)  => Err(translationException(access, f), ext_ptw)
     }

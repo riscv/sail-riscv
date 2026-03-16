@@ -558,6 +558,9 @@
       "rcid_length": 12,
       "mcid_length": 12
     },
+    "Svpbmt": {
+      "supported": @CONFIG_XLEN_IS_64@
+    },
     "Svvptc": {
       "supported": true
     }
