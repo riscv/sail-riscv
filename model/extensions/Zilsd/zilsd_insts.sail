@@ -18,6 +18,11 @@ function validZilsdReg(reg : regidx) -> bool = {
   true
 }
 
+// TODO: According to the spec, an implementation can generate a
+// misaligned trap when performing these instructions at 4B-aligned
+// but not 8B-aligned addresses.  The implementation below does not
+// model this, since it always performs word accesses.
+
 /* ****************************************************************** */
 union clause instruction = ZILSD_LD : (bits(12), regidx, regidx)
 
