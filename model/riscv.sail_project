@@ -470,7 +470,7 @@ extensions {
   }
 
   Zilsd {
-    requires core, sys, I_insts
+    requires core, sys
     files extensions/Zilsd/zilsd_insts.sail
   }
 
