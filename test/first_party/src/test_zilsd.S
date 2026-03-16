@@ -33,9 +33,9 @@ test3:
     # store pair
     la t0, zilsd_sd_dst
     li t1, 0xaabbccdd
-    li x7, 0xeeff0011
+    li t2, 0xeeff0011
 
-    # sd t1, 0(x5)
+    # sd t1, 0(t0)
     .word 0x0062b023  # sd t1, 0(t0)
 
     lw t2, 0(t0)
@@ -51,7 +51,7 @@ test4:
     addi t0, t0, 2
 
     li t1, 0xaabbccdd
-    li x7, 0xeeff0011
+    li t2, 0xeeff0011
 
     # sd t1, 0(t0)
     .word 0x0062b023  # sd t1, 0(t0)
