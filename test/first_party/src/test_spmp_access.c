@@ -8,9 +8,8 @@
 /* SPMP test program
  *
  * This test verifies basic SPMP functionality:
- * 1. Enables SPMP via mseccfg.SSPMP
- * 2. Configure SPMP entry to allow access to a region
- * 3. Verify access works/traps as expected
+ * 1. Configure SPMP entry to allow access to a region
+ * 2. Verify access works/traps as expected
  *
  * It uses the S-mode indirect CSRs (siselect, sireg, sireg2)
  * and spmpswitch registers.
@@ -19,8 +18,6 @@
 /* SPMP specific definitions */
 #define CSR_SPMPSWITCH 0x1F0
 #define CSR_SPMPSWITCHH 0x1F1
-
-#define MSECCFG_SSPMP 0x40
 
 #define SPMPCFG_L (1 << 7)
 #define SPMPCFG_A_OFF 0
@@ -86,15 +83,6 @@ __attribute__((naked)) bool write_succeeds() {
                "csrw mtvec, t0;"
                "li a0, 0;"
                "ret;");
-}
-
-void enable_spmp(void) {
-  unsigned long mseccfg = read_csr(mseccfg);
-  mseccfg |= MSECCFG_SSPMP;
-  write_csr(mseccfg, mseccfg);
-
-  // Set mpmpdeleg to 0 to delegate all entries to SPMP
-  write_csr(0x1F2, 0);
 }
 
 void configure_spmp_entry(int idx, unsigned long addr, unsigned long cfg) {
@@ -269,7 +257,6 @@ void test_shared_region_rwx(unsigned long addr_val) {
 int main(void) {
   printf("Starting SPMP Comprehensive Test\n");
 
-  enable_spmp();
   // Activate entry 0
   set_spmpswitch(0, true);
 

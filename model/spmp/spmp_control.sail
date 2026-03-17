@@ -85,7 +85,6 @@ function spmpAddrRange(cfg: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlen
  * Parameters:
  *   ent: SPMP configuration entry with R/W/X permission bits
  *   acc: Type of memory access (Read/Write/Execute/ReadWrite)
- *   priv: Current privilege level (not used in basic check)
  *
  * Returns: true if the RWX encoding allows the access type
  *
@@ -99,8 +98,8 @@ function spmpAddrRange(cfg: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlen
  *   - 010: -W- (Reserved - write-only not useful)
  *   - 011: -WX (Reserved - write+execute without read)
  */
-val CheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
-function CheckRWX(ent, acc, priv) = {
+val CheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type)) -> bool
+function CheckRWX(ent, acc) = {
   let rwx = ent[R] @ ent[W] @ ent[X];  // Extract 3-bit RWX encoding (bit2=R, bit1=W, bit0=X)
 
   /* Check for reserved encodings first - RWX=010 and RWX=011 are always reserved
@@ -207,10 +206,10 @@ function spmpCheckRWX(ent, acc, priv) = {
               _ => false
             }
           },
-          _ => CheckRWX(ent, acc, priv)  // Other encodings: standard Enforce
+          _ => CheckRWX(ent, acc)  // Other encodings: standard Enforce
         }
       },
-      Supervisor => CheckRWX(ent, acc, priv),  // S-mode: standard Enforce
+      Supervisor => CheckRWX(ent, acc),  // S-mode: standard Enforce
       VirtualUser => false,  // Virtual modes not yet supported
       VirtualSupervisor => false,  // Virtual modes not yet supported
       Machine => true  // M-mode bypasses all SPMP checks
@@ -221,7 +220,7 @@ function spmpCheckRWX(ent, acc, priv) = {
     match priv {
       User => false,  // U-mode accessing S-mode-only region: always Deny
       VirtualUser => false,  // Virtual modes not yet supported
-      Supervisor => CheckRWX(ent, acc, priv),  // S-mode: Enforce
+      Supervisor => CheckRWX(ent, acc),  // S-mode: Enforce
       VirtualSupervisor => false,  // Virtual modes not yet supported
       Machine => true  // M-mode bypasses SPMP
     }
@@ -229,7 +228,7 @@ function spmpCheckRWX(ent, acc, priv) = {
   /* U-mode rule (SHARED=0, U=1) */
   else {
     match priv {
-      User => CheckRWX(ent, acc, priv),  // U-mode: Enforce
+      User => CheckRWX(ent, acc),  // U-mode: Enforce
       VirtualUser => false,  // Virtual modes not yet supported
       Supervisor => {
         // S-mode accessing U-mode region: conditional on SUM bit
@@ -237,7 +236,7 @@ function spmpCheckRWX(ent, acc, priv) = {
           // SUM=1: S-mode can access with EnforceNoX (no execute permission)
           match acc {
             InstructionFetch(_) => false,  // Always deny execute for S-mode
-            _ => CheckRWX(ent, acc, priv)  // Check R/W permissions
+            _ => CheckRWX(ent, acc)  // Check R/W permissions
           }
         } else {
           // SUM=0: S-mode cannot access U-mode regions - Deny
@@ -581,9 +580,6 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    * and this function should allow all accesses to proceed */
   if not(sys_spmp_enabled) then return None();  // SPMP not implemented
 
-  /* SSPMP bit in mseccfg controls enablement. If 0, SPMP checks are disabled. */
-  if mseccfg[SSPMP] == 0b0 then return None();
-
   /* Check SPMP and Paging interaction:
    * - Machine mode: Always uses SPMP if implemented (Machine mode doesn't use virtual memory)
    * - Supervisor/User modes: SPMP is only active when satp.mode == Bare
@@ -762,7 +758,6 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 function reset_spmp() -> unit = {
   /* Reset only hardware resources allocated to SPMP (from getPmpNum() to 63) */
   let spmp_start = getPmpNum();
-  // print_endline("DEBUG: reset_spmp called.");
   foreach (hw_idx from spmp_start to 63) {
     spmpcfg_n[hw_idx] = Mk_Spmpcfg_ent(0b0000000000);  // All bits cleared (A=OFF, L=0, etc.)
     spmpaddr_n[hw_idx] = zeros();
@@ -770,48 +765,6 @@ function reset_spmp() -> unit = {
 
   /* Reset SPMP switch registers - must be cleared on reset */
   spmpSwitchReset();
-
-  /* After reset, SPMP allows all access by default.
-   * Software must explicitly configure SPMP entries to restrict access.
-   * This provides backward compatibility with systems that don't use SPMP.
-   *
-   * To achieve this, we configure the last SPMP entry (63) to allow all access
-   * to U-mode (accessing U-mode requires U=1).
-   * We use TOR mode from 0 to MAX.
-   * We enable this entry in spmpswitch.
-   *
-   * Note: This assumes we have at least one SPMP entry (spmp_start <= 63).
-   */
-  if spmp_start <= 63 then {
-    /* Configure entry 63:
-       Access Match: TOR (01)
-       Permissions: RWX (111)
-       User Mode: U=1
-       Locked: L=0
-       Shared: SHARED=0 (U-mode allowed, S-mode needs SUM=1 but we care about U-mode here)
-
-       Encoding: SHARED(0) U(1) L(0) RSV(00) A(01) X(1) W(1) R(1)
-       Bits: 0 1 0 00 01 111 = 0b0100001111
-    */
-    spmpcfg_n[63] = Mk_Spmpcfg_ent(0b0100001111);
-
-    /* Address: All ones (MAX_UINT)
-       With prev_addr (entry 62) being 0 (from reset loop above),
-       TOR [0, MAX) covers the entire address space.
-    */
-    spmpaddr_n[63] = ones();
-
-    /* Enable entry 63 in spmpswitch */
-    if xlen == 64 then {
-      /* Set bit 63 in spmpswitch (xlenbits) */
-      let one : xlenbits = zero_extend(0b1);
-      spmpswitch = one << 63;
-    } else {
-      /* RV32: Set bit 31 in spmpswitchh (bits(32)) */
-      let one : bits(32) = zero_extend(0b1);
-      spmpswitchh = one << 31;
-    }
-  }
 }
 
 
