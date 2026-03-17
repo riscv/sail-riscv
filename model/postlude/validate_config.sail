@@ -15,6 +15,29 @@ private function check_privs() -> bool = {
   true
 }
 
+private function require_Sv32(ext_name : string) -> bool = {
+  if not(config extensions.Sv32.supported : bool) then {
+    print_endline("The " ^ ext_name ^ " extension is enabled but Sv32 is disabled: " ^ ext_name ^ " depends on Sv32 on RV32.");
+    return false;
+  };
+  true
+}
+
+private function require_Sv39(ext_name : string) -> bool = {
+  if not(config extensions.Sv39.supported : bool) then {
+    print_endline("The " ^ ext_name ^ " extension is enabled but Sv39 is disabled: " ^ ext_name ^ " depends on Sv39 on RV64.");
+    return false;
+  };
+  true
+}
+
+private function require_virtual_memory(ext_name : string) -> bool = {
+  if xlen == 32 then return require_Sv32(ext_name);
+
+  assert(xlen == 64);
+  require_Sv39(ext_name)
+}
+
 // This logic will need to change once MXL/SXL/UXL can differ.
 private function check_mmu_config() -> bool = {
   var valid : bool = true;
@@ -57,25 +80,22 @@ private function check_mmu_config() -> bool = {
     valid = false;
     print_endline("Svrsw60t59b is enabled but Sv39 is disabled: supporting Svrsw60t59b requires supporting Sv39.");
   };
+
+  if (config extensions.Ssccptr.supported : bool)
+  then valid = valid & require_virtual_memory("Ssccptr");
+
   if (config extensions.Svnapot.supported : bool) then {
     if xlen == 32 then {
       valid = false;
       print_endline("The Svnapot extension is enabled: Svnapot is not supported on RV32");
-    };
-    if not(config extensions.Sv39.supported : bool) then {
-      valid = false;
-      print_endline("The Svnapot extension is enabled but Sv39 is disabled: supporting Svnapot requires Sv39.");
-    };
+    } else {
+      valid = valid & require_Sv39("Svnapot");
+    }
   };
-  if (config extensions.Svvptc.supported : bool) then {
-    if xlen == 32 & not(config extensions.Sv32.supported : bool) then {
-      valid = false;
-      print_endline("The Svvptc extension is enabled but Sv32 is disabled: Svvptc depends on Sv32 on RV32.");
-    } else if xlen == 64 & not(config extensions.Sv39.supported : bool) then {
-      valid = false;
-      print_endline("The Svvptc extension is enabled but Sv39 is disabled: Svvptc depends on Sv39 on RV64.");
-    };
-  };
+
+  if (config extensions.Svvptc.supported : bool)
+  then valid = valid & require_virtual_memory("Svvptc");
+
   valid
 }
 
@@ -197,7 +217,7 @@ private function check_vext_config() -> bool = {
 }
 
 // Return true if a list of PMA regions are sorted and don't overlap.
-private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccrse : bool) -> bool =
+private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccrse : bool, check_ssccptr : bool) -> bool =
   match pmas {
     [||] => true,
     pma :: rest => {
@@ -221,8 +241,12 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
           return false;
         };
+        if check_ssccptr & not(attributes.supports_pte_read) then {
+          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable without hardware page-table read support, but Ssccptr is enabled which requires this support.");
+          return false;
+        };
       };
-      check_pma_regions(rest, pma.base, pma.size, check_ziccamoc, check_ziccamoa, check_ziccrse)
+      check_pma_regions(rest, pma.base, pma.size, check_ziccamoc, check_ziccamoa, check_ziccrse, check_ssccptr)
     },
   }
 
@@ -239,7 +263,8 @@ private function check_mem_layout() -> bool =
     let ziccamoa_is_supported : bool = config extensions.Ziccamoa.supported;
     let ziccamoc_is_supported : bool = config extensions.Ziccamoc.supported;
     let ziccrse_is_supported  : bool = config extensions.Ziccrse.supported;
-    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccrse_is_supported)
+    let ssccptr_is_supported  : bool = config extensions.Ssccptr.supported;
+    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccrse_is_supported, ssccptr_is_supported)
   }
 
 private function check_pmp() -> bool = {

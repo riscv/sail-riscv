@@ -16,6 +16,7 @@
   - Ziccamoc
   - Ziccrse
   - Zicfiss
+  - Ssccptr
   - Sscounterenw
   - Svnapot
   - Svvptc
