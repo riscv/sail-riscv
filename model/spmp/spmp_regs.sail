@@ -319,11 +319,11 @@ function getSpmpValidRange() -> (nat, nat) = {
   else (spmp_start, total_resources - 1) // [pmpnum, 63] - hardware indices
 }
 
-/* Check if LOGICAL SPMP entry index is valid for current privilege.
+/* Check if LOGICAL SPMP entry index is valid for current delegation state.
  * logical_idx is the index from siselect (0-63 corresponding to 0x100-0x13F).
  * Valid range is [0, spmp_count) where spmp_count = 64 - pmpnum.
  */
-function spmpCheckLogicalEntryAccess(logical_idx: int, priv: Privilege) -> bool = {
+function spmpCheckLogicalEntryAccess(logical_idx: int) -> bool = {
   let pmpnum = getPmpNum();
   let spmp_count : int = 64 - pmpnum;
   (logical_idx >= 0) & (logical_idx < spmp_count)
@@ -343,7 +343,7 @@ function spmpLogicalToHardwareIdx(logical_idx: int) -> int = {
  * This needs to be converted to hardware index: hw_idx = pmpnum + entry_idx
  */
 function spmp_read_addr_indirect(entry_idx: int) -> xlenbits = {
-  if spmpCheckLogicalEntryAccess(entry_idx, cur_privilege) then {
+  if spmpCheckLogicalEntryAccess(entry_idx) then {
     let hw_idx = spmpLogicalToHardwareIdx(entry_idx);
     if hw_idx >= 0 & hw_idx < 64 then {
       spmpaddr_n[hw_idx]
@@ -359,7 +359,7 @@ function spmp_read_addr_indirect(entry_idx: int) -> xlenbits = {
  * entry_idx is the LOGICAL index (0-63) from siselect value (0x100-0x13F).
  */
 function spmp_read_cfg_indirect(entry_idx: int) -> Spmpcfg_ent = {
-  if spmpCheckLogicalEntryAccess(entry_idx, cur_privilege) then {
+  if spmpCheckLogicalEntryAccess(entry_idx) then {
     let hw_idx = spmpLogicalToHardwareIdx(entry_idx);
     if hw_idx >= 0 & hw_idx < 64 then {
       spmpcfg_n[hw_idx]
@@ -423,7 +423,7 @@ function spmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbit
  *   - M-mode must use miselect interface to modify locked entries
  */
 function spmp_write_addr_indirect(entry_idx: int, value: xlenbits) -> unit = {
-  if spmpCheckLogicalEntryAccess(entry_idx, cur_privilege) then {
+  if spmpCheckLogicalEntryAccess(entry_idx) then {
     let hw_idx = spmpLogicalToHardwareIdx(entry_idx);
     if hw_idx >= 0 & hw_idx < 64 then {
       let cfg = spmpcfg_n[hw_idx];
@@ -452,12 +452,11 @@ function spmp_write_addr_indirect(entry_idx: int, value: xlenbits) -> unit = {
  * - spmp_mmode_write_cfg_indirect: No lock check, M-mode can modify locked entries via miselect
  *
  * Parameters:
- * - n: hardware index (not used in validation, kept for interface consistency)
  * - cfg: current configuration value
  * - v: new configuration value to write
  * - priv: privilege level of the write operation
  */
-function spmpWriteCfg(n: int, cfg: Spmpcfg_ent, v: bits(10), priv: Privilege) -> Spmpcfg_ent = {
+function spmpWriteCfg(cfg: Spmpcfg_ent, v: bits(10), priv: Privilege) -> Spmpcfg_ent = {
   let new_cfg = Mk_Spmpcfg_ent(v);
   let is_machine_mode = (priv == Machine);
 
@@ -514,7 +513,7 @@ function spmpWriteCfg(n: int, cfg: Spmpcfg_ent, v: bits(10), priv: Privilege) ->
  *   - M-mode must use miselect interface to modify locked entries
  */
 function spmp_write_cfg_indirect(entry_idx: int, cfg: Spmpcfg_ent) -> unit = {
-  if spmpCheckLogicalEntryAccess(entry_idx, cur_privilege) then {
+  if spmpCheckLogicalEntryAccess(entry_idx) then {
     let hw_idx = spmpLogicalToHardwareIdx(entry_idx);
     if hw_idx >= 0 & hw_idx < 64 then {
       let current_cfg = spmpcfg_n[hw_idx];
@@ -523,7 +522,7 @@ function spmp_write_cfg_indirect(entry_idx: int, cfg: Spmpcfg_ent) -> unit = {
       /* Per spec: writes to locked entries via siselect are ignored (any privilege) */
       if not(is_locked) then {
         /* Apply WARL validation using spmpWriteCfg function */
-        let new_cfg = spmpWriteCfg(hw_idx, current_cfg, cfg.bits, cur_privilege);
+        let new_cfg = spmpWriteCfg(current_cfg, cfg.bits, cur_privilege);
         spmpcfg_n[hw_idx] = new_cfg;
       }
       /* else: locked entry, write ignored per spec */
@@ -555,7 +554,7 @@ function spmp_mmode_write_cfg_indirect(entry_idx: int, cfg: Spmpcfg_ent) -> unit
        * M-mode can override lock status, so we pass Machine privilege.
        * This allows M-mode to clear L bit and modify all fields.
        */
-      let validated_cfg = spmpWriteCfg(hw_idx, current_cfg, cfg.bits, Machine);
+      let validated_cfg = spmpWriteCfg(current_cfg, cfg.bits, Machine);
       spmpcfg_n[hw_idx] = validated_cfg;
     }
   }
@@ -801,7 +800,7 @@ function siselect_get_spmp_index() -> int = {
  * Valid range is [0, spmp_count) where spmp_count = 64 - pmpnum.
  */
 function siselect_spmp_entry_valid(entry_idx: int) -> bool = {
-  spmpCheckLogicalEntryAccess(entry_idx, cur_privilege)
+  spmpCheckLogicalEntryAccess(entry_idx)
 }
 
 /*---------------------------------------------------------------------------------------*/
