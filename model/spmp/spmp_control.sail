@@ -98,7 +98,7 @@ function spmpAddrRange(cfg: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlen
  *   - 010: -W- (Reserved - write-only not useful)
  *   - 011: -WX (Reserved - write+execute without read)
  */
-val CheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type)) -> bool
+val CheckRWX: (Spmpcfg_ent, MemoryAccessType(mem_payload)) -> bool
 function CheckRWX(ent, acc) = {
   let rwx = ent[R] @ ent[W] @ ent[X];  // Extract 3-bit RWX encoding (bit2=R, bit1=W, bit0=X)
 
@@ -119,23 +119,30 @@ function CheckRWX(ent, acc) = {
       },
       0b001 => {  // --X : Execute-only
         match acc {
-          InstructionFetch(_) => true,
+          InstructionFetch() => true,
           _ => false
         }
       },
       0b101 => {  // R-X : Read+Execute
         match acc {
           Load(_) => true,
-          InstructionFetch(_) => true,
+          InstructionFetch() => true,
           _ => false
         }
       },
       0b110 => {  // RW- : Read+Write (no execute)
         match acc {
           Load(_) => true,
+          LoadReserved(_) => true,
           Store(_) => true,
-          LoadStore(_) => true,  // AMO needs both R and W
-          InstructionFetch(_) => false
+          StoreConditional(_) => true,
+          Atomic(_, _, _) => true,  // AMO needs both R and W
+          CacheAccess(CB_manage(_)) => true,
+          CacheAccess(CB_zero()) => true,
+          CacheAccess(CB_prefetch(PREFETCH_R)) => true,
+          CacheAccess(CB_prefetch(PREFETCH_W)) => true,
+          CacheAccess(CB_prefetch(PREFETCH_I)) => false,
+          InstructionFetch() => false
         }
       },
       0b111 => {  // RWX : All permissions
@@ -165,7 +172,7 @@ function CheckRWX(ent, acc) = {
  * For Shared-Region rules, U-mode and S-mode may have different effective permissions
  * for the same RWX encoding, implementing the mutual exclusivity constraint.
  */
-val spmpCheckRWX: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
+val spmpCheckRWX: (Spmpcfg_ent, MemoryAccessType(mem_payload), Privilege) -> bool
 function spmpCheckRWX(ent, acc, priv) = {
   let do_sum : bool = mstatus[SUM] == 0b1;  // Check SUM bit in mstatus (accessible via sstatus)
   let rwx = ent[R] @ ent[W] @ ent[X];       // Extract RWX as 3-bit combined field (bit2=R, bit1=W, bit0=X)
@@ -202,7 +209,7 @@ function spmpCheckRWX(ent, acc, priv) = {
           },
           0b111 => {  // RWX : U-mode is downgraded to Exec-only (originally full permissions)
             match acc {
-              InstructionFetch(_) => true,
+              InstructionFetch() => true,
               _ => false
             }
           },
@@ -235,7 +242,7 @@ function spmpCheckRWX(ent, acc, priv) = {
         if do_sum then {
           // SUM=1: S-mode can access with EnforceNoX (no execute permission)
           match acc {
-            InstructionFetch(_) => false,  // Always deny execute for S-mode
+            InstructionFetch() => false,  // Always deny execute for S-mode
             _ => CheckRWX(ent, acc)  // Check R/W permissions
           }
         } else {
@@ -262,7 +269,7 @@ function spmpCheckRWX(ent, acc, priv) = {
  *   priv: Current effective privilege level
  *
  * Returns: true if access should be permitted, false if denied */
-val spmpCheckPerms: (Spmpcfg_ent, MemoryAccessType(ext_access_type), Privilege) -> bool
+val spmpCheckPerms: (Spmpcfg_ent, MemoryAccessType(mem_payload), Privilege) -> bool
 function spmpCheckPerms(ent, acc, priv) = {
   match priv {
     /* Machine mode: Always bypass SPMP checks */
@@ -366,7 +373,7 @@ enum spmpMatch = {SPMP_Success, SPMP_Continue, SPMP_Fail}
  *   SPMP_Success: Access granted by this entry
  *   SPMP_Fail: Access denied by this entry
  *   SPMP_Continue: This entry doesn't match, check next entry */
-function spmpMatchEntry(Physaddr(addr): physaddr, width: xlenbits, acc: MemoryAccessType(ext_access_type), priv: Privilege,
+function spmpMatchEntry(Physaddr(addr): physaddr, width: xlenbits, acc: MemoryAccessType(mem_payload), priv: Privilege,
                        ent: Spmpcfg_ent, spmpaddr: xlenbits, prev_spmpaddr: xlenbits, entry_index: nat) -> spmpMatch = {
   let addr = unsigned(addr);
   let width = unsigned(width);
@@ -421,7 +428,7 @@ function spmpMatchEntry(Physaddr(addr): physaddr, width: xlenbits, acc: MemoryAc
  *   - Page-level protection violations (SPMP) - can query satp.mode
  *   - Platform-level protection violations (PMP) - M-mode only
  */
-function accessToSpmpFault(acc : MemoryAccessType(ext_access_type)) -> ExceptionType = {
+function accessToSpmpFault(acc : MemoryAccessType(mem_payload)) -> ExceptionType = {
   /* Virtualization mode detection:
    * When in VirtualUser or VirtualSupervisor privilege level,
    * SPMP violations should generate Guest Page Fault exceptions.
@@ -441,18 +448,24 @@ function accessToSpmpFault(acc : MemoryAccessType(ext_access_type)) -> Exception
   if is_virtual then {
     /* Virtualization Mode: Use Guest Page Fault exceptions (codes 20, 21, 23) */
     match acc {
-      InstructionFetch(_) => E_Fetch_Guest_Page_Fault(),  // Exception code 20
-      Load(_)             => E_Load_Guest_Page_Fault(),   // Exception code 21
-      Store(_)            => E_SAMO_Guest_Page_Fault(),   // Exception code 23
-      LoadStore(_)        => E_SAMO_Guest_Page_Fault()    // Exception code 23
+      InstructionFetch()  => E_Fetch_GPage_Fault(),  // Exception code 20
+      Load(_)             => E_Load_GPage_Fault(),   // Exception code 21
+      Store(_)            => E_SAMO_GPage_Fault(),   // Exception code 23
+      LoadReserved(_)     => E_Load_GPage_Fault(),   // Exception code 21
+      StoreConditional(_) => E_SAMO_GPage_Fault(),   // Exception code 23
+      Atomic(_, _, _)     => E_SAMO_GPage_Fault(),   // Exception code 23
+      CacheAccess(_)      => E_SAMO_GPage_Fault()    // CMO faults are store-like here
     }
   } else {
     /* Standard Mode: Use standard Page Fault exceptions (codes 12, 13, 15) */
     match acc {
-      InstructionFetch(_) => E_Fetch_Page_Fault(),  // Exception code 12
+      InstructionFetch()  => E_Fetch_Page_Fault(),  // Exception code 12
       Load(_)             => E_Load_Page_Fault(),   // Exception code 13
       Store(_)            => E_SAMO_Page_Fault(),   // Exception code 15
-      LoadStore(_)        => E_SAMO_Page_Fault()    // Exception code 15
+      LoadReserved(_)     => E_Load_Page_Fault(),   // Exception code 13
+      StoreConditional(_) => E_SAMO_Page_Fault(),   // Exception code 15
+      Atomic(_, _, _)     => E_SAMO_Page_Fault(),   // Exception code 15
+      CacheAccess(_)      => E_SAMO_Page_Fault()    // CMO faults are store-like here
     }
   }
 }
@@ -570,7 +583,7 @@ val translationMode : Privilege -> SATPMode
 function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   addr: physaddr,
   width: int('n),
-  acc: MemoryAccessType(ext_access_type),
+  acc: MemoryAccessType(mem_payload),
   priv: Privilege
 ) -> option(ExceptionType) = {
   let width : xlenbits = to_bits(sizeof(xlen), width);
@@ -609,7 +622,7 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    *   are subject to SPMP checks (not bypassed even though executed in M-mode)
    */
   let effective_priv : Privilege = match (priv, acc) {
-    (Machine, InstructionFetch(_)) =>
+    (Machine, InstructionFetch()) =>
       Machine,  // Instruction fetches ignore MPRV
     (Machine, _) if mstatus[MPRV] == 0b1 =>
       privLevel_bits((mstatus[MPP], bitzero)),
@@ -622,9 +635,9 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    * executed from M-mode are subject to SPMP checks when V=1 and hgatp.MODE=Bare.
    *
    * Note: Current implementation does not distinguish HLV/HLVX/HSV instructions
-   * from regular M-mode accesses because ext_access_type = unit.
+   * from regular M-mode accesses because mem_payload does not encode a hypervisor access tag.
    * Full support requires:
-   * 1. Extending ext_access_type to include a variant for hypervisor VM accesses
+   * 1. Extending the memory access payload to include a variant for hypervisor VM accesses
    * 2. Checking if access is HLV/HLVX/HSV and V=1 and hgatp.MODE=Bare
    * 3. If so, NOT bypassing SPMP checks even though priv=Machine
    *

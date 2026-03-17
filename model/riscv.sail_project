@@ -59,7 +59,7 @@ pmp {
 }
 
 spmp {
-  requires prelude, core, pmp
+  requires prelude, core, pmp, Zicbop_types
 
   files
     spmp/spmp_regs.sail,
