@@ -23,3 +23,14 @@ function clause write_CSR(csr, _) = {
    internal_error(__FILE__, __LINE__, "Write to CSR that does not exist: " ^ bits_str(csr));
 }
 end write_CSR
+
+// Most CSRs do not raise virtual exceptions
+// TODO: is_CSR_exception_virtual is not yet complete. Missing clauses include:
+// - HS-extension CSRs (e.g. hstatus, hedeleg etc.) should raise virtual
+//   instruction exception when accessed from VS mode.
+// - VS CSRs (e.g. vstimecmp, etc.) should raise virtual instruction
+//   exception when accessed from VS mode directly.
+// - Any other CSRs that follow the HS-qualification rule from the H extension spec.
+// - Miscellaneous: ssp (Zicfiss), etc.
+function clause is_CSR_exception_virtual(_, _, _) = false
+end is_CSR_exception_virtual

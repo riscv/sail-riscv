@@ -64,6 +64,15 @@ function clause is_CSR_accessible(0x61D, _, _) = (xlen == 32) & is_hstateen_acce
 function clause is_CSR_accessible(0x61E, _, _) = (xlen == 32) & is_hstateen_accessible()
 function clause is_CSR_accessible(0x61F, _, _) = (xlen == 32) & is_hstateen_accessible()
 
+function clause is_CSR_exception_virtual(0x60C, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x60D, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x60E, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x60F, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x61C, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x61D, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x61E, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x61F, p, _) = p == VirtualSupervisor
+
 function clause read_CSR(0x60C) = (hstateen0.bits & get_hstateen_mask(0))[xlen - 1 .. 0]
 function clause read_CSR(0x60D) = (hstateen1.bits & get_hstateen_mask(1))[xlen - 1 .. 0]
 function clause read_CSR(0x60E) = (hstateen2.bits & get_hstateen_mask(2))[xlen - 1 .. 0]
@@ -95,6 +104,11 @@ function clause is_CSR_accessible(0x10C, _, _) = is_sstateen_accessible()
 function clause is_CSR_accessible(0x10D, _, _) = is_sstateen_accessible()
 function clause is_CSR_accessible(0x10E, _, _) = is_sstateen_accessible()
 function clause is_CSR_accessible(0x10F, _, _) = is_sstateen_accessible()
+
+function clause is_CSR_exception_virtual(0x10C, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x10D, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x10E, p, _) = p == VirtualSupervisor
+function clause is_CSR_exception_virtual(0x10F, p, _) = p == VirtualSupervisor
 
 function clause read_CSR(0x10C) = { let mask = get_sstateen_mask(0); zero_extend(sstateen0.bits & mask[31..0]) }
 function clause read_CSR(0x10D) = { let mask = get_sstateen_mask(1); zero_extend(sstateen1.bits & mask[31..0]) }
