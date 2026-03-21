@@ -29,3 +29,51 @@ function bf16_to_f32_set_flags(nval : bits(16)) -> bits(32) = {
   accrue_fflags(fflags);
   wval
 }
+
+function get_scalar_BF16(rs1 : fregidx) -> bits_BF16 =
+  F_BF16(rs1)
+
+function negate_BF16(xf16 : bits_BF16) -> bits_BF16 = {
+  let (sign, exp, mant) = fsplit_BF16(xf16);
+  let new_sign = if sign == 0b0 then 0b1 else 0b0;
+  fmake_BF16(new_sign, exp, mant)
+}
+
+function bf16_add(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16) -> bits_BF16 = {
+  let (fflags, result_val) = riscv_bf16Add(rm_3b, op1, op2);
+  accrue_fflags(fflags);
+  result_val
+}
+
+function bf16_sub(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16) -> bits_BF16 = {
+  let (fflags, result_val) = riscv_bf16Sub(rm_3b, op1, op2);
+  accrue_fflags(fflags);
+  result_val
+}
+
+function bf16_mul(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16) -> bits_BF16 = {
+  let (fflags, result_val) = riscv_bf16Mul(rm_3b, op1, op2);
+  accrue_fflags(fflags);
+  result_val
+}
+
+function bf16_div(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16) -> bits_BF16 = {
+  let (fflags, result_val) = riscv_bf16Div(rm_3b, op1, op2);
+  accrue_fflags(fflags);
+  result_val
+}
+
+function bf16_muladd(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16, opadd : bits_BF16) -> bits_BF16 = {
+  let (fflags, result_val) = riscv_bf16MulAdd(rm_3b, op1, op2, opadd);
+  accrue_fflags(fflags);
+  result_val
+}
+
+function bf16_nmuladd(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16, opadd : bits_BF16) -> bits_BF16 =
+  bf16_muladd(rm_3b, negate_BF16(op1), op2, opadd)
+
+function bf16_mulsub(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16, opsub : bits_BF16) -> bits_BF16 =
+  bf16_muladd(rm_3b, op1, op2, negate_BF16(opsub))
+
+function bf16_nmulsub(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16, opsub : bits_BF16) -> bits_BF16 =
+  bf16_muladd(rm_3b, negate_BF16(op1), op2, negate_BF16(opsub))

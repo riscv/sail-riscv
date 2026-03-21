@@ -36,6 +36,18 @@ let softfloat_f16_mul _ _ _ = fail
 val softfloat_f16_div : bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
 let softfloat_f16_div _ _ _ = fail
 
+val softfloat_bf16_add : bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
+let softfloat_bf16_add _ _ _ = fail
+
+val softfloat_bf16_sub : bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
+let softfloat_bf16_sub _ _ _ = fail
+
+val softfloat_bf16_mul : bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
+let softfloat_bf16_mul _ _ _ = fail
+
+val softfloat_bf16_div : bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
+let softfloat_bf16_div _ _ _ = fail
+
 val softfloat_f32_add : bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
 let softfloat_f32_add _ _ _ = fail
 
@@ -63,6 +75,9 @@ let softfloat_f64_div _ _ _ = fail
 
 val softfloat_f16_muladd : bitvector -> bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
 let softfloat_f16_muladd _ _ _ _ = fail
+
+val softfloat_bf16_muladd : bitvector -> bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
+let softfloat_bf16_muladd _ _ _ _ = fail
 
 val softfloat_f32_muladd : bitvector -> bitvector -> bitvector -> bitvector -> (bitvector * bitvector)
 let softfloat_f32_muladd _ _ _ _ = fail

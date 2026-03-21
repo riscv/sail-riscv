@@ -19,10 +19,10 @@ mapping sew_flag : string <-> bits(3) = {
   "e64"   <-> 0b011,
 }
 
-mapping sew_flag_alt : string <-> bits(3) = {                             
-  "e8alt"  <-> 0b000,                                                     
-  "e16alt" <-> 0b001,                                                     
-} 
+mapping sew_flag_alt : string <-> bits(3) = {
+  "e8alt"  <-> 0b000,
+  "e16alt" <-> 0b001,
+}
 
 mapping maybe_lmul_flag : string <-> bits(3) = {
   sep() ^ "mf8"   <-> 0b101,
