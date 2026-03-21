@@ -219,7 +219,7 @@ extensions {
     }
 
     V_instructions {
-      requires sys, I, FD, V_types, V_core
+      requires sys, I, FD, V_types, V_core, bfloat16_core
       files
         extensions/V/vext_utils_insts.sail,
         extensions/V/vext_fp_utils_insts.sail,
@@ -483,7 +483,7 @@ extensions {
       files extensions/bfloat16/zfbfmin_utils.sail
     }
     Zvfbfa {
-      requires sys, FD, V, bfloat16_core
+      requires sys, FD, V, bfloat16_core, Zfbfmin
       files extensions/Zvfbfa/zvfbfa.sail
     }
     Zfbfmin {

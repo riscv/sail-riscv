@@ -573,7 +573,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_H => 4, // > virtual_mem_supported
     Ext_Zve64d => 4, // > Zve64f
     Ext_Zvfbfwma => 4, // > Zvfbfmin
-    Ext_Zvfbfa => 4, // > Zvfbfmin
+    Ext_Zvfbfa => 4, // > Zfbfmin
     Ext_Zvfh => 4, // > Zfhmin
 
     Ext_V => 5, // > Zve64d

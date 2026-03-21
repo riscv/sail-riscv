@@ -7,4 +7,4 @@
 // =======================================================================================
 
 function clause currentlyEnabled(Ext_Zvfbfa) =
-  hartSupports(Ext_Zvfbfa) & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zvfbfmin)
+  hartSupports(Ext_Zvfbfa) & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfbfmin)
