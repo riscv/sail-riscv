@@ -285,18 +285,6 @@ function get_lmul_pow() -> LMUL_pow = {
 function get_altfmt() -> bool =
   currentlyEnabled(Ext_Zvfbfa) & vtype[altfmt] == 0b1
 
-// BF16 canonical NaN bit pattern (for NaN boxing check)
-let bf16_canonical_nan : bits(16) = 0x7FC0
-
-// Read BF16 scalar from f register with NaN boxing check
-// When altfmt=1, VF-type instructions should use this function instead of get_scalar_fp
-function get_scalar_bf16(rs1 : fregidx) -> bits(16) = {
-  let fval = F(rs1);
-  // NaN boxing check: all bits above bit 15 must be 1
-  if flen > 16 & fval[flen - 1 .. 16] != ones()
-  then bf16_canonical_nan
-  else fval[15..0]
-}
 
 enum agtype = { UNDISTURBED, AGNOSTIC }
 

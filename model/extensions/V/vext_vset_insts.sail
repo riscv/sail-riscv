@@ -19,10 +19,10 @@ mapping sew_flag : string <-> bits(3) = {
   "e64"   <-> 0b011,
 }
 
-mapping sew_flag_alt : string <-> bits(3) = {                             
-  "e8alt"  <-> 0b000,                                                     
-  "e16alt" <-> 0b001,                                                     
-} 
+mapping sew_flag_alt : string <-> bits(3) = {
+  "e8alt"  <-> 0b000,
+  "e16alt" <-> 0b001,
+}
 
 mapping maybe_lmul_flag : string <-> bits(3) = {
   sep() ^ "mf8"   <-> 0b101,
@@ -210,16 +210,16 @@ mapping clause assembly = VSETVL(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 // ********************************* vsetivli ***********************************
-union clause instruction = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
+union clause instruction = VSETIVLI : ( bits(1), bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
-mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
-  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
+mapping clause encdec = VSETIVLI(altfmt, ma, ta, sew, lmul, uimm, rd)
+  <-> 0b110 @ altfmt @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
+function clause execute VSETIVLI(altfmt, ma, ta, sew, lmul, uimm, rd) = {
   let avl : xlenbits = zero_extend(uimm);
-  execute_vsetvl_type(0b0, ma, ta, sew, lmul, avl, false, rd)
+  execute_vsetvl_type(altfmt, ma, ta, sew, lmul, avl, false, rd)
 }
 
-mapping clause assembly = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
-  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ vtype_assembly(0b0, ma, ta, sew, lmul)
+mapping clause assembly = VSETIVLI(altfmt, ma, ta, sew, lmul, uimm, rd)
+  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ vtype_assembly(altfmt, ma, ta, sew, lmul)
