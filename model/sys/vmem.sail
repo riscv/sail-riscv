@@ -60,7 +60,8 @@ private function read_pte forall 'n, 'n in {4, 8} . (
 // Update a PTE's A/D bits and write it to memory if needed.  This returns
 // * Ok(Some(pte)) if a write was needed and was successful. pte is the new value.
 // * Ok(None()) if no write was needed.
-// * Err(e) if a write was needed but there was an error.
+// * Err(PTW_PTE_Needs_Update()) if a write was needed but is forbidden by the current state
+// * Err(PTW_No_Access()) if a write was needed and attempted but there was an error.
 private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . (
   pteAddr : physaddr,
   pteWidth : int('pte_width),
@@ -326,9 +327,9 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
 
       // Step 9 of VATP.
       match update_and_write_pte(pteAddr, pte_size, pte, access) {
-        Ok(Some(pte)) => {
+        Ok(Some(new_pte)) => {
           // Writeback the PTE (which has new A/D bits).
-          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
+          add_to_TLB(sv_width, asid, vpn, ppn, new_pte, pteAddr, level, global);
           Ok(ppn, ext_ptw)
         },
         Ok(None()) => {
