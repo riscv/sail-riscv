@@ -52,17 +52,20 @@ union CSRCheckResult = {
 }
 
 function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> CSRCheckResult = {
-  if check_CSR_priv(csr, p)
-     & check_CSR_access(csr, access_type)
-     & is_CSR_accessible(csr, p, access_type)
-     & stateen_allows_CSR_access(csr, p, access_type) then {
-    CSR_Check_OK()
-  } else if (p == VirtualSupervisor | p == VirtualUser)
-          & is_CSR_exception_virtual(csr, p, access_type) then {
-    CSR_Virtual()
-  } else {
+  let access_ok  = check_CSR_access(csr, access_type);
+  let stateen_ok = stateen_allows_CSR_access(csr, p, access_type);
+  let priv_ok    = check_CSR_priv(csr, p);
+  // NOTE: stateen-blocked accesses are never virtual
+  //       read-only violations are never virtual
+  //       lower privilege mode accessing higher privilege mode csr are never virtual
+  if not(access_ok & stateen_ok & priv_ok) then
     CSR_Illegal()
-  }
+  else if is_CSR_accessible(csr, p, access_type) then
+    CSR_Check_OK()
+  else if (p == VirtualSupervisor | p == VirtualUser) & is_CSR_exception_virtual(csr, p, access_type) then
+    CSR_Virtual()
+  else
+    CSR_Illegal()
 }
 
 // Exception delegation: given an exception and the privilege at which

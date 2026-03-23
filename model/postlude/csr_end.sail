@@ -24,13 +24,9 @@ function clause write_CSR(csr, _) = {
 }
 end write_CSR
 
-// Most CSRs do not raise virtual exceptions
-// TODO: is_CSR_exception_virtual is not yet complete. Missing clauses include:
-// - HS-extension CSRs (e.g. hstatus, hedeleg etc.) should raise virtual
-//   instruction exception when accessed from VS mode.
-// - VS CSRs (e.g. vstimecmp, etc.) should raise virtual instruction
-//   exception when accessed from VS mode directly.
-// - Any other CSRs that follow the HS-qualification rule from the H extension spec.
-// - Miscellaneous: ssp (Zicfiss), etc.
-function clause is_CSR_exception_virtual(_, _, _) = false
+// Implements the general HS-qualified rule from the H extension spec.
+// If an access fails in VS/VU mode but would succeed in HS mode, raise a
+// virtual instruction exception instead of an illegal instruction exception.
+// CSRs that deviate from this rule have explicit clauses defined above.
+function clause is_CSR_exception_virtual(csr, _, access_type) = check_CSR(csr, Supervisor, access_type) == CSR_Check_OK()
 end is_CSR_exception_virtual

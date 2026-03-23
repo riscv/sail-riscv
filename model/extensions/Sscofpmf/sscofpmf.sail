@@ -71,13 +71,21 @@ private function get_scountovf(priv : Privilege) -> bits(32) = {
   match priv {
     Machine           => overflow,
     Supervisor        => overflow & mcounteren.bits,
+    VirtualSupervisor => overflow & mcounteren.bits & hcounteren.bits,
     User              => internal_error(__FILE__, __LINE__, "scountovf not readable from User mode"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "scountovf not readable from VirtualUser mode"),
   }
 }
 
 // scountovf
-function clause is_CSR_accessible(0xDA0, _, _) = currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S)
+function clause is_CSR_accessible(0xDA0, p, _) =
+  currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S) &
+  match p {
+    VirtualSupervisor => true,
+    VirtualUser       => false,
+    _                 => true,
+  }
+
+function clause is_CSR_exception_virtual(0xDA0, p, _) = currentlyEnabled(Ext_Smcdeleg) & menvcfg[CDE] == 0b1 & (p == VirtualSupervisor | p == VirtualUser)
 function clause read_CSR(0xDA0) = zero_extend(get_scountovf(cur_privilege))
 // scountovf is read-only.
