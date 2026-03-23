@@ -326,7 +326,7 @@ specification written in Bluespec SystemVerilog.
 
 The ISA model is integrated with the operational model of the RISC-V
 relaxed memory model, RVWMO (as described in an appendix of the [RISC-V
-user-level specification](https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/)),
+user-level specification](https://riscv.github.io/riscv-isa-manual/snapshot/spec/#app:mm-explanatory)),
 which is one of the reference models used
 in the development of the RISC-V concurrency architecture; this is
 part of the [RMEM](http://www.cl.cam.ac.uk/users/pes20/rmem) tool.
