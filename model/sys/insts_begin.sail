@@ -35,7 +35,6 @@ union ExecutionResult = {
   Illegal_Instruction            : unit,
   Virtual_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
-  Memory_Exception               : (virtaddr, ExceptionType),
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,
@@ -71,3 +70,6 @@ scattered mapping encdec_compressed
 // unmatched encodings decode to an illegal instruction.
 union clause instruction = ILLEGAL : word
 union clause instruction = C_ILLEGAL : half
+
+function memory_exception(vaddr : virtaddr, exc : ExceptionType) -> ExecutionResult =
+  Trap(cur_privilege, CTL_TRAP(make_sync_exception(exc, bits_of(vaddr))), PC)

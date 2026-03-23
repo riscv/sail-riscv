@@ -36,7 +36,7 @@ function clause execute SSPUSH(rs2) = {
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(vaddr, width))
-  then return Memory_Exception(vaddr, E_SAMO_Access_Fault());
+  then return memory_exception(vaddr, E_SAMO_Access_Fault());
 
   match vmem_write_addr(vaddr, width, X(rs2), Store(ShadowStack), false, false, false) {
     Ok(_)  => { ssp = vaddr_bits;
@@ -83,7 +83,7 @@ function clause execute SSPOPCHK(rs1) = {
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(ssp_addr, width))
-  then return Memory_Exception(ssp_addr, E_SAMO_Access_Fault());
+  then return memory_exception(ssp_addr, E_SAMO_Access_Fault());
 
   match vmem_read_addr(ssp_addr, width, Load(ShadowStack), false, false, false) {
     Ok(data) => {
@@ -176,11 +176,11 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // "The same exception options [as AMOs in the A extension] apply if
   // the address is not naturally aligned."
   if not(is_aligned_addr(vaddr, width))
-  then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
+  then return memory_exception(vaddr, E_SAMO_Access_Fault());
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Ok(addr, pbmt, _) => (addr, pbmt),
-    Err(e, _)   => return Memory_Exception(vaddr, e),
+    Err(e, _)   => return memory_exception(vaddr, e),
   };
 
   // The `aq` and `rl` flags follow the AMO model in Zaamo: "Just as
@@ -190,9 +190,9 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   let 'width = width;
   let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, aq & rl, rl, true) {
-    Err(e) => return Memory_Exception(vaddr, e),
+    Err(e) => return memory_exception(vaddr, e),
     Ok(_)  => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
-      Err(e) => return Memory_Exception(vaddr, e),
+      Err(e) => return memory_exception(vaddr, e),
       Ok(v)  => v,
     },
   };
@@ -203,7 +203,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   match mem_write_value(paddr, width, write_val, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => X(rd) = sign_extend(mem_val),
     Ok(false) => internal_error(__FILE__, __LINE__, "AMOSWAP_SS got false from mem_write_value"),
-    Err(e)    => return Memory_Exception(vaddr, e),
+    Err(e)    => return memory_exception(vaddr, e),
   };
 
   RETIRE_SUCCESS
