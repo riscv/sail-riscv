@@ -91,12 +91,6 @@ private function check_mmu_config() -> bool = {
   if (config extensions.Svadu.supported : bool)
   then valid = valid & require_virtual_memory("Svadu");
 
-  if (config extensions.Svade.supported : bool) & not(config extensions.Svadu.supported : bool)
-    & (config memory.translation.enable_pte_update : bool) then {
-    valid = false;
-    print_endline("Svade is enabled but `enable_pte_update` is also enabled: supporting Svade requires disabling `enable_pte_update`.");
-  };
-
   if (config extensions.Svnapot.supported : bool) then {
     if xlen == 32 then {
       valid = false;

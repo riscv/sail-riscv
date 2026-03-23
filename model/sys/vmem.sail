@@ -69,9 +69,10 @@ private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . 
 ) -> result(option(bits('pte_width * 8)), PTW_Error) =
   match update_PTE_Bits(pte, access) {
     None()    => Ok(None()),
-    Some(pte) => // The PTE has new A/D bits.
+    Some(pte) => // The PTE has new A/D bits.  If neither Svadu or Svade is supported,
+                 // the current default is to update the PTE.
                  if (currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1)
-                   | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)) & plat_enable_pte_update)
+                   | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)))
                  then match write_pte(pteAddr, pteWidth, pte) {
                    Ok(_)  => Ok(Some(pte)),
                    Err(_) => Err(PTW_No_Access()),

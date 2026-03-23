@@ -121,15 +121,6 @@
       // loads the resulting `xtval` may depend on this setting.
       "order_decreasing": false
     },
-    "translation": {
-      // Whether A/D bits in a PTE are updated by hardware.  If neither
-      // Svade or Svadu is supported, this controls whether any A/D changes
-      // unconditionally trap (false) or are set by hardware (true).
-      // If Svade is supported but Svadu is not, this cannot be set to true.
-      // If Svadu is supported, this field is ignored since its functionality
-      // is subsumed by `menvcfg.ADUE`.
-      "enable_pte_update": false
-    },
     // Address to write DTB to (if provided).
     "dtb_address": {
       "len": 64,

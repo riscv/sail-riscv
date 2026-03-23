@@ -26,9 +26,6 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
 let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_set_size_exp
 
-// whether the MMU should update A/D bits in PTEs
-let plat_enable_pte_update : bool = config memory.translation.enable_pte_update
-
 // whether the platform supports misaligned accesses without trapping to M-mode. if false,
 // misaligned loads/stores are trapped to Machine mode.
 let plat_enable_misaligned_access : bool = config memory.misaligned.supported
