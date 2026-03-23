@@ -93,13 +93,13 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
           // Check PMA and PMP access controls.
           let ep = effectivePrivilege(access, mstatus, cur_privilege);
           match phys_access_check(access, ep, paddr, cache_block_size, false) {
-            Some(e) => Memory_Exception(vaddr_for_error, e),
+            Some(e) => Trap(cur_privilege, CTL_TRAP(make_sync_exception(e, bits_of(vaddr_for_error))), PC),
             // If there is no error, the model has no caches so there's no
             // more action required.
             None()  => RETIRE_SUCCESS
           }
         },
-        Err(e, _) => Memory_Exception(vaddr_for_error, e),
+        Err(e, _) => Trap(cur_privilege, CTL_TRAP(make_sync_exception(e, bits_of(vaddr_for_error))), PC),
       }
     }
   }

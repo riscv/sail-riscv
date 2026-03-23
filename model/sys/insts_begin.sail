@@ -30,7 +30,6 @@ union ExecutionResult = {
   Illegal_Instruction            : unit,
   Virtual_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
-  Memory_Exception               : (virtaddr, ExceptionType),
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,
