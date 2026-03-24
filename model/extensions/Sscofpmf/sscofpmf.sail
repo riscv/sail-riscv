@@ -78,13 +78,7 @@ private function get_scountovf(priv : Privilege) -> bits(32) = {
 }
 
 // scountovf
-function clause is_CSR_accessible(0xDA0, p, _) =
-  currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S) &
-  (match p {
-    VirtualSupervisor => true,
-    VirtualUser       => false,
-    _                 => true,
-  })
+function clause is_CSR_accessible(0xDA0, p, _) = currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S)
 
 // TODO: Smcdeleg is not yet implemented (including menvcfg[CDE]).
 // Once implemented, the is_CSR_exception_virtual clause will
