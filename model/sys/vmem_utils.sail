@@ -130,7 +130,7 @@ function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
     // in normal implementations.
     if res then return Err(Memory_Exception(vaddr, E_Load_Access_Fault()));
     // This models CPUs that don't support any misaligned access at all.
-    // Even if the CPU is aligned it might be that the PMA doesn't support
+    // Even if the CPU does support misaligned accesses, it might be that the PMA doesn't support
     // misaligned accesses so you can still get a fault later, but this will
     // be after address translation.
     if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
