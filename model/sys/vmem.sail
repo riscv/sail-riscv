@@ -190,7 +190,7 @@ private function satp_accessible(priv : Privilege) -> bool =
   match priv {
     Machine           => hartSupports(Ext_S),
     Supervisor        => mstatus[TVM]  == 0b0,
-    VirtualSupervisor => false /* TODO: & hstatus[VTVM] == 0b0 */,
+    VirtualSupervisor => false /* TODO: hstatus[VTVM] == 0b0 */,
     User              => false,
     VirtualUser       => false,
   }
@@ -198,7 +198,7 @@ private function satp_accessible(priv : Privilege) -> bool =
 register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
 function clause is_CSR_accessible(0x180, priv, _) = satp_accessible(priv)
-function clause is_CSR_exception_virtual(0x180, p, _) = true
+function clause is_CSR_exception_virtual(0x180, _, _) = true
 function clause read_CSR(0x180) = satp
 function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(Supervisor), satp, value); Ok(satp) }
 
