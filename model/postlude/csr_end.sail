@@ -27,6 +27,6 @@ end write_CSR
 // Implements the general HS-qualified rule from the H extension spec.
 // If an access fails in VS/VU mode but would succeed in HS mode, raise a
 // virtual instruction exception instead of an illegal instruction exception.
-// CSRs that deviate from this rule have explicit clauses defined above.
+// CSRs that deviate from this rule have explicit clauses defined.
 function clause is_CSR_exception_virtual(csr, _, access_type) = check_CSR(csr, Supervisor, access_type) == CSR_Check_OK()
 end is_CSR_exception_virtual

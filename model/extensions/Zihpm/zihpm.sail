@@ -255,9 +255,9 @@ function clause is_CSR_accessible((0b1100000 /* 0xC00 */ @ index : bits(5), priv
 function clause is_CSR_accessible((0b1100100 /* 0xC80 */ @ index : bits(5), priv, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) & currentlyEnabled(Ext_U) & xlen == 32 & counter_enabled(unsigned(index), priv) // hpmcounterh3..31
 
 function clause is_CSR_exception_virtual((0b1100000 /* 0xC00 */ @ index : bits(5), p, _) if unsigned(index) >= 3) =
-feature_enabled_for_priv(p, mcounteren.bits[unsigned(index)], scounteren.bits[unsigned(index)], hcounteren.bits[unsigned(index)]) == FEATURE_VIRTUAL
+feature_enabled_for_priv(p, mcounteren.bits[unsigned(index)], scounteren.bits[unsigned(index)], 0b0 /* hcounteren.bits[unsigned(index)] */) == FEATURE_VIRTUAL
 function clause is_CSR_exception_virtual((0b1100100 /* 0xC80 */ @ index : bits(5), p, _) if unsigned(index) >= 3) =
-  feature_enabled_for_priv(p, mcounteren.bits[unsigned(index)], scounteren.bits[unsigned(index)], hcounteren.bits[unsigned(index)]) == FEATURE_VIRTUAL
+  feature_enabled_for_priv(p, mcounteren.bits[unsigned(index)], scounteren.bits[unsigned(index)], 0b0 /* hcounteren.bits[unsigned(index)] */) == FEATURE_VIRTUAL
 
 function clause read_CSR(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
 function clause read_CSR(0b1100100 /* 0xC80 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))
