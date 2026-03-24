@@ -215,7 +215,7 @@ private function satp_accessible(priv : Privilege) -> bool =
   match priv {
     Machine           => true,
     Supervisor        => currentlyEnabled(Ext_S) & mstatus[TVM]  == 0b0,
-    VirtualSupervisor => currentlyEnabled(Ext_H) & hstatus[VTVM] == 0b0,
+    VirtualSupervisor => currentlyEnabled(Ext_H) /* TODO: & hstatus[VTVM] == 0b0 */,
     User              => false,
     VirtualUser       => false,
   }
@@ -223,23 +223,9 @@ private function satp_accessible(priv : Privilege) -> bool =
 register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
 function clause is_CSR_accessible(0x180, priv, _) = satp_accessible(priv)
-function clause is_CSR_exception_virtual(0x180, p, _) = p == VirtualSupervisor & hstatus[VTVM] == 0b1
+function clause is_CSR_exception_virtual(0x180, p, _) = p == VirtualSupervisor /* TODO: & hstatus[VTVM] == 0b1 */
 function clause read_CSR(0x180) = satp
 function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(Supervisor), satp, value); Ok(satp) }
-
-// Example: HS-Qualification rule, covered by the default case of is_CSR_exception_virtual
-register hgatp : xlenbits
-mapping clause csr_name_map = 0x680 <-> "hgatp"
-function clause is_CSR_accessible(0x680, priv, _) = currentlyEnabled(Ext_H) & (priv == Machine | (priv == Supervisor & mstatus[TVM] == 0b0))
-function clause read_CSR(0x680) = hgatp
-function clause write_CSR(0x680, value) = { hgatp = legalize_hgatp(architecture(cur_privilege), hgatp, value); Ok(hgatp) }
-
-// Example: HS-Qualification rule, covered by the default case of is_CSR_exception_virtual
-register vsatp : xlenbits
-mapping clause csr_name_map = 0x280 <-> "vsatp"
-function clause is_CSR_accessible(0x280, _, _) = currentlyEnabled(Ext_H)
-function clause read_CSR(0x280) = vsatp
-function clause write_CSR(0x280, value) = { vsatp = legalize_satp(architecture(cur_privilege), vsatp, value); Ok(vsatp) }
 
 // ----------------
 // Fields of SATP

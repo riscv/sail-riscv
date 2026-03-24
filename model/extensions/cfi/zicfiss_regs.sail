@@ -32,15 +32,15 @@ function zicfiss_xSSE(priv : Privilege) -> bool =
 // See "Shadow Stack Pointer (ssp) CSR access control".
 private function ssp_accessible(priv : Privilege) -> bool =
   currentlyEnabled(Ext_Zicfiss) &
-  match priv {
+  (match priv {
     Machine           => true,
     Supervisor        => menvcfg[SSE] == 0b1,
     User              => menvcfg[SSE] == 0b1 & (read_senvcfg()[SSE] == 0b1 | not(currentlyEnabled(Ext_S))),
     // The comment from PR "Refactor CSR access checking to handle virtual-instruction exceptions."
     // regarding this function and these conditions is not really clear to me, needs to be double checked.
-    VirtualSupervisor => menvcfg[SSE] == 0b1 & read_henvcfg()[SSE] == 0b1,
-    VirtualUser       => menvcfg[SSE] == 0b1 & read_henvcfg()[SSE] == 0b1 & read_senvcfg()[SSE] == 0b1,
-  }
+    VirtualSupervisor => menvcfg[SSE] == 0b1 /* TODO: & read_henvcfg()[SSE] == 0b1 */,
+    VirtualUser       => menvcfg[SSE] == 0b1 /* TODO: & read_henvcfg()[SSE] == 0b1 & */ & read_senvcfg()[SSE] == 0b1,
+  })
 
 register ssp : xlenbits = zeros()
 
@@ -51,11 +51,11 @@ function clause is_CSR_accessible(0x011, p, _) = ssp_accessible(p)
 function clause is_CSR_exception_virtual(0x011, p, _) =
   // NOTE: Double check conditions
   currentlyEnabled(Ext_Zicfiss) &
-  menvcfg[SSE] == 0b1 & match p {
-    VirtualSupervisor => read_henvcfg()[SSE] == 0b0,
-    VirtualUser       => read_henvcfg()[SSE] == 0b0 | read_senvcfg()[SSE] == 0b0,
+  menvcfg[SSE] == 0b1 & (match p {
+    VirtualSupervisor => false /* TODO: read_henvcfg()[SSE] == 0b0 */,
+    VirtualUser       => /* TODO: read_henvcfg()[SSE] == 0b0 | */ read_senvcfg()[SSE] == 0b0,
     _                 => false,
-  }
+  })
 // "The bits 1:0 of ssp are read-only zero. If the UXLEN or SXLEN may
 // never be 32, then the bit 2 is also read-only zero."
 function clause read_CSR(0x011) = ssp

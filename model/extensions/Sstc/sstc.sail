@@ -11,14 +11,14 @@ mapping clause csr_name_map = 0x15D  <-> "stimecmph"
 
 private function stimecmp_accessible(priv : Privilege) -> bool =
   currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) &
-  match priv {
+  (match priv {
     Machine           => true,
     Supervisor        => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1,
     User              => false,
-    VirtualSupervisor => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1 &
-                         hcounteren[TM] == 0b1 & henvcfg[STCE] == 0b1,
+    VirtualSupervisor => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1,
+                         /* TODO: & hcounteren[TM] == 0b1 & henvcfg[STCE] == 0b1 */
     VirtualUser       => false,
-  }
+  })
 
 function clause is_CSR_accessible(0x14D, priv, _) = stimecmp_accessible(priv)
 function clause is_CSR_accessible(0x15D, priv, _) = stimecmp_accessible(priv) & xlen == 32
@@ -28,8 +28,8 @@ function clause is_CSR_accessible(0x15D, priv, _) = stimecmp_accessible(priv) & 
 function clause is_CSR_exception_virtual(0x14D, p, _) =
   p == VirtualSupervisor &
   currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) &
-   mcounteren[TM] == 0b1  & menvcfg[STCE] == 0b1 &
-  (hcounteren[TM] == 0b0  | henvcfg[STCE] == 0b0)
+   mcounteren[TM] == 0b1  & menvcfg[STCE] == 0b1
+   /* TODO: & (hcounteren[TM] == 0b0  | henvcfg[STCE] == 0b0) */
 
 function clause is_CSR_exception_virtual(0x15D, p, _) =
   is_CSR_exception_virtual(0x14D, p, CSRRead) & xlen == 32
