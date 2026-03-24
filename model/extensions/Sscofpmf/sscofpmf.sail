@@ -78,11 +78,13 @@ private function get_scountovf(priv : Privilege) -> bits(32) = {
 }
 
 // scountovf
-function clause is_CSR_accessible(0xDA0, p, _) = currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S)
+function clause is_CSR_accessible(0xDA0, priv, _) =
+  currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S) &
+  (match priv {
+    VirtualSupervisor => false, /* TODO: not(menvcfg[CDE] == 0b1) */
+    VirtualUser       => false, /* TODO: not(menvcfg[CDE] == 0b1) */
+    _                 => true,
+  })
 
-// TODO: Smcdeleg is not yet implemented (including menvcfg[CDE]).
-// Once implemented, the is_CSR_exception_virtual clause will
-// correctly raise virtual instruction exceptions when menvcfg.CDE=1.
-// function clause is_CSR_exception_virtual(0xDA0, p, _) = currentlyEnabled(Ext_Smcdeleg) & menvcfg[CDE] == 0b1 & (p == VirtualSupervisor | p == VirtualUser)
 function clause read_CSR(0xDA0) = zero_extend(get_scountovf(cur_privilege))
 // scountovf is read-only.

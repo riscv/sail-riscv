@@ -36,8 +36,6 @@ private function ssp_accessible(priv : Privilege) -> bool =
     Machine           => true,
     Supervisor        => menvcfg[SSE] == 0b1,
     User              => menvcfg[SSE] == 0b1 & (read_senvcfg()[SSE] == 0b1 | not(currentlyEnabled(Ext_S))),
-    // The comment from PR "Refactor CSR access checking to handle virtual-instruction exceptions."
-    // regarding this function and these conditions is not really clear to me, needs to be double checked.
     VirtualSupervisor => menvcfg[SSE] == 0b1 /* TODO: & read_henvcfg()[SSE] == 0b1 */,
     VirtualUser       => menvcfg[SSE] == 0b1 /* TODO: & read_henvcfg()[SSE] == 0b1 & */ & read_senvcfg()[SSE] == 0b1,
   })
