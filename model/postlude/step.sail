@@ -213,7 +213,6 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Execute(ExecuteAs(_), _) => assert(false),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e),
     Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
     // NOTE: Virtual instructions exception cannot be triggered until Hypervisor integration is complete.
     Step_Execute(Virtual_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Virtual_Instr()),
