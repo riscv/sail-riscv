@@ -184,7 +184,7 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
-  // See comments in vmem_read_addr for an explanatio of this check.
+  // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
     if res then return Err(Memory_Exception(vaddr, E_SAMO_Access_Fault()));
     if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
