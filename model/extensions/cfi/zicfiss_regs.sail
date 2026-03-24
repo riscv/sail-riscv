@@ -48,14 +48,7 @@ register ssp : xlenbits = zeros()
 // XLEN of the current privilege mode."
 mapping clause csr_name_map = 0x011  <-> "ssp"
 function clause is_CSR_accessible(0x011, p, _) = ssp_accessible(p)
-function clause is_CSR_exception_virtual(0x011, p, _) =
-  // NOTE: Double check conditions
-  currentlyEnabled(Ext_Zicfiss) &
-  menvcfg[SSE] == 0b1 & (match p {
-    VirtualSupervisor => false /* TODO: read_henvcfg()[SSE] == 0b0 */,
-    VirtualUser       => /* TODO: read_henvcfg()[SSE] == 0b0 | */ read_senvcfg()[SSE] == 0b0,
-    _                 => false,
-  })
+
 // "The bits 1:0 of ssp are read-only zero. If the UXLEN or SXLEN may
 // never be 32, then the bit 2 is also read-only zero."
 function clause read_CSR(0x011) = ssp

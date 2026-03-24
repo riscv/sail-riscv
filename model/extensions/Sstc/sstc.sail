@@ -23,17 +23,6 @@ private function stimecmp_accessible(priv : Privilege) -> bool =
 function clause is_CSR_accessible(0x14D, priv, _) = stimecmp_accessible(priv)
 function clause is_CSR_accessible(0x15D, priv, _) = stimecmp_accessible(priv) & xlen == 32
 
-// stimecmp raises virtual instruction exception in VS mode when
-// mcounteren/menvcfg allow access but hcounteren/henvcfg block it
-function clause is_CSR_exception_virtual(0x14D, p, _) =
-  p == VirtualSupervisor &
-  currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) &
-   mcounteren[TM] == 0b1  & menvcfg[STCE] == 0b1
-   /* TODO: & (hcounteren[TM] == 0b0  | henvcfg[STCE] == 0b0) */
-
-function clause is_CSR_exception_virtual(0x15D, p, _) =
-  is_CSR_exception_virtual(0x14D, p, CSRRead) & xlen == 32
-
 function clause read_CSR(0x14D) = stimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x15D if xlen == 32) = stimecmp[63 .. 32]
 

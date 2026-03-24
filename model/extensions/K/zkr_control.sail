@@ -52,7 +52,5 @@ function clause is_CSR_accessible(0x015, priv, access_type) =
     VirtualUser       => false,
   })
 
-function clause is_CSR_exception_virtual(0x015, _, access_type) = mseccfg[SSEED] == 0b1 & access_type == CSRReadWrite
-
 function clause read_CSR(0x015) = read_seed_csr()
 function clause write_CSR(0x015, _value) = Ok(write_seed_csr())
