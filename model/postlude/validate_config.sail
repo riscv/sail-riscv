@@ -7,7 +7,7 @@
 // =======================================================================================
 
 private function check_privs() -> bool = {
-  if hartSupports(Ext_S) & not(hartSupports(Ext_U))
+  if (config extensions.S.supported : bool) & not(config extensions.U.supported : bool)
   then {
     print_endline("User mode (U) should be enabled if supervisor mode (S) is enabled.");
     return false;
@@ -42,44 +42,47 @@ private function require_virtual_memory(ext_name : string) -> bool = {
 private function check_mmu_config() -> bool = {
   var valid : bool = true;
   if xlen == 64 then {
-    if not(hartSupports(Ext_S)) & (hartSupports(Ext_Sv57) | hartSupports(Ext_Sv48) | hartSupports(Ext_Sv39))
+    if not(config extensions.S.supported : bool) & ((config extensions.Sv57.supported : bool) | (config extensions.Sv48.supported : bool) | (config extensions.Sv39.supported : bool))
     then {
       valid = false;
       print_endline("Supervisor mode (S) disabled but one of (Sv57, Sv48, Sv39) is enabled: cannot support address translation without supervisor mode.");
     };
-    if hartSupports(Ext_Sv57) & not(hartSupports(Ext_Sv48))
+    if (config extensions.Sv57.supported : bool) & not(config extensions.Sv48.supported : bool)
     then {
       valid = false;
       print_endline("Sv57 is enabled but Sv48 is disabled: supporting Sv57 requires supporting Sv48.");
     };
-    if hartSupports(Ext_Sv48) & not(hartSupports(Ext_Sv39))
+    if (config extensions.Sv48.supported : bool) & not(config extensions.Sv39.supported : bool)
     then {
       valid = false;
       print_endline("Sv48 is enabled but Sv39 is disabled: supporting Sv48 requires supporting Sv39.");
     };
-    if hartSupports(Ext_Sv32)
+    if (config extensions.Sv32.supported : bool)
     then {
       valid = false;
       print_endline("Sv32 is enabled: Sv32 is not supported on RV64.");
     };
   } else {
     assert(xlen == 32);
-    if not(hartSupports(Ext_S)) & hartSupports(Ext_Sv32)
+    if not(config extensions.S.supported : bool) & (config extensions.Sv32.supported : bool)
     then {
       valid = false;
       print_endline("Supervisor mode (S) is disabled but Sv32 is enabled: cannot support address translation without supervisor mode.");
     };
-    if hartSupports(Ext_Sv39) | hartSupports(Ext_Sv48) |  hartSupports(Ext_Sv57)
+    if (config extensions.Sv39.supported : bool) | (config extensions.Sv48.supported : bool) |  (config extensions.Sv57.supported : bool)
     then {
       valid = false;
       print_endline("One or more of Sv39/Sv48/Sv57 is enabled: these are not supported on RV32.");
     };
   };
 
-  if hartSupports(Ext_Svrsw60t59b) & not(hartSupports(Ext_Sv39))
-  then {
-    valid = false;
-    print_endline("Svrsw60t59b is enabled but Sv39 is disabled: supporting Svrsw60t59b requires supporting Sv39.");
+  if (config extensions.Svrsw60t59b.supported : bool) then {
+    if xlen == 32 then {
+      valid = false;
+      print_endline("The Svrsw60t59b extension is enabled: Svrsw60t59b is not supported on RV32");
+    } else {
+      valid = valid & require_Sv39("Svrsw60t59b");
+    }
   };
 
   if (config extensions.Ssccptr.supported : bool)
@@ -141,7 +144,7 @@ private function check_vext_config() -> bool = {
     valid = false;
     print_endline("Zve*x is enabled but ELEN is 2^" ^ dec_str(elen_exp) ^ ": ELEN must be >= 2^5");
   };
-  if vector_support_level >= Float_single & not(hartSupports(Ext_F)) then {
+  if vector_support_level >= Float_single & not(config extensions.F.supported : bool) then {
     valid = false;
     print_endline("Zve*f is enabled but F is disabled: supporting Zve*f requires F.");
   };
@@ -155,7 +158,7 @@ private function check_vext_config() -> bool = {
       print_endline("Zve*d is enabled but D is disabled: supporting Zve*d requires D.");
     };
   };
-  if hartSupports(Ext_Zve32x) & not(hartSupports(Ext_Zicsr)) then {
+  if hartSupports(Ext_Zve32x) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
     print_endline("Zve32x is enabled but Zicsr is disabled: supporting Zve32x requires Zicsr.");
   };
@@ -171,52 +174,52 @@ private function check_vext_config() -> bool = {
     valid = false;
     print_endline("VLEN (set to 2^" ^ dec_str(vlen_exp) ^ ") is below the minimum required for V (need Zvl128b).");
   };
-  if hartSupports(Ext_Zvfhmin) & not(hartSupports(Ext_Zve32f)) then {
+  if (config extensions.Zvfhmin.supported : bool) & not(hartSupports(Ext_Zve32f)) then {
     valid = false;
     print_endline("Zvfhmin is enabled but Zve32f is disabled: Zvfhmin requires Zve32f.");
   };
-  if hartSupports(Ext_Zvfh) & (not(hartSupports(Ext_Zve32f)) | not(hartSupports(Ext_Zfhmin))) then {
+  if (config extensions.Zvfh.supported : bool) & (not(hartSupports(Ext_Zve32f)) | not(config extensions.Zfhmin.supported : bool)) then {
     valid = false;
     print_endline("Zvfh is enabled but Zve32f and/or Zfhmin are disabled: Zvfh requires Zve32f and Zfhmin.");
   };
   // Cryptography Extensions: Vector Instructions
-  if hartSupports(Ext_Zvbb) & not(hartSupports(Ext_Zve32x)) then {
+  if (config extensions.Zvbb.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvbb is enabled but Zve32x is disabled: Zvbb requires Zve32x.");
   };
-  if hartSupports(Ext_Zvbc) & not(hartSupports(Ext_Zve64x) | hartSupports(Ext_V)) then {
+  if (config extensions.Zvbc.supported : bool) & not(hartSupports(Ext_Zve64x) | hartSupports(Ext_V)) then {
     valid = false;
     print_endline("Zvbc is enabled but Zve64x and V are disabled: Zvbc requires Zve64x or V.");
   };
-  if hartSupports(Ext_Zvkb) & not(hartSupports(Ext_Zve32x)) then {
+  if (config extensions.Zvkb.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvkb is enabled but Zve32x is disabled: Zvkb requires Zve32x.");
   };
-  if hartSupports(Ext_Zvkg) & not(hartSupports(Ext_Zve32x)) then {
+  if (config extensions.Zvkg.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvkg is enabled but Zve32x is disabled: Zvkg requires Zve32x.");
   };
-  if hartSupports(Ext_Zvkned) & not(hartSupports(Ext_Zve32x)) then {
+  if (config extensions.Zvkned.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvkned is enabled but Zve32x is disabled: Zvkned requires Zve32x.");
   };
-  if hartSupports(Ext_Zvknha) & not(hartSupports(Ext_Zve32x)) then {
+  if (config extensions.Zvknha.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvknha is enabled but Zve32x is disabled: Zvknha requires Zve32x.");
   };
-  if hartSupports(Ext_Zvknhb) & not(hartSupports(Ext_Zve64x) | hartSupports(Ext_V)) then {
+  if (config extensions.Zvknhb.supported : bool) & not(hartSupports(Ext_Zve64x) | hartSupports(Ext_V)) then {
     valid = false;
     print_endline("Zvknhb is enabled but Zve64x and V are disabled: Zvknhb requires Zve64x or V.");
   };
-  if hartSupports(Ext_Zvksed) & not(hartSupports(Ext_Zve32x)) then {
+  if (config extensions.Zvksed.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvksed is enabled but Zve32x is disabled: Zvksed requires Zve32x.");
   };
-  if hartSupports(Ext_Zvksh) & not(hartSupports(Ext_Zve32x)) then {
+  if (config extensions.Zvksh.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvksh is enabled but Zve32x is disabled: Zvksh requires Zve32x.");
   };
-  if hartSupports(Ext_Zvkt) & not(hartSupports(Ext_Zve32x)) then {
+  if (config extensions.Zvkt.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvkt is enabled but Zve32x is disabled: Zvkt requires Zve32x.");
   };
@@ -317,49 +320,53 @@ private function check_required_sstvala_option(name : string, value : bool) -> b
 
 private function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
-  if hartSupports(Ext_F) & hartSupports(Ext_Zfinx) then {
+  if (config extensions.Zcf.supported : bool) & xlen == 64 then {
+    valid = false;
+    print_endline("The Zcf extension is enabled: Zcf is not supported on RV64.");
+  };
+  if (config extensions.F.supported : bool) & (config extensions.Zfinx.supported : bool) then {
     valid = false;
     print_endline("The F and Zfinx extensions are mutually exclusive and cannot be supported simultaneously.");
   };
-  if hartSupports(Ext_Zfinx) & not(hartSupports(Ext_Zicsr)) then {
+  if (config extensions.Zfinx.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
     print_endline("The Zfinx extensions is enabled but Zicsr is disabled: supporting Zfinx requires Zicsr.");
   };
-  if hartSupports(Ext_Zdinx) & not(hartSupports(Ext_Zfinx)) then {
+  if (config extensions.Zdinx.supported : bool) & not(config extensions.Zfinx.supported : bool) then {
     valid = false;
     print_endline("The Zdinx extensions is enabled but Zfinx is disabled: supporting Zdinx requires Zfinx.");
   };
-  if hartSupports(Ext_Zhinx) & not(hartSupports(Ext_Zfinx)) then {
+  if (config extensions.Zhinx.supported : bool) & not(config extensions.Zfinx.supported : bool) then {
     valid = false;
     print_endline("The Zhinx extensions is enabled but Zfinx is disabled: supporting Zhinx requires Zfinx.");
   };
-  if hartSupports(Ext_Zhinxmin) & not(hartSupports(Ext_Zfinx)) then {
+  if (config extensions.Zhinxmin.supported : bool) & not(config extensions.Zfinx.supported : bool) then {
     valid = false;
     print_endline("The Zhinxmin extensions is enabled but Zfinx is disabled: supporting Zhinxmin requires Zfinx.");
   };
-  if hartSupports(Ext_Zicfilp) & not(hartSupports(Ext_Zicsr)) then {
+  if (config extensions.Zicfilp.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
     print_endline("The Zicfilp extension is enabled but Zicsr is disabled: supporting Zicfilp requires Zicsr.");
   };
   // See https://github.com/riscv/sail-riscv/issues/1508
-  if hartSupports(Ext_Zicfiss) & not(hartSupports(Ext_Zicsr) & hartSupports(Ext_Zimop) & (hartSupports(Ext_Zaamo) | hartSupports(Ext_A))) then {
+  if (config extensions.Zicfiss.supported : bool) & not((config extensions.Zicsr.supported : bool) & (config extensions.Zimop.supported : bool) & ((config extensions.Zaamo.supported : bool) | (config extensions.A.supported : bool))) then {
     valid = false;
     print_endline("The Zicfiss extension is enabled but one or more of Zicsr, Zimop and (Zaamo or A) are disabled: supporting Zicfiss requires Zicsr, Zimop and (Zaamo or A).");
   };
-  if hartSupports(Ext_Zfbfmin) & not(hartSupports(Ext_F)) then {
+  if (config extensions.Zfbfmin.supported : bool) & not(config extensions.F.supported : bool) then {
     valid = false;
     print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
   };
-  if hartSupports(Ext_Zvfbfmin) & not(hartSupports(Ext_Zve32f)) then {
+  if (config extensions.Zvfbfmin.supported : bool) & not(hartSupports(Ext_Zve32f)) then {
     valid = false;
     print_endline("The Zvfbfmin extension is enabled but Zve32f is disabled: supporting Zvfbfmin requires Zve32f.")
   };
-  if hartSupports(Ext_Zvfbfwma) & (not(hartSupports(Ext_Zfbfmin)) | not(hartSupports(Ext_Zvfbfmin))) then {
+  if (config extensions.Zvfbfwma.supported : bool) & (not(config extensions.Zfbfmin.supported : bool) | not(config extensions.Zvfbfmin.supported : bool)) then {
     valid = false;
     print_endline("The Zvfbfwma extension is enabled but either Zfbfmin or Zvfbfmin is disabled: supporting Zvfbfwma requires Zfbfmin and Zvfbfmin.")
   };
-  if hartSupports(Ext_Sstvala) then {
-    if not(hartSupports(Ext_S)) then {
+  if (config extensions.Sstvala.supported : bool) then {
+    if not(config extensions.S.supported : bool) then {
       valid = false;
       print_endline("The Sstvala extension writes `stval` which requires supervisor mode (S) but supervisor mode is not enabled.");
     };
@@ -380,7 +387,7 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_required_sstvala_option("hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
     valid = valid & check_required_sstvala_option("illegal instruction exceptions", illegal_instruction_writes_xtval);
   };
-  if hartSupports(Ext_Ssqosid) & not(hartSupports(Ext_Zicsr)) then {
+  if (config extensions.Ssqosid.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
     print_endline("The Ssqosid extension is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
   };
@@ -393,12 +400,12 @@ private function check_misc_extension_dependencies() -> bool = {
 
 private function check_extension_param_constraints() -> bool = {
   var valid : bool = true;
-  if hartSupports(Ext_Zic64b) & (plat_cache_block_size_exp != 6) then {
+  if (config extensions.Zic64b.supported : bool) & (plat_cache_block_size_exp != 6) then {
     valid = false;
     print_endline("The Zic64b extension is enabled but the cache block size is not 64 bytes.");
   };
   let min_rss_exp = log2_xlen - 3;
-  if (hartSupports(Ext_A) | hartSupports(Ext_Zalrsc)) & (plat_reservation_set_size_exp < min_rss_exp) then {
+  if ((config extensions.A.supported : bool) | (config extensions.Zalrsc.supported : bool)) & (plat_reservation_set_size_exp < min_rss_exp) then {
     valid = false;
     print_endline("The A or Zalrsc extensions are enabled, but the reservation set size of 2^" ^ dec_str(plat_reservation_set_size_exp) ^
                   " is too small; it should be at least 2^" ^ dec_str(min_rss_exp) ^
@@ -408,14 +415,14 @@ private function check_extension_param_constraints() -> bool = {
 }
 
 private function check_stateen_config() -> bool = {
-  if not(hartSupports(Ext_Smstateen)) & not(hartSupports(Ext_Ssstateen)) then return true;
+  if not(config extensions.Stateen.Smstateen.supported : bool) & not(config extensions.Stateen.Ssstateen.supported : bool) then return true;
   var valid : bool = true;
   if config extensions.Stateen.SE0_readonly_zero : bool & hartSupports(Ext_H) then {
     valid = false;
     print_endline("Stateen SE0_readonly_zero is true but H extension is supported: SE0 must be writable when H is implemented.");
   };
   // TODO: Update when Zcmt is implemented
-  if config extensions.Stateen.SE0_readonly_zero : bool & (hartSupports(Ext_Zfinx) | not(config extensions.Stateen.C_readonly_zero : bool)) then {
+  if config extensions.Stateen.SE0_readonly_zero : bool & ((config extensions.Zfinx.supported : bool) | not(config extensions.Stateen.C_readonly_zero : bool)) then {
     valid = false;
     print_endline("Stateen SE0_readonly_zero is true but sstateen0 has writable bits (FCSR due to Zfinx support or C due to disabled C_readonly_zero): SE0 must be writable.");
   };
