@@ -114,20 +114,6 @@ function misaligned_order(n) = {
   }
 }
 
-// Return true if the access to a virtual address will raise a misaligned exception.
-// This is checked before address translation. It is true if the address
-// is actually misaligned, and either it *must* be aligned (e.g. for LR/SC)
-// or the hart does not support misaligned access to any address.
-//
-// Even if this returns false, a misaligned exception can still be raised after
-// address translation depending on the PMAs.
-private function access_causes_misaligned_exception(
-  vaddr : virtaddr,
-  width : word_width,
-  must_be_aligned : bool,
-) -> bool =
-  not(is_aligned_addr(vaddr, width)) & (not(plat_enable_misaligned_access) | must_be_aligned)
-
 // External API
 
 val vmem_read_addr : forall 'width, is_mem_width('width).
@@ -137,8 +123,18 @@ val vmem_read_addr : forall 'width, is_mem_width('width).
 function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
-  if access_causes_misaligned_exception(vaddr, width, res)
-  then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
+  if not(is_aligned_addr(vaddr, width)) then {
+    // LR/SC must always be aligned. Returning a misaligned exception indicates
+    // that the access can be emulated (the OS/firmware can transparently break
+    // it down into multiple aligned accesses) which isn't the case for LR/SC
+    // in normal implementations.
+    if res then return Err(Memory_Exception(vaddr, E_Load_Access_Fault()));
+    // This models CPUs that don't support any misaligned access at all.
+    // Even if the CPU does support misaligned accesses, it might be that the PMA doesn't support
+    // misaligned accesses so you can still get a fault later, but this will
+    // be after address translation.
+    if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
+  };
 
   // If the load is misaligned or an allowed misaligned access, split into `n`
   // (single-copy-atomic) memory operations, each of `bytes` width. If the load is
@@ -188,8 +184,11 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
-  if access_causes_misaligned_exception(vaddr, width, res)
-  then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+  // See comments in vmem_read_addr for an explanation of this check.
+  if not(is_aligned_addr(vaddr, width)) then {
+    if res then return Err(Memory_Exception(vaddr, E_SAMO_Access_Fault()));
+    if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+  };
 
   // If the store is misaligned or an allowed misaligned access, split into `n`
   // (single-copy-atomic) memory operations, each of `bytes` width. If the store is
