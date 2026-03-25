@@ -9,7 +9,7 @@
 mapping clause csr_name_map = 0x14D  <-> "stimecmp"
 mapping clause csr_name_map = 0x15D  <-> "stimecmph"
 
-private function stimecmp_accessible(priv : Privilege) -> bool =
+private function is_stimecmp_accessible(priv : Privilege) -> bool =
   currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Sstc) &
   (match priv {
     Machine           => true,
@@ -20,8 +20,8 @@ private function stimecmp_accessible(priv : Privilege) -> bool =
     VirtualUser       => false,
   })
 
-function clause is_CSR_accessible(0x14D, priv, _) = stimecmp_accessible(priv)
-function clause is_CSR_accessible(0x15D, priv, _) = stimecmp_accessible(priv) & xlen == 32
+function clause is_CSR_accessible(0x14D, priv, _) = is_stimecmp_accessible(priv)
+function clause is_CSR_accessible(0x15D, priv, _) = is_stimecmp_accessible(priv) & xlen == 32
 
 function clause read_CSR(0x14D) = stimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x15D if xlen == 32) = stimecmp[63 .. 32]

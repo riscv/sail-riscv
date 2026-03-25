@@ -30,7 +30,7 @@ function zicfiss_xSSE(priv : Privilege) -> bool =
   })
 
 // See "Shadow Stack Pointer (ssp) CSR access control".
-private function ssp_accessible(priv : Privilege) -> bool =
+private function is_ssp_accessible(priv : Privilege) -> bool =
   currentlyEnabled(Ext_Zicfiss) &
   (match priv {
     Machine           => true,
@@ -45,7 +45,7 @@ register ssp : xlenbits = zeros()
 // "There is no high CSR defined as the ssp is always as wide as the
 // XLEN of the current privilege mode."
 mapping clause csr_name_map = 0x011  <-> "ssp"
-function clause is_CSR_accessible(0x011, p, _) = ssp_accessible(p)
+function clause is_CSR_accessible(0x011, p, _) = is_ssp_accessible(p)
 
 // "The bits 1:0 of ssp are read-only zero. If the UXLEN or SXLEN may
 // never be 32, then the bit 2 is also read-only zero."

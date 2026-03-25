@@ -78,13 +78,11 @@ private function get_scountovf(priv : Privilege) -> bits(32) = {
 }
 
 // scountovf
-function clause is_CSR_accessible(0xDA0, priv, _) =
-  currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S) &
-  (match priv {
-    VirtualSupervisor => false, /* TODO: not(menvcfg[CDE] == 0b1) */
-    VirtualUser       => false, /* TODO: not(menvcfg[CDE] == 0b1) */
-    _                 => true,
-  })
+function clause is_CSR_accessible(0xDA0, p, _) =
+  currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S)
+// TODO: when Smcdeleg/Ssccfg is implemented, extend to:
+//   & not(p == VirtualSupervisor & currentlyEnabled(Ext_Smcdeleg)
+//   & currentlyEnabled(Ext_Ssccfg) & menvcfg[CDE] == 0b1)
 
 function clause read_CSR(0xDA0) = zero_extend(get_scountovf(cur_privilege))
 // scountovf is read-only.
