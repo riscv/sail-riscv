@@ -328,6 +328,15 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The F and Zfinx extensions are mutually exclusive and cannot be supported simultaneously.");
   };
+  // See https://github.com/riscv/sail-riscv/issues/1508 for the next two checks.
+  if (config extensions.Zabha.supported : bool) & not((config extensions.Zaamo.supported : bool) | (config extensions.A.supported : bool)) then {
+    valid = false;
+    print_endline("The Zabha extension is enabled but Zaamo and A are disabled: supporting Zabha requires Zaamo or A.");
+  };
+  if (config extensions.Zacas.supported : bool) & not((config extensions.Zaamo.supported : bool) | (config extensions.A.supported : bool)) then {
+    valid = false;
+    print_endline("The Zacas extension is enabled but Zaamo and A are disabled: supporting Zacas requires Zaamo or A.");
+  };
   if (config extensions.Zfinx.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
     print_endline("The Zfinx extensions is enabled but Zicsr is disabled: supporting Zfinx requires Zicsr.");
