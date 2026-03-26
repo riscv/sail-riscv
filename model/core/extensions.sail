@@ -256,6 +256,11 @@ function clause hartSupports(Ext_Ziccamoa) = config extensions.Ziccamoa.supporte
 enum clause extension = Ext_Ziccamoc
 mapping clause extensionName= Ext_Ziccamoc <-> "Ziccamoc"
 function clause hartSupports(Ext_Ziccamoc) = config extensions.Ziccamoc.supported
+// Instruction-Fetch Atomicity
+enum clause extension = Ext_Ziccif
+mapping clause extensionName = Ext_Ziccif <-> "ziccif"
+function clause hartSupports(Ext_Ziccif) = config extensions.Ziccif.supported
+function clause currentlyEnabled(Ext_Ziccif) = hartSupports(Ext_Ziccif)
 // Main memory supports forward progress on LR/SC sequences
 enum clause extension = Ext_Ziccrse
 mapping clause extensionName= Ext_Ziccrse <-> "Ziccrse"
@@ -645,6 +650,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicboz,
   Ext_Ziccamoa,
   Ext_Ziccamoc,
+  Ext_Ziccif,
   Ext_Ziccrse,
   Ext_Zicfilp,
   Ext_Zicfiss,

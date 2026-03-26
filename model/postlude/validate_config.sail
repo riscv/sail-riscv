@@ -217,7 +217,7 @@ private function check_vext_config() -> bool = {
 }
 
 // Return true if a list of PMA regions are sorted and don't overlap.
-private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccrse : bool, check_ssccptr : bool) -> bool =
+private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccif : bool, check_ziccrse : bool, check_ssccptr : bool) -> bool =
   match pmas {
     [||] => true,
     pma :: rest => {
@@ -237,6 +237,10 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoc is enabled which requires AMOCASQ support.");
           return false;
         };
+        if check_ziccif & not(attributes.executable) then {
+          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with no instruction fetch support, but Ziccif is enabled which requires this support.");
+          return false;
+        };
         if check_ziccrse & attributes.reservability != RsrvEventual then {
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
           return false;
@@ -246,7 +250,7 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
           return false;
         };
       };
-      check_pma_regions(rest, pma.base, pma.size, check_ziccamoc, check_ziccamoa, check_ziccrse, check_ssccptr)
+      check_pma_regions(rest, pma.base, pma.size, check_ziccamoa, check_ziccamoc, check_ziccif, check_ziccrse, check_ssccptr)
     },
   }
 
@@ -262,9 +266,10 @@ private function check_mem_layout() -> bool =
   } else {
     let ziccamoa_is_supported : bool = config extensions.Ziccamoa.supported;
     let ziccamoc_is_supported : bool = config extensions.Ziccamoc.supported;
+    let ziccif_is_supported   : bool = config extensions.Ziccif.supported;
     let ziccrse_is_supported  : bool = config extensions.Ziccrse.supported;
     let ssccptr_is_supported  : bool = config extensions.Ssccptr.supported;
-    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccrse_is_supported, ssccptr_is_supported)
+    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccif_is_supported, ziccrse_is_supported, ssccptr_is_supported)
   }
 
 private function check_pmp() -> bool = {
