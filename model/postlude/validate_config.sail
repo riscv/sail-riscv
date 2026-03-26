@@ -238,6 +238,7 @@ private function check_vext_config() -> bool = {
 private struct pma_check_opts = {
   ziccamoa : bool,
   ziccamoc : bool,
+  ziccif   : bool,
   ziccrse  : bool,
   ssccptr  : bool,
   svadu    : bool,
@@ -265,6 +266,10 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
         };
         if check_opts.ziccamoc & attributes.atomic_support != AMOCASQ then {
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoc is enabled which requires AMOCASQ support.");
+          return false;
+        };
+        if check_opts.ziccif & not(attributes.executable) then {
+          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with no instruction fetch support, but Ziccif is enabled which requires this support.");
           return false;
         };
         if check_opts.ziccrse & attributes.reservability != RsrvEventual then {
@@ -296,6 +301,7 @@ private function check_mem_layout() -> bool =
     let check_opts : pma_check_opts = struct {
       ziccamoa = config extensions.Ziccamoa.supported,
       ziccamoc = config extensions.Ziccamoc.supported,
+      ziccif   = config extensions.Ziccif.supported,
       ziccrse  = config extensions.Ziccrse.supported,
       ssccptr  = config extensions.Ssccptr.supported,
       svadu    = config extensions.Svadu.supported,
