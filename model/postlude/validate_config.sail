@@ -223,10 +223,18 @@ private function check_vext_config() -> bool = {
   valid;
 }
 
+private struct pma_check_opts = {
+  ziccamoa : bool,
+  ziccamoc : bool,
+  ziccrse  : bool,
+  ssccptr  : bool,
+  svadu    : bool,
+}
+
 // Return true if a list of PMA regions are sorted and don't overlap, and the specified extension checks are satisfied.
-private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccrse : bool, check_ssccptr : bool, check_svadu : bool, found_valid_svadu_pma : bool) -> bool =
+private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_opts : pma_check_opts, found_valid_svadu_pma : bool) -> bool =
   match pmas {
-    [||] => if check_svadu & not(found_valid_svadu_pma) then {
+    [||] => if check_opts.svadu & not(found_valid_svadu_pma) then {
         print_endline("The Svadu extension is enabled but no memory region supports hardware page-table writes: Svadu requires at least one region provide this support.");
         false
       } else true,
@@ -239,19 +247,19 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
       };
       let attributes = pma.attributes;
       if attributes.cacheable & attributes.coherent then {
-        if check_ziccamoa & attributes.atomic_support < AMOArithmetic then {
+        if check_opts.ziccamoa & attributes.atomic_support < AMOArithmetic then {
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
           return false;
         };
-        if check_ziccamoc & attributes.atomic_support != AMOCASQ then {
+        if check_opts.ziccamoc & attributes.atomic_support != AMOCASQ then {
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoc is enabled which requires AMOCASQ support.");
           return false;
         };
-        if check_ziccrse & attributes.reservability != RsrvEventual then {
+        if check_opts.ziccrse & attributes.reservability != RsrvEventual then {
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
           return false;
         };
-        if check_ssccptr & not(attributes.supports_pte_read) then {
+        if check_opts.ssccptr & not(attributes.supports_pte_read) then {
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable without hardware page-table read support, but Ssccptr is enabled which requires this support.");
           return false;
         };
@@ -259,7 +267,7 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
 
       let found_valid_svadu_pma = found_valid_svadu_pma | (attributes.supports_pte_write & attributes.reservability == RsrvEventual);
 
-      check_pma_regions(rest, pma.base, pma.size, check_ziccamoc, check_ziccamoa, check_ziccrse, check_ssccptr, check_svadu, found_valid_svadu_pma)
+      check_pma_regions(rest, pma.base, pma.size, check_opts, found_valid_svadu_pma)
     },
   }
 
@@ -273,12 +281,14 @@ private function check_mem_layout() -> bool =
     print_endline("No memory regions specified.");
     false
   } else {
-    let ziccamoa_is_supported : bool = config extensions.Ziccamoa.supported;
-    let ziccamoc_is_supported : bool = config extensions.Ziccamoc.supported;
-    let ziccrse_is_supported  : bool = config extensions.Ziccrse.supported;
-    let ssccptr_is_supported  : bool = config extensions.Ssccptr.supported;
-    let svadu_is_supported    : bool = config extensions.Svadu.supported;
-    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccrse_is_supported, ssccptr_is_supported, svadu_is_supported, false)
+    let check_opts : pma_check_opts = struct {
+      ziccamoa = config extensions.Ziccamoa.supported,
+      ziccamoc = config extensions.Ziccamoc.supported,
+      ziccrse  = config extensions.Ziccrse.supported,
+      ssccptr  = config extensions.Ssccptr.supported,
+      svadu    = config extensions.Svadu.supported,
+    };
+    check_pma_regions(pma_regions, zeros(), zeros(), check_opts, false)
   }
 
 private function check_pmp() -> bool = {
