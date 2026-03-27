@@ -81,6 +81,11 @@ function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b
 // Obviating Memory-management Instructions after Marking PTEs valid
 function clause currentlyEnabled(Ext_Svvptc) = hartSupports(Ext_Svvptc) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
 
+// Updates to A/D bits in PTE.
+// Dynamic values of {m,h}envcfg[ADUE] are handled during address translation.
+function clause currentlyEnabled(Ext_Svade) = hartSupports(Ext_Svade)
+function clause currentlyEnabled(Ext_Svadu) = hartSupports(Ext_Svadu)
+
 // Check if a PTE is valid
 private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0

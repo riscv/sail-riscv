@@ -10,6 +10,11 @@
     (see also https://github.com/riscv/sail-riscv/issues/1564). The
     default setting for `platform.wfi_is_nop` was also changed from
     `true` to `false`.
+  - The `dirty_update` attribute of `memory.translation` has been removed,
+    since the behavior that attribute configured can now be modeled
+    using the Svadu and Svade extensions. When neither of these extensions
+    are configured as supported, the model defaults to a hardware update of
+    the PTE.
 
 - The following extensions have been added:
   - Ziccamoa
@@ -18,6 +23,8 @@
   - Zicfiss
   - Ssccptr
   - Sscounterenw
+  - Svade
+  - Svadu
   - Svnapot
   - Svvptc
 

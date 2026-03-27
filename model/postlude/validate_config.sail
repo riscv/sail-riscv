@@ -75,6 +75,7 @@ private function check_mmu_config() -> bool = {
       print_endline("One or more of Sv39/Sv48/Sv57 is enabled: these are not supported on RV32.");
     };
   };
+
   if hartSupports(Ext_Svrsw60t59b) & not(hartSupports(Ext_Sv39))
   then {
     valid = false;
@@ -83,6 +84,12 @@ private function check_mmu_config() -> bool = {
 
   if (config extensions.Ssccptr.supported : bool)
   then valid = valid & require_virtual_memory("Ssccptr");
+
+  if (config extensions.Svade.supported : bool)
+  then valid = valid & require_virtual_memory("Svade");
+
+  if (config extensions.Svadu.supported : bool)
+  then valid = valid & require_virtual_memory("Svadu");
 
   if (config extensions.Svnapot.supported : bool) then {
     if xlen == 32 then {
@@ -216,10 +223,13 @@ private function check_vext_config() -> bool = {
   valid;
 }
 
-// Return true if a list of PMA regions are sorted and don't overlap.
-private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccrse : bool, check_ssccptr : bool) -> bool =
+// Return true if a list of PMA regions are sorted and don't overlap, and the specified extension checks are satisfied.
+private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_ziccamoa : bool, check_ziccamoc : bool, check_ziccrse : bool, check_ssccptr : bool, check_svadu : bool, found_valid_svadu_pma : bool) -> bool =
   match pmas {
-    [||] => true,
+    [||] => if check_svadu & not(found_valid_svadu_pma) then {
+        print_endline("The Svadu extension is enabled but no memory region supports hardware page-table writes: Svadu requires at least one region provide this support.");
+        false
+      } else true,
     pma :: rest => {
       if pma.base <_u prev_base + prev_size then {
         print_endline("Memory region starting at " ^ bits_str(pma.base) ^
@@ -246,7 +256,10 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
           return false;
         };
       };
-      check_pma_regions(rest, pma.base, pma.size, check_ziccamoc, check_ziccamoa, check_ziccrse, check_ssccptr)
+
+      let found_valid_svadu_pma = found_valid_svadu_pma | (attributes.supports_pte_write & attributes.reservability == RsrvEventual);
+
+      check_pma_regions(rest, pma.base, pma.size, check_ziccamoc, check_ziccamoa, check_ziccrse, check_ssccptr, check_svadu, found_valid_svadu_pma)
     },
   }
 
@@ -254,7 +267,7 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
 function dtb_within_configured_pma_memory(addr : bits(64), size : bits(64)) -> bool =
   is_some(matching_pma_bits_range(pma_regions, addr, size))
 
-// Check that all memory regions are sorted and don't overlap.
+// Check that all memory regions are sorted and don't overlap, and that PMAs are compatible with enabled extensions.
 private function check_mem_layout() -> bool =
   if pma_regions == [||] then {
     print_endline("No memory regions specified.");
@@ -264,7 +277,8 @@ private function check_mem_layout() -> bool =
     let ziccamoc_is_supported : bool = config extensions.Ziccamoc.supported;
     let ziccrse_is_supported  : bool = config extensions.Ziccrse.supported;
     let ssccptr_is_supported  : bool = config extensions.Ssccptr.supported;
-    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccrse_is_supported, ssccptr_is_supported)
+    let svadu_is_supported    : bool = config extensions.Svadu.supported;
+    check_pma_regions(pma_regions, zeros(), zeros(), ziccamoa_is_supported, ziccamoc_is_supported, ziccrse_is_supported, ssccptr_is_supported, svadu_is_supported, false)
   }
 
 private function check_pmp() -> bool = {
