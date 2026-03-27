@@ -91,6 +91,15 @@ private function check_mmu_config() -> bool = {
   if (config extensions.Svadu.supported : bool)
   then valid = valid & require_virtual_memory("Svadu");
 
+  if (config extensions.Svpbmt.supported : bool) then {
+    if xlen == 32 then {
+      valid = false;
+      print_endline("The Svpbmt extension is enabled: Svpbmt is not supported on RV32");
+    } else {
+      valid = valid & require_Sv39("Svpbmt");
+    }
+  };
+
   if (config extensions.Svnapot.supported : bool) then {
     if xlen == 32 then {
       valid = false;

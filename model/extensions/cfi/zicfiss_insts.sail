@@ -178,8 +178,8 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   if not(is_aligned_addr(vaddr, width))
   then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
 
-  let paddr : physaddr = match translateAddr(vaddr, access) {
-    Ok(addr, _) => addr,
+  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
+    Ok(addr, pbmt, _) => (addr, pbmt),
     Err(e, _)   => return Memory_Exception(vaddr, e),
   };
 
@@ -191,7 +191,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   let 'width = width;
   let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, aq & rl, rl, true) {
     Err(e) => return Memory_Exception(vaddr, e),
-    Ok(_)  => match mem_read(access, paddr, width, aq, aq & rl, true) {
+    Ok(_)  => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
       Err(e) => return Memory_Exception(vaddr, e),
       Ok(v)  => v,
     },
@@ -200,7 +200,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // This constraint is ensured by the instruction decode clause.
   assert('width == 4 | (xlen == 64 & width == 8));
   let write_val : bits('width * 8) = X(rs2)['width * 8 - 1 .. 0];
-  match mem_write_value(paddr, width, write_val, access, aq & rl, rl, true) {
+  match mem_write_value(paddr, width, write_val, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => X(rd) = sign_extend(mem_val),
     Ok(false) => internal_error(__FILE__, __LINE__, "AMOSWAP_SS got false from mem_write_value"),
     Err(e)    => return Memory_Exception(vaddr, e),

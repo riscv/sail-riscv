@@ -89,10 +89,10 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
       // equal to rs1, but pointer masking can change that.
       let vaddr_for_error = vaddr - negative_offset;
       match translateAddr(vaddr, access) {
-        Ok(paddr, _) => {
+        Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
           let ep = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, ep, paddr, cache_block_size, false) {
+          match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
             Some(e) => Memory_Exception(vaddr_for_error, e),
             // If there is no error, the model has no caches so there's no
             // more action required.

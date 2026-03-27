@@ -77,6 +77,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   paddr      : physaddr,
   width      : int('n),
   access     : MemoryAccessType(mem_payload),
+  pbmt       : page_based_mem_type,
   res_or_con : bool,
 )  -> option(ExceptionType) = {
   match matching_pma(pma_regions, paddr, width) {
@@ -84,6 +85,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
       Some(accessFaultFromAccessType(access))
     },
     Some(struct { attributes, _ }) => {
+      let attributes = override_PMA(attributes, pbmt);
       let misaligned = not(is_aligned_addr(paddr, width));
       // Check if we need to raise an exception for misalignment.
       match attributes.misaligned_fault {
@@ -179,13 +181,14 @@ private function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : 
 // Check if access is permitted according to PMPs and PMAs.
 function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
+  pbmt : page_based_mem_type,
   priv : Privilege,
   paddr : physaddr,
   width : int('n),
   res_or_con : bool,
 ) -> option(ExceptionType) = {
   let pmpError : option(ExceptionType) = pmpCheck(paddr, width, access, priv);
-  let pmaError : option(ExceptionType) = pmaCheck(paddr, width, access, res_or_con);
+  let pmaError : option(ExceptionType) = pmaCheck(paddr, width, access, pbmt, res_or_con);
   match (pmpError, pmaError) {
     (None(), None())     => None(),
     (Some(e), None())    => Some(e),
@@ -197,6 +200,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
+  pbmt : page_based_mem_type,
   priv : Privilege,
   paddr : physaddr,
   width : int('n),
@@ -205,7 +209,7 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   res: bool,
   meta : bool,
 ) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  match phys_access_check(access, priv, paddr, width, res) {
+  match phys_access_check(access, pbmt, priv, paddr, width, res) {
     Some(e) => Err(e),
     None() => {
       if   within_mmio_readable(paddr, width)
@@ -219,20 +223,20 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
 
 // Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
-val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
-val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), Privilege, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
-val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
-val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), Privilege, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
+val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, Privilege, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
+val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, Privilege, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
 
 // The most generic memory read operation
-function mem_read_priv_meta (access, priv, paddr, width, aq, rl, res, meta) = {
+function mem_read_priv_meta (access, pbmt, priv, paddr, width, aq, rl, res, meta) = {
   let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
     if (aq | res) & not(is_aligned_addr(paddr, width))
     then Err(E_Load_Addr_Align())
     else match (aq, rl, res) {
       (false, true,  false) => throw(Error_not_implemented("load.rl")),
       (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-      (_, _, _)             => checked_mem_read(access, priv, paddr, width, aq, rl, res, meta)
+      (_, _, _)             => checked_mem_read(access, pbmt, priv, paddr, width, aq, rl, res, meta)
     };
   match result {
     Ok(value, _) => mem_read_callback(to_str(access), bits_of(paddr), width, value),
@@ -241,16 +245,16 @@ function mem_read_priv_meta (access, priv, paddr, width, aq, rl, res, meta) = {
   result
 }
 
-function mem_read_meta (access, paddr, width, aq, rl, res, meta) =
-  mem_read_priv_meta(access, effectivePrivilege(access, mstatus, cur_privilege), paddr, width, aq, rl, res, meta)
+function mem_read_meta (access, pbmt, paddr, width, aq, rl, res, meta) =
+  mem_read_priv_meta(access, pbmt, effectivePrivilege(access, mstatus, cur_privilege), paddr, width, aq, rl, res, meta)
 
 // Specialized mem_read_meta that drops the metadata
-function mem_read_priv (access, priv, paddr, width, aq, rl, res) =
-  MemoryOpResult_drop_meta(mem_read_priv_meta(access, priv, paddr, width, aq, rl, res, false))
+function mem_read_priv (access, pbmt, priv, paddr, width, aq, rl, res) =
+  MemoryOpResult_drop_meta(mem_read_priv_meta(access, pbmt, priv, paddr, width, aq, rl, res, false))
 
 // Specialized mem_read_priv that operates at the default effective privilege
-function mem_read (access, paddr, width, aq, rel, res) =
-  mem_read_priv(access, effectivePrivilege(access, mstatus, cur_privilege), paddr, width, aq, rel, res)
+function mem_read (access, pbmt, paddr, width, aq, rel, res) =
+  mem_read_priv(access, pbmt, effectivePrivilege(access, mstatus, cur_privilege), paddr, width, aq, rel, res)
 
 val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bool, bool, bool) -> MemoryOpResult(unit)
 function mem_write_ea (addr, width, aq, rl, con) =
@@ -264,13 +268,14 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   width : int('n),
   data: bits(8 * 'n),
   access : MemoryAccessType(mem_payload),
+  pbmt : page_based_mem_type,
   priv : Privilege,
   meta: mem_meta,
   aq : bool,
   rl : bool,
   con : bool,
 ) -> MemoryOpResult(bool) =
-  match phys_access_check(access, priv, paddr, width, con) {
+  match phys_access_check(access, pbmt, priv, paddr, width, con) {
     Some(e) => Err(e),
     None() => {
       if   within_mmio_writable(paddr, width)
@@ -287,12 +292,12 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
 // Memory write with an explicit metadata value.  Metadata writes are
 // currently assumed to have the same alignment constraints as their
 // data.
-val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_priv_meta (paddr, width, value, access, priv, meta, aq, rl, con) = {
+val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), page_based_mem_type, Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value_priv_meta (paddr, width, value, access, pbmt, priv, meta, aq, rl, con) = {
   if (rl | con) & not(is_aligned_addr(paddr, width))
   then Err(E_SAMO_Addr_Align())
   else {
-    let result = checked_mem_write(paddr, width, value, access, priv, meta, aq, rl, con);
+    let result = checked_mem_write(paddr, width, value, access, pbmt, priv, meta, aq, rl, con);
     match result {
       Ok(_) => mem_write_callback(to_str(access), bits_of(paddr), width, value),
       Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
@@ -302,19 +307,19 @@ function mem_write_value_priv_meta (paddr, width, value, access, priv, meta, aq,
 }
 
 // Memory write with explicit Privilege and MemoryAccessType, and implicit metadata
-val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, MemoryAccessType(mem_payload), bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_priv (paddr, width, value, priv, access, aq, rl, con) =
-  mem_write_value_priv_meta(paddr, width, value, access, priv, default_meta, aq, rl, con)
+val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value_priv (paddr, width, value, priv, access, pbmt, aq, rl, con) =
+  mem_write_value_priv_meta(paddr, width, value, access, pbmt, priv, default_meta, aq, rl, con)
 
 // Memory write with explicit metadata and MemoryAccessType, and implicit Privilege
-val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_meta (paddr, width, value, access, meta, aq, rl, con) = {
+val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), page_based_mem_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value_meta (paddr, width, value, access, pbmt, meta, aq, rl, con) = {
   let ep = effectivePrivilege(access, mstatus, cur_privilege);
-  mem_write_value_priv_meta(paddr, width, value, access, ep, meta, aq, rl, con)
+  mem_write_value_priv_meta(paddr, width, value, access, pbmt, ep, meta, aq, rl, con)
 }
 
 // Memory write with explicit MemoryAccessType, default metadata and implicit Privilege
-val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value (paddr, width, value, access, aq, rl, con) = {
-  mem_write_value_meta(paddr, width, value, access, default_meta, aq, rl, con)
+val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value (paddr, width, value, access, pbmt, aq, rl, con) = {
+  mem_write_value_meta(paddr, width, value, access, pbmt, default_meta, aq, rl, con)
 }

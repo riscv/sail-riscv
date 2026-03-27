@@ -114,6 +114,21 @@ struct PMA = {
   // TODO: Memory Ordering PMA
 }
 
+// A PMA can be overridden by page-based memory types.
+// TODO: specify alignment for IO regions.
+function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
+  match pbmt {
+    PBMT_PMA => pma,
+    // TODO: return a weakly-ordered PMA
+    PBMT_NC  => {pma with cacheable = false,
+                          read_idempotent = true,
+                          write_idempotent = true},
+    // TODO: return a strongly ordered PMA
+    PBMT_IO  => {pma with cacheable = false,
+                          read_idempotent = false,
+                          write_idempotent = false},
+  }
+
 // A region of memory and its Physical Memory Attributes.
 struct PMA_Region = {
   // TODO: These should be physaddrbits, but currently that doesn't work due to a compiler bug:
