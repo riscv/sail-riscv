@@ -69,6 +69,8 @@ public:
   virtual bool valid_reservation(unit);
 
   virtual unit plat_term_write(mach_bits);
+  virtual mach_bits plat_term_read(unit);
+  virtual bool plat_uart_rx_valid(unit);
 
   virtual bool sys_enable_experimental_extensions(unit);
 
@@ -82,6 +84,7 @@ public:
   virtual bool get_config_print_exception(unit);
   virtual bool get_config_print_interrupt(unit);
   virtual bool get_config_print_htif(unit);
+  virtual bool get_config_print_uart(unit);
   virtual bool get_config_print_pma(unit);
   virtual bool get_config_rvfi(unit);
   virtual bool get_config_use_abi_names(unit);
