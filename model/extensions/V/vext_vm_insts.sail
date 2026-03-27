@@ -47,7 +47,7 @@ function clause execute VVMTYPE(funct6, vs2, vs1, vd) = {
 
   let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, LMUL_pow, vd_val) {
     Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
+    Err(()) => return Illegal_Instruction(),
   };
   var result = initial_result;
 
