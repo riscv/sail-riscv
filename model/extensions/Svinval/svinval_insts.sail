@@ -15,7 +15,7 @@ mapping clause encdec = SINVAL_VMA(rs1, rs2)
   when currentlyEnabled(Ext_Svinval)
 
 function clause execute SINVAL_VMA(rs1, rs2) = {
-  execute(SFENCE_VMA(rs1, rs2))
+  ExecuteAs(SFENCE_VMA(rs1, rs2))
 }
 
 mapping clause assembly = SINVAL_VMA(rs1, rs2)

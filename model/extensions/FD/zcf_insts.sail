@@ -16,7 +16,7 @@ mapping clause encdec_compressed = C_FLWSP(uimm, rd)
 
 function clause execute C_FLWSP(imm, rd) = {
   let imm : bits(12) = zero_extend(imm @ 0b00);
-  execute(LOAD_FP(imm, sp, rd, 4))
+  ExecuteAs(LOAD_FP(imm, sp, rd, 4))
 }
 
 mapping clause assembly = C_FLWSP(imm, rd)
@@ -32,7 +32,7 @@ mapping clause encdec_compressed = C_FSWSP(uimm, rs2)
 
 function clause execute C_FSWSP(uimm, rs2) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
-  execute(STORE_FP(imm, rs2, sp, 4))
+  ExecuteAs(STORE_FP(imm, rs2, sp, 4))
 }
 
 mapping clause assembly = C_FSWSP(uimm, rs2)
@@ -50,7 +50,7 @@ function clause execute C_FLW(uimm, rsc, rdc) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
   let rd = cfregidx_to_fregidx(rdc);
   let rs = creg2reg_idx(rsc);
-  execute(LOAD_FP(imm, rs, rd, 4))
+  ExecuteAs(LOAD_FP(imm, rs, rd, 4))
 }
 
 mapping clause assembly = C_FLW(uimm, rsc, rdc)
@@ -68,7 +68,7 @@ function clause execute C_FSW(uimm, rsc1, rsc2) = {
   let imm : bits(12) = zero_extend(uimm @ 0b00);
   let rs1 = creg2reg_idx(rsc1);
   let rs2 = cfregidx_to_fregidx(rsc2);
-  execute(STORE_FP(imm, rs2, rs1, 4))
+  ExecuteAs(STORE_FP(imm, rs2, rs1, 4))
 }
 
 mapping clause assembly = C_FSW(uimm, rsc1, rsc2)
