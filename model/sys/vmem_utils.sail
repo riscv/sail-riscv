@@ -117,10 +117,10 @@ function misaligned_order(n) = {
 // External API
 
 val vmem_read_addr : forall 'width, is_mem_width('width).
-  (virtaddr, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
+  (virtaddr, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
-function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
+function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
@@ -263,7 +263,7 @@ function vmem_read(rs, offset, width, access, aq, rl, res) = {
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_read_addr(vaddr, offset, width, access, aq, rl, res)
+  vmem_read_addr(vaddr, width, access, aq, rl, res)
 }
 
 val vmem_write : forall 'width, is_mem_width('width).

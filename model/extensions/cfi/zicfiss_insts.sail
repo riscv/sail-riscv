@@ -85,7 +85,7 @@ function clause execute SSPOPCHK(rs1) = {
   if not(is_aligned_addr(ssp_addr, width))
   then return Memory_Exception(ssp_addr, E_SAMO_Access_Fault());
 
-  match vmem_read_addr(ssp_addr, zeros(), width, Load(ShadowStack), false, false, false) {
+  match vmem_read_addr(ssp_addr, width, Load(ShadowStack), false, false, false) {
     Ok(data) => {
       if X(rs1) != data then {
         Trap(cur_privilege, CTL_TRAP(make_shadow_stack_exception()), PC)
