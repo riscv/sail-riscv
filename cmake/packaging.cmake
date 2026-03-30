@@ -66,7 +66,7 @@ if (NOT CPACK_GENERATOR)
     endif()
 endif()
 
-if (DARWIN)
+if (APPLE)
     # ${CMAKE_SYSTEM_NAME} is unfortunately "Darwin", but we want "Mac".
     set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-Mac-${CMAKE_HOST_SYSTEM_PROCESSOR}")
 else()
