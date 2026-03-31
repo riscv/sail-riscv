@@ -30,3 +30,5 @@ end write_CSR
 // CSRs that deviate from this rule have explicit clauses defined.
 function clause is_CSR_exception_virtual(csr, _, access_type) = check_CSR(csr, Supervisor, access_type) == CSR_Check_OK()
 end is_CSR_exception_virtual
+
+termination_measure is_CSR_exception_virtual(_, _, _) = 1

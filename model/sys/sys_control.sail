@@ -63,6 +63,8 @@ function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> C
     CSR_Illegal()
 }
 
+termination_measure check_CSR(_, p, _) = if p == VirtualSupervisor | p == VirtualUser then 2 else 0
+
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {

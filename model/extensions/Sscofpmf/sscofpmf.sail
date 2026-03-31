@@ -78,7 +78,7 @@ private function get_scountovf(priv : Privilege) -> bits(32) = {
 }
 
 // scountovf
-function clause is_CSR_accessible(0xDA0, p, _) =
+function clause is_CSR_accessible(0xDA0, _, _) =
   currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S)
 // TODO: when Smcdeleg/Ssccfg is implemented, extend to:
 //   & not(p == VirtualSupervisor & currentlyEnabled(Ext_Smcdeleg)
