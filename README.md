@@ -117,7 +117,7 @@ used. This option allows one or more additional JSON configuration files to be s
 whose fields take precedence over those in the base configuration.
 
 Information on other options for the simulator is available from
-`build/c_emulator/sail_riscv_sim -h`.
+`sail_riscv_sim -h`.
 
 ### Booting OS images
 
