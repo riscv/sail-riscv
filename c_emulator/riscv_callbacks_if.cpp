@@ -122,3 +122,17 @@ void callbacks_if::ptw_fail_callback(
   [[maybe_unused]] sbits pte_addr
 ) {
 }
+
+void callbacks_if::tlb_add_callback(
+  [[maybe_unused]] hart::Model &model,
+  [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  [[maybe_unused]] int64_t index
+) {
+}
+
+void callbacks_if::tlb_flush_callback(
+  [[maybe_unused]] hart::Model &model,
+  [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  [[maybe_unused]] int64_t index
+) {
+}

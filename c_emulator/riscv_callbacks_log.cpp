@@ -9,6 +9,7 @@ log_callbacks::log_callbacks(
   bool config_print_csr,
   bool config_print_mem_access,
   bool config_print_ptw,
+  bool config_print_tlb,
   bool config_use_abi_names,
   FILE *trace_log
 ) :
@@ -19,6 +20,7 @@ log_callbacks::log_callbacks(
     config_print_mem_access(config_print_mem_access),
     config_use_abi_names(config_use_abi_names),
     config_print_ptw(config_print_ptw),
+    config_print_tlb(config_print_tlb),
     trace_log(trace_log) {
 }
 
@@ -162,5 +164,84 @@ void log_callbacks::ptw_fail_callback(
       pte_addr.bits
     );
     KILL(sail_string)(&str_et);
+  }
+}
+
+static void print_tlb(
+  FILE *trace_log,
+  hart::Model &model,
+  hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  int64_t index,
+  bool is_flush
+) {
+  fprintf(
+    trace_log,
+    "TLB %s [ len=%zu ]\n"
+    "╔═════╦════╦══════════╦══════════════════════╦══════════════════════╦══════════════════════╦══════════════════════"
+    "╦══════════════════════"
+    "╗\n"
+    "║ IDX ║ GL ║   ASID   ║         VPN          ║         PTE          ║     LEVEL_MASK       ║         PPN          "
+    "║       PTE_ADDR       "
+    "║\n"
+    "╠═════╬════╬══════════╬══════════════════════╬══════════════════════╬══════════════════════╬══════════════════════"
+    "╬══════════════════════"
+    "╣\n",
+    is_flush ? "flush" : "add",
+    tlb.len
+  );
+  for (size_t i = 0; i < tlb.len; i++) {
+    const auto &entry = tlb.data[i];
+    if (entry.kind == hart::Kind_zSomezIRTLB_EntryzK) {
+      const auto &e = entry.variants.zSomezIRTLB_EntryzK;
+      fprintf(
+        trace_log,
+        "║ %3zu ║  %c ║ 0x%06" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64
+        " ║ 0x%018" PRIX64 " ║%s\n",
+        i,
+        e.zglobal ? 'Y' : 'N',
+        e.zasid.bits,
+        e.zvpn,
+        e.zpte,
+        e.zlevelMask,
+        e.zppn,
+        e.zpteAddr.bits,
+        (static_cast<int64_t>(i) == index) ? "  <- + added" : ""
+      );
+    } else {
+      fprintf(
+        trace_log,
+        "║ %3zu ║  - ║   ----   ║         ----         ║         ----         ║         ----         ║         ----    "
+        "     ║         ----    "
+        "     ║%s\n",
+        i,
+        (static_cast<int64_t>(i) == index) ? "  <- x flushed" : ""
+      );
+    }
+  }
+  fprintf(
+    trace_log,
+    "╚═════╩════╩══════════╩══════════════════════╩══════════════════════╩══════════════════════╩══════════════════════"
+    "╩══════════════════════"
+    "╝\n"
+  );
+}
+
+void log_callbacks::tlb_flush_callback(
+  hart::Model &model,
+  hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  int64_t index
+) {
+  if (trace_log != nullptr && config_print_tlb) {
+    print_tlb(trace_log, model, tlb, index, true);
+  }
+}
+
+void log_callbacks::tlb_add_callback(
+  hart::Model &model,
+  hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  int64_t index
+) {
+  if (trace_log != nullptr && config_print_tlb) {
+    print_tlb(trace_log, model, tlb, index, false);
   }
 }

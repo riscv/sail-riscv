@@ -81,6 +81,12 @@ type tlb_index_range = range(0, num_tlb_entries - 1)
 
 private register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
+val tlb_flush_callback = pure {cpp: "tlb_flush_callback"} : (vector(num_tlb_entries, option(TLB_Entry)), range(0, num_tlb_entries)) -> unit
+function tlb_flush_callback(_) = ()
+
+val tlb_add_callback = pure {cpp: "tlb_add_callback"} : (vector(num_tlb_entries, option(TLB_Entry)), range(0, num_tlb_entries)) -> unit
+function tlb_add_callback(_) = ()
+
 // Indexed by the lowest bits of the VPN.
 function tlb_hash forall 'v, is_sv_mode('v) . (
   _sv_mode : int('v),
@@ -166,6 +172,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
                                  ppn       = zero_extend(ppn)};
 
   tlb[index] = Some(entry);
+  tlb_add_callback(tlb, index);
 }
 
 // Top-level TLB flush function
@@ -175,7 +182,7 @@ function flush_TLB(asid : option(asidbits),
   foreach (i from 0 to (length(tlb) - 1)) {
     match tlb[i] {
       None()  => (),
-      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then { tlb[i] = None(); },
+      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then { tlb[i] = None(); tlb_flush_callback(tlb, i)},
     }
   }
 }

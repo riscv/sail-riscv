@@ -157,6 +157,7 @@ struct CLIOptions {
   bool config_print_rvfi = false;
   bool config_print_step = false;
   bool config_print_ptw = false;
+  bool config_print_tlb = false;
 
   bool config_use_abi_names = false;
 
@@ -218,6 +219,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
 
   app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
   app.add_flag("--trace-ptw", opts.config_print_ptw, "Enable trace output for Page Table walk");
+  app.add_flag("--trace-tlb", opts.config_print_tlb, "Enable trace output for TLB adds and flushes");
   app.add_flag(
     "--trace-gpr",
     opts.config_print_gpr,
@@ -288,6 +290,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
       opts.config_print_pma = true;
       opts.config_print_step = true;
       opts.config_print_ptw = true;
+      opts.config_print_tlb = true;
     },
     "Enable all trace output"
   );
@@ -766,6 +769,7 @@ int inner_main(int argc, char **argv) {
     opts.config_print_csr,
     opts.config_print_mem_access,
     opts.config_print_ptw,
+    opts.config_print_tlb,
     opts.config_use_abi_names,
     trace_log
   );
