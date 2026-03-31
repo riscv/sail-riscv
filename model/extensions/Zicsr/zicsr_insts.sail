@@ -41,7 +41,7 @@ function csr_access_type(op : csrop, rd_is_x0 : bool, rs1_imm_is_zero : bool) ->
   }
 
 function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_type : CSRAccessType) -> ExecutionResult = {
-  match check_CSR(csr, cur_privilege, access_type) {
+  match check_CSR_result(csr, cur_privilege, access_type) {
     CSR_Illegal()  => Illegal_Instruction(),
     CSR_Virtual()  => Virtual_Instruction(),
     CSR_Check_OK() => {

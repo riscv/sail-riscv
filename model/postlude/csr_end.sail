@@ -28,7 +28,5 @@ end write_CSR
 // If an access fails in VS/VU mode but would succeed in HS mode, raise a
 // virtual instruction exception instead of an illegal instruction exception.
 // CSRs that deviate from this rule have explicit clauses defined.
-function clause is_CSR_exception_virtual(csr, _, access_type) = check_CSR(csr, Supervisor, access_type) == CSR_Check_OK()
+function clause is_CSR_exception_virtual(csr, _, access_type) = check_CSR(csr, Supervisor, access_type)
 end is_CSR_exception_virtual
-
-termination_measure is_CSR_exception_virtual(_, _, _) = 1
