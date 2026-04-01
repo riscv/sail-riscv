@@ -39,6 +39,13 @@
 
 - A Mac ARM binary release is now available.
 
+- Performance improvements:
+  - https://github.com/riscv/sail-riscv/pull/1643 : Superpage TLB entries
+    were inserted at the wrong index, causing a full page table walk on every
+    access within a superpage. This has been fixed, with significant performance
+    improvements for superpage-heavy workloads (e.g. Linux boot time reduced
+    by ~71%).
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in the execution trace
   - https://github.com/riscv/sail-riscv/issues/1560 : Updates to `mip` were not captured in the trace file
