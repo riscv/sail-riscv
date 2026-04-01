@@ -60,11 +60,12 @@ private:
   unit ptw_start_callback(
     uint64_t vpn,
     hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege,
+    bool is_pure_lookup
   ) override;
-  unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte) override;
-  unit ptw_success_callback(uint64_t final_ppn, int64_t level) override;
-  unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr) override;
+  unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte, bool is_pure_lookup) override;
+  unit ptw_success_callback(uint64_t final_ppn, int64_t level, bool is_pure_lookup) override;
+  unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr, bool is_pure_lookup) override;
   // Provides entropy for the scalar cryptography extension.
   mach_bits plat_get_16_random_bits(unit) override;
 
