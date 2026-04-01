@@ -81,7 +81,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
 
-  if not(is_aligned_addr(vaddr, width))
+  if not(allowed_misaligned(bits_of(vaddr), width, plat_mag_size_exp))
   then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
 
   let addr : physaddr = match translateAddr(vaddr, access) {
