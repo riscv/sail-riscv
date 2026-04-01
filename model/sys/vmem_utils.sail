@@ -73,10 +73,10 @@ private function prop_access_within_single(addr : bits(32)) -> bool = {
   access_within(addr, 1, 0)
 }
 
-private val allowed_misaligned : forall 'width, 'width > 0. (xlenbits, int('width)) -> bool
+private val allowed_misaligned : forall 'width, 'width > 0. (xlenbits, int('width), range(0, 12)) -> bool
 
-function allowed_misaligned(vaddr, width) = {
-  let region_width_exp = sys_misaligned_allowed_within_exp;
+function allowed_misaligned(vaddr, width, allowed_within_exp) = {
+  let region_width_exp = allowed_within_exp;
   let region_width = 2 ^ region_width_exp;
 
   if width > region_width then return false;
@@ -85,11 +85,11 @@ function allowed_misaligned(vaddr, width) = {
 }
 
 private val split_misaligned : forall 'width, 'width > 0.
-  (virtaddr, int('width)) -> {'n 'bytes, 'width == 'n * 'bytes & 'bytes > 0. (int('n), int('bytes))}
+  (virtaddr, int('width), range(0, 12)) -> {'n 'bytes, 'width == 'n * 'bytes & 'bytes > 0. (int('n), int('bytes))}
 
-function split_misaligned(vaddr, width) = {
+function split_misaligned(vaddr, width, allowed_within_exp) = {
   let vaddr_bits = bits_of(vaddr);
-  if is_aligned_addr(vaddr, width) | allowed_misaligned(vaddr_bits, width) then (1, width)
+  if is_aligned_addr(vaddr, width) | allowed_misaligned(vaddr_bits, width, allowed_within_exp) then (1, width)
   else if sys_misaligned_byte_by_byte then (width, 1)
   else {
     let bytes_per_access = 2 ^ count_trailing_zeros(vaddr_bits);
@@ -139,7 +139,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // If the load is misaligned or an allowed misaligned access, split into `n`
   // (single-copy-atomic) memory operations, each of `bytes` width. If the load is
   // aligned, then `n` = 1 and bytes will remain unchanged.
-  let ('n, 'bytes) = split_misaligned(vaddr, width);
+  let ('n, 'bytes) = split_misaligned(vaddr, width, sys_misaligned_allowed_within_exp);
   var data = zeros(8 * n * bytes);
 
   let (first, last, step) = misaligned_order(n);
@@ -192,7 +192,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   // If the store is misaligned or an allowed misaligned access, split into `n`
   // (single-copy-atomic) memory operations, each of `bytes` width. If the store is
   // aligned, then `n` = 1 and bytes will remain unchanged.
-  let ('n, 'bytes) = split_misaligned(vaddr, width);
+  let ('n, 'bytes) = split_misaligned(vaddr, width, sys_misaligned_allowed_within_exp);
 
   let (first, last, step) = misaligned_order(n);
   var i : range(0, 'n - 1) = first;
