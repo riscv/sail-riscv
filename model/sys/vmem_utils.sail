@@ -124,11 +124,28 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
-    // LR/SC must always be aligned. Returning a misaligned exception indicates
-    // that the access can be emulated (the OS/firmware can transparently break
-    // it down into multiple aligned accesses) which isn't the case for LR/SC
-    // in normal implementations.
-    if res then return Err(Memory_Exception(vaddr, E_Load_Access_Fault()));
+    if res then {
+      // LR/SC must always be aligned. Returning a misaligned exception indicates
+      // that the access can be emulated (the OS/firmware can transparently break
+      // it down into multiple aligned accesses).  To do this, the access
+      // must otherwise be able to complete (except for the misalignment).
+      if not(plat_enable_misaligned_access & plat_software_emulates_misaligned_lrsc)
+      then return Err(Memory_Exception(vaddr, E_Load_Access_Fault()));
+      match translateAddr(vaddr, access) {
+        Ok(paddr, pbmt, _) => {
+          let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
+          match phys_access_check(access, pbmt, effPriv, paddr, width, true) {
+            None()  => {
+              // Software should be able to emulate it.
+              return Err(Memory_Exception(vaddr, E_Load_Addr_Align()))
+            },
+            Some(_) => (),
+          }
+        },
+        Err(_) => (),
+      };
+      return Err(Memory_Exception(vaddr, E_Load_Access_Fault()));
+    };
     // This models CPUs that don't support any misaligned access at all.
     // Even if the CPU does support misaligned accesses, it might be that the PMA doesn't support
     // misaligned accesses so you can still get a fault later, but this will
@@ -186,7 +203,21 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
-    if res then return Err(Memory_Exception(vaddr, E_SAMO_Access_Fault()));
+    if res then {
+      if not(plat_enable_misaligned_access & plat_software_emulates_misaligned_lrsc)
+      then return Err(Memory_Exception(vaddr, E_SAMO_Access_Fault()));
+      match translateAddr(vaddr, access) {
+        Ok(paddr, pbmt, _) => {
+          let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
+          match phys_access_check(access, pbmt, effPriv, paddr, width, true) {
+            None()  => return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align())),
+            Some(_) => (),
+          }
+        },
+        Err(_) => (),
+      };
+      return Err(Memory_Exception(vaddr, E_SAMO_Access_Fault()));
+    };
     if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
   };
 
