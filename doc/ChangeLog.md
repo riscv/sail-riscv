@@ -15,6 +15,19 @@
     using the Svadu and Svade extensions. When neither of these extensions
     are configured as supported, the model defaults to a hardware update of
     the PTE.
+  - Two options to control the handling of misaligned atomics have
+    been added: `memory.misaligned.software_emulates_lrsc` and
+    `memory.misaligned.software_emulates_atomics`. If these are set to
+    `true`, misaligned LR/SC and misaligned atomics will respectively
+    generate the corresponding misaligned access exceptions if the
+    access is otherwise able to complete except for the
+    misalignment. The defaults for both options are set to `false`,
+    which causes access faults to be generated for such
+    accesses. These defaults change the previous behavior of the model
+    which generated misaligned access exceptions. These options can be
+    set to `true` to approximate the previous behavior. Note that even
+    when these options are set to `true`, misaligned access can still generate
+    access faults if they cannot complete.
 
 - The following extensions have been added:
   - Ziccamoa

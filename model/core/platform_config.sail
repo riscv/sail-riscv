@@ -26,8 +26,17 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
 let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_set_size_exp
 
-// whether the platform supports misaligned accesses without trapping to M-mode. if false,
-// misaligned loads/stores are trapped to Machine mode.
+// Whether software can emulate misaligned LR/SC accesses. If true, these accesses
+// generate misaligned exceptions if the accesses can complete. If false or the accesses
+// cannot complete, these accesses generate access faults.
+let plat_software_emulates_misaligned_lrsc : bool = config memory.misaligned.software_emulates_lrsc
+
+// Whether software can emulate misaligned AMO accesses. If true, these accesses
+// generate misaligned exceptions if the accesses can complete. If false or the accesses
+// cannot complete, these accesses generate access faults.
+let plat_software_emulates_misaligned_atomics : bool = config memory.misaligned.software_emulates_atomics
+
+// Whether the platform supports misaligned accesses without trapping.
 let plat_enable_misaligned_access : bool = config memory.misaligned.supported
 
 // Location of clock-interface, which should match with the spec in the DTB
