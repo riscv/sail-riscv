@@ -31,15 +31,17 @@ public:
     hart::Model &model,
     uint64_t vpn,
     hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege,
+    bool is_pure_lookup
   ) override;
-  void ptw_step_callback(hart::Model &model, int64_t level, sbits pte_addr, uint64_t pte) override;
-  void ptw_success_callback(hart::Model &model, uint64_t final_ppn, int64_t level) override;
+  void ptw_step_callback(hart::Model &model, int64_t level, sbits pte_addr, uint64_t pte, bool is_pure_lookup) override;
+  void ptw_success_callback(hart::Model &model, uint64_t final_ppn, int64_t level, bool is_pure_lookup) override;
   void ptw_fail_callback(
     hart::Model &model,
     struct hart::zPTW_Error error_type,
     int64_t level,
-    sbits pte_addr
+    sbits pte_addr,
+    bool is_pure_lookup
   ) override;
   void tlb_add_callback(
     hart::Model &model,
