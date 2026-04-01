@@ -152,7 +152,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           };
 
           if get_config_print_pma() & not(canAccess)
-          then print_log("PMA check failed for " ^ hex_bits_str(bits_of(paddr)) ^ " PMA " ^ to_str(attributes));
+          then print_log("PMA check failed for a " ^ dec_str(width) ^ "-byte wide " ^ to_str(access) ^ " access to address " ^ hex_bits_str(bits_of(paddr)) ^ " with PMA {" ^ to_str(attributes) ^ "}");
 
           if canAccess then None() else Some(accessFaultFromAccessType(access))
         },

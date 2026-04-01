@@ -58,9 +58,9 @@ function pma_allows_atomic_op forall 'n, 0 < 'n <= max_mem_access . (pma : Atomi
     AMOSwap       => op == AMOSWAP,
     AMOLogical    => op == AMOSWAP | op == AMOAND | op == AMOOR | op == AMOXOR,
     AMOArithmetic => op != AMOCAS,
-    AMOCASW       => op != AMOCAS | width == 4,
-    AMOCASD       => op != AMOCAS | width == 4 | width == 8,
-    AMOCASQ       => op != AMOCAS | width == 4 | width == 8 | width == 16,
+    AMOCASW       => op != AMOCAS | width <= 4,
+    AMOCASD       => op != AMOCAS | width <= 8,
+    AMOCASQ       => op != AMOCAS | width <= 16,
   }
 
 enum Reservability = { RsrvNone, RsrvNonEventual, RsrvEventual }
@@ -158,7 +158,8 @@ function pma_attributes_to_str(attr : PMA) -> string =
   " " ^ to_str(attr.reservability) ^
   (if attr.supports_cbo_zero then " supports-cbo-zero" else "") ^
   (if attr.supports_pte_read then " supports-pte-read" else "") ^
-  (if attr.supports_pte_write then " supports-pte-write" else "")
+  (if attr.supports_pte_write then " supports-pte-write" else "") ^
+  " "
 
 function pma_region_to_str(region : PMA_Region) -> string =
   "base: " ^ bits_str(region.base) ^ " size: " ^ bits_str(region.size)
