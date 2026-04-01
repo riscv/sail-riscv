@@ -29,7 +29,6 @@ private struct TLB_Entry = {
   ppn        : bits(tlb_ppn_bits), // Physical Page Number, 22 (Sv32), or 44 (Sv39+) bits.
   pte        : bits(64),           // PTE. This is only 32 bits for Sv32 so we zero extend.
   pteAddr    : physaddr,           // Physical address of PTE, for writing dirty/accessed bits.
-  pbmt       : page_based_mem_type,// Memory type override for the PMA containing the physical address
 }
 
 // PTE access functions, for reading flags, and for modifying the dirty and
@@ -64,8 +63,14 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
   trunc(ppn | (vpn & levelMask))
 }
 
-function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type =
-  ent.pbmt
+function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type = {
+  // For RV32, this relies on the RV32 PTE being zero-extended
+  // and the default PBMT_PMA being encoded as zeros.  This is slower
+  // than storing the PBMT enum directly as a field, but less
+  // redundant.
+  let pte_ext = ext_bits_of_PTE(ent.pte);
+  page_based_mem_type(pte_ext[PBMT])
+}
 
 // 64 entries is based on benchmarks of Linux boots and is where
 // you stop seeing performance improvements.
@@ -159,8 +164,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
                                  pteAddr   = pteAddr,
                                  levelMask = zero_extend(levelMask),
                                  vpn       = sign_extend(vpn),
-                                 ppn       = zero_extend(ppn),
-                                 pbmt      = pbmt};
+                                 ppn       = zero_extend(ppn)};
 
   tlb[index] = Some(entry);
 }
