@@ -94,6 +94,7 @@ private val pt_walk : forall 'v, is_sv_mode('v) . (
   ppn_bits('v),                 // Base PPN (`a` in the spec).
   level_range('v),              // Tree level for this recursive call (`i` in the spec).
   bool,                         // global translation,
+  bool,                         // do a pure lookup without side-effects
   ext_ptw                       // ext_ptw
 ) -> PTW_Result('v)
 
@@ -108,9 +109,10 @@ function pt_walk(
   pt_base,
   level,
   global,
+  do_pure_lookup,
   ext_ptw,
 ) = {
-  ptw_start_callback(zero_extend(vpn), access, (priv, ()));
+  ptw_start_callback(zero_extend(vpn), access, (priv, ()), do_pure_lookup);
 
   // Extract the PPN component for this level; 10 bits on Sv32, otherwise 9.
   let 'vpn_i_size = if 'v == 32 then 10 else 9;
@@ -131,18 +133,18 @@ function pt_walk(
   // Read this-level PTE from mem (Step 2 of VATP)
   match read_pte(pte_addr, 2 ^ log_pte_size_bytes) {
     Err(_)  => {
-      ptw_fail_callback(PTW_No_Access(), level, bits_of(pte_addr));
+      ptw_fail_callback(PTW_No_Access(), level, bits_of(pte_addr), do_pure_lookup);
       Err(PTW_No_Access(), ext_ptw)
     },
     Ok(pte) => {
-      ptw_step_callback(level, bits_of(pte_addr), zero_extend(pte));
+      ptw_step_callback(level, bits_of(pte_addr), zero_extend(pte), do_pure_lookup);
 
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
       let pte_ext   = ext_bits_of_PTE(pte);
 
       if pte_is_invalid(pte_flags, pte_ext) then {
         // Step 3 of VATP.
-        ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
+        ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr), do_pure_lookup);
         Err(PTW_Invalid_PTE(), ext_ptw)
       }
       else {
@@ -153,10 +155,10 @@ function pt_walk(
           // Non-Leaf PTE
           if level > 0 then
             // follow the pointer to walk next level (i.e., go to Step 2)
-            pt_walk(sv_width, vpn, access, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
+            pt_walk(sv_width, vpn, access, priv, mxr, do_sum, ppn, level - 1, global, do_pure_lookup, ext_ptw)
           else {
             // level 0 PTE, but contains a pointer instead of a leaf
-            ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
+            ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr), do_pure_lookup);
             Err(PTW_Invalid_PTE(), ext_ptw)
           }
         } else {
@@ -167,14 +169,14 @@ function pt_walk(
             let low_bits = ppn_size_bits * level;
             if   ppn[low_bits - 1 .. 0] != zeros()
             then {
-              ptw_fail_callback(PTW_Misaligned(), level, bits_of(pte_addr));
+              ptw_fail_callback(PTW_Misaligned(), level, bits_of(pte_addr), do_pure_lookup);
               return Err(PTW_Misaligned(), ext_ptw);
             };
           };
           // Steps 6, 7 and 8 of VATP.
           match check_PTE_permission(access, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, pte_failure) => {
-              ptw_fail_callback(ext_get_ptw_error(pte_failure), level, bits_of(pte_addr));
+              ptw_fail_callback(ext_get_ptw_error(pte_failure), level, bits_of(pte_addr), do_pure_lookup);
               Err(ext_get_ptw_error(pte_failure), ext_ptw)
             },
             PTE_Check_Success(ext_ptw) => {
@@ -199,7 +201,7 @@ function pt_walk(
 
               let pbmt = if menvcfg[PBMTE] == 0b0 then PBMT_PMA else page_based_mem_type(pte_ext[PBMT]);
 
-              ptw_success_callback(zero_extend(ppn), level);
+              ptw_success_callback(zero_extend(ppn), level, do_pure_lookup);
 
               Ok(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, pbmt=pbmt, global=global}, ext_ptw)
             }
@@ -210,7 +212,7 @@ function pt_walk(
   }
 }
 
-termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
+termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _, _) = level
 
 // ****************************************************************
 // Architectural SATP CSR
@@ -266,16 +268,17 @@ type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, page_based_mem_
 // part of RISC-V architecture spec (see TLB NOTE above).
 // Translate on TLB hit, and maintenance of PTE in TLB
 private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
-  sv_width  : int('v),
-  _asid     : asidbits,
-  vpn       : vpn_bits('v),
-  access    : MemoryAccessType(mem_payload),
-  priv      : Privilege,
-  mxr       : bool,
-  do_sum    : bool,
-  ext_ptw   : ext_ptw,
-  tlb_index : tlb_index_range,
-  ent       : TLB_Entry,
+  sv_width       : int('v),
+  _asid          : asidbits,
+  vpn            : vpn_bits('v),
+  access         : MemoryAccessType(mem_payload),
+  priv           : Privilege,
+  mxr            : bool,
+  do_sum         : bool,
+  do_pure_lookup : bool,
+  ext_ptw        : ext_ptw,
+  tlb_index      : tlb_index_range,
+  ent            : TLB_Entry,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
 
   let pte_size  = if sv_width == 32 then 4 else 8;
@@ -288,7 +291,9 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   match pte_check {
     PTE_Check_Failure(ext_ptw, pte_failure) =>
       Err(ext_get_ptw_error(pte_failure), ext_ptw),
-    PTE_Check_Success(ext_ptw) =>
+    PTE_Check_Success(ext_ptw) => {
+      if do_pure_lookup then return Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw);
+
       // Step 9 of VATP.
       match update_and_write_pte(ent.pteAddr, pte_size, pte, access) {
         Ok(Some(pte)) => {
@@ -302,31 +307,35 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
           let paddr : bits(64) = zero_extend(bits_of(ent.pteAddr));
           internal_error(__FILE__, __LINE__, "error writing TLB PTE to physical address " ^ bits_str(paddr) ^ ": " ^ to_str(e))
         },
-      },
+      }
+    },
   }
 }
 
 // Translate on TLB miss (do a page-table walk)
 private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
-  sv_width : int('v),
-  asid     : asidbits,
-  base_ppn : ppn_bits('v),
-  vpn      : vpn_bits('v),
-  access   : MemoryAccessType(mem_payload),
-  priv     : Privilege,
-  mxr      : bool,
-  do_sum   : bool,
-  ext_ptw  : ext_ptw,
+  sv_width       : int('v),
+  asid           : asidbits,
+  base_ppn       : ppn_bits('v),
+  vpn            : vpn_bits('v),
+  access         : MemoryAccessType(mem_payload),
+  priv           : Privilege,
+  mxr            : bool,
+  do_sum         : bool,
+  do_pure_lookup : bool,
+  ext_ptw        : ext_ptw,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
   let initial_level = if 'v == 32 then 1 else (if 'v == 39 then 2 else (if 'v == 48 then 3 else 4));
 
   // Step 2 of VATP occurs in pt_walk().
   let 'pte_size = if sv_width == 32 then 4 else 8;
   let ptw_result = pt_walk(sv_width, vpn, access, priv, mxr, do_sum,
-                           base_ppn, initial_level, false, ext_ptw);
+                           base_ppn, initial_level, false, do_pure_lookup, ext_ptw);
   match ptw_result {
     Err(f, ext_ptw) => Err(f, ext_ptw),
     Ok(struct {ppn, pte, pteAddr, level, pbmt, global}, ext_ptw) => {
+      if do_pure_lookup then return Ok(ppn, pbmt, ext_ptw);
+
       let ext_pte = ext_bits_of_PTE(pte);
 
       // Step 9 of VATP.
@@ -358,23 +367,24 @@ mapping satp_mode_width : SATPMode <-> {32, 39, 48, 57} = {
 }
 
 private function translate forall 'v, is_sv_mode('v) . (
-  sv_width : int('v),
-  asid     : asidbits,
-  base_ppn : ppn_bits('v),
-  vpn      : vpn_bits('v),
-  access   : MemoryAccessType(mem_payload),
-  priv     : Privilege,
-  mxr      : bool,
-  do_sum   : bool,
-  ext_ptw  : ext_ptw,
+  sv_width       : int('v),
+  asid           : asidbits,
+  base_ppn       : ppn_bits('v),
+  vpn            : vpn_bits('v),
+  access         : MemoryAccessType(mem_payload),
+  priv           : Privilege,
+  mxr            : bool,
+  do_sum         : bool,
+  do_pure_lookup : bool,
+  ext_ptw        : ext_ptw,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB NOTE above)
   match lookup_TLB(sv_width, asid, vpn) {
     Some(index, ent) => translate_TLB_hit(sv_width, asid, vpn, access, priv,
-                                          mxr, do_sum, ext_ptw, index, ent),
+                                          mxr, do_sum, do_pure_lookup, ext_ptw, index, ent),
     None()           => translate_TLB_miss(sv_width, asid, base_ppn, vpn, access, priv,
-                                           mxr, do_sum, ext_ptw),
+                                           mxr, do_sum, do_pure_lookup, ext_ptw),
   }
 }
 
@@ -389,12 +399,13 @@ private function get_satp forall 'v, is_sv_mode('v). (
   if sv_width == 32 then satp[31 .. 0] else satp
 }
 
-// Top-level addr-translation function
-// PUBLIC: invoked from instr-fetch, atomics and CBOs
-// [postlude/fetch.sail, A/zaamo_insts.sail, Zicbo{zm}/zicbo{zm}_insts.sail].
-function translateAddr(
+// addr-translation implementation. In addition to implementing normal
+// address translation (do_pure_lookup=false), it can also be used to
+// lookup the physical address without any side-effects (do_pure_lookup=true).
+private function translateAddr_impl(
   vAddr : virtaddr,
   access : MemoryAccessType(mem_payload),
+  do_pure_lookup : bool,
 ) -> TR_Result(physaddr, ExceptionType) = {
 
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
@@ -439,6 +450,7 @@ function translateAddr(
                         base_ppn,
                         svAddr[sv_width - 1 .. pagesize_bits],
                         access, effPriv, mxr, do_sum,
+                        do_pure_lookup,
                         init_ext_ptw);
     // Fixup result PA or exception
     match res {
@@ -456,6 +468,23 @@ function translateAddr(
     }
   }
 }
+
+// Top-level addr-translation function
+// PUBLIC: invoked from instr-fetch, atomics and CBOs
+// [postlude/fetch.sail, A/zaamo_insts.sail, Zicbo{zm}/zicbo{zm}_insts.sail].
+function translateAddr(
+  vAddr : virtaddr,
+  access : MemoryAccessType(mem_payload),
+) -> TR_Result(physaddr, ExceptionType) =
+  translateAddr_impl(vAddr, access, false)
+
+// Top-level address lookup function.  This does not perform _any_ side-effects
+// (updating A/D bits or modifying the TLB).
+function lookupAddr(
+  vAddr : virtaddr,
+  access : MemoryAccessType(mem_payload),
+) -> TR_Result(physaddr, ExceptionType) =
+  translateAddr_impl(vAddr, access, true)
 
 // ****************************************************************
 // Initialize Virtual Memory state

@@ -112,9 +112,10 @@ void log_callbacks::ptw_start_callback(
   hart::Model &model,
   uint64_t vpn,
   hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-  hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+  hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege,
+  bool is_pure_lookup
 ) {
-  if (trace_log != nullptr && config_print_ptw) {
+  if (trace_log != nullptr && config_print_ptw && !is_pure_lookup) {
     sail_string str_ac, str_pr;
     CREATE(sail_string)(&str_ac);
     CREATE(sail_string)(&str_pr);
@@ -126,8 +127,14 @@ void log_callbacks::ptw_start_callback(
   }
 }
 
-void log_callbacks::ptw_step_callback(hart::Model & /*model*/, int64_t level, sbits pte_addr, uint64_t pte) {
-  if (trace_log != nullptr && config_print_ptw) {
+void log_callbacks::ptw_step_callback(
+  hart::Model & /*model*/,
+  int64_t level,
+  sbits pte_addr,
+  uint64_t pte,
+  bool is_pure_lookup
+) {
+  if (trace_log != nullptr && config_print_ptw && !is_pure_lookup) {
     fprintf(
       trace_log,
       "PTW: Step, level=%" PRId64 ", pte=0x%" PRIX64 ", pte_addr=0x%" PRIX64 "\n",
@@ -138,8 +145,13 @@ void log_callbacks::ptw_step_callback(hart::Model & /*model*/, int64_t level, sb
   }
 }
 
-void log_callbacks::ptw_success_callback(hart::Model & /*model*/, uint64_t final_ppn, int64_t level) {
-  if (trace_log != nullptr && config_print_ptw) {
+void log_callbacks::ptw_success_callback(
+  hart::Model & /*model*/,
+  uint64_t final_ppn,
+  int64_t level,
+  bool is_pure_lookup
+) {
+  if (trace_log != nullptr && config_print_ptw && !is_pure_lookup) {
     fprintf(trace_log, "PTW: Success, final_ppn=0x%" PRIx64 ", level=%" PRId64 "\n", final_ppn, level);
   }
 }
@@ -148,9 +160,10 @@ void log_callbacks::ptw_fail_callback(
   hart::Model &model,
   struct hart::zPTW_Error error_type,
   int64_t level,
-  sbits pte_addr
+  sbits pte_addr,
+  bool is_pure_lookup
 ) {
-  if (trace_log != nullptr && config_print_ptw) {
+  if (trace_log != nullptr && config_print_ptw && !is_pure_lookup) {
     sail_string str_et;
     CREATE(sail_string)(&str_et);
     model.zptw_error_to_str(&str_et, error_type);
