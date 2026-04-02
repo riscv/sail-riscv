@@ -1,0 +1,10 @@
+{
+  "extensions": {
+    "Zclsd": {
+      "supported": true
+    },
+    "Zcf": {
+      "supported": false
+    }
+  }
+}
