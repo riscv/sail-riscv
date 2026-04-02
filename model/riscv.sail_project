@@ -64,7 +64,9 @@ sys {
 
   files
     sys/sys_reservation.sail,
+    sys/simple_interrupt_generator_regs.sail,
     sys/sys_control.sail,
+    sys/simple_interrupt_generator.sail,
     sys/platform.sail,
     sys/pma.sail,
     sys/mem.sail,
