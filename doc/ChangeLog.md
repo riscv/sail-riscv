@@ -89,6 +89,7 @@
   - Ssu64xl
   - Smstateen, Sstateen
   - Ssqosid
+  - Svpbmt
 
 - The following unratified extensions have been added:
   - Zibi
