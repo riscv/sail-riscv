@@ -51,6 +51,9 @@
   - https://github.com/riscv/sail-riscv/issues/1560 : Updates to `mip` were not captured in the trace file
   - https://github.com/riscv/sail-riscv/issues/1574 : Misaligned store-conditionals didn't raise a misaligned address exception
 
+- The following unratified extensions have been added:
+  - Zvfbfa
+
 # Release notes for version 0.10
 
 - The highlight of this release is the switch to using the C++ backend
