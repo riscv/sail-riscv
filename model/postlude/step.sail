@@ -209,8 +209,10 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Fetch_Failure(vaddr, e) => handle_exception(bits_of(vaddr), e),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
     Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
-    // This case was handled above when processing the fetch result.
-    Step_Execute(ExecuteAs(_), _) => assert(false),
+    // We only support one level of ExecuteAs redirection, primarily intended
+    // for compressed instructions (though it can be used elsewhere). If there
+    // is more than one ExecuteAs indirection we'll get to here. This isn't supported.
+    Step_Execute(ExecuteAs(_), _) => internal_error(__FILE__, __LINE__, "Multiple chained ExecuteAs (only one redirection is supported)."),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
     Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e),
