@@ -47,25 +47,44 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_
   then Ext_CSR_Check_Failure()
   else {
     // A pure write (i.e. CSRRW with rd == 0) should not generate read side-effects.
-    let csr_val : xlenbits = if access_type != CSRWrite then read_CSR(csr) else zeros();
-    if access_type != CSRRead then {
-      let new_val : xlenbits = match op {
+    let read_val : xlenbits = if access_type != CSRWrite then read_CSR(csr) else zeros();
+
+    // mip and sip have delightfully unique behaviour for the SEIP bit.
+    // The value written into `X(rd)` has the external platform interrupt bit
+    // (e.g. from PLIC) ORed into SEIP. But that *isn't* the case for the
+    // "read" value of the CSR used in the read-modify write cycle.
+    //
+    // We treat MEIP the same as SEIP for consistency. It doesn't actually matter
+    // since it is read-only.
+    //
+    // `read_val` is the value used in the read-modify-write. `dest_val` is the
+    // value written to `rd`. These are almost always the same.
+    let dest_val : xlenbits = match csr {
+      0x344 => read_val | external_interrupts_pending().bits, // mip
+      0x144 => read_val | external_interrupts_pending().bits, // sip
+      _ => read_val,
+    };
+
+    if access_type == CSRRead then {
+      csr_read_callback(csr, dest_val);
+      X(rd) = dest_val;
+      RETIRE_SUCCESS
+    } else {
+      let write_val : xlenbits = match op {
         CSRRW => rs1_val,
-        CSRRS => csr_val | rs1_val,
-        CSRRC => csr_val & ~(rs1_val)
+        CSRRS => read_val | rs1_val,
+        CSRRC => read_val & ~(rs1_val)
       };
-      match write_CSR(csr, new_val) {
+      match write_CSR(csr, write_val) {
         Ok(final_val) => {
+          X(rd) = dest_val;
+          // Note that this callback will never include the MEIP or SEIP bits
+          // set by the external platform.
           csr_write_callback(csr, final_val);
-          X(rd) = csr_val;
           RETIRE_SUCCESS
         },
         Err(()) => Illegal_Instruction()
       }
-    } else {
-      csr_read_callback(csr, csr_val);
-      X(rd) = csr_val;
-      RETIRE_SUCCESS
     }
   }
 }
