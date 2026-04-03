@@ -79,7 +79,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   access     : MemoryAccessType(mem_payload),
   res_or_con : bool,
 )  -> option(ExceptionType) = {
-  match matching_pma(pma_regions, paddr, width) {
+  match matching_pma_region(pma_regions, paddr, width) {
     None() => {
       Some(accessFaultFromAccessType(access))
     },
