@@ -51,7 +51,7 @@ private function fetch() -> FetchResult = {
   then return rvfi_fetch();
 
   // Doing this check here assumes the external fetch checks are higher priority
-  // then the following alignment check.
+  // than the following alignment check.
   match ext_fetch_check_pc(PC, PC) {
     Some(e) => return F_Ext_Error(e),
     None()  => (),
