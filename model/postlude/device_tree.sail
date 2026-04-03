@@ -127,6 +127,9 @@ function generate_dts() -> string = {
   let clint_size_hi = unsigned(plat_clint_size >> 32);
   let clint_size_lo = unsigned(plat_clint_size[31 .. 0]);
 
+  let uart_base_hi = unsigned(plat_uart_base >> 32);
+  let uart_base_lo = unsigned(plat_uart_base[31 .. 0]);
+
   // `hex_str` is used for the unit-addresses of the `memory@` and `clint@` nodes
   // instead of `hex_bits_str` since they cannot have leading zeros.  These addresses
   // also cannot have a '0x' prefix which explains the `string_drop(., 2)`.
@@ -139,7 +142,8 @@ function generate_dts() -> string = {
 ^ "  compatible = \"ucbbar,spike-bare-dev\";\n"
 ^ "  model = \"ucbbar,spike-bare\";\n"
 ^ "  chosen {\n"
-^ "    bootargs = \"console=hvc0 earlycon=sbi\";\n"
+^ "    bootargs = \"console=ttyUL0 earlycon=sbi\";\n"
+^ "    stdout-path = \"/soc/uart@" ^ string_drop(hex_str(unsigned(plat_uart_base)), 2) ^ "\";\n"
 ^ "  };\n"
 ^ "  cpus {\n"
 ^ "    #address-cells = <1>;\n"
@@ -166,7 +170,6 @@ function generate_dts() -> string = {
 ^ "    };\n"
 ^ "  };\n"
 ^ generate_dts_memories(pma_regions)
-
 ^ "  soc {\n"
 ^ "    #address-cells = <2>;\n"
 ^ "    #size-cells = <2>;\n"
@@ -177,6 +180,11 @@ function generate_dts() -> string = {
 ^ "      interrupts-extended = <&CPU0_intc 3 &CPU0_intc 7>;\n"
 ^ "      reg = <" ^ hex_str(clint_base_hi) ^ " " ^ hex_str(clint_base_lo)
 ^ " " ^ hex_str(clint_size_hi) ^ " " ^ hex_str(clint_size_lo) ^ ">;\n"
+^ "    };\n"
+^ "    uart@" ^ string_drop(hex_str(unsigned(plat_uart_base)), 2) ^ " {\n"
+^ "      compatible = \"xlnx,xps-uartlite-1.00.a\";\n"
+^ "      reg = <" ^ hex_str(uart_base_hi) ^ " " ^ hex_str(uart_base_lo) ^ " 0x0 0x10>;\n"
+^ "      current-speed = <115200>;\n"
 ^ "    };\n"
 ^ "  };\n"
 ^ "  htif {\n"

@@ -29,6 +29,7 @@ public:
   void set_config_print_exception(bool on);
   void set_config_print_interrupt(bool on);
   void set_config_print_htif(bool on);
+  void set_config_print_uart(bool on);
   void set_config_print_pma(bool on);
   void set_config_rvfi(bool on);
   void set_config_use_abi_names(bool on);
@@ -74,6 +75,8 @@ private:
   bool valid_reservation(unit) override;
 
   unit plat_term_write(mach_bits) override;
+  mach_bits plat_term_read(unit) override;
+  bool plat_uart_rx_valid(unit) override;
 
   bool sys_enable_experimental_extensions(unit) override;
 
@@ -88,6 +91,7 @@ private:
   bool get_config_print_exception(unit) override;
   bool get_config_print_interrupt(unit) override;
   bool get_config_print_htif(unit) override;
+  bool get_config_print_uart(unit) override;
   bool get_config_print_pma(unit) override;
   bool get_config_rvfi(unit) override;
   bool get_config_use_abi_names(unit) override;
@@ -97,6 +101,7 @@ private:
   bool m_config_print_exception = false;
   bool m_config_print_interrupt = false;
   bool m_config_print_htif = false;
+  bool m_config_print_uart = false;
   bool m_config_print_pma = false;
   bool m_config_rvfi = false;
   bool m_config_use_abi_names = false;
