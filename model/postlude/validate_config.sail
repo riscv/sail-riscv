@@ -226,6 +226,7 @@ private function check_vext_config() -> bool = {
   valid;
 }
 
+// TODO: Add Memory Ordering
 private function pma_is_main_memory(attributes : PMA) -> bool =
   attributes.readable & attributes.read_idempotent & attributes.writable & attributes.write_idempotent
 
