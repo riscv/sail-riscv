@@ -30,6 +30,14 @@ let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_s
 // misaligned loads/stores are trapped to Machine mode.
 let plat_enable_misaligned_access : bool = config memory.misaligned.supported
 
+// The Misaligned Atomicity Granule size for main memory.  This is currently
+// required to be the same across all memory regions, and is set by the config validator.
+// Size of the Misaligned Atomicity Granule (MAG) as a power of 2.
+// The maximum is a page size (4096), which should accommodate most
+// realistic configurations.
+type mag_size_pow = range(0, 12)
+register plat_mag_size_exp : mag_size_pow = 0
+
 // Location of clock-interface, which should match with the spec in the DTB
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)

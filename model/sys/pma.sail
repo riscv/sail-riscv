@@ -110,7 +110,8 @@ struct PMA = {
   supports_pte_read : bool,
   // Flags whether this memory supports hardware page table writes.
   supports_pte_write : bool,
-  // TODO: Misaligned Atomicity Granule PMA
+  // The size of the misaligned atomicity granule is 2^misaligned_atomicity_granule_exp.
+  misaligned_atomicity_granule_size_exp : range(0, 12),
   // TODO: Memory Ordering PMA
 }
 
@@ -155,6 +156,7 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.write_idempotent then " write-idempotent" else "") ^
   " misaligned_fault:" ^ to_str(attr.misaligned_fault) ^
   " " ^ to_str(attr.atomic_support) ^
+  " misaligned_atomicity_granule_size_exp=" ^ dec_str(attr.misaligned_atomicity_granule_size_exp) ^
   " " ^ to_str(attr.reservability) ^
   (if attr.supports_cbo_zero then " supports-cbo-zero" else "") ^
   (if attr.supports_pte_read then " supports-pte-read" else "") ^
