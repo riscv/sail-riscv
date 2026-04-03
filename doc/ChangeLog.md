@@ -19,6 +19,7 @@
 - The following extensions have been added:
   - Ziccamoa
   - Ziccamoc
+  - Ziccif
   - Ziccrse
   - Zicfiss
   - Ssccptr
