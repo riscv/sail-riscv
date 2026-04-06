@@ -333,13 +333,13 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
       match update_and_write_pte(pteAddr, pte_size, pte, access) {
         Ok(Some(new_pte)) => {
           // Writeback the PTE (which has new A/D bits).
-          add_to_TLB(sv_width, asid, vpn, ppn, new_pte, pteAddr, level, pbmt, global);
+          add_to_TLB(sv_width, asid, vpn, ppn, new_pte, pteAddr, level, global);
           Ok(ppn, pbmt, ext_ptw)
         },
         Ok(None()) => {
           // There was no change in the PTE, but it still needs to be added
           // to the TLB due to the TLB miss.
-          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, pbmt, global);
+          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
           Ok(ppn, pbmt, ext_ptw)
         },
         Err(e) => Err(e, ext_ptw),

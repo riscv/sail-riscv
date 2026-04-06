@@ -145,7 +145,6 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
   pte      : pte_bits('v),
   pteAddr  : physaddr,
   level    : level_range('v),
-  pbmt     : page_based_mem_type,
   global   : bool,
 ) -> unit = {
   let shift = level * (if 'v == 32 then 10 else 9);
