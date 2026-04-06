@@ -63,6 +63,15 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
   trunc(ppn | (vpn & levelMask))
 }
 
+function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type = {
+  // For RV32, this relies on the RV32 PTE being zero-extended
+  // and the default PBMT_PMA being encoded as zeros.  This is slower
+  // than storing the PBMT enum directly as a field, but less
+  // redundant.
+  let pte_ext = ext_bits_of_PTE(ent.pte);
+  page_based_mem_type(pte_ext[PBMT])
+}
+
 // 64 entries is based on benchmarks of Linux boots and is where
 // you stop seeing performance improvements.
 type num_tlb_entries_exp : Int = 6

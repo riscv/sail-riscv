@@ -510,7 +510,7 @@ function clause hartSupports(Ext_Svnapot) = config extensions.Svnapot.supported 
 // Page-Based Memory Types
 enum clause extension = Ext_Svpbmt
 mapping clause extensionName = Ext_Svpbmt <-> "svpbmt"
-function clause hartSupports(Ext_Svpbmt) = false // Not supported yet
+function clause hartSupports(Ext_Svpbmt) = config extensions.Svpbmt.supported : bool & (xlen == 64)
 // PTE Reserved-for-Software Bits 60-59
 enum clause extension = Ext_Svrsw60t59b
 mapping clause extensionName = Ext_Svrsw60t59b <-> "svrsw60t59b"
@@ -600,6 +600,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_Ssccptr => 3, // > Sv39
     Ext_Svnapot => 3, // > Sv39
+    Ext_Svpbmt => 3, // > Sv39
     Ext_Svvptc => 3, // > Sv39
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh
