@@ -43,7 +43,7 @@ jobs:
             os: ubuntu-24.04-arm
             container: rockylinux:8.9.20231119
 
-          - name: mac-arm64
+          - name: Mac-arm64
             os: macos-latest
             container: ""
 
@@ -162,7 +162,7 @@ jobs:
           files: |
             release-Linux-x86_64/sail-riscv-Linux-x86_64.tar.gz
             release-Linux-aarch64/sail-riscv-Linux-aarch64.tar.gz
-            release-mac-arm64/sail-riscv-mac-arm64.tar.gz
+            release-Mac-arm64/sail-riscv-Mac-arm64.tar.gz
             release-Linux-x86_64/model/sail_riscv_model.json
             release-Linux-x86_64/model/sail_riscv_html.tgz
           fail_on_unmatched_files: true
