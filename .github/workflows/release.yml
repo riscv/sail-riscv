@@ -97,8 +97,8 @@ jobs:
             build/model/sail_riscv_model.json
             build/model/sail_riscv_html.tgz
 
-      - name: "Generate attestations (Linux-aarch64)"
-        if: matrix.name == 'Linux-aarch64'
+      - name: "Generate attestations (Linux-aarch64, Mac-arm64)"
+        if: matrix.name == 'Linux-aarch64' || matrix.name == 'Mac-arm64'
         uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
