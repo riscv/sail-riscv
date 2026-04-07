@@ -327,10 +327,10 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
   let rlb_read_only_zero =
       not(currentlyEnabled(Ext_Smepmp))
     | (o[RLB] == 0b0 & anyPmpLocked());
-  let mml_unable_to_set =
+  let mml_read_only =
       not(currentlyEnabled(Ext_Smepmp))
     | (o[MML] == 0b1);
-  let mmwp_unable_to_set =
+  let mmwp_read_only =
       not(currentlyEnabled(Ext_Smepmp))
     | (o[MMWP] == 0b1);
 
@@ -340,8 +340,8 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
     USEED = if useed_read_only_zero then 0b0 else v[USEED],
     RLB   = if rlb_read_only_zero then 0b0 else v[RLB],
-    MMWP  = if mmwp_unable_to_set then o[MMWP] else v[MMWP],
-    MML   = if mml_unable_to_set then o[MML] else v[MML],
+    MMWP  = if mmwp_read_only then o[MMWP] else v[MMWP],
+    MML   = if mml_read_only then o[MML] else v[MML],
   ]
 }
 
