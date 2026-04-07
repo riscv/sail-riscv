@@ -190,8 +190,9 @@ function reset_pmp() -> unit = {
   };
 }
 
-function checkPmpNcfgL(n : range(0, 63)) -> bits(1) = {
-  if n == 0
-  then pmpcfg_n[0][L]
-  else checkPmpNcfgL(n - 1) | (pmpcfg_n[n][L])
+function anyPmpLocked() -> bool = {
+  foreach (i from 0 to sys_pmp_count - 1) {
+    if pmpcfg_n[i][L] == 0b1 then return true;
+  };
+  false
 }
