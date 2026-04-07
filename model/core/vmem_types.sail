@@ -36,16 +36,18 @@ type vpn_bits('v), is_sv_mode('v) = bits('v - pagesize_bits)
 // handled by adding ShadowStack{Load,Store,Atomic} variants to
 // MemoryAccessType and removing the ShadowStack variant here.
 
-enum mem_payload = { Data, PageTableEntry, ShadowStack }
+enum mem_payload = { Data, Vector, PageTableEntry, ShadowStack }
 
 mapping mem_payload_name : mem_payload <-> string = {
   Data           <-> "Data",
+  Vector         <-> "Vector",
   PageTableEntry <-> "PageTableEntry",
   ShadowStack    <-> "ShadowStack",
 }
 
 mapping mem_payload_str : mem_payload <-> string = {
   Data            <-> "",
+  Vector          <-> "",
   PageTableEntry  <-> "",
   ShadowStack     <-> ".ss",
 }
@@ -71,9 +73,11 @@ function is_shadow_stack_access(access : MemoryAccessType(mem_payload)) -> bool 
 
     InstructionFetch()                  => false,
     Load(Data)                          => false,
+    Load(Vector)                        => false,
     Load(PageTableEntry)                => false,
     LoadReserved(Data)                  => false,
     Store(Data)                         => false,
+    Store(Vector)                       => false,
     Store(PageTableEntry)               => false,
     StoreConditional(Data)              => false,
     Atomic(_, Data, Data)               => false,
