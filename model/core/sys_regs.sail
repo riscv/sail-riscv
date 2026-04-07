@@ -340,7 +340,11 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
   ]
 }
 
-register mseccfg : Seccfg = legalize_mseccfg(Mk_Seccfg(zeros()), zeros())
+// TODO: Ideally this would use legalize_mseccfg however it can't due to a Sail
+// compiler bug. In this case that's fine since the result is actually all zeros anyway.
+// See https://github.com/rems-project/sail/issues/1653
+register mseccfg : Seccfg = Mk_Seccfg(zeros())
+// register mseccfg : Seccfg = legalize_mseccfg(Mk_Seccfg(zeros()), zeros())
 
 mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
