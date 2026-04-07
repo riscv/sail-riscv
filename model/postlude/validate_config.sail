@@ -258,7 +258,7 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
         return false;
       };
       let attributes = region.attributes;
-      if pma_is_main_memory(attributes) & attributes.cacheable & attributes.coherent then {
+      if memory_region_type(attributes) == MainMemory & attributes.cacheable & attributes.coherent then {
         if check_opts.ziccamoa & attributes.atomic_support < AMOArithmetic then {
           print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
           return false;

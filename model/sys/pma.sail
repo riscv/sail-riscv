@@ -84,6 +84,8 @@ mapping misaligned_fault_str : misaligned_fault <-> string = {
 }
 overload to_str = {misaligned_fault_str}
 
+enum MemoryRegionType = { MainMemory, IOMemory }
+
 // Physical Memory Attributes for a region.
 struct PMA = {
   // These have no effect on the model currently but they are affected
@@ -114,9 +116,14 @@ struct PMA = {
   // TODO: Memory Ordering PMA
 }
 
-// TODO: Add Memory Ordering
-function pma_is_main_memory(attributes : PMA) -> bool =
-  attributes.readable & attributes.read_idempotent & attributes.writable & attributes.write_idempotent
+// Technically you can have a region that satisfies these properties
+// but is still declared as IOMemory but we don't support that yet.
+// TODO: We should add an explicit memory type PMA rather than inferring this.
+// TODO: Consider memory ordering if that PMA is added.
+function memory_region_type(pma : PMA) -> MemoryRegionType =
+  if pma.readable & pma.writable & pma.read_idempotent & pma.write_idempotent
+  then MainMemory
+  else IOMemory
 
 // A PMA can be overridden by page-based memory types.
 // TODO: specify alignment for IO regions.
