@@ -134,7 +134,7 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   // control bits, read permission shall also be granted."
 
   var prev_pmpaddr : xlenbits = zeros();
-  foreach (i from 0 to sys_pmp_count - 1) {
+  foreach (i from 0 to sys_pmp_usable_count - 1) {
     let cur_pmpaddr = pmpaddr_n_eff[i];
     let cfg = pmpcfg_n[i];
 
@@ -156,7 +156,7 @@ function reset_pmp() -> unit = {
   foreach (i from 0 to 63) {
     // On reset the PMP register's A and L bits are set to 0 unless the platform
     // mandates a different value.
-    pmpcfg_n[i]     = [pmpcfg_n[i] with A = pmpAddrMatchType_encdec(OFF), L = 0b0];
+    pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_encdec(OFF), L = 0b0];
     pmpaddr_n_eff[i] = zeros();
   };
   pmp_active_count = 0
