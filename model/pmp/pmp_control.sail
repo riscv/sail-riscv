@@ -48,32 +48,35 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_pay
   }
 
 // This needs to be called with the effective current privilege.
-val pmpCheckPerms: (Pmpcfg_ent, AccessType(ext_access_type), Privilege) -> bool
-function pmpCheckPerms(ent, acc, priv) = {
+function pmpCheckPerms(
+  ent : Pmpcfg_ent,
+  access : MemoryAccessType(mem_payload),
+  priv : Privilege,
+) -> bool = {
   if mseccfg[MML] == 0b1
   then {
     match (ent[L], ent[R], ent[W], ent[X]) {
       (0b1, 0b0, 0b1, _) =>
-        match acc {
+        match access {
           InstructionFetch(_) => true,
-          Read(_)    => priv == Machine & ent[X] == 0b1,
-          _          => false
+          Load(_)    => priv == Machine & ent[X] == 0b1,
+          _          => false,
         },
       (0b0, 0b0, 0b1, _) =>
-        match acc {
-          Read(_)  => true,
-          Write(_) => priv == Machine | ent[X] == 0b1,
-          _        => false
+        match access {
+          Load(_)  => true,
+          Store(_) => priv == Machine | ent[X] == 0b1,
+          _        => false,
         },
       (0b1, 0b1, 0b1, 0b1) =>
-        match acc {
-          Read(_) => true,
-          _       => false
+        match access {
+          Load(_) => true,
+          _       => false,
         },
-      (L, _, _, _) => ((priv == Machine) == (L == 0b1)) & pmpCheckRWX(ent, acc)
+      (L, _, _, _) => ((priv == Machine) == (L == 0b1)) & pmpCheckRWX(ent, access),
     }
   }
-  else (priv == Machine & not(pmpLocked(ent))) | pmpCheckRWX(ent, acc)
+  else (priv == Machine & not(pmpLocked(ent))) | pmpCheckRWX(ent, access)
 }
 
 // matching logic
@@ -165,8 +168,8 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       PMP_NoMatch      => (),
       PMP_PartialMatch => return Some(accessFaultFromAccessType(access)),
       PMP_Match        => return (
-        if (currentlyEnabled(Ext_Smepmp) & pmpCheckPerms(cfg, acc, priv)) |
-            pmpCheckRWX(cfg, acc) |
+        if (currentlyEnabled(Ext_Smepmp) & pmpCheckPerms(cfg, access, priv)) |
+            pmpCheckRWX(cfg, access) |
            (priv == Machine & not(pmpLocked(cfg)))
         then None()
         else Some(accessFaultFromAccessType(access))
@@ -175,9 +178,9 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   };
   // Make Read, Write and execute denied by default, if mseccfg[MMWP] == 0b1 for M mode.
   // Make execute denied, if mseccfg[MML] == 0b1 for M mode.
-  if priv == Machine & mseccfg[MMWP] == 0b0 & (mseccfg[MML] == 0b0 | acc != InstructionFetch())
+  if priv == Machine & mseccfg[MMWP] == 0b0 & (mseccfg[MML] == 0b0 | access != InstructionFetch())
   then None()
-  else Some(accessToFault(acc))
+  else Some(accessFaultFromAccessType(access))
 }
 
 function reset_pmp() -> unit = {

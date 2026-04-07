@@ -313,7 +313,7 @@ bitfield Seccfg : bits(64) = {
   MML    : 0,
 }
 
-val checkPmpNcfgL : range(0, 63) -> bits(1)
+val anyPmpLocked : unit -> bool
 
 private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
   let sseed_read_only_zero =
@@ -324,24 +324,19 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
       (config extensions.Zkr.useed_read_only_zero : bool)
     | not(currentlyEnabled(Ext_U))
     | not(currentlyEnabled(Ext_Zkr));
-  let rlb_read_only_zero =
-      not(currentlyEnabled(Ext_Smepmp))
-    | (o[RLB] == 0b0 & anyPmpLocked());
-  let mml_read_only =
-      not(currentlyEnabled(Ext_Smepmp))
-    | (o[MML] == 0b1);
-  let mmwp_read_only =
-      not(currentlyEnabled(Ext_Smepmp))
-    | (o[MMWP] == 0b1);
+
+  let rlb_read_only = o[RLB] == 0b0 & anyPmpLocked();
+  let mml_read_only = o[MML] == 0b1;
+  let mmwp_read_only = o[MMWP] == 0b1;
 
   let v = Mk_Seccfg(v);
   [o with
     MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
     USEED = if useed_read_only_zero then 0b0 else v[USEED],
-    RLB   = if rlb_read_only_zero then 0b0 else v[RLB],
-    MMWP  = if mmwp_read_only then o[MMWP] else v[MMWP],
-    MML   = if mml_read_only then o[MML] else v[MML],
+    RLB   = if not(currentlyEnabled(Ext_Smepmp)) then 0b0 else if rlb_read_only  then o[RLB]  else v[RLB],
+    MMWP  = if not(currentlyEnabled(Ext_Smepmp)) then 0b0 else if mmwp_read_only then o[MMWP] else v[MMWP],
+    MML   = if not(currentlyEnabled(Ext_Smepmp)) then 0b0 else if mml_read_only  then o[MML]  else v[MML],
   ]
 }
 
