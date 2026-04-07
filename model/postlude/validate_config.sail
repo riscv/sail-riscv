@@ -244,12 +244,17 @@ private struct pma_check_opts = {
 }
 
 // Return true if a list of PMA regions are sorted and don't overlap, and the specified extension checks are satisfied.
-private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_opts : pma_check_opts, found_valid_svadu_pma : bool) -> bool =
+private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_opts : pma_check_opts, found_valid_svadu_pma : bool, found_mag_size : mag_size_pow) -> bool =
   match pmas {
-    [||] => if check_opts.svadu & not(found_valid_svadu_pma) then {
+    [||] => {
+      if check_opts.svadu & not(found_valid_svadu_pma) then {
         print_endline("The Svadu extension is enabled but no memory region supports hardware page-table writes: Svadu requires at least one region provide this support.");
-        false
-      } else true,
+        return false;
+      };
+      // Set the platform-wide MAG size.
+      plat_mag_size_exp = found_mag_size;
+      true
+    },
     pma :: rest => {
       if pma.base <_u prev_base + prev_size then {
         print_endline("Memory region starting at " ^ bits_str(pma.base) ^
@@ -258,6 +263,7 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
         return false;
       };
       let attributes = pma.attributes;
+      var mag_size : mag_size_pow = found_mag_size;
       if attributes.cacheable & attributes.coherent then {
         if check_opts.ziccamoa & attributes.atomic_support < AMOArithmetic then {
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
@@ -275,11 +281,17 @@ private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64)
           print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable without hardware page-table read support, but Ssccptr is enabled which requires this support.");
           return false;
         };
+        // For now, we require that all main memory regions have the same Misaligned Atomicity Granule size.
+        if mag_size == 0 then mag_size = attributes.misaligned_atomicity_granule_size_exp
+        else if mag_size != attributes.misaligned_atomicity_granule_size_exp then {
+          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with a misaligned atomicity granule size of 2^" ^ dec_str(attributes.misaligned_atomicity_granule_size_exp) ^ " which differs from a previous region with a size of 2^" ^ dec_str(mag_size) ^ ": this model currently only supports main memory regions with the same granule size.");
+          return false;
+        };
       };
 
       let found_valid_svadu_pma = found_valid_svadu_pma | (attributes.supports_pte_write & attributes.reservability == RsrvEventual);
 
-      check_pma_regions(rest, pma.base, pma.size, check_opts, found_valid_svadu_pma)
+      check_pma_regions(rest, pma.base, pma.size, check_opts, found_valid_svadu_pma, mag_size)
     },
   }
 
@@ -300,7 +312,7 @@ private function check_mem_layout() -> bool =
       ssccptr  = config extensions.Ssccptr.supported,
       svadu    = config extensions.Svadu.supported,
     };
-    check_pma_regions(pma_regions, zeros(), zeros(), check_opts, false)
+    check_pma_regions(pma_regions, zeros(), zeros(), check_opts, false, 0 : mag_size_pow)
   }
 
 private function check_pmp() -> bool = {
