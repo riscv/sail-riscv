@@ -313,7 +313,7 @@ bitfield Seccfg : bits(64) = {
   // Machine Mode Whitelist Policy
   MMWP   : 1,
   // Machine Mode Lockdown
-  MML    : 0
+  MML    : 0,
 }
 
 val checkPmpNcfgL : range(0, 63) -> bits(1)
@@ -329,7 +329,7 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
     | not(currentlyEnabled(Ext_Zkr));
   let rlb_read_only_zero =
       not(currentlyEnabled(Ext_Smepmp))
-    | (o[RLB] == 0b0 & checkPmpNcfgL(63) == 0b1);
+    | (o[RLB] == 0b0 & anyPmpLocked());
   let mml_unable_to_set =
       not(currentlyEnabled(Ext_Smepmp))
     | (o[MML] == 0b1);
