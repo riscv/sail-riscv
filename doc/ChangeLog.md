@@ -26,6 +26,7 @@
   - Svade
   - Svadu
   - Svnapot
+  - Svpbmt
   - Svvptc
 
 - D, A, U and other bits that are reserved in non-leaf PTEs now raise a page-fault exception.
@@ -89,7 +90,6 @@
   - Ssu64xl
   - Smstateen, Sstateen
   - Ssqosid
-  - Svpbmt
 
 - The following unratified extensions have been added:
   - Zibi
