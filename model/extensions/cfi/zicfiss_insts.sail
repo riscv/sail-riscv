@@ -24,7 +24,7 @@ function clause execute SSPUSH(rs2) = {
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
   let vaddr_bits = ssp - xlen_bytes;
-  let vaddr = Virtaddr(vaddr_bits);
+  let vaddr = transform_effective_address(Virtaddr(vaddr_bits), Store(ShadowStack));
   // "If the virtual address in ssp is not XLEN aligned, then the
   // SSPUSH/C.SSPUSH/SSPOPCHK/C.SSPOPCHK instructions cause a
   // store/AMO access-fault exception."
@@ -78,7 +78,7 @@ mapping clause encdec = SSPOPCHK(rs1)
 function clause execute SSPOPCHK(rs1) = {
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
-  let ssp_addr = Virtaddr(ssp);
+  let ssp_addr = transform_effective_address(Virtaddr(ssp), Load(ShadowStack));
   // See above on checking alignment.
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
@@ -168,7 +168,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   let access = Atomic(AMOSWAP, ShadowStack, ShadowStack);
 
-  let vaddr : virtaddr = match ext_data_get_addr(rs1, zeros(), access, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };

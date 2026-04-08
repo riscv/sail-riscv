@@ -20,6 +20,13 @@
     see `base.mcounteren_writable_bits`. (This was previously controlled
     by `base.writable_hpm_counters`, which was incorrect.)
 
+- The following extensions have been added:
+  - Smmpm
+  - Smnpm
+  - Ssnpm
+  - Sspm
+  - Supm
+
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
     build option. When enabled, applies link-time optimization to both the
