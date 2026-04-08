@@ -88,6 +88,7 @@ enum MemoryRegionType = { MainMemory, IOMemory }
 
 // Physical Memory Attributes for a region.
 struct PMA = {
+  mem_type         : MemoryRegionType,
   // These have no effect on the model currently but they are affected
   // by PBMT so they need to be here if the resulting PMA is verified.
   cacheable        : bool,
@@ -116,26 +117,19 @@ struct PMA = {
   // TODO: Memory Ordering PMA
 }
 
-// Technically you can have a region that satisfies these properties
-// but is still declared as IOMemory but we don't support that yet.
-// TODO: We should add an explicit memory type PMA rather than inferring this.
-// TODO: Consider memory ordering if that PMA is added.
-function memory_region_type(pma : PMA) -> MemoryRegionType =
-  if pma.readable & pma.writable & pma.read_idempotent & pma.write_idempotent
-  then MainMemory
-  else IOMemory
-
 // A PMA can be overridden by page-based memory types.
 // TODO: specify alignment for IO regions.
 function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
   match pbmt {
     PBMT_PMA => pma,
     // TODO: return a weakly-ordered PMA
-    PBMT_NC  => {pma with cacheable = false,
+    PBMT_NC  => {pma with mem_type = MainMemory,
+                          cacheable = false,
                           read_idempotent = true,
                           write_idempotent = true},
     // TODO: return a strongly ordered PMA
-    PBMT_IO  => {pma with cacheable = false,
+    PBMT_IO  => {pma with mem_type = IOMemory,
+                          cacheable = false,
                           read_idempotent = false,
                           write_idempotent = false},
   }
@@ -172,6 +166,7 @@ function matching_pma_region(regions : list(PMA_Region), addr : physaddr, width 
 }
 
 function pma_attributes_to_str(attr : PMA) -> string =
+  (match attr.mem_type { MainMemory => " main-memory", IOMemory => " io-memory", }) ^
   (if attr.cacheable then " cacheable" else "") ^
   (if attr.coherent then " coherent" else "") ^
   (if attr.executable then " executable" else "") ^

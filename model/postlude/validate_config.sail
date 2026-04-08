@@ -235,6 +235,21 @@ private function check_vext_config() -> bool = {
   valid;
 }
 
+private function check_pma_region(region : PMA_Region) -> bool = {
+  let pma = region.attributes;
+  // TODO: this could be extended, e.g. to check that read_idempotent => readable, etc.
+  match pma.mem_type {
+    MainMemory =>
+      if not(pma.readable & pma.writable & pma.read_idempotent & pma.write_idempotent) then {
+        print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is marked as MainMemory but is not readable, read-idempotent, writable, and write-idempotent.");
+        return false;
+      },
+    IOMemory =>
+      (),
+  };
+  true
+}
+
 private struct pma_check_opts = {
   ziccamoa : bool,
   ziccamoc : bool,
@@ -257,8 +272,11 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
                       bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
         return false;
       };
+
+      if not(check_pma_region(region)) then return false;
+
       let attributes = region.attributes;
-      if memory_region_type(attributes) == MainMemory & attributes.cacheable & attributes.coherent then {
+      if attributes.mem_type == MainMemory & attributes.cacheable & attributes.coherent then {
         if check_opts.ziccamoa & attributes.atomic_support < AMOArithmetic then {
           print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
           return false;

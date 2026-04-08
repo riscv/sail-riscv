@@ -138,6 +138,7 @@
           "value": "0x1000"
         },
         "attributes": {
+          "mem_type" : "IOMemory",
           "cacheable": true,
           "coherent": false,
           "executable": false,
@@ -165,6 +166,7 @@
           "value": "0x2000000"
         },
         "attributes": {
+          "mem_type": "IOMemory",
           "cacheable": false,
           "coherent": true,
           "executable": false,
@@ -192,6 +194,7 @@
           "value": "0x80000000"
         },
         "attributes": {
+          "mem_type": "MainMemory",
           "cacheable": true,
           "coherent": true,
           "executable": true,
