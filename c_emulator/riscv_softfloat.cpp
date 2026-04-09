@@ -57,6 +57,66 @@ bv5_bv16 softfloat_f16div(uint64_t rm, uint64_t v1, uint64_t v2) {
   return {softfloat_exceptionFlags, res.v};
 }
 
+bv5_bv16 softfloat_bf16add(uint64_t rm, uint64_t v1, uint64_t v2) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  bfloat16_t a, b, res;
+  float32_t a32, b32, res32;
+  a.v = v1;
+  b.v = v2;
+  a32 = bf16_to_f32(a);
+  b32 = bf16_to_f32(b);
+  res32 = f32_add(a32, b32);
+  res = f32_to_bf16(res32);
+
+  return {softfloat_exceptionFlags, res.v};
+}
+
+bv5_bv16 softfloat_bf16sub(uint64_t rm, uint64_t v1, uint64_t v2) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  bfloat16_t a, b, res;
+  float32_t a32, b32, res32;
+  a.v = v1;
+  b.v = v2;
+  a32 = bf16_to_f32(a);
+  b32 = bf16_to_f32(b);
+  res32 = f32_sub(a32, b32);
+  res = f32_to_bf16(res32);
+
+  return {softfloat_exceptionFlags, res.v};
+}
+
+bv5_bv16 softfloat_bf16mul(uint64_t rm, uint64_t v1, uint64_t v2) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  bfloat16_t a, b, res;
+  float32_t a32, b32, res32;
+  a.v = v1;
+  b.v = v2;
+  a32 = bf16_to_f32(a);
+  b32 = bf16_to_f32(b);
+  res32 = f32_mul(a32, b32);
+  res = f32_to_bf16(res32);
+
+  return {softfloat_exceptionFlags, res.v};
+}
+
+bv5_bv16 softfloat_bf16div(uint64_t rm, uint64_t v1, uint64_t v2) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  bfloat16_t a, b, res;
+  float32_t a32, b32, res32;
+  a.v = v1;
+  b.v = v2;
+  a32 = bf16_to_f32(a);
+  b32 = bf16_to_f32(b);
+  res32 = f32_div(a32, b32);
+  res = f32_to_bf16(res32);
+
+  return {softfloat_exceptionFlags, res.v};
+}
+
 bv5_bv32 softfloat_f32add(uint64_t rm, uint64_t v1, uint64_t v2) {
   SOFTFLOAT_PRELUDE(rm);
 
@@ -153,6 +213,23 @@ bv5_bv16 softfloat_f16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3)
   b.v = v2;
   c.v = v3;
   res = f16_mulAdd(a, b, c);
+
+  return {softfloat_exceptionFlags, res.v};
+}
+
+bv5_bv16 softfloat_bf16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3) {
+  SOFTFLOAT_PRELUDE(rm);
+
+  bfloat16_t a, b, c, res;
+  float32_t a32, b32, c32, res32;
+  a.v = v1;
+  b.v = v2;
+  c.v = v3;
+  a32 = bf16_to_f32(a);
+  b32 = bf16_to_f32(b);
+  c32 = bf16_to_f32(c);
+  res32 = f32_mulAdd(a32, b32, c32);
+  res = f32_to_bf16(res32);
 
   return {softfloat_exceptionFlags, res.v};
 }
