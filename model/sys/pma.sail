@@ -84,8 +84,11 @@ mapping misaligned_fault_str : misaligned_fault <-> string = {
 }
 overload to_str = {misaligned_fault_str}
 
+enum MemoryRegionType = { MainMemory, IOMemory }
+
 // Physical Memory Attributes for a region.
 struct PMA = {
+  mem_type         : MemoryRegionType,
   // These have no effect on the model currently but they are affected
   // by PBMT so they need to be here if the resulting PMA is verified.
   cacheable        : bool,
@@ -120,11 +123,13 @@ function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
   match pbmt {
     PBMT_PMA => pma,
     // TODO: return a weakly-ordered PMA
-    PBMT_NC  => {pma with cacheable = false,
+    PBMT_NC  => {pma with mem_type = MainMemory,
+                          cacheable = false,
                           read_idempotent = true,
                           write_idempotent = true},
     // TODO: return a strongly ordered PMA
-    PBMT_IO  => {pma with cacheable = false,
+    PBMT_IO  => {pma with mem_type = IOMemory,
+                          cacheable = false,
                           read_idempotent = false,
                           write_idempotent = false},
   }
@@ -143,24 +148,25 @@ struct PMA_Region = {
 }
 
 // Get the first PMA region that fully contains a given [base, base+size) range.
-function matching_pma_bits_range(pmas : list(PMA_Region), base : bits(64), size : bits(64)) -> option(PMA_Region) = {
-  match pmas {
+function matching_pma_region_bits_range(regions : list(PMA_Region), base : bits(64), size : bits(64)) -> option(PMA_Region) = {
+  match regions {
     [||] => None(),
-    pma :: rest => {
-      if range_subset(base, size, pma.base, pma.size)
-      then Some(pma)
-      else matching_pma_bits_range(rest, base, size)
+    region :: rest => {
+      if range_subset(base, size, region.base, region.size)
+      then Some(region)
+      else matching_pma_region_bits_range(rest, base, size)
     }
   }
 }
 
-// Get the first PMA that matches a given address range.
-// Delegate to matching_pma_bits_range to avoid duplicating the range logic.
-function matching_pma(pmas : list(PMA_Region), addr : physaddr, width : mem_access_width) -> option(PMA_Region) = {
-  matching_pma_bits_range(pmas, zero_extend(bits_of(addr)), to_bits(width))
+// Get the first PMA region that matches a given address range.
+// Delegate to matching_pma_region_bits_range to avoid duplicating the range logic.
+function matching_pma_region(regions : list(PMA_Region), addr : physaddr, width : mem_access_width) -> option(PMA_Region) = {
+  matching_pma_region_bits_range(regions, zero_extend(bits_of(addr)), to_bits(width))
 }
 
 function pma_attributes_to_str(attr : PMA) -> string =
+  (match attr.mem_type { MainMemory => " main-memory", IOMemory => " io-memory", }) ^
   (if attr.cacheable then " cacheable" else "") ^
   (if attr.coherent then " coherent" else "") ^
   (if attr.executable then " executable" else "") ^

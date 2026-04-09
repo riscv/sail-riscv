@@ -235,6 +235,21 @@ private function check_vext_config() -> bool = {
   valid;
 }
 
+private function check_pma_region(region : PMA_Region) -> bool = {
+  let pma = region.attributes;
+  // TODO: this could be extended, e.g. to check that read_idempotent => readable, etc.
+  match pma.mem_type {
+    MainMemory =>
+      if not(pma.readable & pma.writable & pma.read_idempotent & pma.write_idempotent) then {
+        print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is marked as MainMemory but is not readable, read-idempotent, writable, and write-idempotent.");
+        return false;
+      },
+    IOMemory =>
+      (),
+  };
+  true
+}
+
 private struct pma_check_opts = {
   ziccamoa : bool,
   ziccamoc : bool,
@@ -244,48 +259,51 @@ private struct pma_check_opts = {
 }
 
 // Return true if a list of PMA regions are sorted and don't overlap, and the specified extension checks are satisfied.
-private function check_pma_regions(pmas : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_opts : pma_check_opts, found_valid_svadu_pma : bool) -> bool =
-  match pmas {
+private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(64), prev_size : bits(64), check_opts : pma_check_opts, found_valid_svadu_pma : bool) -> bool =
+  match regions {
     [||] => if check_opts.svadu & not(found_valid_svadu_pma) then {
         print_endline("The Svadu extension is enabled but no memory region supports hardware page-table writes: Svadu requires at least one region provide this support.");
         false
       } else true,
-    pma :: rest => {
-      if pma.base <_u prev_base + prev_size then {
-        print_endline("Memory region starting at " ^ bits_str(pma.base) ^
+    region :: rest => {
+      if region.base <_u prev_base + prev_size then {
+        print_endline("Memory region starting at " ^ bits_str(region.base) ^
                       " is not above the end of the previous region starting at " ^
                       bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
         return false;
       };
-      let attributes = pma.attributes;
-      if attributes.cacheable & attributes.coherent then {
+
+      if not(check_pma_region(region)) then return false;
+
+      let attributes = region.attributes;
+      if attributes.mem_type == MainMemory & attributes.cacheable & attributes.coherent then {
         if check_opts.ziccamoa & attributes.atomic_support < AMOArithmetic then {
-          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
+          print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
           return false;
         };
         if check_opts.ziccamoc & attributes.atomic_support != AMOCASQ then {
-          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoc is enabled which requires AMOCASQ support.");
+          print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoc is enabled which requires AMOCASQ support.");
           return false;
         };
         if check_opts.ziccrse & attributes.reservability != RsrvEventual then {
-          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
+          print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
           return false;
         };
         if check_opts.ssccptr & not(attributes.supports_pte_read) then {
-          print_endline("Memory region starting at " ^ bits_str(pma.base) ^ " is coherent and cacheable without hardware page-table read support, but Ssccptr is enabled which requires this support.");
+          print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable without hardware page-table read support, but Ssccptr is enabled which requires this support.");
           return false;
         };
       };
 
       let found_valid_svadu_pma = found_valid_svadu_pma | (attributes.supports_pte_write & attributes.reservability == RsrvEventual);
 
-      check_pma_regions(rest, pma.base, pma.size, check_opts, found_valid_svadu_pma)
+      check_pma_regions(rest, region.base, region.size, check_opts, found_valid_svadu_pma)
     },
   }
 
 // Return true iff [addr, addr+size) is fully contained in a single configured PMA memory region.
-function dtb_within_configured_pma_memory(addr : bits(64), size : bits(64)) -> bool =
-  is_some(matching_pma_bits_range(pma_regions, addr, size))
+private function dtb_within_configured_pma_memory(addr : bits(64), size : bits(64)) -> bool =
+  is_some(matching_pma_region_bits_range(pma_regions, addr, size))
 
 // Check that all memory regions are sorted and don't overlap, and that PMAs are compatible with enabled extensions.
 private function check_mem_layout() -> bool =
