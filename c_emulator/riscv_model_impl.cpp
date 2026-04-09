@@ -136,31 +136,32 @@ unit ModelImpl::trap_callback(bool is_interrupt, fbits cause) {
 unit ModelImpl::ptw_start_callback(
   uint64_t vpn,
   hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-  hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+  hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege,
+  bool is_pure_lookup
 ) {
   for (auto c : m_callbacks) {
-    c->ptw_start_callback(*this, vpn, access_type, privilege);
+    c->ptw_start_callback(*this, vpn, access_type, privilege, is_pure_lookup);
   }
   return UNIT;
 }
 
-unit ModelImpl::ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte) {
+unit ModelImpl::ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte, bool is_pure_lookup) {
   for (auto c : m_callbacks) {
-    c->ptw_step_callback(*this, level, pte_addr, pte);
+    c->ptw_step_callback(*this, level, pte_addr, pte, is_pure_lookup);
   }
   return UNIT;
 }
 
-unit ModelImpl::ptw_success_callback(uint64_t final_ppn, int64_t level) {
+unit ModelImpl::ptw_success_callback(uint64_t final_ppn, int64_t level, bool is_pure_lookup) {
   for (auto c : m_callbacks) {
-    c->ptw_success_callback(*this, final_ppn, level);
+    c->ptw_success_callback(*this, final_ppn, level, is_pure_lookup);
   }
   return UNIT;
 }
 
-unit ModelImpl::ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr) {
+unit ModelImpl::ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr, bool is_pure_lookup) {
   for (auto c : m_callbacks) {
-    c->ptw_fail_callback(*this, error_type, level, pte_addr);
+    c->ptw_fail_callback(*this, error_type, level, pte_addr, is_pure_lookup);
   }
   return UNIT;
 }

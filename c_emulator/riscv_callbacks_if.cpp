@@ -96,7 +96,8 @@ void callbacks_if::ptw_start_callback(
   [[maybe_unused]] hart::Model &model,
   [[maybe_unused]] uint64_t vpn,
   [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-  [[maybe_unused]] hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+  [[maybe_unused]] hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege,
+  [[maybe_unused]] bool is_pure_lookup
 ) {
 }
 
@@ -104,14 +105,16 @@ void callbacks_if::ptw_step_callback(
   [[maybe_unused]] hart::Model &model,
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] sbits pte_addr,
-  [[maybe_unused]] uint64_t pte
+  [[maybe_unused]] uint64_t pte,
+  [[maybe_unused]] bool is_pure_lookup
 ) {
 }
 
 void callbacks_if::ptw_success_callback(
   [[maybe_unused]] hart::Model &model,
   [[maybe_unused]] uint64_t final_ppn,
-  [[maybe_unused]] int64_t level
+  [[maybe_unused]] int64_t level,
+  [[maybe_unused]] bool is_pure_lookup
 ) {
 }
 
@@ -119,6 +122,7 @@ void callbacks_if::ptw_fail_callback(
   [[maybe_unused]] hart::Model &model,
   [[maybe_unused]] hart::zPTW_Error error_type,
   [[maybe_unused]] int64_t level,
-  [[maybe_unused]] sbits pte_addr
+  [[maybe_unused]] sbits pte_addr,
+  [[maybe_unused]] bool is_pure_lookup
 ) {
 }
