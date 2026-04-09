@@ -20,8 +20,6 @@
 //
 // The external API of this module is:
 //
-//   check_misaligned - checks for the alignment of a virtual address given platform settings
-//
 //   vmem_read        - reads data of the specified width
 //   vmem_write       - writes a specified data payload
 
@@ -38,9 +36,19 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 // This is an external option that returns an integer N, such that
 // when N is greater than zero, misaligned accesses to physical memory
 // (as atomic events) are allowed provided the access occurs within a
-// naturally aligned 2^N byte region.  This region must be smaller than
-// the page size (i.e. 2^12 = 4096 bytes).
-let sys_misaligned_allowed_within_exp : range(0, 11) = config memory.misaligned.allowed_within_exp
+// naturally aligned 2^N byte region. If the access spans more than one of these
+// regions it will be split into multiple memory operations.
+// For the current implementation this region must not be more than the page
+// size (i.e. 2^12 = 4096 bytes) so that accesses that span discontiguously
+// mapped pages work correctly.
+//
+// This is an over-constraint: it isn't necessary when virtual memory isn't
+// enabled, or for contiguously mapped pages, and in fact a memory operation
+// itself can be discontiguous, so even an access spanning discontiguously
+// mapped pages could still result in one memory operation.
+// However limiting this to 2^12 is an easy way to ensure that accesses
+// spanning pages always work.
+let sys_misaligned_allowed_within_exp : range(0, 12) = config memory.misaligned.allowed_within_exp
 
 // Check if an 'n byte access for an address is within an aligned 2^'r byte region
 private val access_within : forall 'width 'n ('r : Nat), 'r <= 'width & 1 <= 'n <= 2^'r.
@@ -108,28 +116,24 @@ function misaligned_order(n) = {
 
 // External API
 
-function check_misaligned(vaddr : virtaddr, width : word_width) -> bool = {
-  if plat_enable_misaligned_access then {
-    false
-  } else {
-    not(is_aligned_addr(vaddr, width))
-  }
-}
-
 val vmem_read_addr : forall 'width, is_mem_width('width).
-  (virtaddr, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
+  (virtaddr, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
-function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
-  // TODO: Rationalize to use a single alignment definition if possible.
-  if res then {
-    // "LR faults like a normal load, even though it's in the AMO major opcode space."
-    // - Andrew Waterman, isa-dev, 10 Jul 2018.
-    if   not(is_aligned_addr(vaddr, width))
-    then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
-  } else {
-    if check_misaligned(vaddr, width)
-    then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
+function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
+  // "LR faults like a normal load, even though it's in the AMO major opcode space."
+  // - Andrew Waterman, isa-dev, 10 Jul 2018.
+  if not(is_aligned_addr(vaddr, width)) then {
+    // LR/SC must always be aligned. Returning a misaligned exception indicates
+    // that the access can be emulated (the OS/firmware can transparently break
+    // it down into multiple aligned accesses) which isn't the case for LR/SC
+    // in normal implementations.
+    if res then return Err(Memory_Exception(vaddr, E_Load_Access_Fault()));
+    // This models CPUs that don't support any misaligned access at all.
+    // Even if the CPU does support misaligned accesses, it might be that the PMA doesn't support
+    // misaligned accesses so you can still get a fault later, but this will
+    // be after address translation.
+    if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
   };
 
   // If the load is misaligned or an allowed misaligned access, split into `n`
@@ -149,7 +153,7 @@ function vmem_read_addr(vaddr, offset, width, access, aq, rl, res) = {
     match translateAddr(Virtaddr(vaddr), access) {
       Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
-      Ok(paddr, _) => match mem_read(access, paddr, bytes, aq, rl, res) {
+      Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, bytes, aq, rl, res) {
         Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
 
         Ok(v) => {
@@ -180,8 +184,11 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
-  if   check_misaligned(vaddr, width)
-  then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+  // See comments in vmem_read_addr for an explanation of this check.
+  if not(is_aligned_addr(vaddr, width)) then {
+    if res then return Err(Memory_Exception(vaddr, E_SAMO_Access_Fault()));
+    if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+  };
 
   // If the store is misaligned or an allowed misaligned access, split into `n`
   // (single-copy-atomic) memory operations, each of `bytes` width. If the store is
@@ -202,7 +209,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
       // NOTE: Currently, we only announce the effective address if address translation is successful.
       // This may need revisiting, particularly in the misaligned case.
-      Ok(paddr, _) => {
+      Ok(paddr, pbmt, _) => {
         // If res is true, the load should be aligned, and this loop should only execute once.
         assert(res == is_store_conditional(access));
         if res & not(match_reservation(bits_of(paddr))) then {
@@ -213,7 +220,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           // PMP region without write permissions raises a store
           // access-fault exception."
           let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, effPriv, paddr, bytes, true) {
+          match phys_access_check(access, pbmt, effPriv, paddr, bytes, true) {
             Some(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
             None()  => write_success = false,
           }
@@ -222,7 +229,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
           Ok(()) => {
             let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
-            match mem_write_value(paddr, bytes, write_value, aq, rl, res) {
+            match mem_write_value(paddr, bytes, write_value, access, pbmt, aq, rl, res) {
               Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
               Ok(s)  => write_success = write_success & s,
             }
@@ -256,7 +263,7 @@ function vmem_read(rs, offset, width, access, aq, rl, res) = {
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_read_addr(vaddr, offset, width, access, aq, rl, res)
+  vmem_read_addr(vaddr, width, access, aq, rl, res)
 }
 
 val vmem_write : forall 'width, is_mem_width('width).

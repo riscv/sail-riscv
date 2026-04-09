@@ -10,8 +10,6 @@
 
 function clause currentlyEnabled(Ext_Zicbom) = hartSupports(Ext_Zicbom)
 
-private function cbo_clean_flush_enabled(p : Privilege) -> bool = feature_enabled_for_priv(p, menvcfg[CBCFE][0], senvcfg[CBCFE][0])
-
 // *****************************************************************
 union clause instruction = ZICBOM : (cbop_zicbom, regidx)
 
@@ -53,7 +51,7 @@ private function cbop_priv_check(p: Privilege) -> checked_cbop = {
   let mCBIE : cbie = encdec_cbie(menvcfg[CBIE]);
   // TODO: check henvcfg after hypervisor is implemented
   let sCBIE : cbie = if   currentlyEnabled(Ext_S)
-                     then encdec_cbie(senvcfg[CBIE])
+                     then encdec_cbie(read_senvcfg()[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
   match (p, mCBIE, sCBIE) {
     (VirtualUser, _, _)       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
@@ -88,10 +86,10 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
       // equal to rs1, but pointer masking can change that.
       let vaddr_for_error = vaddr - negative_offset;
       match translateAddr(vaddr, access) {
-        Ok(paddr, _) => {
+        Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
           let ep = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, ep, paddr, cache_block_size, false) {
+          match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
             Some(e) => Memory_Exception(vaddr_for_error, e),
             // If there is no error, the model has no caches so there's no
             // more action required.
@@ -105,14 +103,20 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
 }
 
 function clause execute ZICBOM(CBO_CLEAN, rs1) =
-  if   cbo_clean_flush_enabled(cur_privilege)
-  then process_clean_inval(rs1, CBO_CLEAN)
-  else Illegal_Instruction()
+  // TODO: Pass read_henvcfg()[CBCFE] once henvcfg is implemented.
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], 0b0) {
+    FEATURE_ENABLED => process_clean_inval(rs1, CBO_CLEAN),
+    FEATURE_ILLEGAL => Illegal_Instruction(),
+    FEATURE_VIRTUAL => Virtual_Instruction(),
+  }
 
 function clause execute ZICBOM(CBO_FLUSH, rs1) =
-  if   cbo_clean_flush_enabled(cur_privilege)
-  then process_clean_inval(rs1, CBO_FLUSH)
-  else Illegal_Instruction()
+  // TODO: Pass read_henvcfg()[CBCFE] once henvcfg is implemented.
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], 0b0) {
+    FEATURE_ENABLED => process_clean_inval(rs1, CBO_FLUSH),
+    FEATURE_ILLEGAL => Illegal_Instruction(),
+    FEATURE_VIRTUAL => Virtual_Instruction(),
+  }
 
 function clause execute ZICBOM(CBO_INVAL, rs1) =
   match cbop_priv_check(cur_privilege) {

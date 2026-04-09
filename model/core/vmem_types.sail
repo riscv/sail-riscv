@@ -28,8 +28,7 @@ type ppn_bits('v), is_sv_mode('v) = bits(if 'v == 32 then 22 else 44)
 // Number of Virtual Page Number bits, depending on the virtual memory mode.
 type vpn_bits('v), is_sv_mode('v) = bits('v - pagesize_bits)
 
-// TODO: For Zicfiss, this enum will be extended with ShadowStack, and
-// for CHERI, this enum can be extended with Cap/Tagged.  This assumes
+// TODO: For CHERI, this enum can be extended with Cap/Tagged.  This assumes
 // that capabilities cannot be stored to the ShadowStack; this is
 // implied by CHERI and Zicfiss currently being incompatible.
 //
@@ -37,13 +36,19 @@ type vpn_bits('v), is_sv_mode('v) = bits('v - pagesize_bits)
 // handled by adding ShadowStack{Load,Store,Atomic} variants to
 // MemoryAccessType and removing the ShadowStack variant here.
 
-enum mem_payload = { Data }
+enum mem_payload = { Data, PageTableEntry, ShadowStack }
 
-mapping mem_payload_str : mem_payload <-> string = {
-  Data <-> "",
+mapping mem_payload_name : mem_payload <-> string = {
+  Data           <-> "Data",
+  PageTableEntry <-> "PageTableEntry",
+  ShadowStack    <-> "ShadowStack",
 }
 
-let default_write_acc : mem_payload = Data
+mapping mem_payload_str : mem_payload <-> string = {
+  Data            <-> "",
+  PageTableEntry  <-> "",
+  ShadowStack     <-> ".ss",
+}
 
 function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
   match access {
@@ -57,3 +62,45 @@ function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
   }
 
 overload to_str = {accessType_to_str}
+
+function is_shadow_stack_access(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    Load(ShadowStack)                   => true,
+    Store(ShadowStack)                  => true,
+    Atomic(_, ShadowStack, ShadowStack) => true,
+
+    InstructionFetch()                  => false,
+    Load(Data)                          => false,
+    Load(PageTableEntry)                => false,
+    LoadReserved(Data)                  => false,
+    Store(Data)                         => false,
+    Store(PageTableEntry)               => false,
+    StoreConditional(Data)              => false,
+    Atomic(_, Data, Data)               => false,
+    CacheAccess(_)                      => false,
+
+    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+  }
+
+function is_shadow_stack_amo(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    Atomic(_, ShadowStack, ShadowStack) => true,
+
+    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+
+    _                                   => false,
+  }
+
+// Memory attributes for Page-based Memory Types
+
+enum page_based_mem_type = { PBMT_PMA, PBMT_NC, PBMT_IO }
+
+mapping page_based_mem_type : bits(2) <-> page_based_mem_type = {
+  0b00 <-> PBMT_PMA,
+  0b01 <-> PBMT_NC,
+  0b10 <-> PBMT_IO,
+}

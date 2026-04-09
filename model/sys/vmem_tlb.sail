@@ -63,6 +63,15 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
   trunc(ppn | (vpn & levelMask))
 }
 
+function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type = {
+  // For RV32, this relies on the RV32 PTE being zero-extended
+  // and the default PBMT_PMA being encoded as zeros.  This is slower
+  // than storing the PBMT enum directly as a field, but less
+  // redundant.
+  let pte_ext = ext_bits_of_PTE(ent.pte);
+  page_based_mem_type(pte_ext[PBMT])
+}
+
 // 64 entries is based on benchmarks of Linux boots and is where
 // you stop seeing performance improvements.
 type num_tlb_entries_exp : Int = 6
@@ -140,6 +149,10 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 ) -> unit = {
   let shift = level * (if 'v == 32 then 10 else 9);
   let levelMask = ones(shift);
+  // Hash before masking so the entry lands in the index lookup_TLB will check.
+  // For superpages, the same entry is duplicated across multiple indices,
+  // one copy per 4KB page within the superpage that has been accessed.
+  let index = tlb_hash('v, vpn);
   // Clear bits below the level.
   let vpn = vpn & ~(zero_extend(levelMask));
   let ppn = ppn & ~(zero_extend(levelMask));
@@ -152,11 +165,6 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
                                  vpn       = sign_extend(vpn),
                                  ppn       = zero_extend(ppn)};
 
-  // Add the TLB entry. Note that this may be a super-page, but we still want
-  // to add it to the index corresponding to the page because that is how
-  // lookup_TLB looks it up. For superpages will just end up with the same
-  // TLB entry in multiple slots.
-  let index = tlb_hash('v, vpn);
   tlb[index] = Some(entry);
 }
 

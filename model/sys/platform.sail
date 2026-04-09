@@ -125,14 +125,17 @@ function clint_load(access, Physaddr(addr), width) = {
   }
 }
 
-private function clint_dispatch() -> unit = {
+private function clint_dispatch(mip_was_written : bool) -> unit = {
+  let old_mip = mip.bits;
   mip[MTI] = bool_to_bit(mtimecmp <=_u mtime);
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
     mip[STI] = bool_to_bit(stimecmp <=_u mtime);
   };
   if get_config_print_clint()
-  then print_log("clint mtime " ^ bits_str(mtime) ^ " (mip.MTI <- " ^ bits_str(mip[MTI]) ^
-    (if currentlyEnabled(Ext_Sstc) then ", mip.STI <- " ^ bits_str(mip[STI]) else "") ^ ")");
+  then print_log("clint mtime " ^ bits_str(mtime));
+  if old_mip != mip.bits | mip_was_written then {
+    csr_write_callback("mip", mip.bits);
+  };
 }
 
 private val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
@@ -142,43 +145,43 @@ function clint_store(Physaddr(addr), width, data) = {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mip.MSI <- " ^ bits_str(data[0..0]) ^ ")");
     mip[MSI] = [data[0]];
-    clint_dispatch();
+    clint_dispatch(true);
     Ok(true)
   } else if addr == MTIMECMP_BASE & 'n == 8 then {
     if   get_config_print_clint()
     then print_log("clint<8>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = zero_extend(64, data); // FIXME: Redundant zero_extend currently required by Lem backend
-    clint_dispatch();
+    clint_dispatch(false);
     Ok(true)
   } else if addr == MTIMECMP_BASE & 'n == 4 then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = vector_update_subrange(mtimecmp, 31, 0, zero_extend(32, data));  // FIXME: Redundant zero_extend currently required by Lem backend
-    clint_dispatch();
+    clint_dispatch(false);
     Ok(true)
   } else if addr == MTIMECMP_BASE_HI & 'n == 4 then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = vector_update_subrange(mtimecmp, 63, 32, zero_extend(32, data)); // FIXME: Redundant zero_extend currently required by Lem backend
-    clint_dispatch();
+    clint_dispatch(false);
     Ok(true)
   } else if addr == MTIME_BASE & 'n == 8 then {
     if   get_config_print_clint()
     then print_log("clint<8>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime = data;
-    clint_dispatch();
+    clint_dispatch(false);
     Ok(true)
   } else if addr == MTIME_BASE & 'n == 4 then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime[31 .. 0] = data;
-    clint_dispatch();
+    clint_dispatch(false);
     Ok(true)
   } else if addr == MTIME_BASE_HI & 'n == 4 then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime[63 .. 32] = data;
-    clint_dispatch();
+    clint_dispatch(false);
     Ok(true)
   } else {
     if   get_config_print_clint()
@@ -200,7 +203,7 @@ function tick_clock() -> unit = {
   then mcycle = mcycle + 1;
 
   mtime  = mtime  + 1;
-  clint_dispatch()
+  clint_dispatch(false)
 }
 
 // Basic terminal character I/O.
@@ -217,9 +220,9 @@ bitfield htif_cmd : bits(64) = {
 }
 
 // Current value of the HTIF tohost register.
-register htif_tohost : bits(64)
-register htif_done   : bool
-register htif_exit_code : bits(64)
+register htif_tohost : bits(64) = zeros()
+register htif_done : bool = false
+register htif_exit_code : bits(64) = zeros()
 
 // Applications sometimes write the lower 32-bit payload bytes without
 // writing the control bytes; this is seen in the riscv-tests suite.
@@ -229,8 +232,8 @@ register htif_exit_code : bits(64)
 // intervening write to the control bytes, we process the whole htif
 // command anyway.
 
-register htif_cmd_write : bits(1)
-register htif_payload_writes : bits(4)
+register htif_cmd_write : bits(1) = zeros()
+register htif_payload_writes : bits(4) = zeros()
 
 // Once a htif command has been processed, the port is reset.
 private function reset_htif () -> unit = {
@@ -350,16 +353,3 @@ function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, wid
   else if within_htif_writable(paddr, width)
   then htif_store(paddr, width, data)
   else Err(E_SAMO_Access_Fault())
-
-// Platform initialization and ticking.
-
-function init_platform() -> unit = {
-  htif_tohost = zeros();
-  htif_done   = false;
-  htif_exit_code = zeros();
-  htif_cmd_write = 0b0;
-  htif_payload_writes = zeros();
-}
-
-// Platform-specific wait-for-interrupt
-function platform_wfi() -> unit = ()

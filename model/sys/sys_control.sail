@@ -323,10 +323,13 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
+function make_sync_exception(e : ExceptionType, xtval : xlenbits) -> sync_exception =
+  struct { trap    = e,
+           excinfo = xtval_exception_value(e, xtval),
+           ext     = None() }
+
 function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = xtval_exception_value(e, xtval),
-                                    ext     = None() };
+  let t = make_sync_exception(e, xtval);
   set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
 }
 

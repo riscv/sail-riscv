@@ -26,9 +26,6 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
 let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_set_size_exp
 
-// whether the MMU should update dirty bits in PTEs
-let plat_enable_dirty_update : bool = config memory.translation.dirty_update
-
 // whether the platform supports misaligned accesses without trapping to M-mode. if false,
 // misaligned loads/stores are trapped to Machine mode.
 let plat_enable_misaligned_access : bool = config memory.misaligned.supported
@@ -38,6 +35,10 @@ let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base 
 let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
+
+// Maximum increment in the time CSR to wait for wait instructions.  This is not
+// used within the model but instead configures the external C++ harness.
+let max_wait_time : nat = config platform.max_time_to_wait
 
 // which exceptions write information into `xtval`
 let illegal_instruction_writes_xtval : bool = config base.xtval_nonzero.illegal_instruction
@@ -81,6 +82,11 @@ enum XenvcfgCbieReservedBehavior = {
   Xenvcfg_ClearPermissions,
 }
 
+enum XtvecModeReservedBehavior = {
+  Xtvec_Fatal,
+  Xtvec_Ignore,
+}
+
 enum RV32ZdinxOddRegisterReservedBehavior = {
   Zdinx_Fatal,
   Zdinx_Illegal,
@@ -90,4 +96,5 @@ let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = 
 let fcsr_rm_reserved_behavior : FcsrRmReservedBehavior = config base.reserved_behavior.fcsr_rm
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
+let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reserved_behavior.xtvec_mode
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register

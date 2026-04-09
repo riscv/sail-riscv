@@ -31,6 +31,7 @@ struct PTW_Output('v : Int), is_sv_mode('v) = {
   pte     : pte_bits('v),
   pteAddr : physaddr,
   level   : level_range('v),
+  pbmt    : page_based_mem_type,
   global  : bool,
 }
 
@@ -45,14 +46,42 @@ private function write_pte forall 'n, 'n in {4, 8} . (
   pte_size : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, false, false, false)
+  mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), PBMT_PMA, false, false, false)
+
+// Sscptr: Main memory supports page table read
+function clause currentlyEnabled(Ext_Ssccptr) = hartSupports(Ext_Ssccptr) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
 
 // Read a Page Table Entry.
 private function read_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
   pte_size : int('n),
 ) -> MemoryOpResult(bits(8 * 'n)) =
-  mem_read_priv(Load(Data), Supervisor, paddr, pte_size, false, false, false)
+  mem_read_priv(Load(PageTableEntry), PBMT_PMA, Supervisor, paddr, pte_size, false, false, false)
+
+// Update a PTE's A/D bits and write it to memory if needed.  This returns
+// * Ok(Some(pte)) if a write was needed and was successful. pte is the new value.
+// * Ok(None()) if no write was needed.
+// * Err(PTW_PTE_Needs_Update()) if a write was needed but is forbidden by the current state
+// * Err(PTW_No_Access()) if a write was needed and attempted but there was an error.
+private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . (
+  pteAddr : physaddr,
+  pteWidth : int('pte_width),
+  pte : bits('pte_width * 8),
+  access : MemoryAccessType(mem_payload),
+) -> result(option(bits('pte_width * 8)), PTW_Error) =
+  match update_PTE_Bits(pte, access) {
+    None()    => Ok(None()),
+    Some(pte) => // The PTE has new A/D bits.  If neither Svadu or Svade is supported,
+                 // the current default is to update the PTE.
+                 if (currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1)
+                   | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)))
+                 then match write_pte(pteAddr, pteWidth, pte) {
+                   Ok(_)  => Ok(Some(pte)),
+                   Err(_) => Err(PTW_No_Access()),
+                 } else {
+                   Err(PTW_PTE_Needs_Update())
+                 },
+  }
 
 // 'v is the virtual address size.
 private val pt_walk : forall 'v, is_sv_mode('v) . (
@@ -126,10 +155,10 @@ function pt_walk(
             // follow the pointer to walk next level (i.e., go to Step 2)
             pt_walk(sv_width, vpn, access, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
           else {
-              // level 0 PTE, but contains a pointer instead of a leaf
-              ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
-              Err(PTW_Invalid_PTE(), ext_ptw)
-            }
+            // level 0 PTE, but contains a pointer instead of a leaf
+            ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
+            Err(PTW_Invalid_PTE(), ext_ptw)
+          }
         } else {
           // Leaf PTE (Step 5 of VATP).
           let ppn_size_bits = if 'v == 32 then 10 else 9;
@@ -142,7 +171,7 @@ function pt_walk(
               return Err(PTW_Misaligned(), ext_ptw);
             };
           };
-          // Steps 6, 7 (TODO: shadow stack protection), 8 of VATP.
+          // Steps 6, 7 and 8 of VATP.
           match check_PTE_permission(access, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, pte_failure) => {
               ptw_fail_callback(ext_get_ptw_error(pte_failure), level, bits_of(pte_addr));
@@ -150,16 +179,29 @@ function pt_walk(
             },
             PTE_Check_Success(ext_ptw) => {
               let ppn = if level > 0 then {
+                // NAPOT PTEs are currently reserved for level > 0.
+                if pte_ext[N] == 0b1 then return Err(PTW_Invalid_PTE(), ext_ptw);
+
                 // Compose final PA in superpage:
                 // Superpage PPN @ lower VPNs @ page-offset
                 let low_bits = ppn_size_bits * level;
                 ppn[length(ppn) - 1 .. low_bits] @ vpn[low_bits - 1 .. 0]
+              } else if currentlyEnabled(Ext_Svnapot) & pte_ext[N] == 0b1 then {
+                // Only 64K NAPOT PTEs are valid.
+                let pte_napot_bits = 4;
+                if ppn[pte_napot_bits - 1 .. 0] != 0b1000
+                then return Err(PTW_Invalid_PTE(), ext_ptw);
+
+                [ppn with (pte_napot_bits - 1) .. 0 = vpn[pte_napot_bits - 1 .. 0]]
               } else {
                 ppn
               };
+
+              let pbmt = if menvcfg[PBMTE] == 0b0 then PBMT_PMA else page_based_mem_type(pte_ext[PBMT]);
+
               ptw_success_callback(zero_extend(ppn), level);
 
-              Ok(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, global=global}, ext_ptw)
+              Ok(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, pbmt=pbmt, global=global}, ext_ptw)
             }
           }
         }
@@ -218,7 +260,7 @@ private function translationMode(priv : Privilege) -> SATPMode = {
 
 // Result of address translation
 
-type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, ext_ptw), ('failure, ext_ptw))
+type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, page_based_mem_type, ext_ptw), ('failure, ext_ptw))
 
 // This function can be ignored on first reading since TLBs are not
 // part of RISC-V architecture spec (see TLB NOTE above).
@@ -247,24 +289,20 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
     PTE_Check_Failure(ext_ptw, pte_failure) =>
       Err(ext_get_ptw_error(pte_failure), ext_ptw),
     PTE_Check_Success(ext_ptw) =>
-      match update_PTE_Bits(pte, access) {
-        None()     => Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw),
-        Some(pte') =>
-          // Step 9 of VATP. See platform.sail.
-          if not(plat_enable_dirty_update) then
-            // pte needs dirty/accessed update but that is not enabled
-            Err(PTW_PTE_Needs_Update(), ext_ptw)
-          else {
-            // Writeback the PTE (which has new A/D bits)
-            write_TLB(tlb_index, tlb_set_pte(ent, pte'));
-            match write_pte(ent.pteAddr, pte_size, pte') {
-              Ok(_)  => (),
-              Err(_) => internal_error(__FILE__, __LINE__,
-                                       "invalid physical address in TLB")
-            };
-            Ok(tlb_get_ppn(sv_width, ent, vpn), ext_ptw)
-          }
-      }
+      // Step 9 of VATP.
+      match update_and_write_pte(ent.pteAddr, pte_size, pte, access) {
+        Ok(Some(pte)) => {
+          // Writeback the PTE (which has new A/D bits).
+          write_TLB(tlb_index, tlb_set_pte(ent, pte));
+          Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw)
+        },
+        Ok(None()) => Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw),
+        Err(PTW_PTE_Needs_Update()) => Err(PTW_PTE_Needs_Update(), ext_ptw),
+        Err(e) => {
+          let paddr : bits(64) = zero_extend(bits_of(ent.pteAddr));
+          internal_error(__FILE__, __LINE__, "error writing TLB PTE to physical address " ^ bits_str(paddr) ^ ": " ^ to_str(e))
+        },
+      },
   }
 }
 
@@ -288,34 +326,26 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
                            base_ppn, initial_level, false, ext_ptw);
   match ptw_result {
     Err(f, ext_ptw) => Err(f, ext_ptw),
-    Ok(struct {ppn, pte, pteAddr, level, global}, ext_ptw) => {
+    Ok(struct {ppn, pte, pteAddr, level, pbmt, global}, ext_ptw) => {
       let ext_pte = ext_bits_of_PTE(pte);
-      // Without TLBs, this 'match' expression can be replaced simply
-      // by: 'Ok(ppn, ext_ptw)'    (see TLB NOTE above)
-      match update_PTE_Bits(pte, access) {
-        None() => {
-          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
-          Ok(ppn, ext_ptw)
+
+      // Step 9 of VATP.
+      match update_and_write_pte(pteAddr, pte_size, pte, access) {
+        Ok(Some(new_pte)) => {
+          // Writeback the PTE (which has new A/D bits).
+          add_to_TLB(sv_width, asid, vpn, ppn, new_pte, pteAddr, level, global);
+          Ok(ppn, pbmt, ext_ptw)
         },
-        Some(pte) =>
-          // Step 9 of VATP. See platform.sail.
-          if not(plat_enable_dirty_update) then
-            // pte needs dirty/accessed update but that is not enabled
-            Err(PTW_PTE_Needs_Update(), ext_ptw)
-          else {
-            // Writeback the PTE (which has new A/D bits)
-            match write_pte(pteAddr, pte_size, pte) {
-              Ok(_) => {
-                add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
-                Ok(ppn, ext_ptw)
-              },
-              Err(_) =>
-                Err(PTW_No_Access(), ext_ptw)
-            }
-          }
-        }
+        Ok(None()) => {
+          // There was no change in the PTE, but it still needs to be added
+          // to the TLB due to the TLB miss.
+          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
+          Ok(ppn, pbmt, ext_ptw)
+        },
+        Err(e) => Err(e, ext_ptw),
       }
-    }
+    },
+  }
 }
 
 // Mapping the SATPMode to the width integer. Note there is also SvBare
@@ -373,7 +403,16 @@ function translateAddr(
 
   let mode = translationMode(effPriv);
 
-  if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), init_ext_ptw);
+  // "If satp.MODE (or vsatp.MODE when V=1) is set to Bare and the
+  // effective privilege mode is less than M, shadow stack
+  // instructions raise a store/AMO access-fault exception."
+  // "Use of Zicfiss in M-mode is not supported."
+  if is_shadow_stack_access(access) then {
+    if (mode == Bare & effPriv != Machine) | effPriv == Machine
+    then return Err(E_SAMO_Access_Fault(), init_ext_ptw);
+  };
+
+  if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), PBMT_PMA, init_ext_ptw);
 
   // Sv39 -> 39, etc.
   let sv_width = satp_mode_width(mode);
@@ -403,7 +442,7 @@ function translateAddr(
                         init_ext_ptw);
     // Fixup result PA or exception
     match res {
-      Ok(ppn, ext_ptw) => {
+      Ok(ppn, pbmt, ext_ptw) => {
         // Step 10 of VATP.
         // Append the page offset. This is now a 34 or 56 bit address.
         let paddr = ppn @ bits_of(vAddr)[pagesize_bits - 1 .. 0];
@@ -411,7 +450,7 @@ function translateAddr(
         // On RV64 paddr can be 34 or 56 bits, so we zero extend to 64.
         // On RV32 paddr can only be 34 bits. Sail knows this due to
         // the assertion above.
-        Ok(Physaddr(zero_extend(paddr)), ext_ptw)
+        Ok(Physaddr(zero_extend(paddr)), pbmt, ext_ptw)
       },
       Err(f, ext_ptw)  => Err(translationException(access, f), ext_ptw)
     }

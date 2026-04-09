@@ -28,7 +28,6 @@ depends: [
   "sail_sv_backend" {>= "0.20.1"}
   "sail_ocaml_backend" {>= "0.20.1"}
   "sail_output" {>= "0.20.1"}
-  "sail_manifest" {>= "0.20.1"}
   "coq-sail-stdpp" {>= "0.20.1"}
   "conf-cmake"
 ]

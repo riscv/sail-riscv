@@ -136,7 +136,11 @@ For booting operating system images, see the information under the
 - Zicond extension for integer conditional operations, v1.0
 - Zic64b extension for Cache block size is 64 bytes, v1.0
 - Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
+- Ziccamoa extension for Main memory supports all atomics in Zaamo, v1.0
+- Ziccamoc extension for Main memory supports atomics in Zacas, v1.0
+- Ziccrse extension for Main memory regions with both the cacheability and coherence PMAs must support RsrvEventual, v1.0
 - Zicfilp extension for Landing Pad Control Flow Integrity, v1.0
+- Zicfiss extension for Shadow Stack Control Flow Integrity, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
 - Zihintpause extension for Pause Hint, v2.0
@@ -187,6 +191,8 @@ For booting operating system images, see the information under the
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
+- Ssccptr extension for Main memory supports hardware page table reads, v1.0
+- Sscounterenw extension for writable enables for any supported counter, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Ssqosid extension for Quality-of-Service (QoS) Identifiers, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
@@ -194,9 +200,14 @@ For booting operating system images, see the information under the
 - Sstvecd extension for Direct mode support in `stvec.MODE`, v1.0
 - Ssu64xl extension to ensure `sstatus.UXL` is capable of supporting UXLEN=64, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
+- Svadu extension for Hardware Updating of A/D Bits, Version 1.0
+- Svade extension for Raise exceptions on improper A/D bits, Version 1.0
 - Svbare extension for Bare mode virtual-memory translation
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
+- Svnapot extension for NAPOT Translation Contiguity, v1.0
+- Svpbmt extension for Page-Based Memory Types, v1.0
 - Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
+- Svvptc extension for Obviating Memory-management Instructions after Marking PTEs valid, v1.0
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 
@@ -319,7 +330,7 @@ specification written in Bluespec SystemVerilog.
 
 The ISA model is integrated with the operational model of the RISC-V
 relaxed memory model, RVWMO (as described in an appendix of the [RISC-V
-user-level specification](https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/)),
+user-level specification](https://docs.riscv.org/reference/isa/unpriv/mm-eplan.html))
 which is one of the reference models used
 in the development of the RISC-V concurrency architecture; this is
 part of the [RMEM](http://www.cl.cam.ac.uk/users/pes20/rmem) tool.

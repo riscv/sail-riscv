@@ -18,7 +18,12 @@ union ExecutionResult = {
   Retire_Success                 : unit,
 
   // The instruction is a compressed instruction, and should be
-  // executed as an uncompressed instruction.
+  // executed as an uncompressed instruction. This can be used
+  // for non-compressed instructions too but we only support
+  // one level of indirection. This avoids making the execute()
+  // function recursive, which is helpful for some backends,
+  // and allows Sail to generate faster C/C++ code by avoiding
+  // reallocation.
   ExecuteAs                      : instruction,
 
   // An instruction such as WFI, WRS.{STO,NTO}

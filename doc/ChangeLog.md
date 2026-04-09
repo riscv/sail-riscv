@@ -1,7 +1,56 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - PMAs now have an additional `atomic_support` attribute for the level
+    of atomicity supported in the memory region; see `memory.regions`.
+  - Writable bits of the `scounteren` CSR can now be specified;
+    see `base.scounteren_writable_bits`.
+  - The time limit that wait instructions (e.g. WFI, WRS.NTO, WRS.STO)
+    can wait for is now configurable; see `platform.max_time_to_wait`
+    (see also https://github.com/riscv/sail-riscv/issues/1564). The
+    default setting for `platform.wfi_is_nop` was also changed from
+    `true` to `false`.
+  - The `dirty_update` attribute of `memory.translation` has been removed,
+    since the behavior that attribute configured can now be modeled
+    using the Svadu and Svade extensions. When neither of these extensions
+    are configured as supported, the model defaults to a hardware update of
+    the PTE.
+
+- The following extensions have been added:
+  - Ziccamoa
+  - Ziccamoc
+  - Ziccrse
+  - Zicfiss
+  - Ssccptr
+  - Sscounterenw
+  - Svade
+  - Svadu
+  - Svnapot
+  - Svpbmt
+  - Svvptc
+
+- D, A, U and other bits that are reserved in non-leaf PTEs now raise a page-fault exception.
+  This is a backwards incompatible change, and is required since version 1.12 (also known as version 20211203)
+  of the privileged specification.
+
+- A `--rv32` command line option has been added to use a default RV32
+  configuration. This allows emulating RV32 binaries without needing
+  to point to a specific RV32 configuration file. This option cannot
+  be used with the `--config` option.
+
+- A Mac ARM binary release is now available.
+
+- Performance improvements:
+  - https://github.com/riscv/sail-riscv/pull/1643 : Superpage TLB entries
+    were inserted at the wrong index, causing a full page table walk on every
+    access within a superpage. This has been fixed, with significant performance
+    improvements for superpage-heavy workloads (e.g. Linux boot time reduced
+    by ~71%).
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in the execution trace
+  - https://github.com/riscv/sail-riscv/issues/1560 : Updates to `mip` were not captured in the trace file
+  - https://github.com/riscv/sail-riscv/issues/1574 : Misaligned store-conditionals didn't raise a misaligned address exception
 
 - The following unratified extensions have been added:
   - Zvfbfa

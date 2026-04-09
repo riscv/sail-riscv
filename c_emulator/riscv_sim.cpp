@@ -126,6 +126,7 @@ struct CLIOptions {
   bool do_validate_config = false;
   bool do_print_isa = false;
 
+  bool use_rv32_default = false;
   std::string config_file;
   std::vector<std::string> config_overrides;
   std::string term_log;
@@ -143,7 +144,10 @@ struct CLIOptions {
 #endif
 
   bool config_print_instr = false;
-  bool config_print_reg = false;
+  bool config_print_gpr = false;
+  bool config_print_fpr = false;
+  bool config_print_vreg = false;
+  bool config_print_csr = false;
   bool config_print_mem_access = false;
   bool config_print_clint = false;
   bool config_print_exception = false;
@@ -164,11 +168,6 @@ static CLIOptions parse_cli(int argc, char **argv) {
   CLI::App app("Sail RISC-V Model");
   argv = app.ensure_utf8(argv);
 
-  if (argc == 1) {
-    fprintf(stdout, "%s\n", app.help().c_str());
-    exit(EXIT_FAILURE);
-  }
-
   CLIOptions opts;
 
   app.add_flag("--show-times", opts.do_show_times, "Show execution times");
@@ -185,13 +184,17 @@ static CLIOptions parse_cli(int argc, char **argv) {
     "Enable experimental extensions"
   );
   app.add_flag("--use-abi-names", opts.config_use_abi_names, "Use ABI register names in trace log");
+  app.add_flag("--rv32", opts.use_rv32_default, "Use the default RV32 configuration");
 
   app.add_option("--device-tree-blob", opts.dtb_file, "Device tree blob file")
     ->check(CLI::ExistingFile)
     ->option_text("<file>");
   app.add_option("--terminal-log", opts.term_log, "Terminal log output file")->option_text("<file>");
   app.add_option("--test-signature", opts.sig_file, "Test signature file")->option_text("<file>");
-  app.add_option("--config", opts.config_file, "Configuration file")->check(CLI::ExistingFile)->option_text("<file>");
+  app.add_option("--config", opts.config_file, "Configuration file")
+    ->check(CLI::ExistingFile)
+    ->option_text("<file>")
+    ->excludes("--rv32");
   app
     .add_option(
       "--config-override",
@@ -215,7 +218,38 @@ static CLIOptions parse_cli(int argc, char **argv) {
 
   app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
   app.add_flag("--trace-ptw", opts.config_print_ptw, "Enable trace output for Page Table walk");
-  app.add_flag("--trace-reg", opts.config_print_reg, "Enable trace output for register access");
+  app.add_flag(
+    "--trace-gpr",
+    opts.config_print_gpr,
+    "Enable trace output for general purpose register reads and writes"
+  );
+  app.add_flag(
+    "--trace-fpr",
+    opts.config_print_fpr,
+    "Enable trace output for floating-point registers reads and writes"
+  );
+  app.add_flag("--trace-vreg", opts.config_print_vreg, "Enable trace output for vector register reads and writes");
+  app.add_flag("--trace-csr", opts.config_print_csr, "Enable trace output for CSR reads and writes");
+  app.add_flag_callback(
+    "--trace-arch-regs",
+    [&opts] {
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+    },
+    "Enable trace output for architectural register reads and writes (i.e. general purpose, floating-point, and "
+    "vector registers)"
+  );
+  app.add_flag_callback(
+    "--trace-reg",
+    [&opts] {
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+      opts.config_print_csr = true;
+    },
+    "Enable trace output for register access"
+  );
   app.add_flag("--trace-mem", opts.config_print_mem_access, "Enable trace output for memory accesses");
   app.add_flag("--trace-rvfi", opts.config_print_rvfi, "Enable trace output for RVFI");
   app.add_flag("--trace-clint", opts.config_print_clint, "Enable trace output for CLINT memory accesses and status");
@@ -241,7 +275,10 @@ static CLIOptions parse_cli(int argc, char **argv) {
     "--trace-all",
     [&opts] {
       opts.config_print_instr = true;
-      opts.config_print_reg = true;
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+      opts.config_print_csr = true;
       opts.config_print_mem_access = true;
       opts.config_print_rvfi = true;
       opts.config_print_clint = true;
@@ -269,6 +306,11 @@ static CLIOptions parse_cli(int argc, char **argv) {
   std::size_t column_width = 45;
   app.get_formatter()->long_option_alignment_ratio(6.f / column_width);
   app.get_formatter()->column_width(column_width);
+
+  if (argc == 1) {
+    fprintf(stdout, "%s\n", app.help().c_str());
+    exit(EXIT_FAILURE);
+  }
 
   try {
     app.parse(argc, argv);
@@ -465,7 +507,10 @@ void flush_logs() {
 
 void run_sail(ModelImpl &model, const CLIOptions &opts) {
   bool is_waiting = false;
-  bool exit_wait = true;
+  // The emulator tick increments time by 1 at every step, so the number
+  // of steps to wait is equal to the needed increment in the time CSR.
+  uint64_t max_wait_steps = get_config_uint64({"platform", "max_time_to_wait"});
+  uint64_t wait_steps_remaining = 0;
 
   /* initialize the step number */
   mach_int step_no = 0;
@@ -496,7 +541,9 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      is_waiting = model.ztry_step(sail_step, exit_wait);
+      is_waiting = model.ztry_step(sail_step, wait_steps_remaining == 0);
+      KILL(sail_int)(&sail_step);
+
       if (model.have_exception) {
         model.print_current_exception();
         break;
@@ -504,9 +551,17 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
       if (opts.config_print_instr) {
         flush_logs();
       }
-      KILL(sail_int)(&sail_step);
       if (rvfi) {
         rvfi->send_trace(opts.config_print_rvfi);
+      }
+      if (is_waiting) {
+        if (wait_steps_remaining == 0) {
+          wait_steps_remaining = max_wait_steps;
+        } else {
+          --wait_steps_remaining;
+        }
+      } else {
+        wait_steps_remaining = 0;
       }
     }
 
@@ -542,6 +597,8 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
 
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
+      model.ztick_clock(UNIT);
+    } else if (wait_steps_remaining > 0) {
       model.ztick_clock(UNIT);
     }
   }
@@ -589,7 +646,7 @@ int inner_main(int argc, char **argv) {
     return EXIT_SUCCESS;
   }
   if (opts.do_print_default_config) {
-    printf("%s", get_default_config());
+    printf("%s", opts.use_rv32_default ? get_default_rv32_config() : get_default_config());
     return EXIT_SUCCESS;
   }
   if (opts.do_print_config_schema) {
@@ -634,7 +691,7 @@ int inner_main(int argc, char **argv) {
   if (!opts.config_file.empty()) {
     config_json_string = read_file_to_string(opts.config_file);
   } else {
-    config_json_string = get_default_config();
+    config_json_string = opts.use_rv32_default ? get_default_rv32_config() : get_default_config();
   }
 
   // Check json config and merge overrides
@@ -695,15 +752,18 @@ int inner_main(int argc, char **argv) {
     return EXIT_SUCCESS;
   }
 
-  // If we get here, we need to have ELF files to run.
-  if (opts.elfs.empty()) {
+  // If we get here, we need to have ELF files to run (except in RVFI mode).
+  if (opts.elfs.empty() && !rvfi.has_value()) {
     fprintf(stderr, "No elf file provided.\n");
     return EXIT_FAILURE;
   }
 
   init_logs(opts);
   log_callbacks log_cbs(
-    opts.config_print_reg,
+    opts.config_print_gpr,
+    opts.config_print_fpr,
+    opts.config_print_vreg,
+    opts.config_print_csr,
     opts.config_print_mem_access,
     opts.config_print_ptw,
     opts.config_use_abi_names,
@@ -713,7 +773,7 @@ int inner_main(int argc, char **argv) {
 
   init_start = steady_clock::now();
 
-  if (rvfi) {
+  if (rvfi.has_value()) {
     if (!rvfi->setup_socket(opts.config_print_rvfi)) {
       return 1;
     }
@@ -725,13 +785,13 @@ int inner_main(int argc, char **argv) {
     write_dtb_to_rom(model, read_file(opts.dtb_file));
   }
 
-  const std::string &initial_elf_file = opts.elfs[0];
-  uint64_t entry = rvfi ? rvfi->get_entry() : load_sail(model, initial_elf_file, /*main_file=*/true);
+  uint64_t entry = rvfi.has_value() ? rvfi->get_entry() : load_sail(model, opts.elfs[0], /*main_file=*/true);
 
   fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
 
-  /* Load any additional ELF files into memory */
-  for (auto it = opts.elfs.cbegin() + 1; it != opts.elfs.cend(); it++) {
+  // Load any additional ELF files into memory. If RVFI was NOT used skip
+  // the first one because it was loaded above.
+  for (auto it = opts.elfs.cbegin() + (rvfi.has_value() ? 0 : 1); it != opts.elfs.cend(); it++) {
     fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
     (void)load_sail(model, *it, /*main_file=*/false);
   }

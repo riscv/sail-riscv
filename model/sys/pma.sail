@@ -31,6 +31,16 @@ enum AtomicSupport = {
   AMOCASQ,
 }
 
+function pma_atomicity_support_gt(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) > num_of_AtomicSupport(y)
+function pma_atomicity_support_lt(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) < num_of_AtomicSupport(y)
+function pma_atomicity_support_ge(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) >= num_of_AtomicSupport(y)
+function pma_atomicity_support_le(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) <= num_of_AtomicSupport(y)
+
+overload operator > = {pma_atomicity_support_gt}
+overload operator < = {pma_atomicity_support_lt}
+overload operator >= = {pma_atomicity_support_ge}
+overload operator <= = {pma_atomicity_support_le}
+
 mapping atomic_support_str : AtomicSupport <-> string = {
   AMONone       <-> "AMONone",
   AMOSwap       <-> "AMOSwap",
@@ -41,6 +51,17 @@ mapping atomic_support_str : AtomicSupport <-> string = {
   AMOCASQ       <-> "AMOCASQ",
 }
 overload to_str = {atomic_support_str}
+
+function pma_allows_atomic_op forall 'n, 0 < 'n <= max_mem_access . (pma : AtomicSupport, op : amoop, width : int('n)) -> bool =
+  match pma {
+    AMONone       => false,
+    AMOSwap       => op == AMOSWAP,
+    AMOLogical    => op == AMOSWAP | op == AMOAND | op == AMOOR | op == AMOXOR,
+    AMOArithmetic => op != AMOCAS,
+    AMOCASW       => op != AMOCAS | width <= 4,
+    AMOCASD       => op != AMOCAS | width <= 8,
+    AMOCASQ       => op != AMOCAS | width <= 16,
+  }
 
 enum Reservability = { RsrvNone, RsrvNonEventual, RsrvEventual }
 
@@ -80,16 +101,33 @@ struct PMA = {
   write_idempotent : bool,
   // Optionally cause an access/alignment fault on misaligned access.
   misaligned_fault : misaligned_fault,
-  // TODO: Atomicity PMA. This is not supported yet because
-  // the MemoryAccessType needs to be extended to indicate the AMO type.
-  // atomic_support   : AtomicSupport,
+  atomic_support   : AtomicSupport,
   reservability    : Reservability,
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
   // have this set.
   supports_cbo_zero : bool,
+  // Flags whether this memory supports hardware page table reads.
+  supports_pte_read : bool,
+  // Flags whether this memory supports hardware page table writes.
+  supports_pte_write : bool,
   // TODO: Misaligned Atomicity Granule PMA
   // TODO: Memory Ordering PMA
 }
+
+// A PMA can be overridden by page-based memory types.
+// TODO: specify alignment for IO regions.
+function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
+  match pbmt {
+    PBMT_PMA => pma,
+    // TODO: return a weakly-ordered PMA
+    PBMT_NC  => {pma with cacheable = false,
+                          read_idempotent = true,
+                          write_idempotent = true},
+    // TODO: return a strongly ordered PMA
+    PBMT_IO  => {pma with cacheable = false,
+                          read_idempotent = false,
+                          write_idempotent = false},
+  }
 
 // A region of memory and its Physical Memory Attributes.
 struct PMA_Region = {
@@ -131,10 +169,12 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.read_idempotent then " read-idempotent" else "") ^
   (if attr.write_idempotent then " write-idempotent" else "") ^
   " misaligned_fault:" ^ to_str(attr.misaligned_fault) ^
-  // TODO: Atomicity PMA.
-  // " " ^ to_str(attr.atomic_support) ^
+  " " ^ to_str(attr.atomic_support) ^
   " " ^ to_str(attr.reservability) ^
-  (if attr.supports_cbo_zero then " supports_cbo_zero" else "")
+  (if attr.supports_cbo_zero then " supports-cbo-zero" else "") ^
+  (if attr.supports_pte_read then " supports-pte-read" else "") ^
+  (if attr.supports_pte_write then " supports-pte-write" else "") ^
+  " "
 
 function pma_region_to_str(region : PMA_Region) -> string =
   "base: " ^ bits_str(region.base) ^ " size: " ^ bits_str(region.size)

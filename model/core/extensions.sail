@@ -94,6 +94,10 @@ function clause hartSupports(Ext_Zicboz) = config extensions.Zicboz.supported
 enum clause extension = Ext_Zicfilp
 mapping clause extensionName = Ext_Zicfilp <-> "zicfilp"
 function clause hartSupports(Ext_Zicfilp) = config extensions.Zicfilp.supported
+// Control-flow Integrity: Shadow Stack
+enum clause extension = Ext_Zicfiss
+mapping clause extensionName = Ext_Zicfiss <-> "zicfiss"
+function clause hartSupports(Ext_Zicfiss) = config extensions.Zicfiss.supported
 // Base Counters and Timers
 enum clause extension = Ext_Zicntr
 mapping clause extensionName = Ext_Zicntr <-> "zicntr"
@@ -243,6 +247,19 @@ function clause hartSupports(Ext_Zbkx) = config extensions.Zbkx.supported
 enum clause extension = Ext_Zbs
 mapping clause extensionName = Ext_Zbs <-> "zbs"
 function clause hartSupports(Ext_Zbs) = config extensions.Zbs.supported
+
+// Main memory supports all atomics in Zaamo
+enum clause extension = Ext_Ziccamoa
+mapping clause extensionName= Ext_Ziccamoa <-> "Ziccamoa"
+function clause hartSupports(Ext_Ziccamoa) = config extensions.Ziccamoa.supported
+// Main memory supports atomics in Zacas
+enum clause extension = Ext_Ziccamoc
+mapping clause extensionName= Ext_Ziccamoc <-> "Ziccamoc"
+function clause hartSupports(Ext_Ziccamoc) = config extensions.Ziccamoc.supported
+// Main memory supports forward progress on LR/SC sequences
+enum clause extension = Ext_Ziccrse
+mapping clause extensionName= Ext_Ziccrse <-> "Ziccrse"
+function clause hartSupports(Ext_Ziccrse) = config extensions.Ziccrse.supported
 
 // Scalar & Entropy Source Instructions: NIST Suite: AES Decryption
 enum clause extension = Ext_Zknd
@@ -426,10 +443,18 @@ mapping clause extensionName = Ext_Zvksg <-> "zvksg"
 function clause hartSupports(Ext_Zvksg) = hartSupports(Ext_Zvks) & hartSupports(Ext_Zvkg)
 function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 
+// Main memory supports page table reads
+enum clause extension = Ext_Ssccptr
+mapping clause extensionName = Ext_Ssccptr <-> "ssccptr"
+function clause hartSupports(Ext_Ssccptr) = config extensions.Ssccptr.supported
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
+// Support writeable enables for any supported counter
+enum clause extension = Ext_Sscounterenw
+mapping clause extensionName = Ext_Sscounterenw <-> "sscounterenw"
+function clause hartSupports(Ext_Sscounterenw) = config extensions.Sscounterenw.supported
 // Supervisor-mode view of the state-enable extension
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
@@ -470,6 +495,14 @@ enum clause extension = Ext_Sv57
 mapping clause extensionName = Ext_Sv57 <-> "sv57"
 function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool & (xlen == 64)
 
+// Raise exceptions on improper A/D bits
+enum clause extension = Ext_Svade
+mapping clause extensionName = Ext_Svade <-> "svade"
+function clause hartSupports(Ext_Svade) = config extensions.Svade.supported
+// Hardware Updating of A/D Bits
+enum clause extension = Ext_Svadu
+mapping clause extensionName = Ext_Svadu <-> "svadu"
+function clause hartSupports(Ext_Svadu) = config extensions.Svadu.supported
 // Fine-Grained Address-Translation Cache Invalidation
 enum clause extension = Ext_Svinval
 mapping clause extensionName = Ext_Svinval <-> "svinval"
@@ -477,15 +510,19 @@ function clause hartSupports(Ext_Svinval) = config extensions.Svinval.supported
 // NAPOT Translation Contiguity
 enum clause extension = Ext_Svnapot
 mapping clause extensionName = Ext_Svnapot <-> "svnapot"
-function clause hartSupports(Ext_Svnapot) = false // Not supported yet
+function clause hartSupports(Ext_Svnapot) = config extensions.Svnapot.supported : bool & (xlen == 64)
 // Page-Based Memory Types
 enum clause extension = Ext_Svpbmt
 mapping clause extensionName = Ext_Svpbmt <-> "svpbmt"
-function clause hartSupports(Ext_Svpbmt) = false // Not supported yet
+function clause hartSupports(Ext_Svpbmt) = config extensions.Svpbmt.supported : bool & (xlen == 64)
 // PTE Reserved-for-Software Bits 60-59
 enum clause extension = Ext_Svrsw60t59b
 mapping clause extensionName = Ext_Svrsw60t59b <-> "svrsw60t59b"
 function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.supported
+// Obviating Memory-management Instructions after Marking PTEs valid
+enum clause extension = Ext_Svvptc
+mapping clause extensionName = Ext_Svvptc <-> "svvptc"
+function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
@@ -540,6 +577,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvl128b => 0,
     Ext_Zvl32b => 0,
     Ext_Zvl64b => 0,
+    Ext_Zimop => 0,
 
     Ext_D => 1, // > Zicsr
     Ext_F => 1, // > Zicsr
@@ -555,12 +593,19 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     // Note: even though these match the default case, making them explicit to
     // annotate the chain of dependencies
+    Ext_Sscounterenw => 2, // > S
     Ext_Sv39 => 2, // > S
     Ext_Zfh => 2, // > F
     Ext_Zvbb => 2, // > Zve32x
     Ext_Zve32f => 2, // > Zve32x
     Ext_Zve64x => 2, // > Zve32x
+    Ext_Zcmop => 2, // > Zca
+    Ext_Zicfiss => 2, // > Zaamo
 
+    Ext_Ssccptr => 3, // > Sv39
+    Ext_Svnapot => 3, // > Sv39
+    Ext_Svpbmt => 3, // > Sv39
+    Ext_Svvptc => 3, // > Sv39
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh
     Ext_Zicfilp => 3, // > get_xLPE
@@ -612,7 +657,11 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicbom,
   Ext_Zicbop,
   Ext_Zicboz,
+  Ext_Ziccamoa,
+  Ext_Ziccamoc,
+  Ext_Ziccrse,
   Ext_Zicfilp,
+  Ext_Zicfiss,
   Ext_Zicntr,
   Ext_Zicond,
   Ext_Zicsr,
@@ -716,19 +765,22 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
+  Ext_Ssccptr,
   Ext_Sscofpmf,
+  Ext_Sscounterenw,
   Ext_Ssstateen,
   Ext_Ssqosid,
   Ext_Sstc,
   Ext_Sstvala,
   Ext_Sstvecd,
   Ext_Ssu64xl,
-  // Ext_Svade,
-  // Ext_Svadu,
+  Ext_Svade,
+  Ext_Svadu,
   Ext_Svinval,
   Ext_Svnapot,
   Ext_Svpbmt,
   Ext_Svrsw60t59b,
+  Ext_Svvptc,
 
   // Hypervisor extensions, ordered alphabetically.
 
