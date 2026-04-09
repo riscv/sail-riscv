@@ -60,8 +60,10 @@ public:
   virtual unit ptw_success_callback(uint64_t final_ppn, int64_t level);
   virtual unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr);
 
-  virtual unit tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, int64_t index);
-  virtual unit tlb_flush_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, int64_t index);
+  virtual unit tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index);
+  virtual unit tlb_flush_begin_callback(unit);
+  virtual unit tlb_flush_callback(uint64_t index);
+  virtual unit tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb);
 
   // Provides entropy for the scalar cryptography extension.
   virtual mach_bits plat_get_16_random_bits(unit);

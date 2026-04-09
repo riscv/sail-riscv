@@ -63,12 +63,12 @@ public:
   virtual void tlb_add_callback(
     hart::Model &model,
     hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-    int64_t index
+    uint64_t index
   );
 
-  virtual void tlb_flush_callback(
-    hart::Model &model,
-    hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-    int64_t index
-  );
+  virtual void tlb_flush_begin_callback(hart::Model &model);
+
+  virtual void tlb_flush_callback(hart::Model &model, uint64_t index);
+
+  virtual void tlb_flush_end_callback(hart::Model &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb);
 };

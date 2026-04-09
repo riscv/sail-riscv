@@ -81,11 +81,17 @@ type tlb_index_range = range(0, num_tlb_entries - 1)
 
 private register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
 
-val tlb_flush_callback = pure {cpp: "tlb_flush_callback"} : (vector(num_tlb_entries, option(TLB_Entry)), range(0, num_tlb_entries)) -> unit
-function tlb_flush_callback(_) = ()
-
 val tlb_add_callback = pure {cpp: "tlb_add_callback"} : (vector(num_tlb_entries, option(TLB_Entry)), range(0, num_tlb_entries)) -> unit
 function tlb_add_callback(_) = ()
+
+val tlb_flush_begin_callback = pure {cpp: "tlb_flush_begin_callback"} : unit -> unit
+function tlb_flush_begin_callback(_) = ()
+
+val tlb_flush_callback = pure {cpp: "tlb_flush_callback"} : (range(0, num_tlb_entries)) -> unit
+function tlb_flush_callback(_) = ()
+
+val tlb_flush_end_callback = pure {cpp: "tlb_flush_end_callback"} : (vector(num_tlb_entries, option(TLB_Entry))) -> unit
+function tlb_flush_end_callback(_) = ()
 
 // Indexed by the lowest bits of the VPN.
 function tlb_hash forall 'v, is_sv_mode('v) . (
@@ -177,12 +183,16 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 
 // Top-level TLB flush function
 // PUBLIC: invoked from SFENCE_VMA [extensions/I/insts_base.sail]
-function flush_TLB(asid : option(asidbits),
-                   addr : option(xlenbits)) -> unit = {
+function flush_TLB(asid : option(asidbits), addr : option(xlenbits)) -> unit = {
+  tlb_flush_begin_callback();
   foreach (i from 0 to (length(tlb) - 1)) {
     match tlb[i] {
       None()  => (),
-      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then { tlb[i] = None(); tlb_flush_callback(tlb, i)},
+      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then {
+        tlb[i] = None();
+        tlb_flush_callback(i)
+      },
     }
-  }
+  };
+  tlb_flush_end_callback(tlb);
 }

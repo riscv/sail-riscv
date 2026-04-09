@@ -109,15 +109,20 @@ unit PlatformInterface::ptw_fail_callback(
 
 unit PlatformInterface::tlb_add_callback(
   [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-  [[maybe_unused]] int64_t level
+  [[maybe_unused]] uint64_t level
 ) {
   return UNIT;
 }
 
-unit PlatformInterface::tlb_flush_callback(
-  [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-  [[maybe_unused]] int64_t level
-) {
+unit PlatformInterface::tlb_flush_begin_callback(unit) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_flush_callback([[maybe_unused]] uint64_t level) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_flush_end_callback([[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
   return UNIT;
 }
 

@@ -1,6 +1,8 @@
 #include "riscv_callbacks_log.h"
 #include "sail_riscv_model.h"
+#include <algorithm>
 #include <inttypes.h>
+#include <vector>
 
 log_callbacks::log_callbacks(
   bool config_print_gpr,
@@ -171,7 +173,7 @@ static void print_tlb(
   FILE *trace_log,
   hart::Model &model,
   hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-  int64_t index,
+  const std::vector<uint64_t> &indices,
   bool is_flush
 ) {
   fprintf(
@@ -190,6 +192,9 @@ static void print_tlb(
     tlb.len
   );
   for (size_t i = 0; i < tlb.len; i++) {
+    bool is_marked = std::find(indices.begin(), indices.end(), i) != indices.end();
+    const char *annotation = is_marked ? (is_flush ? "  <- x flushed" : "  <- + added") : "";
+
     const auto &entry = tlb.data[i];
     if (entry.kind == hart::Kind_zSomezIRTLB_EntryzK) {
       const auto &e = entry.variants.zSomezIRTLB_EntryzK;
@@ -205,7 +210,7 @@ static void print_tlb(
         e.zlevelMask,
         e.zppn,
         e.zpteAddr.bits,
-        (static_cast<int64_t>(i) == index) ? "  <- + added" : ""
+        annotation
       );
     } else {
       fprintf(
@@ -214,7 +219,7 @@ static void print_tlb(
         "     ║         ----    "
         "     ║%s\n",
         i,
-        (static_cast<int64_t>(i) == index) ? "  <- x flushed" : ""
+        annotation
       );
     }
   }
@@ -226,22 +231,30 @@ static void print_tlb(
   );
 }
 
-void log_callbacks::tlb_flush_callback(
-  hart::Model &model,
-  hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-  int64_t index
-) {
-  if (trace_log != nullptr && config_print_tlb) {
-    print_tlb(trace_log, model, tlb, index, true);
-  }
-}
-
 void log_callbacks::tlb_add_callback(
   hart::Model &model,
   hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-  int64_t index
+  uint64_t index
 ) {
   if (trace_log != nullptr && config_print_tlb) {
-    print_tlb(trace_log, model, tlb, index, false);
+    print_tlb(trace_log, model, tlb, {index}, false);
+  }
+}
+
+std::vector<uint64_t> pending_flush_indices;
+
+void log_callbacks::tlb_flush_begin_callback(hart::Model &model) {
+  pending_flush_indices.clear();
+}
+
+void log_callbacks::tlb_flush_callback(hart::Model &model, uint64_t index) {
+  if (config_print_tlb) {
+    pending_flush_indices.push_back(index);
+  }
+}
+
+void log_callbacks::tlb_flush_end_callback(hart::Model &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+  if (trace_log != nullptr && config_print_tlb && !pending_flush_indices.empty()) {
+    print_tlb(trace_log, model, tlb, pending_flush_indices, true);
   }
 }

@@ -44,13 +44,11 @@ public:
   void tlb_add_callback(
     hart::Model &model,
     hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-    int64_t index
+    uint64_t index
   ) override;
-  void tlb_flush_callback(
-    hart::Model &model,
-    hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-    int64_t index
-  ) override;
+  void tlb_flush_begin_callback(hart::Model &model) override;
+  void tlb_flush_callback(hart::Model &model, uint64_t index) override;
+  void tlb_flush_end_callback(hart::Model &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) override;
 
 private:
   bool config_print_gpr;
