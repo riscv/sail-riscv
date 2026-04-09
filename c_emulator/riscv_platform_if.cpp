@@ -131,6 +131,14 @@ unit PlatformInterface::plat_term_write(mach_bits) {
   return UNIT;
 }
 
+mach_bits PlatformInterface::plat_term_read(unit) {
+  return 0;
+}
+
+bool PlatformInterface::plat_uart_rx_valid(unit) {
+  return false;
+}
+
 bool PlatformInterface::sys_enable_experimental_extensions(unit) {
   return true;
 }
@@ -173,6 +181,10 @@ bool PlatformInterface::get_config_print_interrupt(unit) {
 }
 
 bool PlatformInterface::get_config_print_htif(unit) {
+  return false;
+}
+
+bool PlatformInterface::get_config_print_uart(unit) {
   return false;
 }
 
