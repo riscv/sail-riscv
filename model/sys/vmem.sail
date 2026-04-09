@@ -215,9 +215,19 @@ termination_measure pt_walk(_,_,_,_,_,_,_,level,_, _) = level
 // ****************************************************************
 // Architectural SATP CSR
 
+private function satp_accessible(priv : Privilege) -> bool =
+  match priv {
+    Machine           => hartSupports(Ext_S),
+    Supervisor        => mstatus[TVM]  == 0b0,
+    VirtualSupervisor => false /* TODO: hstatus[VTVM] == 0b0 */,
+    User              => false,
+    VirtualUser       => false,
+  }
+
 register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
-function clause is_CSR_accessible(0x180, priv, _) = currentlyEnabled(Ext_S) & not(priv == Supervisor & mstatus[TVM] == 0b1)
+function clause is_CSR_accessible(0x180, priv, _) = satp_accessible(priv)
+function clause is_CSR_exception_virtual(0x180, _, _) = true
 function clause read_CSR(0x180) = satp
 function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(Supervisor), satp, value); Ok(satp) }
 
