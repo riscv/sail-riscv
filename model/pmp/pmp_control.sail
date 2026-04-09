@@ -12,9 +12,11 @@
 private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_payload)) -> bool =
   match access {
     Load(Data)                    => ent[R] == 0b1,
+    Load(Vector)                  => ent[R] == 0b1,
     Load(PageTableEntry)          => ent[R] == 0b1,
     LoadReserved(Data)            => ent[R] == 0b1,
     Store(Data)                   => ent[W] == 0b1,
+    Store(Vector)                 => ent[W] == 0b1,
     Store(PageTableEntry)         => ent[W] == 0b1,
     StoreConditional(Data)        => ent[W] == 0b1,
     Atomic(_, Data, Data)         => ent[R] == 0b1 & ent[W] == 0b1,
