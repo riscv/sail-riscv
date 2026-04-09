@@ -274,7 +274,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag("--trace-step", opts.config_print_step, "Add a blank line between steps in the trace output");
 
   app.add_flag_callback(
-    "--trace-all",
+    "--trace",
     [&opts] {
       opts.config_print_instr = true;
       opts.config_print_gpr = true;
@@ -289,10 +289,8 @@ static CLIOptions parse_cli(int argc, char **argv) {
       opts.config_print_htif = true;
       opts.config_print_pma = true;
       opts.config_print_step = true;
-      opts.config_print_ptw = true;
-      opts.config_print_tlb = true;
     },
-    "Enable all trace output"
+    "Enable all trace output except TLB and PTW traces"
   );
 
   // All positional arguments are treated as ELF files.  All ELF files

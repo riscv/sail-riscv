@@ -192,8 +192,8 @@ static void print_tlb(
     tlb.len
   );
   for (size_t i = 0; i < tlb.len; i++) {
-    bool is_marked = std::find(indices.begin(), indices.end(), i) != indices.end();
-    const char *annotation = is_marked ? (is_flush ? "  <- x flushed" : "  <- + added") : "";
+    bool is_entry_selected = std::find(indices.begin(), indices.end(), i) != indices.end();
+    const char *annotation = is_entry_selected ? (is_flush ? "  <- flushed" : "  <- added") : "";
 
     const auto &entry = tlb.data[i];
     if (entry.kind == hart::Kind_zSomezIRTLB_EntryzK) {
