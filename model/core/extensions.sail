@@ -524,6 +524,11 @@ function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Double Trap
+enum clause extension = Ext_Smdbltrp
+mapping clause extensionName = Ext_Smdbltrp <-> "smdbltrp"
+function clause hartSupports(Ext_Smdbltrp) = config extensions.Smdbltrp.supported
+function clause currentlyEnabled(Ext_Smdbltrp) = hartSupports(Ext_Smdbltrp)
 // Machine-mode view of the state-enable extension
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"

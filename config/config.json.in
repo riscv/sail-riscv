@@ -530,6 +530,9 @@
     "Smcntrpmf": {
       "supported": true
     },
+    "Smdbltrp": {
+      "supported": true
+    },
     "Svbare": {
       "supported": true,
       "sfence_vma_illegal_if_svbare_only": true
