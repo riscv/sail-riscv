@@ -172,7 +172,7 @@ extensions {
         files extensions/Zcmt/zcmt_regs.sail
       }
       Zcmt_insts {
-        requires Zcmt_regs
+        requires I_insts, Zcmt_regs
         files extensions/Zcmt/zcmt_insts.sail
       }
     }
