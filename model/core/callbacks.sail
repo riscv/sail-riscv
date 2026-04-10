@@ -56,6 +56,9 @@ function redirect_callback(_) = ()
 val trap_callback = pure {cpp: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code) -> unit
 function trap_callback(_) = ()
 
+/// Called on xrets (mret <=> true, sret <=> false).
+val xret_callback = pure {cpp: "xret_callback"} : (/* is_mret */ bool) -> unit
+
 // Overloads for easier use of callbacks
 function csr_name_write_callback(name : string, value : xlenbits) -> unit = {
   let csr = csr_name_map(name);

@@ -49,6 +49,7 @@ public:
   virtual unit redirect_callback(sbits new_pc);
 
   virtual unit trap_callback(bool is_interrupt, fbits cause);
+  virtual unit xret_callback(bool is_mret);
 
   // Page table walk callbacks
   virtual unit ptw_start_callback(
