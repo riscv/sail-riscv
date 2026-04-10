@@ -171,7 +171,7 @@ extensions {
         files extensions/Zcmp/zcmp_types.sail
       }
       Zcmp_insts {
-        requires sys, Zcmp_types
+        requires sys, I_insts, Zcmp_types
         files extensions/Zcmp/zcmp_insts.sail
       }
     }

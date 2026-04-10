@@ -144,7 +144,7 @@ function clause execute (CMPP(cmop, rlist, spimm)) = {
 
   if cmop == CM_POPRETZ then X(a0) = zeros();
   X(sp) = new_sp;
-  if cmop == CM_POPRET | cmop == CM_POPRETZ then set_next_pc(X(ra));
+  if cmop == CM_POPRET | cmop == CM_POPRETZ then return jump_to([X(ra) with 0 = bitzero]);
   RETIRE_SUCCESS
 }
 
