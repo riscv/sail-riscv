@@ -60,7 +60,7 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   // If it is not 4-byte aligned and compressed instructions are
   // not enabled then raise an alignment exception.
   if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
-  then return Memory_Exception(Virtaddr(target), E_Fetch_Addr_Align());
+  then return memory_exception(Virtaddr(target), E_Fetch_Addr_Align());
 
   set_next_pc(target);
   RETIRE_SUCCESS
@@ -535,7 +535,7 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
-  let trap : ExceptionType = match cur_privilege {
+  let exc_type : ExceptionType = match cur_privilege {
     User              => E_U_EnvCall(),
     Supervisor        => E_S_EnvCall(),
     Machine           => E_M_EnvCall(),
@@ -543,11 +543,11 @@ function clause execute ECALL() = {
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
   let t : sync_exception = struct {
-    trap    = trap,
+    trap    = exc_type,
     excinfo = None(),
     ext     = None(),
   };
-  Trap(cur_privilege, CTL_TRAP(t), PC)
+  trap(t)
 }
 
 mapping clause assembly = ECALL() <-> "ecall"
@@ -603,10 +603,8 @@ union clause instruction = EBREAK : unit
 mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
-function clause execute EBREAK() = {
-  let trap = E_Breakpoint(Brk_Software);
-  Trap(cur_privilege, CTL_TRAP(make_sync_exception(trap, PC)), PC)
-}
+function clause execute EBREAK() =
+  trap(make_sync_exception(E_Breakpoint(Brk_Software), PC))
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 

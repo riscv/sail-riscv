@@ -128,12 +128,12 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
     // that the access can be emulated (the OS/firmware can transparently break
     // it down into multiple aligned accesses) which isn't the case for LR/SC
     // in normal implementations.
-    if res then return Err(Memory_Exception(vaddr, E_Load_Access_Fault()));
+    if res then return Err(memory_exception(vaddr, E_Load_Access_Fault()));
     // This models CPUs that don't support any misaligned access at all.
     // Even if the CPU does support misaligned accesses, it might be that the PMA doesn't support
     // misaligned accesses so you can still get a fault later, but this will
     // be after address translation.
-    if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_Load_Addr_Align()));
+    if not(plat_enable_misaligned_access) then return Err(memory_exception(vaddr, E_Load_Addr_Align()));
   };
 
   // If the load is misaligned or an allowed misaligned access, split into `n`
@@ -151,11 +151,10 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
     match translateAddr(Virtaddr(vaddr), access) {
-      Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+      Err(e, _) => return Err(memory_exception(Virtaddr(vaddr), e)),
 
       Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, bytes, aq, rl, res) {
-        Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
-
+        Err(e) => return Err(memory_exception(Virtaddr(vaddr), e)),
         Ok(v) => {
           if res then {
             load_reservation(bits_of(paddr), width)
@@ -186,8 +185,8 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
-    if res then return Err(Memory_Exception(vaddr, E_SAMO_Access_Fault()));
-    if not(plat_enable_misaligned_access) then return Err(Memory_Exception(vaddr, E_SAMO_Addr_Align()));
+    if res then return Err(memory_exception(vaddr, E_SAMO_Access_Fault()));
+    if not(plat_enable_misaligned_access) then return Err(memory_exception(vaddr, E_SAMO_Addr_Align()));
   };
 
   // If the store is misaligned or an allowed misaligned access, split into `n`
@@ -205,7 +204,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     let offset = i;
     let vaddr = vaddr + (offset * bytes);
     match translateAddr(Virtaddr(vaddr), access) {
-      Err(e, _) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+      Err(e, _) => return Err(memory_exception(Virtaddr(vaddr), e)),
 
       // NOTE: Currently, we only announce the effective address if address translation is successful.
       // This may need revisiting, particularly in the misaligned case.
@@ -221,16 +220,16 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           // access-fault exception."
           let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
           match phys_access_check(access, pbmt, effPriv, paddr, bytes, true) {
-            Some(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+            Some(e) => return Err(memory_exception(Virtaddr(vaddr), e)),
             None()  => write_success = false,
           }
         } else match mem_write_ea(paddr, bytes, aq, rl, res) {
-          Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+          Err(e) => return Err(memory_exception(Virtaddr(vaddr), e)),
 
           Ok(()) => {
             let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
             match mem_write_value(paddr, bytes, write_value, access, pbmt, aq, rl, res) {
-              Err(e) => return Err(Memory_Exception(Virtaddr(vaddr), e)),
+              Err(e) => return Err(memory_exception(Virtaddr(vaddr), e)),
               Ok(s)  => write_success = write_success & s,
             }
           }
