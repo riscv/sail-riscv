@@ -21,6 +21,7 @@
   - Ziccamoc
   - Ziccrse
   - Zicfiss
+  - Zcmt
   - Ssccptr
   - Sscounterenw
   - Svade
