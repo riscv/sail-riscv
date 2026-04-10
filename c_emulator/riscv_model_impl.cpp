@@ -133,6 +133,13 @@ unit ModelImpl::trap_callback(bool is_interrupt, fbits cause) {
   return UNIT;
 }
 
+unit ModelImpl::xret_callback(bool is_mret) {
+  for (auto c : m_callbacks) {
+    c->xret_callback(*this, is_mret);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::ptw_start_callback(
   uint64_t vpn,
   hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,

@@ -33,10 +33,19 @@
   This is a backwards incompatible change, and is required since version 1.12 (also known as version 20211203)
   of the privileged specification.
 
-- A `--rv32` command line option has been added to use a default RV32
-  configuration. This allows emulating RV32 binaries without needing
-  to point to a specific RV32 configuration file. This option cannot
-  be used with the `--config` option.
+- The emulator tries to detect potentially infinite trap loops using
+  the difference between the traps generated and `xret` instructions
+  executed by the hart. If such a potential loop is detected, the
+  emulator exits with an error. This detection is enabled by default,
+  and a command line option has been added to disable it (see below).
+
+- Updates to the CLI:
+  - A `--rv32` option has been added to use a default RV32
+    configuration. This allows emulating RV32 binaries without needing
+    to point to a specific RV32 configuration file. This option cannot
+    be used with the `--config` option.
+  - A `--disable-trap-loop-detection` option has been added to disable
+    the default detection of trap loops.
 
 - A Mac ARM binary release is now available.
 
