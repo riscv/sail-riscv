@@ -176,7 +176,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // "The same exception options [as AMOs in the A extension] apply if
   // the address is not naturally aligned."
   if not(is_aligned_addr(vaddr, width))
-  then return memory_exception(vaddr, E_SAMO_Access_Fault());
+  then return memory_exception(vaddr, E_SAMO_Addr_Align());
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Ok(addr, pbmt, _) => (addr, pbmt),
