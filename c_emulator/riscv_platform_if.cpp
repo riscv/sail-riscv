@@ -107,6 +107,25 @@ unit PlatformInterface::ptw_fail_callback(
   return UNIT;
 }
 
+unit PlatformInterface::tlb_add_callback(
+  [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  [[maybe_unused]] uint64_t level
+) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_flush_begin_callback(unit) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_flush_callback([[maybe_unused]] uint64_t level) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_flush_end_callback([[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+  return UNIT;
+}
+
 mach_bits PlatformInterface::plat_get_16_random_bits(unit) {
   return 0;
 }

@@ -157,6 +157,7 @@ struct CLIOptions {
   bool config_print_rvfi = false;
   bool config_print_step = false;
   bool config_print_ptw = false;
+  bool config_print_tlb = false;
 
   bool config_use_abi_names = false;
 
@@ -218,6 +219,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
 
   app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
   app.add_flag("--trace-ptw", opts.config_print_ptw, "Enable trace output for Page Table walk");
+  app.add_flag("--trace-tlb", opts.config_print_tlb, "Enable trace output for TLB adds and flushes");
   app.add_flag(
     "--trace-gpr",
     opts.config_print_gpr,
@@ -272,7 +274,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag("--trace-step", opts.config_print_step, "Add a blank line between steps in the trace output");
 
   app.add_flag_callback(
-    "--trace-all",
+    "--trace",
     [&opts] {
       opts.config_print_instr = true;
       opts.config_print_gpr = true;
@@ -287,9 +289,8 @@ static CLIOptions parse_cli(int argc, char **argv) {
       opts.config_print_htif = true;
       opts.config_print_pma = true;
       opts.config_print_step = true;
-      opts.config_print_ptw = true;
     },
-    "Enable all trace output"
+    "Enable all trace output except TLB and PTW traces"
   );
 
   // All positional arguments are treated as ELF files.  All ELF files
@@ -766,6 +767,7 @@ int inner_main(int argc, char **argv) {
     opts.config_print_csr,
     opts.config_print_mem_access,
     opts.config_print_ptw,
+    opts.config_print_tlb,
     opts.config_use_abi_names,
     trace_log
   );
