@@ -39,7 +39,7 @@
     to point to a specific RV32 configuration file. This option cannot
     be used with the `--config` option.
   - A new `--trace-tlb` option has been added to enable TLB specific trace output.
-  - The previous `--trace-all` option has been renamed to --trace.
+  - The previous `--trace-all` option has been renamed to `--trace`.
     `--trace` now enables all trace output except TLB and page table walker (PTW) traces.
 
 - A Mac ARM binary release is now available.
