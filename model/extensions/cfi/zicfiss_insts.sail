@@ -175,8 +175,22 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   // "The same exception options [as AMOs in the A extension] apply if
   // the address is not naturally aligned."
-  if not(is_aligned_addr(vaddr, width))
-  then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
+  if not(is_aligned_addr(vaddr, width)) then {
+    // Decide which exception to return.
+    if not(plat_enable_misaligned_access & plat_software_emulates_misaligned_atomics)
+    then return Memory_Exception(vaddr, E_SAMO_Access_Fault());
+    match translateAddr(vaddr, access) {
+      Ok(paddr, pbmt, _) => {
+        let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
+        match phys_access_check(access, pbmt, effPriv, paddr, width, true) {
+          None()  => return Memory_Exception(vaddr, E_SAMO_Addr_Align()),
+          Some(_) => (),
+        }
+      },
+      Err(_) => (),
+    };
+    return Memory_Exception(vaddr, E_SAMO_Access_Fault());
+  };
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Ok(addr, pbmt, _) => (addr, pbmt),

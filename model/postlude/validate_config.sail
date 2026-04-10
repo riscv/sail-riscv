@@ -465,6 +465,21 @@ private function check_stateen_config() -> bool = {
   valid
 }
 
+private function check_platform_config() -> bool = {
+  var valid : bool = true;
+  if not(config memory.misaligned.supported : bool) then {
+    if (config memory.misaligned.software_emulates_lrsc : bool) then {
+      valid = false;
+      print_endline("`memory.misaligned.software_emulates_lrsc` is enabled, but `memory.misaligned.supported` is disabled: enabling `software_emulates_lrsc` requires `memory.misaligned.supported` to be enabled.");
+    };
+    if (config memory.misaligned.software_emulates_atomics : bool) then {
+      valid = false;
+      print_endline("`memory.misaligned.software_emulates_atomics` is enabled, but `memory.misaligned.supported` is disabled: enabling `software_emulates_atomics` requires `memory.misaligned.supported` to be enabled.");
+    };
+  };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
@@ -475,4 +490,5 @@ function config_is_valid() -> bool = {
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
   & check_stateen_config()
+  & check_platform_config()
 }

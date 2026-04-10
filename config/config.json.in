@@ -103,8 +103,23 @@
     // checked before address translation. `misaligned_fault` in
     // `regions` is checked after address translation.
     "misaligned": {
-      // If this is false then all misaligned accesses will raise a misaligned exception.
+      // If this is false then all misaligned accesses will raise a misaligned exception
+      // and misaligned exceptions will have higher priority than page faults or access faults.
+      // If this is true, misaligned exceptions will have lower priority than page faults
+      // or access faults.
       "supported": true,
+      // If this is true (this requires `supported` above to be true), then
+      // misaligned LR/SC accesses that can complete will raise a
+      // misaligned exception so that software can emulate the access,
+      // otherwise they will raise an access fault.  This is false for
+      // most implementations.
+      "software_emulates_lrsc": false,
+      // If this is true (this requires `supported` above to be true), then
+      // misaligned atomic accesses that can complete will raise a
+      // misaligned exception so that software can emulate the access,
+      // otherwise they will raise an access fault.  This is false for
+      // most implementations.
+      "software_emulates_atomics": false,
       // Memory accesses that span multiple naturally aligned
       // 2^allowed_within_exp sized regions will be split into multiple
       // memory operations. 0 means all misaligned accesses will be split.
