@@ -104,7 +104,7 @@ extensions {
       files extensions/A/aext_types.sail
     }
     Zaamo {
-      requires core, sys, exceptions, A_types
+      requires core, sys, A_types
       files extensions/A/zaamo_insts.sail
     }
     Zalrsc {
@@ -404,7 +404,7 @@ extensions {
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
-      requires core, exceptions, sys, Zicbom_types
+      requires core, sys, Zicbom_types
       files extensions/Zicbom/zicbom_insts.sail
     }
   }
@@ -435,7 +435,7 @@ extensions {
   }
 
   Zicboz {
-    requires core, exceptions, sys
+    requires core, sys
     files extensions/Zicboz/zicboz_insts.sail
   }
 
