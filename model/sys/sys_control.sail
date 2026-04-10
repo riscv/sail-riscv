@@ -190,9 +190,9 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
   // zicfilp_preserve_elp_on_trap(). The spec is unclear for supervisor mode
   // but it seems likely the intention was for the trap to be redirected
   // to machine mode also without any other architectural state updates.
-  if hartSupports(Ext_Smdbltrp) then {
-    match del_priv {
-      Machine => {
+  match del_priv {
+    Machine => {
+      if currentlyEnabled(Ext_Smdbltrp) then {
         if mstatus[MDT] == 0b0
         then mstatus[MDT] = 0b1
         else {
@@ -200,9 +200,11 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
           // TODO: This should probably actually be a return from try_step() with
           // a special "double trap" result.
           assert(false, "Unexpected double trap in machine mode");
-        }
-      },
-      Supervisor => {
+        };
+      };
+    },
+    Supervisor => {
+      if currentlyEnabled(Ext_Ssdbltrp) then {
         if mstatus[SDT] == 0b0
         then mstatus[SDT] = 0b1
         else {
@@ -215,11 +217,11 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
           ].bits;
           return trap_handler(Machine, Exception(E_Double_Trap()), pc, info, ext);
         };
-      },
-      User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-      VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-      VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    }
+      };
+    },
+    User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
