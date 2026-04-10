@@ -613,6 +613,15 @@
     "Smcntrpmf": {
       "supported": true
     },
+    // The double trap extensions are not enabled by default because
+    // mstatus[MDT] is reset to 1, which means unless your boot code zeroes
+    // it the first trap you take will be an unexpected double trap.
+    "Smdbltrp": {
+      "supported": false
+    },
+    "Ssdbltrp": {
+      "supported": false
+    },
     "Svbare": {
       "supported": true,
       "sfence_vma_illegal_if_svbare_only": true

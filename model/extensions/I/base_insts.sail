@@ -553,6 +553,30 @@ function clause execute ECALL() = {
 mapping clause assembly = ECALL() <-> "ecall"
 
 // *****************************************************************
+
+/// Called on MRET or SRET to update the mstatus MDT and SDT double trap bits.
+// prev_priv, new_priv are the privilege modes before and after the xRET respectively.
+function update_mstatus_dbltrap(prev_priv : Privilege, new_priv : Privilege) -> unit = {
+  // "The MRET and SRET instructions, when executed in M-mode, set the MDT bit to 0."
+  if currentlyEnabled(Ext_Smdbltrp) & prev_priv == Machine
+  then mstatus[MDT] = 0b1;
+
+  // For M-mode: ""
+  // For S-mode:
+  if currentlyEnabled(Ext_Ssdbltrp) & (match prev_priv {
+    // "If the new privilege mode is U, VS, or VU, then sstatus.SDT is also set to 0."
+    Machine           => new_priv == User | new_priv == VirtualSupervisor | new_priv == VirtualUser,
+    // "An SRET instruction sets the SDT bit to 0."
+    Supervisor        => true,
+    User              => internal_error(__FILE__, __LINE__, "xRET cannot be executed in user mode"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  })
+  then mstatus[SDT] = 0b0;
+
+  // TODO: Set vsstatus[SDT] = 0 when hypervisor is supported.
+}
+
 union clause instruction = MRET : unit
 
 mapping clause encdec = MRET()
@@ -571,6 +595,8 @@ function clause execute MRET() = {
     mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
     if   cur_privilege != Machine
     then mstatus[MPRV] = 0b0;
+
+    update_mstatus_dbltrap(prev_priv, cur_privilege);
 
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(mRET, cur_privilege);
@@ -615,6 +641,8 @@ function clause execute SRET() = {
     mstatus[SPP]  = 0b0;
     if   cur_privilege != Machine
     then mstatus[MPRV] = 0b0;
+
+    update_mstatus_dbltrap(prev_priv, cur_privilege);
 
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
