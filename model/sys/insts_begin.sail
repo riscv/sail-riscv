@@ -50,6 +50,13 @@ union ExecutionResult = {
 
 let RETIRE_SUCCESS : ExecutionResult = Retire_Success()
 
+// Trap helpers
+
+function trap(exc : sync_exception) -> ExecutionResult =
+  Trap(cur_privilege, CTL_TRAP(exc), PC)
+
+function memory_exception(vaddr : virtaddr, exc : ExceptionType) -> ExecutionResult =
+  trap(make_sync_exception(exc, bits_of(vaddr)))
 
 // returns whether an instruction was retired, used for computing minstret
 val execute : instruction -> ExecutionResult
@@ -70,6 +77,3 @@ scattered mapping encdec_compressed
 // unmatched encodings decode to an illegal instruction.
 union clause instruction = ILLEGAL : word
 union clause instruction = C_ILLEGAL : half
-
-function memory_exception(vaddr : virtaddr, exc : ExceptionType) -> ExecutionResult =
-  Trap(cur_privilege, CTL_TRAP(make_sync_exception(exc, bits_of(vaddr))), PC)

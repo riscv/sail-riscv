@@ -88,7 +88,7 @@ function clause execute SSPOPCHK(rs1) = {
   match vmem_read_addr(ssp_addr, width, Load(ShadowStack), false, false, false) {
     Ok(data) => {
       if X(rs1) != data then {
-        Trap(cur_privilege, CTL_TRAP(make_shadow_stack_exception()), PC)
+        trap(make_shadow_stack_exception())
       } else {
         ssp = ssp + width;
         csr_write_callback("ssp", ssp);
