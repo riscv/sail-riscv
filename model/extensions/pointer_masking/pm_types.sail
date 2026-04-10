@@ -6,6 +6,8 @@
 //  SPDX-License-Identifier: BSD-2-Clause
 //=======================================================================================
 
+type pm_len = {0, 7, 16}
+
 enum PM_Ext = {PM_SSNPM, PM_SMNPM, PM_SMMPM}
 
 enum PointerMaskingMode = {
@@ -22,6 +24,7 @@ mapping pmm_mode : PointerMaskingMode <-> bits(2) = {
   PMM_PMLEN_16 <-> 0b11,
 }
 
+// Return whether the given PMM is supported for a given PM extension.
 function is_supported_pmm(ext : PM_Ext, pmm : PointerMaskingMode) -> bool = match (ext, pmm) {
   (_, PMM_Disabled) => true,
   (_, PMM_Reserved) => false,

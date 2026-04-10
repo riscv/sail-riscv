@@ -22,7 +22,7 @@ function is_pmm_applicable(typ : MemoryAccessType(mem_payload), eff_privilege : 
   typ != InstructionFetch() & (eff_privilege == Machine | mstatus[MXR] == 0b0) & xlen == 64
 
 // Get the effective PMLEN value
-function get_pmlen(typ : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> {0, 7, 16} = {
+function get_pmlen(typ : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> pm_len = {
   if is_pmm_applicable(typ, eff_privilege) then {
     match get_pmm(eff_privilege) {
       PMM_Disabled => 0,
