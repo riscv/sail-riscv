@@ -58,6 +58,7 @@ function trap_callback(_) = ()
 
 /// Called on xrets (mret <=> true, sret <=> false).
 val xret_callback = pure {cpp: "xret_callback"} : (/* is_mret */ bool) -> unit
+function xret_callback(_) = ()
 
 // Overloads for easier use of callbacks
 function csr_name_write_callback(name : string, value : xlenbits) -> unit = {
