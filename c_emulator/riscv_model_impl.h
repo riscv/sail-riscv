@@ -55,6 +55,7 @@ private:
   unit pc_write_callback(sbits new_pc) override;
   unit redirect_callback(sbits new_pc) override;
   unit trap_callback(bool is_interrupt, fbits cause) override;
+  unit xret_callback(bool is_mret) override;
 
   // Page table walk callbacks
   unit ptw_start_callback(

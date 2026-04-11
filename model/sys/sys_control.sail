@@ -153,7 +153,7 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
   }
 }
 
-function track_trap(p : Privilege) -> unit = {
+function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> unit = {
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
   match (p) {
     Machine => {
@@ -170,6 +170,8 @@ function track_trap(p : Privilege) -> unit = {
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
+
+  trap_callback(is_interrupt, cause);
 }
 
 // handle exceptional ctl flow by updating nextPC and operating privilege
@@ -177,8 +179,6 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
                      -> xlenbits = {
   let is_interrupt = trapCause_is_interrupt(c);
   let cause        = trapCause_bits(c);
-
-  trap_callback(is_interrupt, cause);
 
   if   get_config_print_exception() | get_config_print_interrupt()
   then print_log("handling " ^ to_str(c)
@@ -202,7 +202,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
       handle_trap_extension(del_priv, pc, ext);
 
-      track_trap(del_priv);
+      track_trap(del_priv, is_interrupt, cause);
 
       prepare_trap_vector(del_priv, mcause)
     },
@@ -228,7 +228,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
       handle_trap_extension(del_priv, pc, ext);
 
-      track_trap(del_priv);
+      track_trap(del_priv, is_interrupt, cause);
 
       prepare_trap_vector(del_priv, scause)
     },

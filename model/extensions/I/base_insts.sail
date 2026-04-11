@@ -565,6 +565,7 @@ function clause execute MRET() = {
   then Ext_XRET_Priv_Failure()
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
+    xret_callback(true);
     RETIRE_SUCCESS
   }
 }
@@ -591,6 +592,7 @@ function clause execute SRET() = {
   then Ext_XRET_Priv_Failure()
   else {
     set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
+    xret_callback(false);
     RETIRE_SUCCESS
   }
 }

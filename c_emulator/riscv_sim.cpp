@@ -36,6 +36,7 @@
 #include "riscv_model_impl.h"
 #include "rvfi_dii.h"
 #include "sail_riscv_version.h"
+#include "traploop_detector.h"
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -127,6 +128,7 @@ struct CLIOptions {
   bool do_print_isa = false;
 
   bool use_rv32_default = false;
+  bool disable_trap_loop_detection = false;
   std::string config_file;
   std::vector<std::string> config_overrides;
   std::string term_log;
@@ -185,6 +187,11 @@ static CLIOptions parse_cli(int argc, char **argv) {
   );
   app.add_flag("--use-abi-names", opts.config_use_abi_names, "Use ABI register names in trace log");
   app.add_flag("--rv32", opts.use_rv32_default, "Use the default RV32 configuration");
+  app.add_flag(
+    "--disable-trap-loop-detection",
+    opts.disable_trap_loop_detection,
+    "Disable detection of potentially infinite trap loops"
+  );
 
   app.add_option("--device-tree-blob", opts.dtb_file, "Device tree blob file")
     ->check(CLI::ExistingFile)
@@ -505,7 +512,7 @@ void flush_logs() {
   fflush(trace_log);
 }
 
-void run_sail(ModelImpl &model, const CLIOptions &opts) {
+void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_detector) {
   bool is_waiting = false;
   // The emulator tick increments time by 1 at every step, so the number
   // of steps to wait is equal to the needed increment in the time CSR.
@@ -601,6 +608,16 @@ void run_sail(ModelImpl &model, const CLIOptions &opts) {
     } else if (wait_steps_remaining > 0) {
       model.ztick_clock(UNIT);
     }
+
+    if (!is_waiting && loop_detector.loop_detected()) {
+      fprintf(
+        stdout,
+        "FAILURE: possible trap loop detected with MEPC=0x%" PRIx64 " and SEPC=0x%" PRIx64 "\n",
+        loop_detector.mepc(),
+        loop_detector.sepc()
+      );
+      exit(EXIT_FAILURE);
+    }
   }
 
   // This is reached if there is a Sail exception, HTIF has indicated
@@ -686,6 +703,11 @@ int inner_main(int argc, char **argv) {
   model.set_config_use_abi_names(opts.config_use_abi_names);
 
   model.set_config_print_step(opts.config_print_step);
+
+  traploop_detector loop_detector;
+  if (!opts.disable_trap_loop_detection) {
+    model.register_callback(&loop_detector);
+  }
 
   std::string config_json_string;
   if (!opts.config_file.empty()) {
@@ -801,11 +823,12 @@ int inner_main(int argc, char **argv) {
   init_end = steady_clock::now();
 
   do {
-    run_sail(model, opts);
+    run_sail(model, opts, loop_detector);
     // `run_sail` only returns in the case of rvfi.
     if (rvfi) {
       /* Reset for next test */
       reinit_sail(model, entry, opts.config_file.c_str());
+      loop_detector.reset();
     }
   } while (rvfi);
 
