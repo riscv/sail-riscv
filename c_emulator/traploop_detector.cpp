@@ -25,7 +25,9 @@ void traploop_detector::xret_callback(hart::Model &, bool) {
 }
 
 bool traploop_detector::loop_detected() {
-  uint64_t diff = (trap_count > xret_count) ? trap_count - xret_count : xret_count - trap_count;
+  // It would be very unusual to have xrets exceeding trap-count by a
+  // large amount.  Should this be handled as well?
+  uint64_t diff = (trap_count > xret_count) ? trap_count - xret_count : 0;
   return (diff > trap_count_threshold);
 }
 
