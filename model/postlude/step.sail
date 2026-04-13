@@ -109,7 +109,7 @@ private function run_hart_active(step_no: nat) -> Step = {
       // When ELP is set to LP_EXPECTED, the next instruction needs to be
       // the non-RVC `LPAD` instruction.
       if is_landing_pad_expected() then {
-        let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+        let r = trap(make_landing_pad_exception());
         Step_Execute(r, instbits)
       }
       // check for RVC once here instead of every RVC execute clause.
@@ -137,7 +137,7 @@ private function run_hart_active(step_no: nat) -> Step = {
       // the instruction stream is not LPAD, then a software check
       // exception with a landing pad fault code is thrown.
       if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
-        let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
+        let r = trap(make_landing_pad_exception());
         Step_Execute(r, instbits)
       } else {
         nextPC = PC + 4;
@@ -215,7 +215,6 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Execute(ExecuteAs(_), _) => internal_error(__FILE__, __LINE__, "Multiple chained ExecuteAs (only one redirection is supported)."),
     // standard errors
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e),
     Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
     // NOTE: Virtual instructions exception cannot be triggered until Hypervisor integration is complete.
     Step_Execute(Virtual_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Virtual_Instr()),
