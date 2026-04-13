@@ -610,7 +610,7 @@ void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_
       model.ztick_clock(UNIT);
     }
 
-    if (!is_waiting && loop_detector.loop_detected()) {
+    if (loop_detector.loop_detected()) {
       fprintf(
         stdout,
         "FAILURE: possible trap loop detected with MEPC=0x%" PRIx64 " and SEPC=0x%" PRIx64 "\n",
