@@ -17,7 +17,7 @@ engineer-friendly language, much like earlier vendor pseudocode, but more precis
 Given a Sail specification, the tool can type-check it, generate documentation snippets (in LaTeX or AsciiDoc), generate executable emulators, show specification coverage, generate versions of the ISA for relaxed memory model tools, support automated instruction-sequence test generation, generate theorem-prover definitions for
 interactive proof (in Isabelle, Rocq, and Lean), support proof about binary code (in Islaris), and (in progress) generate a reference ISA model in SystemVerilog that can be used for formal hardware verification.
 
-<img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
+<img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?raw=true">
 
 ## Using the Sail RISC-V specification
 
