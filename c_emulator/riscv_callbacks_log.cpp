@@ -1,6 +1,8 @@
 #include "riscv_callbacks_log.h"
 #include "sail_riscv_model.h"
+#include <algorithm>
 #include <inttypes.h>
+#include <vector>
 
 log_callbacks::log_callbacks(
   bool config_print_gpr,
@@ -9,6 +11,7 @@ log_callbacks::log_callbacks(
   bool config_print_csr,
   bool config_print_mem_access,
   bool config_print_ptw,
+  bool config_print_tlb,
   bool config_use_abi_names,
   FILE *trace_log
 ) :
@@ -19,6 +22,7 @@ log_callbacks::log_callbacks(
     config_print_mem_access(config_print_mem_access),
     config_use_abi_names(config_use_abi_names),
     config_print_ptw(config_print_ptw),
+    config_print_tlb(config_print_tlb),
     trace_log(trace_log) {
 }
 
@@ -162,5 +166,95 @@ void log_callbacks::ptw_fail_callback(
       pte_addr.bits
     );
     KILL(sail_string)(&str_et);
+  }
+}
+
+static void print_tlb(
+  FILE *trace_log,
+  hart::Model &model,
+  hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  const std::vector<uint64_t> &indices,
+  bool is_flush
+) {
+  fprintf(
+    trace_log,
+    "TLB %s [ len=%zu ]\n"
+    "╔═════╦════╦══════════╦══════════════════════╦══════════════════════╦══════════════════════╦══════════════════════"
+    "╦══════════════════════"
+    "╗\n"
+    "║ IDX ║ GL ║   ASID   ║         VPN          ║         PTE          ║     LEVEL_MASK       ║         PPN          "
+    "║       PTE_ADDR       "
+    "║\n"
+    "╠═════╬════╬══════════╬══════════════════════╬══════════════════════╬══════════════════════╬══════════════════════"
+    "╬══════════════════════"
+    "╣\n",
+    is_flush ? "flush" : "add",
+    tlb.len
+  );
+  for (size_t i = 0; i < tlb.len; i++) {
+    bool is_entry_selected = std::find(indices.begin(), indices.end(), i) != indices.end();
+    const char *annotation = is_entry_selected ? (is_flush ? "  <- flushed" : "  <- added") : "";
+
+    const auto &entry = tlb.data[i];
+    if (entry.kind == hart::Kind_zSomezIRTLB_EntryzK) {
+      const auto &e = entry.variants.zSomezIRTLB_EntryzK;
+      fprintf(
+        trace_log,
+        "║ %3zu ║  %c ║ 0x%06" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64
+        " ║ 0x%018" PRIX64 " ║%s\n",
+        i,
+        e.zglobal ? 'Y' : 'N',
+        e.zasid.bits,
+        e.zvpn,
+        e.zpte,
+        e.zlevelMask,
+        e.zppn,
+        e.zpteAddr.bits,
+        annotation
+      );
+    } else {
+      fprintf(
+        trace_log,
+        "║ %3zu ║  - ║   ----   ║         ----         ║         ----         ║         ----         ║         ----    "
+        "     ║         ----    "
+        "     ║%s\n",
+        i,
+        annotation
+      );
+    }
+  }
+  fprintf(
+    trace_log,
+    "╚═════╩════╩══════════╩══════════════════════╩══════════════════════╩══════════════════════╩══════════════════════"
+    "╩══════════════════════"
+    "╝\n"
+  );
+}
+
+void log_callbacks::tlb_add_callback(
+  hart::Model &model,
+  hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  uint64_t index
+) {
+  if (trace_log != nullptr && config_print_tlb) {
+    print_tlb(trace_log, model, tlb, {index}, false);
+  }
+}
+
+std::vector<uint64_t> pending_flush_indices;
+
+void log_callbacks::tlb_flush_begin_callback(hart::Model &model) {
+  pending_flush_indices.clear();
+}
+
+void log_callbacks::tlb_flush_callback(hart::Model &model, uint64_t index) {
+  if (config_print_tlb) {
+    pending_flush_indices.push_back(index);
+  }
+}
+
+void log_callbacks::tlb_flush_end_callback(hart::Model &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+  if (trace_log != nullptr && config_print_tlb && !pending_flush_indices.empty()) {
+    print_tlb(trace_log, model, tlb, pending_flush_indices, true);
   }
 }

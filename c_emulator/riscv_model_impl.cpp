@@ -165,6 +165,34 @@ unit ModelImpl::ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sb
   return UNIT;
 }
 
+unit ModelImpl::tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index) {
+  for (auto c : m_callbacks) {
+    c->tlb_add_callback(*this, tlb, index);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::tlb_flush_begin_callback(unit) {
+  for (auto c : m_callbacks) {
+    c->tlb_flush_begin_callback(*this);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::tlb_flush_callback(uint64_t index) {
+  for (auto c : m_callbacks) {
+    c->tlb_flush_callback(*this, index);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+  for (auto c : m_callbacks) {
+    c->tlb_flush_end_callback(*this, tlb);
+  }
+  return UNIT;
+}
+
 // Provides entropy for the scalar cryptography extension.
 mach_bits ModelImpl::plat_get_16_random_bits(unit) {
   // This function can be changed to support deterministic sequences of
