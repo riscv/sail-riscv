@@ -55,26 +55,29 @@ private enum pmpAddrMatch = {PMP_NoMatch, PMP_PartialMatch, PMP_Match}
 // is contained fully within it (PMP_Match), doesn't overlap at all (PMP_NoMatch)
 // or partially intersects it (PMP_PartialMatch).
 private function pmpRangeMatch(
-  begin : nat,
-  end_ : nat,
-  addr : nat,
-  width : nat,
-) -> pmpAddrMatch =
-  if      (addr + width <= begin) | (end_ <= addr)
+  begin_words : xlenbits,
+  end_words : xlenbits,
+  Physaddr(addr) : physaddr,
+  width : range(1, max_mem_access),
+) -> pmpAddrMatch = {
+  let addr_begin_words : xlenbits = zero_extend(addr[length(addr) - 1 .. 2]);
+  let addr_end_words : xlenbits = zero_extend((addr + width)[length(addr) - 1 .. 2]); // TODO: Probably wrong.
+  // TODO: This logic is probably wrong.
+  if      (addr_end_words <=_u begin_words) | (end_words <=_u addr_begin_words)
   then    PMP_NoMatch
-  else if (begin <= addr) & (addr + width <= end_)
+  else if (begin_words <=_u addr_begin_words) & (addr_end_words <=_u end_words)
   then    PMP_Match
   else    PMP_PartialMatch
+}
 
 private function pmpMatchAddr(
-  Physaddr(addr) : physaddr,
-  width : xlenbits,
+  addr : physaddr,
+  width : range(1, max_mem_access),
   ent : Pmpcfg_ent,
+  // The current and previous pmpaddr registers. Note these are in units of 4 bytes.
   pmpaddr : xlenbits,
   prev_pmpaddr : xlenbits,
 ) -> pmpAddrMatch = {
-  let addr = unsigned(addr);
-  let width = unsigned(width);
   match pmpAddrMatchType_encdec(ent[A]) {
     OFF => PMP_NoMatch,
     TOR => {
@@ -83,14 +86,13 @@ private function pmpMatchAddr(
       // "If pmpaddr[i-1] >= pmpaddr[i] and pmpcfg[i].A=TOR, then PMP entry i matches no addresses."
       if prev_pmpaddr >=_u pmpaddr
       then PMP_NoMatch
-      else pmpRangeMatch(unsigned(prev_pmpaddr) * 4, unsigned(pmpaddr) * 4, addr, width)
+      else pmpRangeMatch(prev_pmpaddr, pmpaddr, addr, width)
     },
     NA4 => {
       // NA4 is not selectable when the PMP grain G >= 1. See pmpWriteCfg().
       assert(sys_pmp_grain < 1, "NA4 cannot be selected when PMP grain G >= 1.");
-      // Match a 4-byte region.
-      let begin = unsigned(pmpaddr) * 4;
-      pmpRangeMatch(begin, begin + 4, addr, width)
+      // TODO: Double check what happens at the end of memory.
+      pmpRangeMatch(pmpaddr, pmpaddr + 1, addr, width)
     },
     NAPOT => {
       // Example pmpaddr: 0b00010101111
@@ -99,26 +101,25 @@ private function pmpMatchAddr(
       // pmpaddr + 1:     0b00010110000
       // mask:            0b00000011111
       // ~mask:           0b11111100000
-      let begin_words = unsigned(pmpaddr & (~(mask)));
+      let begin_words = pmpaddr & (~(mask));
       // mask + 1:        0b00000100000
-      let end_words = begin_words + unsigned(mask) + 1;
-      pmpRangeMatch(begin_words * 4, end_words * 4, addr, width)
+      let end_words = begin_words + mask + 1;
+      // TODO: Double check overflows.
+      pmpRangeMatch(begin_words, end_words, addr, width)
     },
   }
 }
 
 // priority checks
 
-function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
+function pmpCheck(
   addr : physaddr,
-  width : int('n),
+  width : range(1, max_mem_access),
   access : MemoryAccessType(mem_payload),
   priv : Privilege,
 ) -> option(ExceptionType) = {
 
   if sys_pmp_count == 0 then return None();
-
-  let width : xlenbits = to_bits(width);
 
   // TODO for accesses of type CacheAccess:
   //
