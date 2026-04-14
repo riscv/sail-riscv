@@ -298,10 +298,7 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
         },
         Ok(None()) => Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw),
         Err(PTW_PTE_Needs_Update()) => Err(PTW_PTE_Needs_Update(), ext_ptw),
-        Err(e) => {
-          let paddr : bits(64) = zero_extend(bits_of(ent.pteAddr));
-          internal_error(__FILE__, __LINE__, "error writing TLB PTE to physical address " ^ bits_str(paddr) ^ ": " ^ to_str(e))
-        },
+        Err(e) => Err(e, ext_ptw),
       },
   }
 }
