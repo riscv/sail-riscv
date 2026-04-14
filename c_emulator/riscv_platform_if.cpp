@@ -81,6 +81,10 @@ unit PlatformInterface::trap_callback([[maybe_unused]] bool is_interrupt, [[mayb
   return UNIT;
 }
 
+unit PlatformInterface::xret_callback([[maybe_unused]] bool is_mret) {
+  return UNIT;
+}
+
 unit PlatformInterface::ptw_start_callback(
   [[maybe_unused]] uint64_t vpn,
   [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
