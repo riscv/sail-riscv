@@ -241,13 +241,13 @@ private function check_pma_region(region : PMA_Region) -> bool = {
   // will not change within intra-page accesses.  Although this constraint
   // is not imposed by the specification, most implementations are
   // expected to conform with it.
-  let align : bits(64) = ones(64) << 12;
-  if (region.base & align) != region.base then {
+  if region.base[pagesize_bits - 1 .. 0] != zeros() then {
     print_endline("Memory region starting at " ^ bits_str(region.base) ^ " does not start on a 4K (page) boundary.");
     return false;
   };
-  if (region.size & align) != region.size then {
-    print_endline("Memory region starting at " ^ bits_str(region.base) ^ " does not end on a 4K (page) boundary.");
+  if region.size[pagesize_bits - 1 .. 0] != zeros() then {
+    print_endline("Memory region starting at " ^ bits_str(region.base) ^ " with size " ^ bits_str(region.size) ^ " does not end on a 4K (page) boundary.");
+    return false;
   };
 
   let pma = region.attributes;

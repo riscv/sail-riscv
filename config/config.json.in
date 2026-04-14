@@ -126,6 +126,8 @@
       "len": 64,
       "value": "0x1000"
     },
+    // The locations and sizes of memory regions and their PMAs.  These regions
+    // are required to be aligned to 4K (page) boundaries.
     "regions": [
       // ROM
       {
