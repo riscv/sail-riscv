@@ -190,6 +190,7 @@ For booting operating system images, see the information under the
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
+- Smpmpmt extension for PMP-based memory types extension, v0.6
 - Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
 - Ssccptr extension for Main memory supports hardware page table reads, v1.0
 - Sscounterenw extension for writable enables for any supported counter, v1.0

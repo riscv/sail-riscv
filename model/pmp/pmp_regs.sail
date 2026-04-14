@@ -20,6 +20,8 @@ let sys_pmp_usable_count : range(0, 64) = config memory.pmp.usable_count
 // G=0 -> 4 bytes, G=10 -> 4096 bytes.
 let sys_pmp_grain : range(0, 63) = config memory.pmp.grain
 
+function clause currentlyEnabled(Ext_Smpmpmt) = hartSupports(Ext_Smpmpmt)
+
 // PMP configuration entries
 
 private enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
@@ -33,6 +35,7 @@ private mapping pmpAddrMatchType_encdec : PmpAddrMatchType <-> bits(2) = {
 
 bitfield Pmpcfg_ent : bits(8) = {
   L : 7,        // locking
+  MT : 6 .. 5,  // memory type
   A : 4 .. 3,   // address match type, encoded as above
 
   // permissions
