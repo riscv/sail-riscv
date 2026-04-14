@@ -236,6 +236,20 @@ private function check_vext_config() -> bool = {
 }
 
 private function check_pma_region(region : PMA_Region) -> bool = {
+  // We currently require PMAs to be aligned to page boundaries.  This
+  // simplifies memory protection and alignment checks: PMA properties
+  // will not change within intra-page accesses.  Although this constraint
+  // is not imposed by the specification, most implementations are
+  // expected to conform with it.
+  let align : bits(64) = ones(64) << 12;
+  if (region.base & align) != region.base then {
+    print_endline("Memory region starting at " ^ bits_str(region.base) ^ " does not start on a 4K (page) boundary.");
+    return false;
+  };
+  if (region.size & align) != region.size then {
+    print_endline("Memory region starting at " ^ bits_str(region.base) ^ " does not end on a 4K (page) boundary.");
+  };
+
   let pma = region.attributes;
   // TODO: this could be extended, e.g. to check that read_idempotent => readable, etc.
   match pma.mem_type {
