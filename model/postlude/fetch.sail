@@ -61,6 +61,18 @@ private function fetch() -> FetchResult = {
   then return F_Error(E_Fetch_Addr_Align(), PC);
 
   // For a PC aligned at ILEN=32, perform an atomic fetch for Ziccif.
+  //
+  // NOTE: The atomicity requirements for the fetch can be implemented
+  // in the memory model in two ways: (i) A single memory transaction
+  // in Sail, i.e. the approach followed below, or (ii) multiple smaller
+  // (e.g. 2-byte) fetches, along with rules in the memory model specifying
+  // that nothing can intervene between these smaller
+  // intra-instruction fetches.  The former approach is currently simpler
+  // since it does not require any additional rules in the memory model.
+  // However, if/when ILEN is increased to 48 and higher, it may be that
+  // the complexities around memory protection could be addressed using
+  // smaller fetches and augmenting the memory model with these additional
+  // rules for intra-instruction split fetches.
   if is_aligned_addr(Virtaddr(PC), 4) & currentlyEnabled(Ext_Ziccif) then {
     match fetch_bytes(PC, PC, 4) {
       FetchBytes_Ext_Error(e)   => F_Ext_Error(e),
