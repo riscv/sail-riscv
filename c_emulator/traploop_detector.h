@@ -19,18 +19,15 @@ public:
   void instret_callback(hart::Model &model) override;
 
 private:
-  void reset_loop();
-
-  uint64_t instret;
-  uint64_t mepc_at_first_trap;
-  uint64_t sepc_at_first_trap;
-  uint64_t instret_at_last_trap;
-  uint32_t nested_trap_count;
+  uint64_t mepc_at_first_trap = 0;
+  uint64_t sepc_at_first_trap = 0;
+  uint32_t instrets_since_last_trap = 0;
+  uint32_t nested_trap_count = 0;
 
   // A trap loop is detected if the nested trap count goes higher than
   // this threshold.
   const uint32_t nested_trap_count_threshold = 10;
   // If instrets since the last trap exceed this, a tight nested trap loop
   // is unlikely and the detector is reset.
-  const uint64_t instrets_to_reset_loop = 20;
+  const uint32_t instrets_to_reset_loop = 20;
 };
