@@ -140,6 +140,13 @@ unit ModelImpl::xret_callback(bool is_mret) {
   return UNIT;
 }
 
+unit ModelImpl::instret_callback(unit) {
+  for (auto c : m_callbacks) {
+    c->instret_callback(*this);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::ptw_start_callback(
   uint64_t vpn,
   hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,

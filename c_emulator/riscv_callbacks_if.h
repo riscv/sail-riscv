@@ -48,6 +48,8 @@ public:
 
   virtual void xret_callback(hart::Model &model, bool is_mret);
 
+  virtual void instret_callback(hart::Model &model);
+
   // Page table walk callbacks
   virtual void ptw_start_callback(
     hart::Model &model,

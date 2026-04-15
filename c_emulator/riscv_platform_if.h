@@ -50,6 +50,7 @@ public:
 
   virtual unit trap_callback(bool is_interrupt, fbits cause);
   virtual unit xret_callback(bool is_mret);
+  virtual unit instret_callback(unit);
 
   // Page table walk callbacks
   virtual unit ptw_start_callback(
