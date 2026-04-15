@@ -112,6 +112,6 @@ def riscv_f64roundToInt : BitVec 3 → BitVec 64 → Bool → (BitVec 5 × BitVe
 
 -- Termination of extensionEnabled
 instance : SizeOf extension where
-  sizeOf := extension.toCtorIdx
+  sizeOf := extension.ctorIdx
 
 macro_rules | `(tactic| decreasing_trivial) => `(tactic| decide)
