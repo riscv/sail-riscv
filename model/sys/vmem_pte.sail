@@ -170,12 +170,14 @@ private function check_PTE_permission(
       // "the shadow stack is readable by all instructions that only load from
       // memory."
       Load(Data)         => true,
+      Load(Vector)       => true,
       Load(ShadowStack)  => true,
       LoadReserved(Data) => true,
 
       // "Memory mapped as an SS page cannot be written to by instructions other
       // than SSAMOSWAP.W/D, SSPUSH, and C.SSPUSH."
       Store(Data)                         => false,
+      Store(Vector)                       => false,
       StoreConditional(Data)              => false,
       Atomic(_, Data, Data)               => false,
       Store(ShadowStack)                  => true,
