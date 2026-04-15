@@ -29,7 +29,7 @@ private:
 
   // A trap loop is detected if the nested trap count goes higher than
   // this threshold.
-  const uint64_t nested_trap_count_threshold = 10;
+  const uint32_t nested_trap_count_threshold = 10;
   // If instrets since the last trap exceed this, a tight nested trap loop
   // is unlikely and the detector is reset.
   const uint64_t instrets_to_reset_loop = 20;
