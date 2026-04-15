@@ -106,7 +106,7 @@ All enabled test suites can be executed using `make test` or `ctest` in the buil
 
 The model is configured using a JSON file specifying various tunable
 options. The default configuration used for the model can be examined
-using `build/c_emulator/sail_riscv_sim --print-default-config`. To
+using the `--print-default-config` option. To
 use a custom configuration, save the default configuration into a
 file, edit it as needed, and pass it to the simulator using the
 `--config` option.
@@ -115,9 +115,6 @@ To override only a small subset of options while using the default configuration
 or a custom configuration file as a base, the `--config-override` option can be
 used. This option allows one or more additional JSON configuration files to be specified,
 whose fields take precedence over those in the base configuration.
-
-Information on other options for the simulator is available from
-`build/c_emulator/sail_riscv_sim -h`.
 
 ### Booting OS images
 
