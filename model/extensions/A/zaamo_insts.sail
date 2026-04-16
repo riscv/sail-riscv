@@ -81,8 +81,14 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
 
-  if not(is_aligned_addr(vaddr, width))
-  then return memory_exception(vaddr, E_SAMO_Addr_Align());
+  if not(is_aligned_addr(vaddr, width)) then {
+    match plat_misaligned_access.amo {
+      Option_AccessFault    => return memory_exception(vaddr, E_SAMO_Access_Fault()),
+      Option_AlignmentFault => return memory_exception(vaddr, E_SAMO_Addr_Align()),
+      // This should have been caught in the config validator.
+      Option_NoFault        => internal_error(__FILE__, __LINE__, "Misaligned AMOs not yet supported"),
+    };
+  };
 
   let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Err(e, _) => return memory_exception(vaddr, e),

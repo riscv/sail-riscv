@@ -72,19 +72,17 @@ mapping reservability_str : Reservability <-> string = {
 }
 overload to_str = {reservability_str}
 
-// Do misaligned accesses (of any kind) to this region cause
-// a fault, and if so which kind. This is for regions that
-// only support aligned accesses.
-enum misaligned_fault = { NoFault, AccessFault, AlignmentFault }
-
-mapping misaligned_fault_str : misaligned_fault <-> string = {
-  NoFault        <-> "NoFault",
-  AccessFault    <-> "AccessFault",
-  AlignmentFault <-> "AlignmentFault",
-}
-overload to_str = {misaligned_fault_str}
-
 enum MemoryRegionType = { MainMemory, IOMemory }
+
+// PMA misalignment handling.  Misalignment for LR/SC is handled
+// pre-address-translation only.  Note that AMO handling is specified
+// differently in PMAs compared to the global (pre-address-translation)
+// configuration.
+struct PMAMisalignedFaults = {
+  load_store : optional_misaligned_fault,
+  vector     : optional_misaligned_fault,
+  amo        : misaligned_fault,
+}
 
 // Physical Memory Attributes for a region.
 struct PMA = {
@@ -102,8 +100,8 @@ struct PMA = {
   writable         : bool,
   read_idempotent  : bool,
   write_idempotent : bool,
-  // Optionally cause an access/alignment fault on misaligned access.
-  misaligned_fault : misaligned_fault,
+  // Misaligned handling for various accesses.
+  misaligned_faults: PMAMisalignedFaults,
   atomic_support   : AtomicSupport,
   reservability    : Reservability,
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
@@ -133,6 +131,28 @@ function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
                           read_idempotent = false,
                           write_idempotent = false},
   }
+
+// Provide the misaligned treatment for a misaligned access.
+function pma_misaligned_fault(pma : PMA, access : MemoryAccessType(mem_payload)) -> optional_misaligned_fault = {
+  let faults = pma.misaligned_faults;
+  match access {
+    Load(Data)             => faults.load_store,
+    Load(PageTableEntry)   => faults.load_store,
+    Load(ShadowStack)      => faults.load_store,
+    Store(Data)            => faults.load_store,
+    Store(PageTableEntry)  => faults.load_store,
+    Store(ShadowStack)     => faults.load_store,
+    Load(Vector)           => faults.vector,
+    Store(Vector)          => faults.vector,
+    Atomic(_, _, _)        => misaligned_fault_into_optional(faults.amo),
+
+    // These access types should not be misaligned at the PMA level.
+    InstructionFetch()     => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned instruction fetch."),
+    LoadReserved(p)        => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned load-reserved (" ^ mem_payload_name(p) ^ ")."),
+    StoreConditional(p)    => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned store-conditional (" ^ mem_payload_name(p) ^ ")."),
+    CacheAccess(_)         => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned cache-access."),
+  }
+}
 
 // A region of memory and its Physical Memory Attributes.
 struct PMA_Region = {
@@ -165,6 +185,13 @@ function matching_pma_region(regions : list(PMA_Region), addr : physaddr, width 
   matching_pma_region_bits_range(regions, zero_extend(bits_of(addr)), to_bits(width))
 }
 
+function pma_misaligned_to_str(m : PMAMisalignedFaults) -> string =
+  "misaligned-load-store=" ^ optional_misaligned_fault_str(m.load_store) ^
+  " misaligned-amo=" ^ misaligned_fault_str(m.amo) ^
+  " misaligned-vector=" ^ optional_misaligned_fault_str(m.vector)
+
+overload to_str = {pma_misaligned_to_str}
+
 function pma_attributes_to_str(attr : PMA) -> string =
   (match attr.mem_type { MainMemory => " main-memory", IOMemory => " io-memory", }) ^
   (if attr.cacheable then " cacheable" else "") ^
@@ -174,7 +201,7 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.writable then " writable" else "") ^
   (if attr.read_idempotent then " read-idempotent" else "") ^
   (if attr.write_idempotent then " write-idempotent" else "") ^
-  " misaligned_fault:" ^ to_str(attr.misaligned_fault) ^
+  " " ^ to_str(attr.misaligned_faults) ^
   " " ^ to_str(attr.atomic_support) ^
   " " ^ to_str(attr.reservability) ^
   (if attr.supports_cbo_zero then " supports-cbo-zero" else "") ^

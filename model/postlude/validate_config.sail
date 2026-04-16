@@ -235,6 +235,20 @@ private function check_vext_config() -> bool = {
   valid;
 }
 
+private function check_misaligned_config() -> bool = {
+  var valid : bool = true;
+  let global_faults : GlobalMisalignedFaults = config memory.misaligned.global_faults;
+  match global_faults.amo {
+    Option_AccessFault    => (),
+    Option_AlignmentFault => (),
+    Option_NoFault        => {
+      valid = false;
+      print_endline("The `amo` field in `memory.misaligned.global_faults` is set to NoFault; misaligned AMOs are not currently supported.");
+    }
+  };
+  valid
+}
+
 private function check_pma_region(region : PMA_Region) -> bool = {
   // We currently require PMAs to be aligned to page boundaries.  This
   // simplifies memory protection and alignment checks: PMA properties
@@ -483,6 +497,7 @@ function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
   & check_mem_layout()
+  & check_misaligned_config()
   & check_vlen_elen()
   & check_vext_config()
   & check_pmp()

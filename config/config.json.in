@@ -103,8 +103,30 @@
     // checked before address translation. `misaligned_fault` in
     // `regions` is checked after address translation.
     "misaligned": {
-      // If this is false then all misaligned accesses will raise a misaligned exception.
-      "supported": true,
+      // "Global" faults specify the treatment of misaligned accesses
+      // before address translation.  If a fault is specified for an access,
+      // it will have a higher priority than memory-protection faults arising from
+      // that access if it were allowed to proceed.
+      "global_faults": {
+        // A misaligned LR/SC currently always faults, and this field can specify
+        // whether it generates an access fault (use `AccessFault`)
+        // or a misaligned fault (use `AlignmentFault`).
+        "lrsc": "AccessFault",
+        // Similarly, a misaligned AMO currently always faults, and this field
+        // can specify either `Option_AccessFault` or `Option_AlignmentFault`.
+        "amo": "Option_AccessFault",
+        // A misaligned load/store can either proceed without a fault (use `Option_NoFault`),
+        // or raise an access fault (use `Option_AccessFault`) or a misaligned fault
+        // (use `Option_AlignmentFault`).
+        "load_store": "Option_NoFault",
+        // A misaligned vector load/store can either proceed without a fault (use `Option_NoFault`),
+        // or raise an access fault (use `Option_AccessFault`) or a misaligned fault
+        // (use `Option_AlignmentFault`).
+        "vector": "Option_NoFault"
+      },
+      // If a misaligned access was specified to have no fault in `global_faults` above, the
+      // fields below specify how it is handled.
+      //
       // Memory accesses that span multiple naturally aligned
       // 2^allowed_within_exp sized regions will be split into multiple
       // memory operations. 0 means all misaligned accesses will be split.
@@ -148,7 +170,11 @@
           "writable": false,
           "read_idempotent": true,
           "write_idempotent": true,
-          "misaligned_fault": "NoFault",
+          "misaligned_faults": {
+            "load_store": "Option_NoFault",
+            "amo": "AccessFault",
+            "vector": "Option_NoFault"
+          },
           "atomic_support": "AMONone",
           "reservability": "RsrvNone",
           "supports_cbo_zero": false,
@@ -176,7 +202,11 @@
           "writable": true,
           "read_idempotent": false,
           "write_idempotent": false,
-          "misaligned_fault": "AlignmentFault",
+          "misaligned_faults": {
+            "load_store": "Option_NoFault",
+            "amo": "AccessFault",
+            "vector": "Option_NoFault"
+          },
           "atomic_support": "AMONone",
           "reservability": "RsrvNone",
           "supports_cbo_zero": false,
@@ -204,7 +234,11 @@
           "writable": true,
           "read_idempotent": true,
           "write_idempotent": true,
-          "misaligned_fault": "NoFault",
+          "misaligned_faults": {
+            "load_store": "Option_NoFault",
+            "amo": "AccessFault",
+            "vector": "Option_NoFault"
+          },
           "atomic_support": "AMOCASQ",
           "reservability": "RsrvEventual",
           "supports_cbo_zero": true,

@@ -26,9 +26,41 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
 let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_set_size_exp
 
-// whether the platform supports misaligned accesses without trapping to M-mode. if false,
-// misaligned loads/stores are trapped to Machine mode.
-let plat_enable_misaligned_access : bool = config memory.misaligned.supported
+// The types of faults a misaligned access can generate.  When used in
+// the global (pre-address translation) configuration, `NoFault`
+// indicates that the handling is deferred to the underlying PMA (if any).
+
+enum optional_misaligned_fault = { Option_NoFault, Option_AccessFault, Option_AlignmentFault }
+mapping optional_misaligned_fault_str : optional_misaligned_fault <-> string = {
+  Option_NoFault        <-> "NoFault",
+  Option_AccessFault    <-> "AccessFault",
+  Option_AlignmentFault <-> "AlignmentFault",
+}
+overload to_str = {optional_misaligned_fault_str}
+
+//  A misaligned LR/SC always faults.
+enum misaligned_fault = { AccessFault, AlignmentFault }
+mapping misaligned_fault_str : misaligned_fault <-> string = {
+  AccessFault    <-> "AccessFault",
+  AlignmentFault <-> "AlignmentFault",
+}
+overload to_str = {misaligned_fault_str}
+
+function misaligned_fault_into_optional(f : misaligned_fault) -> optional_misaligned_fault =
+  match f {
+    AccessFault    => Option_AccessFault,
+    AlignmentFault => Option_AlignmentFault,
+  }
+
+struct GlobalMisalignedFaults = {
+  lrsc       : misaligned_fault,
+  load_store : optional_misaligned_fault,
+  amo        : optional_misaligned_fault,
+  vector     : optional_misaligned_fault,
+}
+
+// The handling of misaligned accesses before address translation.
+let plat_misaligned_access : GlobalMisalignedFaults = config memory.misaligned.global_faults
 
 // Location of clock-interface, which should match with the spec in the DTB
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
