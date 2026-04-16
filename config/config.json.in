@@ -103,8 +103,36 @@
     // checked before address translation. `misaligned_fault` in
     // `regions` is checked after address translation.
     "misaligned": {
-      // If this is false then all misaligned accesses will raise a misaligned exception.
-      "supported": true,
+      // `exceptions` specifies the treatment of misaligned accesses
+      // before address translation.  If a fault is specified for an access,
+      // it will have a higher priority than memory-protection faults arising from
+      // that access if it were allowed to proceed.
+      "exceptions": {
+        // A misaligned scalar or vector load/store can either proceed
+        // without a fault (use `{"None" : null}`), or raise an access fault
+        // (use `{"Some": "AccessFault"}`) or a misaligned exception
+        // (use `{"Some": "AlignmentException"}`).
+        // This option controls scalar loads/stores.
+        "load_store": {
+          "None" : null
+        },
+        // A misaligned vector load/store can be configured
+        // independently of the scalar case above, but uses the same
+        // option values.
+        "vector": {
+          "None": null
+        },
+        // A misaligned LR/SC currently always faults, and this field can specify
+        // whether it generates an access fault (use `"AccessFault"`)
+        // or a misaligned exception (use `"AlignmentException"`).
+        "lrsc": "AccessFault",
+        // Similarly, a misaligned AMO currently always faults, and this field
+        // can specify either `"AccessFault"` or `"AlignmentException"`.
+        "amo": "AccessFault"
+      },
+      // If a misaligned access was specified to have no fault in `exceptions` above, the
+      // fields below specify how it is handled.
+      //
       // Memory accesses that span multiple naturally aligned
       // 2^allowed_within_exp sized regions will be split into multiple
       // memory operations. 0 means all misaligned accesses will be split.
@@ -128,7 +156,9 @@
       "value": "0x1000"
     },
     // The locations and sizes of memory regions and their PMAs.  These regions
-    // are required to be aligned to 4K (page) boundaries.
+    // are required to be aligned to 4K (page) boundaries.  To specify
+    // the `misaligned` PMA attribute for a region, see the comments for
+    // `memory.misaligned.exceptions` above.
     "regions": [
       // ROM
       {
@@ -149,7 +179,15 @@
           "writable": false,
           "read_idempotent": true,
           "write_idempotent": true,
-          "misaligned_fault": "NoFault",
+          "misaligned_exceptions": {
+            "load_store": {
+              "None" : null
+            },
+            "vector": {
+              "None" : null
+            },
+            "amo": "AccessFault"
+          },
           "atomic_support": "AMONone",
           "reservability": "RsrvNone",
           "supports_cbo_zero": false,
@@ -177,7 +215,15 @@
           "writable": true,
           "read_idempotent": false,
           "write_idempotent": false,
-          "misaligned_fault": "AlignmentFault",
+          "misaligned_exceptions": {
+            "load_store": {
+              "None" : null
+            },
+            "vector": {
+              "None" : null
+            },
+            "amo": "AccessFault"
+          },
           "atomic_support": "AMONone",
           "reservability": "RsrvNone",
           "supports_cbo_zero": false,
@@ -205,7 +251,15 @@
           "writable": true,
           "read_idempotent": true,
           "write_idempotent": true,
-          "misaligned_fault": "NoFault",
+          "misaligned_exceptions": {
+            "load_store": {
+              "None" : null
+            },
+            "vector": {
+              "None" : null
+            },
+            "amo": "AccessFault"
+          },
           "atomic_support": "AMOCASQ",
           "reservability": "RsrvEventual",
           "supports_cbo_zero": true,

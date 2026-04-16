@@ -81,8 +81,13 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
 
-  if not(is_aligned_addr(vaddr, width))
-  then return memory_exception(vaddr, E_SAMO_Addr_Align());
+  if not(is_aligned_addr(vaddr, width)) then {
+    let exc : ExceptionType = match plat_misaligned_access.amo {
+      AccessFault        => E_SAMO_Access_Fault(),
+      AlignmentException => E_SAMO_Addr_Align(),
+    };
+    return memory_exception(vaddr, exc)
+  };
 
   let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Err(e, _) => return memory_exception(vaddr, e),

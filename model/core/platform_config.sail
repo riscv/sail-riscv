@@ -26,9 +26,40 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
 let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_set_size_exp
 
-// whether the platform supports misaligned accesses without trapping to M-mode. if false,
-// misaligned loads/stores are trapped to Machine mode.
-let plat_enable_misaligned_access : bool = config memory.misaligned.supported
+// The exceptions that a misaligned access could generate.  For
+// example, a misaligned LR/SC always raises an exception.
+enum misaligned_exception = { AccessFault, AlignmentException }
+mapping misaligned_exception_str : misaligned_exception <-> string = {
+  AccessFault        <-> "AccessFault",
+  AlignmentException <-> "AlignmentException",
+}
+overload to_str = {misaligned_exception_str}
+
+function optional_misaligned_exception_str(opt_e : option(misaligned_exception)) -> string =
+  match opt_e {
+    None()  => "NoFault",
+    Some(e) => misaligned_exception_str(e),
+  }
+overload to_str = {optional_misaligned_exception_str}
+
+// Some misaligned accesses could proceed or generate exceptions.
+// When used in the global (pre-address translation) configuration,
+// `None` indicates that the handling is deferred to the underlying
+// PMA (if any).
+struct GlobalMisalignedExceptions = {
+  load_store : option(misaligned_exception),
+  vector     : option(misaligned_exception),
+  // LR/SC must always be aligned. Returning a misaligned exception indicates
+  // that the access can be emulated (the OS/firmware can transparently break
+  // it down into multiple aligned accesses) which isn't the case for LR/SC
+  // in normal implementations.
+  lrsc       : misaligned_exception,
+  // TODO: Support for the MAG PMA will change this field to an option(misaligned_exception).
+  amo        : misaligned_exception,
+}
+
+// The handling of misaligned accesses before address translation.
+let plat_misaligned_access : GlobalMisalignedExceptions = config memory.misaligned.exceptions
 
 // Location of clock-interface, which should match with the spec in the DTB
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
