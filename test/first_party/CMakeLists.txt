@@ -105,6 +105,7 @@ add_first_party_test("test_misaligned_vector_register_groups.S")
 add_first_party_test("test_pmp_access.c")
 add_first_party_test("test_phys_perms_on_failing_sc.S")
 add_first_party_test("test_wfi_wait.S")
+add_first_party_test("test_tlb_stale_pte_access_fault.S")
 
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
