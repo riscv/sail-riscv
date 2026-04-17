@@ -150,23 +150,47 @@ infix 4 >_u
 infix 4 <=_u
 infix 4 >=_u
 
-val operator <_s  : forall 'n, 'n > 0. (bits('n), bits('n)) -> bool
-val operator >_s  : forall 'n, 'n > 0. (bits('n), bits('n)) -> bool
-val operator <=_s : forall 'n, 'n > 0. (bits('n), bits('n)) -> bool
-val operator >=_s : forall 'n, 'n > 0. (bits('n), bits('n)) -> bool
-val operator <_u  : forall 'n. (bits('n), bits('n)) -> bool
-val operator >_u  : forall 'n. (bits('n), bits('n)) -> bool
-val operator <=_u : forall 'n. (bits('n), bits('n)) -> bool
-val operator >=_u : forall 'n. (bits('n), bits('n)) -> bool
+// Manually monomorphised versions of the comparison operators for short
+// bitvectors. This prevents Sail from always using arbitrary precision integers
+// in the C/C++ output even when it knows the values fit in uint64_t.
 
-function operator <_s  (x, y) = signed(x) < signed(y)
-function operator >_s  (x, y) = signed(x) > signed(y)
-function operator <=_s (x, y) = signed(x) <= signed(y)
-function operator >=_s (x, y) = signed(x) >= signed(y)
-function operator <_u  (x, y) = unsigned(x) < unsigned(y)
-function operator >_u  (x, y) = unsigned(x) > unsigned(y)
-function operator <=_u (x, y) = unsigned(x) <= unsigned(y)
-function operator >=_u (x, y) = unsigned(x) >= unsigned(y)
+function bits_lt_s forall 'n, 0 < 'n . (x : bits('n), y : bits('n)) -> bool = signed(x) < signed(y)
+function bits_gt_s forall 'n, 0 < 'n . (x : bits('n), y : bits('n)) -> bool = signed(x) > signed(y)
+function bits_le_s forall 'n, 0 < 'n . (x : bits('n), y : bits('n)) -> bool = signed(x) <= signed(y)
+function bits_ge_s forall 'n, 0 < 'n . (x : bits('n), y : bits('n)) -> bool = signed(x) >= signed(y)
+function bits_lt_u forall 'n . (x : bits('n), y : bits('n)) -> bool = unsigned(x) < unsigned(y)
+function bits_gt_u forall 'n . (x : bits('n), y : bits('n)) -> bool = unsigned(x) > unsigned(y)
+function bits_le_u forall 'n . (x : bits('n), y : bits('n)) -> bool = unsigned(x) <= unsigned(y)
+function bits_ge_u forall 'n . (x : bits('n), y : bits('n)) -> bool = unsigned(x) >= unsigned(y)
+
+val fast_bits_lt_s = pure { c: "fast_bits_lt_s", cpp: "fast_bits_lt_s" } : forall 'n, 0 < 'n <= 64 . (bits('n), bits('n)) -> bool
+val fast_bits_gt_s = pure { c: "fast_bits_gt_s", cpp: "fast_bits_gt_s" } : forall 'n, 0 < 'n <= 64 . (bits('n), bits('n)) -> bool
+val fast_bits_le_s = pure { c: "fast_bits_le_s", cpp: "fast_bits_le_s" } : forall 'n, 0 < 'n <= 64 . (bits('n), bits('n)) -> bool
+val fast_bits_ge_s = pure { c: "fast_bits_ge_s", cpp: "fast_bits_ge_s" } : forall 'n, 0 < 'n <= 64 . (bits('n), bits('n)) -> bool
+val fast_bits_lt_u = pure { c: "fast_bits_lt_u", cpp: "fast_bits_lt_u" } : forall 'n, 'n <= 64 . (bits('n), bits('n)) -> bool
+val fast_bits_gt_u = pure { c: "fast_bits_gt_u", cpp: "fast_bits_gt_u" } : forall 'n, 'n <= 64 . (bits('n), bits('n)) -> bool
+val fast_bits_le_u = pure { c: "fast_bits_le_u", cpp: "fast_bits_le_u" } : forall 'n, 'n <= 64 . (bits('n), bits('n)) -> bool
+val fast_bits_ge_u = pure { c: "fast_bits_ge_u", cpp: "fast_bits_ge_u" } : forall 'n, 'n <= 64 . (bits('n), bits('n)) -> bool
+
+// Fallbacks for non-C/C++ backends.
+function fast_bits_lt_s(x, y) = bits_lt_s(x, y)
+function fast_bits_gt_s(x, y) = bits_gt_s(x, y)
+function fast_bits_le_s(x, y) = bits_le_s(x, y)
+function fast_bits_ge_s(x, y) = bits_ge_s(x, y)
+function fast_bits_lt_u(x, y) = bits_lt_u(x, y)
+function fast_bits_gt_u(x, y) = bits_gt_u(x, y)
+function fast_bits_le_u(x, y) = bits_le_u(x, y)
+function fast_bits_ge_u(x, y) = bits_ge_u(x, y)
+
+overload operator <_s  = {fast_bits_lt_s, bits_lt_s}
+overload operator >_s  = {fast_bits_gt_s, bits_gt_s}
+overload operator <=_s = {fast_bits_le_s, bits_le_s}
+overload operator >=_s = {fast_bits_ge_s, bits_ge_s}
+overload operator <_u  = {fast_bits_lt_u, bits_lt_u}
+overload operator >_u  = {fast_bits_gt_u, bits_gt_u}
+overload operator <=_u = {fast_bits_le_u, bits_le_u}
+overload operator >=_u = {fast_bits_ge_u, bits_ge_u}
+
 
 // Implication. This has the lowest precedence.
 infix 1 ==>
