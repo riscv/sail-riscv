@@ -85,6 +85,11 @@ mapping misaligned_fault_str : misaligned_fault <-> string = {
 overload to_str = {misaligned_fault_str}
 
 enum MemoryRegionType = { MainMemory, IOMemory }
+mapping memory_region_type_str : MemoryRegionType <-> string = {
+  MainMemory <-> "main memory",
+  IOMemory   <-> "IO memory",
+}
+overload to_str = {memory_region_type_str}
 
 // Physical Memory Attributes for a region.
 struct PMA = {
