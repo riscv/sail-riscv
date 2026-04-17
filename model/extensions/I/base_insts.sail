@@ -564,7 +564,24 @@ function clause execute MRET() = {
   else if not(ext_check_xret_priv(Machine))
   then Ext_XRET_Priv_Failure()
   else {
-    set_next_pc(exception_handler(cur_privilege, CTL_MRET(), PC));
+    let prev_priv = cur_privilege;
+    mstatus[MIE]  = mstatus[MPIE];
+    mstatus[MPIE] = 0b1;
+    cur_privilege = privLevel_bits(mstatus[MPP], 0b0); // TODO: use mstatus[MPV] if hypervisor enabled
+    mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
+    if   cur_privilege != Machine
+    then mstatus[MPRV] = 0b0;
+
+    if   hartSupports(Ext_Zicfilp)
+    then zicfilp_restore_elp_on_xret(mRET, cur_privilege);
+
+    long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
+    if   get_config_print_exception()
+    then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
+
+    set_next_pc(prepare_xret_target(Machine));
+
     xret_callback(true);
     RETIRE_SUCCESS
   }
@@ -591,7 +608,24 @@ function clause execute SRET() = {
   else if not(ext_check_xret_priv (Supervisor))
   then Ext_XRET_Priv_Failure()
   else {
-    set_next_pc(exception_handler(cur_privilege, CTL_SRET(), PC));
+    let prev_priv = cur_privilege;
+    mstatus[SIE]  = mstatus[SPIE];
+    mstatus[SPIE] = 0b1;
+    cur_privilege = if mstatus[SPP] == 0b1 then Supervisor else User;
+    mstatus[SPP]  = 0b0;
+    if   cur_privilege != Machine
+    then mstatus[MPRV] = 0b0;
+
+    if   hartSupports(Ext_Zicfilp)
+    then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
+
+    long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+
+    if   get_config_print_exception()
+    then print_log("ret-ing from " ^ to_str(prev_priv)
+                        ^ " to " ^ to_str(cur_privilege));
+
+    set_next_pc(prepare_xret_target(Supervisor));
     xret_callback(false);
     RETIRE_SUCCESS
   }

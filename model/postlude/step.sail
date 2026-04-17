@@ -214,7 +214,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     // is more than one ExecuteAs indirection we'll get to here. This isn't supported.
     Step_Execute(ExecuteAs(_), _) => internal_error(__FILE__, __LINE__, "Multiple chained ExecuteAs (only one redirection is supported)."),
     // standard errors
-    Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
+    Step_Execute(Trap(priv, exc, pc), _) => set_next_pc(exception_handler(priv, exc, pc)),
     Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
     // NOTE: Virtual instructions exception cannot be triggered until Hypervisor integration is complete.
     Step_Execute(Virtual_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Virtual_Instr()),
