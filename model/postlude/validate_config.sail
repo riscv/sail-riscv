@@ -479,10 +479,20 @@ private function check_stateen_config() -> bool = {
   valid
 }
 
+private function check_mmio_devices() -> bool = {
+  var valid : bool = true;
+  if plat_sig_base[1 .. 0] != zeros() then {
+    print_endline("platform.simple_interrupt_generator.base is not 4-byte aligned.");
+    valid = false;
+  };
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_mmu_config()
   & check_mem_layout()
+  & check_mmio_devices()
   & check_vlen_elen()
   & check_vext_config()
   & check_pmp()

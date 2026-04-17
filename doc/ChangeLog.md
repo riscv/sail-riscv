@@ -66,6 +66,8 @@
   - https://github.com/riscv/sail-riscv/issues/1560 : Updates to `mip` were not captured in the trace file
   - https://github.com/riscv/sail-riscv/issues/1574 : Misaligned store-conditionals didn't raise a misaligned address exception
 
+- A [Simple Interrupt Generator](../doc/SimpleInterruptGenerator.md) MMIO device has been added for testing purposes. This allows generating external and software interrupts that cannot be directly generated from within the hart.
+
 # Release notes for version 0.10
 
 - The highlight of this release is the switch to using the C++ backend
