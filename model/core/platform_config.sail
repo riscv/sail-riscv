@@ -34,10 +34,9 @@ let plat_enable_misaligned_access : bool = config memory.misaligned.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
-// Simple Interrupt Generator. For testing purposes, allows setting external
-// interrupts directly.
+// Simple Interrupt Generator. See docs/SimpleInterruptGenerator.md for details.
 let plat_sig_base : physaddrbits = to_bits_checked(config platform.simple_interrupt_generator.base : int)
-let plat_sig_size : physaddrbits = zero_extend(0x4)
+let plat_sig_size : physaddrbits = zero_extend(0x20)
 
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 

@@ -232,19 +232,10 @@
       "size": 786432
     },
     // Very simple MMIO device to generate external interrupts for testing
-    // purposes. It's always exactly 4 bytes and only supports 4-byte accesses
-    // (others will raise an access fault). The bits correspond to `mip`
-    // interrupt bits except bit 31 which is used to indicate set (0b1) or
-    // clear (0b0) operations. Only the MEI, SEI and MSI bits do anything;
-    // all other bits are ignored currently.
-    //
-    // The MEI and SEI bits set the external platform interrupts (for SEI this
-    // is distinct from the software-writable mip[SEI] bit). For MSI it controls
-    // the mip[MSI] bit directly.
-    //
+    // purposes. See docs/SimpleInterruptGenerator.md for details.
     "simple_interrupt_generator": {
-      // This must be in a suitable memory region (see `memory.regions`).
-      // The size is always 0x4.
+      // This must be in a suitable memory region (see `memory.regions`)
+      // and 4-byte aligned. The size is always 0x20.
       "base": 201326592
     },
     "clock_frequency": 1000000000,

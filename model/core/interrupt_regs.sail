@@ -103,6 +103,12 @@ private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
 // We could store MEIP here directly since it is never software-writable, but
 // for consistency with SEIP we don't.
 
+// Called whenever we want mip/sip with the external interrupts ORed in.
+// This is the case for a) reading mip/sip, and b) dispatching interrupts.
+// But it is NOT the case for reading mip/sip during a CSR read-modify-write
+// update, therefore we can't just store them directly in the mip register.
+val external_interrupts_pending : unit -> Minterrupts
+
 register mie     : Minterrupts // Enabled
 register mip     : Minterrupts // Pending
 register medeleg : Medeleg     // Exception delegation to S-mode
@@ -120,14 +126,29 @@ function clause is_CSR_accessible(0x302, _, _) = currentlyEnabled(Ext_S) // mede
 function clause is_CSR_accessible(0x312, _, _) = currentlyEnabled(Ext_S) & xlen == 32 // medelegh
 function clause is_CSR_accessible(0x303, _, _) = currentlyEnabled(Ext_S) // mideleg
 
+enum XipReadType = {
+  IncludePlatformInterrupts,
+  ExcludePlatformInterrupts,
+}
+
+function read_mip(read_type : XipReadType) -> Minterrupts =
+  match read_type {
+    IncludePlatformInterrupts => Mk_Minterrupts(mip.bits | external_interrupts_pending().bits),
+    ExcludePlatformInterrupts => mip,
+  }
+
+function write_mip(value : xlenbits) -> unit = {
+  mip = legalize_mip(mip, value);
+}
+
 function clause read_CSR(0x304) = mie.bits
-function clause read_CSR(0x344) = mip.bits
+function clause read_CSR(0x344) = read_mip(ExcludePlatformInterrupts).bits
 function clause read_CSR(0x302) = medeleg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x312 if xlen == 32) = medeleg.bits[63 .. 32]
 function clause read_CSR(0x303) = mideleg.bits
 
 function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); Ok(mie.bits) }
-function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); Ok(mip.bits) }
+function clause write_CSR(0x344, value) = { write_mip(value); Ok(read_mip(IncludePlatformInterrupts).bits) }
 function clause write_CSR((0x302, value) if xlen == 64) = { medeleg = legalize_medeleg(medeleg, value); Ok(medeleg.bits) }
 function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, medeleg.bits[63 .. 32] @ value); Ok(medeleg.bits[31 .. 0]) }
 function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); Ok(medeleg.bits[63 .. 32]) }
@@ -179,10 +200,17 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
   lift_sip(m, d, Mk_Sinterrupts(v))
 }
 
+function read_sip(read_type : XipReadType) -> Sinterrupts =
+  lower_mip(read_mip(read_type), mideleg)
+
+function write_sip(value : xlenbits) -> unit = {
+  mip = legalize_sip(mip, mideleg, value);
+}
+
 mapping clause csr_name_map = 0x144  <-> "sip"
 function clause is_CSR_accessible(0x144, _, _) = currentlyEnabled(Ext_S) // sip
-function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
-function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); Ok(lower_mip(mip, mideleg).bits) }
+function clause read_CSR(0x144) = read_sip(ExcludePlatformInterrupts).bits
+function clause write_CSR(0x144, value) = { write_sip(value); Ok(read_sip(IncludePlatformInterrupts).bits) }
 
 // sie
 // Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d).

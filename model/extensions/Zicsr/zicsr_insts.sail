@@ -78,8 +78,6 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_
       match write_CSR(csr, write_val) {
         Ok(final_val) => {
           X(rd) = dest_val;
-          // Note that this callback will never include the MEIP or SEIP bits
-          // set by the external platform.
           csr_write_callback(csr, final_val);
           RETIRE_SUCCESS
         },
