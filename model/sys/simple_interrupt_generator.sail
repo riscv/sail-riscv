@@ -21,26 +21,14 @@ function sig_store(Physaddr(paddr), width, data) = {
     let data = Mk_Minterrupts(zero_extend(data));
     if set then {
       // Set
-      if data[MEI] == 0b1 then {
-        sig_meip = 0b1;
-      };
-      if data[SEI] == 0b1 then {
-        sig_seip = 0b1;
-      };
-      if data[MSI] == 0b1 then {
-        mip[MSI] = 0b1;
-      };
+      if data[MEI] == 0b1 then sig_meip = 0b1;
+      if data[SEI] == 0b1 then sig_seip = 0b1;
+      if data[MSI] == 0b1 then mip[MSI] = 0b1;
     } else {
       // Clear
-      if data[MEI] == 0b1 then {
-        sig_meip = 0b0;
-      };
-      if data[SEI] == 0b1 then {
-        sig_seip = 0b0;
-      };
-      if data[MSI] == 0b1 then {
-        mip[MSI] = 0b0;
-      };
+      if data[MEI] == 0b1 then sig_meip = 0b0;
+      if data[SEI] == 0b1 then sig_seip = 0b0;
+      if data[MSI] == 0b1 then mip[MSI] = 0b0;
     };
 
     Ok(true)
