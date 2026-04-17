@@ -25,3 +25,8 @@ function ptw_success_callback(_) = ()
 
 val ptw_fail_callback = pure {cpp: "ptw_fail_callback"} : (/* error_type */ PTW_Error, /* level */ range(0, 4), /* pte_addr */ physaddrbits) -> unit
 function ptw_fail_callback(_) = ()
+
+// Instruction retire callback.  This allows tracking retires without using
+// minstret, since that is only conditionally incremented on retires.
+val instret_callback = pure {cpp: "instret_callback"} : (unit) -> unit
+function instret_callback() = ()

@@ -8,33 +8,42 @@ traploop_detector::traploop_detector() {
 }
 
 void traploop_detector::reset() {
-  trap_count = 0;
-  trap_mepc = 0;
-  trap_sepc = 0;
-  xret_count = 0;
+  mepc_at_first_trap = 0;
+  sepc_at_first_trap = 0;
+  instrets_since_last_trap = 0;
+  nested_trap_count = 0;
 }
 
 void traploop_detector::trap_callback(hart::Model &model, bool, fbits) {
-  trap_count++;
-  trap_mepc = model.zmepc.bits;
-  trap_sepc = model.zsepc.bits;
+  if (nested_trap_count == 0) {
+    mepc_at_first_trap = model.zmepc.bits;
+    sepc_at_first_trap = model.zsepc.bits;
+  }
+  nested_trap_count++;
+  instrets_since_last_trap = 0;
 }
 
 void traploop_detector::xret_callback(hart::Model &, bool) {
-  xret_count++;
+  reset();
 }
 
-bool traploop_detector::loop_detected() {
-  // It would be very unusual to have xrets exceeding trap-count by a
-  // large amount.  Should this be handled as well?
-  uint64_t diff = (trap_count > xret_count) ? trap_count - xret_count : 0;
-  return (diff > trap_count_threshold);
+void traploop_detector::instret_callback(hart::Model &) {
+  if (nested_trap_count != 0) {
+    instrets_since_last_trap++;
+    if (instrets_since_last_trap > instrets_to_reset_loop) {
+      reset();
+    }
+  }
+}
+
+bool traploop_detector::loop_detected() const {
+  return nested_trap_count > nested_trap_count_threshold;
 }
 
 uint64_t traploop_detector::mepc() const {
-  return trap_mepc;
+  return mepc_at_first_trap;
 }
 
 uint64_t traploop_detector::sepc() const {
-  return trap_sepc;
+  return sepc_at_first_trap;
 }

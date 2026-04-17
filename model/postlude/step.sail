@@ -264,6 +264,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
 
       // For step extensions
       ext_post_step_hook();
+
+      if retired then instret_callback();
+
       // Return that we have stepped and are not waiting.
       false
     }

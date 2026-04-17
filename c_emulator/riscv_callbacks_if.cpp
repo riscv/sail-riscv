@@ -94,6 +94,9 @@ void callbacks_if::trap_callback(
 void callbacks_if::xret_callback([[maybe_unused]] hart::Model &model, [[maybe_unused]] bool is_mret) {
 }
 
+void callbacks_if::instret_callback([[maybe_unused]] hart::Model &model) {
+}
+
 // Page table walk callbacks
 void callbacks_if::ptw_start_callback(
   [[maybe_unused]] hart::Model &model,
