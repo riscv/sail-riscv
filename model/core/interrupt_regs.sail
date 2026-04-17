@@ -91,6 +91,18 @@ private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
   [Mk_Medeleg(v) with MEnvCall = 0b0]
 }
 
+// Note that mip's MEIP and SEIP had special handling. MEIP is always
+// read-only zero in mip, and SEIP is software-writable. But there are also
+// external platform MEIP/SEIP inputs that are OR'd into mip when it is
+// read, both for dispatching interrupts, and when writing rd with CSR
+// instructions but NOT when it is used as a value for read-modify-write.
+//
+// For instance if the external platform is asserting SEIP and you do
+// `csrsi mip, 0`, it does NOT change the software-writable value of SEIP to be 1.
+//
+// We could store MEIP here directly since it is never software-writable, but
+// for consistency with SEIP we don't.
+
 register mie     : Minterrupts // Enabled
 register mip     : Minterrupts // Pending
 register medeleg : Medeleg     // Exception delegation to S-mode

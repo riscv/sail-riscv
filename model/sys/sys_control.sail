@@ -77,6 +77,16 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else                        None()
 }
 
+// Called whenever we want mip/sip with the external interrupts ORed in.
+// This is the case for a) reading mip/sip, and b) dispatching interrupts.
+// But it is NOT the case for reading mip/sip during a CSR read-modify-write
+// update, therefore we can't just store them directly in the mip register.
+function external_interrupts_pending() -> Minterrupts =
+  [Mk_Minterrupts(zeros()) with
+    MEI = sig_meip,
+    SEI = sig_seip,
+  ]
+
 // Given the current privilege level, return the pending set
 // of interrupts for the highest privilege that has any pending.
 //
@@ -90,8 +100,12 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
   assert(currentlyEnabled(Ext_S) | mideleg.bits == zeros());
 
-  let pending_m = mip.bits & mie.bits & ~(mideleg.bits);
-  let pending_s = mip.bits & mie.bits & mideleg.bits;
+  // The `mip` variable does not include the MEIP/SEIP external platform
+  // interrupt bits. We need to OR those in.
+  let mip_ext = mip.bits | external_interrupts_pending().bits;
+
+  let pending_m = mip_ext & mie.bits & ~(mideleg.bits);
+  let pending_s = mip_ext & mie.bits & mideleg.bits;
 
   let mIE = (priv == Machine    & mstatus[MIE] == 0b1) | priv == Supervisor | priv == User;
   let sIE = (priv == Supervisor & mstatus[SIE] == 0b1) | priv == User;
