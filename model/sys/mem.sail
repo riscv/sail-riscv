@@ -77,6 +77,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   paddr      : physaddr,
   width      : int('n),
   access     : MemoryAccessType(mem_payload),
+  pmpmt      : option(page_based_mem_type),
   pbmt       : page_based_mem_type,
   res_or_con : bool,
 )  -> option(ExceptionType) = {
@@ -85,6 +86,10 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
       Some(accessFaultFromAccessType(access))
     },
     Some(struct { attributes, _ }) => {
+      let attributes : PMA = match pmpmt {
+        Some(mt) if currentlyEnabled(Ext_Smpmpmt) => override_PMA(attributes, mt),
+        _                                         => attributes,
+      };
       let attributes = override_PMA(attributes, pbmt);
       let misaligned = not(is_aligned_addr(paddr, width));
       // Check if we need to raise an exception for misalignment.
@@ -189,8 +194,8 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   width : int('n),
   res_or_con : bool,
 ) -> option(ExceptionType) = {
-  let pmpError : option(ExceptionType) = pmpCheck(paddr, width, access, priv);
-  let pmaError : option(ExceptionType) = pmaCheck(paddr, width, access, pbmt, res_or_con);
+  let (pmpError, pmpmt) : (option(ExceptionType), option(page_based_mem_type)) = pmpCheck(paddr, width, access, priv);
+  let pmaError : option(ExceptionType) = pmaCheck(paddr, width, access, pmpmt, pbmt, res_or_con);
   match (pmpError, pmaError) {
     (None(), None())     => None(),
     (Some(e), None())    => Some(e),
