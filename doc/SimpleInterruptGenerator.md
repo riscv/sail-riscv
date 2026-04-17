@@ -1,6 +1,6 @@
 # Simple Interrupt Generator
 
-This model includes a very simple MMIO device that allows setting interrupts that are difficult to set via other means (though software or CLINT). This is intended for testing purposes.
+This model includes a very simple MMIO device that allows setting interrupts that are difficult to set via other means (through software or CLINT). This is intended for testing purposes.
 
 This describes version 0 of the device. Future versions may add additional features but will be backwards compatible.
 
