@@ -91,12 +91,14 @@ function is_shadow_stack_access(access : MemoryAccessType(mem_payload)) -> bool 
 function is_shadow_stack_amo(access : MemoryAccessType(mem_payload)) -> bool =
   match access {
     Atomic(_, ShadowStack, ShadowStack) => true,
-
-    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
-    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
-    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
-
     _                                   => false,
+  }
+
+function is_vector_access(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    Load(Vector)  => true,
+    Store(Vector) => true,
+    _             => false,
   }
 
 // Memory attributes for Page-based Memory Types

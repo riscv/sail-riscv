@@ -88,10 +88,15 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
       let attributes = override_PMA(attributes, pbmt);
       let misaligned = not(is_aligned_addr(paddr, width));
       // Check if we need to raise an exception for misalignment.
-      match attributes.misaligned_fault {
-        AccessFault if misaligned => return Some(accessFaultFromAccessType(access)),
-        AlignmentFault if misaligned => return Some(alignmentFaultFromAccessType(access)),
-        _ => {
+      let misaligned_fault : optional_misaligned_fault =
+        if not(misaligned) then Option_NoFault
+        // Ensure that `pma_misaligned_fault` is only called for a misaligned access.
+        else pma_misaligned_fault(attributes, access);
+
+      match misaligned_fault {
+        Option_AccessFault    => return Some(accessFaultFromAccessType(access)),
+        Option_AlignmentFault => return Some(alignmentFaultFromAccessType(access)),
+        Option_NoFault => {
           // Check read/write/execute permissions and PMAs.
           let canAccess : bool = match access {
             InstructionFetch()     => attributes.executable,

@@ -15,6 +15,16 @@
     using the Svadu and Svade extensions. When neither of these extensions
     are configured as supported, the model defaults to a hardware update of
     the PTE.
+  - The global handling (i.e. before address translation) of misaligned
+    accesses can be configured in a more fine-grained way: the handling of AMOs,
+    LR/SC and scalar and vector load/stores can be individually specified.
+    Misaligned AMOs and LR/SC now both raise access faults by default; this is a
+    change from the previous default and now matches the more common behavior. See
+    `memory.misaligned.global_faults`, which replaces `memory.misaligned.supported`.
+  - The handling of misaligned accesses can also be similarly specified in a PMA.
+    See the `attributes.misaligned_faults` field of each region under `memory.regions`;
+    `attributes.misaligned_faults` replaces the earlier `attributes.misaligned_fault`
+    property.
 
 - The following extensions have been added:
   - Ziccamoa
