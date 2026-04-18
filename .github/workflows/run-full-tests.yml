@@ -22,6 +22,7 @@ jobs:
         TEST_SUITE:
           [
             RISCV_TESTS,
+            RISCV_ARCH_TESTS,
             RISCV_VECTOR_TESTS_V128_E32,
             RISCV_VECTOR_TESTS_V128_E64,
             RISCV_VECTOR_TESTS_V256_E32,
