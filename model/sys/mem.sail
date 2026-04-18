@@ -72,10 +72,9 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => internal_error(__FILE__, __LINE__, "Store-conditional with acquire semantics should be unreachable"),
   }
 
-private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
-(
+private function pmaCheck(
   paddr      : physaddr,
-  width      : int('n),
+  width      : range(1, max_mem_access),
   access     : MemoryAccessType(mem_payload),
   pbmt       : page_based_mem_type,
   res_or_con : bool,
@@ -181,12 +180,12 @@ private function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : 
   if alignmentOrAccessFaultPriority(l) > alignmentOrAccessFaultPriority(r) then l else r
 
 // Check if access is permitted according to PMPs and PMAs.
-function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
+function phys_access_check(
   access : MemoryAccessType(mem_payload),
   pbmt : page_based_mem_type,
   priv : Privilege,
   paddr : physaddr,
-  width : int('n),
+  width : range(1, max_mem_access),
   res_or_con : bool,
 ) -> option(ExceptionType) = {
   let pmpError : option(ExceptionType) = pmpCheck(paddr, width, access, priv);
