@@ -90,8 +90,11 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
   assert(currentlyEnabled(Ext_S) | mideleg.bits == zeros());
 
-  let pending_m = mip.bits & mie.bits & ~(mideleg.bits);
-  let pending_s = mip.bits & mie.bits & mideleg.bits;
+  // Read mip with the external platform interrupts ORed in.
+  let mip_bits = read_mip(IncludePlatformInterrupts).bits;
+
+  let pending_m = mip_bits & mie.bits & ~(mideleg.bits);
+  let pending_s = mip_bits & mie.bits & mideleg.bits;
 
   let mIE = (priv == Machine    & mstatus[MIE] == 0b1) | priv == Supervisor | priv == User;
   let sIE = (priv == Supervisor & mstatus[SIE] == 0b1) | priv == User;

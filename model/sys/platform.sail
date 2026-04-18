@@ -31,6 +31,14 @@ private function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(ad
   & (addr_int + sizeof('n)) <= (clint_base_int + clint_size_int)
 }
 
+private function within_sig forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
+  let addr_int = unsigned(addr);
+  let sig_base_int = unsigned(plat_sig_base);
+  let sig_size_int = unsigned(plat_sig_size);
+    sig_base_int <= addr_int
+  & (addr_int + sizeof('n)) <= (sig_base_int + sig_size_int)
+}
+
 private function within_htif_writable forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool =
   match htif_tohost_base {
     None() => false,
@@ -333,16 +341,18 @@ function htif_store(Physaddr(paddr), width, data) = {
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   if get_config_rvfi()
   then false
-  else within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
+  else within_clint(addr, width) | within_sig(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
 
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   if get_config_rvfi()
   then false
-  else within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
+  else within_clint(addr, width) | within_sig(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 
 function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessType(mem_payload), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
   then clint_load(access, paddr, width)
+  else if within_sig(paddr, width)
+  then sig_load(access, paddr, width)
   else if within_htif_readable(paddr, width)
   then htif_load(access, paddr, width)
   else Err(accessFaultFromAccessType(access))
@@ -350,6 +360,8 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessT
 function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)
   then clint_store(paddr, width, data)
+  else if within_sig(paddr, width)
+  then sig_store(paddr, width, data)
   else if within_htif_writable(paddr, width)
   then htif_store(paddr, width, data)
   else Err(E_SAMO_Access_Fault())
