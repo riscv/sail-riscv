@@ -207,6 +207,7 @@ For booting operating system images, see the information under the
 - Svvptc extension for Obviating Memory-management Instructions after Marking PTEs valid, v1.0
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
+- Ssnpm, Smmpm, Smnpm, Sspm and Supm extensions for pointer masking, v1.0
 
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
 

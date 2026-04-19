@@ -7,7 +7,7 @@ prelude {
 }
 
 core {
-  requires prelude, A_types, Zicbop_types, Zicbom_types
+  requires prelude, A_types, Zicbop_types, Zicbom_types, PM_types
 
   files
     core/xlen.sail,
@@ -60,7 +60,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
 
   files
     sys/sys_reservation.sail,
@@ -521,6 +521,16 @@ extensions {
       files
         extensions/Stateen/stateen_csrs.sail,
         extensions/Stateen/stateen_access_checks.sail,
+    }
+  }
+
+   PM {
+    PM_types {
+      files extensions/pointer_masking/pm_types.sail
+    }
+    PM_utils {
+      requires core, PM_types
+      files extensions/pointer_masking/pm_utils.sail
     }
   }
 
