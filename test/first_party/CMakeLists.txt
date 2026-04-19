@@ -107,6 +107,9 @@ add_first_party_test("test_phys_perms_on_failing_sc.S")
 add_first_party_test("test_wfi_wait.S")
 add_first_party_test("test_tlb_stale_pte_access_fault.S")
 
+add_first_party_test_with_config("test_zilsd.S" "rv32gcv" 32 "no_override.json")
+add_first_party_test_with_config("test_zclsd.S" "rv32gv"  32 "test_zclsd.json")
+
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
 foreach(idx RANGE 0 ${test_last} 4)
