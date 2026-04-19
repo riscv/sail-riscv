@@ -210,6 +210,10 @@ function clause hartSupports(Ext_Zcf) = config extensions.Zcf.supported : bool &
 enum clause extension = Ext_Zcmop
 mapping clause extensionName = Ext_Zcmop <-> "zcmop"
 function clause hartSupports(Ext_Zcmop) = config extensions.Zcmop.supported
+// Code Size Reduction: compressed table jump instructions
+enum clause extension = Ext_Zcmt
+mapping clause extensionName = Ext_Zcmt <-> "zcmt"
+function clause hartSupports(Ext_Zcmt) = config extensions.Zcmt.supported
 // Compressed Instructions
 // C is supported if all of the following are true:
 //   - Zca is supported
@@ -596,6 +600,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zve32f => 2, // > Zve32x
     Ext_Zve64x => 2, // > Zve32x
     Ext_Zcmop => 2, // > Zca
+    Ext_Zcmt => 2, // > Zca
     Ext_Zicfiss => 2, // > Zaamo
 
     Ext_Ssccptr => 3, // > Sv39
