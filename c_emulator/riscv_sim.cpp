@@ -155,6 +155,7 @@ struct CLIOptions {
   bool config_print_exception = false;
   bool config_print_interrupt = false;
   bool config_print_htif = false;
+  bool config_print_uart = false;
   bool config_print_pma = false;
   bool config_print_rvfi = false;
   bool config_print_step = false;
@@ -265,6 +266,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag("--trace-exception", opts.config_print_exception, "Enable trace output for exceptions");
   app.add_flag("--trace-interrupt", opts.config_print_interrupt, "Enable trace output for interrupts");
   app.add_flag("--trace-htif", opts.config_print_htif, "Enable trace output for HTIF operations");
+  app.add_flag("--trace-uart", opts.config_print_uart, "Enable trace output for UART operations");
   app.add_flag("--trace-pma", opts.config_print_pma, "Enable trace output for PMA checks");
   app.add_flag_callback(
     "--trace-platform",
@@ -273,7 +275,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
       opts.config_print_exception = true;
       opts.config_print_interrupt = true;
       opts.config_print_htif = true;
-      opts.config_print_pma = true;
+      opts.config_print_uart = true, opts.config_print_pma = true;
     },
     "Enable trace output for platform-level events (MMIO, interrupts, "
     "exceptions, CLINT, HTIF, PMA)"
@@ -294,6 +296,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
       opts.config_print_exception = true;
       opts.config_print_interrupt = true;
       opts.config_print_htif = true;
+      opts.config_print_uart = true;
       opts.config_print_pma = true;
       opts.config_print_step = true;
     },
@@ -699,6 +702,7 @@ int inner_main(int argc, char **argv) {
   model.set_config_print_exception(opts.config_print_exception);
   model.set_config_print_interrupt(opts.config_print_interrupt);
   model.set_config_print_htif(opts.config_print_htif);
+  model.set_config_print_uart(opts.config_print_uart);
   model.set_config_print_pma(opts.config_print_pma);
   model.set_config_rvfi(rvfi.has_value());
   model.set_config_use_abi_names(opts.config_use_abi_names);

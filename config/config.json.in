@@ -231,6 +231,10 @@
       "base": 33554432,
       "size": 786432
     },
+    "uart": {
+      // This must be in a suitable memory region (see 'memory.regions').
+      "base": 50331648
+    },
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
     "wfi_is_nop": false,
