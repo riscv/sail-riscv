@@ -27,6 +27,7 @@ mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd)
   when (currentlyEnabled(Ext_Zvfh)   & get_sew() == 16)
      | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32)
      | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
+     | (currentlyEnabled(Ext_Zvfbfa) & get_altfmt() & get_sew() == 16)
 
 function clause execute FVVMTYPE(funct6, vm, vs2, vs1, vd) = {
   let rm_3b    = fcsr[FRM];
@@ -58,10 +59,10 @@ function clause execute FVVMTYPE(funct6, vm, vs2, vs1, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then {
       let res : bool = match funct6 {
-        FVVM_VMFEQ    => fp_eq(vs2_val[i], vs1_val[i]),
-        FVVM_VMFNE    => ~(fp_eq(vs2_val[i], vs1_val[i])),
-        FVVM_VMFLE    => fp_le(vs2_val[i], vs1_val[i]),
-        FVVM_VMFLT    => fp_lt(vs2_val[i], vs1_val[i])
+        FVVM_VMFEQ => fp_or_bf16_eq(vs2_val[i], vs1_val[i]),
+        FVVM_VMFNE => not(fp_or_bf16_eq(vs2_val[i], vs1_val[i])),
+        FVVM_VMFLE => fp_or_bf16_le(vs2_val[i], vs1_val[i]),
+        FVVM_VMFLT => fp_or_bf16_lt(vs2_val[i], vs1_val[i])
       };
       result[i] = bool_to_bit(res)
     }
@@ -100,6 +101,7 @@ mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)
   when (currentlyEnabled(Ext_Zvfh)   & get_sew() == 16)
      | (currentlyEnabled(Ext_Zve32f) & get_sew() == 32)
      | (currentlyEnabled(Ext_Zve64d) & get_sew() == 64)
+     | (currentlyEnabled(Ext_Zvfbfa) & get_altfmt() & get_sew() == 16)
 
 function clause execute FVFMTYPE(funct6, vm, vs2, rs1, vd) = {
   let rm_3b    = fcsr[FRM];
@@ -116,8 +118,10 @@ function clause execute FVFMTYPE(funct6, vm, vs2, rs1, vd) = {
   let 'n = num_elem;
   let 'm = SEW;
 
+  let use_bf16 = get_altfmt() & SEW == 16;
+
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
+  let rs1_val : bits('m)             = if use_bf16 then zero_extend(get_scalar_BF16(rs1)) else get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : bits('n)             = read_vmask(num_elem, 0b0, vd);
 
@@ -130,12 +134,12 @@ function clause execute FVFMTYPE(funct6, vm, vs2, rs1, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then {
       let res : bool = match funct6 {
-        VFM_VMFEQ    => fp_eq(vs2_val[i], rs1_val),
-        VFM_VMFNE    => ~(fp_eq(vs2_val[i], rs1_val)),
-        VFM_VMFLE    => fp_le(vs2_val[i], rs1_val),
-        VFM_VMFLT    => fp_lt(vs2_val[i], rs1_val),
-        VFM_VMFGE    => fp_ge(vs2_val[i], rs1_val),
-        VFM_VMFGT    => fp_gt(vs2_val[i], rs1_val)
+        VFM_VMFEQ => fp_or_bf16_eq(vs2_val[i], rs1_val),
+        VFM_VMFNE => not(fp_or_bf16_eq(vs2_val[i], rs1_val)),
+        VFM_VMFLE => fp_or_bf16_le(vs2_val[i], rs1_val),
+        VFM_VMFLT => fp_or_bf16_lt(vs2_val[i], rs1_val),
+        VFM_VMFGE => fp_or_bf16_ge(vs2_val[i], rs1_val),
+        VFM_VMFGT => fp_or_bf16_gt(vs2_val[i], rs1_val)
       };
       result[i] = bool_to_bit(res)
     }
