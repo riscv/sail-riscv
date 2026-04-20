@@ -381,6 +381,11 @@ extensions {
     }
   }
 
+  Zclsd {
+    requires core, sys, Zilsd
+    files extensions/Zclsd/zclsd_insts.sail
+  }
+
   Zicond {
     requires core
 
@@ -462,6 +467,11 @@ extensions {
     requires core, sys
     before I_insts // PAUSE overrides a FENCE
     files extensions/Zihintpause/zihintpause_insts.sail
+  }
+
+  Zilsd {
+    requires core, sys
+    files extensions/Zilsd/zilsd_insts.sail
   }
 
   Ssqosid {
