@@ -23,3 +23,10 @@ function clause write_CSR(csr, _) = {
    internal_error(__FILE__, __LINE__, "Write to CSR that does not exist: " ^ bits_str(csr));
 }
 end write_CSR
+
+// Implements the general HS-qualified rule from the H extension spec.
+// If an access fails in VS/VU mode but would succeed in HS mode, raise a
+// virtual instruction exception instead of an illegal instruction exception.
+// CSRs that deviate from this rule have explicit clauses defined.
+function clause is_CSR_exception_virtual(csr, _, access_type) = check_CSR(csr, Supervisor, access_type)
+end is_CSR_exception_virtual
