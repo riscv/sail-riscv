@@ -76,6 +76,13 @@ private function fetch() -> FetchResult = {
   if is_aligned_addr(Virtaddr(PC), 4) & currentlyEnabled(Ext_Ziccif) then {
     match fetch_bytes(PC, PC, 4) {
       FetchBytes_Ext_Error(e)   => F_Ext_Error(e),
+      // If an exception is raised for the upper two bytes but the
+      // instruction is only 16 bits then the exception should be
+      // ignored. In this implementation we avoid situations where
+      // this can happen - the minimum PMP granularity is 4 bytes, and
+      // for simplicity we restrict PMA granularity to 4096
+      // bytes. This situation may still occur if MMIO devices are
+      // incorrectly configured, but this is not checked currently.
       FetchBytes_Exception(e)   => F_Error(e, PC),
       FetchBytes_Success(bytes) => if isRVC(bytes[15 .. 0]) then F_RVC(bytes[15 .. 0]) else F_Base(bytes),
     }
