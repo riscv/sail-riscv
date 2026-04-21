@@ -329,22 +329,86 @@ function htif_store(Physaddr(paddr), width, data) = {
   Ok(true)
 }
 
+// AXI UART Lite
+
+val plat_uart_rx_valid = impure {cpp: "plat_uart_rx_valid", lem: "plat_uart_rx_valid"} : unit -> bool
+
+let plat_uart_base : physaddrbits = to_bits_checked(config platform.uart.base : int)
+let UART_RX_FIFO   : physaddrbits = zero_extend(0x0)
+let UART_TX_FIFO   : physaddrbits = zero_extend(0x4)
+let UART_STATUS    : physaddrbits = zero_extend(0x8)
+let UART_CONTROL   : physaddrbits = zero_extend(0xC)
+
+let UART_STATUS_RX_VALID : bits(8) = 0x01
+let UART_STATUS_TX_EMPTY : bits(8) = 0x04
+
+private function within_uart forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
+  let addr_int = unsigned(addr);
+  let uart_base_int = unsigned(plat_uart_base);
+    uart_base_int <= addr_int
+  & (addr_int + sizeof('n)) <= (uart_base_int + 16)
+}
+
+private val uart_load : forall 'n, 'n > 0. (MemoryAccessType(mem_payload), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
+function uart_load(access, Physaddr(addr), width) = {
+  let offset = addr - plat_uart_base;
+  // OpenSBI uses readb() (1-byte read) to access UART registers.
+  // Handle both 1-byte and 4-byte  memory accesses
+  if offset == UART_STATUS & (width == 4 | width == 1)
+  then {
+    let status : bits(8) = if plat_uart_rx_valid()
+                           then UART_STATUS_RX_VALID | UART_STATUS_TX_EMPTY
+                           else UART_STATUS_TX_EMPTY;
+    if get_config_print_uart()
+    then print_log("uart[" ^ hex_bits_str(addr) ^ "] -> " ^ bits_str(zero_extend(32, status)));
+    Ok(zero_extend(8 * 'n, status))
+  }
+  else if offset == UART_RX_FIFO & (width == 4 | width == 1)
+  then {
+    let c = plat_term_read();
+    if get_config_print_uart()
+    then print_log("uart[" ^ hex_bits_str(addr) ^ "] -> " ^ bits_str(zero_extend(32, c)));
+    Ok(zero_extend(8 * 'n, c))
+  }
+  else Err(accessFaultFromAccessType(access))
+}
+
+private val uart_store : forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
+function uart_store(Physaddr(addr), width, data) = {
+  let offset = addr - plat_uart_base;
+  // OpenSBI uses writeb() (1-byte write) to access UART registers.
+  // Handle both 1-byte and 4-byte memory accesses
+  if offset == UART_TX_FIFO & (width == 4 | width == 1)
+  then {
+    if get_config_print_uart()
+    then print_log("uart[" ^ hex_bits_str(addr) ^ "] <- " ^ bits_str(zero_extend(32, data[7..0])));
+    plat_term_write(data[7..0]);
+    Ok(true)
+  }
+  else if offset == UART_CONTROL & (width == 4 | width == 1)
+  // Ignore control register writes
+  then Ok(true)
+  else Err(E_SAMO_Access_Fault())
+}
+
 // Top-level MMIO dispatch
 function within_mmio_readable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   if get_config_rvfi()
   then false
-  else within_clint(addr, width) | (within_htif_readable(addr, width) & 1 <= 'n)
+  else within_clint(addr, width) | within_uart(addr, width)| (within_htif_readable(addr, width) & 1 <= 'n)
 
 function within_mmio_writable forall 'n, 0 < 'n <= max_mem_access . (addr : physaddr, width : int('n)) -> bool =
   if get_config_rvfi()
   then false
-  else within_clint(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
+  else within_clint(addr, width) | within_uart(addr, width) | (within_htif_writable(addr, width) & 'n <= 8)
 
 function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessType(mem_payload), paddr : physaddr, width : int('n)) -> MemoryOpResult(bits(8 * 'n)) =
   if   within_clint(paddr, width)
   then clint_load(access, paddr, width)
   else if within_htif_readable(paddr, width)
   then htif_load(access, paddr, width)
+  else if within_uart(paddr, width)
+  then uart_load(access, paddr, width)
   else Err(accessFaultFromAccessType(access))
 
 function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
@@ -352,4 +416,6 @@ function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, wid
   then clint_store(paddr, width, data)
   else if within_htif_writable(paddr, width)
   then htif_store(paddr, width, data)
+  else if within_uart(paddr, width)
+  then uart_store(paddr, width, data)
   else Err(E_SAMO_Access_Fault())

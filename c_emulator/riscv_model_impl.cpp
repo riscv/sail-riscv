@@ -1,6 +1,7 @@
 #include "riscv_model_impl.h"
 #include <algorithm>
 #include <cassert>
+#include <poll.h>
 #include <random>
 #include <unistd.h>
 
@@ -8,10 +9,59 @@
 #include "symbol_table.h"
 
 int term_fd = 1; // set during startup
+
+// Terminal write
 void plat_term_write_impl(char c) {
   if (write(term_fd, &c, sizeof(c)) < 0) {
     fprintf(stderr, "Unable to write to terminal!\n");
   }
+}
+
+// Terminal read
+char plat_term_read_impl() {
+  char c;
+  if (read(STDIN_FILENO, &c, 1) < 0) {
+    fprintf(stderr, "Unable to read from terminal!\n");
+    return 0;
+  }
+  return c;
+}
+
+// Single-character RX buffer to separate polling from reading.
+// -1 means empty. Checks for available input (plat_uart_rx_valid)
+// use the buffer, so stdin is read only once and the char is consumed
+// only when plat_term_read is called.
+static int uart_rx_buffer = -1;
+
+// Non-blocking check for RX data availability. Uses poll() to check if stdin
+// has data without blocking. If data is available, it is read into the buffer
+// so it can be returned later by plat_term_read
+bool ModelImpl::plat_uart_rx_valid(unit) {
+  if (uart_rx_buffer != -1) {
+    return true;
+  }
+  struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
+  if (poll(&pfd, 1, 0) > 0) {
+    uart_rx_buffer = plat_term_read_impl();
+    return true;
+  }
+  return false;
+}
+
+unit ModelImpl::plat_term_write(mach_bits c) {
+  plat_term_write_impl(static_cast<char>(c));
+  return UNIT;
+}
+
+// Blocking read of a single character. Returns the buffered character if
+// available, otherwise blocks on stdin until a character is received.
+mach_bits ModelImpl::plat_term_read(unit) {
+  if (uart_rx_buffer != -1) {
+    char c = static_cast<char>(uart_rx_buffer);
+    uart_rx_buffer = -1;
+    return static_cast<mach_bits>(c);
+  }
+  return static_cast<mach_bits>(plat_term_read_impl());
 }
 
 void ModelImpl::register_callback(callbacks_if *cb) {
@@ -243,11 +293,6 @@ bool ModelImpl::valid_reservation(unit) {
   return m_reservation_valid;
 }
 
-unit ModelImpl::plat_term_write(mach_bits s) {
-  plat_term_write_impl(static_cast<char>(s));
-  return UNIT;
-}
-
 bool ModelImpl::sys_enable_experimental_extensions(unit) {
   return m_enable_experimental_extensions;
 }
@@ -299,6 +344,10 @@ bool ModelImpl::get_config_print_htif(unit) {
   return m_config_print_htif;
 }
 
+bool ModelImpl::get_config_print_uart(unit) {
+  return m_config_print_uart;
+}
+
 bool ModelImpl::get_config_print_pma(unit) {
   return m_config_print_pma;
 }
@@ -329,6 +378,10 @@ void ModelImpl::set_config_print_interrupt(bool on) {
 
 void ModelImpl::set_config_print_htif(bool on) {
   m_config_print_htif = on;
+}
+
+void ModelImpl::set_config_print_uart(bool on) {
+  m_config_print_uart = on;
 }
 
 void ModelImpl::set_config_print_pma(bool on) {
