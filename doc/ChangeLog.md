@@ -28,6 +28,11 @@
     `attributes.misaligned_exceptions` field of each region under
     `memory.regions`; `attributes.misaligned_exceptions` replaces the
     earlier `attributes.misaligned_fault` property.
+  - A new `platform.require_exact_reservation_addr` parameter controls
+    whether Store-Conditional instructions are required to provide the
+    same address of the matching Load-Reserve in order to succeed.
+    This defaults to `false` to match earlier behavior, but can be set
+    to `true` to match some implementations such as Spike.
 
 - The following extensions have been added:
   - Ziccamoa
