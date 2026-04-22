@@ -177,47 +177,47 @@ let softfloat_f64_to_f32 _ _ = fail
 val softfloat_f32_to_bf16: bitvector -> bitvector -> (bitvector * bitvector)
 let softfloat_f32_to_bf16 _ _ = fail
 
-val softfloat_f16_lt : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f16_lt : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f16_lt _ _ = fail
 
-val softfloat_f16_lt_quiet : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f16_lt_quiet : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f16_lt_quiet _ _ = fail
 
-val softfloat_f16_le : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f16_le : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f16_le _ _ = fail
 
-val softfloat_f16_le_quiet : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f16_le_quiet : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f16_le_quiet _ _ = fail
 
-val softfloat_f16_eq : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f16_eq : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f16_eq _ _ = fail
 
-val softfloat_f32_lt : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f32_lt : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f32_lt _ _ = fail
 
-val softfloat_f32_lt_quiet : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f32_lt_quiet : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f32_lt_quiet _ _ = fail
 
-val softfloat_f32_le : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f32_le : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f32_le _ _ = fail
 
-val softfloat_f32_le_quiet : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f32_le_quiet : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f32_le_quiet _ _ = fail
 
-val softfloat_f32_eq : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f32_eq : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f32_eq _ _ = fail
 
-val softfloat_f64_lt : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f64_lt : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f64_lt _ _ = fail
 
-val softfloat_f64_lt_quiet : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f64_lt_quiet : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f64_lt_quiet _ _ = fail
 
-val softfloat_f64_le : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f64_le : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f64_le _ _ = fail
 
-val softfloat_f64_le_quiet : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f64_le_quiet : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f64_le_quiet _ _ = fail
 
-val softfloat_f64_eq : bitvector -> bitvector -> (bitvector * bitvector)
+val softfloat_f64_eq : bitvector -> bitvector -> (bitvector * bool)
 let softfloat_f64_eq _ _ = fail

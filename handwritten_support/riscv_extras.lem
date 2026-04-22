@@ -16,8 +16,8 @@ open import Sail2_monadic_combinators
 
 type bitvector = list Sail2_values.bitU
 
-val load_reservation : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. bitvector -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv unit 'e
-let load_reservation addr = return ()
+val load_reservation : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. bitvector -> integer -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv unit 'e
+let load_reservation addr width = return ()
 
 let match_reservation _ = true
 let cancel_reservation () = return ()
@@ -36,7 +36,7 @@ val plat_get_16_random_bits : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_o
 let plat_get_16_random_bits () = choose_bitvector "plat_get_16_random_bits" 16
 declare ocaml target_rep function plat_get_16_random_bits = `Platform.get_16_random_bits`
 
-def sys_enable_experimental_extensions () = false
+let sys_enable_experimental_extensions () = false
 
 val shift_bits_right : bitvector -> bitvector -> bitvector
 let shift_bits_right v m = shiftr v (uint m)

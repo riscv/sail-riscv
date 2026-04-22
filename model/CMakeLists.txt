@@ -519,9 +519,11 @@ foreach (xlen IN ITEMS 32 64)
         OUTPUT "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy" "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
         COMMENT "Building Isabelle definitions from Lem definitions (${arch})"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        # The -no_lifting_toplevel_match_for options avoid unnecessary and expensive use of `fun` on large pattern matches
         COMMAND
             lem
-            -no_lifting_toplevel_match_for ${arch_thy}_types.ast
+            -no_lifting_toplevel_match_for ${arch_thy}_types.instruction
+            -no_lifting_toplevel_match_for ${arch_thy}_types.MemoryAccessType
             -wl ign
             -isa
             -outdir ${CMAKE_BINARY_DIR}/isabelle/${arch}
@@ -530,9 +532,11 @@ foreach (xlen IN ITEMS 32 64)
             ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras_fdext.lem
             ${arch}_types.lem
             ${arch}.lem
+        # We need a few workarounds for large datatypes, and a syntax collision
         COMMAND
             sed
-            -e "s/datatype ast/datatype (plugins only: size) ast/"
+            -e "s/datatype extension/datatype (plugins only: size) extension/"
+            -e "s/datatype instruction/datatype (plugins only: size) instruction/"
             -e "s/record( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/record (overloaded) ( 'asidlen, 'valen, 'palen, 'ptelen) TLB_Entry/"
             "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
             >
@@ -541,9 +545,10 @@ foreach (xlen IN ITEMS 32 64)
             mv
             "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy.new"
             "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}_types.thy"
+        # These workarounds are for pattern completeness proofs in monadic functions
         COMMAND
             sed
-            -e "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong result.case_cong)/"
+            -e "s/by pat_completeness auto/by pat_completeness (auto intro!: let_cong bind_cong result.case_cong arg_cong[where f = catch_early_return])/"
             -e "s/WriteRAM_Meta addr width meta/WriteRAM_Meta addr width ()/"
             "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy"
             >
