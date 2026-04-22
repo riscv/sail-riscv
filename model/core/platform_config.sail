@@ -24,7 +24,7 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // `max_mem_access` (4096) because larger sizes are unrealistic.
 // Reservation sets are also naturally aligned. Reservation sets need to subsume
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
-let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_set_size_exp
+let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation.reservation_set_size_exp
 
 // The exceptions that a misaligned access could generate.  For
 // example, a misaligned LR/SC always raises an exception.
