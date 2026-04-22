@@ -524,11 +524,20 @@ function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Double Trap (Machine)
+enum clause extension = Ext_Smdbltrp
+mapping clause extensionName = Ext_Smdbltrp <-> "smdbltrp"
+function clause hartSupports(Ext_Smdbltrp) = config extensions.Smdbltrp.supported
+function clause currentlyEnabled(Ext_Smdbltrp) = hartSupports(Ext_Smdbltrp)
 // Machine-mode view of the state-enable extension
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
 function clause hartSupports(Ext_Smstateen) = config extensions.Stateen.Smstateen.supported
 
+// Double Trap (Supervisor)
+enum clause extension = Ext_Ssdbltrp
+mapping clause extensionName = Ext_Ssdbltrp <-> "ssdbltrp"
+function clause hartSupports(Ext_Ssdbltrp) = config extensions.Ssdbltrp.supported
 // QoS identifiers
 enum clause extension = Ext_Ssqosid
 mapping clause extensionName = Ext_Ssqosid <-> "ssqosid"
