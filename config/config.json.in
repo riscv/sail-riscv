@@ -281,6 +281,11 @@
     // It must be at least 2 on RV32 and 3 on RV64 to support Zalrsc.  It must not be more than
     // 6 for Za64rs and 7 for Za128rs.  In all cases, it must be less than or equal to 12.
     "reservation_set_size_exp": 3,
+    // Some implementations (e.g. Spike) require the Store-Conditional to provide the same
+    // address of the matching Load-Reserve in order to succeed, regardless of the
+    // configured reservation set size.  This controls whether such an exact address
+    // match is required for a Store-Conditional to succeed.
+    "require_exact_reservation_addr": false,
     "clint": {
       // This must be in a suitable IO memory region (see `memory.regions`).
       "base": 33554432,

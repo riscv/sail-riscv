@@ -23,6 +23,7 @@ public:
 
   void set_enable_experimental_extensions(bool en);
   void set_reservation_set_size_exp(uint64_t exponent);
+  void set_reservation_require_exact_addr_match(bool require_exact_addr_match);
 
   void set_config_print_instr(bool on);
   void set_config_print_clint(bool on);
@@ -113,9 +114,11 @@ private:
   std::vector<callbacks_if *> m_callbacks;
 
   uint64_t m_reservation = 0;
+  uint64_t m_reservation_addr = 0;
   bool m_reservation_valid = false;
 
   uint64_t m_reservation_set_addr_mask = 0;
+  bool m_reservation_require_exact_addr = false;
 
   bool m_enable_experimental_extensions = false;
 

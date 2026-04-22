@@ -424,6 +424,7 @@ void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
 
 void init_platform_constants(ModelImpl &model) {
   model.set_reservation_set_size_exp(get_config_uint64({"platform", "reservation_set_size_exp"}));
+  model.set_reservation_require_exact_addr_match(get_config_bool({"platform", "require_exact_reservation_addr"}));
 }
 
 void init_sail(ModelImpl &model, uint64_t elf_entry, const char *config_file) {
