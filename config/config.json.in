@@ -165,7 +165,7 @@
         },
         "size": {
           "len": 64,
-          "value": "0x2000000"
+          "value": "0x10000000"
         },
         "attributes": {
           "mem_type": "IOMemory",
@@ -230,6 +230,13 @@
       // This must be in a suitable memory region (see `memory.regions`).
       "base": 33554432,
       "size": 786432
+    },
+    // Very simple MMIO device to generate interrupts for testing
+    // purposes. See docs/SimpleInterruptGenerator.md for details.
+    "simple_interrupt_generator": {
+      // This must be in a suitable IO memory region (see `memory.regions`)
+      // and 4-byte aligned. The size is always 0x20.
+      "base": 201326592
     },
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
