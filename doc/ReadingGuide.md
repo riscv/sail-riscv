@@ -260,15 +260,15 @@ function that is used in other Sail backends.
 When implementing atomic accesses (e.g. for AMOs and instructions
 fetches in Ziccif), there are two approaches that can be taken in the
 Sail model. One approach is to implement an atomic memory access
-using a single memory transaction at the lowest level (i.e. in
+using a single memory operation at the lowest level (i.e. in
 [phys_mem_interface.sail](../model/core/phys_mem_interface.sail); this
 is the approach taken in this model. The second approach splits an
 atomic access into multiple smaller intra-instruction memory
-transactions at the level of
+operations at the level of
 [phys_mem_interface.sail](../model/core/phys_mem_interface.sail);
 however, these would have to be accompanied by additional rules in the
 RVWMO memory model specifying that no other memory accesses can
-intervene in between these transactions. Both approaches are
+intervene in between these operations. Both approaches are
 observationally equivalent for the C++ emulator since it currently
 implements a single-hart system, but the first approach is preferred
 to simplify the rules in the memory model.
