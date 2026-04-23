@@ -155,14 +155,6 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
   }
 }
 
-// types of privilege transitions
-
-union ctl_result = {
-  CTL_TRAP : sync_exception,
-  CTL_SRET : unit,
-  CTL_MRET : unit,
-}
-
 // trap value
 
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
@@ -257,58 +249,13 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
   };
 }
 
-function exception_handler(cur_priv : Privilege, ctl : ctl_result,
-                           pc: xlenbits) -> xlenbits = {
-  match ctl {
-    CTL_TRAP(e) => {
-      let del_priv = exception_delegatee(e.trap, cur_priv);
-      if   get_config_print_exception()
-      then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
-                          ^ " to handle " ^ to_str(e.trap));
-      trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext)
-    },
-    CTL_MRET()  => {
-      let prev_priv = cur_privilege;
-      mstatus[MIE]  = mstatus[MPIE];
-      mstatus[MPIE] = 0b1;
-      cur_privilege = privLevel_bits(mstatus[MPP], 0b0); // TODO: use mstatus[MPV] if hypervisor enabled
-      mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
-      if   cur_privilege != Machine
-      then mstatus[MPRV] = 0b0;
-
-      if   hartSupports(Ext_Zicfilp)
-      then zicfilp_restore_elp_on_xret(mRET, cur_privilege);
-
-      long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
-
-      if   get_config_print_exception()
-      then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
-
-      prepare_xret_target(Machine)
-    },
-    CTL_SRET()  => {
-      let prev_priv = cur_privilege;
-      mstatus[SIE]  = mstatus[SPIE];
-      mstatus[SPIE] = 0b1;
-      cur_privilege = if mstatus[SPP] == 0b1 then Supervisor else User;
-      mstatus[SPP]  = 0b0;
-      if   cur_privilege != Machine
-      then mstatus[MPRV] = 0b0;
-
-      if   hartSupports(Ext_Zicfilp)
-      then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
-
-      long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
-
-      if   get_config_print_exception()
-      then print_log("ret-ing from " ^ to_str(prev_priv)
-                          ^ " to " ^ to_str(cur_privilege));
-
-      prepare_xret_target(Supervisor)
-    },
-  }
+function exception_handler(cur_priv : Privilege, exc : sync_exception, pc : xlenbits) -> xlenbits = {
+  let del_priv = exception_delegatee(exc.trap, cur_priv);
+  if   get_config_print_exception()
+  then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
+                      ^ " to handle " ^ to_str(exc.trap));
+  trap_handler(del_priv, Exception(exc.trap), pc, exc.excinfo, exc.ext)
 }
-
 // Compute the value to write to mtval on a trap.
 function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
@@ -347,10 +294,8 @@ function make_sync_exception(e : ExceptionType, xtval : xlenbits) -> sync_except
            excinfo = xtval_exception_value(e, xtval),
            ext     = None() }
 
-function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
-  let t = make_sync_exception(e, xtval);
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
-}
+function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit =
+  set_next_pc(exception_handler(cur_privilege, make_sync_exception(e, xtval), PC))
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None()))
