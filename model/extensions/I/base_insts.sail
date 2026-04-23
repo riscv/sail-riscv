@@ -626,6 +626,7 @@ function clause execute SRET() = {
                         ^ " to " ^ to_str(cur_privilege));
 
     set_next_pc(prepare_xret_target(Supervisor));
+    
     xret_callback(false);
     RETIRE_SUCCESS
   }
