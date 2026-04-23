@@ -1,0 +1,72 @@
+name: CodSpeed
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  tests:
+    name: "RISC-V Tests (benchmarked)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build simulator and tests
+        run: |
+          CLANG_FLAG=""
+          if [ -n "$CLANG_VERSION" ]; then
+            CLANG_FLAG="-DCLANG_BIN=/usr/bin/clang-$CLANG_VERSION"
+          fi
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DENABLE_RISCV_TESTS=TRUE -DENABLE_SMT_TESTS=FALSE $CLANG_FLAG
+          ninja -C build
+
+      - name: Run tests
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: ctest --test-dir build --output-on-failure
+
+  linux-boot:
+    name: "Linux boot (benchmarked)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages
+        run: sudo apt-get install -y --no-install-recommends device-tree-compiler
+
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build
+
+      - name: Restore cache (linux image)
+        uses: actions/cache/restore@v5
+        id: linux-cache-restore
+        with:
+          path: os-boot/linux/build/fw_payload.elf
+          key: linux-image-${{ hashFiles('os-boot/linux/*.url', 'os-boot/linux/Makefile') }}
+
+      - name: Build Linux image
+        if: steps.linux-cache-restore.outputs.cache-hit != 'true'
+        run: make -C os-boot/linux --jobs=$(nproc)
+
+      - name: Prepare DTB
+        run: make -C os-boot/linux build/sail.dtb
+
+      - name: Linux boot
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 20000000 --device-tree-blob os-boot/linux/build/sail.dtb os-boot/linux/build/fw_payload.elf
