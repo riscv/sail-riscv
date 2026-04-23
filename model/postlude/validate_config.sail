@@ -320,9 +320,28 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
     },
   }
 
-// Return true iff [addr, addr+size) is fully contained in a single configured PMA memory region.
+// Return true iff [addr, addr+size) is fully contained in a single configured PMA memory region of the specified type.
+function within_configured_pma_memory(component : string, mem_type_opt : option(MemoryRegionType), addr : bits(64), size : bits(64)) -> bool = {
+  var valid : bool = true;
+  match (matching_pma_region_bits_range(pma_regions, addr, size), mem_type_opt) {
+    (None(), _) => {
+      valid = false;
+      print_endline("The " ^ component ^ " for the platform is not in a defined memory region.");
+    },
+    (Some(region), Some(mem_type)) => {
+      if region.attributes.mem_type != mem_type then {
+        valid = false;
+        print_endline("The " ^ component ^ " for the platform is in a memory region starting at " ^ bits_str(region.base) ^ " which is not a " ^ to_str(mem_type) ^ " region.");
+      }
+    },
+    (Some(_), _) => (),
+  };
+  valid
+}
+
 private function dtb_within_configured_pma_memory(addr : bits(64), size : bits(64)) -> bool =
-  is_some(matching_pma_region_bits_range(pma_regions, addr, size))
+  // Allow DTBs to be in main memory or IO memory (e.g. ROM).
+  within_configured_pma_memory("DTB", None(), addr, size)
 
 // Check that all memory regions are sorted and don't overlap, and that PMAs are compatible with enabled extensions.
 private function check_mem_layout() -> bool =
@@ -338,7 +357,14 @@ private function check_mem_layout() -> bool =
       ssccptr  = config extensions.Ssccptr.supported,
       svadu    = config extensions.Svadu.supported,
     };
-    check_pma_regions(pma_regions, zeros(), zeros(), check_opts, false)
+    let pmas_ok  = check_pma_regions(pma_regions, zeros(), zeros(), check_opts, false);
+    let clint_ok = within_configured_pma_memory("CLINT (platform.clint)", Some(IOMemory),
+                                                to_bits_checked(config platform.clint.base : int),
+                                                to_bits_checked(config platform.clint.size : int));
+    let sig_ok   = within_configured_pma_memory("simple interrupt generator (platform.simple_interrupt_generator)", Some(IOMemory),
+                                                to_bits_checked(config platform.simple_interrupt_generator.base : int),
+                                                zero_extend(plat_sig_size));
+    pmas_ok & clint_ok & sig_ok
   }
 
 private function check_pmp() -> bool = {

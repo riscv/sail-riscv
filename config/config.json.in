@@ -121,7 +121,8 @@
       // loads the resulting `xtval` may depend on this setting.
       "order_decreasing": false
     },
-    // Address to write DTB to (if provided).
+    // Address to write DTB to (if provided). This must be in a suitable memory
+    // region (see `memory.regions`).
     "dtb_address": {
       "len": 64,
       "value": "0x1000"
@@ -227,7 +228,7 @@
     // 6 for Za64rs and 7 for Za128rs.  In all cases, it must be less than or equal to 12.
     "reservation_set_size_exp": 3,
     "clint": {
-      // This must be in a suitable memory region (see `memory.regions`).
+      // This must be in a suitable IO memory region (see `memory.regions`).
       "base": 33554432,
       "size": 786432
     },
