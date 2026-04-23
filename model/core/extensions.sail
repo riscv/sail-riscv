@@ -456,6 +456,11 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 enum clause extension = Ext_Sscounterenw
 mapping clause extensionName = Ext_Sscounterenw <-> "sscounterenw"
 function clause hartSupports(Ext_Sscounterenw) = config extensions.Sscounterenw.supported
+// Supervisor-Level pointer masking for next lower privilege mode
+enum clause extension = Ext_Ssnpm
+mapping clause extensionName = Ext_Ssnpm <-> "ssnpm"
+function clause hartSupports(Ext_Ssnpm) = config extensions.Ssnpm.supported : bool & (xlen == 64)
+function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm) & currentlyEnabled(Ext_S)
 // Supervisor-mode view of the state-enable extension
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
@@ -529,6 +534,16 @@ function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Machine-Level pointer masking for machine mode
+enum clause extension = Ext_Smmpm
+mapping clause extensionName = Ext_Smmpm <-> "smmpm"
+function clause hartSupports(Ext_Smmpm) = config extensions.Smmpm.supported : bool & (xlen == 64)
+function clause currentlyEnabled(Ext_Smmpm) = hartSupports(Ext_Smmpm)
+// Machine-Level pointer masking for next lower privilege mode
+enum clause extension = Ext_Smnpm
+mapping clause extensionName = Ext_Smnpm <-> "smnpm"
+function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported : bool & (xlen == 64)
+function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm)
 // Machine-mode view of the state-enable extension
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
@@ -538,6 +553,21 @@ function clause hartSupports(Ext_Smstateen) = config extensions.Stateen.Smstatee
 enum clause extension = Ext_Ssqosid
 mapping clause extensionName = Ext_Ssqosid <-> "ssqosid"
 function clause hartSupports(Ext_Ssqosid) = config extensions.Ssqosid.supported
+
+// Environment extensions
+// These extensions are not configurable via the config file
+// To avoid ordering issues, they are placed at the bottom
+
+// Indicates whether pointer masking support is available in supervisor mode
+enum clause extension = Ext_Sspm
+mapping clause extensionName = Ext_Sspm <-> "sspm"
+function clause hartSupports(Ext_Sspm) = hartSupports(Ext_Smnpm) & hartSupports(Ext_S)
+function clause currentlyEnabled(Ext_Sspm) = hartSupports(Ext_Sspm) & currentlyEnabled(Ext_S)
+// Indicates whether pointer masking support is available in user mode
+enum clause extension = Ext_Supm
+mapping clause extensionName = Ext_Supm <-> "supm"
+function clause hartSupports(Ext_Supm) = (hartSupports(Ext_Smnpm) & not(hartSupports(Ext_S))) | (hartSupports(Ext_Ssnpm) & hartSupports(Ext_S))
+function clause currentlyEnabled(Ext_Supm) = hartSupports(Ext_Supm) & currentlyEnabled(Ext_U)
 
 // When adding a new extension X, we need to make sure that if X being supported
 // depends on Y being supported, then the value associated to X is _greater_ than
@@ -550,6 +580,8 @@ function hartSupports_measure(ext : extension) -> int =
     Ext_Ssu64xl => 1, // > S
     Ext_Zvkn => 1, // > Zvkned
     Ext_Zvks => 1, // > Zvksed
+    Ext_Sspm => 1, // > S
+    Ext_Supm => 1, // > S
 
     Ext_C => 2, // > D
     Ext_Zvknc => 2, // > Zvkn
@@ -604,6 +636,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zicfiss => 2, // > Zaamo
 
     Ext_Ssccptr => 3, // > Sv39
+    Ext_Supm => 3, // > U
     Ext_Svnapot => 3, // > Sv39
     Ext_Svpbmt => 3, // > Sv39
     Ext_Svvptc => 3, // > Sv39
@@ -769,12 +802,15 @@ let extensions_ordered_for_isa_string = [
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
-  Ext_Ssstateen,
+  Ext_Ssnpm,
+  Ext_Sspm,
   Ext_Ssqosid,
+  Ext_Ssstateen,
   Ext_Sstc,
   Ext_Sstvala,
   Ext_Sstvecd,
   Ext_Ssu64xl,
+  Ext_Supm,
   Ext_Svade,
   Ext_Svadu,
   Ext_Svinval,
@@ -787,5 +823,7 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smmpm,
+  Ext_Smnpm,
   Ext_Smstateen,
 ]
