@@ -35,6 +35,7 @@
   - Ziccif
   - Ziccrse
   - Zicfiss
+  - Zcmt
   - Ssccptr
   - Sscounterenw
   - Svade
