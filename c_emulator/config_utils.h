@@ -11,6 +11,8 @@
 // is ignored (-3 will be read as 3).
 uint64_t get_config_uint64(const std::vector<const char *> &keypath);
 
+bool get_config_bool(const std::vector<const char *> &keypath);
+
 const char *get_default_config();
 const char *get_default_rv32_config();
 

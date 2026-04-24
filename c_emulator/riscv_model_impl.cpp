@@ -44,6 +44,10 @@ void ModelImpl::set_reservation_set_size_exp(uint64_t exponent) {
   m_reservation_set_addr_mask = ~((1 << exponent) - 1);
 }
 
+void ModelImpl::set_reservation_require_exact_addr_match(bool require_exact_addr) {
+  m_reservation_require_exact_addr = require_exact_addr;
+}
+
 void ModelImpl::print_current_exception() {
   if (current_exception != nullptr) {
     zprint_exception(*current_exception);
@@ -220,6 +224,7 @@ mach_bits ModelImpl::plat_get_16_random_bits(unit) {
 // `cancel_reservation()`.
 
 unit ModelImpl::load_reservation(sbits addr, uint64_t width) {
+  m_reservation_addr = addr.bits;
   m_reservation = addr.bits & m_reservation_set_addr_mask;
   m_reservation_valid = true;
 
@@ -230,8 +235,9 @@ unit ModelImpl::load_reservation(sbits addr, uint64_t width) {
 }
 
 bool ModelImpl::match_reservation(sbits addr) {
-  return m_reservation_valid &&
-         (m_reservation & m_reservation_set_addr_mask) == (addr.bits & m_reservation_set_addr_mask);
+  return m_reservation_valid && (m_reservation_require_exact_addr ? (addr.bits == m_reservation_addr)
+                                                                  : (m_reservation & m_reservation_set_addr_mask) ==
+                                                                      (addr.bits & m_reservation_set_addr_mask));
 }
 
 unit ModelImpl::cancel_reservation(unit) {
