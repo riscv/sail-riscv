@@ -306,12 +306,12 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
           return false;
         };
         if check_opts.zicclsm then {
-          if not(is_none(attributes.misaligned_exceptions.load_store)) then {
-            print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with exceptions for misaligned scalar loads/stores, but Zicclsm is enabled which requires no exceptions for such accesses.");
+          if misaligned_exception_is_access_fault(attributes.misaligned_exceptions.load_store) then {
+            print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with access faults for misaligned scalar loads/stores, but Zicclsm is enabled which requires no exceptions or only misaligned exceptions for such accesses.");
             return false;
           };
-          if not(is_none(attributes.misaligned_exceptions.vector)) then {
-            print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with exceptions for misaligned vector loads/stores, but Zicclsm is enabled which requires no exceptions for such accesses.");
+          if misaligned_exception_is_access_fault(attributes.misaligned_exceptions.vector) then {
+            print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with access faults for misaligned vector loads/stores, but Zicclsm is enabled which requires no exceptions or only misaligned exceptions for such accesses.");
             return false;
           };
         };
@@ -506,13 +506,13 @@ private function check_extension_param_constraints() -> bool = {
                   " for the LR/SC operands on this platform.");
   };
   if (config extensions.Zicclsm.supported : bool) then {
-    if not(is_none((config memory.misaligned.exceptions : GlobalMisalignedExceptions).load_store)) then {
+    if misaligned_exception_is_access_fault((config memory.misaligned.exceptions : GlobalMisalignedExceptions).load_store) then {
       valid = false;
-      print_endline("The Zicclsm extension is enabled, but misaligned scalar loads/stores raise misaligned exceptions before address translation (as per `memory.misaligned.exceptions.load_store`); Zicclsm requires no exceptions for such accesses.");
+      print_endline("The Zicclsm extension is enabled, but misaligned scalar loads/stores raise access faults before address translation (as per `memory.misaligned.exceptions.load_store`); Zicclsm requires no exceptions or only misaligned exceptions for such accesses.");
     };
-    if not(is_none((config memory.misaligned.exceptions : GlobalMisalignedExceptions).vector)) then {
+    if misaligned_exception_is_access_fault((config memory.misaligned.exceptions : GlobalMisalignedExceptions).vector) then {
       valid = false;
-      print_endline("The Zicclsm extension is enabled, but misaligned vector loads/stores raise misaligned exceptions before address translation (as per `memory.misaligned.exceptions.vector`); Zicclsm requires no exceptions for such accesses.");
+      print_endline("The Zicclsm extension is enabled, but misaligned vector loads/stores raise access faults before address translation (as per `memory.misaligned.exceptions.vector`); Zicclsm requires no exceptions or only misaligned exceptions for such accesses.");
     };
   };
   valid
