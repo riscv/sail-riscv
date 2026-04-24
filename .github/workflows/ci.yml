@@ -74,10 +74,7 @@ jobs:
           # build top-level targets in parallel unfortunately.
           # First party tests cannot be built in the Rocky container due to lack of a suitable toolchain.
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWARNINGS_AS_ERRORS=TRUE -DFIRST_PARTY_TESTS=${{ matrix.first_party_tests }} -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_ARCH_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE $CLANG_FLAG
-          # The SMT generation is temporarily disabled due to
-          # https://github.com/rems-project/sail/issues/1664
-          #ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
-          ninja -C build all generated_sail_riscv_docs
+          ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
 
       - name: Run tests
         run: |
