@@ -239,7 +239,7 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // read-only zero. If S-mode is implemented but the v registers are not,
     // VS may optionally be read-only zero.
     // TODO: This should be made a platform parameter for the latter case.
-    VS = if not(hartSupports(Ext_Zve32x)) & not(hartSupports(Ext_S)) then 0b00 else v[VS],
+    VS = if not(hartSupports(Ext_Zve32x)) then 0b00 else v[VS],
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
