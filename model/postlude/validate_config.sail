@@ -477,6 +477,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
   };
+  if (config extensions.Zcmp.supported : bool) & (config extensions.Zcd.supported : bool) then {
+    valid = false;
+    print_endline("The Zcmp and Zcd extensions are mutually exclusive and cannot be supported simultaneously.");
+  };
   valid
 }
 
