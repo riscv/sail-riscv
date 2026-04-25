@@ -255,7 +255,7 @@ private function check_pma_region(region : PMA_Region) -> bool = {
   match pma.mem_type {
     MainMemory =>
       if not(pma.readable & pma.writable & pma.read_idempotent & pma.write_idempotent) then {
-        print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is marked as MainMemory but is not readable, read-idempotent, writable, and write-idempotent.");
+        print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is marked as " ^ to_str(pma.mem_type) ^ " but is not readable, read-idempotent, writable, and write-idempotent.");
         return false;
       },
     IOMemory =>
@@ -294,11 +294,11 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
       let attributes = region.attributes;
       if attributes.mem_type == MainMemory & attributes.cacheable & attributes.coherent then {
         if check_opts.ziccamoa & attributes.atomic_support < AMOArithmetic then {
-          print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
+          print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
           return false;
         };
         if check_opts.ziccamoc & attributes.atomic_support != AMOCASQ then {
-          print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoc is enabled which requires AMOCASQ support.");
+          print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoc is enabled which requires AMOCASQ support.");
           return false;
         };
         if check_opts.ziccif & not(attributes.executable) then {
@@ -307,20 +307,20 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
         };
         if check_opts.zicclsm then {
           if misaligned_exception_is_access_fault(attributes.misaligned_exceptions.load_store) then {
-            print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with access faults for misaligned scalar loads/stores, but Zicclsm is enabled which requires no exceptions or only misaligned exceptions for such accesses.");
+            print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with access faults for misaligned scalar loads/stores, but Zicclsm is enabled which requires no exceptions or only misaligned exceptions for such accesses.");
             return false;
           };
           if misaligned_exception_is_access_fault(attributes.misaligned_exceptions.vector) then {
-            print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with access faults for misaligned vector loads/stores, but Zicclsm is enabled which requires no exceptions or only misaligned exceptions for such accesses.");
+            print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with access faults for misaligned vector loads/stores, but Zicclsm is enabled which requires no exceptions or only misaligned exceptions for such accesses.");
             return false;
           };
         };
         if check_opts.ziccrse & attributes.reservability != RsrvEventual then {
-          print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
+          print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ reservability_str(attributes.reservability) ^ " reservability support, but Ziccrse is enabled which requires RsrvEventual support.");
           return false;
         };
         if check_opts.ssccptr & not(attributes.supports_pte_read) then {
-          print_endline("Memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable without hardware page-table read support, but Ssccptr is enabled which requires this support.");
+          print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable without hardware page-table read support, but Ssccptr is enabled which requires this support.");
           return false;
         };
       };
