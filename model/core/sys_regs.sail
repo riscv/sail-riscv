@@ -232,7 +232,7 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // "If neither the F extension nor S-mode is implemented, then FS is read-only zero.
     // If S-mode is implemented but the F extension is not, FS may optionally be read-only zero."
     // TODO: This should be made a platform parameter for the latter case.
-    FS = if hartSupports(Ext_Zfinx) | (not(hartSupports(Ext_F)) & not(hartSupports(Ext_S))) then 0b00 else v[FS],
+    FS = if hartSupports(Ext_Zfinx) | (not(hartSupports(Ext_F)) & not(currentlyEnabled(Ext_S))) then 0b00 else v[FS],
     MPP = if have_nominal_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
     // If neither the v registers nor S-mode is implemented, then VS is
