@@ -263,10 +263,7 @@ foreach (xlen IN ITEMS 32 64)
     # TODO: Currently we'll only test this on RV64D. It's quite
     # slow and there aren't any properties that depend on XLEN/FLEN
     # currently.
-    #
-    # The SMT test is currently disabled due to
-    # https://github.com/rems-project/sail/issues/1664
-    if ((arch STREQUAL rv64d) AND FALSE)
+    if (arch STREQUAL rv64d)
         add_test(
             NAME smt_properties_${arch}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
