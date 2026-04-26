@@ -42,6 +42,12 @@ function optional_misaligned_exception_str(opt_e : option(misaligned_exception))
   }
 overload to_str = {optional_misaligned_exception_str}
 
+function misaligned_exception_is_access_fault(e : option(misaligned_exception)) -> bool =
+  match e {
+    Some(AccessFault) => true,
+    _                 => false,
+  }
+
 // Some misaligned accesses could proceed or generate exceptions.
 // When used in the global (pre-address translation) configuration,
 // `None` indicates that the handling is deferred to the underlying

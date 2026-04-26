@@ -382,6 +382,9 @@
     "Ziccif": {
       "supported": true
     },
+    "Zicclsm": {
+      "supported": true
+    },
     "Ziccrse": {
       "supported": true
     },

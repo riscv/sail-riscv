@@ -27,14 +27,14 @@
 // performs misaligned accesses.
 let sys_misaligned_order_decreasing : bool = config memory.misaligned.order_decreasing
 
-// This is an external option that, when true, causes all misaligned accesses
-// to be split into single byte operations.  Otherwise, misaligned accesses
+// This is an external option that, when true, causes misaligned load/store accesses
+// to be split into single byte operations.  Otherwise, such misaligned accesses
 // are split into multiple accesses of smaller widths such that each of the latter
 // accesses is aligned.
 let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 
 // This is an external option that returns an integer N, such that
-// when N is greater than zero, misaligned accesses to physical memory
+// when N is greater than zero, misaligned load/store accesses to physical memory
 // (as atomic events) are allowed provided the access occurs within a
 // naturally aligned 2^N byte region. If the access spans more than one of these
 // regions it will be split into multiple memory operations.
