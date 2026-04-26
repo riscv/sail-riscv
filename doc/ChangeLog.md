@@ -1,10 +1,19 @@
 # Release notes for the next version
 
+# Release notes for version 0.11
+
 - Updates to the [configuration file](../config/config.json.in):
-  - PMAs now have an additional `atomic_support` attribute for the level
-    of atomicity supported in the memory region; see `memory.regions`.
+  - PMAs now have additional attributes (see `memory.regions`):
+    - `mem_type` for the type of memory covered by the region,
+      which can be either `MainMemory` or `IOMemory`.
+    - `atomic_support` for the level of atomicity supported in the
+      memory region.
+    - `supports_pte_read` and `supports_pte_write` for whether the region
+      supports the hardware read and write of page table entries respectively.
   - Writable bits of the `scounteren` CSR can now be specified;
     see `base.scounteren_writable_bits`.
+  - The behavior when reserved modes are written to the `mtvec` and
+    `stvec` CSRs can now be specified; see `base.reserved_behavior.xtvec_mode`.
   - The time limit that wait instructions (e.g. WFI, WRS.NTO, WRS.STO)
     can wait for is now configurable; see `platform.max_time_to_wait`
     (see also https://github.com/riscv/sail-riscv/issues/1564). The
@@ -35,6 +44,9 @@
     to `true` to match some implementations such as Spike. The earlier
     `platform.reservation_set_size_exp` parameter has moved to
     `platform.reservation.reservation_set_size_exp`.
+  - A new `platform.simple_interrupt_generator.base` parameter specifies
+    the memory location of the simple interrupt generator; see below for
+    more on this device.
 
 - The following extensions have been added:
   - Ziccamoa
