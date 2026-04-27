@@ -50,46 +50,12 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 // spanning pages always work.
 let sys_misaligned_allowed_within_exp : range(0, 12) = config memory.misaligned.allowed_within_exp
 
-// Check if an 'n byte access for an address is within an aligned 2^'r byte region
-private val access_within : forall 'width 'n ('r : Nat), 'r <= 'width & 1 <= 'n <= 2^'r.
-  (bits('width), int('n), int('r)) -> bool
-function access_within(addr, bytes, region_width_exp) = {
-  let mask : bits('width) = ~(zero_extend(ones(region_width_exp)));
-  (addr & mask) == ((addr + (bytes - 1)) & mask)
-}
-
-// This property demonstrates that when bytes == 2^region_width_exp, the access_within check above is
-// equivalent to a regular alignment check (for a constrained set of inputs to help the SMT solver).
-$[property]
-private function prop_access_within_is_aligned(addr : bits(32), region_width_exp : bits(4)) -> bool = {
-  let region_width_exp = unsigned(region_width_exp);
-  let bytes = 2 ^ region_width_exp;
-  access_within(addr, bytes, region_width_exp) == (unsigned(addr) % bytes == 0)
-}
-
-// A 1-byte access is always within a 2^0 = 1-byte region.
-$[property]
-private function prop_access_within_single(addr : bits(32)) -> bool = {
-  access_within(addr, 1, 0)
-}
-
-private val allowed_misaligned : forall 'width, 'width > 0. (xlenbits, int('width)) -> bool
-
-function allowed_misaligned(vaddr, width) = {
-  let region_width_exp = sys_misaligned_allowed_within_exp;
-  let region_width = 2 ^ region_width_exp;
-
-  if width > region_width then return false;
-
-  access_within(vaddr, width, region_width_exp)
-}
-
-private val split_misaligned : forall 'width, 'width > 0.
+private val split_misaligned : forall 'width, is_mem_width('width).
   (virtaddr, int('width)) -> {'n 'bytes, 'width == 'n * 'bytes & 'bytes > 0. (int('n), int('bytes))}
 
 function split_misaligned(vaddr, width) = {
   let vaddr_bits = bits_of(vaddr);
-  if is_aligned_addr(vaddr, width) | allowed_misaligned(vaddr_bits, width) then (1, width)
+  if is_aligned_addr(vaddr, width) | allowed_misaligned(vaddr_bits, width, sys_misaligned_allowed_within_exp) then (1, width)
   else if sys_misaligned_byte_by_byte then (width, 1)
   else {
     let bytes_per_access = 2 ^ count_trailing_zeros(vaddr_bits);
