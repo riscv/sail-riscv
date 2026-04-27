@@ -29,8 +29,7 @@ private function prop_access_within_single(addr : bits(32)) -> bool = {
   access_within(addr, 1, 0)
 }
 
-private val allowed_misaligned : (xlenbits, word_width_wide, range(0, 12)) -> bool
-function allowed_misaligned(addr, width, region_width_exp) = {
+private function allowed_misaligned(addr : xlenbits, width : word_width_wide, region_width_exp : range(0, 12)) -> bool = {
   let region_width = 2 ^ region_width_exp;
 
   if width > region_width then return false;
