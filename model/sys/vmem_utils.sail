@@ -50,6 +50,9 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 // spanning pages always work.
 let sys_misaligned_allowed_within_exp : range(0, 12) = config memory.misaligned.allowed_within_exp
 
+function is_access_within_page(Virtaddr(addr) : virtaddr, width : word_width_wide) -> bool =
+  access_within(addr, width, pagesize_bits)
+
 private val split_misaligned : forall 'width, is_mem_width('width).
   (virtaddr, int('width)) -> {'n 'bytes, 'width == 'n * 'bytes & 'bytes > 0. (int('n), int('bytes))}
 
@@ -80,10 +83,9 @@ function misaligned_order(n) = {
   }
 }
 
-private function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res : bool) -> option(misaligned_exception) = {
-  // AMOs should not be calling these utilities.
-  assert(not(is_amo_access(access)));
-  if res then Some(plat_misaligned_access.lrsc)
+function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res : bool) -> option(misaligned_exception) = {
+  if is_amo_access(access) then plat_misaligned_access.amo
+  else if res then Some(plat_misaligned_access.lrsc)
   else if is_vector_access(access) then plat_misaligned_access.vector
   else plat_misaligned_access.load_store
 }
