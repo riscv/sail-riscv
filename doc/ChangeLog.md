@@ -4,6 +4,10 @@
   - The CLINT and simple interrupt generator can be marked as not
     supported for platforms that do not contain these MMIO devices;
     see `platform.clint.supported` and `platform.simple_interrupt_generator.supported`.
+  - An option to control whether reservations can be cancelled by stores
+    by the same hart to the reservation set has been added; see
+    `platform.reservation.invalidate_on_same_hart_store`. This defaults
+    to false to match previous behavior.
 
 # Release notes for version 0.11
 

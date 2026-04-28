@@ -427,6 +427,9 @@ void init_platform_constants(ModelImpl &model) {
   model.set_reservation_require_exact_addr_match(
     get_config_bool({"platform", "reservation", "require_exact_reservation_addr"})
   );
+  model.set_reservation_invalidate_on_same_hart_store(
+    get_config_bool({"platform", "reservation", "invalidate_on_same_hart_store"})
+  );
 }
 
 void init_sail(ModelImpl &model, uint64_t elf_entry, const char *config_file) {

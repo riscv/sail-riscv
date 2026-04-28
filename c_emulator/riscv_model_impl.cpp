@@ -48,6 +48,10 @@ void ModelImpl::set_reservation_require_exact_addr_match(bool require_exact_addr
   m_reservation_require_exact_addr = require_exact_addr;
 }
 
+void ModelImpl::set_reservation_invalidate_on_same_hart_store(bool invalidate_on_same_hart_store) {
+  m_reservation_invalidate_on_same_hart_store = invalidate_on_same_hart_store;
+}
+
 void ModelImpl::print_current_exception() {
   if (current_exception != nullptr) {
     zprint_exception(*current_exception);
@@ -65,6 +69,9 @@ unit ModelImpl::mem_write_callback(const char *type, sbits paddr, uint64_t width
   for (auto c : m_callbacks) {
     c->mem_write_callback(*this, type, paddr, width, value);
   }
+  if (m_reservation_invalidate_on_same_hart_store && match_reservation(paddr)) {
+    cancel_reservation(UNIT);
+  };
   return UNIT;
 }
 unit ModelImpl::mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value) {
