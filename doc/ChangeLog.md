@@ -16,6 +16,19 @@
   - Writable bits of the `mcounteren` CSR can now be specified;
     see `base.mcounteren_writable_bits`. (This was previously controlled
     by `base.writable_hpm_counters`, which was incorrect.)
+  - PMA regions now have two additional attributes,
+    `misaligned_atomicity_granule_size_exp` and
+    `vector_misaligned_atomicity_granule_size_exp`, specifying the MAG
+    for scalar and vector accesses respectively. Since the MAG PMA is
+    optional, a value of `0` indicates an absence of the MAG PMA.
+    The value is restricted to a maximum of `12` (corresponding to a
+    page size).
+  - The pre-address-translation `misaligned.exceptions.amo`
+    configuration now allows misaligned AMOs to not raise an exception
+    (but see following sentence). In this case, the misalignment will
+    be checked by the MAG PMA for the access address. However,
+    exceptions are still raised for misaligned AMOs that straddle page
+    boundaries in the presence of address translation.
 
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
