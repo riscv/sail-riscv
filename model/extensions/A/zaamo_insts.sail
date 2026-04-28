@@ -82,17 +82,23 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   };
 
   if not(is_aligned_addr(vaddr, width)) then {
-    let exc : ExceptionType = match plat_misaligned_access.amo {
-      AccessFault        => E_SAMO_Access_Fault(),
-      AlignmentException => E_SAMO_Addr_Align(),
+    match plat_misaligned_exception(access, false) {
+      Some(AccessFault)        => return memory_exception(vaddr, E_SAMO_Access_Fault()),
+      Some(AlignmentException) => return memory_exception(vaddr, E_SAMO_Addr_Align()),
+      // Misaligned handling will be determined by applicable PMAs.
+      None()                   => (),
     };
-    return memory_exception(vaddr, exc)
   };
 
   let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Err(e, _) => return memory_exception(vaddr, e),
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
+
+  // FIXME: the AMO could lie outside a MAG PMA region, which will be
+  // determined by the following `mem_write_value`.  This might result
+  // in a `mem_write_ea` without a matching write of a value to
+  // memory.  See https://github.com/riscv/sail-riscv/issues/1761.
 
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, access, pbmt, aq & rl, rl, true) {
     Err(e) => return memory_exception(vaddr, e),

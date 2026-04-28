@@ -10,6 +10,24 @@
   - Add the `extensions.F.fflags_dirty_policy` option to configure exactly
     when mstatus[FS/SD] is set by floating point instructions.
 
+  - PMA regions now have two additional attributes to support the
+    Misaligned Atomicity Granule PMA: `misaligned_atomicity_granule_size_exp`
+	and `vector_misaligned_atomicity_granule_size_exp`, specifying the
+    MAG as a power of 2 for scalar and vector accesses respectively. A
+    value of `0` indicates an absence of the MAG PMA.  The value is
+    restricted to a maximum of `12` (corresponding to a page size).
+
+  - The pre-address-translation `memory.misaligned.exceptions.amo`
+    configuration now allows misaligned AMOs to not raise an exception
+    (but see following sentence); in this case, the misalignment will
+    be checked by the MAG PMA for the access address. However,
+    exceptions are still raised for misaligned AMOs that straddle 4K
+    page boundaries when virtual memory is active, since the maximum
+    MAG is 2^12. The default has been changed to not raise exceptions;
+    this is not compatible with previous versions. To recover previous
+    behavior, specify `memory.misaligned.exceptions.amo` as `"Some":
+    "AccessFault"`.
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1794 : `vtype.vill` was not set when SEW was configured to exceed ELEN
   - https://github.com/riscv/sail-riscv/issues/1753 : Access to `xenvcfg` CSRs need to be gated by the specification version

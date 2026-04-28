@@ -31,9 +31,8 @@
 //   mem_write_value      - both of the above partial applications
 //
 // The internal implementation first performs a PMP check (if PMP is
-// enabled), and then dispatches to MMIO regions or physical memory as
-// per the platform memory map.
-//
+// enabled) and a PMA check, and then dispatches to MMIO regions or physical
+// memory as per the platform memory map.
 
 private function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> read_kind =
   match (aq, rl, res) {
@@ -61,6 +60,20 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => internal_error(__FILE__, __LINE__, "Store-conditional with acquire semantics should be unreachable"),
   }
 
+
+// Information used to access physical memory.
+//
+// It specifies whether the access should be split, and if so, the MAG
+// granule to use. In future, this could be extended to cover memory
+// ordering properties.
+
+struct PM_Access_Info = {
+  // Whether the access should be split.
+  splittable : Splittability,
+  // The granule size to use for any splitting.
+  granule_size_exp : mag_size_exp,
+}
+
 private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 (
   paddr      : physaddr,
@@ -68,11 +81,11 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   access     : MemoryAccessType(mem_payload),
   pbmt       : page_based_mem_type,
   res_or_con : bool,
-)  -> option(ExceptionType) = {
+)  -> result(PM_Access_Info, ExceptionType) = {
 
   let attributes : PMA = match matching_pma_region(pma_regions, paddr, width) {
     None() =>
-      return Some(accessFaultFromAccessType(access)),
+      return Err(accessFaultFromAccessType(access)),
     Some(struct { attributes, _ }) =>
       override_PMA(attributes, pbmt),
   };
@@ -150,28 +163,23 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
     if get_config_print_pma()
     then print_log("PMA access check failed for a " ^ dec_str(width) ^ "-byte wide " ^ to_str(access) ^ " access to address " ^ hex_bits_str(bits_of(paddr)) ^ " with PMA {" ^ to_str(attributes) ^ "}");
 
-    return Some(accessFaultFromAccessType(access));
+    return Err(accessFaultFromAccessType(access));
   };
 
   // Check if we need to raise an exception for misalignment.
 
-  let misaligned = not(is_aligned_addr(paddr, width));
-  let misaligned_exception : option(misaligned_exception) =
-    if not(misaligned) then None()
-    // Ensure that `pma_misaligned_exception` is only called for a misaligned access.
-    else pma_misaligned_exception(attributes, access);
+  match mag_pma_check(attributes, access, paddr, width) {
+    Ok((splittable, granule)) => Ok(struct { splittable, granule_size_exp = granule }),
 
-  let opt_exception : option(ExceptionType) = match misaligned_exception {
-    Some(AccessFault)        => Some(accessFaultFromAccessType(access)),
-    Some(AlignmentException) => Some(alignmentFaultFromAccessType(access)),
-    None()                   => None(),
-  };
-
-  if get_config_print_pma() & opt_exception != None() then {
-    print_log("PMA alignment check failed for a " ^ dec_str(width) ^ "-byte wide " ^ to_str(access) ^ " access to address " ^ hex_bits_str(bits_of(paddr)) ^ " with PMA {" ^ to_str(attributes) ^ "}");
-  };
-
-  opt_exception
+    Err(e) => {
+      if get_config_print_pma()
+      then print_log("MAG PMA check failed for a " ^ dec_str(width) ^ "-byte wide " ^ to_str(access) ^ " access to address " ^ hex_bits_str(bits_of(paddr)) ^ " with PMA {" ^ to_str(attributes) ^ "}");
+      match e {
+        AccessFault        => Err(accessFaultFromAccessType(access)),
+        AlignmentException => Err(alignmentFaultFromAccessType(access)),
+      }
+    },
+  }
 }
 
 // Check if access is permitted according to PMPs and PMAs.
@@ -182,7 +190,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   paddr : physaddr,
   width : int('n),
   res_or_con : bool,
-) -> option(ExceptionType) = {
+) -> result(PM_Access_Info, ExceptionType) = {
 
   // Although the relative ordering of PMA and PMP checks is
   // unspecified, access faults do have a higher priority than
@@ -191,7 +199,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   // checks do not raise misaligned exceptions.
 
   match pmpCheck(paddr, width, access, priv) {
-    Some(e) => Some(e),
+    Some(e) => Err(e),
     None()  => pmaCheck(paddr, width, access, pbmt, res_or_con)
   }
 }
@@ -209,16 +217,58 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   meta : bool,
 ) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
   match phys_access_check(access, pbmt, priv, paddr, width, res) {
-    Some(e) => Err(e),
-    None() => {
-      if   within_mmio_readable(paddr, width)
-      then MemoryOpResult_add_meta(mmio_read(access, paddr, width), default_meta)
-      else {
-        let rk = read_kind_of_flags(aq, rl, res);
-        Ok(read_ram(rk, paddr, width, meta))
-      }
-    }
+    Err(e) => Err(e),
+
+    Ok(access_info) => {
+      // If the load is misaligned or an allowed misaligned access,
+      // split into `N` (single-copy-atomic) memory operations, each
+      // of `split_width` width. If the load is aligned, then `N` = 1
+      // and `split_width` == `width`.
+      let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
+
+      let paddr_bits = bits_of(paddr);
+
+      var data = zeros(8 * N * split_width);
+      // TODO: handle folding of read metadata across all the splits.
+
+      let (first, last, step) = misaligned_order(N);
+      var i : range(0, 'N - 1) = first;
+      var finished : bool = false;
+
+      repeat {
+        let offset = i;
+        let paddr = Physaddr(paddr_bits + (offset * split_width));
+
+        // Since splitting is within 4K page boundaries and PMAs are
+        // page-aligned, every split will be in a homogeneous region,
+        // though the code looks otherwise.
+
+        let split_data =
+          if   within_mmio_readable(paddr, width)
+          then match mmio_read(access, paddr, split_width) {
+            Err(e) => return Err(e),
+            Ok(mmio_data) => mmio_data,
+          } else {
+            let rk = read_kind_of_flags(aq, rl, res);
+            let (ram_data, _meta) = read_ram(rk, paddr, split_width, meta);
+            ram_data
+          };
+        data[(8 * (offset + 1) * split_width - 1) .. 8 * offset * split_width] = split_data;
+
+        if offset == last then {
+          finished = true
+        } else {
+          i = offset + step
+        }
+      } until finished;
+
+      // See above: metadata is not handled.
+      Ok((data, default_meta))
+    },
   }
+
+// This lets the Rocq extraction know why the repeat loop above terminates
+termination_measure checked_mem_read repeat N
 
 // Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
@@ -229,14 +279,11 @@ val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType
 
 // The most generic memory read operation
 function mem_read_priv_meta (access, pbmt, priv, paddr, width, aq, rl, res, meta) = {
-  let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
-    if (aq | res) & not(is_aligned_addr(paddr, width))
-    then Err(E_Load_Addr_Align())
-    else match (aq, rl, res) {
-      (false, true,  false) => throw(Error_not_implemented("load.rl")),
-      (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-      (_, _, _)             => checked_mem_read(access, pbmt, priv, paddr, width, aq, rl, res, meta)
-    };
+  let result : MemoryOpResult((bits(8 * 'n), mem_meta)) = match (aq, rl, res) {
+    (false, true,  false) => throw(Error_not_implemented("load.rl")),
+    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
+    (_, _, _)             => checked_mem_read(access, pbmt, priv, paddr, width, aq, rl, res, meta)
+  };
   match result {
     Ok(value, _) => mem_read_callback(to_str(access), bits_of(paddr), width, value),
     Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
@@ -274,8 +321,8 @@ function mem_write_ea(addr, width, access, pbmt, aq, rl, con) = {
   // concurrency of RAM accesses.
 
   match phys_access_check(access, pbmt, priv, addr, width, con) {
-    None()  => Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width)),
-    Some(e) => Err(e)
+    Ok(_)   => Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width)),
+    Err(e)  => Err(e)
   }
 }
 
@@ -293,16 +340,55 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   con : bool,
 ) -> MemoryOpResult(bool) =
   match phys_access_check(access, pbmt, priv, paddr, width, con) {
-    Some(e) => Err(e),
-    None() => {
-      if   within_mmio_writable(paddr, width)
-      then mmio_write(paddr, width, data)
-      else {
-        let wk = write_kind_of_flags(aq, rl, con);
-        Ok(write_ram(wk, paddr, width, data, meta))
-      }
-    }
+    Err(e) => Err(e),
+
+    Ok(access_info) => {
+      // If the store is misaligned or an allowed misaligned access,
+      // split into `N` (single-copy-atomic) memory operations, each
+      // of `split_width` width. If the store is aligned, then `N` = 1
+      // and `split_width` == `width`.
+      let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
+      // TODO: handle any splits of metadata across the splits.
+
+      let paddr_bits = bits_of(paddr);
+      var write_success : bool = true;
+
+      let (first, last, step) = misaligned_order(N);
+      var i : range(0, 'N - 1) = first;
+      var finished : bool = false;
+
+      repeat {
+        let offset = i;
+        let paddr = Physaddr(paddr_bits + (offset * split_width));
+
+        let write_value = data[(8 * (offset + 1) * split_width) - 1 .. 8 * offset * split_width];
+
+        // See comment above in `checked_mem_read` about the
+        // homogeneity of the split accesses.
+        if   within_mmio_writable(paddr, width)
+        then match mmio_write(paddr, split_width, write_value) {
+          Ok(v)  => write_success = write_success & v,
+          Err(e) => return Err(e),
+        } else {
+          let wk = write_kind_of_flags(aq, rl, con);
+          // This assumes that the same metadata applies to every split.
+          let v = write_ram(wk, paddr, split_width, write_value, meta);
+          write_success = write_success & v
+        };
+
+        if offset == last then {
+          finished = true
+        } else {
+          i = offset + step
+        }
+      } until finished;
+
+      Ok(write_success)
+    },
   }
+
+// This lets the Rocq extraction know why the repeat loop above terminates
+termination_measure checked_mem_write repeat N
 
 // Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
@@ -311,16 +397,12 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
 // data.
 val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), page_based_mem_type, Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_priv_meta (paddr, width, value, access, pbmt, priv, meta, aq, rl, con) = {
-  if (rl | con) & not(is_aligned_addr(paddr, width))
-  then Err(E_SAMO_Addr_Align())
-  else {
-    let result = checked_mem_write(paddr, width, value, access, pbmt, priv, meta, aq, rl, con);
-    match result {
-      Ok(_) => mem_write_callback(to_str(access), bits_of(paddr), width, value),
-      Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
-    };
-    result
-  }
+  let result = checked_mem_write(paddr, width, value, access, pbmt, priv, meta, aq, rl, con);
+  match result {
+    Ok(_) => mem_write_callback(to_str(access), bits_of(paddr), width, value),
+    Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
+  };
+  result
 }
 
 // Memory write with explicit Privilege and MemoryAccessType, and implicit metadata

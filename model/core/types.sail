@@ -144,6 +144,9 @@ function is_store_conditional forall ('a : Type) . (access : MemoryAccessType('a
 enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
 
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
+// used for misalignment calculations
+type max_mem_width : Nat = 8
+type max_mem_width_bits : Nat = 3
 
 // architectural interrupt definitions
 
