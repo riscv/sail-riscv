@@ -192,7 +192,7 @@ function illegal_reduction() -> bool = {
 }
 
 // f. Variable width check for widening reduction instructions
-function illegal_widening_reduction(EEW : int) -> bool = {
+function illegal_widening_reduction(EEW : nat) -> bool = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(EEW >= 8 & EEW <= elen)
 }
 
