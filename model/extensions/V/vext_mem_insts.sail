@@ -432,8 +432,7 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
 
   if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_reg_group(vs2, EMUL_index_pow)) |
-     not(valid_reg_group(vd, EMUL_data_pow))
+     not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
