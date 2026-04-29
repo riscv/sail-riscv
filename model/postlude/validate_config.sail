@@ -370,10 +370,14 @@ private function check_mem_layout() -> bool =
       svadu    = config extensions.Svadu.supported,
     };
     let pmas_ok  = check_pma_regions(pma_regions, zeros(), zeros(), check_opts, false);
-    let clint_ok = within_configured_pma_memory("CLINT (platform.clint)", Some(IOMemory),
+    let clint_supported : bool = config platform.clint.supported;
+    let clint_ok = not(clint_supported) |
+                   within_configured_pma_memory("CLINT (platform.clint)", Some(IOMemory),
                                                 to_bits_checked(config platform.clint.base : int),
                                                 to_bits_checked(config platform.clint.size : int));
-    let sig_ok   = within_configured_pma_memory("simple interrupt generator (platform.simple_interrupt_generator)", Some(IOMemory),
+    let sig_supported : bool = config platform.simple_interrupt_generator.supported;
+    let sig_ok   = not(sig_supported) |
+                   within_configured_pma_memory("simple interrupt generator (platform.simple_interrupt_generator)", Some(IOMemory),
                                                 to_bits_checked(config platform.simple_interrupt_generator.base : int),
                                                 zero_extend(plat_sig_size));
     pmas_ok & clint_ok & sig_ok
