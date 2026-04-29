@@ -68,10 +68,12 @@ struct GlobalMisalignedExceptions = {
 let plat_misaligned_access : GlobalMisalignedExceptions = config memory.misaligned.exceptions
 
 // Location of clock-interface, which should match with the spec in the DTB
+let plat_have_clint : bool = config platform.clint.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
 // Simple Interrupt Generator. See docs/SimpleInterruptGenerator.md for details.
+let plat_have_sig : bool = config platform.simple_interrupt_generator.supported
 let plat_sig_base : physaddrbits = to_bits_checked(config platform.simple_interrupt_generator.base : int)
 let plat_sig_size : physaddrbits = zero_extend(0x20)
 

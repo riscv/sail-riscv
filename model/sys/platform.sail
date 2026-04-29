@@ -21,6 +21,8 @@ let htif_tohost_size = 8
 function enable_htif(tohost_addr : bits(64)) -> unit = htif_tohost_base = Some(trunc(tohost_addr))
 
 private function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
+  if not(plat_have_clint) then return false;
+
   // To avoid overflow issues when physical memory extends to the end
   // of the addressable range, we need to perform address bound checks
   // on unsigned unbounded integers.
@@ -32,6 +34,8 @@ private function within_clint forall 'n, 0 < 'n <= max_mem_access . (Physaddr(ad
 }
 
 private function within_sig forall 'n, 0 < 'n <= max_mem_access . (Physaddr(addr) : physaddr, width : int('n)) -> bool = {
+  if not(plat_have_sig) then return false;
+
   let addr_int = unsigned(addr);
   let sig_base_int = unsigned(plat_sig_base);
   let sig_size_int = unsigned(plat_sig_size);
