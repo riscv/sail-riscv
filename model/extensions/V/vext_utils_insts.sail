@@ -20,7 +20,7 @@ mapping maybe_vmask : string <-> bits(1) = {
 //
 // 1. vector widening/narrowing instructions
 // 2. vector load/store instructions
-function valid_eew_emul(EEW : int, EMUL_pow : int) -> bool = {
+function valid_eew_emul(EEW : nat, EMUL_pow : int) -> bool = {
   EEW >= 8 & EEW <= elen & EMUL_pow >= -3 & EMUL_pow <= 3
 }
 
@@ -180,7 +180,7 @@ function illegal_vd_unmasked() -> bool = {
 //   1. integer/fixed-point widening/narrowing instructions
 //   2. vector integer extension: vzext, vsext
 //   3. vector crypto extension: zvbb
-function illegal_variable_width(vd : vregidx, vm : bits(1), SEW_new : int, LMUL_pow_new : int) -> bool = {
+function illegal_variable_width(vd : vregidx, vm : bits(1), SEW_new : nat, LMUL_pow_new : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
@@ -192,29 +192,29 @@ function illegal_reduction() -> bool = {
 }
 
 // f. Variable width check for widening reduction instructions
-function illegal_widening_reduction(EEW : int) -> bool = {
+function illegal_widening_reduction(EEW : nat) -> bool = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(EEW >= 8 & EEW <= elen)
 }
 
 // g. Non-indexed load instruction check
-function illegal_load(vd : vregidx, vm : bits(1), nf : nfields, EEW : int, EMUL_pow : int) -> bool = {
+function illegal_load(vd : vregidx, vm : bits(1), nf : nfields, EEW : nat, EMUL_pow : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 // h. Non-indexed store instruction check (with vs3 rather than vd)
-function illegal_store(nf : nfields, EEW : int, EMUL_pow : int) -> bool = {
+function illegal_store(nf : nfields, EEW : nat, EMUL_pow : int) -> bool = {
   not(valid_vtype()) | not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 // i. Indexed load instruction check
-function illegal_indexed_load(vd : vregidx, vm : bits(1), nf : nfields, EEW_index : int, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
+function illegal_indexed_load(vd : vregidx, vm : bits(1), nf : nfields, EEW_index : nat, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW_index, EMUL_pow_index)) | not(valid_segment(nf, EMUL_pow_data))
 }
 
 // j. Indexed store instruction check (with vs3 rather than vd)
-function illegal_indexed_store(nf : nfields, EEW_index : int, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
+function illegal_indexed_store(nf : nfields, EEW_index : nat, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
   not(valid_vtype()) | not(valid_eew_emul(EEW_index, EMUL_pow_index)) |
   not(valid_segment(nf, EMUL_pow_data))
 }
