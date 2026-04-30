@@ -200,7 +200,11 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   // implementation prioritizes PMP checks before PMA checks, as PMP
   // checks do not raise misaligned exceptions.
 
-  let spmpError : option(ExceptionType) = spmpCheck(paddr, width, access, priv);
+  /* Per SPMP spec §2.6: SPMP and paging are mutually exclusive.
+   * SPMP checks only apply when satp.mode == Bare. */
+  let spmpError : option(ExceptionType) =
+    if translationMode(priv) == Bare then spmpCheck(paddr, width, access, priv)
+    else None();
   match spmpError {
     Some(e) => Err(e),  // SPMP has priority
     None() =>

@@ -12,12 +12,12 @@
  * 2. Verify access works/traps as expected
  *
  * It uses the S-mode indirect CSRs (siselect, sireg, sireg2)
- * and spmpswitch registers.
+ * and spmpen registers.
  */
 
 /* SPMP specific definitions */
-#define CSR_SPMPSWITCH 0x1F0
-#define CSR_SPMPSWITCHH 0x1F1
+#define CSR_SPMPEN 0x183
+#define CSR_SPMPENH 0x193
 
 #define SPMPCFG_L (1 << 7)
 #define SPMPCFG_A_OFF 0
@@ -96,14 +96,14 @@ unsigned long read_spmp_cfg(int idx) {
   return read_csr(sireg2);
 }
 
-void set_spmpswitch(int idx, bool active) {
-  unsigned long sw = read_csr(0x1F0); // spmpswitch
+void set_spmpen(int idx, bool active) {
+  unsigned long sw = read_csr(0x183); // spmpen
   if (active) {
     sw |= (1UL << idx);
   } else {
     sw &= ~(1UL << idx);
   }
-  asm volatile("csrw 0x1F0, %0" ::"r"(sw));
+  asm volatile("csrw 0x183, %0" ::"r"(sw));
 }
 
 unsigned long get_napot_addr(unsigned long region_start) {
@@ -258,7 +258,7 @@ int main(void) {
   printf("Starting SPMP Comprehensive Test\n");
 
   // Activate entry 0
-  set_spmpswitch(0, true);
+  set_spmpen(0, true);
 
   unsigned long spmpaddr_val = get_napot_addr((unsigned long)REGION);
 
