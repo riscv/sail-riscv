@@ -203,7 +203,8 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           // PMP region without write permissions raises a store
           // access-fault exception."
           let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, pbmt, effPriv, paddr, bytes, true) {
+          let wid = current_world_id_for_access(access, effPriv);
+          match phys_access_check(access, pbmt, effPriv, wid, paddr, bytes, true) {
             Some(e) => return Err(memory_exception(Virtaddr(vaddr), e)),
             None()  => write_success = false,
           }

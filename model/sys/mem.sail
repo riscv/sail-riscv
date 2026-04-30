@@ -190,17 +190,23 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
   pbmt : page_based_mem_type,
   priv : Privilege,
+  wid : xlenbits,
   paddr : physaddr,
   width : int('n),
   res_or_con : bool,
 ) -> option(ExceptionType) = {
+  let smwidError : option(ExceptionType) = smwid_access_check(access, wid, paddr, width);
   let pmpError : option(ExceptionType) = pmpCheck(paddr, width, access, priv);
   let pmaError : option(ExceptionType) = pmaCheck(paddr, width, access, pbmt, res_or_con);
-  match (pmpError, pmaError) {
-    (None(), None())     => None(),
-    (Some(e), None())    => Some(e),
-    (None(), Some(e))    => Some(e),
-    (Some(e0), Some(e1)) => Some(highestPriorityAlignmentOrAccessFault(e0, e1)),
+  match smwidError {
+    Some(e) => Some(e),
+    None() =>
+      match (pmpError, pmaError) {
+        (None(), None())     => None(),
+        (Some(e), None())    => Some(e),
+        (None(), Some(e))    => Some(e),
+        (Some(e0), Some(e1)) => Some(highestPriorityAlignmentOrAccessFault(e0, e1)),
+      }
   }
 }
 
@@ -209,6 +215,7 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
   pbmt : page_based_mem_type,
   priv : Privilege,
+  wid : xlenbits,
   paddr : physaddr,
   width : int('n),
   aq : bool,
@@ -216,14 +223,14 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   res: bool,
   meta : bool,
 ) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  match phys_access_check(access, pbmt, priv, paddr, width, res) {
+  match phys_access_check(access, pbmt, priv, wid, paddr, width, res) {
     Some(e) => Err(e),
     None() => {
       if   within_mmio_readable(paddr, width)
-      then MemoryOpResult_add_meta(mmio_read(access, paddr, width), default_meta)
+      then MemoryOpResult_add_meta(mmio_read(access, wid, paddr, width), default_meta)
       else {
         let rk = read_kind_of_flags(aq, rl, res);
-        Ok(read_ram(rk, paddr, width, meta))
+        Ok(read_ram(wid, rk, paddr, width, meta))
       }
     }
   }
@@ -237,17 +244,18 @@ val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType
 
 // The most generic memory read operation
 function mem_read_priv_meta (access, pbmt, priv, paddr, width, aq, rl, res, meta) = {
+  let wid = current_world_id_for_access(access, priv);
   let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
     if (aq | res) & not(is_aligned_addr(paddr, width))
     then Err(E_Load_Addr_Align())
     else match (aq, rl, res) {
       (false, true,  false) => throw(Error_not_implemented("load.rl")),
       (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-      (_, _, _)             => checked_mem_read(access, pbmt, priv, paddr, width, aq, rl, res, meta)
+      (_, _, _)             => checked_mem_read(access, pbmt, priv, wid, paddr, width, aq, rl, res, meta)
     };
   match result {
-    Ok(value, _) => mem_read_callback(to_str(access), bits_of(paddr), width, value),
-    Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
+    Ok(value, _) => mem_read_callback(to_str(access), wid, bits_of(paddr), width, value),
+    Err(e) => mem_exception_callback(wid, bits_of(paddr), exceptionType_bits(e)),
   };
   result
 }
@@ -271,6 +279,7 @@ function mem_write_ea (addr, width, aq, rl, con) =
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
+  wid : xlenbits,
   paddr : physaddr,
   width : int('n),
   data: bits(8 * 'n),
@@ -282,14 +291,14 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   rl : bool,
   con : bool,
 ) -> MemoryOpResult(bool) =
-  match phys_access_check(access, pbmt, priv, paddr, width, con) {
+  match phys_access_check(access, pbmt, priv, wid, paddr, width, con) {
     Some(e) => Err(e),
     None() => {
       if   within_mmio_writable(paddr, width)
-      then mmio_write(paddr, width, data)
+      then mmio_write(wid, paddr, width, data)
       else {
         let wk = write_kind_of_flags(aq, rl, con);
-        Ok(write_ram(wk, paddr, width, data, meta))
+        Ok(write_ram(wid, wk, paddr, width, data, meta))
       }
     }
   }
@@ -301,16 +310,16 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
 // data.
 val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), page_based_mem_type, Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_priv_meta (paddr, width, value, access, pbmt, priv, meta, aq, rl, con) = {
-  if (rl | con) & not(is_aligned_addr(paddr, width))
-  then Err(E_SAMO_Addr_Align())
-  else {
-    let result = checked_mem_write(paddr, width, value, access, pbmt, priv, meta, aq, rl, con);
-    match result {
-      Ok(_) => mem_write_callback(to_str(access), bits_of(paddr), width, value),
-      Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
-    };
-    result
-  }
+  let wid = current_world_id_for_access(access, priv);
+  let result =
+    if (rl | con) & not(is_aligned_addr(paddr, width))
+    then Err(E_SAMO_Addr_Align())
+    else checked_mem_write(wid, paddr, width, value, access, pbmt, priv, meta, aq, rl, con);
+  match result {
+    Ok(_) => mem_write_callback(to_str(access), wid, bits_of(paddr), width, value),
+    Err(e) => mem_exception_callback(wid, bits_of(paddr), exceptionType_bits(e)),
+  };
+  result
 }
 
 // Memory write with explicit Privilege and MemoryAccessType, and implicit metadata

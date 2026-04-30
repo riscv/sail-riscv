@@ -7,11 +7,25 @@
 // Implementations of default callbacks for RVFI.
 // The model assumes that these functions do not change the state of the model.
 
-void rvfi_callbacks::mem_write_callback(ModelImpl &model, const char *, sbits paddr, uint64_t width, lbits value) {
+void rvfi_callbacks::mem_write_callback(
+  ModelImpl &model,
+  const char *,
+  sbits wid,
+  sbits paddr,
+  uint64_t width,
+  lbits value
+) {
   model.zrvfi_write(paddr, width, value);
 }
 
-void rvfi_callbacks::mem_read_callback(ModelImpl &model, const char *, sbits paddr, uint64_t width, lbits value) {
+void rvfi_callbacks::mem_read_callback(
+  ModelImpl &model,
+  const char *,
+  sbits wid,
+  sbits paddr,
+  uint64_t width,
+  lbits value
+) {
   sail_int len;
   CREATE(sail_int)(&len);
   CONVERT_OF(sail_int, mach_int)(&len, width);
@@ -19,7 +33,7 @@ void rvfi_callbacks::mem_read_callback(ModelImpl &model, const char *, sbits pad
   KILL(sail_int)(&len);
 }
 
-void rvfi_callbacks::mem_exception_callback(ModelImpl &model, sbits paddr, uint64_t) {
+void rvfi_callbacks::mem_exception_callback(ModelImpl &model, sbits wid, sbits paddr, uint64_t) {
   model.zrvfi_mem_exception(paddr);
 }
 

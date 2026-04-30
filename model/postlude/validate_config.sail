@@ -516,6 +516,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssqosid extension is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
   };
+  if (config extensions.Smwid.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
+    valid = false;
+    print_endline("The Smwid extension is enabled but Zicsr is disabled: supporting Smwid requires Zicsr.");
+  };
   if (config extensions.Sscounterenw.supported : bool) & ((sys_writable_hpm_counters[31 .. 3] & sys_scounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3]) then {
     valid = false;
     print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
@@ -525,6 +529,57 @@ private function check_misc_extension_dependencies() -> bool = {
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
   };
   valid
+}
+
+private function smwid_mask_sets_invalid_wids(mask : bits(64), nworlds : int) -> bool = {
+  assert(1 <= nworlds & nworlds <= 64);
+  if nworlds == 64 then false
+  else {
+    let high_mask : bits(64) = ~((zero_extend(0b1) << nworlds) - 1);
+    (mask & high_mask) != zeros()
+  }
+}
+
+private function smwid_region_sets_invalid_wids(region : SmwidWorldRegion, nworlds : int) -> bool =
+  smwid_mask_sets_invalid_wids(region.read_wids, nworlds)
+  | smwid_mask_sets_invalid_wids(region.write_wids, nworlds)
+  | smwid_mask_sets_invalid_wids(region.execute_wids, nworlds)
+  | smwid_mask_sets_invalid_wids(region.ptw_wids, nworlds)
+
+private function check_smwid_world_region(region : SmwidWorldRegion, nworlds : int) -> bool = {
+  var valid : bool = true;
+  if region.size == zeros() then {
+    valid = false;
+    print_endline("Smwid world regions must have non-zero size.");
+  };
+  if region.base + region.size <_u region.base then {
+    valid = false;
+    print_endline("Smwid world region starting at " ^ bits_str(region.base) ^
+                  " with size " ^ bits_str(region.size) ^
+                  " wraps around the physical address space.");
+  };
+  if smwid_region_sets_invalid_wids(region, nworlds) then {
+    valid = false;
+    print_endline("Smwid world-region masks set bits above nworlds - 1.");
+  };
+  valid
+}
+
+private function check_smwid_world_regions(regions : list(SmwidWorldRegion), prev_base : bits(64), prev_size : bits(64), nworlds : int) -> bool = {
+  match regions {
+    [||] => true,
+    region :: rest => {
+      var valid : bool = true;
+      if region.base <_u prev_base + prev_size then {
+        valid = false;
+        print_endline("Smwid world region starting at " ^ bits_str(region.base) ^
+                      " is not above the end of the previous region starting at " ^
+                      bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
+      };
+      valid = valid & check_smwid_world_region(region, nworlds);
+      valid & check_smwid_world_regions(rest, region.base, region.size, nworlds)
+    }
+  }
 }
 
 private function check_extension_param_constraints() -> bool = {
@@ -548,6 +603,40 @@ private function check_extension_param_constraints() -> bool = {
     if misaligned_exception_is_access_fault((config memory.misaligned.exceptions : GlobalMisalignedExceptions).vector) then {
       valid = false;
       print_endline("The Zicclsm extension is enabled, but misaligned vector loads/stores raise access faults before address translation (as per `memory.misaligned.exceptions.vector`); Zicclsm requires no exceptions or only misaligned exceptions for such accesses.");
+    };
+  };
+  if (config extensions.Smwid.supported : bool) | (config platform.worlds.enabled : bool) then {
+    let nworlds = config extensions.Smwid.nworlds : int;
+    let pmwid_bits : xlenbits = trunc(config extensions.Smwid.pmwid : bits(64));
+    let pmwid = unsigned(pmwid_bits);
+    let nworlds_valid = (1 <= nworlds) & (nworlds <= xlen);
+
+    if not(nworlds_valid) then {
+      valid = false;
+      print_endline("Smwid nworlds must be in the range [1, XLEN].");
+    };
+    if nworlds_valid then {
+      if pmwid >= nworlds then {
+        valid = false;
+        print_endline("Smwid pmwid must be less than nworlds.");
+      };
+      if (config extensions.Smwid.supported : bool) then {
+        let pmwidlist : xlenbits = trunc(config extensions.Smwid.pmwidlist : bits(64));
+        if (pmwid < xlen) & ((pmwidlist >> pmwid)[0] == 0b0) then {
+          valid = false;
+          print_endline("Smwid pmwidlist must authorize pmwid.");
+        };
+        if nworlds < xlen then {
+          let high_mask : xlenbits = ~((zero_extend(0b1) << nworlds) - 1);
+          if (pmwidlist & high_mask) != zeros() then {
+            valid = false;
+            print_endline("Smwid pmwidlist sets bits above nworlds - 1.");
+          };
+        };
+      };
+      if (config platform.worlds.enabled : bool) then {
+        valid = valid & check_smwid_world_regions(config platform.worlds.regions, zeros(), zeros(), nworlds);
+      };
     };
   };
   valid

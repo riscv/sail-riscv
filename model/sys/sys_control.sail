@@ -375,6 +375,7 @@ function reset_sys() -> unit = {
   // "Writable PMP registers’ A and L fields are set to 0, unless the platform
   // mandates a different reset value for some PMP registers’ A and L fields."
   reset_pmp();
+  reset_smwid();
 
   // "The [s,u]seed bits must have a defined reset value. The system must
   // not allow them to be in an undefined state after a reset."

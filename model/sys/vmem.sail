@@ -278,6 +278,7 @@ type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, page_based_mem_
 private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   sv_width  : int('v),
   _asid     : asidbits,
+  _wid      : xlenbits,
   vpn       : vpn_bits('v),
   access    : MemoryAccessType(mem_payload),
   priv      : Privilege,
@@ -317,6 +318,7 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
 private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  wid      : xlenbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
   access   : MemoryAccessType(mem_payload),
@@ -340,13 +342,13 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
       match update_and_write_pte(pteAddr, pte_size, pte, access) {
         Ok(Some(new_pte)) => {
           // Writeback the PTE (which has new A/D bits).
-          add_to_TLB(sv_width, asid, vpn, ppn, new_pte, pteAddr, level, global);
+          add_to_TLB(sv_width, asid, wid, vpn, ppn, new_pte, pteAddr, level, global);
           Ok(ppn, pbmt, ext_ptw)
         },
         Ok(None()) => {
           // There was no change in the PTE, but it still needs to be added
           // to the TLB due to the TLB miss.
-          add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
+          add_to_TLB(sv_width, asid, wid, vpn, ppn, pte, pteAddr, level, global);
           Ok(ppn, pbmt, ext_ptw)
         },
         Err(e) => Err(e, ext_ptw),
@@ -367,6 +369,7 @@ mapping satp_mode_width : SATPMode <-> {32, 39, 48, 57} = {
 private function translate forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  wid      : xlenbits,
   base_ppn : ppn_bits('v),
   vpn      : vpn_bits('v),
   access   : MemoryAccessType(mem_payload),
@@ -377,10 +380,10 @@ private function translate forall 'v, is_sv_mode('v) . (
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB NOTE above)
-  match lookup_TLB(sv_width, asid, vpn) {
-    Some(index, ent) => translate_TLB_hit(sv_width, asid, vpn, access, priv,
+  match lookup_TLB(sv_width, asid, wid, vpn) {
+    Some(index, ent) => translate_TLB_hit(sv_width, asid, wid, vpn, access, priv,
                                           mxr, do_sum, ext_ptw, index, ent),
-    None()           => translate_TLB_miss(sv_width, asid, base_ppn, vpn, access, priv,
+    None()           => translate_TLB_miss(sv_width, asid, wid, base_ppn, vpn, access, priv,
                                            mxr, do_sum, ext_ptw),
   }
 }
@@ -437,12 +440,14 @@ function translateAddr(
     let mxr    = mstatus[MXR] == 0b1;
     let do_sum = mstatus[SUM] == 0b1;
     let asid   = satp_to_asid(satp_sxlen);
+    let wid    = current_world_id_for_access(access, effPriv);
 
     // Step 1 of VATP.
     let base_ppn = satp_to_ppn(satp_sxlen);
 
     let res = translate(sv_width,
                         zero_extend(asid),
+                        wid,
                         base_ppn,
                         svAddr[sv_width - 1 .. pagesize_bits],
                         access, effPriv, mxr, do_sum,

@@ -61,7 +61,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Smwid, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
 
   files
     sys/sys_reservation.sail,
@@ -177,6 +177,13 @@ extensions {
 
     files
       extensions/H/hext_insts.sail
+  }
+
+  Smwid {
+    requires core, A_types, Zicbop_types
+
+    files
+      extensions/Smwid/smwid.sail
   }
 
   // Floating point (F and D extensions)
@@ -408,7 +415,7 @@ extensions {
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
-      requires core, sys, Zicbom_types
+      requires core, sys, Smwid, Zicbom_types
       files extensions/Zicbom/zicbom_insts.sail
     }
   }
@@ -421,7 +428,7 @@ extensions {
     Zicbop_insts {
       // PREFETCH.{I,R,W} instructions override ORI hints (rd=0)
       before I_insts
-      requires core, sys, Zicbop_types
+      requires core, sys, Smwid, Zicbop_types
       files extensions/Zicbop/zicbop_insts.sail
     }
   }
@@ -566,7 +573,7 @@ mops {
 postlude {
   after extensions, mops, core
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, Smwid, pmp, Zicfilp_regs, Zicfilp_insts
 
   files
     postlude/insts_end.sail,
@@ -584,7 +591,7 @@ postlude {
 
 unit_tests {
   after postlude
-  requires prelude, core, sys, exceptions, postlude
+  requires prelude, core, sys, exceptions, postlude, Smwid
 
   files
     unit_tests/test_mstatus.sail,

@@ -28,11 +28,11 @@ class PlatformInterface {
 public:
   virtual unit fetch_callback(sbits opcode);
 
-  virtual unit mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value);
+  virtual unit mem_write_callback(const char *type, sbits wid, sbits paddr, uint64_t width, lbits value);
 
-  virtual unit mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value);
+  virtual unit mem_read_callback(const char *type, sbits wid, sbits paddr, uint64_t width, lbits value);
 
-  virtual unit mem_exception_callback(sbits paddr, uint64_t num_of_exception);
+  virtual unit mem_exception_callback(sbits wid, sbits paddr, uint64_t num_of_exception);
 
   virtual unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value);
 
