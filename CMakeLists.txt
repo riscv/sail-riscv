@@ -48,6 +48,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 # Generally it just simplifies everything for a negligible performance cost.
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
+# Enable link-time optimization globally. This allows the linker to inline
+# Sail runtime helpers (eq_bits, add_bits_int, etc.) into the generated
+# model code, which is the dominant cost in the simulator hot path.
+include(CheckIPOSupported)
+check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
+if (lto_supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    message(STATUS "LTO enabled globally")
+else()
+    message(STATUS "LTO not supported: ${lto_error}")
+endif()
+
 # Don't allow undefined symbols. This is generally a pain.
 include(CheckLinkerFlag)
 
