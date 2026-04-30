@@ -25,7 +25,8 @@ function clause execute (VFNCVTBF16_F_F_W(vm, vs2, vd)) = {
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
+      not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) |
+      not(valid_vm_src_overlap(vm, vs2, SEW_widen))
   then return Illegal_Instruction();
 
   assert(SEW == 16);
@@ -78,7 +79,8 @@ function clause execute (VFWCVTBF16_F_F_V(vm, vs2, vd)) = {
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+      not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW == 16);

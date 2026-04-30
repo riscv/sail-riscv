@@ -315,7 +315,9 @@ function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  if illegal_store(nf, EEW, EMUL_pow) |
+     not(valid_reg_group(vs3, EMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs3, EEW))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
@@ -368,6 +370,7 @@ mapping clause encdec = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
 // only implements the ordered variant, hence `mop` is ignored.
 function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   let EEW_index_pow = vlewidth_pow(width);
+  let EEW_index = 2 ^ EEW_index_pow;
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
   let EEW_data_bytes = get_sew_bytes();
@@ -375,7 +378,8 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
 
   if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))
+     not(valid_disjoint_reg_groups(vs2, vd, EMUL_index_pow, EMUL_data_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, EEW_index))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
@@ -433,8 +437,10 @@ mapping clause encdec = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
 // only implements the ordered variant, hence `mop` is ignored.
 function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, _mop) = {
   let EEW_index_pow = vlewidth_pow(width);
+  let EEW_index = 2 ^ EEW_index_pow;
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
+  let EEW_data = 2 ^ EEW_data_pow;
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
@@ -443,8 +449,9 @@ function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, _mop) = {
   assert(num_elem > 0);
 
   if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_reg_group(vs2, EMUL_index_pow)) |
-     not(valid_reg_group(vs3, EMUL_data_pow))
+     not(valid_src_overlap(vs2, EEW_index, EMUL_index_pow, vs3, EEW_data, EMUL_data_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, EEW_index)) |
+     not(valid_vm_src_overlap(vm, vs3, EEW_data))
   then return Illegal_Instruction();
 
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;

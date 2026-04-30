@@ -27,7 +27,9 @@ function clause execute VABS_V(vm, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -72,7 +74,10 @@ function clause execute ZVABDTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) then return Illegal_Instruction();
+  if illegal_normal(vd, vm) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -131,7 +136,9 @@ function clause execute ZVWABDATYPE(funct6, vm, vs2, vs1, vd) = {
 
   if  illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+      not(valid_vm_src_overlap(vm, vs1, SEW)) |
+      not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW_widen == 16 | SEW_widen == 32);

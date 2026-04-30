@@ -36,7 +36,9 @@ function clause execute FVVMTYPE(funct6, vm, vs2, vs1, vd) = {
 
   if illegal_fp_vd_unmasked(SEW, rm_3b) |
      not(valid_reg_group(vs1, LMUL_pow)) |
-     not(valid_reg_group(vs2, LMUL_pow))
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -108,7 +110,8 @@ function clause execute FVFMTYPE(funct6, vm, vs2, rs1, vd) = {
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_fp_vd_unmasked(SEW, rm_3b) |
-     not(valid_reg_group(vs2, LMUL_pow))
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
