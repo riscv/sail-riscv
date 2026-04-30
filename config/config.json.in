@@ -12,7 +12,9 @@
 {
   "base": {
     "xlen": @CONFIG__BASE__XLEN@,
-    // Whether the base ISA is E.
+    // Whether the base ISA is E, in which case accessing
+    // x16-31 is reserved and in this implementation will
+    // raise an illegal instruction exception.
     "E": false,
     "writable_misa": true,
     "writable_fiom": true,
