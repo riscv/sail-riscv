@@ -289,15 +289,21 @@
       "require_exact_reservation_addr": false
     },
     "clint": {
-      // This must be in a suitable IO memory region (see `memory.regions`).
+      // Whether the platform contains a CLINT.
+      "supported": true,
+      // If supported, this must be in a suitable IO memory region (see `memory.regions`).
+      // Otherwise, these values can be left as 0.
       "base": 33554432,
       "size": 786432
     },
     // Very simple MMIO device to generate interrupts for testing
     // purposes. See docs/SimpleInterruptGenerator.md for details.
     "simple_interrupt_generator": {
-      // This must be in a suitable IO memory region (see `memory.regions`)
-      // and 4-byte aligned. The size is always 0x20.
+      // Whether the platform contains this device.
+      "supported": true,
+      // If supported, this must be in a suitable IO memory region (see `memory.regions`)
+      // and 4-byte aligned. The size is always 0x20.  If not supported, this can be left
+      // as 0.
       "base": 201326592
     },
     "clock_frequency": 1000000000,

@@ -1,5 +1,10 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - The CLINT and simple interrupt generator can be marked as not
+    supported for platforms that do not contain these MMIO devices;
+    see `platform.clint.supported` and `platform.simple_interrupt_generator.supported`.
+
 # Release notes for version 0.11
 
 - Updates to the [configuration file](../config/config.json.in):
