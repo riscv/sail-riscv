@@ -93,44 +93,44 @@ function init_mpmpdeleg() -> unit = {
 /*  - sireg2 = spmpcfg[entry_index]                                                    */
 /*=======================================================================================*/
 
-mapping clause csr_name_map = 0x1F0  <-> "spmpswitch" // SPMP domain switch register
-mapping clause csr_name_map = 0x1F1  <-> "spmpswitchh" // SPMP domain switch register high (RV32 only)
+mapping clause csr_name_map = 0x183  <-> "spmpen"      // SPMP per-entry enable register
+mapping clause csr_name_map = 0x193  <-> "spmpenh"     // SPMP per-entry enable register high (RV32 only)
 
 /*=======================================================================================*/
-/*  SPMP Context Switching Optimization - Sspmpsw Extension                            */
+/*  SPMP Context Switching Optimization - Sspmpen Extension                            */
 /*                                                                                       */
-/*  The spmpswitch registers provide context switching optimization by allowing         */
+/*  The spmpen registers provide context switching optimization by allowing         */
 /*  software to activate/deactivate SPMP entries without modifying configuration.      */
 /*                                                                                       */
 /*  Register Layout:                                                                     */
-/*    - RV32: spmpswitch (entries 0-31) + spmpswitchh (entries 32-63)                  */
-/*    - RV64: spmpswitch (entries 0-63)                                                 */
+/*    - RV32: spmpen (entries 0-31) + spmpenh (entries 32-63)                  */
+/*    - RV64: spmpen (entries 0-63)                                                 */
 /*                                                                                       */
 /*  Activation Rule (per spec):                                                         */
-/*    An entry i is active only when: sspmpswitch[i] & spmpcfg[i].A != 0               */
+/*    An entry i is active only when: sspmpen[i] & spmpcfg[i].A != 0               */
 /*    - Switch bit must be set (= 1) AND                                               */
 /*    - Address matching mode must not be OFF                                          */
 /*                                                                                       */
 /*  Lock Bit Behavior:                                                                   */
-/*    When spmpcfg[i].L == 1, the corresponding sspmpswitch[i] bit becomes READ-ONLY.  */
+/*    When spmpcfg[i].L == 1, the corresponding sspmpen[i] bit becomes READ-ONLY.  */
 /*    This prevents modification but does NOT automatically activate the entry.        */
 /*    A locked entry with switch bit = 0 remains inactive.                             */
 /*                                                                                       */
-/*  TOR Mode Special Rule (per Sspmpsw spec):                                          */
+/*  TOR Mode Special Rule (per Sspmpen spec):                                          */
 /*    For TOR entries, address matching [spmpaddr[i-1], spmpaddr[i]) is INDEPENDENT    */
 /*    of the configuration or activation state of entry i-1:                           */
 /*    - spmpcfg[i-1].A can be OFF                                                      */
-/*    - sspmpswitch[i-1] can be 0 (inactive)                                           */
+/*    - sspmpen[i-1] can be 0 (inactive)                                           */
 /*    The TOR range calculation always uses spmpaddr[i-1] value.                       */
 /*                                                                                       */
 /*  Memory Ordering:                                                                     */
-/*    Writes to spmpswitch CSRs are NOT ordered with respect to subsequent memory      */
+/*    Writes to spmpen CSRs are NOT ordered with respect to subsequent memory      */
 /*    accesses. Software must execute SFENCE.VMA (rs1=x0, rs2=x0) to enforce ordering. */
 /*=======================================================================================*/
 
-/* SPMP switch registers - control activation of SPMP entries */
-register spmpswitch : xlenbits
-register spmpswitchh : bits(32)  // Only used in RV32
+/* SPMP enable registers - control activation of SPMP entries */
+register spmpen : xlenbits
+register spmpenh : bits(32)  // Only used in RV32
 
 /* SPMP configuration entries */
 
@@ -210,11 +210,11 @@ function spmpTORLocked(cfg: Spmpcfg_ent) -> bool =
    (cfg[L] == 0b1) & (spmpAddrMatchType_of_bits(cfg[A]) == TOR)
 
 /* mpmpdeleg CSR access (M-mode only) */
-mapping clause csr_name_map = 0x1F2 <-> "mpmpdeleg"
+mapping clause csr_name_map = 0x316 <-> "mpmpdeleg"
 
-function clause is_CSR_accessible(0x1F2, _, _) = sys_spmp_enabled
-function clause read_CSR(0x1F2) = mpmpdeleg.bits
-function clause write_CSR((0x1F2, value)) = {
+function clause is_CSR_accessible(0x316, _, _) = sys_spmp_enabled
+function clause read_CSR(0x316) = mpmpdeleg.bits
+function clause write_CSR((0x316, value)) = {
   /* Only M-mode can write mpmpdeleg */
   if cur_privilege == Machine then {
     let new_pmpnum = value[6 .. 0];
@@ -652,90 +652,73 @@ function spmp_mmode_read_addr_indirect(entry_idx: int) -> xlenbits = {
  */
 
 
-/*=======================================================================================*/
-// spmpswitch - SPMP domain switch register (RV64 and RV32)
-function clause is_CSR_accessible(0x1F0, _, _) = sys_spmp_enabled
-function clause read_CSR(0x1F0) = spmpswitch
-function clause write_CSR((0x1F0, value)) = {
-  /* According to spec: When an entry i is locked (spmpcfg[i].L == 1),
-   * its corresponding sspmpswitch[i] bit becomes read-only.
-   * This means no modification is allowed for locked entries. */
-
+// spmpen - SPMP per-entry enable register (RV64 and RV32)
+function clause is_CSR_accessible(0x183, _, _) = sys_spmp_enabled
+function clause read_CSR(0x183) = spmpen
+function clause write_CSR((0x183, value)) = {
   let spmp_start = getPmpNum();
   let spmp_end = 63;
-
-  var new_switch : xlenbits = value;
-
-  /* For each SPMP entry, check if it's locked and restore its original switch bit if locked */
+  /* Bits below spmp_start correspond to PMP entries, not SPMP entries.
+   * They are read-only-zero. Only bits [spmp_start .. 63] are writable.
+   */
+  var new_switch : xlenbits = zeros();
   foreach (hw_idx from spmp_start to spmp_end) {
-    /* In RV32, spmpswitch only handles entries [0:31] */
     let in_range = if xlen == 32 then hw_idx < 32 else true;
-
     if in_range then {
       let cfg = spmpcfg_n[hw_idx];
       let is_locked = spmpLocked(cfg);
-
+      let bit_idx = hw_idx;
+      assert(bit_idx >= 0 & bit_idx < xlen);
       if is_locked then {
-        /* For locked entries, restore the original bit from spmpswitch */
-        let bit_idx = hw_idx;
-        assert(bit_idx >= 0 & bit_idx < xlen);
-        new_switch = vector_update_subrange(new_switch, bit_idx, bit_idx, spmpswitch[bit_idx..bit_idx]);
+        new_switch = vector_update_subrange(new_switch, bit_idx, bit_idx, spmpen[bit_idx..bit_idx]);
+      } else {
+        new_switch = vector_update_subrange(new_switch, bit_idx, bit_idx, value[bit_idx..bit_idx]);
       }
-      /* For unlocked entries, keep the new value from 'value' */
     }
   };
-
-  spmpswitch = new_switch;
-  Ok(spmpswitch)
+  spmpen = new_switch;
+  /* print_endline("DEBUG sail spmpen: new_switch=" ^ bits_str(new_switch)); */
+  Ok(spmpen)
 }
 
-// spmpswitchh - SPMP domain switch register high (RV32 only)
-// Controls activation of SPMP entries [32:63] on RV32 systems
-function clause is_CSR_accessible(0x1F1, _, _) = sys_spmp_enabled & (xlen == 32)
-function clause read_CSR(0x1F1) = {
+// spmpenh - SPMP per-entry enable register high (RV32 only)
+function clause is_CSR_accessible(0x193, _, _) = sys_spmp_enabled & (xlen == 32)
+function clause read_CSR(0x193) = {
   if xlen == 32
-  then zero_extend(spmpswitchh)
+  then zero_extend(spmpenh)
   else zeros()
 }
-function clause write_CSR((0x1F1, value)) = {
+function clause write_CSR((0x193, value)) = {
   if xlen == 32 then {
-    /* Similar to spmpswitch, locked entries become read-only */
     let spmp_start = getPmpNum();
     let spmp_end = 63;
-
     var new_switchh : bits(32) = value[31 .. 0];
-
-    /* For entries [32:63], check if locked and restore original switch bit if locked */
     foreach (hw_idx from spmp_start to spmp_end) {
-      if hw_idx >= 32 then {  // Only process entries [32:63]
+      if hw_idx >= 32 then {
         let cfg = spmpcfg_n[hw_idx];
         let is_locked = spmpLocked(cfg);
-
         if is_locked then {
-          /* For locked entries, restore the original bit from spmpswitchh */
           let bit_idx = hw_idx - 32;
           assert(bit_idx >= 0 & bit_idx < 32);
-          new_switchh = vector_update_subrange(new_switchh, bit_idx, bit_idx, spmpswitchh[bit_idx..bit_idx]);
+          new_switchh = vector_update_subrange(new_switchh, bit_idx, bit_idx, spmpenh[bit_idx..bit_idx]);
         }
-        /* For unlocked entries, keep the new value from 'value' */
       }
     };
-
-    spmpswitchh = new_switchh;
+    spmpenh = new_switchh;
   };
-  Ok(zero_extend(spmpswitchh))
+  Ok(zero_extend(spmpenh))
 }
 
-/* Get the effective switch register value for 64-bit view */
-function spmpGetFullSwitchReg() -> bits(64) = {
-  if xlen == 32 then spmpswitchh @ spmpswitch
-  else spmpswitch
+/* Get the effective enable register value for 64-bit view */
+function spmpGetFullEnReg() -> bits(64) = {
+  if xlen == 32 then spmpenh @ spmpen
+  else spmpen
 }
 
-/* Initialize SPMP switch registers on reset */
-function spmpSwitchReset() -> unit = {
-  spmpswitch = zeros();
-  spmpswitchh = zeros();
+/* Initialize SPMP enable registers on reset */
+function spmpEnReset() -> unit = {
+  spmpen = zeros();
+  spmpenh = zeros();
 }
 
 /*=======================================================================================*/

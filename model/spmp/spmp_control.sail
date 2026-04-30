@@ -501,11 +501,11 @@ function spmpGetEntry(i: nat) -> (Spmpcfg_ent, xlenbits) = {
 
 /* SPMP Context Switch Optimization Helper Functions */
 
-/* Check if an SPMP entry is active based on spmpswitch and configuration.
+/* Check if an SPMP entry is active based on spmpen and configuration.
  *
  * Activation Rule (per spec):
  *   An SPMP entry i is considered active only when:
- *     sspmpswitch[i] & spmpcfg[i].A != 0
+ *     sspmpen[i] & spmpcfg[i].A != 0
  *
  * This means:
  *   - If switch bit is 0, entry is inactive (regardless of L bit)
@@ -526,12 +526,12 @@ function spmpEntryActive(hw_idx: range(0, 63), cfg: Spmpcfg_ent) -> bool = {
 
   /* Get the switch bit for this entry */
   let switch_bit : bit = if xlen == 32 then {
-    if hw_idx < 32 then spmpswitch[hw_idx] else spmpswitchh[hw_idx - 32]
+    if hw_idx < 32 then spmpen[hw_idx] else spmpenh[hw_idx - 32]
   } else {
-    spmpswitch[hw_idx]
+    spmpen[hw_idx]
   };
 
-  /* Activation rule: sspmpswitch[i] & (spmpcfg[i].A != OFF)
+  /* Activation rule: sspmpen[i] & (spmpcfg[i].A != OFF)
    * Entry is active only when:
    *   1. Switch bit is set (= 1) AND
    *   2. Address matching mode is not OFF
@@ -671,24 +671,27 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   let has_implemented_entries : bool = (spmp_start <= spmp_end);
 
   var prev_spmpaddr : xlenbits = zeros();  // Previous address for TOR mode
+  var has_active_entries : bool = false;    // Track whether any entry is active
 
   foreach (hw_idx from spmp_start to spmp_end) {
     let (cfg, spmpaddr) = spmpGetEntry(hw_idx);
     let match_type = spmpAddrMatchType_of_bits(cfg[A]);
 
-    /* Check if this entry is active (considering spmpswitch optimization) */
+    /* Check if this entry is active (considering spmpen optimization) */
     let active = spmpEntryActive(hw_idx, cfg);
     // if hw_idx == 63 then {
     //   print_endline("DEBUG: Checking entry 63. Active=" ^ (if active then "T" else "F") ^ " Addr=" ^ hex_bits_str(spmpaddr) ^ " Prev=" ^ hex_bits_str(prev_spmpaddr) ^ " A=" ^ bits_str(cfg[A]) ^ " U=" ^ bits_str(cfg[U]) ^ " L=" ^ bits_str(cfg[L]));
     // };
 
     if active then {
+      has_active_entries = true;
+
       /* Calculate address range for this entry.
        *
        * IMPORTANT (per Sspmpsw spec):
        * For TOR mode, address matching uses spmpaddr[i-1] regardless of:
        *   - spmpcfg[i-1] configuration (entry i-1 could be OFF)
-       *   - sspmpswitch[i-1] activation state (entry i-1 could be inactive)
+       *   - sspmpen[i-1] activation state (entry i-1 could be inactive)
        *
        * This is why prev_spmpaddr is updated unconditionally at the end of
        * each iteration, not just when an entry is active.
@@ -737,14 +740,17 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    * entry matches, but at least one SPMP entry is implemented, the access is denied."
    *
    * Note: "implemented" means hardware resources are allocated to SPMP (pmpnum <= 63),
-   * not that entries are configured (A != OFF). This is a security-first approach. */
-  if has_implemented_entries then {
-    /* At least one SPMP entry is implemented, deny unmatched access */
+   * not that entries are configured (A != OFF). This is a security-first approach.
+   *
+   * EXCEPTION: When no SPMP entries are active (all switches off or A=OFF),
+   * SPMP provides no protection and access is allowed for backward compatibility. */
+  if has_implemented_entries & has_active_entries then {
+    /* At least one SPMP entry is both implemented AND active, deny unmatched access */
     // let Physaddr(paddr) = addr;
     // print_endline("SPMP No Match Deny: " ^ hex_bits_str(paddr));
     Some(accessToSpmpFault(acc))
   } else {
-    /* No SPMP entries implemented (all resources allocated to PMP), allow access */
+    /* No active SPMP entries, allow access */
     None()
   }
 }
@@ -777,7 +783,7 @@ function reset_spmp() -> unit = {
   };
 
   /* Reset SPMP switch registers - must be cleared on reset */
-  spmpSwitchReset();
+  spmpEnReset();
 }
 
 
