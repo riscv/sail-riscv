@@ -449,8 +449,7 @@
       "supported": true,
       // Whether `WRS.NTO` and `WRS.STO` behave as NOPS.  If they do
       // not, see above note for `platform.max_time_to_wait`.  If
-      // Zawrs is not supported, these `is_nop` fields may be left
-      // as `true`.
+      // Zawrs is not supported, these `is_nop` fields are ignored.
       "nto": {
         "is_nop": false
       },
