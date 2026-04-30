@@ -43,7 +43,9 @@ function clause execute FVVTYPE(funct6, vm, vs2, vs1, vd) = {
      illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -129,7 +131,9 @@ function clause execute FVVMATYPE(funct6, vm, vs2, vs1, vd) = {
      illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -208,7 +212,9 @@ function clause execute FWVVTYPE(funct6, vm, vs2, vs1, vd) = {
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
-     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -281,7 +287,9 @@ function clause execute FWVVMATYPE(funct6, vm, vs1, vs2, vd) = {
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
-     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -353,7 +361,9 @@ function clause execute FWVTYPE(funct6, vm, vs2, vs1, vd) = {
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
-     not(valid_reg_group(vs2, LMUL_pow_widen))
+     not(valid_src_overlap(vs2, SEW_widen, LMUL_pow_widen, vs1, SEW, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW_widen))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -423,7 +433,8 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -547,7 +558,8 @@ function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
 
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 8 & SEW_widen <= 64);
@@ -684,7 +696,8 @@ function clause execute VFNUNARY0(vm, vs2, vfnunary0, vd) = {
 
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-     not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
+     not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW_widen))
   then return Illegal_Instruction();
 
   assert(SEW != 64);
@@ -826,7 +839,8 @@ function clause execute VFUNARY1(vm, vs2, vfunary1, vd) = {
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -970,6 +984,7 @@ function clause execute FVFTYPE(funct6, vm, vs2, rs1, vd) = {
      illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW)) |
      src_dst_overlap
   then return Illegal_Instruction();
 
@@ -1069,7 +1084,8 @@ function clause execute FVFMATYPE(funct6, vm, vs2, rs1, vd) = {
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -1147,7 +1163,8 @@ function clause execute FWVFTYPE(funct6, vm, vs2, rs1, vd) = {
 
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1219,7 +1236,8 @@ function clause execute FWVFMATYPE(funct6, vm, rs1, vs2, vd) = {
 
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1291,7 +1309,8 @@ function clause execute FWFTYPE(funct6, vm, vs2, rs1, vd) = {
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_group(vs2, LMUL_pow_widen)) |
-     not(valid_reg_group(vd, LMUL_pow_widen))
+     not(valid_reg_group(vd, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW_widen))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1359,7 +1378,8 @@ function clause execute VFMERGE(vs2, rs1, vd) = {
   if illegal_vstart(VSTART_ARITH) |
      illegal_fp_vd_masked(vd, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(0b0, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
