@@ -22,12 +22,20 @@ function stateen_allows_CSR_access(csr : csreg, priv : Privilege, _access_type :
   match (csr, priv) {
     // hstateen0
     (0x60C, priv) => check_stateen_bit(priv, STATEEN_SE, 0),
+    // hstateen0h
+    (0x61C, priv) => check_stateen_bit(priv, STATEEN_SE, 0),
     // hstateen1
     (0x60D, priv) => check_stateen_bit(priv, STATEEN_SE, 1),
+    // hstateen1h
+    (0x61D, priv) => check_stateen_bit(priv, STATEEN_SE, 1),
     // hstateen2
     (0x60E, priv) => check_stateen_bit(priv, STATEEN_SE, 2),
+    // hstateen2h
+    (0x61E, priv) => check_stateen_bit(priv, STATEEN_SE, 2),
     // hstateen3
     (0x60F, priv) => check_stateen_bit(priv, STATEEN_SE, 3),
+    // hstateen3h
+    (0x61F, priv) => check_stateen_bit(priv, STATEEN_SE, 3),
 
     // sstateen0
     (0x10C, priv) => check_stateen_bit(priv, STATEEN_SE, 0),

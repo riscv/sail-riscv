@@ -81,6 +81,14 @@ unit PlatformInterface::trap_callback([[maybe_unused]] bool is_interrupt, [[mayb
   return UNIT;
 }
 
+unit PlatformInterface::xret_callback([[maybe_unused]] bool is_mret) {
+  return UNIT;
+}
+
+unit PlatformInterface::instret_callback(unit) {
+  return UNIT;
+}
+
 unit PlatformInterface::ptw_start_callback(
   [[maybe_unused]] uint64_t vpn,
   [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
@@ -104,6 +112,25 @@ unit PlatformInterface::ptw_fail_callback(
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] sbits pte_addr
 ) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_add_callback(
+  [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  [[maybe_unused]] uint64_t level
+) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_flush_begin_callback(unit) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_flush_callback([[maybe_unused]] uint64_t level) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_flush_end_callback([[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
   return UNIT;
 }
 

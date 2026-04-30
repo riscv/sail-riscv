@@ -5,10 +5,13 @@ __STACK_SIZE = 0x2000;
 
 MEMORY
 {
-  /* Main RAM. Chosen for compatibility with SPIKE's default options. */
-  if_ram (wxa) : org = 0x80000000, len = 512m
+  /* Match the default configuration in config.json.in, which is roughly based on Spike. */
   /* MMIO peripherals. */
-  if_mmio (wa) : org = 0xa0000000, len = 512k
+  if_clint (wa) : org = 0x2000000, len = 768k
+  if_htif (wa)  : org = 0x20c0000, len = 512k
+
+  /* Main RAM. */
+  if_ram (wxa) : org = 0x80000000, len = 512m
 }
 
 SECTIONS
@@ -50,5 +53,5 @@ SECTIONS
 
   /* MMIO devices. PMA must make this uncacheable (doesn't
      matter in Sail because there are no caches). */
-  .bss.mmio : { *(.bss.mmio) } >if_mmio
+  .bss.mmio.htif : { *(.bss.mmio.htif) } >if_htif
 }

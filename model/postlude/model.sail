@@ -26,7 +26,6 @@ function init_model(config_filename : string) -> unit = {
                              then "Default config"
                              else "Config in " ^ config_filename)
                              ^ " is invalid.");
-  init_platform();
   reset();
 }
 

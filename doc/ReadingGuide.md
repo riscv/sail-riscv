@@ -53,6 +53,14 @@ implemented by the various Sail backends.
 [mem_metadata.sail](../model/core/mem_metadata.sail)
 contain other low-level definitions related to memory.
 
+Functions that implement some more complex arithmetic operations used
+in several instructions are implemented in
+[arithmetic.sail](../model/core/arithmetic.sail), and utilities to
+deal with address ranges are in
+[range_util.sail](../model/core/range_util.sail).
+[float_classify.sail](../model/core/float_classify.sail) contains a
+classifier for the floating-point format.
+
 [platform_config.sail](../model/core/platform_config.sail) contains
 various configuration parameters for the platform, some of which can
 affect which extensions can be supported on the platform.
@@ -79,6 +87,10 @@ definitions are used throughout the specification for privilege
 levels, register indices, interrupt and exception definitions and
 enumerations, and types used to define memory accesses.
 
+[mem_type_utils.sail](../model/core/mem_type_utils.sail) contains
+helper functions to map memory access types to the corresponding
+memory exceptions that can be generated from those accesses.
+
 [regs.sail](../model/core/regs.sail) contains the base
 register file, where each register is defined as having the `regtype`
 type defined in [reg_type.sail](../model/core/reg_type.sail)
@@ -99,7 +111,8 @@ functions to access and modify the program counter.
 [sys_regs.sail](../model/core/sys_regs.sail) describes the
 privileged architectural state, viz. M-mode and S-mode CSRs, and
 contains helpers to interpret their content, such as WLRL and WARL
-fields.
+fields. CSRs dealing with interrupts are in
+[interrupt_regs.sail](../model/core/interrupt_regs.sail).
 
 [addr_checks_common.sail](../model/core/addr_checks_common.sail)
 and [addr_checks.sail](../model/core/addr_checks.sail)
@@ -142,20 +155,19 @@ accessed through the functions in
 [sys_reservation.sail](../model/sys/sys_reservation.sail).
 
 [sys_control.sail](../model/sys/sys_control.sail) describes
-interrupt and exception delegation and dispatch, and the handling of
-privilege transitions.
+interrupt and exception delegation and dispatch, the handling of
+privilege transitions and access control for CSRs.
 
-[platform.sail](../model/sys/platform.sail) contains
-platform-specific functionality for the model. It contains the
-definitions for the physical memory map, the cache block size, the
+[platform.sail](../model/sys/platform.sail) implements
+platform-specific functionality for the model. It contains the CLINT
 local interrupt controller, and the MMIO interfaces to the clock,
-timer and terminal devices. Sail functions connect to externally
-provided (i.e. external to the Sail model) platform functionality,
-such as those provided by the platform support in the C++
-emulator. This file also contains some of the configurable options
-for platform behavior, such as the handling of misaligned memory
-accesses, the handling of PTE dirty-bit updates during address
-translation, etc.
+timer and terminal devices.
+
+A simple model of an MMIO-based external interrupt controller is
+implemented in [simple_interrupt_generator.sail](../model/sys/simple_interrupt_generator.sail)
+and [simple_interrupt_generator_regs.sail](../model/sys/simple_interrupt_generator_regs.sail).
+This enables testing the model with external interrupts, as described in
+its [documentation](SimpleInterruptGenerator.md).
 
 [pma.sail](../model/sys/pma.sail) implements Physical Memory Attributes
 (PMAs), in terms of which the physical memory layout is configured in
@@ -171,6 +183,11 @@ The `vmem_{types,pte,ptw,tlb}.sail` and
 [vmem.sail](../model/sys/vmem.sail) files describe the
 S-mode address translation. More details are in
 [Virtual Memory Notes](./VirtualMemory.md).
+
+Callbacks to track page table walks are in
+[callbacks.sail](../model/sys/callbacks.sail), while callbacks to
+track operations on the TLB are in
+[vmem_tlb.sail](../model/sys/vmem_tlb.sail).
 
 [vmem_utils.sail](../model/sys/vmem_utils.sail) provides a
 higher level interface to virtual memory for load/store style
@@ -190,6 +207,24 @@ instruction to and from their binary representations and assembly
 language formats. Though the assembly mappings are defined
 bidirectionally, only the disassembler direction (i.e., binary
 encoding to assembler) is used.
+
+### Extensions
+
+The `extensions` module contains a sequence of submodules, each
+typically implementing an ISA extension. In some cases, submodules
+implementing related extensions (e.g. `Zaamo` and `Zalrsc`) may be
+grouped together and nested within another submodule (e.g. `A`) under
+the `extensions` module. This nested structure helps to organize the
+files implementing large related extensions such as those in the
+Vector (`V`) and cryptography (`Zk*`) extensions.
+
+### The `mops` module
+
+The `mops` module is a module containing the `Zimop` and `Zcmop`
+extensions. It is included after the `extensions` module containing
+all the other extensions, since those other extensions could
+potentially override the maybe-operations (MOPs) that are defined by
+`Zimop` and `Zcmop`.
 
 ### The `postlude` module
 
@@ -239,21 +274,29 @@ Model initialization and reset are implemented in
 is used for RVFI, and complements the `rvfi_dii*.sail` files mentioned
 above.
 
-### Extensions
-
-The `extensions` module contains a sequence of submodules, each
-typically implementing an ISA extension. In some cases, submodules
-implementing related extensions (e.g. `Zaamo` and `Zalrsc`) may be
-grouped together and nested within another submodule (e.g. `A`) under
-the `extensions` module. This nested structure helps to organize the
-files implementing large related extensions such as those in the
-Vector (`V`) and cryptography (`Zk*`) extensions.
-
 ### Other modules
 
 The `unit_tests` module collects Sail unit tests for the specification.
 The `main` module provides a [`main()`](../model/main/main.sail)
 function that is used in other Sail backends.
+
+### Miscellaneous notes
+
+When implementing atomic accesses (e.g. for AMOs and instructions
+fetches in Ziccif), there are two approaches that can be taken in the
+Sail model. One approach is to implement an atomic memory access
+using a single memory operation at the lowest level (i.e. in
+[phys_mem_interface.sail](../model/core/phys_mem_interface.sail); this
+is the approach taken in this model. The second approach splits an
+atomic access into multiple smaller intra-instruction memory
+operations at the level of
+[phys_mem_interface.sail](../model/core/phys_mem_interface.sail);
+however, these would have to be accompanied by additional rules in the
+RVWMO memory model specifying that no other memory accesses can
+intervene in between these operations. Both approaches are
+observationally equivalent for the C++ emulator since it currently
+implements a single-hart system, but the first approach is preferred
+to simplify the rules in the memory model.
 
 ## Structure of the C++ emulator
 

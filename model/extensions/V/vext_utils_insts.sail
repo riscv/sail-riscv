@@ -20,7 +20,7 @@ mapping maybe_vmask : string <-> bits(1) = {
 //
 // 1. vector widening/narrowing instructions
 // 2. vector load/store instructions
-function valid_eew_emul(EEW : int, EMUL_pow : int) -> bool = {
+function valid_eew_emul(EEW : nat, EMUL_pow : int) -> bool = {
   EEW >= 8 & EEW <= elen & EMUL_pow >= -3 & EMUL_pow <= 3
 }
 
@@ -46,16 +46,37 @@ function valid_rd_mask(rd : vregidx, vm : bits(1)) -> bool = {
   vm != 0b0 | rd != zvreg
 }
 
+// Check that a vector register number for a vector register group is
+// a multiple of its EMUL. Fractional EMULs are rounded up to 1.
+function valid_reg_group(r : vregidx, EMUL_pow : int) -> bool = {
+  let reg_group_size = if EMUL_pow > 0 then 2 ^ EMUL_pow else 1;
+  unsigned(vregidx_bits(r)) % reg_group_size == 0
+}
+
+// For whole register loads/stores: "The nf field encodes how many
+// vector registers to load and store using the NFIELDS encoding. The
+// encoded number of registers must be a power of 2 and the vector
+// register numbers must be aligned as with a vector register group,
+// otherwise the instruction encoding is reserved."
+function valid_whole_register(r : vregidx, nf : nfields_pow2) -> bool = {
+  unsigned(vregidx_bits(r)) % nf == 0
+}
+
 // Check for valid register overlap in vector widening/narrowing instructions:
 // In a widening instruction, the overlap is valid only in the highest-numbered part
 // of the destination register group, and the source EMUL is at least 1.
 // In a narrowing instruction, the overlap is valid only in the lowest-numbered part
 // of the source register group.
+// This also checks that the source and destination register groups are valid.
 function valid_reg_overlap(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_pow_rd : int) -> bool = {
   let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
   let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
   let rs_int = unsigned(vregidx_bits(rs));
   let rd_int = unsigned(vregidx_bits(rd));
+
+  if rs_int % rs_group != 0 | rd_int % rd_group != 0
+  then return false;
+
   if EMUL_pow_rs < EMUL_pow_rd then {
     (rs_int + rs_group <= rd_int) | (rs_int >= rd_int + rd_group) |
     ((rs_int + rs_group == rd_int + rd_group) & (EMUL_pow_rs >= 0))
@@ -159,7 +180,7 @@ function illegal_vd_unmasked() -> bool = {
 //   1. integer/fixed-point widening/narrowing instructions
 //   2. vector integer extension: vzext, vsext
 //   3. vector crypto extension: zvbb
-function illegal_variable_width(vd : vregidx, vm : bits(1), SEW_new : int, LMUL_pow_new : int) -> bool = {
+function illegal_variable_width(vd : vregidx, vm : bits(1), SEW_new : nat, LMUL_pow_new : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
 
@@ -171,29 +192,29 @@ function illegal_reduction() -> bool = {
 }
 
 // f. Variable width check for widening reduction instructions
-function illegal_widening_reduction(EEW : int) -> bool = {
+function illegal_widening_reduction(EEW : nat) -> bool = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(EEW >= 8 & EEW <= elen)
 }
 
 // g. Non-indexed load instruction check
-function illegal_load(vd : vregidx, vm : bits(1), nf : nfields, EEW : int, EMUL_pow : int) -> bool = {
+function illegal_load(vd : vregidx, vm : bits(1), nf : nfields, EEW : nat, EMUL_pow : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 // h. Non-indexed store instruction check (with vs3 rather than vd)
-function illegal_store(nf : nfields, EEW : int, EMUL_pow : int) -> bool = {
+function illegal_store(nf : nfields, EEW : nat, EMUL_pow : int) -> bool = {
   not(valid_vtype()) | not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
 }
 
 // i. Indexed load instruction check
-function illegal_indexed_load(vd : vregidx, vm : bits(1), nf : nfields, EEW_index : int, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
+function illegal_indexed_load(vd : vregidx, vm : bits(1), nf : nfields, EEW_index : nat, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
   not(valid_eew_emul(EEW_index, EMUL_pow_index)) | not(valid_segment(nf, EMUL_pow_data))
 }
 
 // j. Indexed store instruction check (with vs3 rather than vd)
-function illegal_indexed_store(nf : nfields, EEW_index : int, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
+function illegal_indexed_store(nf : nfields, EEW_index : nat, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
   not(valid_vtype()) | not(valid_eew_emul(EEW_index, EMUL_pow_index)) |
   not(valid_segment(nf, EMUL_pow_data))
 }

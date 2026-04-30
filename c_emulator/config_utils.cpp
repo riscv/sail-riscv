@@ -1,12 +1,13 @@
 #include "config_utils.h"
 
 #include <fstream>
-#include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
+#include <sstream>
 #include <stdexcept>
 
 #include "config_schema.h"
 #include "default_config.h"
+#include "file_utils.h"
 #include "sail.h"
 #include "sail_config.h"
 #include "sail_riscv_model.h"
@@ -63,15 +64,35 @@ uint64_t get_config_uint64(const std::vector<const char *> &keypath) {
   );
 }
 
+bool get_config_bool(const std::vector<const char *> &keypath) {
+  sail_config_json json = sail_config_get(keypath.size(), keypath.data());
+
+  if (json == nullptr) {
+    throw std::runtime_error("Failed to find configuration option '" + keypath_to_str(keypath) + "'.");
+  }
+
+  if (sail_config_is_bool(json)) {
+    return sail_config_unwrap_bool(json);
+  }
+
+  throw std::runtime_error(
+    "Configuration option '" + keypath_to_str(keypath) + "' could not be parsed as a boolean.\n"
+  );
+}
+
 const char *get_default_config() {
   return DEFAULT_JSON;
+}
+
+const char *get_default_rv32_config() {
+  return DEFAULT_JSON_RV32;
 }
 
 const char *get_config_schema() {
   return CONFIG_SCHEMA;
 }
 
-void validate_config_schema(const std::string &conf_file) {
+void validate_config_schema(const jsoncons::json &json_config, const std::string &source_desc) {
   using jsoncons::json;
   namespace jsonschema = jsoncons::jsonschema;
 
@@ -81,30 +102,15 @@ void validate_config_schema(const std::string &conf_file) {
   // Throws schema_error if compilation fails.
   jsonschema::json_schema<json> compiled = jsonschema::make_json_schema(std::move(schema), options);
 
-  std::string source = conf_file.empty() ? "default configuration" : "configuration in " + conf_file;
-
-  // Parse the config.
-  json config;
-  try {
-    if (conf_file.empty()) {
-      config = json::parse(get_default_config());
-    } else {
-      std::ifstream is(conf_file);
-      config = json::parse(is);
-    }
-  } catch (const std::exception &ex) {
-    throw std::runtime_error("Cannot parse " + source + ": " + ex.what() + ".");
-  }
-
-  // Validate.
   bool is_valid = true;
-  auto report = [&is_valid](const jsonschema::validation_message &msg) -> jsonschema::walk_result {
+  std::ostringstream error_stream;
+  auto report = [&is_valid, &error_stream](const jsonschema::validation_message &msg) -> jsonschema::walk_result {
     is_valid = false;
-    std::cerr << msg.instance_location().string() << ": " << msg.message() << std::endl;
+    error_stream << "- " << msg.instance_location().string() << ": " << msg.message() << "\n";
     return jsonschema::walk_result::advance;
   };
-  compiled.validate(config, report);
+  compiled.validate(json_config, report);
   if (!is_valid) {
-    throw std::runtime_error("Schema conformance check failed for the " + source + ".");
+    throw std::runtime_error("Schema conformance check failed for " + source_desc + ":\n" + error_stream.str());
   }
 }

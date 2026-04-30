@@ -38,5 +38,13 @@ To set up these hooks, install [pre-commit](https://pre-commit.com)
 For information on contributing an extension, please see
 [doc/AddingExtensions.md](doc/AddingExtensions.md).
 
+PRs for contributions of extensions under development can be made at
+any point during the [ratification
+lifecycle](https://tech.riscv.org/ratification-process)
+though later stages (e.g. Stabilization, Freezing, Ratification-Ready)
+are recommended. Small self-contained PRs may be merged at earlier
+stages (e.g. Stabilization), while merging more intrusive PRs may
+be deferred until Ratification-Ready or later.
+
 We _require_ any and all use of generative AI tools, e.g. for writing
 code, comments, documentation, or PR text, to be disclosed.

@@ -88,63 +88,64 @@ private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : ins
 
 private function run_hart_active(step_no: nat) -> Step = {
   match dispatchInterrupt(cur_privilege) {
-    Some(intr, priv) => Step_Pending_Interrupt(intr, priv),
-    None() => match ext_fetch_hook(fetch()) {
-      // extension error
-      F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
-      // standard error
-      F_Error(e, addr) => Step_Fetch_Failure(Virtaddr(addr), e),
-      // non-error cases:
-      F_RVC(h) => {
-        sail_instr_announce(h);
-        fetch_callback(h);
-        let instbits : instbits = zero_extend(h);
-        let instruction = ext_decode_compressed(h);
-        if   get_config_print_instr()
-        then {
-          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
+    Some(intr, priv) => return Step_Pending_Interrupt(intr, priv),
+    None() => (),
+  };
+  match ext_fetch_hook(fetch()) {
+    // extension error
+    F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
+    // standard error
+    F_Error(e, addr) => Step_Fetch_Failure(Virtaddr(addr), e),
+    // non-error cases:
+    F_RVC(h) => {
+      sail_instr_announce(h);
+      fetch_callback(h);
+      let instbits : instbits = zero_extend(h);
+      let instruction = ext_decode_compressed(h);
+      if   get_config_print_instr()
+      then {
+        print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
+      };
+      // When ELP is set to LP_EXPECTED, the next instruction needs to be
+      // the non-RVC `LPAD` instruction.
+      if is_landing_pad_expected() then {
+        let r = trap(make_landing_pad_exception());
+        Step_Execute(r, instbits)
+      }
+      // check for RVC once here instead of every RVC execute clause.
+      else if currentlyEnabled(Ext_Zca) then {
+        nextPC = PC + 2;
+        let result : ExecutionResult = match execute(instruction) {
+          ExecuteAs(other_inst) => execute(other_inst),
+          result => result,
         };
-        // When ELP is set to LP_EXPECTED, the next instruction needs to be
-        // the non-RVC `LPAD` instruction.
-        if is_landing_pad_expected() then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
-          Step_Execute(r, instbits)
-        }
-        // check for RVC once here instead of every RVC execute clause.
-        else if currentlyEnabled(Ext_Zca) then {
-          nextPC = PC + 2;
-          let result : ExecutionResult = match execute(instruction) {
-            ExecuteAs(other_inst) => execute(other_inst),
-            result => result,
-          };
-          Step_Execute(result, instbits)
-        } else {
-          Step_Execute(Illegal_Instruction(), instbits)
-        }
-      },
-      F_Base(w) => {
-        sail_instr_announce(w);
-        fetch_callback(w);
-        let instbits : instbits = zero_extend(w);
-        let instruction = ext_decode(w);
-        if   get_config_print_instr()
-        then {
-          print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
+        Step_Execute(result, instbits)
+      } else {
+        Step_Execute(Illegal_Instruction(), instbits)
+      }
+    },
+    F_Base(w) => {
+      sail_instr_announce(w);
+      fetch_callback(w);
+      let instbits : instbits = zero_extend(w);
+      let instruction = ext_decode(w);
+      if   get_config_print_instr()
+      then {
+        print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
+      };
+      // When ELP is set to LP_EXPECTED, if the next instruction in
+      // the instruction stream is not LPAD, then a software check
+      // exception with a landing pad fault code is thrown.
+      if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
+        let r = trap(make_landing_pad_exception());
+        Step_Execute(r, instbits)
+      } else {
+        nextPC = PC + 4;
+        let result : ExecutionResult = match execute(instruction) {
+          ExecuteAs(other_inst) => execute(other_inst),
+          result => result,
         };
-        // When ELP is set to LP_EXPECTED, if the next instruction in
-        // the instruction stream is not LPAD, then a software check
-        // exception with a landing pad fault code is thrown.
-        if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
-          let r = Trap(cur_privilege, CTL_TRAP(make_landing_pad_exception()), PC);
-          Step_Execute(r, instbits)
-        } else {
-          nextPC = PC + 4;
-          let result : ExecutionResult = match execute(instruction) {
-            ExecuteAs(other_inst) => execute(other_inst),
-            result => result,
-          };
-          Step_Execute(result, instbits)
-        }
+        Step_Execute(result, instbits)
       }
     }
   }
@@ -208,11 +209,12 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Fetch_Failure(vaddr, e) => handle_exception(bits_of(vaddr), e),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
     Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
-    // This case was handled above when processing the fetch result.
-    Step_Execute(ExecuteAs(_), _) => assert(false),
+    // We only support one level of ExecuteAs redirection, primarily intended
+    // for compressed instructions (though it can be used elsewhere). If there
+    // is more than one ExecuteAs indirection we'll get to here. This isn't supported.
+    Step_Execute(ExecuteAs(_), _) => internal_error(__FILE__, __LINE__, "Multiple chained ExecuteAs (only one redirection is supported)."),
     // standard errors
-    Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Memory_Exception(vaddr, e), _) => handle_exception(bits_of(vaddr), e),
+    Step_Execute(Trap(priv, exc, pc), _) => set_next_pc(exception_handler(priv, exc, pc)),
     Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
     // NOTE: Virtual instructions exception cannot be triggered until Hypervisor integration is complete.
     Step_Execute(Virtual_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Virtual_Instr()),
@@ -262,6 +264,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
 
       // For step extensions
       ext_post_step_hook();
+
+      if retired then instret_callback();
+
       // Return that we have stepped and are not waiting.
       false
     }

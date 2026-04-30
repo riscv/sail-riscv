@@ -18,19 +18,53 @@ function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus,
 function csrAccess(csr : csreg) -> csrRW = csr[11..10]
 function csrPriv(csr : csreg) -> nom_priv_bits = csr[9..8]
 
+// When hypervisor is enabled, `Supervisor` (HS-mode) and
+// `VirtualSupervisor` (VS-mode) privileges are encoded as `0b01` in
+// `privLevel_bits()`, but the CSR addresses for hypervisor and VS
+// CSRs encode the required privilege as `0b10`.  This overrides
+// the encoding in `privLevel_bits()` for the purposes of CSR privilege
+// checks.
+private function privLevel_to_CSR_privbits(p : Privilege) -> nom_priv_bits =
+  match p {
+    User              => 0b00,
+    VirtualUser       => 0b00,
+    // Note that this `if` is not strictly necessary. We could return
+    // 0b10 unconditionally if other checks ensure that hypervisor
+    // CSRs do not exist if H is not enabled.
+    Supervisor        => if currentlyEnabled(Ext_H) then 0b10 else 0b01,
+    VirtualSupervisor => 0b01,
+    Machine           => 0b11,
+  }
+
 // Check that the CSR access is made with sufficient privilege.
 function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
-  privLevel_to_bits(p) >=_u csrPriv(csr)
+  privLevel_to_CSR_privbits(p) >=_u csrPriv(csr)
 
 // Check that the CSR access isn't a write to a read-only CSR.
 function check_CSR_access(csr : csreg, access_type : CSRAccessType) -> bool =
   not((access_type == CSRWrite | access_type == CSRReadWrite) & (csrAccess(csr) == 0b11))
+
+// CSR check results
+union CSRCheckResult = {
+  CSR_Check_OK : unit,
+  CSR_Illegal  : unit,
+  CSR_Virtual  : unit,
+}
 
 function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> bool =
     check_CSR_priv(csr, p)
   & check_CSR_access(csr, access_type)
   & is_CSR_accessible(csr, p, access_type)
   & stateen_allows_CSR_access(csr, p, access_type)
+
+function check_CSR_result(csr : csreg, p : Privilege, access_type : CSRAccessType) -> CSRCheckResult = {
+  if check_CSR(csr, p, access_type) then
+    CSR_Check_OK()
+  else if (p == VirtualSupervisor | p == VirtualUser) & is_CSR_exception_virtual(csr, p, access_type) then
+    CSR_Virtual()
+  else
+    CSR_Illegal()
+}
 
 // Exception delegation: given an exception and the privilege at which
 // it occurred, returns the privilege at which it should be handled.
@@ -44,8 +78,9 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   then p else deleg
 }
 
-// Interrupts are prioritized in privilege order, and for each
-// privilege, in the order: external, software, timers.
+// "Multiple simultaneous interrupts destined for M-mode are handled
+// in the following decreasing priority order: MEI, MSI, MTI, SEI,
+// SSI, STI, LCOFI."
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   let ip = Mk_Minterrupts(ip);
   if      ip[MEI] == 0b1 then Some(I_M_External)
@@ -54,6 +89,7 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else if ip[SEI] == 0b1 then Some(I_S_External)
   else if ip[SSI] == 0b1 then Some(I_S_Software)
   else if ip[STI] == 0b1 then Some(I_S_Timer)
+  else if ip[LCOFI] == 0b1 then Some(I_COF)
   else                        None()
 }
 
@@ -70,8 +106,11 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
   assert(currentlyEnabled(Ext_S) | mideleg.bits == zeros());
 
-  let pending_m = mip.bits & mie.bits & ~(mideleg.bits);
-  let pending_s = mip.bits & mie.bits & mideleg.bits;
+  // Read mip with the external platform interrupts ORed in.
+  let mip_bits = read_mip(IncludePlatformInterrupts).bits;
+
+  let pending_m = mip_bits & mie.bits & ~(mideleg.bits);
+  let pending_s = mip_bits & mie.bits & mideleg.bits;
 
   let mIE = (priv == Machine    & mstatus[MIE] == 0b1) | priv == Supervisor | priv == User;
   let sIE = (priv == Supervisor & mstatus[SIE] == 0b1) | priv == User;
@@ -116,14 +155,6 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
   }
 }
 
-// types of privilege transitions
-
-union ctl_result = {
-  CTL_TRAP : sync_exception,
-  CTL_SRET : unit,
-  CTL_MRET : unit,
-}
-
 // trap value
 
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
@@ -133,7 +164,7 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
   }
 }
 
-function track_trap(p : Privilege) -> unit = {
+function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> unit = {
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
   match (p) {
     Machine => {
@@ -150,6 +181,8 @@ function track_trap(p : Privilege) -> unit = {
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
+
+  trap_callback(is_interrupt, cause);
 }
 
 // handle exceptional ctl flow by updating nextPC and operating privilege
@@ -157,8 +190,6 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
                      -> xlenbits = {
   let is_interrupt = trapCause_is_interrupt(c);
   let cause        = trapCause_bits(c);
-
-  trap_callback(is_interrupt, cause);
 
   if   get_config_print_exception() | get_config_print_interrupt()
   then print_log("handling " ^ to_str(c)
@@ -182,7 +213,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
       handle_trap_extension(del_priv, pc, ext);
 
-      track_trap(del_priv);
+      track_trap(del_priv, is_interrupt, cause);
 
       prepare_trap_vector(del_priv, mcause)
     },
@@ -208,7 +239,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
       handle_trap_extension(del_priv, pc, ext);
 
-      track_trap(del_priv);
+      track_trap(del_priv, is_interrupt, cause);
 
       prepare_trap_vector(del_priv, scause)
     },
@@ -218,58 +249,13 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
   };
 }
 
-function exception_handler(cur_priv : Privilege, ctl : ctl_result,
-                           pc: xlenbits) -> xlenbits = {
-  match ctl {
-    CTL_TRAP(e) => {
-      let del_priv = exception_delegatee(e.trap, cur_priv);
-      if   get_config_print_exception()
-      then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
-                          ^ " to handle " ^ to_str(e.trap));
-      trap_handler(del_priv, Exception(e.trap), pc, e.excinfo, e.ext)
-    },
-    CTL_MRET()  => {
-      let prev_priv = cur_privilege;
-      mstatus[MIE]  = mstatus[MPIE];
-      mstatus[MPIE] = 0b1;
-      cur_privilege = privLevel_bits(mstatus[MPP], 0b0); // TODO: use mstatus[MPV] if hypervisor enabled
-      mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
-      if   cur_privilege != Machine
-      then mstatus[MPRV] = 0b0;
-
-      if   hartSupports(Ext_Zicfilp)
-      then zicfilp_restore_elp_on_xret(mRET, cur_privilege);
-
-      long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
-
-      if   get_config_print_exception()
-      then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
-
-      prepare_xret_target(Machine)
-    },
-    CTL_SRET()  => {
-      let prev_priv = cur_privilege;
-      mstatus[SIE]  = mstatus[SPIE];
-      mstatus[SPIE] = 0b1;
-      cur_privilege = if mstatus[SPP] == 0b1 then Supervisor else User;
-      mstatus[SPP]  = 0b0;
-      if   cur_privilege != Machine
-      then mstatus[MPRV] = 0b0;
-
-      if   hartSupports(Ext_Zicfilp)
-      then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
-
-      long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
-
-      if   get_config_print_exception()
-      then print_log("ret-ing from " ^ to_str(prev_priv)
-                          ^ " to " ^ to_str(cur_privilege));
-
-      prepare_xret_target(Supervisor)
-    },
-  }
+function exception_handler(cur_priv : Privilege, exc : sync_exception, pc : xlenbits) -> xlenbits = {
+  let del_priv = exception_delegatee(exc.trap, cur_priv);
+  if   get_config_print_exception()
+  then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
+                      ^ " to handle " ^ to_str(exc.trap));
+  trap_handler(del_priv, Exception(exc.trap), pc, exc.excinfo, exc.ext)
 }
-
 // Compute the value to write to mtval on a trap.
 function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
@@ -303,12 +289,13 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
-function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit = {
-  let t : sync_exception = struct { trap    = e,
-                                    excinfo = xtval_exception_value(e, xtval),
-                                    ext     = None() };
-  set_next_pc(exception_handler(cur_privilege, CTL_TRAP(t), PC))
-}
+function make_sync_exception(e : ExceptionType, xtval : xlenbits) -> sync_exception =
+  struct { trap    = e,
+           excinfo = xtval_exception_value(e, xtval),
+           ext     = None() }
+
+function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit =
+  set_next_pc(exception_handler(cur_privilege, make_sync_exception(e, xtval), PC))
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
   set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None()))

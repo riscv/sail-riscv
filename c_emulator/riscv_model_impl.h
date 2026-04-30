@@ -23,6 +23,20 @@ public:
 
   void set_enable_experimental_extensions(bool en);
   void set_reservation_set_size_exp(uint64_t exponent);
+  void set_reservation_require_exact_addr_match(bool require_exact_addr_match);
+
+  void set_config_print_instr(bool on);
+  void set_config_print_clint(bool on);
+  void set_config_print_exception(bool on);
+  void set_config_print_interrupt(bool on);
+  void set_config_print_htif(bool on);
+  void set_config_print_pma(bool on);
+  void set_config_rvfi(bool on);
+  void set_config_use_abi_names(bool on);
+
+  void set_config_print_step(bool on);
+
+  void print_current_exception();
 
 private:
   // These functions are called by the Sail code.
@@ -42,6 +56,8 @@ private:
   unit pc_write_callback(sbits new_pc) override;
   unit redirect_callback(sbits new_pc) override;
   unit trap_callback(bool is_interrupt, fbits cause) override;
+  unit xret_callback(bool is_mret) override;
+  unit instret_callback(unit) override;
 
   // Page table walk callbacks
   unit ptw_start_callback(
@@ -52,6 +68,10 @@ private:
   unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte) override;
   unit ptw_success_callback(uint64_t final_ppn, int64_t level) override;
   unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr) override;
+  unit tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index) override;
+  unit tlb_flush_begin_callback(unit) override;
+  unit tlb_flush_callback(uint64_t index) override;
+  unit tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) override;
   // Provides entropy for the scalar cryptography extension.
   mach_bits plat_get_16_random_bits(unit) override;
 
@@ -79,13 +99,26 @@ private:
   bool get_config_rvfi(unit) override;
   bool get_config_use_abi_names(unit) override;
 
+  bool m_config_print_instr = false;
+  bool m_config_print_clint = false;
+  bool m_config_print_exception = false;
+  bool m_config_print_interrupt = false;
+  bool m_config_print_htif = false;
+  bool m_config_print_pma = false;
+  bool m_config_rvfi = false;
+  bool m_config_use_abi_names = false;
+
+  bool m_config_print_step = false;
+
   // TODO: Probably better with std::shared_ptr<callbacks_if>.
   std::vector<callbacks_if *> m_callbacks;
 
   uint64_t m_reservation = 0;
+  uint64_t m_reservation_addr = 0;
   bool m_reservation_valid = false;
 
   uint64_t m_reservation_set_addr_mask = 0;
+  bool m_reservation_require_exact_addr = false;
 
   bool m_enable_experimental_extensions = false;
 

@@ -68,7 +68,7 @@ private function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_wi
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
-        match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Data), false, false, false) {
+        match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Vector), false, false, false) {
           Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_reg)), elem),
           Err(e)   => return e,
         }
@@ -92,13 +92,14 @@ function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
   let num_elem = get_num_elem(EMUL_pow, EEW); // # of element of each register group
-
   assert(num_elem > 0);
-
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
   process_vlseg(nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -133,7 +134,7 @@ private function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_
       if mask[i] == 0b1 then { // active segments
         foreach (j from 0 to (nf - 1)) {
           let elem_offset = (i * nf + j) * load_width_bytes;
-          match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Data), false, false, false) {
+          match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Vector), false, false, false) {
             Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_reg)), elem),
             Err(e)   => if i == 0 then return e
                         else {
@@ -172,13 +173,14 @@ function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
   let num_elem = get_num_elem(EMUL_pow, EEW);
-
   assert(num_elem > 0);
-
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
   process_vlsegff(nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -212,7 +214,7 @@ private function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_w
         let elem_offset = (i * nf + j) * load_width_bytes;
         let vs = vregidx_offset(vs3, to_bits_unsafe(5, j * EMUL_reg));
         let data = read_single_element(load_width_bytes * 8, i, vs);
-        match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, data, Store(Data), false, false, false) {
+        match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, data, Store(Vector), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,
@@ -232,13 +234,14 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  then return Illegal_Instruction();
+
   let num_elem = get_num_elem(EMUL_pow, EEW);
-
   assert(num_elem > 0);
-
-  if illegal_store(nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
   process_vsseg(nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
 }
@@ -272,7 +275,7 @@ private function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_w
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
-        match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Data), false, false, false) {
+        match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Vector), false, false, false) {
           Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_reg)), elem),
           Err(e)   => return e,
         }
@@ -296,13 +299,14 @@ function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
   let num_elem = get_num_elem(EMUL_pow, EEW);
-
   assert(num_elem > 0);
-
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
   process_vlsseg(nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -337,7 +341,7 @@ private function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_
         let elem_offset = i * rs2_val + j * load_width_bytes;
         let vs = vregidx_offset(vs3, to_bits_unsafe(5, j * EMUL_reg));
         let data = read_single_element(load_width_bytes * 8, i, vs);
-        match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, data, Store(Data), false, false, false) {
+        match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, data, Store(Vector), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,
@@ -357,13 +361,14 @@ function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
   let SEW_pow = get_sew_pow();
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-  // TODO: The EMUL_pow calculation here is incorrect. See https://github.com/riscv/sail-riscv/issues/1196
+
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  then return Illegal_Instruction();
+
   let num_elem = get_num_elem(EMUL_pow, EEW);
-
   assert(num_elem > 0);
-
-  if illegal_store(nf, EEW, EMUL_pow) then return Illegal_Instruction();
 
   process_vssseg(nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
 }
@@ -401,7 +406,7 @@ private function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_in
       set_vstart(to_bits_unsafe(16, i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
-        match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), EEW_data_bytes, Load(Data), false, false, false) {
+        match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), EEW_data_bytes, Load(Vector), false, false, false) {
           Ok(elem) => write_single_element(EEW_data_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j * EMUL_data_reg)), elem),
           Err(e)   => return e,
         }
@@ -425,12 +430,14 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop) = {
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
 
-  assert(num_elem > 0);
-
-  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
+     not(valid_reg_group(vs2, EMUL_index_pow)) |
+     not(valid_reg_group(vd, EMUL_data_pow))
   then return Illegal_Instruction();
+
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
+  assert(num_elem > 0);
 
   process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop)
 }
@@ -469,7 +476,7 @@ private function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_i
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
         let vs = vregidx_offset(vs3, to_bits_unsafe(5, j * EMUL_data_reg));
         let data = read_single_element(EEW_data_bytes * 8, i, vs);
-        match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), EEW_data_bytes, data, Store(Data), false, false, false) {
+        match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), EEW_data_bytes, data, Store(Vector), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,
@@ -493,7 +500,9 @@ function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop) = {
 
   assert(num_elem > 0);
 
-  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow)
+  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
+     not(valid_reg_group(vs2, EMUL_index_pow)) |
+     not(valid_reg_group(vs3, EMUL_data_pow))
   then return Illegal_Instruction();
 
   process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop)
@@ -524,7 +533,7 @@ private function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : wor
     foreach (i from elem_to_align to (elem_per_reg - 1)) {
       set_vstart(to_bits_unsafe(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Data), false, false, false) {
+      match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Vector), false, false, false) {
         Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, cur_field)), elem),
         Err(e)   => return e,
       };
@@ -537,7 +546,7 @@ private function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : wor
     foreach (i from 0 to (elem_per_reg - 1)) {
       set_vstart(to_bits_unsafe(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Data), false, false, false) {
+      match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Vector), false, false, false) {
         Ok(elem) => write_single_element(load_width_bytes * 8, i, vregidx_offset(vd, to_bits_unsafe(5, j)), elem),
         Err(e)   => return e,
       };
@@ -550,11 +559,12 @@ private function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : wor
 }
 
 function clause execute VLRETYPE(nf, rs1, width, vd) = {
+  if not(valid_whole_register(vd, nf)) then return Illegal_Instruction();
+
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
   let EEW = 2 ^ EEW_pow;
   let elem_per_reg = vlen / EEW;
-
   assert(elem_per_reg >= 0);
 
   process_vlre(nf, vd, load_width_bytes, rs1, elem_per_reg)
@@ -586,7 +596,7 @@ private function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 :
       let elem_offset : int = cur_elem * load_width_bytes;
       let vs = vregidx_offset(vs3, to_bits_unsafe(5, cur_field));
       let data = read_single_element(load_width_bytes * 8, i, vs);
-      match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, data, Store(Data), false, false, false) {
+      match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, data, Store(Vector), false, false, false) {
         Ok(true)  => (),
         Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
         Err(e)    => return e,
@@ -601,7 +611,7 @@ private function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 :
     foreach (i from 0 to (elem_per_reg - 1)) {
       set_vstart(to_bits_unsafe(16, cur_elem));
       let elem_offset = cur_elem * load_width_bytes;
-      match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, vs3_val[i], Store(Data), false, false, false) {
+      match vmem_write(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, vs3_val[i], Store(Vector), false, false, false) {
         Ok(true)  => (),
         Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
         Err(e)    => return e,
@@ -615,10 +625,11 @@ private function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 :
 }
 
 function clause execute VSRETYPE(nf, rs1, vs3) = {
+  if not(valid_whole_register(vs3, nf)) then return Illegal_Instruction();
+
   let load_width_bytes = 1;
   let EEW = 8;
   let elem_per_reg = vlen / EEW;
-
   assert(elem_per_reg >= 0);
 
   process_vsre(nf, load_width_bytes, rs1, vs3, elem_per_reg)
@@ -651,12 +662,12 @@ private function process_vm(vd_or_vs3 : vregidx, rs1 : regidx, num_elem : nat, e
     if i < evl then { // active elements
       set_vstart(to_bits_unsafe(16, i));
       if op == VLM then { // load
-        match vmem_read(rs1, to_bits_unsafe(xlen, i), 1, Load(Data), false, false, false) {
+        match vmem_read(rs1, to_bits_unsafe(xlen, i), 1, Load(Vector), false, false, false) {
           Ok(elem) => write_single_element(8, i, vd_or_vs3, elem),
           Err(e)   => return e,
         }
       } else if op == VSM then { // store
-        match vmem_write(rs1, to_bits_unsafe(xlen, i), 1, vd_or_vs3_val[i], Store(Data), false, false, false) {
+        match vmem_write(rs1, to_bits_unsafe(xlen, i), 1, vd_or_vs3_val[i], Store(Vector), false, false, false) {
           Ok(true)  => (),
           Ok(false) => internal_error(__FILE__, __LINE__, "store got false from vmem_write"),
           Err(e)    => return e,

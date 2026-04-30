@@ -229,18 +229,17 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     MPRV = if currentlyEnabled(Ext_U) then v[MPRV] else 0b0,
     // We don't have any extension context yet.
     XS = extStatus_to_bits(Off),
-    // FS is WARL, and making FS writable can support the M-mode emulation of an FPU
-    // to support code running in S/U-modes.  Spike does this, and for now, we match it,
-    // but only if Zfinx isn't enabled.
-    // FIXME: This should be made a platform parameter.
-    FS = if hartSupports(Ext_Zfinx) then extStatus_to_bits(Off) else v[FS],
+    // "If neither the F extension nor S-mode is implemented, then FS is read-only zero.
+    // If S-mode is implemented but the F extension is not, FS may optionally be read-only zero."
+    // TODO: This should be made a platform parameter for the latter case.
+    FS = if hartSupports(Ext_Zfinx) | (not(hartSupports(Ext_F)) & not(currentlyEnabled(Ext_S))) then 0b00 else v[FS],
     MPP = if have_nominal_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
-    // TODO: make this configurable
     // If neither the v registers nor S-mode is implemented, then VS is
     // read-only zero. If S-mode is implemented but the v registers are not,
     // VS may optionally be read-only zero.
-    VS = if hartSupports(Ext_Zve32x) then v[VS] else 0b00,
+    // TODO: This should be made a platform parameter for the latter case.
+    VS = if not(hartSupports(Ext_Zve32x)) then 0b00 else v[VS],
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
@@ -360,12 +359,16 @@ bitfield MEnvcfg : bits(64) = {
   STCE   : 63,
   // Page Based Memory Types Extension
   PBMTE  : 62,
+  // Svadu
+  ADUE   : 61,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
+  // Shadow Stack Enable
+  SSE    : 3,
   // Landing Pad Enable
   LPE    : 2,
   // Fence of I/O implies Memory
@@ -379,6 +382,8 @@ bitfield SEnvcfg : xlenbits = {
   CBCFE  : 6,
   // Cache Block Invalidate instruction Enable
   CBIE   : 5 .. 4,
+  // Shadow Stack Enable
+  SSE    : 3,
   // Landing Pad Enable
   LPE    : 2,
   // Fence of I/O implies Memory
@@ -399,10 +404,13 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     LPE  = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
+    SSE  = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
+    ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
+    PBMTE = if currentlyEnabled(Ext_Svpbmt) then v[PBMTE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }
@@ -412,6 +420,11 @@ private function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   [o with
     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
     LPE = if hartSupports(Ext_Zicfilp) then v[LPE] else 0b0,
+    // In this implementation, menvcfg[SSE] does not control the writes to senvcfg[SSE],
+    // but does control the reads.  This way, senvcfg[SSE] does not have to be modified
+    // when menvcfg[SSE] is cleared.  The "CSR Field Modulation" section of the
+    // privileged specification has relevant discussion.
+    SSE = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
@@ -421,7 +434,15 @@ private function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
 
 // Initialised to legal values in case some bits are hard-coded to 1.
 register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
-register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
+
+// This register is private to ensure that it is read using `read_senvcfg()`.
+private register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
+
+// "When menvcfg.SSE is 0, the henvcfg.SSE and senvcfg.SSE fields are read-only zero."
+// This function should be used for any read of the `senvcfg` CSR that includes the SSE bit.
+// TODO: When henvcfg.SSE is 0, the senvcfg.SSE field will read as zero and is read-only.
+function read_senvcfg() -> SEnvcfg =
+  [senvcfg with SSE = menvcfg[SSE] & senvcfg[SSE]]
 
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
@@ -436,12 +457,12 @@ function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) // senv
 
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
-function clause read_CSR(0x10A) = senvcfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x10A) = read_senvcfg().bits
 
 function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Ok(menvcfg.bits[31 .. 0]) }
 function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); Ok(menvcfg.bits) }
 function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Ok(menvcfg.bits[63 .. 32]) }
-function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(senvcfg.bits[xlen - 1 .. 0]) }
+function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(read_senvcfg().bits) }
 
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences
@@ -456,108 +477,6 @@ function is_fiom_active() -> bool = {
   }
 }
 
-// interrupt processing state
-
-bitfield Minterrupts : xlenbits = {
-  SGEI : 12, // Supervisor guest external interrupt
-  MEI  : 11, // Machine external interrupt
-  VSEI : 10, // Virtual Supervisor external interrupt
-  SEI  : 9,  // Supervisor external interrupt
-
-  MTI  : 7,  // Timer interrupt
-  VSTI : 6,  // Virtual supervisor timer interrupt
-  STI  : 5,  // Supervisor timer interrupt
-
-  MSI  : 3,  // Software interrupt
-  VSSI : 2,  // Virtual supervisor software interrupt
-  SSI  : 1,  // Supervisor software interrupt
-}
-
-private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  // The only writable bits are the S-mode bits.
-  let v = Mk_Minterrupts(v);
-  [o with
-    SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
-    SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
-    STI = if currentlyEnabled(Ext_S) then (
-      // STI is read only if Sstc is enabled and STCE is set (it is equal to stimecmp <= mtime).
-      if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
-    ) else 0b0,
-  ]
-}
-
-private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  let v = Mk_Minterrupts(v);
-  [o with
-    MEI = v[MEI],
-    MTI = v[MTI],
-    MSI = v[MSI],
-    SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
-    STI = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
-    SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
-  ]
-}
-
-private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  // M-mode interrupt delegation bits "should" be hardwired to 0.
-  // FIXME: needs verification against eventual spec language.
-  [Mk_Minterrupts(v) with MEI = 0b0, MTI = 0b0, MSI = 0b0]
-}
-
-// exception processing state
-
-bitfield Medeleg : bits(64) = {
-  SAMO_Page_Fault   : 15,
-  Load_Page_Fault   : 13,
-  Fetch_Page_Fault  : 12,
-  MEnvCall          : 11,
-  SEnvCall          : 9,
-  UEnvCall          : 8,
-  SAMO_Access_Fault : 7,
-  SAMO_Addr_Align   : 6,
-  Load_Access_Fault : 5,
-  Load_Addr_Align   : 4,
-  Breakpoint        : 3,
-  Illegal_Instr     : 2,
-  Fetch_Access_Fault: 1,
-  Fetch_Addr_Align  : 0
-}
-
-private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
-  // M-EnvCalls delegation is not supported
-  [Mk_Medeleg(v) with MEnvCall = 0b0]
-}
-
-register mie     : Minterrupts // Enabled
-register mip     : Minterrupts // Pending
-register medeleg : Medeleg     // Exception delegation to S-mode
-register mideleg : Minterrupts // Interrupt delegation to S-mode
-
-mapping clause csr_name_map = 0x304  <-> "mie"
-mapping clause csr_name_map = 0x344  <-> "mip"
-mapping clause csr_name_map = 0x302  <-> "medeleg"
-mapping clause csr_name_map = 0x312  <-> "medelegh"
-mapping clause csr_name_map = 0x303  <-> "mideleg"
-
-function clause is_CSR_accessible(0x304, _, _) = true // mie
-function clause is_CSR_accessible(0x344, _, _) = true // mip
-function clause is_CSR_accessible(0x302, _, _) = currentlyEnabled(Ext_S) // medeleg
-function clause is_CSR_accessible(0x312, _, _) = currentlyEnabled(Ext_S) & xlen == 32 // medelegh
-function clause is_CSR_accessible(0x303, _, _) = currentlyEnabled(Ext_S) // mideleg
-
-function clause read_CSR(0x304) = mie.bits
-function clause read_CSR(0x344) = mip.bits
-function clause read_CSR(0x302) = medeleg.bits[xlen - 1 .. 0]
-function clause read_CSR(0x312 if xlen == 32) = medeleg.bits[63 .. 32]
-function clause read_CSR(0x303) = mideleg.bits
-
-function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); Ok(mie.bits) }
-function clause write_CSR(0x344, value) = { mip = legalize_mip(mip, value); Ok(mip.bits) }
-function clause write_CSR((0x302, value) if xlen == 64) = { medeleg = legalize_medeleg(medeleg, value); Ok(medeleg.bits) }
-function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, medeleg.bits[63 .. 32] @ value); Ok(medeleg.bits[31 .. 0]) }
-function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); Ok(medeleg.bits[63 .. 32]) }
-function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); Ok(mideleg.bits) }
-
 // registers for trap handling
 
 bitfield Mtvec : xlenbits = {
@@ -568,12 +487,15 @@ register mtvec : Mtvec  // Trap Vector
 
 // PUBLIC: invoked from set_{ms}tvec() [exceptions/sys_exceptions.sail]
 function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
- let v = Mk_Mtvec(v);
- match (trapVectorMode_of_bits(v[Mode])) {
-   TV_Direct => v,
-   TV_Vector => v,
-   _         => [v with Mode = o[Mode]]
- }
+  let v = Mk_Mtvec(v);
+  match trapVectorMode_of_bits(v[Mode]) {
+    TV_Direct => v,
+    TV_Vector => v,
+    _         => match xtvec_mode_reserved_behavior {
+      Xtvec_Fatal => reserved_behavior("Tried to write a reserved value (" ^ dec_str(unsigned(v[Mode])) ^ ") to the MODE field of xtvec."),
+      Xtvec_Ignore => [v with Mode = o[Mode]],
+    },
+  }
 }
 
 bitfield Mcause : xlenbits = {
@@ -647,11 +569,14 @@ bitfield Counteren : bits(32) = {
   CY   : 0
 }
 
+function clause currentlyEnabled(Ext_Sscounterenw) = hartSupports(Ext_Sscounterenw) & currentlyEnabled(Ext_S)
+
+// Which bits of `scounteren` are writable. Bits [2 .. 0] are ignored.
+let sys_scounteren_writable_bits : bits(32) = config base.scounteren_writable_bits
+
 // scounteren
-private function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren = {
-  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
-  Mk_Counteren(v[31 .. 0] & supported_counters)
-}
+private function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren =
+  Mk_Counteren(v[31 .. 0] & (sys_scounteren_writable_bits[31 .. 3] @ 0b111))
 
 register scounteren : Counteren
 mapping clause csr_name_map = 0x106  <-> "scounteren"
@@ -803,77 +728,6 @@ function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // ssta
 function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0]) }
 
-
-bitfield Sinterrupts : xlenbits = {
-  SEI : 9,  // external interrupts
-
-  STI : 5,  // timers interrupts
-
-  SSI : 1,  // software interrupts
-}
-
-// sip
-// Provides the sip read view of mip (m) as delegated by mideleg (d).
-private function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
-  let s : Sinterrupts = Mk_Sinterrupts(zeros());
-
-  [s with
-    SEI = m[SEI] & d[SEI],
-    STI = m[STI] & d[STI],
-    SSI = m[SSI] & d[SSI],
-  ]
-}
-
-// Provides the sie read view of mie (m) as delegated by mideleg (d).
-private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
-  let s : Sinterrupts = Mk_Sinterrupts(zeros());
-
-  [s with
-    SEI = m[SEI] & d[SEI],
-    STI = m[STI] & d[STI],
-    SSI = m[SSI] & d[SSI],
-  ]
-}
-
-// Returns the new value of mip from the previous mip (o) and the written sip (s) as delegated by mideleg (d).
-private function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
-  let m : Minterrupts = o;
-  let m = if d[SSI] == 0b1 then [m with SSI = s[SSI]] else m;
-  m
-}
-
-private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
-  lift_sip(m, d, Mk_Sinterrupts(v))
-}
-
-mapping clause csr_name_map = 0x144  <-> "sip"
-function clause is_CSR_accessible(0x144, _, _) = currentlyEnabled(Ext_S) // sip
-function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
-function clause write_CSR(0x144, value) = { mip = legalize_sip(mip, mideleg, value); Ok(lower_mip(mip, mideleg).bits) }
-
-
-// sie
-// Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d).
-private function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
-  let m : Minterrupts = o;
-  [m with
-    SEI = if d[SEI] == 0b1 then s[SEI] else m[SEI],
-    STI = if d[STI] == 0b1 then s[STI] else m[STI],
-    SSI = if d[SSI] == 0b1 then s[SSI] else m[SSI],
-  ]
-}
-
-private function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
-  lift_sie(m, d, Mk_Sinterrupts(v))
-}
-
-
-mapping clause csr_name_map = 0x104  <-> "sie"
-function clause is_CSR_accessible(0x104, _, _) = currentlyEnabled(Ext_S) // sie
-function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
-function clause write_CSR(0x104, value) = { mie = legalize_sie(mie, mideleg, value); Ok(lower_mie(mie, mideleg).bits) }
-
-
 // other non-VM related supervisor state
 register stvec    : Mtvec
 register sscratch : xlenbits
@@ -972,16 +826,32 @@ val get_16_random_bits = impure {
 } : unit -> bits(16)
 
 
-// There are several features that are controlled by machine/supervisor enable
-// bits (m/senvcfg, m/scounteren, etc.). This abstracts that logic.
-function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), supervisor_enable_bit : bits(1)) -> bool = match p {
-  Machine => true,
-  Supervisor => machine_enable_bit == 0b1,
-  User => machine_enable_bit == 0b1 & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == 0b1),
-  VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-  VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+enum FeatureEnabledResult = {FEATURE_ENABLED, FEATURE_ILLEGAL, FEATURE_VIRTUAL}
+
+// Several features are controlled by enable bits in machine/supervisor/hypervisor
+// CSRs (m/s/henvcfg, m/s/hcounteren, etc.). This function abstracts that logic,
+// returning whether the feature is enabled, and if not, whether the failure should
+// raise an illegal-instruction or virtual-instruction exception.
+function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), supervisor_enable_bit : bits(1), hypervisor_enable_bit : bits(1)) -> FeatureEnabledResult = match p {
+  Machine           => FEATURE_ENABLED,
+  Supervisor        => if machine_enable_bit == 0b1 then FEATURE_ENABLED else FEATURE_ILLEGAL,
+  User              => if machine_enable_bit == 0b1 & (not(currentlyEnabled(Ext_S)) | supervisor_enable_bit == 0b1)
+                       then FEATURE_ENABLED else FEATURE_ILLEGAL,
+  VirtualSupervisor => if machine_enable_bit == 0b0 then FEATURE_ILLEGAL
+                       else if hypervisor_enable_bit == 0b0 then FEATURE_VIRTUAL
+                       else FEATURE_ENABLED,
+  VirtualUser       => if machine_enable_bit == 0b0 then FEATURE_ILLEGAL
+                       else if hypervisor_enable_bit == 0b0 | supervisor_enable_bit == 0b0 then FEATURE_VIRTUAL
+                       else FEATURE_ENABLED,
 }
 
+// Backward-compatible wrapper around feature_enabled_for_priv for callers that
+// do not yet distinguish between illegal-instruction and virtual-instruction
+// exceptions. Required for upcoming Hypervisor extension support.
+function feature_enabled_for_priv_bool(p : Privilege, m : bits(1), s : bits(1), h : bits(1)) -> bool =
+  feature_enabled_for_priv(p, m, s, h) == FEATURE_ENABLED
+
 // Return true if the counter is enabled.
+// TODO: Pass hcounteren.bits[index] once hcounteren is implemented.
 function counter_enabled(index: range(0, 31), priv : Privilege) -> bool =
-  feature_enabled_for_priv(priv, mcounteren.bits[index], scounteren.bits[index])
+  feature_enabled_for_priv_bool(priv, mcounteren.bits[index], scounteren.bits[index], 0b0)

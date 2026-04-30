@@ -315,6 +315,14 @@ function clause is_CSR_accessible(0xC20, _, _) = currentlyEnabled(Ext_Zve32x) //
 function clause is_CSR_accessible(0xC21, _, _) = currentlyEnabled(Ext_Zve32x) // vtype
 function clause is_CSR_accessible(0xC22, _, _) = currentlyEnabled(Ext_Zve32x) // vlenb
 
+function clause is_CSR_exception_virtual(0x008, _, _) = false // vstart
+function clause is_CSR_exception_virtual(0x009, _, _) = false // vxsat
+function clause is_CSR_exception_virtual(0x00A, _, _) = false // vxrm
+function clause is_CSR_exception_virtual(0x00F, _, _) = false // vcsr
+function clause is_CSR_exception_virtual(0xC20, _, _) = false // vl
+function clause is_CSR_exception_virtual(0xC21, _, _) = false // vtype
+function clause is_CSR_exception_virtual(0xC22, _, _) = false // vlenb
+
 function clause read_CSR(0x008) = vstart
 function clause read_CSR(0x009) = zero_extend(vcsr[vxsat])
 function clause read_CSR(0x00A) = zero_extend(vcsr[vxrm])

@@ -43,10 +43,9 @@ jobs:
             os: ubuntu-24.04-arm
             container: rockylinux:8.9.20231119
 
-          # TODO: Mac. We need a Mac binary release of the Sail compiler first.
-          # - name: mac-arm64
-          #   os: macos-latest
-          #   container: ""
+          - name: Mac-arm64
+            os: macos-latest
+            container: ""
 
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
@@ -64,36 +63,23 @@ jobs:
       - name: Install dependencies (Linux)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          dnf update -y --enablerepo=devel
-          dnf install -y --enablerepo=devel \
-              pkg-config \
-              gmp-static \
-              libstdc++-static \
-              curl \
-              git \
-              make \
-              gcc \
-              gcc-c++ \
-              cmake \
-              ninja-build
-          curl --location --output sail.tar.gz https://github.com/rems-project/sail/releases/download/$SAIL_VERSION/sail-$(uname)-$(arch).tar.gz
-          tar --directory=/usr/local --strip-components=1 --extract --file sail.tar.gz
+          dnf install -y git
 
-      # TODO: Mac
-      # - name: Install dependencies (Mac)
-      #   if: startsWith(matrix.os, 'macos')
-      #   run: |
-      #     brew install --force --overwrite ...
+      - name: Check out repository code
+        uses: actions/checkout@v6
 
-      - uses: actions/checkout@v6
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          cmake-version: "3.20.0"
 
       - name: Build simulator
         run: |
           git config --global --add safe.directory '*'
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_ARCH_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
           cd build
           ninja all
-          ctest
+          ctest -j2
           cpack
 
       - name: Build JSON and HTML
@@ -104,22 +90,22 @@ jobs:
 
       - name: "Generate attestations (Linux-x86_64)"
         if: matrix.name == 'Linux-x86_64'
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             build/sail-riscv-*
             build/model/sail_riscv_model.json
             build/model/sail_riscv_html.tgz
 
-      - name: "Generate attestations (Linux-aarch64)"
-        if: matrix.name == 'Linux-aarch64'
-        uses: actions/attest-build-provenance@v3
+      - name: "Generate attestations (Linux-aarch64, Mac-arm64)"
+        if: matrix.name == 'Linux-aarch64' || matrix.name == 'Mac-arm64'
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             build/sail-riscv-*
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.name }}
           path: |
@@ -136,7 +122,7 @@ jobs:
       contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
 
       - name: Prepare release inputs
         id: params
@@ -165,7 +151,7 @@ jobs:
           echo "body=$BODY" >> "$GITHUB_OUTPUT"
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: ${{ steps.params.outputs.name }}
           tag_name: ${{ steps.params.outputs.tag_name }}
@@ -176,6 +162,7 @@ jobs:
           files: |
             release-Linux-x86_64/sail-riscv-Linux-x86_64.tar.gz
             release-Linux-aarch64/sail-riscv-Linux-aarch64.tar.gz
+            release-Mac-arm64/sail-riscv-Mac-arm64.tar.gz
             release-Linux-x86_64/model/sail_riscv_model.json
             release-Linux-x86_64/model/sail_riscv_html.tgz
           fail_on_unmatched_files: true

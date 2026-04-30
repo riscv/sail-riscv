@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 #include "riscv_callbacks_if.h"
-#include "riscv_config.h"
 #include "symbol_table.h"
 
 int term_fd = 1; // set during startup
@@ -43,6 +42,16 @@ void ModelImpl::set_enable_experimental_extensions(bool en) {
 
 void ModelImpl::set_reservation_set_size_exp(uint64_t exponent) {
   m_reservation_set_addr_mask = ~((1 << exponent) - 1);
+}
+
+void ModelImpl::set_reservation_require_exact_addr_match(bool require_exact_addr) {
+  m_reservation_require_exact_addr = require_exact_addr;
+}
+
+void ModelImpl::print_current_exception() {
+  if (current_exception != nullptr) {
+    zprint_exception(*current_exception);
+  }
 }
 
 unit ModelImpl::fetch_callback(sbits opcode) {
@@ -128,6 +137,20 @@ unit ModelImpl::trap_callback(bool is_interrupt, fbits cause) {
   return UNIT;
 }
 
+unit ModelImpl::xret_callback(bool is_mret) {
+  for (auto c : m_callbacks) {
+    c->xret_callback(*this, is_mret);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::instret_callback(unit) {
+  for (auto c : m_callbacks) {
+    c->instret_callback(*this);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::ptw_start_callback(
   uint64_t vpn,
   hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
@@ -160,6 +183,34 @@ unit ModelImpl::ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sb
   return UNIT;
 }
 
+unit ModelImpl::tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index) {
+  for (auto c : m_callbacks) {
+    c->tlb_add_callback(*this, tlb, index);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::tlb_flush_begin_callback(unit) {
+  for (auto c : m_callbacks) {
+    c->tlb_flush_begin_callback(*this);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::tlb_flush_callback(uint64_t index) {
+  for (auto c : m_callbacks) {
+    c->tlb_flush_callback(*this, index);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+  for (auto c : m_callbacks) {
+    c->tlb_flush_end_callback(*this, tlb);
+  }
+  return UNIT;
+}
+
 // Provides entropy for the scalar cryptography extension.
 mach_bits ModelImpl::plat_get_16_random_bits(unit) {
   // This function can be changed to support deterministic sequences of
@@ -173,6 +224,7 @@ mach_bits ModelImpl::plat_get_16_random_bits(unit) {
 // `cancel_reservation()`.
 
 unit ModelImpl::load_reservation(sbits addr, uint64_t width) {
+  m_reservation_addr = addr.bits;
   m_reservation = addr.bits & m_reservation_set_addr_mask;
   m_reservation_valid = true;
 
@@ -183,8 +235,9 @@ unit ModelImpl::load_reservation(sbits addr, uint64_t width) {
 }
 
 bool ModelImpl::match_reservation(sbits addr) {
-  return m_reservation_valid &&
-         (m_reservation & m_reservation_set_addr_mask) == (addr.bits & m_reservation_set_addr_mask);
+  return m_reservation_valid && (m_reservation_require_exact_addr ? (addr.bits == m_reservation_addr)
+                                                                  : (m_reservation & m_reservation_set_addr_mask) ==
+                                                                      (addr.bits & m_reservation_set_addr_mask));
 }
 
 unit ModelImpl::cancel_reservation(unit) {
@@ -226,36 +279,76 @@ unit ModelImpl::print_log_instr(const_sail_string s, uint64_t pc) {
 }
 
 unit ModelImpl::print_step(unit) {
-  if (config_print_step) {
+  if (m_config_print_step) {
     fprintf(trace_log, "\n");
   }
   return UNIT;
 }
 
 bool ModelImpl::get_config_print_instr(unit) {
-  return config_print_instr;
+  return m_config_print_instr;
 }
 
 bool ModelImpl::get_config_print_clint(unit) {
-  return config_print_clint;
+  return m_config_print_clint;
 }
+
 bool ModelImpl::get_config_print_exception(unit) {
-  return config_print_exception;
+  return m_config_print_exception;
 }
+
 bool ModelImpl::get_config_print_interrupt(unit) {
-  return config_print_interrupt;
+  return m_config_print_interrupt;
 }
+
 bool ModelImpl::get_config_print_htif(unit) {
-  return config_print_htif;
+  return m_config_print_htif;
 }
+
 bool ModelImpl::get_config_print_pma(unit) {
-  return config_print_pma;
+  return m_config_print_pma;
 }
 
 bool ModelImpl::get_config_rvfi(unit) {
-  return config_enable_rvfi;
+  return m_config_rvfi;
 }
 
 bool ModelImpl::get_config_use_abi_names(unit) {
-  return config_use_abi_names;
+  return m_config_use_abi_names;
+}
+
+void ModelImpl::set_config_print_instr(bool on) {
+  m_config_print_instr = on;
+}
+
+void ModelImpl::set_config_print_clint(bool on) {
+  m_config_print_clint = on;
+}
+
+void ModelImpl::set_config_print_exception(bool on) {
+  m_config_print_exception = on;
+}
+
+void ModelImpl::set_config_print_interrupt(bool on) {
+  m_config_print_interrupt = on;
+}
+
+void ModelImpl::set_config_print_htif(bool on) {
+  m_config_print_htif = on;
+}
+
+void ModelImpl::set_config_print_pma(bool on) {
+  m_config_print_pma = on;
+}
+
+void ModelImpl::set_config_rvfi(bool on) {
+  m_config_rvfi = on;
+}
+
+void ModelImpl::set_config_use_abi_names(bool on) {
+  m_config_use_abi_names = on;
+}
+
+void ModelImpl::set_config_print_step(bool on) {
+  m_config_print_step = on;
 }

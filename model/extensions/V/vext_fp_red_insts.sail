@@ -34,7 +34,10 @@ function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let rm_3b       = fcsr[FRM];
   let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
 
-  if illegal_fp_reduction(SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_fp_reduction(SEW, rm_3b) |
+     not(valid_reg_group(vs2, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW != 8);
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; // if vl=0, no operation is performed
@@ -107,7 +110,10 @@ function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
   let rm_3b       = fcsr[FRM];
   let SEW_widen   = SEW * 2;
 
-  if illegal_fp_widening_reduction(SEW, rm_3b, SEW_widen) then return Illegal_Instruction();
+  if illegal_fp_widening_reduction(SEW, rm_3b, SEW_widen) |
+     not(valid_reg_group(vs2, LMUL_pow))
+  then return Illegal_Instruction();
+
   assert(SEW >= 16 & SEW_widen <= 64);
 
   let num_elem_vd = get_num_elem(0, SEW_widen); // vd regardless of LMUL setting

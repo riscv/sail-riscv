@@ -71,32 +71,44 @@ private function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
   & pte_flags[W] == 0b0
   & pte_flags[R] == 0b0
 
-// Not supported in the model yet.
-function clause currentlyEnabled(Ext_Svnapot) = false
-function clause currentlyEnabled(Ext_Svpbmt) = false
-
+// NAPOT Translation Contiguity
+function clause currentlyEnabled(Ext_Svnapot) = hartSupports(Ext_Svnapot) & currentlyEnabled(Ext_Sv39)
+// Page-Based Memory Types
+function clause currentlyEnabled(Ext_Svpbmt) =  hartSupports(Ext_Svpbmt) & currentlyEnabled(Ext_Sv39)
 // Svrsw60t59b: PTE Reserved for software bits 60-59
 function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b) & currentlyEnabled(Ext_Sv39)
+// Obviating Memory-management Instructions after Marking PTEs valid
+function clause currentlyEnabled(Ext_Svvptc) = hartSupports(Ext_Svvptc) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
+
+// Updates to A/D bits in PTE.
+// Dynamic values of {m,h}envcfg[ADUE] are handled during address translation.
+function clause currentlyEnabled(Ext_Svade) = hartSupports(Ext_Svade)
+function clause currentlyEnabled(Ext_Svadu) = hartSupports(Ext_Svadu)
 
 // Check if a PTE is valid
 private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
     pte_flags[V] == 0b0
-  | (pte_flags[W] == 0b1 & pte_flags[R] == 0b0)
+  // The encoding R=0, W=1, and X=0, is defined to represent an SS
+  // page. When menvcfg.SSE=0, this encoding remains reserved.
+  // TODO: handle V=1 and henvcfg.SSE=0 at VS/VU levels
+  | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b0 & menvcfg[SSE] == 0b0)
+  | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b1)
   // Note, the following requirements depend on the privileged spec version.
   // Early versions do not require this check. This will need to be behind
   // a flag when the Sail model allows specifying the spec version.
+  | (pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1 | pte_ext.bits != zeros()))
   | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
-  | (pte_ext[PBMT] != zeros() & not(currentlyEnabled(Ext_Svpbmt)))
+  | (pte_ext[PBMT] != zeros() & (menvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))))
   | (pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b)))
   | pte_ext[reserved] != zeros()
 
 // ----------------
 // Check access permissions in PTE
 
-// TODO: Zicfiss will add PTE_No_Access here.
 union pte_check_failure = {
   PTE_No_Permission : unit,
-  PTE_Ext_Failure : ext_ptw_fail
+  PTE_No_Access     : unit,
+  PTE_Ext_Failure   : ext_ptw_fail
 }
 
 // For (non-standard) extensions: this function gets the extension-available bits
@@ -137,12 +149,60 @@ private function check_PTE_permission(
     // loads and stores; not instruction fetch.
     Supervisor => not(pte_U) | (do_sum & is_load_store(access)),
     Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
-    VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   };
   if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
-  // (TODO: Step 7 awaits shadow stack implementation (Zicfiss).)
+  // Step 7 of VATP (see vmem.sail).
+
+  // Enforce Shadow Stack (SS) protection rules for a shadow stack page.
+  if not(pte_R) & pte_W & not(pte_X) then {
+    // Since we assume a valid PTE: this encoding is only valid when menvcfg[SSE] is 1.
+    assert(bool_bit(menvcfg[SSE]));
+
+    let shadow_stack_ok : bool = match access {
+      // "Implicit accesses, including instruction fetches to an SS page, are not permitted.
+      // Such accesses will raise an access-fault exception appropriate to the access type."
+      InstructionFetch()    => false,
+      Load(PageTableEntry)  => false,
+      Store(PageTableEntry) => false,
+      // "the shadow stack is readable by all instructions that only load from
+      // memory."
+      Load(Data)         => true,
+      Load(Vector)       => true,
+      Load(ShadowStack)  => true,
+      LoadReserved(Data) => true,
+
+      // "Memory mapped as an SS page cannot be written to by instructions other
+      // than SSAMOSWAP.W/D, SSPUSH, and C.SSPUSH."
+      Store(Data)                         => false,
+      Store(Vector)                       => false,
+      StoreConditional(Data)              => false,
+      Atomic(_, Data, Data)               => false,
+      Store(ShadowStack)                  => true,
+      Atomic(_, ShadowStack, ShadowStack) => true,
+
+      // "Access to a SS page using cache-block operation (CBO.*) instructions
+      // is not permitted. Such accesses will raise a store/AMO access-fault
+      // exception."
+      CacheAccess(_) => false,
+
+      LoadReserved(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+      StoreConditional(p)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+      Atomic(_, rp, wp)              => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+
+    };
+    if not(shadow_stack_ok) then return PTE_Check_Failure((), PTE_No_Access());
+  } else if is_shadow_stack_access(access) then {
+    // "Should a shadow stack instruction access a page that is not designated
+    // as a shadow stack page and is not marked as read-only (pte.xwr=001), a
+    // store/AMO access-fault exception will be invoked. Conversely, if the page
+    // being accessed by a shadow stack instruction is a read-only page, a
+    // store/AMO page-fault exception will be triggered."
+    let is_read_only = pte_R & not(pte_W) & not(pte_X);
+    return PTE_Check_Failure((), if is_read_only then PTE_No_Permission() else PTE_No_Access());
+  };
 
   // Step 8 of VATP (see vmem.sail).
 

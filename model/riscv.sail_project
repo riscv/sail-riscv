@@ -7,7 +7,7 @@ prelude {
 }
 
 core {
-  requires prelude, Zicbop_types
+  requires prelude, A_types, Zicbop_types, Zicbom_types
 
   files
     core/xlen.sail,
@@ -36,6 +36,7 @@ core {
     core/pc_access.sail,
     core/sys_regs.sail,
     core/ext_regs.sail,
+    core/interrupt_regs.sail,
     core/addr_checks_common.sail,
     core/addr_checks.sail,
     core/misa_ext.sail,
@@ -71,7 +72,9 @@ sys {
 
   files
     sys/sys_reservation.sail,
+    sys/simple_interrupt_generator_regs.sail,
     sys/sys_control.sail,
+    sys/simple_interrupt_generator.sail,
     sys/platform.sail,
     sys/pma.sail,
     sys/mem.sail,
@@ -108,7 +111,6 @@ extensions {
 
   A {
     A_types {
-      before core
       files extensions/A/aext_types.sail
     }
     Zaamo {
@@ -312,6 +314,19 @@ extensions {
     }
   }
 
+  Zvabd {
+    requires core
+
+    Zvabd_types {
+      before sys
+      files extensions/Zvabd/zvabd_types.sail
+    }
+    Zvabd_insts {
+      requires sys, V, Zvabd_types
+      files extensions/Zvabd/zvabd_insts.sail
+    }
+  }
+
   // Control and Status Register (CSR) Instructions
   Zicsr {
     requires core
@@ -364,6 +379,18 @@ extensions {
     }
   }
 
+  Zicfiss {
+    requires core
+
+    Zicfiss_regs {
+      files extensions/cfi/zicfiss_regs.sail
+    }
+    Zicfiss_insts {
+      requires sys, exceptions, CFI_types, Zicfiss_regs, A_types
+      files extensions/cfi/zicfiss_insts.sail
+    }
+  }
+
   Zicond {
     requires core
 
@@ -384,7 +411,6 @@ extensions {
 
   Zicbom {
     Zicbom_types {
-      before core
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
@@ -406,14 +432,26 @@ extensions {
     }
   }
 
+
+  Zibi {
+    Zibi_types {
+      before core
+      files extensions/Zibi/zibi_types.sail
+    }
+    Zibi_insts {
+      requires core, sys, I_insts, Zibi_types
+      files extensions/Zibi/zibi_insts.sail
+    }
+  }
+
   Zicboz {
     requires core, sys
     files extensions/Zicboz/zicboz_insts.sail
   }
 
-  Zifenci {
+  Zifencei {
     requires core, sys
-    files extensions/Zifenci/zifencei_insts.sail
+    files extensions/Zifencei/zifencei_insts.sail
   }
 
   Zihintntl {
@@ -522,7 +560,7 @@ mops {
 }
 
 postlude {
-  after extensions, mops
+  after extensions, mops, core
 
   requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
 

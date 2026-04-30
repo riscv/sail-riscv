@@ -31,6 +31,16 @@ enum AtomicSupport = {
   AMOCASQ,
 }
 
+function pma_atomicity_support_gt(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) > num_of_AtomicSupport(y)
+function pma_atomicity_support_lt(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) < num_of_AtomicSupport(y)
+function pma_atomicity_support_ge(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) >= num_of_AtomicSupport(y)
+function pma_atomicity_support_le(x : AtomicSupport, y : AtomicSupport) -> bool = num_of_AtomicSupport(x) <= num_of_AtomicSupport(y)
+
+overload operator > = {pma_atomicity_support_gt}
+overload operator < = {pma_atomicity_support_lt}
+overload operator >= = {pma_atomicity_support_ge}
+overload operator <= = {pma_atomicity_support_le}
+
 mapping atomic_support_str : AtomicSupport <-> string = {
   AMONone       <-> "AMONone",
   AMOSwap       <-> "AMOSwap",
@@ -42,6 +52,17 @@ mapping atomic_support_str : AtomicSupport <-> string = {
 }
 overload to_str = {atomic_support_str}
 
+function pma_allows_atomic_op forall 'n, 0 < 'n <= max_mem_access . (pma : AtomicSupport, op : amoop, width : int('n)) -> bool =
+  match pma {
+    AMONone       => false,
+    AMOSwap       => op == AMOSWAP,
+    AMOLogical    => op == AMOSWAP | op == AMOAND | op == AMOOR | op == AMOXOR,
+    AMOArithmetic => op != AMOCAS,
+    AMOCASW       => op != AMOCAS | width <= 4,
+    AMOCASD       => op != AMOCAS | width <= 8,
+    AMOCASQ       => op != AMOCAS | width <= 16,
+  }
+
 enum Reservability = { RsrvNone, RsrvNonEventual, RsrvEventual }
 
 mapping reservability_str : Reservability <-> string = {
@@ -51,20 +72,24 @@ mapping reservability_str : Reservability <-> string = {
 }
 overload to_str = {reservability_str}
 
-// Do misaligned accesses (of any kind) to this region cause
-// a fault, and if so which kind. This is for regions that
-// only support aligned accesses.
-enum misaligned_fault = { NoFault, AccessFault, AlignmentFault }
-
-mapping misaligned_fault_str : misaligned_fault <-> string = {
-  NoFault        <-> "NoFault",
-  AccessFault    <-> "AccessFault",
-  AlignmentFault <-> "AlignmentFault",
+enum MemoryRegionType = { MainMemory, IOMemory }
+mapping memory_region_type_str : MemoryRegionType <-> string = {
+  MainMemory <-> "main memory",
+  IOMemory   <-> "IO memory",
 }
-overload to_str = {misaligned_fault_str}
+overload to_str = {memory_region_type_str}
+
+// PMA misalignment handling.  Misalignment for LR/SC is handled
+// before address-translation.
+struct PMAMisalignedExceptions = {
+  load_store : option(misaligned_exception),
+  vector     : option(misaligned_exception),
+  amo        : misaligned_exception,
+}
 
 // Physical Memory Attributes for a region.
 struct PMA = {
+  mem_type         : MemoryRegionType,
   // These have no effect on the model currently but they are affected
   // by PBMT so they need to be here if the resulting PMA is verified.
   cacheable        : bool,
@@ -78,17 +103,58 @@ struct PMA = {
   writable         : bool,
   read_idempotent  : bool,
   write_idempotent : bool,
-  // Optionally cause an access/alignment fault on misaligned access.
-  misaligned_fault : misaligned_fault,
-  // TODO: Atomicity PMA. This is not supported yet because
-  // the MemoryAccessType needs to be extended to indicate the AMO type.
-  // atomic_support   : AtomicSupport,
+  // Misaligned handling for various accesses.
+  misaligned_exceptions : PMAMisalignedExceptions,
+  atomic_support   : AtomicSupport,
   reservability    : Reservability,
   // Flags whether this memory supports CBO.zero. Note that main memory regions must
   // have this set.
   supports_cbo_zero : bool,
+  // Flags whether this memory supports hardware page table reads.
+  supports_pte_read : bool,
+  // Flags whether this memory supports hardware page table writes.
+  supports_pte_write : bool,
   // TODO: Misaligned Atomicity Granule PMA
   // TODO: Memory Ordering PMA
+}
+
+// A PMA can be overridden by page-based memory types.
+// TODO: specify alignment for IO regions.
+function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
+  match pbmt {
+    PBMT_PMA => pma,
+    // TODO: return a weakly-ordered PMA
+    PBMT_NC  => {pma with mem_type = MainMemory,
+                          cacheable = false,
+                          read_idempotent = true,
+                          write_idempotent = true},
+    // TODO: return a strongly ordered PMA
+    PBMT_IO  => {pma with mem_type = IOMemory,
+                          cacheable = false,
+                          read_idempotent = false,
+                          write_idempotent = false},
+  }
+
+// Provide the misaligned treatment for a misaligned access.
+function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_payload)) -> option(misaligned_exception) = {
+  let exceptions = pma.misaligned_exceptions;
+  match access {
+    Load(Data)             => exceptions.load_store,
+    Load(PageTableEntry)   => exceptions.load_store,
+    Load(ShadowStack)      => exceptions.load_store,
+    Store(Data)            => exceptions.load_store,
+    Store(PageTableEntry)  => exceptions.load_store,
+    Store(ShadowStack)     => exceptions.load_store,
+    Load(Vector)           => exceptions.vector,
+    Store(Vector)          => exceptions.vector,
+    Atomic(_, _, _)        => Some(exceptions.amo),
+
+    // These access types should not be misaligned at the PMA level.
+    InstructionFetch()     => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned instruction fetch."),
+    LoadReserved(p)        => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned load-reserved (" ^ mem_payload_name(p) ^ ")."),
+    StoreConditional(p)    => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned store-conditional (" ^ mem_payload_name(p) ^ ")."),
+    CacheAccess(_)         => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned cache-access."),
+  }
 }
 
 // A region of memory and its Physical Memory Attributes.
@@ -105,24 +171,32 @@ struct PMA_Region = {
 }
 
 // Get the first PMA region that fully contains a given [base, base+size) range.
-function matching_pma_bits_range(pmas : list(PMA_Region), base : bits(64), size : bits(64)) -> option(PMA_Region) = {
-  match pmas {
+function matching_pma_region_bits_range(regions : list(PMA_Region), base : bits(64), size : bits(64)) -> option(PMA_Region) = {
+  match regions {
     [||] => None(),
-    pma :: rest => {
-      if range_subset(base, size, pma.base, pma.size)
-      then Some(pma)
-      else matching_pma_bits_range(rest, base, size)
+    region :: rest => {
+      if range_subset(base, size, region.base, region.size)
+      then Some(region)
+      else matching_pma_region_bits_range(rest, base, size)
     }
   }
 }
 
-// Get the first PMA that matches a given address range.
-// Delegate to matching_pma_bits_range to avoid duplicating the range logic.
-function matching_pma(pmas : list(PMA_Region), addr : physaddr, width : mem_access_width) -> option(PMA_Region) = {
-  matching_pma_bits_range(pmas, zero_extend(bits_of(addr)), to_bits(width))
+// Get the first PMA region that matches a given address range.
+// Delegate to matching_pma_region_bits_range to avoid duplicating the range logic.
+function matching_pma_region(regions : list(PMA_Region), addr : physaddr, width : mem_access_width) -> option(PMA_Region) = {
+  matching_pma_region_bits_range(regions, zero_extend(bits_of(addr)), to_bits(width))
 }
 
+function pma_misaligned_to_str(m : PMAMisalignedExceptions) -> string =
+  "misaligned-load-store:" ^ optional_misaligned_exception_str(m.load_store) ^
+  " misaligned-amo:" ^ misaligned_exception_str(m.amo) ^
+  " misaligned-vector:" ^ optional_misaligned_exception_str(m.vector)
+
+overload to_str = {pma_misaligned_to_str}
+
 function pma_attributes_to_str(attr : PMA) -> string =
+  (match attr.mem_type { MainMemory => " main-memory", IOMemory => " io-memory", }) ^
   (if attr.cacheable then " cacheable" else "") ^
   (if attr.coherent then " coherent" else "") ^
   (if attr.executable then " executable" else "") ^
@@ -130,11 +204,13 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.writable then " writable" else "") ^
   (if attr.read_idempotent then " read-idempotent" else "") ^
   (if attr.write_idempotent then " write-idempotent" else "") ^
-  " misaligned_fault:" ^ to_str(attr.misaligned_fault) ^
-  // TODO: Atomicity PMA.
-  // " " ^ to_str(attr.atomic_support) ^
+  " " ^ to_str(attr.misaligned_exceptions) ^
+  " " ^ to_str(attr.atomic_support) ^
   " " ^ to_str(attr.reservability) ^
-  (if attr.supports_cbo_zero then " supports_cbo_zero" else "")
+  (if attr.supports_cbo_zero then " supports-cbo-zero" else "") ^
+  (if attr.supports_pte_read then " supports-pte-read" else "") ^
+  (if attr.supports_pte_write then " supports-pte-write" else "") ^
+  " "
 
 function pma_region_to_str(region : PMA_Region) -> string =
   "base: " ^ bits_str(region.base) ^ " size: " ^ bits_str(region.size)
@@ -142,5 +218,5 @@ function pma_region_to_str(region : PMA_Region) -> string =
 
 overload to_str = {pma_attributes_to_str, pma_region_to_str}
 
-// The list of PMAs. These must be sorted and cannot overlap.
+// The list of PMA regions. These must be sorted and cannot overlap.
 register pma_regions : list(PMA_Region) = config memory.regions

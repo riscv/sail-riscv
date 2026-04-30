@@ -1,4 +1,5 @@
 #include <cassert>
+#include <chrono>
 #include <climits>
 #include <cstring>
 #include <ctype.h>
@@ -20,6 +21,7 @@
 #include "CLI11.hpp"
 #include "elf_loader.h"
 #include "jsoncons/config/version.hpp"
+#include "jsoncons/json.hpp"
 #include "rts.h"
 #include "sail.h"
 #include "sail_config.h"
@@ -28,85 +30,57 @@
 #include "sail_coverage.h"
 #endif
 #include "config_utils.h"
+#include "file_utils.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_rvfi.h"
 #include "riscv_model_impl.h"
 #include "rvfi_dii.h"
 #include "sail_riscv_version.h"
+#include "traploop_detector.h"
 
-bool do_show_times = false;
-bool do_print_version = false;
-bool do_print_build_info = false;
-bool do_print_default_config = false;
-bool do_print_config_schema = false;
-bool do_print_dts = false;
-bool do_validate_config = false;
-bool do_print_isa = false;
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::steady_clock;
 
-std::string config_file;
-std::string term_log;
-std::string trace_log_path;
-FILE *trace_log = stdout;
-std::string dtb_file;
-int rvfi_dii_port = 0;
+namespace {
+
 std::optional<rvfi_handler> rvfi;
-std::vector<std::string> elfs;
 
 // The address of the HTIF tohost port, if it is enabled.
 std::optional<uint64_t> htif_tohost_address;
 
 rvfi_callbacks rvfi_cbs;
 
-std::string sig_file;
 uint64_t mem_sig_start = 0;
 uint64_t mem_sig_end = 0;
-const int DEFAULT_SIGNATURE_GRANULARITY = 4;
-int signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
 
-bool config_print_instr = false;
-bool config_print_reg = false;
-bool config_print_mem_access = false;
-bool config_print_clint = false;
-bool config_print_exception = false;
-bool config_print_interrupt = false;
-bool config_print_htif = false;
-bool config_print_pma = false;
-bool config_print_rvfi = false;
-bool config_print_step = false;
-bool config_print_ptw = false;
+steady_clock::time_point init_start;
+steady_clock::time_point init_end;
 
-bool config_use_abi_names = false;
-bool config_enable_rvfi = false;
-
-bool config_enable_experimental_extensions = false;
-
-struct timeval init_start, init_end, run_end;
 uint64_t total_insns = 0;
-uint64_t insn_limit = 0;
 #ifdef SAILCOV
 char *sailcov_file = nullptr;
 #endif
 
-// Single global model instance.
-// TODO: This shouldn't be global, but it is to facilitate gradual transition
-// from the C Sail output which was necessarily global.
-ModelImpl g_model;
+} // namespace
 
-static void print_dts(void) {
+FILE *trace_log = stdout;
+
+static void print_dts(ModelImpl &model) {
   char *dts = nullptr;
-  g_model.zgenerate_dts(&dts, UNIT);
+  model.zgenerate_dts(&dts, UNIT);
   fprintf(stdout, "%s", dts);
   KILL(sail_string)(&dts);
 }
 
-static void print_isa(void) {
+static void print_isa(ModelImpl &model) {
   char *isa = nullptr;
-  g_model.zgenerate_canonical_isa_string(&isa, UNIT);
+  model.zgenerate_canonical_isa_string(&isa, UNIT);
   fprintf(stdout, "%s\n", isa);
   KILL(sail_string)(&isa);
 }
 
-static void print_build_info(void) {
+static void print_build_info() {
   std::cout << "Sail RISC-V release: " << version_info::release_version << std::endl;
   std::cout << "Sail RISC-V git: " << version_info::git_version << std::endl;
   std::cout << "Sail: " << version_info::sail_version << std::endl;
@@ -116,85 +90,214 @@ static void print_build_info(void) {
   std::cout << "JSONCONS: " << jsoncons::version() << std::endl;
 }
 
-std::vector<uint8_t> read_file(const std::string &file_path) {
-  std::ifstream instream(file_path, std::ios::in | std::ios::binary);
-  return {std::istreambuf_iterator<char>(instream), std::istreambuf_iterator<char>()};
+static jsoncons::json parse_json_or_exit(const std::string &json_text, const std::string &source_desc) {
+  try {
+    return jsoncons::json::parse(json_text);
+  } catch (const jsoncons::json_exception &e) {
+    std::cerr << "JSON parse error in " << source_desc << ":\n" << e.what() << "\n\n";
+    exit(EXIT_FAILURE);
+  }
 }
 
-// Set up command line option processing.
-static void setup_options(CLI::App &app) {
-  app.add_flag("--show-times", do_show_times, "Show execution times");
-  app.add_flag("--version", do_print_version, "Print model version");
-  app.add_flag("--build-info", do_print_build_info, "Print build information");
-  app.add_flag("--print-default-config", do_print_default_config, "Print default configuration");
-  app.add_flag("--print-config-schema", do_print_config_schema, "Print configuration schema");
-  app.add_flag("--validate-config", do_validate_config, "Exit after config validation (it is always validated)");
-  app.add_flag("--print-device-tree", do_print_dts, "Print device tree");
-  app.add_flag("--print-isa-string", do_print_isa, "Print ISA string");
+// JSON objects are merged by replacing/adding fields from the override config.
+// If a given field is an object in the base and override then instead of
+// replacing the field entirely the merging process recurses into it.
+// All other field types (including arrays) are simply replaced.
+void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override) {
+  for (const auto &entry : json_override.object_range()) {
+    const auto &key = entry.key();
+    const auto &value = entry.value();
+    if (base.contains(key) && base[key].is_object() && value.is_object()) {
+      deep_merge_json(base[key], value);
+    } else {
+      base[key] = value;
+    }
+  }
+}
+
+const unsigned DEFAULT_SIGNATURE_GRANULARITY = 4;
+
+struct CLIOptions {
+  bool do_show_times = false;
+  bool do_print_version = false;
+  bool do_print_build_info = false;
+  bool do_print_default_config = false;
+  bool do_print_config_schema = false;
+  bool do_print_dts = false;
+  bool do_validate_config = false;
+  bool do_print_isa = false;
+
+  bool use_rv32_default = false;
+  bool disable_trap_loop_detection = false;
+  std::string config_file;
+  std::vector<std::string> config_overrides;
+  std::string term_log;
+  std::string trace_log_path;
+  std::string dtb_file;
+  unsigned rvfi_dii_port = 0;
+  std::vector<std::string> elfs;
+  uint64_t insn_limit = 0;
+
+  std::string sig_file;
+  unsigned signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
+
+#ifdef SAILCOV
+  std::string sailcov_file;
+#endif
+
+  bool config_print_instr = false;
+  bool config_print_gpr = false;
+  bool config_print_fpr = false;
+  bool config_print_vreg = false;
+  bool config_print_csr = false;
+  bool config_print_mem_access = false;
+  bool config_print_clint = false;
+  bool config_print_exception = false;
+  bool config_print_interrupt = false;
+  bool config_print_htif = false;
+  bool config_print_pma = false;
+  bool config_print_rvfi = false;
+  bool config_print_step = false;
+  bool config_print_ptw = false;
+  bool config_print_tlb = false;
+
+  bool config_use_abi_names = false;
+
+  bool config_enable_experimental_extensions = false;
+};
+
+// Parse CLI options. This calls `exit()` on failure.
+static CLIOptions parse_cli(int argc, char **argv) {
+  CLI::App app("Sail RISC-V Model");
+  argv = app.ensure_utf8(argv);
+
+  CLIOptions opts;
+
+  app.add_flag("--show-times", opts.do_show_times, "Show execution times");
+  app.add_flag("--version", opts.do_print_version, "Print model version");
+  app.add_flag("--build-info", opts.do_print_build_info, "Print build information");
+  app.add_flag("--print-default-config", opts.do_print_default_config, "Print default configuration");
+  app.add_flag("--print-config-schema", opts.do_print_config_schema, "Print configuration schema");
+  app.add_flag("--validate-config", opts.do_validate_config, "Exit after config validation (it is always validated)");
+  app.add_flag("--print-device-tree", opts.do_print_dts, "Print device tree");
+  app.add_flag("--print-isa-string", opts.do_print_isa, "Print ISA string");
   app.add_flag(
     "--enable-experimental-extensions",
-    config_enable_experimental_extensions,
+    opts.config_enable_experimental_extensions,
     "Enable experimental extensions"
   );
-  app.add_flag("--use-abi-names", config_use_abi_names, "Use ABI register names in trace log");
+  app.add_flag("--use-abi-names", opts.config_use_abi_names, "Use ABI register names in trace log");
+  app.add_flag("--rv32", opts.use_rv32_default, "Use the default RV32 configuration");
+  app.add_flag(
+    "--disable-trap-loop-detection",
+    opts.disable_trap_loop_detection,
+    "Disable detection of potentially infinite trap loops"
+  );
 
-  app.add_option("--device-tree-blob", dtb_file, "Device tree blob file")
+  app.add_option("--device-tree-blob", opts.dtb_file, "Device tree blob file")
     ->check(CLI::ExistingFile)
     ->option_text("<file>");
-  app.add_option("--terminal-log", term_log, "Terminal log output file")->option_text("<file>");
-  app.add_option("--test-signature", sig_file, "Test signature file")->option_text("<file>");
-  app.add_option("--config", config_file, "Configuration file")->check(CLI::ExistingFile)->option_text("<file>");
-  app.add_option("--trace-output", trace_log_path, "Trace output file")->option_text("<file>");
+  app.add_option("--terminal-log", opts.term_log, "Terminal log output file")->option_text("<file>");
+  app.add_option("--test-signature", opts.sig_file, "Test signature file")->option_text("<file>");
+  app.add_option("--config", opts.config_file, "Configuration file")
+    ->check(CLI::ExistingFile)
+    ->option_text("<file>")
+    ->excludes("--rv32");
+  app
+    .add_option(
+      "--config-override",
+      opts.config_overrides,
+      "Configuration override file (repeatable; later files override earlier ones). Use this when you only want to "
+      "change a small part of the base configuration."
+    )
+    ->check(CLI::ExistingFile)
+    ->option_text("<file>")
+    ->allow_extra_args(false);
+  app.add_option("--trace-output", opts.trace_log_path, "Trace output file")->option_text("<file>");
 
-  app.add_option("--signature-granularity", signature_granularity, "Signature granularity")->option_text("<uint>");
-  app.add_option("--rvfi-dii", rvfi_dii_port, "RVFI DII port")
+  app.add_option("--signature-granularity", opts.signature_granularity, "Signature granularity")->option_text("<uint>");
+  app.add_option("--rvfi-dii", opts.rvfi_dii_port, "RVFI DII port")
     ->check(CLI::Range(1, 65535))
     ->option_text("<int> (within [1 - 65535])");
-  app.add_option("--inst-limit", insn_limit, "Instruction limit")->option_text("<uint>");
+  app.add_option("--inst-limit", opts.insn_limit, "Instruction limit")->option_text("<uint>");
 #ifdef SAILCOV
   app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")->option_text("<file>");
 #endif
 
-  app.add_flag("--trace-instr", config_print_instr, "Enable trace output for instruction execution");
-  app.add_flag("--trace-ptw", config_print_ptw, "Enable trace output for Page Table walk");
-  app.add_flag("--trace-reg", config_print_reg, "Enable trace output for register access");
-  app.add_flag("--trace-mem", config_print_mem_access, "Enable trace output for memory accesses");
-  app.add_flag("--trace-rvfi", config_print_rvfi, "Enable trace output for RVFI");
-  app.add_flag("--trace-clint", config_print_clint, "Enable trace output for CLINT memory accesses and status");
-  app.add_flag("--trace-exception", config_print_exception, "Enable trace output for exceptions");
-  app.add_flag("--trace-interrupt", config_print_interrupt, "Enable trace output for interrupts");
-  app.add_flag("--trace-htif", config_print_htif, "Enable trace output for HTIF operations");
-  app.add_flag("--trace-pma", config_print_pma, "Enable trace output for PMA checks");
+  app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
+  app.add_flag("--trace-ptw", opts.config_print_ptw, "Enable trace output for Page Table walk");
+  app.add_flag("--trace-tlb", opts.config_print_tlb, "Enable trace output for TLB adds and flushes");
+  app.add_flag(
+    "--trace-gpr",
+    opts.config_print_gpr,
+    "Enable trace output for general purpose register reads and writes"
+  );
+  app.add_flag(
+    "--trace-fpr",
+    opts.config_print_fpr,
+    "Enable trace output for floating-point registers reads and writes"
+  );
+  app.add_flag("--trace-vreg", opts.config_print_vreg, "Enable trace output for vector register reads and writes");
+  app.add_flag("--trace-csr", opts.config_print_csr, "Enable trace output for CSR reads and writes");
+  app.add_flag_callback(
+    "--trace-arch-regs",
+    [&opts] {
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+    },
+    "Enable trace output for architectural register reads and writes (i.e. general purpose, floating-point, and "
+    "vector registers)"
+  );
+  app.add_flag_callback(
+    "--trace-reg",
+    [&opts] {
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+      opts.config_print_csr = true;
+    },
+    "Enable trace output for register access"
+  );
+  app.add_flag("--trace-mem", opts.config_print_mem_access, "Enable trace output for memory accesses");
+  app.add_flag("--trace-rvfi", opts.config_print_rvfi, "Enable trace output for RVFI");
+  app.add_flag("--trace-clint", opts.config_print_clint, "Enable trace output for CLINT memory accesses and status");
+  app.add_flag("--trace-exception", opts.config_print_exception, "Enable trace output for exceptions");
+  app.add_flag("--trace-interrupt", opts.config_print_interrupt, "Enable trace output for interrupts");
+  app.add_flag("--trace-htif", opts.config_print_htif, "Enable trace output for HTIF operations");
+  app.add_flag("--trace-pma", opts.config_print_pma, "Enable trace output for PMA checks");
   app.add_flag_callback(
     "--trace-platform",
-    [] {
-      config_print_clint = true;
-      config_print_exception = true;
-      config_print_interrupt = true;
-      config_print_htif = true;
-      config_print_pma = true;
+    [&opts] {
+      opts.config_print_clint = true;
+      opts.config_print_exception = true;
+      opts.config_print_interrupt = true;
+      opts.config_print_htif = true;
+      opts.config_print_pma = true;
     },
     "Enable trace output for platform-level events (MMIO, interrupts, "
     "exceptions, CLINT, HTIF, PMA)"
   );
-  app.add_flag("--trace-step", config_print_step, "Add a blank line between steps in the trace output");
+  app.add_flag("--trace-step", opts.config_print_step, "Add a blank line between steps in the trace output");
 
   app.add_flag_callback(
-    "--trace-all",
-    [] {
-      config_print_instr = true;
-      config_print_reg = true;
-      config_print_mem_access = true;
-      config_print_rvfi = true;
-      config_print_clint = true;
-      config_print_exception = true;
-      config_print_interrupt = true;
-      config_print_htif = true;
-      config_print_pma = true;
-      config_print_step = true;
-      config_print_ptw = true;
+    "--trace",
+    [&opts] {
+      opts.config_print_instr = true;
+      opts.config_print_gpr = true;
+      opts.config_print_fpr = true;
+      opts.config_print_vreg = true;
+      opts.config_print_csr = true;
+      opts.config_print_mem_access = true;
+      opts.config_print_rvfi = true;
+      opts.config_print_clint = true;
+      opts.config_print_exception = true;
+      opts.config_print_interrupt = true;
+      opts.config_print_htif = true;
+      opts.config_print_pma = true;
+      opts.config_print_step = true;
     },
-    "Enable all trace output"
+    "Enable all trace output except TLB and PTW traces"
   );
 
   // All positional arguments are treated as ELF files.  All ELF files
@@ -202,26 +305,43 @@ static void setup_options(CLI::App &app) {
   // magic `tohost/{begin,end}_signature` symbols.
   app.add_option(
     "elfs",
-    elfs,
+    opts.elfs,
     "List of ELF files to load. They will be loaded in order, possibly "
     "overwriting each other. PC will be set to the entry point of the first "
     "file. This is optional with some arguments, e.g. --print-isa-string."
   );
+
+  std::size_t column_width = 45;
+  app.get_formatter()->long_option_alignment_ratio(6.f / column_width);
+  app.get_formatter()->column_width(column_width);
+
+  if (argc == 1) {
+    fprintf(stdout, "%s\n", app.help().c_str());
+    exit(EXIT_FAILURE);
+  }
+
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError &e) {
+    exit(app.exit(e));
+  }
+
+  return opts;
 }
 
-uint64_t load_sail(const std::string &filename, bool main_file) {
+uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file) {
   ELF elf = ELF::open(filename);
 
   switch (elf.architecture()) {
   case Architecture::RV32:
-    if (g_model.zxlen != 32) {
-      fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n", g_model.zxlen);
+    if (model.zxlen != 32) {
+      fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n", model.zxlen);
       exit(EXIT_FAILURE);
     }
     break;
   case Architecture::RV64:
-    if (g_model.zxlen != 64) {
-      fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n", g_model.zxlen);
+    if (model.zxlen != 64) {
+      fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n", model.zxlen);
       exit(EXIT_FAILURE);
     }
     break;
@@ -272,7 +392,7 @@ uint64_t load_sail(const std::string &filename, bool main_file) {
   return elf.entry();
 }
 
-void write_dtb_to_rom(const std::vector<uint8_t> &dtb) {
+void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
   uint64_t addr = get_config_uint64({"memory", "dtb_address"});
   uint64_t size = static_cast<uint64_t>(dtb.size());
 
@@ -284,7 +404,7 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb) {
   }
 
   // Validate DTB range against configured PMA memory regions.
-  if (!g_model.zdtb_within_configured_pma_memory(addr, size)) {
+  if (!model.zdtb_within_configured_pma_memory(addr, size)) {
     fprintf(
       stderr,
       "DTB does not fit in any configured PMA memory region: "
@@ -302,42 +422,45 @@ void write_dtb_to_rom(const std::vector<uint8_t> &dtb) {
   }
 }
 
-void init_platform_constants() {
-  g_model.set_reservation_set_size_exp(get_config_uint64({"platform", "reservation_set_size_exp"}));
+void init_platform_constants(ModelImpl &model) {
+  model.set_reservation_set_size_exp(get_config_uint64({"platform", "reservation", "reservation_set_size_exp"}));
+  model.set_reservation_require_exact_addr_match(
+    get_config_bool({"platform", "reservation", "require_exact_reservation_addr"})
+  );
 }
 
-void init_sail(uint64_t elf_entry, const char *config_file) {
+void init_sail(ModelImpl &model, uint64_t elf_entry, const char *config_file) {
   // zset_pc_reset_address must be called before zinit_model
   // because reset happens inside init_model().
-  g_model.zset_pc_reset_address(elf_entry);
+  model.zset_pc_reset_address(elf_entry);
   if (htif_tohost_address.has_value()) {
-    g_model.zenable_htif(*htif_tohost_address);
+    model.zenable_htif(*htif_tohost_address);
   }
-  g_model.zinit_model(config_file != nullptr ? config_file : "");
-  g_model.zinit_boot_requirements(UNIT);
+  model.zinit_model(config_file != nullptr ? config_file : "");
+  model.zinit_boot_requirements(UNIT);
 }
 
 /* reinitialize to clear state and memory, typically across tests runs */
-void reinit_sail(uint64_t elf_entry, const char *config_file) {
-  g_model.model_fini();
-  g_model.model_init();
-  init_sail(elf_entry, config_file);
+void reinit_sail(ModelImpl &model, uint64_t elf_entry, const char *config_file) {
+  model.model_fini();
+  model.model_init();
+  init_sail(model, elf_entry, config_file);
 }
 
-void write_signature(const char *file) {
+void write_signature(const std::string &file, unsigned signature_granularity) {
   if (mem_sig_start >= mem_sig_end) {
     fprintf(
       stderr,
       "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
       mem_sig_start,
       mem_sig_end,
-      file
+      file.c_str()
     );
     return;
   }
-  FILE *f = fopen(file, "w");
+  FILE *f = fopen(file.c_str(), "w");
   if (!f) {
-    fprintf(stderr, "Cannot open file '%s': %s\n", file, strerror(errno));
+    fprintf(stderr, "Cannot open file '%s': %s\n", file.c_str(), strerror(errno));
     return;
   }
   /* write out words depending on signature granularity in signature area */
@@ -352,7 +475,7 @@ void write_signature(const char *file) {
   fclose(f);
 }
 
-void close_logs(void) {
+void close_logs() {
 #ifdef SAILCOV
   if (sail_coverage_exit() != 0) {
     fprintf(stderr, "Could not write coverage information!\n");
@@ -364,43 +487,41 @@ void close_logs(void) {
   }
 }
 
-void finish() {
+void finish(ModelImpl &model, const CLIOptions &opts) {
   // Don't write a signature if there was an internal Sail exception.
-  if (!g_model.have_exception && !sig_file.empty()) {
-    write_signature(sig_file.c_str());
+  if (!model.have_exception && !opts.sig_file.empty()) {
+    write_signature(opts.sig_file, opts.signature_granularity);
   }
 
   // `model_fini()` exits with failure if there was a Sail exception.
-  g_model.model_fini();
+  model.model_fini();
 
-  if (do_show_times) {
-    if (gettimeofday(&run_end, nullptr) < 0) {
-      fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-    int init_msecs = (init_end.tv_sec - init_start.tv_sec) * 1000 + (init_end.tv_usec - init_start.tv_usec) / 1000;
-    int exec_msecs = (run_end.tv_sec - init_end.tv_sec) * 1000 + (run_end.tv_usec - init_end.tv_usec) / 1000;
-    double Kips = ((double)total_insns) / ((double)exec_msecs);
-    fprintf(stderr, "Initialization:   %d msecs\n", init_msecs);
-    fprintf(stderr, "Execution:        %d msecs\n", exec_msecs);
+  if (opts.do_show_times) {
+    auto run_end = steady_clock::now();
+    uint64_t init_msecs = duration_cast<milliseconds>(init_end - init_start).count();
+    uint64_t exec_msecs = duration_cast<milliseconds>(run_end - init_end).count();
+    uint64_t kips = total_insns / exec_msecs;
+    fprintf(stderr, "Initialization:   %" PRIu64 " ms\n", init_msecs);
+    fprintf(stderr, "Execution:        %" PRIu64 " ms\n", exec_msecs);
     fprintf(stderr, "Instructions:     %" PRIu64 "\n", total_insns);
-    fprintf(stderr, "Perf:             %.3f Kips\n", Kips);
+    fprintf(stderr, "Performance:      %" PRIu64 " kIPS\n", kips);
   }
   close_logs();
   exit(EXIT_SUCCESS);
 }
 
-void flush_logs(void) {
-  if (config_print_instr) {
-    fflush(stderr);
-    fflush(stdout);
-    fflush(trace_log);
-  }
+void flush_logs() {
+  fflush(stderr);
+  fflush(stdout);
+  fflush(trace_log);
 }
 
-void run_sail(void) {
+void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_detector) {
   bool is_waiting = false;
-  bool exit_wait = true;
+  // The emulator tick increments time by 1 at every step, so the number
+  // of steps to wait is equal to the needed increment in the time CSR.
+  uint64_t max_wait_steps = get_config_uint64({"platform", "max_time_to_wait"});
+  uint64_t wait_steps_remaining = 0;
 
   /* initialize the step number */
   mach_int step_no = 0;
@@ -408,15 +529,11 @@ void run_sail(void) {
 
   uint64_t insns_per_tick = get_config_uint64({"platform", "instructions_per_tick"});
 
-  struct timeval interval_start;
-  if (gettimeofday(&interval_start, nullptr) < 0) {
-    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  auto interval_start = steady_clock::now();
 
-  while (!g_model.zhtif_done && (insn_limit == 0 || total_insns < insn_limit)) {
-    if (rvfi) {
-      switch (rvfi->pre_step(config_print_rvfi)) {
+  while (!model.zhtif_done && (opts.insn_limit == 0 || total_insns < opts.insn_limit)) {
+    if (rvfi.has_value()) {
+      switch (rvfi->pre_step(opts.config_print_rvfi)) {
       case RVFI_prestep_continue:
         continue;
       case RVFI_prestep_eof:
@@ -429,27 +546,40 @@ void run_sail(void) {
       }
     }
 
-    g_model.call_pre_step_callbacks(is_waiting);
+    model.call_pre_step_callbacks(is_waiting);
 
     { /* run a Sail step */
       sail_int sail_step;
       CREATE(sail_int)(&sail_step);
       CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      is_waiting = g_model.ztry_step(sail_step, exit_wait);
-      if (g_model.have_exception) {
+      is_waiting = model.ztry_step(sail_step, wait_steps_remaining == 0);
+      KILL(sail_int)(&sail_step);
+
+      if (model.have_exception) {
+        model.print_current_exception();
         break;
       }
-      flush_logs();
-      KILL(sail_int)(&sail_step);
+      if (opts.config_print_instr) {
+        flush_logs();
+      }
       if (rvfi) {
-        rvfi->send_trace(config_print_rvfi);
+        rvfi->send_trace(opts.config_print_rvfi);
+      }
+      if (is_waiting) {
+        if (wait_steps_remaining == 0) {
+          wait_steps_remaining = max_wait_steps;
+        } else {
+          --wait_steps_remaining;
+        }
+      } else {
+        wait_steps_remaining = 0;
       }
     }
 
-    g_model.call_post_step_callbacks(is_waiting);
+    model.call_post_step_callbacks(is_waiting);
 
     if (!is_waiting) {
-      if (config_print_step) {
+      if (opts.config_print_step) {
         fprintf(trace_log, "\n");
       }
       step_no++;
@@ -457,221 +587,261 @@ void run_sail(void) {
       total_insns++;
     }
 
-    if (do_show_times && (total_insns & 0xfffff) == 0) {
-      uint64_t start_us = 1000000 * ((uint64_t)interval_start.tv_sec) + ((uint64_t)interval_start.tv_usec);
-      if (gettimeofday(&interval_start, nullptr) < 0) {
-        fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-      }
-      uint64_t end_us = 1000000 * ((uint64_t)interval_start.tv_sec) + ((uint64_t)interval_start.tv_usec);
-      fprintf(stdout, "kips: %" PRIu64 "\n", ((uint64_t)1000) * 0x100000 / (end_us - start_us));
+    if (opts.do_show_times && (total_insns & 0xfffff) == 0) {
+      const auto now = steady_clock::now();
+      const auto interval = now - interval_start;
+      interval_start = now;
+
+      uint64_t kips = 0x100000 / duration_cast<milliseconds>(interval).count();
+      fprintf(stdout, "kips: %" PRIu64 "\n", kips);
     }
 
-    if (g_model.zhtif_done) {
+    if (model.zhtif_done) {
       /* check exit code */
-      if (g_model.zhtif_exit_code == 0) {
+      if (model.zhtif_exit_code == 0) {
         fprintf(stdout, "SUCCESS\n");
       } else {
-        fprintf(stdout, "FAILURE: %" PRIi64 "\n", g_model.zhtif_exit_code);
+        fprintf(stdout, "FAILURE: %" PRIi64 "\n", model.zhtif_exit_code);
         exit(EXIT_FAILURE);
       }
     }
 
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
-      g_model.ztick_clock(UNIT);
+      model.ztick_clock(UNIT);
+    } else if (wait_steps_remaining > 0) {
+      model.ztick_clock(UNIT);
+    }
+
+    if (loop_detector.loop_detected()) {
+      fprintf(
+        stdout,
+        "FAILURE: possible trap loop detected with MEPC=0x%" PRIx64 " and SEPC=0x%" PRIx64 "\n",
+        loop_detector.mepc(),
+        loop_detector.sepc()
+      );
+      exit(EXIT_FAILURE);
     }
   }
 
   // This is reached if there is a Sail exception, HTIF has indicated
   // successful completion, or the instruction limit has been reached.
-  finish();
+  finish(model, opts);
 }
 
-void init_logs() {
-  if (!term_log.empty() &&
-      (term_fd = open(term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
-    fprintf(stderr, "Cannot create terminal log '%s': %s\n", term_log.c_str(), strerror(errno));
+void init_logs(const CLIOptions &opts) {
+  if (!opts.term_log.empty() &&
+      (term_fd = open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) <
+        0) {
+    fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
 
-  if (!trace_log_path.empty()) {
-    trace_log = fopen(trace_log_path.c_str(), "w+");
+  if (!opts.trace_log_path.empty()) {
+    trace_log = fopen(opts.trace_log_path.c_str(), "w+");
     if (trace_log == nullptr) {
-      fprintf(stderr, "Cannot create trace log '%s': %s\n", trace_log_path.c_str(), strerror(errno));
+      fprintf(stderr, "Cannot create trace log '%s': %s\n", opts.trace_log_path.c_str(), strerror(errno));
       exit(EXIT_FAILURE);
     }
   }
 
 #ifdef SAILCOV
-  if (sailcov_file != nullptr) {
-    sail_set_coverage_file(sailcov_file);
+  if (!sailcov_file.empty()) {
+    sail_set_coverage_file(sailcov_file.c_str());
   }
 #endif
 }
 
 int inner_main(int argc, char **argv) {
-  CLI::App app("Sail RISC-V Model");
-  argv = app.ensure_utf8(argv);
-  setup_options(app);
 
-  if (argc == 1) {
-    fprintf(stdout, "%s\n", app.help().c_str());
-    exit(EXIT_FAILURE);
-  }
+  CLIOptions opts = parse_cli(argc, argv);
 
-  // long_options_offset() is a local addition, so when updating CLI11,
-  // see how https://github.com/CLIUtils/CLI11/pull/1185 ended up,
-  // and possibly implement the upstream solution.
-  app.get_formatter()->long_options_offset(6);
-  app.get_formatter()->column_width(45);
+  ModelImpl model;
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError &e) {
-    return app.exit(e);
-  }
-
-  if (do_print_version) {
+  if (opts.do_print_version) {
     std::cout << version_info::release_version << std::endl;
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
-  if (do_print_build_info) {
+  if (opts.do_print_build_info) {
     print_build_info();
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
-  if (do_print_default_config) {
-    printf("%s", get_default_config());
-    exit(EXIT_SUCCESS);
+  if (opts.do_print_default_config) {
+    printf("%s", opts.use_rv32_default ? get_default_rv32_config() : get_default_config());
+    return EXIT_SUCCESS;
   }
-  if (do_print_config_schema) {
+  if (opts.do_print_config_schema) {
     printf("%s", get_config_schema());
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   }
-  if (rvfi_dii_port != 0) {
-    config_enable_rvfi = true;
-    rvfi.emplace(rvfi_dii_port, g_model);
+  if (opts.rvfi_dii_port != 0) {
+    rvfi.emplace(opts.rvfi_dii_port, model);
   }
-  if (do_show_times) {
+  if (opts.do_show_times) {
     fprintf(stderr, "will show execution times on completion.\n");
   }
-  if (!term_log.empty()) {
-    fprintf(stderr, "using %s for terminal output.\n", term_log.c_str());
+  if (!opts.term_log.empty()) {
+    fprintf(stderr, "using %s for terminal output.\n", opts.term_log.c_str());
   }
-  if (!sig_file.empty()) {
-    fprintf(stderr, "using %s for test-signature output.\n", sig_file.c_str());
+  if (!opts.sig_file.empty()) {
+    fprintf(stderr, "using %s for test-signature output.\n", opts.sig_file.c_str());
   }
-  if (signature_granularity != DEFAULT_SIGNATURE_GRANULARITY) {
-    fprintf(stderr, "setting signature-granularity to %d bytes\n", signature_granularity);
+  if (opts.signature_granularity != DEFAULT_SIGNATURE_GRANULARITY) {
+    fprintf(stderr, "setting signature-granularity to %d bytes\n", opts.signature_granularity);
   }
-  if (config_enable_experimental_extensions) {
+  if (opts.config_enable_experimental_extensions) {
     fprintf(stderr, "enabling unratified extensions.\n");
-    g_model.set_enable_experimental_extensions(true);
+    model.set_enable_experimental_extensions(true);
   }
-  if (!trace_log_path.empty()) {
-    fprintf(stderr, "using %s for trace output.\n", trace_log_path.c_str());
+  if (!opts.trace_log_path.empty()) {
+    fprintf(stderr, "using %s for trace output.\n", opts.trace_log_path.c_str());
   }
+
+  model.set_config_print_instr(opts.config_print_instr);
+  model.set_config_print_clint(opts.config_print_clint);
+  model.set_config_print_exception(opts.config_print_exception);
+  model.set_config_print_interrupt(opts.config_print_interrupt);
+  model.set_config_print_htif(opts.config_print_htif);
+  model.set_config_print_pma(opts.config_print_pma);
+  model.set_config_rvfi(rvfi.has_value());
+  model.set_config_use_abi_names(opts.config_use_abi_names);
+
+  model.set_config_print_step(opts.config_print_step);
+
+  traploop_detector loop_detector;
+  if (!opts.disable_trap_loop_detection) {
+    model.register_callback(&loop_detector);
+  }
+
+  std::string config_json_string;
+  if (!opts.config_file.empty()) {
+    config_json_string = read_file_to_string(opts.config_file);
+  } else {
+    config_json_string = opts.use_rv32_default ? get_default_rv32_config() : get_default_config();
+  }
+
+  // Check json config and merge overrides
+  const std::string base_source_desc =
+    opts.config_file.empty() ? "default configuration" : "configuration file " + opts.config_file;
+  jsoncons::json config_json = parse_json_or_exit(config_json_string, base_source_desc);
+  for (const auto &override_path : opts.config_overrides) {
+    std::string override_json_string = read_file_to_string(override_path);
+    jsoncons::json override_item = parse_json_or_exit(override_json_string, "override file " + override_path);
+    deep_merge_json(config_json, override_item);
+  }
+
+  std::ostringstream os;
+  os << config_json;
+  config_json_string = os.str();
 
   // Always validate the schema conformance of the config.
-  validate_config_schema(config_file);
+  std::string config_source_desc = opts.config_file.empty() ? "default configuration" : opts.config_file;
+  if (!opts.config_overrides.empty()) {
+    config_source_desc = "merged configuration from " + config_source_desc;
+    for (const auto &override_path : opts.config_overrides) {
+      config_source_desc = config_source_desc + ", " + override_path;
+    }
+  }
+  validate_config_schema(config_json, config_source_desc);
 
   // Initialize the model.
-  if (!config_file.empty()) {
-    sail_config_set_file(config_file.c_str());
-  } else {
-    sail_config_set_string(get_default_config());
-  }
+  sail_config_set_string(config_json_string.c_str());
 
   // Initialize platform.
-  init_platform_constants();
+  init_platform_constants(model);
 
-  g_model.model_init();
+  model.model_init();
 
   // Validate the configuration; exit if that's all we were asked to do
   // or if the validation failed.
   {
-    bool config_is_valid = g_model.zconfig_is_valid(UNIT);
+    bool config_is_valid = model.zconfig_is_valid(UNIT);
     const char *s = config_is_valid ? "valid" : "invalid";
-    if (!config_is_valid || do_validate_config) {
-      if (config_file.empty()) {
+    if (!config_is_valid || opts.do_validate_config) {
+      if (opts.config_file.empty()) {
         fprintf(stderr, "Default configuration is %s.\n", s);
       } else {
-        fprintf(stderr, "Configuration in %s is %s.\n", config_file.c_str(), s);
+        fprintf(stderr, "Configuration in %s is %s.\n", opts.config_file.c_str(), s);
       }
-      exit(config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE);
+      return config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE;
     }
   }
 
   // Print a device tree or an ISA string only after the configuration
   // is validated above.
-  if (do_print_dts) {
-    print_dts();
-    exit(EXIT_SUCCESS);
+  if (opts.do_print_dts) {
+    print_dts(model);
+    return EXIT_SUCCESS;
   }
-  if (do_print_isa) {
-    print_isa();
-    exit(EXIT_SUCCESS);
+  if (opts.do_print_isa) {
+    print_isa(model);
+    return EXIT_SUCCESS;
   }
 
-  // If we get here, we need to have ELF files to run.
-  if (elfs.empty()) {
+  // If we get here, we need to have ELF files to run (except in RVFI mode).
+  if (opts.elfs.empty() && !rvfi.has_value()) {
     fprintf(stderr, "No elf file provided.\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
-  init_logs();
-  log_callbacks log_cbs(config_print_reg, config_print_mem_access, config_print_ptw, config_use_abi_names, trace_log);
-  g_model.register_callback(&log_cbs);
+  init_logs(opts);
+  log_callbacks log_cbs(
+    opts.config_print_gpr,
+    opts.config_print_fpr,
+    opts.config_print_vreg,
+    opts.config_print_csr,
+    opts.config_print_mem_access,
+    opts.config_print_ptw,
+    opts.config_print_tlb,
+    opts.config_use_abi_names,
+    trace_log
+  );
+  model.register_callback(&log_cbs);
 
-  if (gettimeofday(&init_start, nullptr) < 0) {
-    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  init_start = steady_clock::now();
 
-  if (rvfi) {
-    if (!rvfi->setup_socket(config_print_rvfi)) {
+  if (rvfi.has_value()) {
+    if (!rvfi->setup_socket(opts.config_print_rvfi)) {
       return 1;
     }
-    g_model.register_callback(&rvfi_cbs);
+    model.register_callback(&rvfi_cbs);
   }
 
-  if (!dtb_file.empty()) {
-    fprintf(stderr, "using %s as DTB file.\n", dtb_file.c_str());
-    write_dtb_to_rom(read_file(dtb_file));
+  if (!opts.dtb_file.empty()) {
+    fprintf(stderr, "using %s as DTB file.\n", opts.dtb_file.c_str());
+    write_dtb_to_rom(model, read_file(opts.dtb_file));
   }
 
-  const std::string &initial_elf_file = elfs[0];
-  uint64_t entry = rvfi ? rvfi->get_entry() : load_sail(initial_elf_file, /*main_file=*/true);
+  uint64_t entry = rvfi.has_value() ? rvfi->get_entry() : load_sail(model, opts.elfs[0], /*main_file=*/true);
 
   fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
 
-  /* Load any additional ELF files into memory */
-  for (auto it = elfs.cbegin() + 1; it != elfs.cend(); it++) {
+  // Load any additional ELF files into memory. If RVFI was NOT used skip
+  // the first one because it was loaded above.
+  for (auto it = opts.elfs.cbegin() + (rvfi.has_value() ? 0 : 1); it != opts.elfs.cend(); it++) {
     fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
-    (void)load_sail(*it, /*main_file=*/false);
+    (void)load_sail(model, *it, /*main_file=*/false);
   }
 
-  init_sail(entry, config_file.c_str());
+  init_sail(model, entry, opts.config_file.c_str());
 
-  if (gettimeofday(&init_end, nullptr) < 0) {
-    fprintf(stderr, "Cannot gettimeofday: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
+  init_end = steady_clock::now();
 
   do {
-    run_sail();
+    run_sail(model, opts, loop_detector);
     // `run_sail` only returns in the case of rvfi.
     if (rvfi) {
       /* Reset for next test */
-      reinit_sail(entry, config_file.c_str());
+      reinit_sail(model, entry, opts.config_file.c_str());
+      loop_detector.reset();
     }
   } while (rvfi);
 
-  g_model.model_fini();
+  model.model_fini();
   flush_logs();
   close_logs();
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 int main(int argc, char **argv) {
@@ -681,5 +851,5 @@ int main(int argc, char **argv) {
   } catch (const std::exception &exc) {
     std::cerr << "Error: " << exc.what() << std::endl;
   }
-  return 1;
+  return EXIT_FAILURE;
 }

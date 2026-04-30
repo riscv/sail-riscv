@@ -6,7 +6,7 @@
 --   SPDX-License-Identifier: BSD-2-Clause
 -- =======================================================================================
 
-import THE_MODULE_NAME.Sail.Sail
+import Sail.Sail
 import THE_MODULE_NAME.Defs
 
 open Sail
@@ -112,6 +112,6 @@ def riscv_f64roundToInt : BitVec 3 → BitVec 64 → Bool → (BitVec 5 × BitVe
 
 -- Termination of extensionEnabled
 instance : SizeOf extension where
-  sizeOf := extension.toCtorIdx
+  sizeOf := extension.ctorIdx
 
 macro_rules | `(tactic| decreasing_trivial) => `(tactic| decide)

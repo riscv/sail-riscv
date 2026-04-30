@@ -162,7 +162,7 @@ reset_handler:
 //   1 (terminal): if command is 0, terminal input (unimplemented in Sail)
 //                 if command is 1, terminal output (write lowest byte of payload)
 
-.section .bss.mmio
+.section .bss.mmio.htif
 
 // HTIF devices.
 

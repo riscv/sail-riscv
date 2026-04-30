@@ -24,6 +24,11 @@ function clause execute VANDN_VV(vm, vs1, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -62,6 +67,10 @@ function clause execute VANDN_VX(vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -99,6 +108,10 @@ function clause execute VBREV_V(vm, vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -141,6 +154,10 @@ function clause execute VBREV8_V(vm, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -179,6 +196,10 @@ function clause execute VREV8_V(vm, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -216,6 +237,10 @@ function clause execute VCLZ_V(vm, vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -256,6 +281,10 @@ function clause execute VCTZ_V(vm, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -294,6 +323,10 @@ function clause execute VCPOP_V(vm, vs2, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -338,6 +371,11 @@ function clause execute VROL_VV(vm, vs1, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -376,6 +414,10 @@ function clause execute VROL_VX(vm, vs2, rs1, vd) = {
   let SEW      = 2 ^ SEW_pow;
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -416,6 +458,11 @@ function clause execute VROR_VV(vm, vs1, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs1, LMUL_pow)) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -455,6 +502,10 @@ function clause execute VROR_VX(vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
+
   let 'n = num_elem;
   let 'm = SEW;
 
@@ -493,6 +544,10 @@ function clause execute VROR_VI(vm, vs2, uimm, vd) = {
   let SEW      = 2 ^ SEW_pow;
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
+
+  if not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_group(vd, LMUL_pow))
+  then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;

@@ -43,14 +43,13 @@ private function write_seed_csr () -> xlenbits = zeros()
 mapping clause csr_name_map = 0x015  <-> "seed"
 function clause is_CSR_accessible(0x015, priv, access_type) =
   currentlyEnabled(Ext_Zkr) &
-  // Read-only access is not allowed.
-  (access_type != CSRRead) &
+  access_type != CSRRead &
   (match priv {
-    Machine => true,
-    Supervisor => mseccfg[SSEED] == 0b1,
-    User => mseccfg[USEED] == 0b1,
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualUser => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    Machine           => true,
+    User              => mseccfg[USEED] == 0b1,
+    Supervisor        => mseccfg[SSEED] == 0b1,
+    VirtualSupervisor => false,
+    VirtualUser       => false,
   })
 
 function clause read_CSR(0x015) = read_seed_csr()

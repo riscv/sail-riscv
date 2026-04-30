@@ -6,9 +6,13 @@ class log_callbacks : public callbacks_if {
 
 public:
   explicit log_callbacks(
-    bool config_print_reg = true,
+    bool config_print_gpr = true,
+    bool config_print_fpr = true,
+    bool config_print_vreg = true,
+    bool config_print_csr = true,
     bool config_print_mem_access = true,
     bool config_print_ptw = true,
+    bool config_print_tlb = true,
     bool config_use_abi_names = false,
 
     FILE *trace_log = nullptr
@@ -37,11 +41,23 @@ public:
     int64_t level,
     sbits pte_addr
   ) override;
+  void tlb_add_callback(
+    hart::Model &model,
+    hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+    uint64_t index
+  ) override;
+  void tlb_flush_begin_callback(hart::Model &model) override;
+  void tlb_flush_callback(hart::Model &model, uint64_t index) override;
+  void tlb_flush_end_callback(hart::Model &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) override;
 
 private:
-  bool config_print_reg;
+  bool config_print_gpr;
+  bool config_print_fpr;
+  bool config_print_vreg;
+  bool config_print_csr;
   bool config_print_mem_access;
   bool config_use_abi_names;
   bool config_print_ptw;
+  bool config_print_tlb;
   FILE *trace_log;
 };

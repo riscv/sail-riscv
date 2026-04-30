@@ -30,7 +30,6 @@ add_library(riscv_model
     elf_loader.h
     riscv_callbacks_if.cpp
     riscv_callbacks_if.h
-    riscv_config.h
     riscv_platform_if.cpp
     riscv_platform_if.h
     riscv_model_impl.cpp
@@ -39,6 +38,8 @@ add_library(riscv_model
     riscv_softfloat.h
     config_utils.cpp
     config_utils.h
+    file_utils.cpp
+    file_utils.h
     symbol_table.cpp
     symbol_table.h
     sail_riscv_version.h
@@ -74,6 +75,8 @@ add_executable(sail_riscv_sim
     riscv_callbacks_log.h
     riscv_callbacks_rvfi.cpp
     riscv_callbacks_rvfi.h
+    traploop_detector.cpp
+    traploop_detector.h
 )
 
 # The generated C model is not warnings-clean, silence them.

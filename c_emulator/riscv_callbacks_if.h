@@ -9,7 +9,7 @@ class Model;
 struct zMemoryAccessTypezIEmem_payloadz5zK;
 struct ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
 struct zPTW_Error;
-
+struct zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
 } // namespace hart
 
 class callbacks_if {
@@ -46,6 +46,10 @@ public:
 
   virtual void trap_callback(hart::Model &model, bool is_interrupt, fbits cause);
 
+  virtual void xret_callback(hart::Model &model, bool is_mret);
+
+  virtual void instret_callback(hart::Model &model);
+
   // Page table walk callbacks
   virtual void ptw_start_callback(
     hart::Model &model,
@@ -59,4 +63,16 @@ public:
   virtual void ptw_success_callback(hart::Model &model, uint64_t final_ppn, int64_t level);
 
   virtual void ptw_fail_callback(hart::Model &model, hart::zPTW_Error error_type, int64_t level, sbits pte_addr);
+
+  virtual void tlb_add_callback(
+    hart::Model &model,
+    hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+    uint64_t index
+  );
+
+  virtual void tlb_flush_begin_callback(hart::Model &model);
+
+  virtual void tlb_flush_callback(hart::Model &model, uint64_t index);
+
+  virtual void tlb_flush_end_callback(hart::Model &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb);
 };

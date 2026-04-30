@@ -11,6 +11,9 @@ function clause currentlyEnabled(Ext_Zaamo) = hartSupports(Ext_Zaamo) | currentl
 function clause currentlyEnabled(Ext_Zabha) = hartSupports(Ext_Zabha) & currentlyEnabled(Ext_Zaamo)
 function clause currentlyEnabled(Ext_Zacas) = hartSupports(Ext_Zacas) & currentlyEnabled(Ext_Zaamo)
 
+function clause currentlyEnabled(Ext_Ziccamoa) = hartSupports(Ext_Ziccamoa)
+function clause currentlyEnabled(Ext_Ziccamoc) = hartSupports(Ext_Ziccamoc)
+
 // Zaamo defines AMOs for 32-bit and 64-bit.
 // Zabha defines AMOs for 8-bit and 16-bit.
 //
@@ -32,11 +35,11 @@ private function amo_encoding_valid(width : word_width_wide, op : amoop, Regidx(
       (op == AMOCAS & width <= xlen_bytes * 2)
       &
       (if   rs2[0] == 0b1 | rd[0] == 0b1
-       then match amocas_odd_register_reserved_behavior {
-         AMOCAS_Fatal   => reserved_behavior("AMOCAS.D/Q used odd-numbered register"),
-         AMOCAS_Illegal => false,
-       }
-       else true)
+      then match amocas_odd_register_reserved_behavior {
+        AMOCAS_Fatal   => reserved_behavior("AMOCAS.D/Q used an odd-numbered register (rs2 = " ^ dec_str(unsigned(rs2)) ^ ", rd = " ^ dec_str(unsigned(rd)) ^ ")."),
+        AMOCAS_Illegal => false,
+      }
+      else true)
     )))
 
 // *****************************************************************
@@ -78,12 +81,17 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
 
-  if not(is_aligned_addr(vaddr, width))
-  then return Memory_Exception(vaddr, E_SAMO_Addr_Align());
+  if not(is_aligned_addr(vaddr, width)) then {
+    let exc : ExceptionType = match plat_misaligned_access.amo {
+      AccessFault        => E_SAMO_Access_Fault(),
+      AlignmentException => E_SAMO_Addr_Align(),
+    };
+    return memory_exception(vaddr, exc)
+  };
 
-  let addr : physaddr = match translateAddr(vaddr, access) {
-    Err(e, _) => return Memory_Exception(vaddr, e),
-    Ok(addr, _) => addr,
+  let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
+    Err(e, _) => return memory_exception(vaddr, e),
+    Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
   // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
@@ -92,9 +100,9 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
 
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, aq & rl, rl, true) {
-    Err(e) => return Memory_Exception(vaddr, e),
-    Ok(_)  => match mem_read(access, addr, width, aq, aq & rl, true) {
-      Err(e)     => return Memory_Exception(vaddr, e),
+    Err(e) => return memory_exception(vaddr, e),
+    Ok(_)  => match mem_read(access, pbmt, addr, width, aq, aq & rl, true) {
+      Err(e)     => return memory_exception(vaddr, e),
       Ok(loaded) => loaded,
     },
   };
@@ -120,7 +128,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     then X(rd) = sign_extend(loaded)
     else X_pair(rd) = sign_extend(loaded);
     RETIRE_SUCCESS
-  } else match mem_write_value(addr, width, sign_extend(result), aq & rl, rl, true) {
+  } else match mem_write_value(addr, width, sign_extend(result), access, pbmt, aq & rl, rl, true) {
     Ok(true)  => {
       if width <= xlen_bytes
       then X(rd) = sign_extend(loaded)
@@ -128,21 +136,8 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       RETIRE_SUCCESS
     },
     Ok(false) => internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value"),
-    Err(e)    => Memory_Exception(vaddr, e),
+    Err(e)    => memory_exception(vaddr, e),
   }
-}
-
-mapping amo_mnemonic : amoop <-> string = {
-  AMOSWAP <-> "amoswap",
-  AMOADD  <-> "amoadd",
-  AMOXOR  <-> "amoxor",
-  AMOAND  <-> "amoand",
-  AMOOR   <-> "amoor",
-  AMOMIN  <-> "amomin",
-  AMOMAX  <-> "amomax",
-  AMOMINU <-> "amominu",
-  AMOMAXU <-> "amomaxu",
-  AMOCAS  <-> "amocas",
 }
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)

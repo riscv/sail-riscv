@@ -63,6 +63,15 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
   trunc(ppn | (vpn & levelMask))
 }
 
+function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type = {
+  // For RV32, this relies on the RV32 PTE being zero-extended
+  // and the default PBMT_PMA being encoded as zeros.  This is slower
+  // than storing the PBMT enum directly as a field, but less
+  // redundant.
+  let pte_ext = ext_bits_of_PTE(ent.pte);
+  page_based_mem_type(pte_ext[PBMT])
+}
+
 // 64 entries is based on benchmarks of Linux boots and is where
 // you stop seeing performance improvements.
 type num_tlb_entries_exp : Int = 6
@@ -71,6 +80,18 @@ type num_tlb_entries : Int = 2 ^ num_tlb_entries_exp
 type tlb_index_range = range(0, num_tlb_entries - 1)
 
 private register tlb : vector(num_tlb_entries, option(TLB_Entry)) = vector_init(None())
+
+val tlb_add_callback = pure {cpp: "tlb_add_callback"} : (vector(num_tlb_entries, option(TLB_Entry)), range(0, num_tlb_entries)) -> unit
+function tlb_add_callback(_) = ()
+
+val tlb_flush_begin_callback = pure {cpp: "tlb_flush_begin_callback"} : unit -> unit
+function tlb_flush_begin_callback(_) = ()
+
+val tlb_flush_callback = pure {cpp: "tlb_flush_callback"} : (range(0, num_tlb_entries)) -> unit
+function tlb_flush_callback(_) = ()
+
+val tlb_flush_end_callback = pure {cpp: "tlb_flush_end_callback"} : (vector(num_tlb_entries, option(TLB_Entry))) -> unit
+function tlb_flush_end_callback(_) = ()
 
 // Indexed by the lowest bits of the VPN.
 function tlb_hash forall 'v, is_sv_mode('v) . (
@@ -140,6 +161,10 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 ) -> unit = {
   let shift = level * (if 'v == 32 then 10 else 9);
   let levelMask = ones(shift);
+  // Hash before masking so the entry lands in the index lookup_TLB will check.
+  // For superpages, the same entry is duplicated across multiple indices,
+  // one copy per 4KB page within the superpage that has been accessed.
+  let index = tlb_hash('v, vpn);
   // Clear bits below the level.
   let vpn = vpn & ~(zero_extend(levelMask));
   let ppn = ppn & ~(zero_extend(levelMask));
@@ -152,22 +177,22 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
                                  vpn       = sign_extend(vpn),
                                  ppn       = zero_extend(ppn)};
 
-  // Add the TLB entry. Note that this may be a super-page, but we still want
-  // to add it to the index corresponding to the page because that is how
-  // lookup_TLB looks it up. For superpages will just end up with the same
-  // TLB entry in multiple slots.
-  let index = tlb_hash('v, vpn);
   tlb[index] = Some(entry);
+  tlb_add_callback(tlb, index);
 }
 
 // Top-level TLB flush function
 // PUBLIC: invoked from SFENCE_VMA [extensions/I/insts_base.sail]
-function flush_TLB(asid : option(asidbits),
-                   addr : option(xlenbits)) -> unit = {
+function flush_TLB(asid : option(asidbits), addr : option(xlenbits)) -> unit = {
+  tlb_flush_begin_callback();
   foreach (i from 0 to (length(tlb) - 1)) {
     match tlb[i] {
       None()  => (),
-      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then { tlb[i] = None(); },
+      Some(entry) => if flush_TLB_Entry(entry, asid, addr) then {
+        tlb[i] = None();
+        tlb_flush_callback(i)
+      },
     }
-  }
+  };
+  tlb_flush_end_callback(tlb);
 }

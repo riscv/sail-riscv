@@ -17,7 +17,7 @@ engineer-friendly language, much like earlier vendor pseudocode, but more precis
 Given a Sail specification, the tool can type-check it, generate documentation snippets (in LaTeX or AsciiDoc), generate executable emulators, show specification coverage, generate versions of the ISA for relaxed memory model tools, support automated instruction-sequence test generation, generate theorem-prover definitions for
 interactive proof (in Isabelle, Rocq, and Lean), support proof about binary code (in Islaris), and (in progress) generate a reference ISA model in SystemVerilog that can be used for formal hardware verification.
 
-<img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?">
+<img width="800" src="https://www.cl.cam.ac.uk/~pes20/sail/overview-sail.png?raw=true">
 
 ## Using the Sail RISC-V specification
 
@@ -35,12 +35,23 @@ executable binary to give an RISC-V emulator.
 
 When running this emulator on a RISC-V ELF binary (`test.elf`), the
 emulator can also be a provided a configuration file in JSON format
-(named `dut_config.json` above); if no configuration file is provided,
-a default RV64 configuration is assumed. The Sail compiler also
-generates a JSON schema (`sail_riscv_config_schema.json`) for the
-configuration file from the Sail sources; every configuration file is
-validated against this schema before use. More information on using
-the emulator is available using its `-h` help command-line option.
+(named `dut_config.json` above). If no configuration file is
+provided, a default RV64 configuration is assumed; this default
+configuration can be printed using the `--print-default-config` option
+to the `sail_riscv_sim` emulator. A _template_ for the configuration
+files that are used to test the model is
+[here](config/config.json.in); this template will need to be edited to
+match a desired configuration.
+
+The Sail compiler also generates a JSON schema
+(`sail_riscv_config_schema.json`) for the configuration file from the
+Sail sources; every configuration file is validated against this
+schema before use. This file will be in the directory containing the
+build artifacts after a build of the model, and is also available in
+the [binary releases](#using-the-binary-releases) of the model.
+
+More information on using the emulator is available using its `-h`
+help command-line option.
 
 The Sail model can also be used to generate `JSON` and `HTML`
 artifacts for documentation. A prototype of their use to annotate the
@@ -95,13 +106,15 @@ All enabled test suites can be executed using `make test` or `ctest` in the buil
 
 The model is configured using a JSON file specifying various tunable
 options. The default configuration used for the model can be examined
-using `build/c_emulator/sail_riscv_sim --print-default-config`. To
+using the `--print-default-config` option. To
 use a custom configuration, save the default configuration into a
 file, edit it as needed, and pass it to the simulator using the
 `--config` option.
 
-Information on other options for the simulator is available from
-`build/c_emulator/sail_riscv_sim -h`.
+To override only a small subset of options while using the default configuration
+or a custom configuration file as a base, the `--config-override` option can be
+used. This option allows one or more additional JSON configuration files to be specified,
+whose fields take precedence over those in the base configuration.
 
 ### Booting OS images
 
@@ -120,7 +133,13 @@ For booting operating system images, see the information under the
 - Zicond extension for integer conditional operations, v1.0
 - Zic64b extension for Cache block size is 64 bytes, v1.0
 - Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
+- Ziccamoa extension for Main memory supports all atomics in Zaamo, v1.0
+- Ziccamoc extension for Main memory supports atomics in Zacas, v1.0
+- Ziccif extension for Main memory supports instruction fetch with atomicity requirement, v1.0
+- Zicclsm extension for Main memory misaligned accesses, v1.0
+- Ziccrse extension for Main memory regions with both the cacheability and coherence PMAs must support RsrvEventual, v1.0
 - Zicfilp extension for Landing Pad Control Flow Integrity, v1.0
+- Zicfiss extension for Shadow Stack Control Flow Integrity, v1.0
 - Zimop extension for May-Be-Operations, v1.0
 - Zihintntl extension for Non-temporal Locality Hints, v1.0
 - Zihintpause extension for Pause Hint, v2.0
@@ -171,6 +190,8 @@ For booting operating system images, see the information under the
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
+- Ssccptr extension for Main memory supports hardware page table reads, v1.0
+- Sscounterenw extension for writable enables for any supported counter, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Ssqosid extension for Quality-of-Service (QoS) Identifiers, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
@@ -178,15 +199,21 @@ For booting operating system images, see the information under the
 - Sstvecd extension for Direct mode support in `stvec.MODE`, v1.0
 - Ssu64xl extension to ensure `sstatus.UXL` is capable of supporting UXLEN=64, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
+- Svadu extension for Hardware Updating of A/D Bits, Version 1.0
+- Svade extension for Raise exceptions on improper A/D bits, Version 1.0
 - Svbare extension for Bare mode virtual-memory translation
 - Svinval extension for fine-grained address-translation cache invalidation, v1.0
+- Svnapot extension for NAPOT Translation Contiguity, v1.0
+- Svpbmt extension for Page-Based Memory Types, v1.0
 - Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
+- Svvptc extension for Obviating Memory-management Instructions after Marking PTEs valid, v1.0
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 
-<!-- Uncomment the following section when unratified extensions are added
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
--  -->
+
+- Zibi extension for conditional branches with immediate operands, v0.6
+- Zvabd extension for vector absolute difference, v0.7
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
@@ -301,7 +328,7 @@ specification written in Bluespec SystemVerilog.
 
 The ISA model is integrated with the operational model of the RISC-V
 relaxed memory model, RVWMO (as described in an appendix of the [RISC-V
-user-level specification](https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/)),
+user-level specification](https://docs.riscv.org/reference/isa/unpriv/mm-eplan.html))
 which is one of the reference models used
 in the development of the RISC-V concurrency architecture; this is
 part of the [RMEM](http://www.cl.cam.ac.uk/users/pes20/rmem) tool.

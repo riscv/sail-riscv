@@ -1,12 +1,141 @@
 # Release notes for the next version
 
-- The highlight of this release is the switch to using the C++ backend
-  of the Sail compiler. The generated model for the hart is wrapped
-  in a C++ `class`, which opens up the possibility of instantiating
-  multiple harts to simulate multicore platforms.
+- Updates to the [configuration file](../config/config.json.in):
+  - The CLINT and simple interrupt generator can be marked as not
+    supported for platforms that do not contain these MMIO devices;
+    see `platform.clint.supported` and `platform.simple_interrupt_generator.supported`.
 
-- A configuration parameter to specify the size of the reservation set
-  for Zalrsc atomics has been added.
+# Release notes for version 0.11
+
+- Updates to the [configuration file](../config/config.json.in):
+  - PMAs now have additional attributes (see `memory.regions`):
+    - `mem_type` for the type of memory covered by the region,
+      which can be either `MainMemory` or `IOMemory`.
+    - `atomic_support` for the level of atomicity supported in the
+      memory region.
+    - `supports_pte_read` and `supports_pte_write` for whether the region
+      supports the hardware read and write of page table entries respectively.
+  - Writable bits of the `scounteren` CSR can now be specified;
+    see `base.scounteren_writable_bits`.
+  - The behavior when reserved modes are written to the `mtvec` and
+    `stvec` CSRs can now be specified; see `base.reserved_behavior.xtvec_mode`.
+  - The time limit that wait instructions (e.g. WFI, WRS.NTO, WRS.STO)
+    can wait for is now configurable; see `platform.max_time_to_wait`
+    (see also https://github.com/riscv/sail-riscv/issues/1564). The
+    default setting for `platform.wfi_is_nop` was also changed from
+    `true` to `false`.
+  - The `dirty_update` attribute of `memory.translation` has been removed,
+    since the behavior that attribute configured can now be modeled
+    using the Svadu and Svade extensions. When neither of these extensions
+    are configured as supported, the model defaults to a hardware update of
+    the PTE.
+  - The global (i.e. before address translation) handling of
+    misaligned accesses can be configured in a more fine-grained way:
+    the handling of AMOs, LR/SC and scalar and vector load/stores can
+    be individually specified. Misaligned AMOs and LR/SC now both
+    raise access faults by default; this is a change from the previous
+    default, which raised a misaligned exception, and now matches the
+    more common behavior. See `memory.misaligned.exceptions`, which
+    replaces `memory.misaligned.supported`.
+  - The fine-grained handling of misaligned accesses can also be
+    similarly specified in a PMA. See the
+    `attributes.misaligned_exceptions` field of each region under
+    `memory.regions`; `attributes.misaligned_exceptions` replaces the
+    earlier `attributes.misaligned_fault` property.
+  - A new `platform.reservation.require_exact_reservation_addr` parameter controls
+    whether Store-Conditional instructions are required to provide the
+    same address as the matching Load-Reserve in order to succeed.
+    This defaults to `false` to match earlier behavior, but can be set
+    to `true` to match some implementations such as Spike. The earlier
+    `platform.reservation_set_size_exp` parameter has moved to
+    `platform.reservation.reservation_set_size_exp`.
+  - A new `platform.simple_interrupt_generator.base` parameter specifies
+    the memory location of the simple interrupt generator; see below for
+    more on this device.
+
+- The following extensions have been added:
+  - Ziccamoa
+  - Ziccamoc
+  - Ziccif
+  - Zicclsm
+  - Ziccrse
+  - Zicfiss
+  - Ssccptr
+  - Sscounterenw
+  - Svade
+  - Svadu
+  - Svnapot
+  - Svpbmt
+  - Svvptc
+
+- D, A, U and other bits that are reserved in non-leaf PTEs now raise a page-fault exception.
+  This is a backwards incompatible change, and is required since version 1.12 (also known as version 20211203)
+  of the privileged specification.
+
+- The emulator tries to detect some potentially infinite trap loops using
+  the difference between the traps generated and `xret` instructions
+  executed by the hart. If such a potential loop is detected, the
+  emulator exits with an error. This detection is enabled by default,
+  and a command line option has been added to disable it (see below).
+
+- The command line interface has been updated:
+  - A `--rv32` option has been added to use a default RV32
+    configuration. This allows emulating RV32 binaries without needing
+    to point to a specific RV32 configuration file. This option cannot
+    be used with the `--config` option.
+  - A new `--trace-tlb` option has been added to enable TLB specific trace output.
+  - The previous `--trace-all` option has been renamed to `--trace`.
+    `--trace` now enables all trace output except TLB and page table walker (PTW) traces.
+  - A `--disable-trap-loop-detection` option has been added to disable
+    the default detection of trap loops.
+
+- A Mac ARM binary release is now available.
+
+- Performance improvements:
+  - https://github.com/riscv/sail-riscv/pull/1643 : Superpage TLB entries
+    were inserted at the wrong index, causing a full page table walk on every
+    access within a superpage. This has been fixed, with significant performance
+    improvements for superpage-heavy workloads (e.g. Linux boot time reduced
+    by ~71%).
+
+- Testing in CI now includes the ACT4 test suite from `riscv/riscv-arch-test`.
+
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1553 : Sail exceptions were not usefully shown in the execution trace
+  - https://github.com/riscv/sail-riscv/issues/1560 : Updates to `mip` were not captured in the trace file
+  - https://github.com/riscv/sail-riscv/issues/1574 : Misaligned store-conditionals didn't raise a misaligned address exception
+
+- A [Simple Interrupt Generator](../doc/SimpleInterruptGenerator.md) MMIO device has been added for testing purposes. This allows generating external and software interrupts that cannot be directly generated from within the hart.
+
+# Release notes for version 0.10
+
+- The highlight of this release is the switch to using the C++ backend
+  of the Sail compiler. The generated model for the hart is wrapped in
+  a C++ `class`, which opens up the possibility of instantiating
+  multiple harts to simulate multicore platforms (though this is not
+  yet implemented).
+
+- A `--config-override` cli option has been added to specify one or more
+  additional JSON configuration files that override the corresponding fields
+  in a configuration.
+
+- Updates to the [configuration file](../config/config.json.in):
+  - New configuration parameters to control reserved behavior have
+    been added. See the `reserved_behavior` section for details. More
+    such options will continue to be added in subsequent releases.
+
+  - Read-only-zero PMP entries can now be configured; see
+    `memory.pmp.usable_count` (see https://github.com/riscv/sail-riscv/issues/1111).
+
+  - The size of the reservation set for Zalrsc atomics can now be
+    specified; see `platform.reservation_set_size_exp`.
+
+  - Page faults can now also be configured to set `xtval` registers,
+    and `breakpoint` has been disambiguated into `hardware_breakpoint`
+    and `software_breakpoint`; see `base.xtval_non_zero`.
+
+  - Explicit configuration for the Zdinx extension was added; see `extensions.Zdinx`.
+    Previously, Zdinx was implicitly configured by the Zfinx extension.
 
 - The following extensions have been added:
   - Za64rs, Za128rs
@@ -17,7 +146,28 @@
   - Smstateen, Sstateen
   - Ssqosid
 
+- The following unratified extensions have been added:
+  - Zibi
+  - Zvabd
+
+- Command-line options for finer-grained execution tracing have been
+  added. Use the `--help` option for details.
+
+- Weekly binary releases are now available for more up-to-date builds
+  of the model.
+
 - The model now requires the Sail 0.20.1 compiler version.
+
+- Testing in CI has been updated to the latest `riscv-tests` and
+  `riscv-vector-tests`, and the OS boot test now uses Linux 6.18.2 and
+  OpenSBI v1.8.1.
+
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1014 : reserved fences were treated as illegal instructions
+  - https://github.com/riscv/sail-riscv/issues/1239 : missed PMA access control checks for failing store-conditionals
+  - https://github.com/riscv/sail-riscv/issues/1434 : missing write to `rd` for some cases of `vset{i}vl{i}`
+  - https://github.com/riscv/sail-riscv/issues/1455 : missing source-destination overlap checks for vector instructions
+  - https://github.com/riscv/sail-riscv/issues/1527 : incorrect NaN result from `fcvt.s.bf16` for improperly NaN-boxed inputs
 
 # Release notes for version 0.9
 

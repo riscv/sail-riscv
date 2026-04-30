@@ -36,7 +36,7 @@ function illegal_fp_vd_unmasked(SEW : sew_bitsize, rm_3b : bits(3)) -> bool = {
 }
 
 // d. Variable width check for floating-point widening/narrowing instructions
-function illegal_fp_variable_width(vd : vregidx, vm : bits(1), SEW : sew_bitsize, rm_3b : bits(3), SEW_new : int, LMUL_pow_new : int) -> bool = {
+function illegal_fp_variable_width(vd : vregidx, vm : bits(1), SEW : sew_bitsize, rm_3b : bits(3), SEW_new : nat, LMUL_pow_new : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) | not(valid_fp_op(SEW, rm_3b)) |
   not(valid_eew_emul(SEW_new, LMUL_pow_new))
 }
@@ -47,7 +47,7 @@ function illegal_fp_reduction(SEW : sew_bitsize, rm_3b : bits(3)) -> bool = {
 }
 
 // f. Variable width check for floating-point widening reduction instructions
-function illegal_fp_widening_reduction(SEW : sew_bitsize, rm_3b : bits(3), EEW : int) -> bool = {
+function illegal_fp_widening_reduction(SEW : sew_bitsize, rm_3b : bits(3), EEW : nat) -> bool = {
   not(valid_vtype()) | not(assert_vstart(0)) | not(valid_fp_op(SEW, rm_3b)) |
   not(EEW >= 8 & EEW <= elen)
 }

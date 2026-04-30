@@ -30,6 +30,10 @@ function clause is_CSR_accessible (0x001, _, _) = currentlyEnabled(Ext_F) | curr
 function clause is_CSR_accessible (0x002, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 function clause is_CSR_accessible (0x003, _, _) = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 
+function clause is_CSR_exception_virtual(0x001, _, _) = false
+function clause is_CSR_exception_virtual(0x002, _, _) = false
+function clause is_CSR_exception_virtual(0x003, _, _) = false
+
 function clause read_CSR (0x001) = zero_extend(fcsr[FFLAGS])
 function clause read_CSR (0x002) = zero_extend(fcsr[FRM])
 function clause read_CSR (0x003) = zero_extend(fcsr.bits)

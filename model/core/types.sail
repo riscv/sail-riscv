@@ -48,6 +48,7 @@ function creg2reg_idx(Cregidx(i) : cregidx) -> regidx = Regidx(zero_extend(0b1 @
 let zreg : regidx = Regidx(zero_extend(0b00)) // x0, zero register
 let ra   : regidx = Regidx(zero_extend(0b01)) // x1, return address
 let sp   : regidx = Regidx(zero_extend(0b10)) // x2, stack pointer
+let t0   : regidx = Regidx(zero_extend(0b101)) // x5, alternate link register
 
 // base architecture definitions
 
@@ -131,6 +132,12 @@ function is_prefetch_access forall ('a : Type) . (access : MemoryAccessType('a))
     _ => false,
   }
 
+function is_store_conditional forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
+  match access {
+    StoreConditional(_) => true,
+    _ => false,
+  }
+
 // CSR access types
 enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
 
@@ -152,6 +159,7 @@ enum InterruptType = {
   I_VS_External,
   I_M_External,
   I_SG_External,
+  I_COF,
 }
 
 mapping interruptType_bits : InterruptType <-> exc_code = {
@@ -168,6 +176,7 @@ mapping interruptType_bits : InterruptType <-> exc_code = {
   I_VS_External  <-> 0b001010, // 10
   I_M_External   <-> 0b001011, // 11
   I_SG_External  <-> 0b001100, // 12
+  I_COF          <-> 0b001101, // 13
 }
 
 function interruptType_to_str(i : InterruptType) -> string =
@@ -184,7 +193,8 @@ function interruptType_to_str(i : InterruptType) -> string =
     I_S_External  => "supervisor-external-interrupt",
     I_VS_External => "virtual-supervisor-external-interrupt",
     I_M_External  => "machine-external-interrupt",
-    I_SG_External => "supervisor guest-external-interrupt"
+    I_SG_External => "supervisor guest-external-interrupt",
+    I_COF         => "counter-overflow interrupt",
   }
 
 overload to_str = {interruptType_to_str}

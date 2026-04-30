@@ -18,7 +18,12 @@ union ExecutionResult = {
   Retire_Success                 : unit,
 
   // The instruction is a compressed instruction, and should be
-  // executed as an uncompressed instruction.
+  // executed as an uncompressed instruction. This can be used
+  // for non-compressed instructions too but we only support
+  // one level of indirection. This avoids making the execute()
+  // function recursive, which is helpful for some backends,
+  // and allows Sail to generate faster C/C++ code by avoiding
+  // reallocation.
   ExecuteAs                      : instruction,
 
   // An instruction such as WFI, WRS.{STO,NTO}
@@ -29,8 +34,7 @@ union ExecutionResult = {
   // Did not retire for a standard reason.
   Illegal_Instruction            : unit,
   Virtual_Instruction            : unit,
-  Trap                           : (Privilege, ctl_result, xlenbits),
-  Memory_Exception               : (virtaddr, ExceptionType),
+  Trap                           : (Privilege, sync_exception, xlenbits),
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,
@@ -46,6 +50,13 @@ union ExecutionResult = {
 
 let RETIRE_SUCCESS : ExecutionResult = Retire_Success()
 
+// Trap helpers
+
+function trap(exc : sync_exception) -> ExecutionResult =
+  Trap(cur_privilege, exc, PC)
+
+function memory_exception(vaddr : virtaddr, exc : ExceptionType) -> ExecutionResult =
+  trap(make_sync_exception(exc, bits_of(vaddr)))
 
 // returns whether an instruction was retired, used for computing minstret
 val execute : instruction -> ExecutionResult

@@ -24,20 +24,64 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // `max_mem_access` (4096) because larger sizes are unrealistic.
 // Reservation sets are also naturally aligned. Reservation sets need to subsume
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
-let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation_set_size_exp
+let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation.reservation_set_size_exp
 
-// whether the MMU should update dirty bits in PTEs
-let plat_enable_dirty_update : bool = config memory.translation.dirty_update
+// The exceptions that a misaligned access could generate.  For
+// example, a misaligned LR/SC always raises an exception.
+enum misaligned_exception = { AccessFault, AlignmentException }
+mapping misaligned_exception_str : misaligned_exception <-> string = {
+  AccessFault        <-> "AccessFault",
+  AlignmentException <-> "AlignmentException",
+}
+overload to_str = {misaligned_exception_str}
 
-// whether the platform supports misaligned accesses without trapping to M-mode. if false,
-// misaligned loads/stores are trapped to Machine mode.
-let plat_enable_misaligned_access : bool = config memory.misaligned.supported
+function optional_misaligned_exception_str(opt_e : option(misaligned_exception)) -> string =
+  match opt_e {
+    None()  => "NoFault",
+    Some(e) => misaligned_exception_str(e),
+  }
+overload to_str = {optional_misaligned_exception_str}
+
+function misaligned_exception_is_access_fault(e : option(misaligned_exception)) -> bool =
+  match e {
+    Some(AccessFault) => true,
+    _                 => false,
+  }
+
+// Some misaligned accesses could proceed or generate exceptions.
+// When used in the global (pre-address translation) configuration,
+// `None` indicates that the handling is deferred to the underlying
+// PMA (if any).
+struct GlobalMisalignedExceptions = {
+  load_store : option(misaligned_exception),
+  vector     : option(misaligned_exception),
+  // LR/SC must always be aligned. Returning a misaligned exception indicates
+  // that the access can be emulated (the OS/firmware can transparently break
+  // it down into multiple aligned accesses) which isn't the case for LR/SC
+  // in normal implementations.
+  lrsc       : misaligned_exception,
+  // TODO: Support for the MAG PMA will change this field to an option(misaligned_exception).
+  amo        : misaligned_exception,
+}
+
+// The handling of misaligned accesses before address translation.
+let plat_misaligned_access : GlobalMisalignedExceptions = config memory.misaligned.exceptions
 
 // Location of clock-interface, which should match with the spec in the DTB
+let plat_have_clint : bool = config platform.clint.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
+// Simple Interrupt Generator. See docs/SimpleInterruptGenerator.md for details.
+let plat_have_sig : bool = config platform.simple_interrupt_generator.supported
+let plat_sig_base : physaddrbits = to_bits_checked(config platform.simple_interrupt_generator.base : int)
+let plat_sig_size : physaddrbits = zero_extend(0x20)
+
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
+
+// Maximum increment in the time CSR to wait for wait instructions.  This is not
+// used within the model but instead configures the external C++ harness.
+let max_wait_time : nat = config platform.max_time_to_wait
 
 // which exceptions write information into `xtval`
 let illegal_instruction_writes_xtval : bool = config base.xtval_nonzero.illegal_instruction
@@ -59,55 +103,44 @@ let fetch_guest_page_fault_writes_xtval : bool = false
 let software_check_fault_writes_xtval : bool = config base.xtval_nonzero.software_check
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
 
-// Defines the policy for handling reserved behaviors.
+// Define the policy for handling reserved behaviors.
+
 enum AmocasOddRegisterReservedBehavior = {
   AMOCAS_Fatal,
   AMOCAS_Illegal,
 }
 
-mapping AmocasOddRegisterReservedBehavior_str : AmocasOddRegisterReservedBehavior <-> string = {
-  AMOCAS_Fatal   <-> "AMOCAS_Fatal",
-  AMOCAS_Illegal <-> "AMOCAS_Illegal",
+enum FcsrRmReservedBehavior = {
+  Fcsr_RM_Fatal,
+  Fcsr_RM_Illegal,
 }
-overload to_str = {AmocasOddRegisterReservedBehavior_str}
 
 enum PmpWriteOnlyReservedBehavior = {
   PMP_Fatal,
   PMP_ClearPermissions,
 }
 
-mapping PmpWriteOnlyReservedBehavior_str : PmpWriteOnlyReservedBehavior <-> string = {
-  PMP_Fatal <-> "PMP_Fatal",
-  PMP_ClearPermissions <-> "PMP_ClearPermissions",
-}
-overload to_str = {PmpWriteOnlyReservedBehavior_str}
-
 enum XenvcfgCbieReservedBehavior = {
   Xenvcfg_Fatal,
   Xenvcfg_ClearPermissions,
 }
 
-mapping XenvcfgCbieReservedBehavior_str : XenvcfgCbieReservedBehavior <-> string = {
-  Xenvcfg_Fatal <-> "Xenvcfg_Fatal",
-  Xenvcfg_ClearPermissions <-> "Xenvcfg_ClearPermissions",
+enum XtvecModeReservedBehavior = {
+  Xtvec_Fatal,
+  Xtvec_Ignore,
 }
-overload to_str = {XenvcfgCbieReservedBehavior_str}
 
 enum RV32ZdinxOddRegisterReservedBehavior = {
   Zdinx_Fatal,
   Zdinx_Illegal,
 }
 
-mapping RV32ZdinxOddRegisterReservedBehavior_str : RV32ZdinxOddRegisterReservedBehavior <-> string = {
-  Zdinx_Fatal   <-> "Zdinx_Fatal",
-  Zdinx_Illegal <-> "Zdinx_Illegal",
-}
-overload to_str = {RV32ZdinxOddRegisterReservedBehavior_str}
-
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
-
 // Platform SPMP support
 let sys_spmp_enabled : bool = config memory.spmp.enabled
+
+let fcsr_rm_reserved_behavior : FcsrRmReservedBehavior = config base.reserved_behavior.fcsr_rm
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
+let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reserved_behavior.xtvec_mode
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
