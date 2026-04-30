@@ -522,7 +522,7 @@
     },
     "Zkr": {
       "supported": true,
-      // If Zkr is not supported, these may be left as false.
+      // If Zkr is not supported, these are ignored.
       "sseed_reset_value": false,
       "useed_reset_value": false,
       "sseed_read_only_zero": false,
