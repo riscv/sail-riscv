@@ -12,6 +12,9 @@
 {
   "base": {
     "xlen": @CONFIG__BASE__XLEN@,
+    // Whether the base ISA is E, in which case accessing
+    // x16-31 is reserved and in this implementation will
+    // raise an illegal instruction exception.
     "E": false,
     "writable_misa": true,
     "writable_fiom": true,
@@ -353,6 +356,9 @@
       // Zve64x, Zve64f, and Zve64d require `elen_exp` >= 6,
       // and V requires `elen_exp` >= 6 and `vlen_exp` >= 7.
       "support_level": "@CONFIG__V__SUPPORT@",
+      // `vlen_exp` and `elen_exp` should be between 3 and 16,
+      // inclusive.  If `support_level` is `"Disabled"`, then these
+      // should be left as 3 (or any other legal value).
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
       "vl_use_ceil": false
@@ -446,6 +452,10 @@
     },
     "Zawrs": {
       "supported": true,
+      // Whether `WRS.NTO` and `WRS.STO` behave as NOPS.  If they do
+      // not, see above note for `platform.max_time_to_wait`.  If
+      // Zawrs is not supported, these `is_nop` fields need to be
+      // present but their boolean values are ignored.
       "nto": {
         "is_nop": false
       },
@@ -518,6 +528,8 @@
     },
     "Zkr": {
       "supported": true,
+      // If Zkr is not supported, these fields need to be present but
+      // their boolean values are ignored.
       "sseed_reset_value": false,
       "useed_reset_value": false,
       "sseed_read_only_zero": false,
@@ -646,6 +658,9 @@
     },
     "Ssqosid": {
       "supported": true,
+      // These lengths should be between 1 and 12, inclusive.
+      // If Ssqosid is not supported, this should be left as 1
+      // (or any other legal value).
       "rcid_length": 12,
       "mcid_length": 12
     },
