@@ -72,20 +72,35 @@ public:
   std::string generate_dts();
   std::string generate_isa_string();
 
-  // access to model state
+  // read access to model state
 
   void tick_clock();
   bool try_step(int64_t step_no, bool exit_wait);
 
   int64_t xlen() const;
+  int64_t flen() const;
   int64_t physaddrbits_len() const;
   uint64_t mepc() const;
   uint64_t sepc() const;
   uint64_t htif_exit_code() const;
   bool htif_done() const;
   bool had_exception() const;
+  uint64_t pc() const;
+  uint64_t fcsr() const;
+
+  // These state accessors are not const due to the generated read
+  // accessors not being marked const in hart::Model.
+  uint64_t peek_xreg(int64_t reg);
+  uint64_t peek_freg(int64_t reg);
   // returns std::nullopt if the model has not thrown an exception.
   std::optional<std::string> string_of_current_exception();
+
+  // write access to model state
+
+  void poke_xreg(int64_t reg, uint64_t val);
+  void poke_freg(int64_t reg, uint64_t val);
+  void set_pc(uint64_t val);
+  void set_fcsr(uint64_t val);
 
   // RVFI support
 

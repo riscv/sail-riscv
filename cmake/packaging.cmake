@@ -28,6 +28,15 @@ install(FILES "${CMAKE_SOURCE_DIR}/dependencies/jsoncons/LICENSE"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
     RENAME "JSONCONS-LICENSE.txt"
 )
+install(FILES "${CMAKE_SOURCE_DIR}/dependencies/asio/COPYING"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
+    RENAME "ASIO-COPYRIGHT.txt"
+)
+# Don't rename this file since it is referred to by name in the
+# asio/COPYING file.
+install(FILES "${CMAKE_SOURCE_DIR}/dependencies/asio/LICENSE_1_0.txt"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/${CMAKE_PROJECT_NAME}"
+)
 
 # Debian requires compressed changelogs.
 # https://lintian.debian.org/tags/changelog-file-not-compressed
