@@ -26,6 +26,12 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
 let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation.reservation_set_size_exp
 
+// The following reservation options are used for reservation state
+// management by the external harness; they are not used within the Sail code.
+// They appear here so that their names and types are reflected in the config schema.
+let plat_reservation_require_exact_addr_match : bool = config platform.reservation.require_exact_reservation_addr
+let plat_reservation_invalidate_on_same_hart_store : bool = config platform.reservation.invalidate_on_same_hart_store
+
 // The exceptions that a misaligned access could generate.  For
 // example, a misaligned LR/SC always raises an exception.
 enum misaligned_exception = { AccessFault, AlignmentException }

@@ -24,6 +24,7 @@ public:
   void set_enable_experimental_extensions(bool en);
   void set_reservation_set_size_exp(uint64_t exponent);
   void set_reservation_require_exact_addr_match(bool require_exact_addr_match);
+  void set_reservation_invalidate_on_same_hart_store(bool invalidate_on_same_hart_store);
 
   void set_config_print_instr(bool on);
   void set_config_print_clint(bool on);
@@ -119,6 +120,7 @@ private:
 
   uint64_t m_reservation_set_addr_mask = 0;
   bool m_reservation_require_exact_addr = false;
+  bool m_reservation_invalidate_on_same_hart_store = false;
 
   bool m_enable_experimental_extensions = false;
 
