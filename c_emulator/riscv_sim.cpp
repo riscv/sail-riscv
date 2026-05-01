@@ -12,15 +12,13 @@
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
+#include "gdb/target_regs.h"
 #include "sail_riscv_version.h"
 #include "symbol_table.h"
 #include "traploop_detector.h"
 
-#include <algorithm>
-#include <cerrno>
-#include <cstring>
+#include <asio.hpp>
 #include <fcntl.h>
-#include <sstream>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -37,6 +35,7 @@ void print_build_info() {
   std::cout << "CLI11: " << CLI11_VERSION << std::endl;
   std::cout << "ELFIO: " << ELFIO_VERSION << std::endl;
   std::cout << "JSONCONS: " << jsoncons::version() << std::endl;
+  std::cout << "ASIO: " << ASIO_VERSION << std::endl;
 }
 
 jsoncons::json parse_json_or_exit(const std::string &json_text, const std::string &source_desc) {
@@ -548,6 +547,10 @@ InitResult preinit_model(
   }
   if (opts.do_print_isa) {
     fprintf(stdout, "%s\n", model.generate_isa_string().c_str());
+    return InitResult::ExitSuccess;
+  }
+  if (opts.do_print_gdb_target_xml) {
+    fprintf(stdout, "%s", get_target_xml(model).c_str());
     return InitResult::ExitSuccess;
   }
 

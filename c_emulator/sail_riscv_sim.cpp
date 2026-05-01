@@ -1,10 +1,14 @@
 #include "cli_options.h"
+#include "gdb/gdb_run_info.h"
+#include "gdb/gdbserver.h"
+#include "gdb/target_regs.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_stop_at_pc.h"
 #include "riscv_model_impl.h"
 #include "riscv_sim.h"
 #include "traploop_detector.h"
 
+#include <asio.hpp>
 #include <iostream>
 
 namespace {
@@ -19,19 +23,6 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t, const elf_info &elf
     stop_at_pc = std::make_shared<stop_at_pc_callbacks>(*opts.stop_at_pc);
     model.register_callback(stop_at_pc);
   }
-
-  auto log_cbs = std::make_shared<log_callbacks>(
-    opts.config_print_gpr,
-    opts.config_print_fpr,
-    opts.config_print_vreg,
-    opts.config_print_csr,
-    opts.config_print_mem_access,
-    opts.config_print_ptw,
-    opts.config_print_tlb,
-    opts.config_use_abi_names,
-    run_info.trace_log
-  );
-  model.register_callback(log_cbs);
 
   do {
     run_sail(model, opts, loop_detector, stop_at_pc, elf_info, run_info);
@@ -72,7 +63,28 @@ int inner_main(int argc, char **argv) {
   elf_info elf_info;
   uint64_t entry = init_model(opts, model, elf_info, run_info);
 
-  run_model(opts, model, entry, elf_info, run_info);
+  auto log_cbs = std::make_shared<log_callbacks>(
+    opts.config_print_gpr,
+    opts.config_print_fpr,
+    opts.config_print_vreg,
+    opts.config_print_csr,
+    opts.config_print_mem_access,
+    opts.config_print_ptw,
+    opts.config_print_tlb,
+    opts.config_use_abi_names,
+    run_info.trace_log
+  );
+  model.register_callback(log_cbs);
+
+  if (opts.gdb_server_port != 0) {
+    gdb_run_info info = {
+      .enable_trace = opts.config_print_gdbserver,
+      .trace_log = run_info.trace_log,
+    };
+    run_gdbserver(model, info, opts.gdb_server_port);
+  } else {
+    run_model(opts, model, entry, elf_info, run_info);
+  }
 
   model.model_fini();
   flush_logs(run_info);

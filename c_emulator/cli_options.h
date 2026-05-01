@@ -17,6 +17,7 @@ struct CLIOptions {
   bool do_validate_config = false;
   bool do_print_isa = false;
   std::string dump_memory_prefix = {};
+  bool do_print_gdb_target_xml = false;
 
   bool use_rv32_default = false;
   bool disable_trap_loop_detection = false;
@@ -26,6 +27,7 @@ struct CLIOptions {
   std::string trace_log_path = {};
   std::string dtb_file;
   unsigned rvfi_dii_port = 0;
+  unsigned gdb_server_port = 0;
   std::vector<std::string> elfs;
   uint64_t insn_limit = 0;
   std::optional<uint64_t> stop_at_pc;
@@ -52,6 +54,7 @@ struct CLIOptions {
   bool config_print_step = false;
   bool config_print_ptw = false;
   bool config_print_tlb = false;
+  bool config_print_gdbserver = false;
 
   bool config_use_abi_names = false;
 
