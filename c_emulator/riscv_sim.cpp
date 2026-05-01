@@ -17,6 +17,11 @@
 
 #include <fcntl.h>
 
+#ifdef ENABLE_GDBSERVER
+#include "gdb/target_regs.h"
+#include <asio.hpp>
+#endif
+
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
@@ -32,6 +37,9 @@ void print_build_info() {
   std::cout << "CLI11: " << CLI11_VERSION << std::endl;
   std::cout << "ELFIO: " << ELFIO_VERSION << std::endl;
   std::cout << "JSONCONS: " << jsoncons::version() << std::endl;
+#ifdef ENABLE_GDBSERVER
+  std::cout << "ASIO: " << ASIO_VERSION << std::endl;
+#endif
 }
 
 jsoncons::json parse_json_or_exit(const std::string &json_text, const std::string &source_desc) {
@@ -499,6 +507,12 @@ InitResult preinit_model(
     fprintf(stdout, "%s\n", model.generate_isa_string().c_str());
     return InitResult::ExitSuccess;
   }
+#ifdef ENABLE_GDBSERVER
+  if (opts.do_print_gdb_target_xml) {
+    fprintf(stdout, "%s", get_target_xml(model).c_str());
+    return InitResult::ExitSuccess;
+  }
+#endif
 
   // If we get here, we need to have ELF files to run (except in RVFI mode).
   if (opts.elfs.empty() && !run_info.rvfi.has_value()) {

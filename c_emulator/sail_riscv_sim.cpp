@@ -6,6 +6,13 @@
 
 #include <iostream>
 
+#ifdef ENABLE_GDBSERVER
+#include "gdb/gdb_run_info.h"
+#include "gdb/gdbserver.h"
+#include "gdb/target_regs.h"
+#include <asio.hpp>
+#endif
+
 namespace {
 
 void run_model(CLIOptions &opts, ModelImpl &model, uint64_t, const elf_info &elf_info, run_info &run_info) {
@@ -66,7 +73,17 @@ int inner_main(int argc, char **argv) {
   elf_info elf_info;
   uint64_t entry = init_model(opts, model, elf_info, run_info);
 
-  run_model(opts, model, entry, elf_info, run_info);
+  if (opts.gdb_server_port != 0) {
+#ifdef ENABLE_GDBSERVER
+    gdb_run_info info = {
+      .enable_trace = opts.config_print_gdbserver,
+      .trace_log = run_info.trace_log,
+    };
+    run_gdbserver(model, info, opts.gdb_server_port);
+#endif
+  } else {
+    run_model(opts, model, entry, elf_info, run_info);
+  }
 
   model.model_fini();
   flush_logs(run_info);

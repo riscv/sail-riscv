@@ -93,6 +93,38 @@ add_executable(sail_riscv_sim
     traploop_detector.h
 )
 
+option(ENABLE_GDBSERVER
+    "Enable gdb-server for interaction with debuggers as a remote target."
+    OFF
+)
+
+# Allows the simulator to act as a gdb-server for GDB and LLDB.
+if (ENABLE_GDBSERVER)
+    message(STATUS "Building with debugger support")
+    target_sources(sail_riscv_sim PRIVATE
+        gdb/gdb_run_info.h
+        gdb/gdbserver.cpp
+        gdb/gdbserver.h
+        gdb/connection.cpp
+        gdb/connection.h
+        gdb/parse_utils.h
+        gdb/parse_utils.cpp
+        gdb/protocol_handler.cpp
+        gdb/protocol_handler.h
+        gdb/requests.cpp
+        gdb/requests.h
+        gdb/responses.cpp
+        gdb/responses.h
+        gdb/target_regs.cpp
+        gdb/target_regs.h
+        gdb/triggers.cpp
+        gdb/triggers.h
+    )
+    target_compile_definitions(sail_riscv_sim PRIVATE
+        "ENABLE_GDBSERVER"
+    )
+endif()
+
 # The generated C model is not warnings-clean, silence them.
 set(_generated_c_warning_opt_out
     -Wno-extra
@@ -110,6 +142,11 @@ add_dependencies(sail_riscv_sim generated_sail_riscv_model)
 target_link_libraries(sail_riscv_sim
     PRIVATE CLI11 riscv_model
 )
+if (ENABLE_GDBSERVER)
+    target_link_libraries(sail_riscv_sim
+        PRIVATE asio
+    )
+endif()
 
 if (ENABLE_CLANG_TIDY)
     set_target_properties(sail_riscv_sim
