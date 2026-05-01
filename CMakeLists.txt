@@ -51,13 +51,17 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 # Enable link-time optimization globally. This allows the linker to inline
 # Sail runtime helpers (eq_bits, add_bits_int, etc.) into the generated
 # model code, which is the dominant cost in the simulator hot path.
-include(CheckIPOSupported)
-check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
-if (lto_supported)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-    message(STATUS "LTO enabled globally")
-else()
-    message(STATUS "LTO not supported: ${lto_error}")
+# Disabled by default because it can make compile times worse.
+option(ENABLE_LTO "Enable link-time optimization" FALSE)
+if (ENABLE_LTO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
+    if (lto_supported)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+        message(STATUS "LTO enabled")
+    else()
+        message(FATAL_ERROR "LTO requested but not supported: ${lto_error}")
+    endif()
 endif()
 
 # Don't allow undefined symbols. This is generally a pain.
