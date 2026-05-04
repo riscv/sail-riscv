@@ -118,6 +118,12 @@ endif()
 option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
 if (DOWNLOAD_GMP)
     include(ExternalProject)
+    # Build GMP with LTO when ENABLE_LTO is on.
+    if (ENABLE_LTO)
+        set(GMP_CFLAGS "CFLAGS=-std=c11 -O3 -flto=auto -ffat-lto-objects")
+    else()
+        set(GMP_CFLAGS "CFLAGS=-std=c11")
+    endif()
     ExternalProject_Add(
         gmp
         URL https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz https://ftpmirror.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
@@ -129,13 +135,14 @@ if (DOWNLOAD_GMP)
             --enable-static
             --with-pic
             # Newer compilers default to C23 which causes GMP build errors.
-            CFLAGS=-std=c11
+            "${GMP_CFLAGS}"
         # The libgmp.a output is created by the install step but since GMP::GMP
         # depends on the entire ExternalProject build, we can pretend it is
         # created by the build.
         # TODO: Once we depend on CMake 3.26, use INSTALL_BYPRODUCTS
         BUILD_BYPRODUCTS "<INSTALL_DIR>/lib/libgmp.a"
     )
+
     ExternalProject_Get_property(gmp INSTALL_DIR)
     add_library(GMP::GMP STATIC IMPORTED GLOBAL)
     # Work around `Imported target "GMP::GMP" includes non-existent path`.
