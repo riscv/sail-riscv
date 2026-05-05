@@ -496,7 +496,7 @@ function legalize_tvec(o : Mtvec, v : xlenbits, tvec : tvec_type) -> Mtvec = {
     TV_Direct => v,
     TV_Vector => v,
     _         => match xtvec_mode_reserved_behavior {
-      Xtvec_Fatal => reserved_behavior("Tried to write a reserved value (" ^ dec_str(unsigned(v[Mode])) ^ ") to the MODE field of xtvec."),
+      Xtvec_Fatal => reserved_behavior("Tried to write a reserved value (" ^ dec_str(unsigned(v[Mode])) ^ ") to the MODE field of " ^ tvec_type_str(tvec) ^ "."),
       Xtvec_Ignore => [v with Mode = o[Mode]],
     },
   };
