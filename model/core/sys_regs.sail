@@ -476,6 +476,12 @@ function is_fiom_active() -> bool = {
 
 // registers for trap handling
 
+enum tvec_type = {Mtvec, Stvec}
+mapping tvec_type_str : tvec_type <-> string = {
+  Mtvec <-> "mtvec",
+  Stvec <-> "stvec",
+}
+
 bitfield Mtvec : xlenbits = {
   Base : xlen - 1 .. 2,
   Mode : 1 .. 0
@@ -483,16 +489,30 @@ bitfield Mtvec : xlenbits = {
 register mtvec : Mtvec  // Trap Vector
 
 // PUBLIC: invoked from set_{ms}tvec() [exceptions/sys_exceptions.sail]
-function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
+function legalize_tvec(o : Mtvec, v : xlenbits, tvec : tvec_type) -> Mtvec = {
   let v = Mk_Mtvec(v);
-  match trapVectorMode_of_bits(v[Mode]) {
+  // Legalize mode.
+  let v : Mtvec = match trapVectorMode_of_bits(v[Mode]) {
     TV_Direct => v,
     TV_Vector => v,
     _         => match xtvec_mode_reserved_behavior {
       Xtvec_Fatal => reserved_behavior("Tried to write a reserved value (" ^ dec_str(unsigned(v[Mode])) ^ ") to the MODE field of xtvec."),
       Xtvec_Ignore => [v with Mode = o[Mode]],
     },
-  }
+  };
+  // Legalize alignment.
+  let base_alignment : tvec_alignment = match (tvec, trapVectorMode_of_bits(v[Mode])) {
+    (Mtvec, TV_Direct)   => plat_mtvec_base_alignment_direct_exp,
+    (Mtvec, TV_Vector)   => plat_mtvec_base_alignment_vectored_exp,
+    (Stvec, TV_Direct)   => 2,
+    (Stvec, TV_Vector)   => plat_stvec_base_alignment_vectored_exp,
+    (_,     TV_Reserved) => // This should never happen due to the check above.
+                            internal_error(__FILE__, __LINE__, "Reserved mode in " ^ tvec_type_str(tvec) ^ "."),
+  };
+  // v[Base] doesn't contain the lowest 2 bits, and hence is at least 4-byte aligned.
+  if base_alignment > 2
+  then [v with Base = [v[Base] with (base_alignment - 3) .. 0 = zeros()]]
+  else v;
 }
 
 bitfield Mcause : xlenbits = {
