@@ -118,11 +118,19 @@ endif()
 option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
 if (DOWNLOAD_GMP)
     include(ExternalProject)
-    # Build GMP with LTO when ENABLE_LTO is on.
+    # Build GMP with LTO when ENABLE_LTO is on, using the same toolchain and
+    # IPO flags as the main project so the LTO bytecode is compatible.
     if (ENABLE_LTO)
-        set(GMP_CFLAGS "CFLAGS=-std=c11 -O3 -flto=auto -ffat-lto-objects")
+        string(REPLACE ";" " " GMP_LTO_CFLAGS "${CMAKE_C_COMPILE_OPTIONS_IPO}")
+        string(REPLACE ";" " " GMP_LTO_LDFLAGS "${CMAKE_C_LINK_OPTIONS_IPO}")
+        set(GMP_EXTRA_CONFIGURE_ARGS
+            "CFLAGS=-std=c11 -O3 ${GMP_LTO_CFLAGS}"
+            "LDFLAGS=${GMP_LTO_LDFLAGS}"
+            "CC=${CMAKE_C_COMPILER}"
+            "CXX=${CMAKE_CXX_COMPILER}"
+        )
     else()
-        set(GMP_CFLAGS "CFLAGS=-std=c11")
+        set(GMP_EXTRA_CONFIGURE_ARGS "CFLAGS=-std=c11")
     endif()
     ExternalProject_Add(
         gmp
@@ -135,7 +143,7 @@ if (DOWNLOAD_GMP)
             --enable-static
             --with-pic
             # Newer compilers default to C23 which causes GMP build errors.
-            "${GMP_CFLAGS}"
+            ${GMP_EXTRA_CONFIGURE_ARGS}
         # The libgmp.a output is created by the install step but since GMP::GMP
         # depends on the entire ExternalProject build, we can pretend it is
         # created by the build.
