@@ -791,6 +791,12 @@
     "Sscsrind": {
       "supported": true
     },
+    "Sspmp": {
+      "supported": true
+    },
+    "Sspmpen": {
+      "supported": true
+    },
     "Sstc": {
       "supported": true
     },
