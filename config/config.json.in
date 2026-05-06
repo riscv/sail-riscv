@@ -100,7 +100,6 @@
       "napot_supported": true
     },
     "spmp": {
-      "enabled": true,
       "count": 64,
       "grain": 0,
       "tor_supported": true,
@@ -593,6 +592,12 @@
       "supported": true
     },
     "Sscounterenw": {
+      "supported": true
+    },
+    "Sspmp": {
+      "supported": true
+    },
+    "Sspmpen": {
       "supported": true
     },
     "Sstc": {

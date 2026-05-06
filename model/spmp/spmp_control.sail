@@ -591,7 +591,7 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   /* SPMP Enablement Check: SPMP is only active when satp.mode == Bare
    * When paged virtual memory is active (satp.mode != Bare), SPMP is disabled
    * and this function should allow all accesses to proceed */
-  if not(sys_spmp_enabled) then return None();  // SPMP not implemented
+  if not(hartSupports(Ext_Sspmp)) then return None();  // SPMP not implemented
 
   /* Check SPMP and Paging interaction:
    * - Machine mode: Always uses SPMP if implemented (Machine mode doesn't use virtual memory)

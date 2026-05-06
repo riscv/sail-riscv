@@ -29,7 +29,6 @@
 
 /* SPMP platform configuration parameters.
  * These values are typically set at build time based on platform capabilities. */
-// let sys_spmp_enabled : bool = config memory.spmp.enabled  // Platform SPMP support
 let sys_spmp_count : nat = config memory.spmp.count       // Number of SPMP entries
 
 /* G parameter that specifies the SPMP grain size. The grain size is 2^(G+2), e.g.
@@ -212,7 +211,7 @@ function spmpTORLocked(cfg: Spmpcfg_ent) -> bool =
 /* mpmpdeleg CSR access (M-mode only) */
 mapping clause csr_name_map = 0x316 <-> "mpmpdeleg"
 
-function clause is_CSR_accessible(0x316, _, _) = sys_spmp_enabled
+function clause is_CSR_accessible(0x316, _, _) = hartSupports(Ext_Sspmp)
 function clause read_CSR(0x316) = mpmpdeleg.bits
 function clause write_CSR((0x316, value)) = {
   /* Only M-mode can write mpmpdeleg */
@@ -653,7 +652,7 @@ function spmp_mmode_read_addr_indirect(entry_idx: int) -> xlenbits = {
 
 
 // spmpen - SPMP per-entry enable register (RV64 and RV32)
-function clause is_CSR_accessible(0x183, _, _) = sys_spmp_enabled
+function clause is_CSR_accessible(0x183, _, _) = hartSupports(Ext_Sspmpen)
 function clause read_CSR(0x183) = spmpen
 function clause write_CSR((0x183, value)) = {
   let spmp_start = getPmpNum();
@@ -682,7 +681,7 @@ function clause write_CSR((0x183, value)) = {
 }
 
 // spmpenh - SPMP per-entry enable register high (RV32 only)
-function clause is_CSR_accessible(0x193, _, _) = sys_spmp_enabled & (xlen == 32)
+function clause is_CSR_accessible(0x193, _, _) = hartSupports(Ext_Sspmpen) & (xlen == 32)
 function clause read_CSR(0x193) = {
   if xlen == 32
   then zero_extend(spmpenh)
@@ -789,7 +788,7 @@ function siselect_spmp_entry_valid(entry_idx: int) -> bool = {
 /*---------------------------------------------------------------------------------------*/
 /*  siselect CSR (0x150) - Select SPMP entry for indirect access                        */
 /*---------------------------------------------------------------------------------------*/
-function clause is_CSR_accessible(0x150, _, _) = currentlyEnabled(Ext_S) & sys_spmp_enabled
+function clause is_CSR_accessible(0x150, _, _) = currentlyEnabled(Ext_S) & hartSupports(Ext_Sspmp)
 
 function clause read_CSR(0x150) = siselect
 
@@ -809,7 +808,7 @@ function clause write_CSR((0x150, value)) = {
 /*    - Read: Returns 0                                                                  */
 /*    - Write: Ignored                                                                   */
 /*---------------------------------------------------------------------------------------*/
-function clause is_CSR_accessible(0x151, _, _) = currentlyEnabled(Ext_S) & sys_spmp_enabled
+function clause is_CSR_accessible(0x151, _, _) = currentlyEnabled(Ext_S) & hartSupports(Ext_Sspmp)
 
 function clause read_CSR(0x151) = {
   if siselect_is_spmp() then {
@@ -851,7 +850,7 @@ function clause write_CSR((0x151, value)) = {
 /*    - Read: Returns 0                                                                  */
 /*    - Write: Ignored                                                                   */
 /*---------------------------------------------------------------------------------------*/
-function clause is_CSR_accessible(0x152, _, _) = currentlyEnabled(Ext_S) & sys_spmp_enabled
+function clause is_CSR_accessible(0x152, _, _) = currentlyEnabled(Ext_S) & hartSupports(Ext_Sspmp)
 
 function clause read_CSR(0x152) = {
   if siselect_is_spmp() then {
@@ -888,10 +887,10 @@ function clause write_CSR((0x152, value)) = {
 /*    - Read: Returns 0                                                                  */
 /*    - Write: Ignored (WPRI behavior)                                                  */
 /*---------------------------------------------------------------------------------------*/
-function clause is_CSR_accessible(0x153, _, _) = currentlyEnabled(Ext_S) & sys_spmp_enabled
-function clause is_CSR_accessible(0x155, _, _) = currentlyEnabled(Ext_S) & sys_spmp_enabled
-function clause is_CSR_accessible(0x156, _, _) = currentlyEnabled(Ext_S) & sys_spmp_enabled
-function clause is_CSR_accessible(0x157, _, _) = currentlyEnabled(Ext_S) & sys_spmp_enabled
+function clause is_CSR_accessible(0x153, _, _) = currentlyEnabled(Ext_S) & hartSupports(Ext_Sspmp)
+function clause is_CSR_accessible(0x155, _, _) = currentlyEnabled(Ext_S) & hartSupports(Ext_Sspmp)
+function clause is_CSR_accessible(0x156, _, _) = currentlyEnabled(Ext_S) & hartSupports(Ext_Sspmp)
+function clause is_CSR_accessible(0x157, _, _) = currentlyEnabled(Ext_S) & hartSupports(Ext_Sspmp)
 
 function clause read_CSR(0x153) = zeros()  /* sireg3 - reserved WPRI */
 function clause read_CSR(0x155) = zeros()  /* sireg4 - reserved WPRI */
@@ -955,7 +954,7 @@ function miselect_spmp_entry_valid() -> bool = {
 /*---------------------------------------------------------------------------------------*/
 /*  miselect CSR (0x350) - M-mode indirect select register                              */
 /*---------------------------------------------------------------------------------------*/
-function clause is_CSR_accessible(0x350, _, _) = sys_spmp_enabled
+function clause is_CSR_accessible(0x350, _, _) = hartSupports(Ext_Sspmp)
 function clause read_CSR(0x350) = miselect
 function clause write_CSR((0x350, value)) = {
   miselect = value;
@@ -966,7 +965,7 @@ function clause write_CSR((0x350, value)) = {
 /*  mireg CSR (0x351) - M-mode indirect access to spmpaddr                              */
 /*  Reads/writes spmpaddr[miselect_get_spmp_index()] when miselect in SPMP range       */
 /*---------------------------------------------------------------------------------------*/
-function clause is_CSR_accessible(0x351, _, _) = sys_spmp_enabled
+function clause is_CSR_accessible(0x351, _, _) = hartSupports(Ext_Sspmp)
 function clause read_CSR(0x351) = {
   if miselect_is_spmp() then {
     let entry_idx = miselect_get_spmp_index();
@@ -990,7 +989,7 @@ function clause write_CSR((0x351, value)) = {
 /*  Reads/writes spmpcfg[miselect_get_spmp_index()] when miselect in SPMP range        */
 /*  M-mode can clear L bit via this interface (the ONLY way to unlock SPMP entries)    */
 /*---------------------------------------------------------------------------------------*/
-function clause is_CSR_accessible(0x352, _, _) = sys_spmp_enabled
+function clause is_CSR_accessible(0x352, _, _) = hartSupports(Ext_Sspmp)
 function clause read_CSR(0x352) = {
   if miselect_is_spmp() then {
     let entry_idx = miselect_get_spmp_index();
@@ -1019,10 +1018,10 @@ function clause write_CSR((0x352, value)) = {
 /*---------------------------------------------------------------------------------------*/
 /*  mireg3-mireg6 CSRs (0x353, 0x355-0x357) - Reserved as WPRI                          */
 /*---------------------------------------------------------------------------------------*/
-function clause is_CSR_accessible(0x353, _, _) = sys_spmp_enabled
-function clause is_CSR_accessible(0x355, _, _) = sys_spmp_enabled
-function clause is_CSR_accessible(0x356, _, _) = sys_spmp_enabled
-function clause is_CSR_accessible(0x357, _, _) = sys_spmp_enabled
+function clause is_CSR_accessible(0x353, _, _) = hartSupports(Ext_Sspmp)
+function clause is_CSR_accessible(0x355, _, _) = hartSupports(Ext_Sspmp)
+function clause is_CSR_accessible(0x356, _, _) = hartSupports(Ext_Sspmp)
+function clause is_CSR_accessible(0x357, _, _) = hartSupports(Ext_Sspmp)
 
 function clause read_CSR(0x353) = zeros()  /* mireg3 - reserved WPRI */
 function clause read_CSR(0x355) = zeros()  /* mireg4 - reserved WPRI */

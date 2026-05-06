@@ -465,6 +465,14 @@ function clause hartSupports(Ext_Sscounterenw) = config extensions.Sscounterenw.
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
 function clause hartSupports(Ext_Ssstateen) = config extensions.Stateen.Ssstateen.supported
+// Supervisor-mode Physical Memory Protection
+enum clause extension = Ext_Sspmp
+mapping clause extensionName = Ext_Sspmp <-> "sspmp"
+function clause hartSupports(Ext_Sspmp) = config extensions.Sspmp.supported
+// SPMP per-entry enable (context-switch optimization)
+enum clause extension = Ext_Sspmpen
+mapping clause extensionName = Ext_Sspmpen <-> "sspmpen"
+function clause hartSupports(Ext_Sspmpen) = hartSupports(Ext_Sspmp) & config extensions.Sspmpen.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -776,6 +784,8 @@ let extensions_ordered_for_isa_string = [
   Ext_Sscofpmf,
   Ext_Sscounterenw,
   Ext_Ssstateen,
+  Ext_Sspmp,
+  Ext_Sspmpen,
   Ext_Ssqosid,
   Ext_Sstc,
   Ext_Sstvala,
