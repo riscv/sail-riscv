@@ -121,8 +121,8 @@ if (DOWNLOAD_GMP)
     # Build GMP with LTO when ENABLE_LTO is on, using the same toolchain and
     # IPO flags as the main project so the LTO bytecode is compatible.
     if (ENABLE_LTO)
-        string(REPLACE ";" " " GMP_LTO_CFLAGS "${CMAKE_C_COMPILE_OPTIONS_IPO}")
-        string(REPLACE ";" " " GMP_LTO_LDFLAGS "${CMAKE_C_LINK_OPTIONS_IPO}")
+        list(JOIN CMAKE_C_COMPILE_OPTIONS_IPO " " GMP_LTO_CFLAGS)
+        list(JOIN CMAKE_C_LINK_OPTIONS_IPO " " GMP_LTO_LDFLAGS)
         set(GMP_EXTRA_CONFIGURE_ARGS
             "CFLAGS=-std=c11 -O3 ${GMP_LTO_CFLAGS}"
             "LDFLAGS=${GMP_LTO_LDFLAGS}"
