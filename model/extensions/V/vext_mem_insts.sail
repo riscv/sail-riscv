@@ -95,7 +95,7 @@ function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  if illegal_vstart(VS_LOAD_STORE) | illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW); // # of element of each register group
@@ -176,7 +176,7 @@ function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  if illegal_vstart(VS_LOAD_STORE) | illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
@@ -237,7 +237,7 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  if illegal_vstart(VS_LOAD_STORE) | illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
@@ -302,7 +302,7 @@ function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  if illegal_vstart(VS_LOAD_STORE) | illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
@@ -364,7 +364,7 @@ function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  if illegal_vstart(VS_LOAD_STORE) | illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
@@ -431,7 +431,8 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop) = {
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
 
-  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
+  if illegal_vstart(VS_LOAD_STORE) |
+     illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
      not(valid_reg_group(vs2, EMUL_index_pow)) |
      not(valid_reg_group(vd, EMUL_data_pow))
   then return Illegal_Instruction();
@@ -500,7 +501,8 @@ function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop) = {
 
   assert(num_elem > 0);
 
-  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
+  if illegal_vstart(VS_LOAD_STORE) |
+     illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
      not(valid_reg_group(vs2, EMUL_index_pow)) |
      not(valid_reg_group(vs3, EMUL_data_pow))
   then return Illegal_Instruction();
@@ -559,7 +561,7 @@ private function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : wor
 }
 
 function clause execute VLRETYPE(nf, rs1, width, vd) = {
-  if not(valid_whole_register(vd, nf)) then return Illegal_Instruction();
+  if illegal_vstart(VS_LOAD_STORE) | not(valid_whole_register(vd, nf)) then return Illegal_Instruction();
 
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
@@ -625,7 +627,7 @@ private function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 :
 }
 
 function clause execute VSRETYPE(nf, rs1, vs3) = {
-  if not(valid_whole_register(vs3, nf)) then return Illegal_Instruction();
+  if illegal_vstart(VS_LOAD_STORE) | not(valid_whole_register(vs3, nf)) then return Illegal_Instruction();
 
   let load_width_bytes = 1;
   let EEW = 8;
@@ -692,7 +694,7 @@ function clause execute VMTYPE(rs1, vd_or_vs3, op) = {
   let evl : int = if vl_val % 8 == 0 then vl_val / 8 else vl_val / 8 + 1; // the effective vector length is evl=ceil(vl/8)
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if illegal_vd_unmasked() then return Illegal_Instruction();
+  if illegal_vstart(VS_LOAD_STORE) | illegal_vd_unmasked() then return Illegal_Instruction();
 
   assert(evl >= 0);
   process_vm(vd_or_vs3, rs1, num_elem, evl, op)

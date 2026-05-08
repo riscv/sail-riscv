@@ -29,7 +29,7 @@ function clause execute RIVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let SEW_widen = SEW * 2;
 
-  if illegal_widening_reduction(SEW_widen) | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VS_MANDATORY) | illegal_widening_reduction(SEW_widen) | not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW_widen <= 64);
@@ -104,7 +104,7 @@ function clause execute RMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
 
-  if illegal_reduction() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VS_MANDATORY) | illegal_reduction() | not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; // if vl=0, no operation is performed

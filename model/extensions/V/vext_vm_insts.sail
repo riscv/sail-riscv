@@ -32,7 +32,8 @@ function clause execute VVMTYPE(funct6, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() |
+  if illegal_vstart(VS_ALU) |
+     illegal_vd_unmasked()  |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
@@ -95,7 +96,8 @@ function clause execute VVMCTYPE(funct6, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() |
+  if illegal_vstart(VS_ALU) |
+     illegal_vd_unmasked()  |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
@@ -157,7 +159,8 @@ function clause execute VVMSTYPE(funct6, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_masked(vd) |
+  if illegal_vstart(VS_ALU) |
+     illegal_vd_masked(vd)  |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow))
@@ -225,7 +228,8 @@ function clause execute VVCMPTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() |
+  if illegal_vstart(VS_ALU) |
+     illegal_vd_unmasked()  |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
@@ -296,7 +300,7 @@ function clause execute VXMTYPE(funct6, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VS_ALU) | illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -357,7 +361,7 @@ function clause execute VXMCTYPE(funct6, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VS_ALU) | illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -417,7 +421,8 @@ function clause execute VXMSTYPE(funct6, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_masked(vd) |
+  if illegal_vstart(VS_ALU) |
+     illegal_vd_masked(vd)  |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
@@ -486,7 +491,7 @@ function clause execute VXCMPTYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VS_ALU) | illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -558,7 +563,7 @@ function clause execute VIMTYPE(funct6, vs2, simm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VS_ALU) | illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -616,7 +621,7 @@ function clause execute VIMCTYPE(funct6, vs2, simm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VS_ALU) | illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -673,7 +678,8 @@ function clause execute VIMSTYPE(funct6, vs2, simm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_masked(vd) |
+  if illegal_vstart(VS_ALU) |
+     illegal_vd_masked(vd)  |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
@@ -738,7 +744,7 @@ function clause execute VICMPTYPE(funct6, vm, vs2, simm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VS_ALU) | illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;

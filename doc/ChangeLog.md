@@ -5,6 +5,9 @@
     supported for platforms that do not contain these MMIO devices;
     see `platform.clint.supported` and `platform.simple_interrupt_generator.supported`.
 
+- Vector instructions now raise an illegal-instruction exception on
+  non-zero `vstart` where the model cannot produce such values.
+
 # Release notes for version 0.11
 
 - Updates to the [configuration file](../config/config.json.in):
