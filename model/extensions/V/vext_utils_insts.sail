@@ -16,6 +16,46 @@ mapping maybe_vmask : string <-> bits(1) = {
   sep() ^ "v0.t"  <-> 0b0
 }
 
+// Check for vstart value
+function assert_vstart(i : int) -> bool = {
+  unsigned(vstart) == i
+}
+
+let vstart_arith_zero_required : bool = config extensions.V.vstart.zero_required.arith
+let vstart_scalar_move_zero_required : bool = config extensions.V.vstart.zero_required.scalar_move
+
+// Returns true if the instruction should raise an illegal instruction
+// exception due to a non-zero vstart, depending on the instruction class.
+//
+// VSTART_ARITH       - Standard arithmetic instructions. The model never
+//                  produces a non-zero vstart for these instructions, so
+//                  the spec permits trapping on a non-zero vstart. This
+//                  is configurable via `extensions.V.vstart.zero_required.arith`.
+//
+// VSTART_LOAD_STORE  - Memory instructions (loads, stores, segment, indexed,
+//                  fault-only-first, whole-register, and mask load/store).
+//                  These always allow any vstart value since vstart is
+//                  required for trap resumption. Never traps.
+//
+// VSTART_SCALAR_MOVE - Scalar move instructions (vmv.x.s, vmv.s.x, vfmv.f.s,
+//                  vfmv.s.f). Both trapping and not trapping on a non-zero
+//                  vstart are permitted, see https://github.com/riscv/riscv-isa-manual/issues/2564
+//                  Configurable via `extensions.V.vstart.zero_required.scalar_move`
+//
+// VSTART_MANDATORY   - Instructions where the spec explicitly requires an
+//                  illegal instruction exception when vstart is non-zero:
+//                  all reductions, vcompress, vcpop.m, vfirst.m,
+//                  vmsbf/sif/sof.m, and viota.m. Always traps, not
+//                  configurable.
+function illegal_vstart(cls : vstart_class) -> bool = {
+  match cls {
+    VSTART_ARITH       => vstart_arith_zero_required & not(assert_vstart(0)),
+    VSTART_LOAD_STORE  => false,
+    VSTART_SCALAR_MOVE => vstart_scalar_move_zero_required & not(assert_vstart(0)),
+    VSTART_MANDATORY   => not(assert_vstart(0))
+  }
+}
+
 // Check for valid EEW and EMUL values in:
 //
 // 1. vector widening/narrowing instructions
@@ -30,11 +70,6 @@ function valid_eew_emul(EEW : nat, EMUL_pow : int) -> bool = {
 // 2. vset{i}vl{i} and whole-register loads, stores, and moves do not depend upon vtype.
 function valid_vtype() -> bool = {
   vtype[vill] == 0b0
-}
-
-// Check for vstart value
-function assert_vstart(i : int) -> bool = {
-  unsigned(vstart) == i
 }
 
 // Check for valid destination register when vector masking is enabled:
@@ -186,14 +221,13 @@ function illegal_variable_width(vd : vregidx, vm : bits(1), SEW_new : nat, LMUL_
 
 // e. Normal check for reduction instructions:
 //  The destination vector register can overlap the source operands, including the mask register.
-//  Vector reduction operations raise an illegal instruction exception if vstart is non-zero.
 function illegal_reduction() -> bool = {
-  not(valid_vtype()) | not(assert_vstart(0))
+  not(valid_vtype())
 }
 
 // f. Variable width check for widening reduction instructions
 function illegal_widening_reduction(EEW : nat) -> bool = {
-  not(valid_vtype()) | not(assert_vstart(0)) | not(EEW >= 8 & EEW <= elen)
+  illegal_reduction() | not(EEW >= 8 & EEW <= elen)
 }
 
 // g. Non-indexed load instruction check

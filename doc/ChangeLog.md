@@ -22,6 +22,18 @@
   - The WFI instruction can be optionally made available to User mode;
     see `platform.wfi_available_to_user_mode`. This is set to false
     by default for backwards compatibility.
+  - New option `extensions.V.vstart.zero_required.arith` (default `true`)
+    controls whether vector arithmetic instructions raise an illegal instruction
+    exception when vstart is non-zero. This option also governs instructions from
+    the Zvbb, Zvbc, Zvabd, Zvfbfmin, and Zvfbfwma extensions. The default value of
+    true introduces a backward-incompatible change compared to previous versions,
+    but can be changed to preserve the earlier behaviour.
+  - New option `extensions.V.vstart.zero_required.scalar_move` (default
+    `true`) controls whether the scalar move instructions (`vmv.x.s`,
+    `vmv.s.x`, `vfmv.f.s`, `vfmv.s.f`) raise an illegal instruction exception
+    when `vstart` is non-zero. The default value of true introduces a backward-
+    incompatible change compared to previous versions, but can be changed to
+    preserve the earlier behaviour.
 
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
