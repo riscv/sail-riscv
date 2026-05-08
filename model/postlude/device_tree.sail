@@ -119,6 +119,15 @@ private function generate_dts_memories(pmas : list(PMA_Region)) -> string =
     }
   }
 
+// Generates a `riscv,<prefix>-block-size` property line if the corresponding
+// cache-block extension is supported. The size is 2^plat_cache_block_size_exp
+// bytes, the same value used by the Zicbom/Zicboz/Zicbop instruction semantics.
+private function generate_cbo_block_size(prefix : string, ext : extension) -> string = {
+  if hartSupports(ext)
+  then "      riscv," ^ prefix ^ "-block-size = <" ^ dec_str(2 ^ plat_cache_block_size_exp) ^ ">;\n"
+  else ""
+}
+
 function generate_dts() -> string = {
   let clock_freq : nat = config platform.clock_frequency;
 
@@ -156,6 +165,9 @@ function generate_dts() -> string = {
 ^ "      riscv,isa = \"" ^ generate_isa_string(Canonical_Lowercase) ^ "\";\n"
 ^ "      riscv,isa-extensions = " ^ generate_isa_string(DeviceTree_ISA_Extensions) ^ ";\n"
 ^ "      mmu-type = \"riscv," ^ mmu_type() ^ "\";\n"
+^ generate_cbo_block_size("cbom", Ext_Zicbom)
+^ generate_cbo_block_size("cboz", Ext_Zicboz)
+^ generate_cbo_block_size("cbop", Ext_Zicbop)
 ^ "      clock-frequency = <" ^ dec_str(clock_freq) ^ ">;\n"
 ^ "      CPU0_intc: interrupt-controller {\n"
 ^ "        #address-cells = <2>;\n"
