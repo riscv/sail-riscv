@@ -58,9 +58,6 @@ steady_clock::time_point init_start;
 steady_clock::time_point init_end;
 
 uint64_t total_insns = 0;
-#ifdef SAILCOV
-char *sailcov_file = nullptr;
-#endif
 
 } // namespace
 
@@ -221,7 +218,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
     ->option_text("<int> (within [1 - 65535])");
   app.add_option("--inst-limit", opts.insn_limit, "Instruction limit")->option_text("<uint>");
 #ifdef SAILCOV
-  app.add_option("--sailcov-file", sailcov_file, "Sail coverage output file")->option_text("<file>");
+  app.add_option("--sailcov-file", opts.sailcov_file, "Sail coverage output file")->option_text("<file>");
 #endif
 
   app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
@@ -649,8 +646,8 @@ void init_logs(const CLIOptions &opts) {
   }
 
 #ifdef SAILCOV
-  if (!sailcov_file.empty()) {
-    sail_set_coverage_file(sailcov_file.c_str());
+  if (!opts.sailcov_file.empty()) {
+    sail_set_coverage_file(opts.sailcov_file.c_str());
   }
 #endif
 }
