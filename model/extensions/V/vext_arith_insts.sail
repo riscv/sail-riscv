@@ -1387,7 +1387,9 @@ function clause execute VMVRTYPE(vs2, nreg, vd) = {
     8 => 3,
   };
 
-  if not(valid_reg_group(vs2, EMUL_pow)) | not(valid_reg_group(vd, EMUL_pow))
+  if illegal_vd_unmasked() |
+     not(valid_reg_group(vs2, EMUL_pow)) |
+     not(valid_reg_group(vd, EMUL_pow))
   then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, SEW);

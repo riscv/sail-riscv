@@ -22,7 +22,8 @@ function clause execute VCLMUL_VV(vm, vs2, vs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
 
-  if not(valid_reg_group(vs1, LMUL_pow)) |
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
@@ -66,7 +67,8 @@ function clause execute VCLMUL_VX(vm, vs2, rs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
 
-  if not(valid_reg_group(vs2, LMUL_pow)) |
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
 
@@ -109,7 +111,8 @@ function clause execute VCLMULH_VV(vm, vs2, vs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
 
-  if not(valid_reg_group(vs1, LMUL_pow)) |
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
@@ -153,7 +156,8 @@ function clause execute VCLMULH_VX(vm, vs2, rs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
 
-  if not(valid_reg_group(vs2, LMUL_pow)) |
+  if illegal_normal(vd, vm) |
+     not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
 
