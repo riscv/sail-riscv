@@ -9,6 +9,10 @@
     `platform.reservation.invalidate_on_same_hart_store`. This defaults
     to false to match previous behavior.
 
+- The command line interface has been updated:
+  - A `--trace-trigger` command-line option has been added to track
+    triggers in the execution trace.
+
 # Release notes for version 0.11
 
 - Updates to the [configuration file](../config/config.json.in):
@@ -64,6 +68,7 @@
   - Zicclsm
   - Ziccrse
   - Zicfiss
+  - Sdtrig (partial: only icount, itrigger, and etrigger triggers; tdata3 and {m,h,s}context are not yet supported)
   - Ssccptr
   - Sscounterenw
   - Svade

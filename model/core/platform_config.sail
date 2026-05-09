@@ -147,3 +147,24 @@ let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config bas
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
 let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reserved_behavior.xtvec_mode
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
+
+// Sdtrig configuration
+let sdtrig_has_tcontrol : bool = config extensions.Sdtrig.tcontrol.supported
+let sdtrig_has_icount   : bool = config extensions.Sdtrig.icount.supported
+let sdtrig_has_etrigger : bool = config extensions.Sdtrig.etrigger.supported
+let sdtrig_has_itrigger : bool = config extensions.Sdtrig.itrigger.supported
+
+let sdtrig_has_scontext : bool = false
+let sdtrig_has_mcontext : bool = false
+
+type num_triggers : Int = config extensions.Sdtrig.num_triggers
+// The number of bits to index the triggers needs to fit into `tselect`,
+// but for practical reasons is constrained to be much smaller.
+constraint 0 <= num_triggers <= 15
+
+enum Sdtrig_breakpoint_reentrancy = {
+  Use_tcontrol,
+  Use_interrupt_enables,
+  No_reentrancy_support,
+}
+let sdtrig_breakpoint_reentrancy : Sdtrig_breakpoint_reentrancy = config extensions.Sdtrig.breakpoint_reentrancy

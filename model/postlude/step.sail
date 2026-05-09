@@ -12,6 +12,7 @@ register hart_state : HartState = HART_ACTIVE()
 
 private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
+  Step_Pending_Trigger    : (Trig_Action, trigger_index, xlenbits),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : (virtaddr, ExceptionType),
   Step_Execute            : (ExecutionResult, instbits),
@@ -87,10 +88,26 @@ private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : ins
 }
 
 private function run_hart_active(step_no: nat) -> Step = {
+  // The Sdtrig extension does not define the priority of triggers
+  // with respect to pending interrupts. See however:
+  //   https://github.com/riscv/riscv-debug-spec/pull/802
+  // and the related issue:
+  //   https://github.com/riscv/riscv-debug-spec/issues/796
+  //
+  // For now, the implementation follows #802 by prioritizing the
+  // itrigger, etrigger and icount triggers above asynchronous
+  // interrupts.  When mcontrol6 triggers are implemented, their
+  // `after` versions should also be handled here.
+  match find_highest_priority_pending_trigger(cur_privilege) {
+    Some(action, idx, breakpoint_tval) => return Step_Pending_Trigger(action, idx, breakpoint_tval),
+    None() => (),
+  };
+
   match dispatchInterrupt(cur_privilege) {
     Some(intr, priv) => return Step_Pending_Interrupt(intr, priv),
     None() => (),
   };
+
   match ext_fetch_hook(fetch()) {
     // extension error
     F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
@@ -200,6 +217,15 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     };
 
   match step_val {
+    Step_Pending_Trigger(action, idx, trigger_tval) => {
+      match action {
+        TA_Breakpoint => {
+          fire_trigger(idx);
+          handle_exception(trigger_tval, E_Breakpoint(Brk_Hardware))
+        },
+        _ => internal_error(__FILE__, __LINE__, "Trigger action " ^ trigger_action_name(action) ^ " not supported."),
+      }
+    },
     Step_Pending_Interrupt(intr, priv) => {
       if   get_config_print_instr()
       then print_bits("Handling interrupt: ", interruptType_bits(intr));
@@ -208,7 +234,10 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
     Step_Fetch_Failure(vaddr, e) => handle_exception(bits_of(vaddr), e),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
-    Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
+    Step_Execute(Retire_Success(), _) => {
+      assert(hart_is_active(hart_state));
+      match_icount_triggers(cur_privilege)
+    },
     // We only support one level of ExecuteAs redirection, primarily intended
     // for compressed instructions (though it can be used elsewhere). If there
     // is more than one ExecuteAs indirection we'll get to here. This isn't supported.
