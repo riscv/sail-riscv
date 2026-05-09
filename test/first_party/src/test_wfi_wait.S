@@ -30,7 +30,8 @@ test2:
   csrw mideleg, 0
   # Don't inhibit counters.
   csrw mcountinhibit, 0
-  csrw mcyclecfg, 0
+  # Older compilers (Clang < 21) don't support mcyclecfg, use numeric value.
+  csrw CSR_MCYCLECFG, 0
 
   # Disable stimecmp until we need it
   li t0, -1
