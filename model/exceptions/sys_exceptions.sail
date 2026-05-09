@@ -71,12 +71,12 @@ function get_stvec() -> xlenbits =
   stvec.bits
 
 function set_mtvec(value : xlenbits) -> xlenbits = {
-  mtvec = legalize_tvec(mtvec, value, Mtvec);
+  mtvec = legalize_tvec(mtvec, value, plat_mtvec_base_alignment_direct_exp, plat_mtvec_base_alignment_vectored_exp);
   mtvec.bits
 }
 
 function set_stvec(value : xlenbits) -> xlenbits = {
-  stvec = legalize_tvec(stvec, value, Stvec);
+  stvec = legalize_tvec(stvec, value, 2, plat_stvec_base_alignment_vectored_exp);
   stvec.bits
 }
 
