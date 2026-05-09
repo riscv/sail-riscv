@@ -50,9 +50,23 @@ mapping clause encdec = VLSEGTYPE(nf, vm, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-private function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
-  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
+  let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
+  let SEW_pow = get_sew_pow();
+  let LMUL_pow = get_lmul_pow();
+  let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
 
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
+  let num_elem = get_num_elem(EMUL_pow, EEW); // # of element of each register group
+  assert(num_elem > 0);
+
+  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
 
@@ -85,7 +99,18 @@ private function process_vlseg(nf : nfields, vm : bits(1), vd : vregidx, load_wi
   RETIRE_SUCCESS
 }
 
-function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
+mapping clause assembly = VLSEGTYPE(nf, vm, rs1, width, vd)
+  <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
+
+// *********** Vector Load Unit-Stride Normal & Segment Fault-Only-First (mop=0b00, lumop=0b10000) ************
+union clause instruction = VLSEGFFTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
+
+mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
+  <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
+  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
+     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
+
+function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
   let EEW = 2 ^ EEW_pow;
@@ -98,24 +123,9 @@ function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
   if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
   then return Illegal_Instruction();
 
-  let num_elem = get_num_elem(EMUL_pow, EEW); // # of element of each register group
+  let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
 
-  process_vlseg(nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
-}
-
-mapping clause assembly = VLSEGTYPE(nf, vm, rs1, width, vd)
-  <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
-
-// *********** Vector Load Unit-Stride Normal & Segment Fault-Only-First (mop=0b00, lumop=0b10000) ************
-union clause instruction = VLSEGFFTYPE : (nfields, bits(1), regidx, vlewidth, vregidx)
-
-mapping clause encdec = VLSEGFFTYPE(nf, vm, rs1, width, vd)
-  <-> encdec_nfields(nf) @ 0b0 @ 0b00 @ vm @ 0b10000 @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
-     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
-
-private function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -166,25 +176,6 @@ private function process_vlsegff(nf : nfields, vm : bits(1), vd : vregidx, load_
   RETIRE_SUCCESS
 }
 
-function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
-  let EEW_pow = vlewidth_pow(width);
-  let load_width_bytes = 2 ^ (EEW_pow - 3);
-  let EEW = 2 ^ EEW_pow;
-  let SEW_pow = get_sew_pow();
-  let LMUL_pow = get_lmul_pow();
-  let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
-
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
-  then return Illegal_Instruction();
-
-  let num_elem = get_num_elem(EMUL_pow, EEW);
-  assert(num_elem > 0);
-
-  process_vlsegff(nf, vm, vd, load_width_bytes, rs1, EMUL_pow, num_elem)
-}
-
 mapping clause assembly = VLSEGFFTYPE(nf, vm, rs1, width, vd)
   <-> "vl" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ "ff.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
@@ -196,7 +187,22 @@ mapping clause encdec = VSSEGTYPE(nf, vm, rs1, width, vs3)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-private function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
+function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
+  let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
+  let SEW_pow = get_sew_pow();
+  let LMUL_pow = get_lmul_pow();
+  let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
+
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  then return Illegal_Instruction();
+
+  let num_elem = get_num_elem(EMUL_pow, EEW);
+  assert(num_elem > 0);
+
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
@@ -227,25 +233,6 @@ private function process_vsseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_w
   RETIRE_SUCCESS
 }
 
-function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
-  let EEW_pow = vlewidth_pow(width);
-  let load_width_bytes = 2 ^ (EEW_pow - 3);
-  let EEW = 2 ^ EEW_pow;
-  let SEW_pow = get_sew_pow();
-  let LMUL_pow = get_lmul_pow();
-  let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
-
-  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
-  then return Illegal_Instruction();
-
-  let num_elem = get_num_elem(EMUL_pow, EEW);
-  assert(num_elem > 0);
-
-  process_vsseg(nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem)
-}
-
 mapping clause assembly = VSSEGTYPE(nf, vm, rs1, width, vs3)
   <-> "vs" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ maybe_vmask(vm)
 
@@ -257,7 +244,22 @@ mapping clause encdec = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-private function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
+function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
+  let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
+  let SEW_pow = get_sew_pow();
+  let LMUL_pow = get_lmul_pow();
+  let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
+
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
+  let num_elem = get_num_elem(EMUL_pow, EEW);
+  assert(num_elem > 0);
+
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val  = read_vmask(num_elem, vm, zvreg);
   let vd_seg  = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
@@ -292,25 +294,6 @@ private function process_vlsseg(nf : nfields, vm : bits(1), vd : vregidx, load_w
   RETIRE_SUCCESS
 }
 
-function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
-  let EEW_pow = vlewidth_pow(width);
-  let load_width_bytes = 2 ^ (EEW_pow - 3);
-  let EEW = 2 ^ EEW_pow;
-  let SEW_pow = get_sew_pow();
-  let LMUL_pow = get_lmul_pow();
-  let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
-
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
-  then return Illegal_Instruction();
-
-  let num_elem = get_num_elem(EMUL_pow, EEW);
-  assert(num_elem > 0);
-
-  process_vlsseg(nf, vm, vd, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
-}
-
 mapping clause assembly = VLSSEGTYPE(nf, vm, rs2, rs1, width, vd)
   <-> "vls" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
@@ -322,7 +305,22 @@ mapping clause encdec = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-private function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_width_bytes : word_width, rs1 : regidx, rs2 : regidx, EMUL_pow : int, num_elem : range(1, vlen)) -> ExecutionResult = {
+function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
+  let EEW_pow = vlewidth_pow(width);
+  let EEW = 2 ^ EEW_pow;
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let SEW_pow = get_sew_pow();
+  let LMUL_pow = get_lmul_pow();
+  let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
+
+  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+
+  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  then return Illegal_Instruction();
+
+  let num_elem = get_num_elem(EMUL_pow, EEW);
+  assert(num_elem > 0);
+
   let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
@@ -354,25 +352,6 @@ private function process_vssseg(nf : nfields, vm : bits(1), vs3 : vregidx, load_
   RETIRE_SUCCESS
 }
 
-function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
-  let EEW_pow = vlewidth_pow(width);
-  let EEW = 2 ^ EEW_pow;
-  let load_width_bytes = 2 ^ (EEW_pow - 3);
-  let SEW_pow = get_sew_pow();
-  let LMUL_pow = get_lmul_pow();
-  let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
-
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
-
-  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
-  then return Illegal_Instruction();
-
-  let num_elem = get_num_elem(EMUL_pow, EEW);
-  assert(num_elem > 0);
-
-  process_vssseg(nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_elem)
-}
-
 mapping clause assembly = VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3)
   <-> "vss" ^ nfields_string(nf) ^ "e" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ reg_name(rs2) ^ maybe_vmask(vm)
 
@@ -387,7 +366,21 @@ mapping clause encdec = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
-private function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : indexed_mop) -> ExecutionResult = {
+function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop) = {
+  let EEW_index_pow = vlewidth_pow(width);
+  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
+  let EEW_data_pow = get_sew_pow();
+  let EEW_data_bytes = get_sew_bytes();
+  let EMUL_data_pow = get_lmul_pow();
+  let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
+
+  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
+     not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))
+  then return Illegal_Instruction();
+
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
+  assert(num_elem > 0);
+
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vd);
@@ -395,10 +388,11 @@ private function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_in
 
   let 'm = nf * EEW_data_bytes * 8;
   let 'n = num_elem;
-  let (result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, nf * EEW_data_bytes * 8, EMUL_data_pow, vd_seg, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (result, mask) : (vector('n, bits('m)), bits('n)) =
+    match init_masked_result(num_elem, nf * EEW_data_bytes * 8, EMUL_data_pow, vd_seg, vm_val) {
+      Ok(v)   => v,
+      Err(()) => return Illegal_Instruction()
+    };
 
   // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
@@ -423,24 +417,6 @@ private function process_vlxseg(nf : nfields, vm : bits(1), vd : vregidx, EEW_in
   RETIRE_SUCCESS
 }
 
-function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop) = {
-  let EEW_index_pow = vlewidth_pow(width);
-  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
-  let EEW_data_pow = get_sew_pow();
-  let EEW_data_bytes = get_sew_bytes();
-  let EMUL_data_pow = get_lmul_pow();
-  let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-
-  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))
-  then return Illegal_Instruction();
-
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
-  assert(num_elem > 0);
-
-  process_vlxseg(nf, vm, vd, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop)
-}
-
 mapping clause assembly = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
   <-> "vl" ^ indexed_mop_mnemonic(mop) ^ "x" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
@@ -455,7 +431,22 @@ mapping clause encdec = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
-private function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_index_bytes : word_width, EEW_data_bytes : word_width, EMUL_index_pow : int, EMUL_data_pow : int, rs1 : regidx, vs2 : vregidx, num_elem : range(1, vlen), _mop : indexed_mop) -> ExecutionResult = {
+function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop) = {
+  let EEW_index_pow = vlewidth_pow(width);
+  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
+  let EEW_data_pow = get_sew_pow();
+  let EEW_data_bytes = get_sew_bytes();
+  let EMUL_data_pow = get_lmul_pow();
+  let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
+  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); // number of data and indices are the same
+
+  assert(num_elem > 0);
+
+  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
+     not(valid_reg_group(vs2, EMUL_index_pow)) |
+     not(valid_reg_group(vs3, EMUL_data_pow))
+  then return Illegal_Instruction();
+
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, EEW_data_bytes * 8, EMUL_data_pow, nf, vs3);
@@ -488,25 +479,6 @@ private function process_vsxseg(nf : nfields, vm : bits(1), vs3 : vregidx, EEW_i
   RETIRE_SUCCESS
 }
 
-function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop) = {
-  let EEW_index_pow = vlewidth_pow(width);
-  let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
-  let EEW_data_pow = get_sew_pow();
-  let EEW_data_bytes = get_sew_bytes();
-  let EMUL_data_pow = get_lmul_pow();
-  let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-  let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8); // number of data and indices are the same
-
-  assert(num_elem > 0);
-
-  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_reg_group(vs2, EMUL_index_pow)) |
-     not(valid_reg_group(vs3, EMUL_data_pow))
-  then return Illegal_Instruction();
-
-  process_vsxseg(nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_index_pow, EMUL_data_pow, rs1, vs2, num_elem, mop)
-}
-
 mapping clause assembly = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
   <-> "vs" ^ indexed_mop_mnemonic(mop) ^ "x" ^ nfields_string(nf) ^ "ei" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")" ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
@@ -518,7 +490,15 @@ mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
   when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
-private function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : word_width, rs1 : regidx, elem_per_reg : nat) -> ExecutionResult = {
+function clause execute VLRETYPE(nf, rs1, width, vd) = {
+  if not(valid_whole_register(vd, nf)) then return Illegal_Instruction();
+
+  let EEW_pow = vlewidth_pow(width);
+  let load_width_bytes = 2 ^ (EEW_pow - 3);
+  let EEW = 2 ^ EEW_pow;
+  let elem_per_reg = vlen / EEW;
+  assert(elem_per_reg >= 0);
+
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -557,18 +537,6 @@ private function process_vlre(nf : nfields, vd : vregidx, load_width_bytes : wor
   RETIRE_SUCCESS
 }
 
-function clause execute VLRETYPE(nf, rs1, width, vd) = {
-  if not(valid_whole_register(vd, nf)) then return Illegal_Instruction();
-
-  let EEW_pow = vlewidth_pow(width);
-  let load_width_bytes = 2 ^ (EEW_pow - 3);
-  let EEW = 2 ^ EEW_pow;
-  let elem_per_reg = vlen / EEW;
-  assert(elem_per_reg >= 0);
-
-  process_vlre(nf, vd, load_width_bytes, rs1, elem_per_reg)
-}
-
 mapping clause assembly = VLRETYPE(nf, rs1, width, vd)
   <-> "vl" ^ nfields_pow2_string(nf) ^ "re" ^ vlewidth_bitsnumberstr(width) ^ ".v" ^ spc() ^ vreg_name(vd) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
@@ -579,7 +547,14 @@ mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   <-> encdec_nfields_pow2(nf) @ 0b0 @ 0b00 @ 0b1 @ 0b01000 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vs3) @ 0b0100111
   when currentlyEnabled(Ext_Zve32x)
 
-private function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 : regidx, vs3 : vregidx, elem_per_reg : nat) -> ExecutionResult = {
+function clause execute VSRETYPE(nf, rs1, vs3) = {
+  if not(valid_whole_register(vs3, nf)) then return Illegal_Instruction();
+
+  let load_width_bytes = 1;
+  let EEW = 8;
+  let elem_per_reg = vlen / EEW;
+  assert(elem_per_reg >= 0);
+
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -623,17 +598,6 @@ private function process_vsre(nf : nfields, load_width_bytes : word_width, rs1 :
   RETIRE_SUCCESS
 }
 
-function clause execute VSRETYPE(nf, rs1, vs3) = {
-  if not(valid_whole_register(vs3, nf)) then return Illegal_Instruction();
-
-  let load_width_bytes = 1;
-  let EEW = 8;
-  let elem_per_reg = vlen / EEW;
-  assert(elem_per_reg >= 0);
-
-  process_vsre(nf, load_width_bytes, rs1, vs3, elem_per_reg)
-}
-
 mapping clause assembly = VSRETYPE(nf, rs1, vs3)
   <-> "vs" ^ nfields_pow2_string(nf) ^ "r.v" ^ spc() ^ vreg_name(vs3) ^ sep() ^ "(" ^ reg_name(rs1) ^ ")"
 
@@ -649,7 +613,16 @@ mapping clause encdec = VMTYPE(rs1, vd_or_vs3, op)
   <-> 0b000 @ 0b0 @ 0b00 @ 0b1 @ 0b01011 @ encdec_reg(rs1) @ 0b000 @ encdec_vreg(vd_or_vs3) @ encdec_lsop(op)
   when currentlyEnabled(Ext_Zve32x)
 
-private function process_vm(vd_or_vs3 : vregidx, rs1 : regidx, num_elem : nat, evl : nat, op : vmlsop) -> ExecutionResult = {
+function clause execute VMTYPE(rs1, vd_or_vs3, op) = {
+  let EEW = 8;
+  let EMUL_pow = 0;
+  let vl_val = unsigned(vl);
+  let evl : int = if vl_val % 8 == 0 then vl_val / 8 else vl_val / 8 + 1; // the effective vector length is evl=ceil(vl/8)
+  let num_elem = get_num_elem(EMUL_pow, EEW);
+
+  if illegal_vd_unmasked() then return Illegal_Instruction();
+
+  assert(evl >= 0);
   let start_element : nat = match get_start_element() {
     Ok(v)   => v,
     Err(()) => return Illegal_Instruction()
@@ -682,19 +655,6 @@ private function process_vm(vd_or_vs3 : vregidx, rs1 : regidx, num_elem : nat, e
 
   set_vstart(zeros());
   RETIRE_SUCCESS
-}
-
-function clause execute VMTYPE(rs1, vd_or_vs3, op) = {
-  let EEW = 8;
-  let EMUL_pow = 0;
-  let vl_val = unsigned(vl);
-  let evl : int = if vl_val % 8 == 0 then vl_val / 8 else vl_val / 8 + 1; // the effective vector length is evl=ceil(vl/8)
-  let num_elem = get_num_elem(EMUL_pow, EEW);
-
-  if illegal_vd_unmasked() then return Illegal_Instruction();
-
-  assert(evl >= 0);
-  process_vm(vd_or_vs3, rs1, num_elem, evl, op)
 }
 
 mapping vmtype_mnemonic : vmlsop <-> string = {
