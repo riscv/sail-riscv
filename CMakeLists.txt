@@ -48,6 +48,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 # Generally it just simplifies everything for a negligible performance cost.
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
+# Enable link-time optimization globally. This allows the linker to inline
+# Sail runtime helpers (eq_bits, add_bits_int, etc.) into the generated
+# model code, which is the dominant cost in the simulator hot path.
+# Disabled by default because it can make compile times worse.
+option(ENABLE_LTO "Enable link-time optimization" FALSE)
+if (ENABLE_LTO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
+    if (lto_supported)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+        message(STATUS "LTO enabled")
+    else()
+        message(FATAL_ERROR "LTO requested but not supported: ${lto_error}")
+    endif()
+endif()
+
 # Don't allow undefined symbols. This is generally a pain.
 include(CheckLinkerFlag)
 
@@ -102,6 +118,20 @@ endif()
 option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
 if (DOWNLOAD_GMP)
     include(ExternalProject)
+    # Build GMP with LTO when ENABLE_LTO is on, using the same toolchain and
+    # IPO flags as the main project so the LTO bytecode is compatible.
+    if (ENABLE_LTO)
+        list(JOIN CMAKE_C_COMPILE_OPTIONS_IPO " " GMP_LTO_CFLAGS)
+        list(JOIN CMAKE_C_LINK_OPTIONS_IPO " " GMP_LTO_LDFLAGS)
+        set(GMP_EXTRA_CONFIGURE_ARGS
+            "CFLAGS=-std=c11 -O3 ${GMP_LTO_CFLAGS}"
+            "LDFLAGS=${GMP_LTO_LDFLAGS}"
+            "CC=${CMAKE_C_COMPILER}"
+            "CXX=${CMAKE_CXX_COMPILER}"
+        )
+    else()
+        set(GMP_EXTRA_CONFIGURE_ARGS "CFLAGS=-std=c11")
+    endif()
     ExternalProject_Add(
         gmp
         URL https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz https://ftpmirror.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
@@ -113,13 +143,14 @@ if (DOWNLOAD_GMP)
             --enable-static
             --with-pic
             # Newer compilers default to C23 which causes GMP build errors.
-            CFLAGS=-std=c11
+            ${GMP_EXTRA_CONFIGURE_ARGS}
         # The libgmp.a output is created by the install step but since GMP::GMP
         # depends on the entire ExternalProject build, we can pretend it is
         # created by the build.
         # TODO: Once we depend on CMake 3.26, use INSTALL_BYPRODUCTS
         BUILD_BYPRODUCTS "<INSTALL_DIR>/lib/libgmp.a"
     )
+
     ExternalProject_Get_property(gmp INSTALL_DIR)
     add_library(GMP::GMP STATIC IMPORTED GLOBAL)
     # Work around `Imported target "GMP::GMP" includes non-existent path`.

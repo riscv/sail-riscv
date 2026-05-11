@@ -42,7 +42,7 @@ jobs:
           install-clang: "true"
       - name: Build simulator
         run: |
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_${{ matrix.TEST_SUITE }}=TRUE
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_${{ matrix.TEST_SUITE }}=TRUE -DENABLE_LTO=TRUE
           ninja -C build all
       - name: Run tests
         run: |

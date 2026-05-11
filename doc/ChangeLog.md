@@ -9,6 +9,13 @@
     `platform.reservation.invalidate_on_same_hart_store`. This defaults
     to false to match previous behavior.
 
+- Performance improvements:
+  - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
+    build option. When enabled, applies link-time optimization to both the
+    simulator and the bundled libgmp, with performance improvements
+    (e.g. Linux boot time reduced by up to ~50%). Off by default to keep
+    incremental builds fast, enabled in CI and release builds.
+
 # Release notes for version 0.11
 
 - Updates to the [configuration file](../config/config.json.in):
