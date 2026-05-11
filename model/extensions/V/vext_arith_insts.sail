@@ -2101,10 +2101,7 @@ function clause execute MVXTYPE(funct6, vm, vs2, rs1, vd) = {
                               let rounding_incr = get_fixed_rounding_incr(result_sub, 1);
                               (result_sub >> 1)['m - 1 .. 0] + zero_extend('m, rounding_incr)
                             },
-        MVX_VSLIDE1UP    => {
-                              if (vs2 == vd) then return Illegal_Instruction();
-                              if i == 0 then rs1_val else vs2_val[i - 1]
-                            },
+        MVX_VSLIDE1UP    => if i == 0 then rs1_val else vs2_val[i - 1],
         MVX_VSLIDE1DOWN  => {
                               let last_elem = get_end_element();
                               assert(last_elem < num_elem);
