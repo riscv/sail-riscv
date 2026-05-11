@@ -658,6 +658,7 @@ let extensions_ordered_for_isa_string = [
 
   // Z extensions, ordered by category and then alphabetically.
   // Zi
+  Ext_Zic64b,
   Ext_Zibi,
   Ext_Zicbom,
   Ext_Zicbop,
