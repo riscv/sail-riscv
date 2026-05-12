@@ -624,29 +624,32 @@ void init_logs(const CLIOptions &opts) {
 #endif
 }
 
+// Initialization result used during startup.
+enum class InitResult {
+  ExitFailure,
+  ExitSuccess,
+  Continue,
+};
+
 // Processes options that don't need an initialized model and gets the
 // json configuration string; returns whether to continue with model
 // initialization.
-bool preinit_args(CLIOptions &opts, int &exit_code, std::string &config_json_string) {
+InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
   if (opts.do_print_version) {
     std::cout << version_info::release_version << std::endl;
-    exit_code = EXIT_SUCCESS;
-    return false;
+    return InitResult::ExitSuccess;
   }
   if (opts.do_print_build_info) {
     print_build_info();
-    exit_code = EXIT_SUCCESS;
-    return false;
+    return InitResult::ExitSuccess;
   }
   if (opts.do_print_default_config) {
     printf("%s", opts.use_rv32_default ? get_default_rv32_config() : get_default_config());
-    exit_code = EXIT_SUCCESS;
-    return false;
+    return InitResult::ExitSuccess;
   }
   if (opts.do_print_config_schema) {
     printf("%s", get_config_schema());
-    exit_code = EXIT_SUCCESS;
-    return false;
+    return InitResult::ExitSuccess;
   }
 
   if (opts.do_show_times) {
@@ -695,13 +698,13 @@ bool preinit_args(CLIOptions &opts, int &exit_code, std::string &config_json_str
   }
   validate_config_schema(config_json, config_source_desc);
 
-  return true;
+  return InitResult::Continue;
 }
 
 // Configures the model, validates the configuration, processes
 // options requiring a configured model and returns whether to continue with
 // model simulation.
-bool preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &config_json_string, int &exit_code) {
+InitResult preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &config_json_string) {
   if (opts.rvfi_dii_port != 0) {
     rvfi.emplace(opts.rvfi_dii_port, model);
   }
@@ -742,8 +745,7 @@ bool preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &config
       } else {
         fprintf(stderr, "Configuration in %s is %s.\n", opts.config_file.c_str(), s);
       }
-      exit_code = config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE;
-      return false;
+      return config_is_valid ? InitResult::ExitSuccess : InitResult::ExitFailure;
     }
   }
 
@@ -751,25 +753,22 @@ bool preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &config
   // is validated above.
   if (opts.do_print_dts) {
     print_dts(model);
-    exit_code = EXIT_SUCCESS;
-    return false;
+    return InitResult::ExitSuccess;
   }
   if (opts.do_print_isa) {
     print_isa(model);
-    exit_code = EXIT_SUCCESS;
-    return false;
+    return InitResult::ExitSuccess;
   }
 
   // If we get here, we need to have ELF files to run (except in RVFI mode).
   if (opts.elfs.empty() && !rvfi.has_value()) {
     fprintf(stderr, "No elf file provided.\n");
-    exit_code = EXIT_FAILURE;
-    return false;
+    return InitResult::ExitFailure;
   }
 
   init_logs(opts);
 
-  return true;
+  return InitResult::Continue;
 }
 
 uint64_t init_model(CLIOptions &opts, ModelImpl &model) {
@@ -839,15 +838,24 @@ int inner_main(int argc, char **argv) {
 
   CLIOptions opts = parse_cli(argc, argv);
 
-  int exit_code;
   std::string config_json_string;
-  if (!preinit_args(opts, exit_code, config_json_string)) {
-    return exit_code;
+  switch (preinit_args(opts, config_json_string)) {
+  case InitResult::ExitSuccess:
+    return EXIT_SUCCESS;
+  case InitResult::ExitFailure:
+    return EXIT_FAILURE;
+  case InitResult::Continue:
+    break;
   }
 
   ModelImpl model;
-  if (!preinit_model(opts, model, config_json_string, exit_code)) {
-    return exit_code;
+  switch (preinit_model(opts, model, config_json_string)) {
+  case InitResult::ExitSuccess:
+    return EXIT_SUCCESS;
+  case InitResult::ExitFailure:
+    return EXIT_FAILURE;
+  case InitResult::Continue:
+    break;
   }
 
   uint64_t entry = init_model(opts, model);
