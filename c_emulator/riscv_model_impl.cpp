@@ -4,6 +4,7 @@
 #include <random>
 #include <unistd.h>
 
+#include "config_utils.h"
 #include "riscv_callbacks_if.h"
 #include "symbol_table.h"
 
@@ -358,4 +359,39 @@ void ModelImpl::set_config_use_abi_names(bool on) {
 
 void ModelImpl::set_config_print_step(bool on) {
   m_config_print_step = on;
+}
+
+void ModelImpl::init_platform_constants() {
+  set_reservation_set_size_exp(get_config_uint64({"platform", "reservation", "reservation_set_size_exp"}));
+  set_reservation_require_exact_addr_match(
+    get_config_bool({"platform", "reservation", "require_exact_reservation_addr"})
+  );
+  set_reservation_invalidate_on_same_hart_store(
+    get_config_bool({"platform", "reservation", "invalidate_on_same_hart_store"})
+  );
+}
+
+void ModelImpl::init_sail(
+  uint64_t elf_entry,
+  const char *config_file,
+  const std::optional<uint64_t> &htif_tohost_address
+) {
+  // zset_pc_reset_address must be called before zinit_model
+  // because reset happens inside init_model().
+  zset_pc_reset_address(elf_entry);
+  if (htif_tohost_address.has_value()) {
+    zenable_htif(*htif_tohost_address);
+  }
+  zinit_model(config_file != nullptr ? config_file : "");
+  zinit_boot_requirements(UNIT);
+}
+
+void ModelImpl::reinit_sail(
+  uint64_t elf_entry,
+  const char *config_file,
+  const std::optional<uint64_t> &htif_tohost_address
+) {
+  model_fini();
+  model_init();
+  init_sail(elf_entry, config_file, htif_tohost_address);
 }
