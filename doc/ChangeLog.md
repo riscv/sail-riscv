@@ -3,6 +3,14 @@
 - The following extensions have been added:
   - H
 
+- The following unratified extensions have been added:
+  - Zvqwdota8i: vector quad-widening 8-bit integer dot-product
+    (`vqwdotau.vv`, `vqwdotas.vv`), from the proposed Zvdota family
+    (https://github.com/aswaterman/riscv-misc/blob/main/isa/ldot-bdot/ldot-bdot.adoc).
+    Initial implementation pins vs1 to unsigned (the spec's
+    `vtype.altfmt=0` case) until Zvfbfa
+    (https://github.com/riscv/sail-riscv/pull/1581) lands.
+
 - Updates to the [configuration file](../config/config.json.in):
   - Whether each bit of `hcounteren` is writable or read-only zero can
     be specified, see `base.hcounteren_writable_bits`.
@@ -119,7 +127,6 @@ extension.
     simulator and the bundled libgmp, with performance improvements
     (e.g. Linux boot time reduced by up to ~50%). This is off by default to keep
     incremental builds fast, enabled in CI and release builds.
-
 - Updates to the [configuration file](../config/config.json.in):
   - The CLINT and simple interrupt generator can be marked as not
     supported for platforms that do not contain these MMIO devices;
