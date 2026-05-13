@@ -219,7 +219,6 @@ add_custom_target(csim DEPENDS sail_riscv_sim)
 add_custom_target(check DEPENDS generated_model_rv)
 
 # TODO: Add `interpret` target.
-# TODO: Add hol4 target.
 
 # Release packaging.
 include(cmake/packaging.cmake)

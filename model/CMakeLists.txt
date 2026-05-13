@@ -565,4 +565,36 @@ foreach (xlen IN ITEMS 32 64)
             "${CMAKE_BINARY_DIR}/isabelle/${arch}/ROOT"
     )
     add_custom_target(generated_isabelle_${arch} DEPENDS "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy")
+
+    ############# HOL4 #############
+
+    # Build HOL4 definitions from Lem
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/hol4/${arch}")
+    configure_file("${CMAKE_SOURCE_DIR}/handwritten_support/Holmakefile.in" "${CMAKE_BINARY_DIR}/hol4/${arch}/Holmakefile" @ONLY)
+    add_custom_command(
+        DEPENDS
+          "${arch}.lem"
+          "${arch}_types.lem"
+          "${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras.lem"
+          "${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras_fdext.lem"
+        VERBATIM
+        OUTPUT
+          "${CMAKE_BINARY_DIR}/hol4/${arch}/${arch}Script.thy"
+          "${CMAKE_BINARY_DIR}/hol4/${arch}/${arch}_typesScript.thy"
+          "${CMAKE_BINARY_DIR}/hol4/${arch}/riscv_extrasScript.thy"
+          "${CMAKE_BINARY_DIR}/hol4/${arch}/riscv_extras_fdextScript.thy"
+        COMMENT "Building HOL4 definitions from Lem definitions (${arch})"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND
+            lem
+            -wl ign
+            -hol
+            -outdir ${CMAKE_BINARY_DIR}/hol4/${arch}
+            -lib Sail=${sail_dir}/lib/hol
+            ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras.lem
+            ${CMAKE_SOURCE_DIR}/handwritten_support/riscv_extras_fdext.lem
+            ${arch}_types.lem
+            ${arch}.lem
+    )
+    add_custom_target(generated_hol4_${arch} DEPENDS "${CMAKE_BINARY_DIR}/hol4/${arch}/${arch}Script.thy")
 endforeach()
