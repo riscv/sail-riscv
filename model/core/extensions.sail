@@ -358,6 +358,10 @@ function clause hartSupports(Ext_Zvfbfmin) = config extensions.Zvfbfmin.supporte
 enum clause extension = Ext_Zvfbfwma
 mapping clause extensionName = Ext_Zvfbfwma <-> "zvfbfwma"
 function clause hartSupports(Ext_Zvfbfwma) = config extensions.Zvfbfwma.supported
+// Vector BF16 Fore-Aft
+enum clause extension = Ext_Zvfbfa
+mapping clause extensionName = Ext_Zvfbfa <-> "zvfbfa"
+function clause hartSupports(Ext_Zvfbfa) = config extensions.Zvfbfa.supported
 // Vector Extension for Half-Precision Floating-Point
 enum clause extension = Ext_Zvfh
 mapping clause extensionName = Ext_Zvfh <-> "zvfh"
@@ -624,6 +628,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_H => 4, // > virtual_mem_supported
     Ext_Zve64d => 4, // > Zve64f
     Ext_Zvfbfwma => 4, // > Zvfbfmin
+    Ext_Zvfbfa => 4, // > Zfbfmin
     Ext_Zvfh => 4, // > Zfhmin
 
     Ext_V => 5, // > Zve64d

@@ -364,6 +364,133 @@ function fp_nmulsub(rm_3b, op1, op2, opsub) = {
   result_val
 }
 
+val fp_or_bf16_add : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_add(rm_3b, op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_add(rm_3b, op1, op2) else fp_add(rm_3b, op1, op2),
+    32 => fp_add(rm_3b, op1, op2),
+    64 => fp_add(rm_3b, op1, op2)
+  }
+}
+
+val fp_or_bf16_sub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_sub(rm_3b, op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_sub(rm_3b, op1, op2) else fp_sub(rm_3b, op1, op2),
+    32 => fp_sub(rm_3b, op1, op2),
+    64 => fp_sub(rm_3b, op1, op2)
+  }
+}
+
+val fp_or_bf16_mul : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_mul(rm_3b, op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_mul(rm_3b, op1, op2) else fp_mul(rm_3b, op1, op2),
+    32 => fp_mul(rm_3b, op1, op2),
+    64 => fp_mul(rm_3b, op1, op2)
+  }
+}
+
+val fp_or_bf16_min : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_min(op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_min(op1, op2)
+           else fp_min(op1, op2),
+    32 => fp_min(op1, op2),
+    64 => fp_min(op1, op2)
+  }
+}
+
+val fp_or_bf16_max : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_max(op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_max(op1, op2) else fp_max(op1, op2),
+    32 => fp_max(op1, op2),
+    64 => fp_max(op1, op2)
+  }
+}
+
+val fp_or_bf16_eq : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+function fp_or_bf16_eq(op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then fp_eq(bf16_to_f32_set_flags(op1), bf16_to_f32_set_flags(op2)) else fp_eq(op1, op2),
+    32 => fp_eq(op1, op2),
+    64 => fp_eq(op1, op2)
+  }
+}
+
+val fp_or_bf16_lt : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+function fp_or_bf16_lt(op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then fp_lt(bf16_to_f32_set_flags(op1), bf16_to_f32_set_flags(op2)) else fp_lt(op1, op2),
+    32 => fp_lt(op1, op2),
+    64 => fp_lt(op1, op2)
+  }
+}
+
+val fp_or_bf16_le : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+function fp_or_bf16_le(op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then fp_le(bf16_to_f32_set_flags(op1), bf16_to_f32_set_flags(op2)) else fp_le(op1, op2),
+    32 => fp_le(op1, op2),
+    64 => fp_le(op1, op2)
+  }
+}
+
+val fp_or_bf16_ge : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+function fp_or_bf16_ge(op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then fp_ge(bf16_to_f32_set_flags(op1), bf16_to_f32_set_flags(op2)) else fp_ge(op1, op2),
+    32 => fp_ge(op1, op2),
+    64 => fp_ge(op1, op2)
+  }
+}
+
+val fp_or_bf16_gt : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bool
+function fp_or_bf16_gt(op1, op2) = {
+  match 'm {
+    16 => if get_altfmt() then fp_gt(bf16_to_f32_set_flags(op1), bf16_to_f32_set_flags(op2)) else fp_gt(op1, op2),
+    32 => fp_gt(op1, op2),
+    64 => fp_gt(op1, op2)
+  }
+}
+
+val fp_or_bf16_muladd : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_muladd(rm_3b, op1, op2, opadd) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_muladd(rm_3b, op1, op2, opadd) else fp_muladd(rm_3b, op1, op2, opadd),
+    32 => fp_muladd(rm_3b, op1, op2, opadd),
+    64 => fp_muladd(rm_3b, op1, op2, opadd)
+  }
+}
+
+val fp_or_bf16_nmuladd : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_nmuladd(rm_3b, op1, op2, opadd) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_nmuladd(rm_3b, op1, op2, opadd) else fp_nmuladd(rm_3b, op1, op2, opadd),
+    32 => fp_nmuladd(rm_3b, op1, op2, opadd),
+    64 => fp_nmuladd(rm_3b, op1, op2, opadd)
+  }
+}
+
+val fp_or_bf16_mulsub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_mulsub(rm_3b, op1, op2, opsub) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_mulsub(rm_3b, op1, op2, opsub) else fp_mulsub(rm_3b, op1, op2, opsub),
+    32 => fp_mulsub(rm_3b, op1, op2, opsub),
+    64 => fp_mulsub(rm_3b, op1, op2, opsub)
+  }
+}
+
+val fp_or_bf16_nmulsub : forall 'm, 'm in {16, 32, 64}. (bits(3), bits('m), bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_nmulsub(rm_3b, op1, op2, opsub) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_nmulsub(rm_3b, op1, op2, opsub) else fp_nmulsub(rm_3b, op1, op2, opsub),
+    32 => fp_nmulsub(rm_3b, op1, op2, opsub),
+    64 => fp_nmulsub(rm_3b, op1, op2, opsub)
+  }
+}
+
 val fp_widen : forall 'm, 'm in {16, 32}. bits('m) -> bits('m * 2)
 function fp_widen(nval) = {
   let rm_3b = fcsr[FRM];
@@ -374,6 +501,51 @@ function fp_widen(nval) = {
   accrue_fflags(fflags);
   wval
 }
+
+
+val fp_widen_or_bf16 : forall 'm, 'm in {16, 32}. bits('m) -> bits('m * 2)
+function fp_widen_or_bf16(op) = {
+  match 'm {
+    16 => if get_altfmt() then bf16_to_f32_set_flags(op) else fp_widen(op),
+    32 => fp_widen(op)
+  }
+}
+
+val fp_widen_or_bf16_add : forall 'm, 'm in {16, 32}. (bits(3), bits('m), bits('m)) -> bits('m * 2)
+function fp_widen_or_bf16_add(rm_3b, op1, op2) =
+  fp_add(rm_3b, fp_widen_or_bf16(op1), fp_widen_or_bf16(op2))
+
+val fp_widen_or_bf16_sub : forall 'm, 'm in {16, 32}. (bits(3), bits('m), bits('m)) -> bits('m * 2)
+function fp_widen_or_bf16_sub(rm_3b, op1, op2) =
+  fp_sub(rm_3b, fp_widen_or_bf16(op1), fp_widen_or_bf16(op2))
+
+val fp_widen_or_bf16_mul : forall 'm, 'm in {16, 32}. (bits(3), bits('m), bits('m)) -> bits('m * 2)
+function fp_widen_or_bf16_mul(rm_3b, op1, op2) =
+  fp_mul(rm_3b, fp_widen_or_bf16(op1), fp_widen_or_bf16(op2))
+
+val fp_widen_or_bf16_add_wide : forall 'm, 'm in {16, 32}. (bits(3), bits('m * 2), bits('m)) -> bits('m * 2)
+function fp_widen_or_bf16_add_wide(rm_3b, op1, op2) =
+  fp_add(rm_3b, op1, fp_widen_or_bf16(op2))
+
+val fp_widen_or_bf16_sub_wide : forall 'm, 'm in {16, 32}. (bits(3), bits('m * 2), bits('m)) -> bits('m * 2)
+function fp_widen_or_bf16_sub_wide(rm_3b, op1, op2) =
+  fp_sub(rm_3b, op1, fp_widen_or_bf16(op2))
+
+val fp_widen_or_bf16_muladd : forall 'm, 'm in {16, 32}. (bits(3), bits('m), bits('m), bits('m * 2)) -> bits('m * 2)
+function fp_widen_or_bf16_muladd(rm_3b, op1, op2, opadd) =
+  fp_muladd(rm_3b, fp_widen_or_bf16(op1), fp_widen_or_bf16(op2), opadd)
+
+val fp_widen_or_bf16_nmuladd : forall 'm, 'm in {16, 32}. (bits(3), bits('m), bits('m), bits('m * 2)) -> bits('m * 2)
+function fp_widen_or_bf16_nmuladd(rm_3b, op1, op2, opadd) =
+  fp_nmuladd(rm_3b, fp_widen_or_bf16(op1), fp_widen_or_bf16(op2), opadd)
+
+val fp_widen_or_bf16_mulsub : forall 'm, 'm in {16, 32}. (bits(3), bits('m), bits('m), bits('m * 2)) -> bits('m * 2)
+function fp_widen_or_bf16_mulsub(rm_3b, op1, op2, opsub) =
+  fp_mulsub(rm_3b, fp_widen_or_bf16(op1), fp_widen_or_bf16(op2), opsub)
+
+val fp_widen_or_bf16_nmulsub : forall 'm, 'm in {16, 32}. (bits(3), bits('m), bits('m), bits('m * 2)) -> bits('m * 2)
+function fp_widen_or_bf16_nmulsub(rm_3b, op1, op2, opsub) =
+  fp_nmulsub(rm_3b, fp_widen_or_bf16(op1), fp_widen_or_bf16(op2), opsub)
 
 // Floating point functions without softfloat support
 function riscv_f16ToI16(rm : bits_rm, v : bits_H) -> (bits_fflags, bits(16)) = {
