@@ -16,6 +16,9 @@
     (e.g. Linux boot time reduced by up to ~50%). Off by default to keep
     incremental builds fast, enabled in CI and release builds.
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1711 : A reserved instruction encoding was decoded as `add.uw`.
+
 # Release notes for version 0.11
 
 - Updates to the [configuration file](../config/config.json.in):
