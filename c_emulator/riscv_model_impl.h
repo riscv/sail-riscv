@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 #include <random>
 #include <vector>
 
@@ -36,6 +37,11 @@ public:
   void set_config_use_abi_names(bool on);
 
   void set_config_print_step(bool on);
+
+  // initialization
+  void init_platform_constants();
+  void init_sail(uint64_t entry, const char *config_file, const std::optional<uint64_t> &htif_tohost_address);
+  void reinit_sail(uint64_t entry, const char *config_file, const std::optional<uint64_t> &htif_tohost_address);
 
   void print_current_exception();
 

@@ -419,34 +419,6 @@ void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
   }
 }
 
-void init_platform_constants(ModelImpl &model) {
-  model.set_reservation_set_size_exp(get_config_uint64({"platform", "reservation", "reservation_set_size_exp"}));
-  model.set_reservation_require_exact_addr_match(
-    get_config_bool({"platform", "reservation", "require_exact_reservation_addr"})
-  );
-  model.set_reservation_invalidate_on_same_hart_store(
-    get_config_bool({"platform", "reservation", "invalidate_on_same_hart_store"})
-  );
-}
-
-void init_sail(ModelImpl &model, uint64_t elf_entry, const char *config_file) {
-  // zset_pc_reset_address must be called before zinit_model
-  // because reset happens inside init_model().
-  model.zset_pc_reset_address(elf_entry);
-  if (htif_tohost_address.has_value()) {
-    model.zenable_htif(*htif_tohost_address);
-  }
-  model.zinit_model(config_file != nullptr ? config_file : "");
-  model.zinit_boot_requirements(UNIT);
-}
-
-/* reinitialize to clear state and memory, typically across tests runs */
-void reinit_sail(ModelImpl &model, uint64_t elf_entry, const char *config_file) {
-  model.model_fini();
-  model.model_init();
-  init_sail(model, elf_entry, config_file);
-}
-
 void write_signature(const std::string &file, unsigned signature_granularity) {
   if (mem_sig_start >= mem_sig_end) {
     fprintf(
@@ -652,31 +624,34 @@ void init_logs(const CLIOptions &opts) {
 #endif
 }
 
-int inner_main(int argc, char **argv) {
+// Initialization result used during startup.
+enum class InitResult {
+  ExitFailure,
+  ExitSuccess,
+  Continue,
+};
 
-  CLIOptions opts = parse_cli(argc, argv);
-
-  ModelImpl model;
-
+// Processes options that don't need an initialized model and gets the
+// json configuration string; returns whether to continue with model
+// initialization.
+InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
   if (opts.do_print_version) {
     std::cout << version_info::release_version << std::endl;
-    return EXIT_SUCCESS;
+    return InitResult::ExitSuccess;
   }
   if (opts.do_print_build_info) {
     print_build_info();
-    return EXIT_SUCCESS;
+    return InitResult::ExitSuccess;
   }
   if (opts.do_print_default_config) {
     printf("%s", opts.use_rv32_default ? get_default_rv32_config() : get_default_config());
-    return EXIT_SUCCESS;
+    return InitResult::ExitSuccess;
   }
   if (opts.do_print_config_schema) {
     printf("%s", get_config_schema());
-    return EXIT_SUCCESS;
+    return InitResult::ExitSuccess;
   }
-  if (opts.rvfi_dii_port != 0) {
-    rvfi.emplace(opts.rvfi_dii_port, model);
-  }
+
   if (opts.do_show_times) {
     fprintf(stderr, "will show execution times on completion.\n");
   }
@@ -689,31 +664,10 @@ int inner_main(int argc, char **argv) {
   if (opts.signature_granularity != DEFAULT_SIGNATURE_GRANULARITY) {
     fprintf(stderr, "setting signature-granularity to %d bytes\n", opts.signature_granularity);
   }
-  if (opts.config_enable_experimental_extensions) {
-    fprintf(stderr, "enabling unratified extensions.\n");
-    model.set_enable_experimental_extensions(true);
-  }
   if (!opts.trace_log_path.empty()) {
     fprintf(stderr, "using %s for trace output.\n", opts.trace_log_path.c_str());
   }
 
-  model.set_config_print_instr(opts.config_print_instr);
-  model.set_config_print_clint(opts.config_print_clint);
-  model.set_config_print_exception(opts.config_print_exception);
-  model.set_config_print_interrupt(opts.config_print_interrupt);
-  model.set_config_print_htif(opts.config_print_htif);
-  model.set_config_print_pma(opts.config_print_pma);
-  model.set_config_rvfi(rvfi.has_value());
-  model.set_config_use_abi_names(opts.config_use_abi_names);
-
-  model.set_config_print_step(opts.config_print_step);
-
-  traploop_detector loop_detector;
-  if (!opts.disable_trap_loop_detection) {
-    model.register_callback(&loop_detector);
-  }
-
-  std::string config_json_string;
   if (!opts.config_file.empty()) {
     config_json_string = read_file_to_string(opts.config_file);
   } else {
@@ -744,11 +698,39 @@ int inner_main(int argc, char **argv) {
   }
   validate_config_schema(config_json, config_source_desc);
 
+  return InitResult::Continue;
+}
+
+// Configures the model, validates the configuration, processes
+// options requiring a configured model and returns whether to continue with
+// model simulation.
+InitResult preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &config_json_string) {
+  if (opts.rvfi_dii_port != 0) {
+    rvfi.emplace(opts.rvfi_dii_port, model);
+  }
+
+  if (opts.config_enable_experimental_extensions) {
+    fprintf(stderr, "enabling unratified extensions.\n");
+    model.set_enable_experimental_extensions(true);
+  }
+
   // Initialize the model.
+
+  model.set_config_print_instr(opts.config_print_instr);
+  model.set_config_print_clint(opts.config_print_clint);
+  model.set_config_print_exception(opts.config_print_exception);
+  model.set_config_print_interrupt(opts.config_print_interrupt);
+  model.set_config_print_htif(opts.config_print_htif);
+  model.set_config_print_pma(opts.config_print_pma);
+  model.set_config_rvfi(rvfi.has_value());
+  model.set_config_use_abi_names(opts.config_use_abi_names);
+
+  model.set_config_print_step(opts.config_print_step);
+
   sail_config_set_string(config_json_string.c_str());
 
   // Initialize platform.
-  init_platform_constants(model);
+  model.init_platform_constants();
 
   model.model_init();
 
@@ -763,7 +745,7 @@ int inner_main(int argc, char **argv) {
       } else {
         fprintf(stderr, "Configuration in %s is %s.\n", opts.config_file.c_str(), s);
       }
-      return config_is_valid ? EXIT_SUCCESS : EXIT_FAILURE;
+      return config_is_valid ? InitResult::ExitSuccess : InitResult::ExitFailure;
     }
   }
 
@@ -771,33 +753,25 @@ int inner_main(int argc, char **argv) {
   // is validated above.
   if (opts.do_print_dts) {
     print_dts(model);
-    return EXIT_SUCCESS;
+    return InitResult::ExitSuccess;
   }
   if (opts.do_print_isa) {
     print_isa(model);
-    return EXIT_SUCCESS;
+    return InitResult::ExitSuccess;
   }
 
   // If we get here, we need to have ELF files to run (except in RVFI mode).
   if (opts.elfs.empty() && !rvfi.has_value()) {
     fprintf(stderr, "No elf file provided.\n");
-    return EXIT_FAILURE;
+    return InitResult::ExitFailure;
   }
 
   init_logs(opts);
-  log_callbacks log_cbs(
-    opts.config_print_gpr,
-    opts.config_print_fpr,
-    opts.config_print_vreg,
-    opts.config_print_csr,
-    opts.config_print_mem_access,
-    opts.config_print_ptw,
-    opts.config_print_tlb,
-    opts.config_use_abi_names,
-    trace_log
-  );
-  model.register_callback(&log_cbs);
 
+  return InitResult::Continue;
+}
+
+uint64_t init_model(CLIOptions &opts, ModelImpl &model) {
   init_start = steady_clock::now();
 
   if (rvfi.has_value()) {
@@ -823,19 +797,70 @@ int inner_main(int argc, char **argv) {
     (void)load_sail(model, *it, /*main_file=*/false);
   }
 
-  init_sail(model, entry, opts.config_file.c_str());
+  model.init_sail(entry, opts.config_file.c_str(), htif_tohost_address);
 
   init_end = steady_clock::now();
+
+  return entry;
+}
+
+void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry) {
+  traploop_detector loop_detector;
+  if (!opts.disable_trap_loop_detection) {
+    model.register_callback(&loop_detector);
+  }
+
+  log_callbacks log_cbs(
+    opts.config_print_gpr,
+    opts.config_print_fpr,
+    opts.config_print_vreg,
+    opts.config_print_csr,
+    opts.config_print_mem_access,
+    opts.config_print_ptw,
+    opts.config_print_tlb,
+    opts.config_use_abi_names,
+    trace_log
+  );
+  model.register_callback(&log_cbs);
 
   do {
     run_sail(model, opts, loop_detector);
     // `run_sail` only returns in the case of rvfi.
     if (rvfi) {
       /* Reset for next test */
-      reinit_sail(model, entry, opts.config_file.c_str());
+      model.reinit_sail(entry, opts.config_file.c_str(), htif_tohost_address);
       loop_detector.reset();
     }
   } while (rvfi);
+}
+
+int inner_main(int argc, char **argv) {
+
+  CLIOptions opts = parse_cli(argc, argv);
+
+  std::string config_json_string;
+  switch (preinit_args(opts, config_json_string)) {
+  case InitResult::ExitSuccess:
+    return EXIT_SUCCESS;
+  case InitResult::ExitFailure:
+    return EXIT_FAILURE;
+  case InitResult::Continue:
+    break;
+  }
+
+  ModelImpl model;
+  switch (preinit_model(opts, model, config_json_string)) {
+  case InitResult::ExitSuccess:
+    return EXIT_SUCCESS;
+  case InitResult::ExitFailure:
+    return EXIT_FAILURE;
+  case InitResult::Continue:
+    break;
+  }
+
+  uint64_t entry = init_model(opts, model);
+
+  run_model(opts, model, entry);
 
   model.model_fini();
   flush_logs();
