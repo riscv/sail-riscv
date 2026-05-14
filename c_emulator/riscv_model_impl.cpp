@@ -8,13 +8,6 @@
 #include "riscv_callbacks_if.h"
 #include "symbol_table.h"
 
-int term_fd = 1; // set during startup
-void plat_term_write_impl(char c) {
-  if (write(term_fd, &c, sizeof(c)) < 0) {
-    fprintf(stderr, "Unable to write to terminal!\n");
-  }
-}
-
 void ModelImpl::register_callback(callbacks_if *cb) {
   if (std::find(m_callbacks.begin(), m_callbacks.end(), cb) == m_callbacks.end()) {
     m_callbacks.push_back(cb);
@@ -258,7 +251,10 @@ bool ModelImpl::valid_reservation(unit) {
 }
 
 unit ModelImpl::plat_term_write(mach_bits s) {
-  plat_term_write_impl(static_cast<char>(s));
+  char c = static_cast<char>(s);
+  if (write(m_term_fd, &c, sizeof(c)) < 0) {
+    fprintf(stderr, "Unable to write to terminal!\n");
+  }
   return UNIT;
 }
 
@@ -363,6 +359,10 @@ void ModelImpl::set_config_print_step(bool on) {
 
 void ModelImpl::set_elf_symbols(std::map<uint64_t, std::string> &&symbols) {
   m_symbols = std::move(symbols);
+}
+
+void ModelImpl::set_term_fd(int fd) {
+  m_term_fd = fd;
 }
 
 void ModelImpl::init_platform_constants() {

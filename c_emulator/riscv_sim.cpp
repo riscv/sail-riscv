@@ -56,6 +56,7 @@ struct elf_info {
 
 struct run_info {
   std::optional<rvfi_handler> rvfi;
+  int term_fd = 1;
   steady_clock::time_point init_start;
   steady_clock::time_point init_end;
   uint64_t total_insns = 0;
@@ -609,10 +610,10 @@ void run_sail(
   finish(model, opts, elf_info, run_info);
 }
 
-void init_logs(const CLIOptions &opts) {
+void init_logs(const CLIOptions &opts, run_info &run_info) {
   if (!opts.term_log.empty() &&
-      (term_fd = open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) <
-        0) {
+      (run_info.term_fd =
+         open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
@@ -779,7 +780,7 @@ InitResult preinit_model(
     return InitResult::ExitFailure;
   }
 
-  init_logs(opts);
+  init_logs(opts, run_info);
 
   return InitResult::Continue;
 }
@@ -793,6 +794,7 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
     }
     model.register_callback(&rvfi_cbs);
   }
+  model.set_term_fd(run_info.term_fd);
 
   if (!opts.dtb_file.empty()) {
     fprintf(stderr, "using %s as DTB file.\n", opts.dtb_file.c_str());
@@ -811,8 +813,8 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
     (void)load_sail(model, *it, /*main_file=*/false, elf_info);
   }
 
-  model.init_sail(entry, opts.config_file.c_str(), elf_info.htif_tohost_address);
   model.set_elf_symbols(std::move(elf_info.symbols));
+  model.init_sail(entry, opts.config_file.c_str(), elf_info.htif_tohost_address);
 
   run_info.init_end = steady_clock::now();
 
