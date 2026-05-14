@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <map>
 #include <optional>
 #include <random>
 #include <vector>
@@ -10,8 +11,6 @@
 #include "sail_riscv_model.h"
 
 extern FILE *trace_log;
-extern int term_fd;
-void plat_term_write_impl(char c);
 
 // Model wrapped with an implementation of its platform callbacks.
 class ModelImpl final : public hart::Model {
@@ -33,10 +32,13 @@ public:
   void set_config_print_interrupt(bool on);
   void set_config_print_htif(bool on);
   void set_config_print_pma(bool on);
+  void set_config_print_step(bool on);
+
   void set_config_rvfi(bool on);
   void set_config_use_abi_names(bool on);
 
-  void set_config_print_step(bool on);
+  void set_elf_symbols(std::map<uint64_t, std::string> symbols);
+  void set_term_fd(int fd);
 
   // initialization
   void init_platform_constants();
@@ -116,6 +118,9 @@ private:
   bool m_config_use_abi_names = false;
 
   bool m_config_print_step = false;
+
+  std::map<uint64_t, std::string> m_symbols;
+  int m_term_fd = 1;
 
   // TODO: Probably better with std::shared_ptr<callbacks_if>.
   std::vector<callbacks_if *> m_callbacks;

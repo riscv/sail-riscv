@@ -44,20 +44,23 @@ using std::chrono::steady_clock;
 
 namespace {
 
-std::optional<rvfi_handler> rvfi;
-
-// The address of the HTIF tohost port, if it is enabled.
-std::optional<uint64_t> htif_tohost_address;
-
 rvfi_callbacks rvfi_cbs;
 
-uint64_t mem_sig_start = 0;
-uint64_t mem_sig_end = 0;
+struct elf_info {
+  // The address of the HTIF tohost port, if it is enabled.
+  std::optional<uint64_t> htif_tohost_address;
+  uint64_t mem_sig_start = 0;
+  uint64_t mem_sig_end = 0;
+  std::map<uint64_t, std::string> symbols;
+};
 
-steady_clock::time_point init_start;
-steady_clock::time_point init_end;
-
-uint64_t total_insns = 0;
+struct run_info {
+  std::optional<rvfi_handler> rvfi;
+  int term_fd = 1;
+  steady_clock::time_point init_start;
+  steady_clock::time_point init_end;
+  uint64_t total_insns = 0;
+};
 
 } // namespace
 
@@ -326,7 +329,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
   return opts;
 }
 
-uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file) {
+uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file, elf_info &elf_info) {
   ELF elf = ELF::open(filename);
 
   switch (elf.architecture()) {
@@ -360,7 +363,7 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
   // If multiple symbols from different ELF files have the same value the first
   // one wins.
   const auto reversed_symbols = reverse_symbol_table(symbols);
-  g_symbols.insert(reversed_symbols.begin(), reversed_symbols.end());
+  elf_info.symbols.insert(reversed_symbols.begin(), reversed_symbols.end());
 
   if (main_file) {
     // Only scan for test-signature/htif symbols in the main ELF file.
@@ -368,21 +371,21 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
     const auto &tohost = symbols.find("tohost");
     if (tohost == symbols.end()) {
       fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
-      htif_tohost_address = std::nullopt;
+      elf_info.htif_tohost_address = std::nullopt;
     } else {
-      htif_tohost_address = tohost->second;
-      fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", *htif_tohost_address);
+      elf_info.htif_tohost_address = tohost->second;
+      fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", *elf_info.htif_tohost_address);
     }
     // Locate test-signature locations if any.
     const auto &begin_sig = symbols.find("begin_signature");
     if (begin_sig != symbols.end()) {
       fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig->second);
-      mem_sig_start = begin_sig->second;
+      elf_info.mem_sig_start = begin_sig->second;
     }
     const auto &end_sig = symbols.find("end_signature");
     if (end_sig != symbols.end()) {
       fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig->second);
-      mem_sig_end = end_sig->second;
+      elf_info.mem_sig_end = end_sig->second;
     }
   }
 
@@ -419,13 +422,13 @@ void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
   }
 }
 
-void write_signature(const std::string &file, unsigned signature_granularity) {
-  if (mem_sig_start >= mem_sig_end) {
+void write_signature(const std::string &file, unsigned signature_granularity, const elf_info &elf_info) {
+  if (elf_info.mem_sig_start >= elf_info.mem_sig_end) {
     fprintf(
       stderr,
       "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
-      mem_sig_start,
-      mem_sig_end,
+      elf_info.mem_sig_start,
+      elf_info.mem_sig_end,
       file.c_str()
     );
     return;
@@ -436,7 +439,7 @@ void write_signature(const std::string &file, unsigned signature_granularity) {
     return;
   }
   /* write out words depending on signature granularity in signature area */
-  for (uint64_t addr = mem_sig_start; addr < mem_sig_end; addr += signature_granularity) {
+  for (uint64_t addr = elf_info.mem_sig_start; addr < elf_info.mem_sig_end; addr += signature_granularity) {
     /* most-significant byte first */
     for (int i = signature_granularity - 1; i >= 0; i--) {
       uint8_t byte = (uint8_t)read_mem(addr + i);
@@ -459,10 +462,10 @@ void close_logs() {
   }
 }
 
-void finish(ModelImpl &model, const CLIOptions &opts) {
+void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, const run_info &run_info) {
   // Don't write a signature if there was an internal Sail exception.
   if (!model.have_exception && !opts.sig_file.empty()) {
-    write_signature(opts.sig_file, opts.signature_granularity);
+    write_signature(opts.sig_file, opts.signature_granularity, elf_info);
   }
 
   // `model_fini()` exits with failure if there was a Sail exception.
@@ -470,12 +473,12 @@ void finish(ModelImpl &model, const CLIOptions &opts) {
 
   if (opts.do_show_times) {
     auto run_end = steady_clock::now();
-    uint64_t init_msecs = duration_cast<milliseconds>(init_end - init_start).count();
-    uint64_t exec_msecs = duration_cast<milliseconds>(run_end - init_end).count();
-    uint64_t kips = total_insns / exec_msecs;
+    uint64_t init_msecs = duration_cast<milliseconds>(run_info.init_end - run_info.init_start).count();
+    uint64_t exec_msecs = duration_cast<milliseconds>(run_end - run_info.init_end).count();
+    uint64_t kips = run_info.total_insns / exec_msecs;
     fprintf(stderr, "Initialization:   %" PRIu64 " ms\n", init_msecs);
     fprintf(stderr, "Execution:        %" PRIu64 " ms\n", exec_msecs);
-    fprintf(stderr, "Instructions:     %" PRIu64 "\n", total_insns);
+    fprintf(stderr, "Instructions:     %" PRIu64 "\n", run_info.total_insns);
     fprintf(stderr, "Performance:      %" PRIu64 " kIPS\n", kips);
   }
   close_logs();
@@ -488,7 +491,13 @@ void flush_logs() {
   fflush(trace_log);
 }
 
-void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_detector) {
+void run_sail(
+  ModelImpl &model,
+  const CLIOptions &opts,
+  traploop_detector &loop_detector,
+  const elf_info &elf_info,
+  run_info &run_info
+) {
   bool is_waiting = false;
   // The emulator tick increments time by 1 at every step, so the number
   // of steps to wait is equal to the needed increment in the time CSR.
@@ -503,13 +512,13 @@ void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_
 
   auto interval_start = steady_clock::now();
 
-  while (!model.zhtif_done && (opts.insn_limit == 0 || total_insns < opts.insn_limit)) {
-    if (rvfi.has_value()) {
-      switch (rvfi->pre_step(opts.config_print_rvfi)) {
+  while (!model.zhtif_done && (opts.insn_limit == 0 || run_info.total_insns < opts.insn_limit)) {
+    if (run_info.rvfi.has_value()) {
+      switch (run_info.rvfi->pre_step(opts.config_print_rvfi)) {
       case RVFI_prestep_continue:
         continue;
       case RVFI_prestep_eof:
-        rvfi = std::nullopt;
+        run_info.rvfi = std::nullopt;
         return;
       case RVFI_prestep_end_trace:
         return;
@@ -534,8 +543,8 @@ void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_
       if (opts.config_print_instr) {
         flush_logs();
       }
-      if (rvfi) {
-        rvfi->send_trace(opts.config_print_rvfi);
+      if (run_info.rvfi) {
+        run_info.rvfi->send_trace(opts.config_print_rvfi);
       }
       if (is_waiting) {
         if (wait_steps_remaining == 0) {
@@ -556,10 +565,10 @@ void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_
       }
       step_no++;
       insn_cnt++;
-      total_insns++;
+      run_info.total_insns++;
     }
 
-    if (opts.do_show_times && (total_insns & 0xfffff) == 0) {
+    if (opts.do_show_times && (run_info.total_insns & 0xfffff) == 0) {
       const auto now = steady_clock::now();
       const auto interval = now - interval_start;
       interval_start = now;
@@ -598,13 +607,13 @@ void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_
 
   // This is reached if there is a Sail exception, HTIF has indicated
   // successful completion, or the instruction limit has been reached.
-  finish(model, opts);
+  finish(model, opts, elf_info, run_info);
 }
 
-void init_logs(const CLIOptions &opts) {
+void init_logs(const CLIOptions &opts, run_info &run_info) {
   if (!opts.term_log.empty() &&
-      (term_fd = open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) <
-        0) {
+      (run_info.term_fd =
+         open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
@@ -704,9 +713,14 @@ InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
 // Configures the model, validates the configuration, processes
 // options requiring a configured model and returns whether to continue with
 // model simulation.
-InitResult preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &config_json_string) {
+InitResult preinit_model(
+  CLIOptions &opts,
+  ModelImpl &model,
+  const std::string &config_json_string,
+  run_info &run_info
+) {
   if (opts.rvfi_dii_port != 0) {
-    rvfi.emplace(opts.rvfi_dii_port, model);
+    run_info.rvfi.emplace(opts.rvfi_dii_port, model);
   }
 
   if (opts.config_enable_experimental_extensions) {
@@ -722,7 +736,7 @@ InitResult preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &
   model.set_config_print_interrupt(opts.config_print_interrupt);
   model.set_config_print_htif(opts.config_print_htif);
   model.set_config_print_pma(opts.config_print_pma);
-  model.set_config_rvfi(rvfi.has_value());
+  model.set_config_rvfi(run_info.rvfi.has_value());
   model.set_config_use_abi_names(opts.config_use_abi_names);
 
   model.set_config_print_step(opts.config_print_step);
@@ -761,50 +775,53 @@ InitResult preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &
   }
 
   // If we get here, we need to have ELF files to run (except in RVFI mode).
-  if (opts.elfs.empty() && !rvfi.has_value()) {
+  if (opts.elfs.empty() && !run_info.rvfi.has_value()) {
     fprintf(stderr, "No elf file provided.\n");
     return InitResult::ExitFailure;
   }
 
-  init_logs(opts);
+  init_logs(opts, run_info);
 
   return InitResult::Continue;
 }
 
-uint64_t init_model(CLIOptions &opts, ModelImpl &model) {
-  init_start = steady_clock::now();
+uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_info &run_info) {
+  run_info.init_start = steady_clock::now();
 
-  if (rvfi.has_value()) {
-    if (!rvfi->setup_socket(opts.config_print_rvfi)) {
+  if (run_info.rvfi.has_value()) {
+    if (!run_info.rvfi->setup_socket(opts.config_print_rvfi)) {
       return 1;
     }
     model.register_callback(&rvfi_cbs);
   }
+  model.set_term_fd(run_info.term_fd);
 
   if (!opts.dtb_file.empty()) {
     fprintf(stderr, "using %s as DTB file.\n", opts.dtb_file.c_str());
     write_dtb_to_rom(model, read_file(opts.dtb_file));
   }
 
-  uint64_t entry = rvfi.has_value() ? rvfi->get_entry() : load_sail(model, opts.elfs[0], /*main_file=*/true);
+  uint64_t entry = run_info.rvfi.has_value() ? run_info.rvfi->get_entry()
+                                             : load_sail(model, opts.elfs[0], /*main_file=*/true, elf_info);
 
   fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
 
   // Load any additional ELF files into memory. If RVFI was NOT used skip
   // the first one because it was loaded above.
-  for (auto it = opts.elfs.cbegin() + (rvfi.has_value() ? 0 : 1); it != opts.elfs.cend(); it++) {
+  for (auto it = opts.elfs.cbegin() + (run_info.rvfi.has_value() ? 0 : 1); it != opts.elfs.cend(); it++) {
     fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
-    (void)load_sail(model, *it, /*main_file=*/false);
+    (void)load_sail(model, *it, /*main_file=*/false, elf_info);
   }
 
-  model.init_sail(entry, opts.config_file.c_str(), htif_tohost_address);
+  model.set_elf_symbols(std::move(elf_info.symbols));
+  model.init_sail(entry, opts.config_file.c_str(), elf_info.htif_tohost_address);
 
-  init_end = steady_clock::now();
+  run_info.init_end = steady_clock::now();
 
   return entry;
 }
 
-void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry) {
+void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_info &elf_info, run_info &run_info) {
   traploop_detector loop_detector;
   if (!opts.disable_trap_loop_detection) {
     model.register_callback(&loop_detector);
@@ -824,14 +841,14 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry) {
   model.register_callback(&log_cbs);
 
   do {
-    run_sail(model, opts, loop_detector);
+    run_sail(model, opts, loop_detector, elf_info, run_info);
     // `run_sail` only returns in the case of rvfi.
-    if (rvfi) {
+    if (run_info.rvfi) {
       /* Reset for next test */
-      model.reinit_sail(entry, opts.config_file.c_str(), htif_tohost_address);
+      model.reinit_sail(entry, opts.config_file.c_str(), elf_info.htif_tohost_address);
       loop_detector.reset();
     }
-  } while (rvfi);
+  } while (run_info.rvfi);
 }
 
 int inner_main(int argc, char **argv) {
@@ -849,7 +866,8 @@ int inner_main(int argc, char **argv) {
   }
 
   ModelImpl model;
-  switch (preinit_model(opts, model, config_json_string)) {
+  run_info run_info;
+  switch (preinit_model(opts, model, config_json_string, run_info)) {
   case InitResult::ExitSuccess:
     return EXIT_SUCCESS;
   case InitResult::ExitFailure:
@@ -858,9 +876,10 @@ int inner_main(int argc, char **argv) {
     break;
   }
 
-  uint64_t entry = init_model(opts, model);
+  elf_info elf_info;
+  uint64_t entry = init_model(opts, model, elf_info, run_info);
 
-  run_model(opts, model, entry);
+  run_model(opts, model, entry, elf_info, run_info);
 
   model.model_fini();
   flush_logs();

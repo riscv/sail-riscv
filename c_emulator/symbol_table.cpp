@@ -25,5 +25,3 @@ std::optional<std::pair<uint64_t, const std::string &>> symbolize_address(
   --it;
   return *it;
 }
-
-std::map<uint64_t, std::string> g_symbols;
