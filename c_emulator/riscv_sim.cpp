@@ -495,7 +495,7 @@ void run_sail(
   ModelImpl &model,
   const CLIOptions &opts,
   traploop_detector &loop_detector,
-  elf_info &elf_info,
+  const elf_info &elf_info,
   run_info &run_info
 ) {
   bool is_waiting = false;
@@ -821,7 +821,7 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
   return entry;
 }
 
-void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, elf_info &elf_info, run_info &run_info) {
+void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_info &elf_info, run_info &run_info) {
   traploop_detector loop_detector;
   if (!opts.disable_trap_loop_detection) {
     model.register_callback(&loop_detector);
