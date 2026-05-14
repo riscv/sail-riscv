@@ -100,11 +100,11 @@ function bf16_min(op1 : bits_BF16, op2 : bits_BF16) -> bits_BF16 = {
   let op2_f32 = bf16_to_f32_set_flags(op2);
   let (fflags, op1_lt_op2) = riscv_f32Lt_quiet(op1_f32, op2_f32);
   let result_val =
-    if f_is_NaN(op1_f32) & f_is_NaN(op2_f32) then canonical_NaN_BF16
-    else if f_is_NaN(op1_f32) then op2
-    else if f_is_NaN(op2_f32) then op1
-    else if f_is_neg_zero(op1_f32) & f_is_pos_zero(op2_f32) then op1
-    else if f_is_neg_zero(op2_f32) & f_is_pos_zero(op1_f32) then op2
+    if f_is_NaN_S(op1_f32) & f_is_NaN_S(op2_f32) then canonical_NaN_BF16
+    else if f_is_NaN_S(op1_f32) then op2
+    else if f_is_NaN_S(op2_f32) then op1
+    else if f_is_neg_zero_S(op1_f32) & f_is_pos_zero_S(op2_f32) then op1
+    else if f_is_neg_zero_S(op2_f32) & f_is_pos_zero_S(op1_f32) then op2
     else if op1_lt_op2 then op1
     else op2;
   accrue_fflags(fflags);
@@ -116,11 +116,11 @@ function bf16_max(op1 : bits_BF16, op2 : bits_BF16) -> bits_BF16 = {
   let op2_f32 = bf16_to_f32_set_flags(op2);
   let (fflags, op1_lt_op2) = riscv_f32Lt_quiet(op1_f32, op2_f32);
   let result_val =
-    if f_is_NaN(op1_f32) & f_is_NaN(op2_f32) then canonical_NaN_BF16
-    else if f_is_NaN(op1_f32) then op2
-    else if f_is_NaN(op2_f32) then op1
-    else if f_is_neg_zero(op1_f32) & f_is_pos_zero(op2_f32) then op2
-    else if f_is_neg_zero(op2_f32) & f_is_pos_zero(op1_f32) then op1
+    if f_is_NaN_S(op1_f32) & f_is_NaN_S(op2_f32) then canonical_NaN_BF16
+    else if f_is_NaN_S(op1_f32) then op2
+    else if f_is_NaN_S(op2_f32) then op1
+    else if f_is_neg_zero_S(op1_f32) & f_is_pos_zero_S(op2_f32) then op2
+    else if f_is_neg_zero_S(op2_f32) & f_is_pos_zero_S(op1_f32) then op1
     else if op1_lt_op2 then op2
     else op1;
   accrue_fflags(fflags);
