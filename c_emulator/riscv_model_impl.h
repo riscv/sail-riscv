@@ -37,7 +37,7 @@ public:
   void set_config_rvfi(bool on);
   void set_config_use_abi_names(bool on);
 
-  void set_elf_symbols(std::map<uint64_t, std::string> &&g_symbols);
+  void set_elf_symbols(std::map<uint64_t, std::string> g_symbols);
   void set_term_fd(int fd);
 
   // initialization

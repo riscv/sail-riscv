@@ -357,7 +357,7 @@ void ModelImpl::set_config_print_step(bool on) {
   m_config_print_step = on;
 }
 
-void ModelImpl::set_elf_symbols(std::map<uint64_t, std::string> &&symbols) {
+void ModelImpl::set_elf_symbols(std::map<uint64_t, std::string> symbols) {
   m_symbols = std::move(symbols);
 }
 
