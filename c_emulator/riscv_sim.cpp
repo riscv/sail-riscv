@@ -215,7 +215,9 @@ static CLIOptions parse_cli(int argc, char **argv) {
     ->allow_extra_args(false);
   app.add_option("--trace-output", opts.trace_log_path, "Trace output file")->option_text("<file>");
 
-  app.add_option("--signature-granularity", opts.signature_granularity, "Signature granularity")->option_text("<uint>");
+  app.add_option("--signature-granularity", opts.signature_granularity, "Signature granularity")
+    ->option_text("<uint>")
+    ->check(CLI::PositiveNumber);
   app.add_option("--rvfi-dii", opts.rvfi_dii_port, "RVFI DII port")
     ->check(CLI::Range(1, 65535))
     ->option_text("<int> (within [1 - 65535])");
@@ -475,11 +477,10 @@ void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, 
     auto run_end = steady_clock::now();
     uint64_t init_msecs = duration_cast<milliseconds>(run_info.init_end - run_info.init_start).count();
     uint64_t exec_msecs = duration_cast<milliseconds>(run_end - run_info.init_end).count();
-    uint64_t kips = run_info.total_insns / exec_msecs;
     fprintf(stderr, "Initialization:   %" PRIu64 " ms\n", init_msecs);
     fprintf(stderr, "Execution:        %" PRIu64 " ms\n", exec_msecs);
     fprintf(stderr, "Instructions:     %" PRIu64 "\n", run_info.total_insns);
-    fprintf(stderr, "Performance:      %" PRIu64 " kIPS\n", kips);
+    fprintf(stderr, "Performance:      %" PRIu64 " kIPS\n", exec_msecs == 0 ? 0 : run_info.total_insns / exec_msecs);
   }
   close_logs();
   exit(EXIT_SUCCESS);
