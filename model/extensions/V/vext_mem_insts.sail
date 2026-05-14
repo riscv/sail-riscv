@@ -366,7 +366,7 @@ mapping clause encdec = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
-function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop) = {
+function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   let EEW_index_pow = vlewidth_pow(width);
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
@@ -431,7 +431,7 @@ mapping clause encdec = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
-function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop) = {
+function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, _mop) = {
   let EEW_index_pow = vlewidth_pow(width);
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
