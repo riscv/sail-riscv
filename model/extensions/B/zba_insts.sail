@@ -38,7 +38,7 @@ mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, 0b00)
 // sh#add.uw
 mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, shamt)
   <-> 0b0010000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ shamt @ 0b0 @ encdec_reg(rd) @ 0b0111011
-  when currentlyEnabled(Ext_Zba) & xlen == 64
+  when currentlyEnabled(Ext_Zba) & xlen == 64 & shamt != 0b00
 
 mapping zba_rtypeuw_mnemonic : shamt_zba <-> string = {
   0b00 <-> "add.uw",

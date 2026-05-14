@@ -483,16 +483,28 @@ bitfield Mtvec : xlenbits = {
 register mtvec : Mtvec  // Trap Vector
 
 // PUBLIC: invoked from set_{ms}tvec() [exceptions/sys_exceptions.sail]
-function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
+function legalize_tvec(o : Mtvec, v : xlenbits, direct_alignment_exp : tvec_alignment, vectored_alignment_exp : tvec_alignment) -> Mtvec = {
   let v = Mk_Mtvec(v);
-  match trapVectorMode_of_bits(v[Mode]) {
+  // Legalize mode.
+  let v : Mtvec = match trapVectorMode_of_bits(v[Mode]) {
     TV_Direct => v,
     TV_Vector => v,
     _         => match xtvec_mode_reserved_behavior {
       Xtvec_Fatal => reserved_behavior("Tried to write a reserved value (" ^ dec_str(unsigned(v[Mode])) ^ ") to the MODE field of xtvec."),
       Xtvec_Ignore => [v with Mode = o[Mode]],
     },
-  }
+  };
+  // Legalize alignment.
+  let base_alignment : tvec_alignment = match trapVectorMode_of_bits(v[Mode]) {
+    TV_Direct   => direct_alignment_exp,
+    TV_Vector   => vectored_alignment_exp,
+    TV_Reserved => // This should never happen due to the check above.
+                   internal_error(__FILE__, __LINE__, "Reserved mode in xtvec."),
+  };
+  // v[Base] doesn't contain the lowest 2 bits, and hence is at least 4-byte aligned.
+  if base_alignment > 2
+  then [v with Base = [v[Base] with (base_alignment - 3) .. 0 = zeros()]]
+  else v;
 }
 
 bitfield Mcause : xlenbits = {

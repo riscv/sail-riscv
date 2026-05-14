@@ -38,6 +38,23 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
+    // The `{m,s}tvec.base_alignment` parameters control the alignment
+    // of the trap vector base for each mode.  The alignment is
+    // specified as the power of 2 of the desired byte alignment, and
+    // can range from a minimum of 2 upto a maximum of 24. If
+    // unaligned values are written to these CSRs, the lowest bits
+    // will be zeroed to respect the specified alignment.
+    "mtvec": {
+      "base_alignment": {
+        "direct" : 2,
+        "vectored" : 2
+      }
+    },
+    "stvec": {
+      "base_alignment": {
+        "vectored" : 2
+      }
+    },
     // These settings control whether the specified exceptions
     // cause information to be written into the appropriate
     // `xtval` registers.
