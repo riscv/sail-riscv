@@ -277,7 +277,7 @@ unit ModelImpl::print_log(const_sail_string s) {
 }
 
 unit ModelImpl::print_log_instr(const_sail_string s, uint64_t pc) {
-  auto maybe_symbol = symbolize_address(g_symbols, pc);
+  auto maybe_symbol = symbolize_address(m_symbols, pc);
   if (maybe_symbol.has_value()) {
     fprintf(trace_log, "%-80s    %s+%" PRIu64 "\n", s, maybe_symbol->second.c_str(), pc - maybe_symbol->first);
   } else {
@@ -359,6 +359,10 @@ void ModelImpl::set_config_use_abi_names(bool on) {
 
 void ModelImpl::set_config_print_step(bool on) {
   m_config_print_step = on;
+}
+
+void ModelImpl::set_elf_symbols(std::map<uint64_t, std::string> &&symbols) {
+  m_symbols = std::move(symbols);
 }
 
 void ModelImpl::init_platform_constants() {

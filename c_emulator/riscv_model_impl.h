@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <map>
 #include <optional>
 #include <random>
 #include <vector>
@@ -33,10 +34,12 @@ public:
   void set_config_print_interrupt(bool on);
   void set_config_print_htif(bool on);
   void set_config_print_pma(bool on);
+  void set_config_print_step(bool on);
+
   void set_config_rvfi(bool on);
   void set_config_use_abi_names(bool on);
 
-  void set_config_print_step(bool on);
+  void set_elf_symbols(std::map<uint64_t, std::string> &&g_symbols);
 
   // initialization
   void init_platform_constants();
@@ -116,6 +119,8 @@ private:
   bool m_config_use_abi_names = false;
 
   bool m_config_print_step = false;
+
+  std::map<uint64_t, std::string> m_symbols;
 
   // TODO: Probably better with std::shared_ptr<callbacks_if>.
   std::vector<callbacks_if *> m_callbacks;
