@@ -106,7 +106,7 @@ function clause execute VCPOP_M(vm, vs2, rd) = {
     Err(()) => return Illegal_Instruction()
   };
 
-  X(rd) = to_bits_unsafe(xlen, count_ones(mask & vs2_val));
+  X(rd) = to_bits(xlen, count_ones(mask & vs2_val));
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
@@ -138,9 +138,8 @@ function clause execute VFIRST_M(vm, vs2, rd) = {
   };
 
   let active = mask & vs2_val;
-  let index = if active == zeros() then -1 else count_trailing_zeros(active);
 
-  X(rd) = to_bits_unsafe(xlen, index);
+  X(rd) = if active == zeros() then ones() else to_bits(count_trailing_zeros(active));
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
