@@ -292,7 +292,7 @@ function loop () : unit -> unit = {
     if htif_done then {
       let exit_val = unsigned(htif_exit_code);
       if exit_val == 0 then print("SUCCESS")
-      else print_int("FAILURE: ", exit_val);
+      else print_string("FAILURE: ", dec_str(exit_val) ^ " (0x" ^ hex_bits_str(htif_exit_code) ^ ")");
     } else {
       // update time
       i = i + 1;

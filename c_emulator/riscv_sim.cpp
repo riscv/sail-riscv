@@ -601,7 +601,7 @@ void run_sail(ModelImpl &model, const CLIOptions &opts, traploop_detector &loop_
       if (model.zhtif_exit_code == 0) {
         fprintf(stdout, "SUCCESS\n");
       } else {
-        fprintf(stdout, "FAILURE: %" PRIi64 "\n", model.zhtif_exit_code);
+        fprintf(stdout, "FAILURE: %" PRIi64 " (0x%08" PRIx64 ")\n", model.zhtif_exit_code, (uint64_t)model.zhtif_exit_code);
         exit(EXIT_FAILURE);
       }
     }
