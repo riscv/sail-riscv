@@ -534,6 +534,10 @@ function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// PMP-based Memory Types Extension
+enum clause extension = Ext_Smpmpmt
+mapping clause extensionName = Ext_Smpmpmt <-> "smpmpmt"
+function clause hartSupports(Ext_Smpmpmt) = config extensions.Smpmpmt.supported
 // Machine-mode view of the state-enable extension
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
@@ -794,5 +798,6 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smpmpmt,
   Ext_Smstateen,
 ]
