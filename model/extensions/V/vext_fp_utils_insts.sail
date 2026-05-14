@@ -391,27 +391,20 @@ function fp_or_bf16_mul(rm_3b, op1, op2) = {
   }
 }
 
-val fp_or_bf16_min : forall 'm, 'm in {16, 32, 64}. (bits_rm, bits('m), bits('m)) -> bits('m)
-function fp_or_bf16_min(rm_3b, op1, op2) = {
+val fp_or_bf16_min : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_min(op1, op2) = {
   match 'm {
-    16 => if get_altfmt() then {
-            let (fflags, result_val) = riscv_f32ToBF16(rm_3b, fp_min(bf16_to_f32_set_flags(op1), bf16_to_f32_set_flags(op2)));
-            accrue_fflags(fflags);
-            result_val
-          } else fp_min(op1, op2),
+    16 => if get_altfmt() then bf16_min(op1, op2)
+           else fp_min(op1, op2),
     32 => fp_min(op1, op2),
     64 => fp_min(op1, op2)
   }
 }
 
-val fp_or_bf16_max : forall 'm, 'm in {16, 32, 64}. (bits_rm, bits('m), bits('m)) -> bits('m)
-function fp_or_bf16_max(rm_3b, op1, op2) = {
+val fp_or_bf16_max : forall 'm, 'm in {16, 32, 64}. (bits('m), bits('m)) -> bits('m)
+function fp_or_bf16_max(op1, op2) = {
   match 'm {
-    16 => if get_altfmt() then {
-            let (fflags, result_val) = riscv_f32ToBF16(rm_3b, fp_max(bf16_to_f32_set_flags(op1), bf16_to_f32_set_flags(op2)));
-            accrue_fflags(fflags);
-            result_val
-          } else fp_max(op1, op2),
+    16 => if get_altfmt() then bf16_max(op1, op2) else fp_max(op1, op2),
     32 => fp_max(op1, op2),
     64 => fp_max(op1, op2)
   }

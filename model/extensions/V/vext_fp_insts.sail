@@ -70,8 +70,8 @@ function clause execute FVVTYPE(funct6, vm, vs2, vs1, vd) = {
       result[i] = match funct6 {
         FVV_VADD   => fp_or_bf16_add(rm_3b, vs2_val[i], vs1_val[i]),
         FVV_VSUB   => fp_or_bf16_sub(rm_3b, vs2_val[i], vs1_val[i]),
-        FVV_VMIN   => fp_or_bf16_min(rm_3b, vs2_val[i], vs1_val[i]),
-        FVV_VMAX   => fp_or_bf16_max(rm_3b, vs2_val[i], vs1_val[i]),
+        FVV_VMIN   => fp_or_bf16_min(vs2_val[i], vs1_val[i]),
+        FVV_VMAX   => fp_or_bf16_max(vs2_val[i], vs1_val[i]),
         FVV_VMUL   => fp_or_bf16_mul(rm_3b, vs2_val[i], vs1_val[i]),
         FVV_VDIV   => if use_bf16 then return Illegal_Instruction() else fp_div(rm_3b, vs2_val[i], vs1_val[i]),
         FVV_VSGNJ  => [vs1_val[i]['m - 1]] @ vs2_val[i][('m - 2)..0],
@@ -915,10 +915,7 @@ function clause execute VFUNARY1(vm, vs2, vfunary1, vd) = {
                                 accrue_fflags(fflags_r | fflags_c);
                                 r16
                               },
-            FVV_VCLASS     => {
-                                let a32 = bf16_to_f32_set_flags(vs2_val[i]);
-                                zero_extend(float_class_onehot_bits(float_classify(a32)))
-                              }
+            FVV_VCLASS     =>   zero_extend(float_class_onehot_bits(bf16_classify(vs2_val[i])))
           }
         } else {
           match vfunary1 {
@@ -995,7 +992,8 @@ function clause execute VFMVFS(vs2, rd) = {
 
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, 0, vs2);
   match 'm {
-    16 => F_H(rd) = vs2_val[0],
+    16 => if get_altfmt() then F_BF16(rd) = vs2_val[0]
+          else F_H(rd) = vs2_val[0],
     32 => F_S(rd) = vs2_val[0],
     64 => F_D(rd) = vs2_val[0]
   };
@@ -1074,8 +1072,8 @@ function clause execute FVFTYPE(funct6, vm, vs2, rs1, vd) = {
         VF_VADD        => fp_or_bf16_add(rm_3b, vs2_val[i], rs1_val),
         VF_VSUB        => fp_or_bf16_sub(rm_3b, vs2_val[i], rs1_val),
         VF_VRSUB       => fp_or_bf16_sub(rm_3b, rs1_val, vs2_val[i]),
-        VF_VMIN        => fp_or_bf16_min(rm_3b, vs2_val[i], rs1_val),
-        VF_VMAX        => fp_or_bf16_max(rm_3b, vs2_val[i], rs1_val),
+        VF_VMIN        => fp_or_bf16_min(vs2_val[i], rs1_val),
+        VF_VMAX        => fp_or_bf16_max(vs2_val[i], rs1_val),
         VF_VMUL        => fp_or_bf16_mul(rm_3b, vs2_val[i], rs1_val),
         VF_VDIV        => if use_bf16 then return Illegal_Instruction() else fp_div(rm_3b, vs2_val[i], rs1_val),
         VF_VRDIV       => if use_bf16 then return Illegal_Instruction() else fp_div(rm_3b, rs1_val, vs2_val[i]),
