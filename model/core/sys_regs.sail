@@ -167,7 +167,7 @@ function have_nominal_privLevel(priv : nom_priv_bits) -> bool =
 bitfield Mstatus : bits(64) = {
   SD   : xlen - 1,
 
-  //MDT  : 42,
+  MDT  : 42,
   MPELP: 41,
 
   //MPV  : 39,
@@ -179,7 +179,7 @@ bitfield Mstatus : bits(64) = {
   SXL  : 35 .. 34,
   UXL  : 33 .. 32,
 
-  //SDT  : 24,
+  SDT  : 24,
   SPELP: 23,
   TSR  : 22,
   TW   : 21,
@@ -209,7 +209,7 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   let v = Mk_Mstatus(v);
 
   let o = [o with
-    // MDT = v[MDT],
+    MDT = if currentlyEnabled(Ext_Smdbltrp) then v[MDT] else 0b0,
     MPELP = if hartSupports(Ext_Zicfilp) then v[MPELP] else 0b0,
     // MPV = v[MPV],
     // GVA = v[GVA],
@@ -219,7 +219,7 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // We don't support dynamic changes to SXL and UXL.
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
-    // SDT = v[SDT],
+    SDT = if currentlyEnabled(Ext_Ssdbltrp) & currentlyEnabled(Ext_S) then v[SDT] else 0b0,
     SPELP = if hartSupports(Ext_Zicfilp) then v[SPELP] else 0b0,
     TSR = if currentlyEnabled(Ext_S) then v[TSR] else 0b0,
     TW = if currentlyEnabled(Ext_U) then v[TW] else 0b0,
@@ -242,8 +242,9 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     VS = if not(hartSupports(Ext_Zve32x)) then 0b00 else v[VS],
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
-    MIE = v[MIE],
-    SIE = if currentlyEnabled(Ext_S) then v[SIE] else 0b0,
+    // "When the MDT bit is set to 1 by an explicit CSR write, the MIE (Machine Interrupt Enable) bit is cleared to 0."
+    MIE = if not(currentlyEnabled(Ext_Smdbltrp) & v[MDT] == 0b1) then v[MIE] else 0b0,
+    SIE = if not(currentlyEnabled(Ext_Ssdbltrp) & v[SDT] == 0b1) & currentlyEnabled(Ext_S) then v[SIE] else 0b0,
   ];
 
   // Set dirty bit to OR of other status bits.
@@ -358,6 +359,8 @@ bitfield MEnvcfg : bits(64) = {
   PBMTE  : 62,
   // Svadu
   ADUE   : 61,
+  // Double Trap
+  DTE    : 59,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -406,6 +409,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
+    DTE = if hartSupports(Ext_Ssdbltrp) then v[DTE] else 0b0,
     ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
     PBMTE = if currentlyEnabled(Ext_Svpbmt) then v[PBMTE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
@@ -473,6 +477,8 @@ function is_fiom_active() -> bool = {
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }
 }
+
+function clause currentlyEnabled(Ext_Ssdbltrp) = menvcfg[DTE] == 0b1
 
 // registers for trap handling
 
@@ -555,18 +561,23 @@ function align_pc(addr : xlenbits) -> xlenbits = {
 // auxiliary exception registers
 
 register mtval    : xlenbits
+register mtval2   : xlenbits
 register mscratch : xlenbits
 
 mapping clause csr_name_map = 0x343  <-> "mtval"
+mapping clause csr_name_map = 0x34B  <-> "mtval2"
 mapping clause csr_name_map = 0x340  <-> "mscratch"
 
 function clause is_CSR_accessible(0x343, _, _) = true // mtval
+function clause is_CSR_accessible(0x34B, _, _) = hartSupports(Ext_H) | hartSupports(Ext_Smdbltrp) // mtval2
 function clause is_CSR_accessible(0x340, _, _) = true // mscratch
 
 function clause read_CSR(0x343) = mtval
+function clause read_CSR(0x34B) = mtval2
 function clause read_CSR(0x340) = mscratch
 
 function clause write_CSR(0x343, value) = { mtval = value; Ok(mtval) }
+function clause write_CSR(0x34B, value) = { mtval2 = value; Ok(mtval2) }
 function clause write_CSR(0x340, value) = { mscratch = value; Ok(mscratch) }
 
 // counters
@@ -676,7 +687,7 @@ bitfield Sstatus : bits(64) = {
   SD    : xlen - 1,
 
   UXL   : 33 .. 32,
-//  SDT   : 24,
+  SDT   : 24,
   SPELP : 23,
   MXR   : 19,
   SUM   : 18,
@@ -695,7 +706,8 @@ private function lower_mstatus(m : Mstatus) -> Sstatus = {
   [s with
     SD = m[SD],
     UXL = m[UXL],
-    //SDT = m[SDT],
+    // If Ssdbltrp is disabled via menvcfg[DTE] then status[SDT] is read-only zero.
+    SDT = if currentlyEnabled(Ext_Ssdbltrp) then m[SDT] else 0b0,
     SPELP = m[SPELP],
     MXR = m[MXR],
     SUM = m[SUM],
@@ -715,7 +727,7 @@ private function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   [m with
     SD = bool_to_bit(dirty),
     UXL = s[UXL],
-    //SDT = s[SDT],
+    SDT = s[SDT],
     SPELP = s[SPELP],
     MXR = s[MXR],
     SUM = s[SUM],
