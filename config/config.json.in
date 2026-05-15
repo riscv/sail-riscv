@@ -32,8 +32,8 @@
     // and `cycle`, `time` and `instret` registers, are read-only
     // zero. A set bit specifies that the corresponding bit of
     // `scounteren` is writable, otherwise the bit is read-only zero.
-    // If Sscounterenw is supported this must be a superset of
-    // `writable_hpm_counters`.
+    // If Sscounterenw is supported the top 29 bits must be a superset of
+    // the top 29 bits of `writable_hpm_counters`.
     "scounteren_writable_bits": {
       "len": 32,
       "value": "0xFFFF_FFFF"
