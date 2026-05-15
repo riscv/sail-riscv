@@ -409,6 +409,10 @@ private function check_required_sstvala_option(name : string, value : bool) -> b
 
 private function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
+  if (config extensions.Sspmpen.supported : bool) & not(config extensions.Sspmp.supported : bool) then {
+    valid = false;
+    print_endline("The Sspmpen extension is enabled but Sspmp is disabled: supporting Sspmpen requires Sspmp.");
+  };
   if (config extensions.Zcf.supported : bool) & xlen == 64 then {
     valid = false;
     print_endline("The Zcf extension is enabled: Zcf is not supported on RV64.");
