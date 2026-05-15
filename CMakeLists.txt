@@ -214,6 +214,12 @@ add_subdirectory("test")
 # Handwritten support files for provers
 add_subdirectory("handwritten_support")
 
+# Performance benchmarks (requires google_benchmark).
+option(BENCHMARKS "Build performance benchmarks." OFF)
+if (BENCHMARKS)
+    add_subdirectory("benchmarks")
+endif()
+
 # Convenience targets.
 add_custom_target(csim DEPENDS sail_riscv_sim)
 add_custom_target(check DEPENDS generated_model_rv)
