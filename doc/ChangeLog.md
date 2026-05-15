@@ -10,6 +10,9 @@
     to false to match previous behavior.
   - The alignment constraints of the bases of the `mtvec` and `stvec`
     CSRs can now be specified; see `base.{m,s}tvec.base_alignment`.
+  - Writable bits of the `mcounteren` CSR can now be specified;
+    see `base.mcounteren_writable_bits`. (This was previously controlled
+    by `base.writable_hpm_counters`, which was incorrect.)
 
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`

@@ -593,10 +593,12 @@ function clause is_CSR_accessible(0x106, _, _) = currentlyEnabled(Ext_S) // scou
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); Ok(zero_extend(scounteren.bits)) }
 
+// Which bits of `mcounteren` are writable.
+let sys_mcounteren_writable_bits : bits(32) = config base.mcounteren_writable_bits
+
 // mcounteren
 function legalize_mcounteren(_c : Counteren, v : xlenbits) -> Counteren = {
-  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
-  Mk_Counteren(v[31 .. 0] & supported_counters)
+  Mk_Counteren(v[31 .. 0] & sys_mcounteren_writable_bits)
 }
 
 register mcounteren : Counteren
