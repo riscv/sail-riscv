@@ -13,6 +13,9 @@
   - The `base.scounteren_writable_bits` option now does not ignore the
     lowest three bits, governing access to the `cycle`, `time` and
     `instret` CSRs from U-mode.
+  - Writable bits of the `mcounteren` CSR can now be specified;
+    see `base.mcounteren_writable_bits`. (This was previously controlled
+    by `base.writable_hpm_counters`, which was incorrect.)
 
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
