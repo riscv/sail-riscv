@@ -10,6 +10,9 @@
     to false to match previous behavior.
   - The alignment constraints of the bases of the `mtvec` and `stvec`
     CSRs can now be specified; see `base.{m,s}tvec.base_alignment`.
+  - The `base.scounteren_writable_bits` option now does not ignore the
+    lowest three bits, governing access to the `cycle`, `time` and
+    `instret` CSRs from U-mode.
 
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
