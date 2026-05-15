@@ -580,7 +580,7 @@ bitfield Counteren : bits(32) = {
 
 function clause currentlyEnabled(Ext_Sscounterenw) = hartSupports(Ext_Sscounterenw) & currentlyEnabled(Ext_S)
 
-// Which bits of `scounteren` are writable. Bits [2 .. 0] are ignored.
+// Which bits of `scounteren` are writable.
 let sys_scounteren_writable_bits : bits(32) = config base.scounteren_writable_bits
 
 // scounteren
