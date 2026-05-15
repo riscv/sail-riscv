@@ -85,6 +85,48 @@ function valid_reg_overlap(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_p
   } else true;
 }
 
+function valid_disjoint_reg_groups(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_pow_rd : int) -> bool = {
+  let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
+  let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
+  let rs_int = unsigned(vregidx_bits(rs));
+  let rd_int = unsigned(vregidx_bits(rd));
+
+  if rs_int % rs_group != 0 | rd_int % rd_group != 0
+  then return false;
+
+  rs_int + rs_group <= rd_int | rs_int >= rd_int + rd_group
+}
+
+// Check for valid overlaps between source register groups: overlaps
+// are not allowed if the EEWs are different for the two groups; a
+// mask register is considered to have EEW of 1. This also checks if
+// the register groups are valid.
+function valid_src_overlap(rs1 : vregidx, EEW_rs1 : nat, EMUL_pow_rs1 : int,
+                           rs2 : vregidx, EEW_rs2 : nat, EMUL_pow_rs2 : int) -> bool = {
+  let rs1_group = if EMUL_pow_rs1 > 0 then 2 ^ EMUL_pow_rs1 else 1;
+  let rs2_group = if EMUL_pow_rs2 > 0 then 2 ^ EMUL_pow_rs2 else 1;
+  let rs1_int = unsigned(vregidx_bits(rs1));
+  let rs2_int = unsigned(vregidx_bits(rs2));
+
+  if rs1_int % rs1_group != 0 | rs2_int % rs2_group != 0
+  then return false;
+
+  if EEW_rs1 == EEW_rs2 then return true;
+
+  rs1_int + rs1_group <= rs2_int | rs2_int + rs2_group <= rs1_int
+}
+
+// Check for valid overlaps between a source register group and the v0
+// mask register; this is a specialization of `valid_src_overlap` for
+// the mask register.
+// TODO: `EEW_rs` is always != 1, but this is unfortunately not
+// guaranteed by the `nat` type.  Once the type of `EEW_rs` is made
+// `sew_bitsize` or similar, the assert could be removed.
+function valid_vm_src_overlap(vm : bits(1), rs : vregidx, EEW_rs : nat) -> bool = {
+  assert(EEW_rs != 1);
+  vm != 0b0 | rs != zvreg
+}
+
 // Check for valid register grouping in vector segment load/store instructions:
 // The EMUL of load vd or store vs3 times the number of fields per segment
 // must not be larger than 8. (EMUL * NFIELDS <= 8)

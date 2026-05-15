@@ -25,7 +25,9 @@ function clause execute VCLMUL_VV(vm, vs2, vs1, vd) = {
   if illegal_normal(vd, vm) |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   let 'n = get_num_elem(LMUL_pow, SEW);
@@ -69,7 +71,8 @@ function clause execute VCLMUL_VX(vm, vs2, rs1, vd) = {
 
   if illegal_normal(vd, vm) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   let 'n = get_num_elem(LMUL_pow, SEW);
@@ -114,7 +117,9 @@ function clause execute VCLMULH_VV(vm, vs2, vs1, vd) = {
   if illegal_normal(vd, vm) |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   let 'n = get_num_elem(LMUL_pow, SEW);
@@ -158,7 +163,8 @@ function clause execute VCLMULH_VX(vm, vs2, rs1, vd) = {
 
   if illegal_normal(vd, vm) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   let 'n = get_num_elem(LMUL_pow, SEW);
