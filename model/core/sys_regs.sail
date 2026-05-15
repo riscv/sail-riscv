@@ -585,7 +585,7 @@ let sys_scounteren_writable_bits : bits(32) = config base.scounteren_writable_bi
 
 // scounteren
 private function legalize_scounteren(_c : Counteren, v : xlenbits) -> Counteren =
-  Mk_Counteren(v[31 .. 0] & (sys_scounteren_writable_bits[31 .. 3] @ 0b111))
+  Mk_Counteren(v[31 .. 0] & sys_scounteren_writable_bits)
 
 register scounteren : Counteren
 mapping clause csr_name_map = 0x106  <-> "scounteren"
