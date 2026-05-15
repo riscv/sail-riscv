@@ -320,6 +320,19 @@ extensions {
     }
   }
 
+  Zvqwdota8i {
+    requires core
+
+    Zvqwdota8i_types {
+      before sys
+      files extensions/Zvqwdota8i/zvqwdota8i_types.sail
+    }
+    Zvqwdota8i_insts {
+      requires sys, V, Zvqwdota8i_types
+      files extensions/Zvqwdota8i/zvqwdota8i_insts.sail
+    }
+  }
+
   // Control and Status Register (CSR) Instructions
   Zicsr {
     requires core

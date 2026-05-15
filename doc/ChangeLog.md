@@ -1,5 +1,13 @@
 # Release notes for the next version
 
+- The following unratified extensions have been added:
+  - Zvqwdota8i: vector quad-widening 8-bit integer dot-product
+    (`vqwdotau.vv`, `vqwdotas.vv`), from the proposed Zvdota family
+    (https://github.com/aswaterman/riscv-misc/blob/main/isa/ldot-bdot/ldot-bdot.adoc).
+    Initial implementation pins vs1 to unsigned (the spec's
+    `vtype.altfmt=0` case) until Zvfbfa
+    (https://github.com/riscv/sail-riscv/pull/1581) lands.
+
 - Updates to the [configuration file](../config/config.json.in):
   - The CLINT and simple interrupt generator can be marked as not
     supported for platforms that do not contain these MMIO devices;

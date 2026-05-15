@@ -350,6 +350,11 @@ function clause hartSupports(Ext_Zve64x) = sizeof(elen_exp) >= 6 & vector_suppor
 enum clause extension = Ext_Zvabd
 mapping clause extensionName = Ext_Zvabd <-> "zvabd"
 function clause hartSupports(Ext_Zvabd) = sys_enable_experimental_extensions() & config extensions.Zvabd.supported
+// Vector Quad-Widening 8-bit Integer Dot-Product (unratified, v0.2)
+// https://github.com/aswaterman/riscv-misc/blob/main/isa/ldot-bdot/ldot-bdot.adoc
+enum clause extension = Ext_Zvqwdota8i
+mapping clause extensionName = Ext_Zvqwdota8i <-> "zvqwdota8i"
+function clause hartSupports(Ext_Zvqwdota8i) = sys_enable_experimental_extensions() & config extensions.Zvqwdota8i.supported
 // Vector BF16 Converts
 enum clause extension = Ext_Zvfbfmin
 mapping clause extensionName = Ext_Zvfbfmin <-> "zvfbfmin"
@@ -728,6 +733,9 @@ let extensions_ordered_for_isa_string = [
 
   //Zvabd
   Ext_Zvabd,
+
+  //Zvqwdota8i
+  Ext_Zvqwdota8i,
 
   // Zvb
   Ext_Zvbb,
