@@ -27,6 +27,15 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
+    // The bits in this value control whether the corresponding bits
+    // of the `mcounteren` CSR that control access to HPM counters,
+    // and `cycle`, `time` and `instret` registers, are read-only
+    // zero. A set bit specifies that the corresponding bit of
+    // `mcounteren` is writable, otherwise the bit is read-only zero.
+    "mcounteren_writable_bits": {
+      "len": 32,
+      "value": "0xFFFF_FFFF"
+    },
     // The top 29 bits in this value control whether the
     // corresponding bits of the `scounteren` CSR that control HPM
     // counters are read-only zero. A set bit specifies that the
