@@ -76,6 +76,7 @@
   - Zicclsm
   - Ziccrse
   - Zicfiss
+  - Zcmt
   - Ssccptr
   - Sscounterenw
   - Svade

@@ -513,6 +513,9 @@
     "Zcmop": {
       "supported": true
     },
+    "Zcmt": {
+      "supported": false
+    },
     "Zba": {
       "supported": false
     },
