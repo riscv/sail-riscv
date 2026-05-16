@@ -82,16 +82,35 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   };
 
   if not(is_aligned_addr(vaddr, width)) then {
-    let exc : ExceptionType = match plat_misaligned_access.amo {
-      AccessFault        => E_SAMO_Access_Fault(),
-      AlignmentException => E_SAMO_Addr_Align(),
+    match plat_misaligned_exception(access, false) {
+      Some(AccessFault)        => return memory_exception(vaddr, E_SAMO_Access_Fault()),
+      Some(AlignmentException) => return memory_exception(vaddr, E_SAMO_Addr_Align()),
+      // Misaligned handling will be determined by applicable PMAs.
+      None()                   => (),
     };
-    return memory_exception(vaddr, exc)
   };
 
   let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Err(e, _) => return memory_exception(vaddr, e),
     Ok(addr, pbmt, _) => (addr, pbmt),
+  };
+
+  // For now, don't allow misaligned AMOs that cross a page
+  // boundary.  Most implementations are unlikely to support this case,
+  // and since the size of the MAG PMA is bounded by the 4K page size,
+  // these accesses cannot lie within a MAG anyway.
+  if not(is_access_within_page(vaddr, width)) then {
+    // Look up the PMA for the first page of the split-page access.
+    // If really needed, address translation could be done for both
+    // pages involved, but this should suffice for now.
+    let e : ExceptionType = match matching_pma_region(pma_regions, addr, width) {
+      None() => E_SAMO_Access_Fault(),
+      Some(struct { attributes, _ }) => match attributes.misaligned_exceptions.amo {
+        AccessFault        => E_SAMO_Access_Fault(),
+        AlignmentException => E_SAMO_Addr_Align(),
+      },
+    };
+    return memory_exception(vaddr, e);
   };
 
   // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of

@@ -87,6 +87,9 @@ struct PMAMisalignedExceptions = {
   amo        : misaligned_exception,
 }
 
+// The MAG size is restricted by the page size.
+type mag_size_exp = range(0, pagesize_bits)
+
 // Physical Memory Attributes for a region.
 struct PMA = {
   mem_type         : MemoryRegionType,
@@ -114,7 +117,9 @@ struct PMA = {
   supports_pte_read : bool,
   // Flags whether this memory supports hardware page table writes.
   supports_pte_write : bool,
-  // TODO: Misaligned Atomicity Granule PMA
+  // The size of the optional misaligned atomicity granule is 2^misaligned_atomicity_granule_exp.
+  // The value of 0 is used to indicate the attribute is absent.
+  misaligned_atomicity_granule_size_exp : mag_size_exp,
   // TODO: Memory Ordering PMA
 }
 
@@ -155,6 +160,44 @@ function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_paylo
     StoreConditional(p)    => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned store-conditional (" ^ mem_payload_name(p) ^ ")."),
     CacheAccess(_)         => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned cache-access."),
   }
+}
+
+private function is_mag_applicable_access(access : MemoryAccessType(mem_payload), width : nat) -> bool =
+  match access {
+    // loads/stores need to be XLEN bits or less
+    Load(Data)                          => width <= xlen_bytes,
+    Store(Data)                         => width <= xlen_bytes,
+    Load(Vector)                        => false,
+    Store(Vector)                       => false,
+    // not applicable to implicit accesses
+    Load(PageTableEntry)                => false,
+    Store(PageTableEntry)               => false,
+    // not in the base ISA
+    Load(ShadowStack)                   => false,
+    Store(ShadowStack)                  => false,
+    // AMOs
+    Atomic(_, Data, Data)               => true,
+    // treat like an AMO
+    Atomic(_, ShadowStack, ShadowStack) => true,
+
+    // other not applicable
+    InstructionFetch()                  => false,
+    LoadReserved(Data)                  => false,
+    StoreConditional(Data)              => false,
+    CacheAccess(_)                      => false,
+
+    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+  }
+
+// Check whether an access location is within a misaligned atomicity granule, if present.
+function within_pma_mag forall 'n, 0 < 'n <= max_mem_access. (pma : PMA, Physaddr(addr) : physaddr, width : int('n)) -> bool = {
+  let mag : mag_size_exp = pma.misaligned_atomicity_granule_size_exp;
+  // no MAG present
+  if mag == 0 then return false;
+  // PMAs are restricted to page boundaries, so we can use the lowest xlen bits of the address.
+  allowed_misaligned(addr[xlen - 1 .. 0], width, mag)
 }
 
 // A region of memory and its Physical Memory Attributes.
@@ -206,6 +249,7 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.write_idempotent then " write-idempotent" else "") ^
   " " ^ to_str(attr.misaligned_exceptions) ^
   " " ^ to_str(attr.atomic_support) ^
+  " misaligned_atomicity_granule_size_exp=" ^ dec_str(attr.misaligned_atomicity_granule_size_exp) ^
   " " ^ to_str(attr.reservability) ^
   (if attr.supports_cbo_zero then " supports-cbo-zero" else "") ^
   (if attr.supports_pte_read then " supports-pte-read" else "") ^

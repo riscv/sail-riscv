@@ -176,16 +176,30 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // "The same exception options [as AMOs in the A extension] apply if
   // the address is not naturally aligned."
   if not(is_aligned_addr(vaddr, width)) then {
-    let exc : ExceptionType = match plat_misaligned_access.amo {
-      AccessFault        => E_SAMO_Access_Fault(),
-      AlignmentException => E_SAMO_Addr_Align(),
+    match plat_misaligned_exception(access, false) {
+      Some(AccessFault)        => return memory_exception(vaddr, E_SAMO_Access_Fault()),
+      Some(AlignmentException) => return memory_exception(vaddr, E_SAMO_Addr_Align()),
+      // Misaligned handling will be determined by applicable PMAs.
+      None()                   => (),
     };
-    return memory_exception(vaddr, exc)
   };
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Ok(addr, pbmt, _) => (addr, pbmt),
     Err(e, _)   => return memory_exception(vaddr, e),
+  };
+
+  // Handle misaligned accesses that straddle page-boundaries, as with the
+  // AMOs in Zaamo.
+  if not(is_access_within_page(vaddr, width)) then {
+    let e : ExceptionType = match matching_pma_region(pma_regions, paddr, width) {
+      None() => E_SAMO_Access_Fault(),
+      Some(struct { attributes, _ }) => match attributes.misaligned_exceptions.amo {
+        AccessFault        => E_SAMO_Access_Fault(),
+        AlignmentException => E_SAMO_Addr_Align(),
+      },
+    };
+    return memory_exception(vaddr, e);
   };
 
   // The `aq` and `rl` flags follow the AMO model in Zaamo: "Just as

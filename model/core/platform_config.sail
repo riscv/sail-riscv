@@ -67,13 +67,12 @@ function misaligned_exception_is_access_fault(e : option(misaligned_exception)) 
 struct GlobalMisalignedExceptions = {
   load_store : option(misaligned_exception),
   vector     : option(misaligned_exception),
+  amo        : option(misaligned_exception),
   // LR/SC must always be aligned. Returning a misaligned exception indicates
   // that the access can be emulated (the OS/firmware can transparently break
   // it down into multiple aligned accesses) which isn't the case for LR/SC
   // in normal implementations.
   lrsc       : misaligned_exception,
-  // TODO: Support for the MAG PMA will change this field to an option(misaligned_exception).
-  amo        : misaligned_exception,
 }
 
 // The handling of misaligned accesses before address translation.
