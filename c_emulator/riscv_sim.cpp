@@ -66,20 +66,6 @@ struct run_info {
 
 FILE *trace_log = stdout;
 
-static void print_dts(ModelImpl &model) {
-  char *dts = nullptr;
-  model.zgenerate_dts(&dts, UNIT);
-  fprintf(stdout, "%s", dts);
-  KILL(sail_string)(&dts);
-}
-
-static void print_isa(ModelImpl &model) {
-  char *isa = nullptr;
-  model.zgenerate_canonical_isa_string(&isa, UNIT);
-  fprintf(stdout, "%s\n", isa);
-  KILL(sail_string)(&isa);
-}
-
 static void print_build_info() {
   std::cout << "Sail RISC-V release: " << version_info::release_version << std::endl;
   std::cout << "Sail RISC-V git: " << version_info::git_version << std::endl;
@@ -336,14 +322,14 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
 
   switch (elf.architecture()) {
   case Architecture::RV32:
-    if (model.zxlen != 32) {
-      fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n", model.zxlen);
+    if (model.xlen() != 32) {
+      fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n", model.xlen());
       exit(EXIT_FAILURE);
     }
     break;
   case Architecture::RV64:
-    if (model.zxlen != 64) {
-      fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n", model.zxlen);
+    if (model.xlen() != 64) {
+      fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n", model.xlen());
       exit(EXIT_FAILURE);
     }
     break;
@@ -406,7 +392,7 @@ void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
   }
 
   // Validate DTB range against configured PMA memory regions.
-  if (!model.zdtb_within_configured_pma_memory(addr, size)) {
+  if (!model.dtb_within_configured_pma_memory(addr, size)) {
     fprintf(
       stderr,
       "DTB does not fit in any configured PMA memory region: "
@@ -466,7 +452,7 @@ void close_logs() {
 
 void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, const run_info &run_info) {
   // Don't write a signature if there was an internal Sail exception.
-  if (!model.have_exception && !opts.sig_file.empty()) {
+  if (!model.had_exception() && !opts.sig_file.empty()) {
     write_signature(opts.sig_file, opts.signature_granularity, elf_info);
   }
 
@@ -513,7 +499,7 @@ void run_sail(
 
   auto interval_start = steady_clock::now();
 
-  while (!model.zhtif_done && (opts.insn_limit == 0 || run_info.total_insns < opts.insn_limit)) {
+  while (!model.htif_done() && (opts.insn_limit == 0 || run_info.total_insns < opts.insn_limit)) {
     if (run_info.rvfi.has_value()) {
       switch (run_info.rvfi->pre_step(opts.config_print_rvfi)) {
       case RVFI_prestep_continue:
@@ -531,13 +517,9 @@ void run_sail(
     model.call_pre_step_callbacks(is_waiting);
 
     { /* run a Sail step */
-      sail_int sail_step;
-      CREATE(sail_int)(&sail_step);
-      CONVERT_OF(sail_int, mach_int)(&sail_step, step_no);
-      is_waiting = model.ztry_step(sail_step, wait_steps_remaining == 0);
-      KILL(sail_int)(&sail_step);
+      is_waiting = model.try_step(step_no, wait_steps_remaining == 0);
 
-      if (model.have_exception) {
+      if (model.had_exception()) {
         model.print_current_exception();
         break;
       }
@@ -578,21 +560,21 @@ void run_sail(
       fprintf(stdout, "kips: %" PRIu64 "\n", kips);
     }
 
-    if (model.zhtif_done) {
+    if (model.htif_done()) {
       /* check exit code */
-      if (model.zhtif_exit_code == 0) {
+      if (model.htif_exit_code() == 0) {
         fprintf(stdout, "SUCCESS\n");
       } else {
-        fprintf(stdout, "FAILURE: %" PRIi64 " (0x%08" PRIx64 ")\n", model.zhtif_exit_code, model.zhtif_exit_code);
+        fprintf(stdout, "FAILURE: %" PRIi64 " (0x%08" PRIx64 ")\n", model.htif_exit_code(), model.htif_exit_code());
         exit(EXIT_FAILURE);
       }
     }
 
     if (insn_cnt == insns_per_tick) {
       insn_cnt = 0;
-      model.ztick_clock(UNIT);
+      model.tick_clock();
     } else if (wait_steps_remaining > 0) {
-      model.ztick_clock(UNIT);
+      model.tick_clock();
     }
 
     if (loop_detector.loop_detected()) {
@@ -752,7 +734,7 @@ InitResult preinit_model(
   // Validate the configuration; exit if that's all we were asked to do
   // or if the validation failed.
   {
-    bool config_is_valid = model.zconfig_is_valid(UNIT);
+    bool config_is_valid = model.config_is_valid();
     const char *s = config_is_valid ? "valid" : "invalid";
     if (!config_is_valid || opts.do_validate_config) {
       if (opts.config_file.empty()) {
@@ -767,11 +749,11 @@ InitResult preinit_model(
   // Print a device tree or an ISA string only after the configuration
   // is validated above.
   if (opts.do_print_dts) {
-    print_dts(model);
+    fprintf(stdout, "%s", model.generate_dts().c_str());
     return InitResult::ExitSuccess;
   }
   if (opts.do_print_isa) {
-    print_isa(model);
+    fprintf(stdout, "%s\n", model.generate_isa_string().c_str());
     return InitResult::ExitSuccess;
   }
 

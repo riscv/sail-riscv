@@ -15,11 +15,15 @@ extern FILE *trace_log;
 // Model wrapped with an implementation of its platform callbacks.
 class ModelImpl final : public hart::Model {
 public:
+  // callbacks
+
   void register_callback(callbacks_if *cb);
   void remove_callback(callbacks_if *cb);
 
   void call_pre_step_callbacks(bool is_waiting);
   void call_post_step_callbacks(bool is_waiting);
+
+  // configuration
 
   void set_enable_experimental_extensions(bool en);
   void set_reservation_set_size_exp(uint64_t exponent);
@@ -41,11 +45,26 @@ public:
   void set_term_fd(int fd);
 
   // initialization
+
   void init_platform_constants();
   void init_sail(uint64_t entry, const char *config_file, const std::optional<uint64_t> &htif_tohost_address);
   void reinit_sail(uint64_t entry, const char *config_file, const std::optional<uint64_t> &htif_tohost_address);
 
+  // access to model state
+
+  bool config_is_valid();
+  bool dtb_within_configured_pma_memory(uint64_t addr, uint64_t size);
+  std::string generate_dts();
+  std::string generate_isa_string();
   void print_current_exception();
+
+  void tick_clock();
+  bool try_step(int64_t step_no, bool exit_wait);
+
+  int64_t xlen() const;
+  uint64_t htif_exit_code() const;
+  bool htif_done() const;
+  bool had_exception() const;
 
 private:
   // These functions are called by the Sail code.
