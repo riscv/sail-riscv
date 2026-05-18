@@ -323,13 +323,13 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
   switch (elf.architecture()) {
   case Architecture::RV32:
     if (model.xlen() != 32) {
-      fprintf(stderr, "32-bit ELF not supported by RV%" PRIu64 " model.\n", model.xlen());
+      fprintf(stderr, "32-bit ELF not supported by RV%" PRIi64 " model.\n", model.xlen());
       exit(EXIT_FAILURE);
     }
     break;
   case Architecture::RV64:
     if (model.xlen() != 64) {
-      fprintf(stderr, "64-bit ELF not supported by RV%" PRIu64 " model.\n", model.xlen());
+      fprintf(stderr, "64-bit ELF not supported by RV%" PRIi64 " model.\n", model.xlen());
       exit(EXIT_FAILURE);
     }
     break;
@@ -565,7 +565,7 @@ void run_sail(
       if (model.htif_exit_code() == 0) {
         fprintf(stdout, "SUCCESS\n");
       } else {
-        fprintf(stdout, "FAILURE: %" PRIi64 " (0x%08" PRIx64 ")\n", model.htif_exit_code(), model.htif_exit_code());
+        fprintf(stdout, "FAILURE: %" PRIu64 " (0x%08" PRIx64 ")\n", model.htif_exit_code(), model.htif_exit_code());
         exit(EXIT_FAILURE);
       }
     }
