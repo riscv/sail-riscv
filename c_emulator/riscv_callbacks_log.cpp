@@ -1,5 +1,5 @@
 #include "riscv_callbacks_log.h"
-#include "sail_riscv_model.h"
+#include "riscv_model_impl.h"
 #include <algorithm>
 #include <inttypes.h>
 #include <vector>
@@ -29,7 +29,7 @@ log_callbacks::log_callbacks(
 // Implementations of default callbacks for trace printing.
 // The model assumes that these functions do not change the state of the model.
 
-void log_callbacks::mem_write_callback(hart::Model &model, const char *type, sbits paddr, uint64_t width, lbits value) {
+void log_callbacks::mem_write_callback(ModelImpl &model, const char *type, sbits paddr, uint64_t width, lbits value) {
   // This is just passed due to Sail type system requirements.
   (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
@@ -44,7 +44,7 @@ void log_callbacks::mem_write_callback(hart::Model &model, const char *type, sbi
   }
 }
 
-void log_callbacks::mem_read_callback(hart::Model &model, const char *type, sbits paddr, uint64_t width, lbits value) {
+void log_callbacks::mem_read_callback(ModelImpl &model, const char *type, sbits paddr, uint64_t width, lbits value) {
   // This is just passed due to Sail type system requirements.
   (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
@@ -59,7 +59,7 @@ void log_callbacks::mem_read_callback(hart::Model &model, const char *type, sbit
   }
 }
 
-void log_callbacks::xreg_full_write_callback(hart::Model &, const_sail_string abi_name, sbits reg, sbits value) {
+void log_callbacks::xreg_full_write_callback(ModelImpl &, const_sail_string abi_name, sbits reg, sbits value) {
   if (trace_log != nullptr && config_print_gpr) {
     if (config_use_abi_names) {
       fprintf(trace_log, "%s <- 0x%0*" PRIX64 "\n", abi_name, static_cast<int>(value.len / 4), value.bits);
@@ -69,7 +69,7 @@ void log_callbacks::xreg_full_write_callback(hart::Model &, const_sail_string ab
   }
 }
 
-void log_callbacks::freg_write_callback(hart::Model &, unsigned reg, sbits value) {
+void log_callbacks::freg_write_callback(ModelImpl &, unsigned reg, sbits value) {
   // TODO: will only print bits; should we print in floating point format?
   if (trace_log != nullptr && config_print_fpr) {
     // TODO: Might need to change from PRIX64 to PRIX128 once the "Q"
@@ -78,7 +78,7 @@ void log_callbacks::freg_write_callback(hart::Model &, unsigned reg, sbits value
   }
 }
 
-void log_callbacks::csr_full_write_callback(hart::Model &, const_sail_string csr_name, unsigned reg, sbits value) {
+void log_callbacks::csr_full_write_callback(ModelImpl &, const_sail_string csr_name, unsigned reg, sbits value) {
   if (trace_log != nullptr && config_print_csr) {
     fprintf(
       trace_log,
@@ -91,7 +91,7 @@ void log_callbacks::csr_full_write_callback(hart::Model &, const_sail_string csr
   }
 }
 
-void log_callbacks::csr_full_read_callback(hart::Model &, const_sail_string csr_name, unsigned reg, sbits value) {
+void log_callbacks::csr_full_read_callback(ModelImpl &, const_sail_string csr_name, unsigned reg, sbits value) {
   if (trace_log != nullptr && config_print_csr) {
     fprintf(
       trace_log,
@@ -104,7 +104,7 @@ void log_callbacks::csr_full_read_callback(hart::Model &, const_sail_string csr_
   }
 }
 
-void log_callbacks::vreg_write_callback(hart::Model &, unsigned reg, lbits value) {
+void log_callbacks::vreg_write_callback(ModelImpl &, unsigned reg, lbits value) {
   if (trace_log != nullptr && config_print_vreg) {
     fprintf(trace_log, "v%d <- ", reg);
     gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
@@ -113,7 +113,7 @@ void log_callbacks::vreg_write_callback(hart::Model &, unsigned reg, lbits value
 
 // Page table walk callback
 void log_callbacks::ptw_start_callback(
-  hart::Model &model,
+  ModelImpl &model,
   uint64_t vpn,
   hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
   hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
@@ -130,7 +130,7 @@ void log_callbacks::ptw_start_callback(
   }
 }
 
-void log_callbacks::ptw_step_callback(hart::Model & /*model*/, int64_t level, sbits pte_addr, uint64_t pte) {
+void log_callbacks::ptw_step_callback(ModelImpl & /*model*/, int64_t level, sbits pte_addr, uint64_t pte) {
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
       trace_log,
@@ -142,14 +142,14 @@ void log_callbacks::ptw_step_callback(hart::Model & /*model*/, int64_t level, sb
   }
 }
 
-void log_callbacks::ptw_success_callback(hart::Model & /*model*/, uint64_t final_ppn, int64_t level) {
+void log_callbacks::ptw_success_callback(ModelImpl & /*model*/, uint64_t final_ppn, int64_t level) {
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(trace_log, "PTW: Success, final_ppn=0x%" PRIx64 ", level=%" PRId64 "\n", final_ppn, level);
   }
 }
 
 void log_callbacks::ptw_fail_callback(
-  hart::Model &model,
+  ModelImpl &model,
   struct hart::zPTW_Error error_type,
   int64_t level,
   sbits pte_addr
@@ -171,7 +171,7 @@ void log_callbacks::ptw_fail_callback(
 
 static void print_tlb(
   FILE *trace_log,
-  hart::Model &model,
+  ModelImpl &model,
   hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
   const std::vector<uint64_t> &indices,
   bool is_flush
@@ -232,7 +232,7 @@ static void print_tlb(
 }
 
 void log_callbacks::tlb_add_callback(
-  hart::Model &model,
+  ModelImpl &model,
   hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
   uint64_t index
 ) {
@@ -243,17 +243,17 @@ void log_callbacks::tlb_add_callback(
 
 std::vector<uint64_t> pending_flush_indices;
 
-void log_callbacks::tlb_flush_begin_callback(hart::Model &model) {
+void log_callbacks::tlb_flush_begin_callback(ModelImpl &model) {
   pending_flush_indices.clear();
 }
 
-void log_callbacks::tlb_flush_callback(hart::Model &model, uint64_t index) {
+void log_callbacks::tlb_flush_callback(ModelImpl &model, uint64_t index) {
   if (config_print_tlb) {
     pending_flush_indices.push_back(index);
   }
 }
 
-void log_callbacks::tlb_flush_end_callback(hart::Model &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+void log_callbacks::tlb_flush_end_callback(ModelImpl &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
   if (trace_log != nullptr && config_print_tlb && !pending_flush_indices.empty()) {
     print_tlb(trace_log, model, tlb, pending_flush_indices, true);
   }
