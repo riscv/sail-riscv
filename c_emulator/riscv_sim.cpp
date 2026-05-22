@@ -469,7 +469,7 @@ void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, 
     fprintf(stderr, "Performance:      %" PRIu64 " kIPS\n", exec_msecs == 0 ? 0 : run_info.total_insns / exec_msecs);
   }
   close_logs();
-  exit(EXIT_SUCCESS);
+  exit(model.had_exception() ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 void flush_logs() {
@@ -519,8 +519,9 @@ void run_sail(
     { /* run a Sail step */
       is_waiting = model.try_step(step_no, wait_steps_remaining == 0);
 
-      if (model.had_exception()) {
-        model.print_current_exception();
+      std::optional<std::string> opt_str = model.string_of_current_exception();
+      if (opt_str.has_value()) {
+        fprintf(stdout, "%s\n", opt_str.value().c_str());
         break;
       }
       if (opts.config_print_instr) {
