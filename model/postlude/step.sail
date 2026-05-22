@@ -18,7 +18,7 @@ private union Step = {
   Step_Waiting            : WaitReason,
 }
 
-private function run_hart_waiting(_step_no : int, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
+private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
   // successfully interrupted waits
   if shouldWakeForInterrupt() then {
     if   get_config_print_instr()

@@ -46,12 +46,6 @@ void ModelImpl::set_reservation_invalidate_on_same_hart_store(bool invalidate_on
   m_reservation_invalidate_on_same_hart_store = invalidate_on_same_hart_store;
 }
 
-void ModelImpl::print_current_exception() {
-  if (current_exception != nullptr) {
-    zprint_exception(*current_exception);
-  }
-}
-
 unit ModelImpl::fetch_callback(sbits opcode) {
   for (auto c : m_callbacks) {
     c->fetch_callback(*this, opcode);
@@ -398,4 +392,63 @@ void ModelImpl::reinit_sail(
   model_fini();
   model_init();
   init_sail(elf_entry, config_file, htif_tohost_address);
+}
+
+bool ModelImpl::config_is_valid() {
+  return zconfig_is_valid(UNIT);
+}
+
+bool ModelImpl::dtb_within_configured_pma_memory(uint64_t addr, uint64_t size) {
+  return zdtb_within_configured_pma_memory(addr, size);
+}
+
+std::string ModelImpl::generate_dts() {
+  char *c_dts = nullptr;
+  zgenerate_dts(&c_dts, UNIT);
+  std::string dts(c_dts);
+  KILL(sail_string)(&c_dts);
+  return dts;
+}
+
+std::string ModelImpl::generate_isa_string() {
+  char *c_isa = nullptr;
+  zgenerate_canonical_isa_string(&c_isa, UNIT);
+  std::string isa(c_isa);
+  KILL(sail_string)(&c_isa);
+  return isa;
+}
+
+void ModelImpl::print_current_exception() {
+  if (current_exception != nullptr) {
+    zprint_exception(*current_exception);
+  }
+}
+
+void ModelImpl::tick_clock() {
+  ztick_clock(UNIT);
+}
+
+bool ModelImpl::try_step(int64_t step_no, bool exit_wait) {
+  sail_int sail_step;
+  CREATE(sail_int)(&sail_step);
+  CONVERT_OF(sail_int, mach_int)(&sail_step, static_cast<mach_int>(step_no));
+  bool is_waiting = ztry_step(sail_step, exit_wait);
+  KILL(sail_int)(&sail_step);
+  return is_waiting;
+}
+
+int64_t ModelImpl::xlen() const {
+  return zxlen;
+}
+
+uint64_t ModelImpl::htif_exit_code() const {
+  return zhtif_exit_code;
+}
+
+bool ModelImpl::htif_done() const {
+  return zhtif_done;
+}
+
+bool ModelImpl::had_exception() const {
+  return have_exception;
 }
