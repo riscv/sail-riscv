@@ -425,7 +425,7 @@ function clause hartSupports(Ext_Zvfbfmin) = config extensions.Zvfbfmin.supporte
 enum clause extension = Ext_Zvfbfwma
 mapping clause extensionName = Ext_Zvfbfwma <-> "zvfbfwma"
 function clause hartSupports(Ext_Zvfbfwma) = config extensions.Zvfbfwma.supported
-// Vector BF16 Fore-Aft
+// Additional BF16 vector compute support
 enum clause extension = Ext_Zvfbfa
 mapping clause extensionName = Ext_Zvfbfa <-> "zvfbfa"
 function clause hartSupports(Ext_Zvfbfa) = config extensions.Zvfbfa.supported
@@ -729,7 +729,7 @@ function hartSupports_measure(ext : extension) -> int =
     Ext_Ss1p12 => 1, // > S
     Ext_Ss1p13 => 1, // > S
 
-    Ext_C => 2, // > D
+    Ext_C     => 2, // > D
     Ext_Zvknc => 2, // > Zvkn
     Ext_Zvkng => 2, // > Zvkn
     Ext_Zvksc => 2, // > Zvks
@@ -748,15 +748,15 @@ termination_measure hartSupports(ext) = hartSupports_measure(ext)
 
 function currentlyEnabled_measure(ext : extension) -> int =
   match ext {
-    Ext_A => 0,
-    Ext_B => 0,
-    Ext_C => 0,
-    Ext_M => 0,
-    Ext_Zicsr => 0,
+    Ext_A       => 0,
+    Ext_B       => 0,
+    Ext_C       => 0,
+    Ext_M       => 0,
+    Ext_Zicsr   => 0,
     Ext_Zvl128b => 0,
-    Ext_Zvl32b => 0,
-    Ext_Zvl64b => 0,
-    Ext_Zimop => 0,
+    Ext_Zvl32b  => 0,
+    Ext_Zvl64b  => 0,
+    Ext_Zimop   => 0,
 
     Ext_F => 1, // > Zicsr
     Ext_S => 1, // > Zicsr
@@ -802,11 +802,11 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvkb => 3, // > Zvbb
     Ext_Zvknhb => 3, // > Zve64x
 
-    Ext_H => 4, // > virtual_mem_supported
-    Ext_Zve64d => 4, // > Zve64f
+    Ext_H        => 4, // > virtual_mem_supported
+    Ext_Zve64d   => 4, // > Zve64f
     Ext_Zvfbfwma => 4, // > Zvfbfmin
-    Ext_Zvfbfa => 4, // > Zfbfmin
-    Ext_Zvfh => 4, // > Zfhmin
+    Ext_Zvfbfa   => 4, // > Zfbfmin
+    Ext_Zvfh     => 4, // > Zfhmin
 
     Ext_Ssccfg => 5, // > Sscsrind
     Ext_Smcdeleg => 5, // > Sscsrind

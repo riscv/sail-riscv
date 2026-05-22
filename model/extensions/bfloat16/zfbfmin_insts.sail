@@ -20,7 +20,7 @@ mapping clause encdec = FCVT_BF16_S(rs1, rm, rd)
 function clause execute FCVT_BF16_S(rs1, rm, rd) = {
   let rs1_val_S = F_or_X_S(rs1);
   match (select_instr_or_fcsr_rm (rm)) {
-    None() => Illegal_Instruction(),
+    None()    => Illegal_Instruction(),
     Some(rm') => {
       let rm_3b = encdec_rounding_mode(rm');
       let (fflags, rd_val_BF16) = riscv_f32ToBF16(rm_3b, rs1_val_S);
