@@ -302,8 +302,11 @@ register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
 function clause is_CSR_accessible(0x180, priv, _) = is_satp_accessible(priv)
 function clause is_CSR_exception_virtual(0x180, _, _) = true
-function clause read_CSR(0x180) = satp
-function clause write_CSR(0x180, value) = { satp = legalize_satp(architecture(Supervisor), satp, value); Ok(satp) }
+function clause read_CSR(0x180) = if inVirtualPrivilege() then vsatp else satp
+function clause write_CSR(0x180, value) =
+  if inVirtualPrivilege()
+  then { vsatp = legalize_satp(architecture(cur_privilege), vsatp, value); Ok(vsatp) }
+  else { satp  = legalize_satp(architecture(Supervisor),    satp,  value); Ok(satp)  }
 
 // ----------------
 // Fields of SATP
