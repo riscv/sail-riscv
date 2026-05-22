@@ -6,9 +6,13 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function fsplit_BF16 (v : bits(16)) -> (bits(1), bits(8), bits(7)) = (v[15..15], v[14..7], v[6..0])
+function fsplit_BF16(v : bits(16)) -> (bits(1), bits(8), bits(7)) = (v[15..15], v[14..7], v[6..0])
 
-function fmake_BF16 (sign : bits(1), exp : bits(8), mant : bits(7)) -> (bits(16)) = (sign @ exp @ mant)
+function fmake_BF16(
+  sign : bits(1),
+  exp  : bits(8),
+  mant : bits(7),
+) -> (bits(16)) = (sign @ exp @ mant)
 
 function bf16_classify(v : bits_BF16) -> float_class = {
   let (sign, exp, mant) = fsplit_BF16(v);
@@ -26,7 +30,7 @@ function bf16_classify(v : bits_BF16) -> float_class = {
   }
 }
 
-function bf16_to_f32 (v : bits(16)) -> (bits_fflags, bits(32)) = {
+function bf16_to_f32(v : bits(16)) -> (bits_fflags, bits(32)) = {
   let (sign, exp, mant) = fsplit_BF16(v);
   let is_nan = exp == ones() & mant != zeros();
   let is_inf = exp == ones() & mant == zeros();
@@ -80,19 +84,39 @@ function bf16_div(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16) -> bits_BF1
   result_val
 }
 
-function bf16_muladd(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16, opadd : bits_BF16) -> bits_BF16 = {
+function bf16_muladd(
+  rm_3b : bits_rm,
+  op1   : bits_BF16,
+  op2   : bits_BF16,
+  opadd : bits_BF16,
+) -> bits_BF16 = {
   let (fflags, result_val) = riscv_bf16MulAdd(rm_3b, op1, op2, opadd);
   accrue_fflags(fflags);
   result_val
 }
 
-function bf16_nmuladd(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16, opadd : bits_BF16) -> bits_BF16 =
+function bf16_nmuladd(
+  rm_3b : bits_rm,
+  op1   : bits_BF16,
+  op2   : bits_BF16,
+  opadd : bits_BF16,
+) -> bits_BF16 =
   bf16_muladd(rm_3b, negate_BF16(op1), op2, opadd)
 
-function bf16_mulsub(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16, opsub : bits_BF16) -> bits_BF16 =
+function bf16_mulsub(
+  rm_3b : bits_rm,
+  op1   : bits_BF16,
+  op2   : bits_BF16,
+  opsub : bits_BF16,
+) -> bits_BF16 =
   bf16_muladd(rm_3b, op1, op2, negate_BF16(opsub))
 
-function bf16_nmulsub(rm_3b : bits_rm, op1 : bits_BF16, op2 : bits_BF16, opsub : bits_BF16) -> bits_BF16 =
+function bf16_nmulsub(
+  rm_3b : bits_rm,
+  op1   : bits_BF16,
+  op2   : bits_BF16,
+  opsub : bits_BF16,
+) -> bits_BF16 =
   bf16_muladd(rm_3b, negate_BF16(op1), op2, negate_BF16(opsub))
 
 function bf16_min(op1 : bits_BF16, op2 : bits_BF16) -> bits_BF16 = {

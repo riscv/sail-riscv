@@ -423,8 +423,7 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
 
   if illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow)) |
-     not(valid_single_width_fp_conversion(vfunary0))
+     not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -447,8 +446,7 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
       result[i] = match vfunary0 {
         FV_CVT_XU_F      => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => if get_altfmt() then riscv_f32ToUi16(rm_3b, bf16_to_f32_set_flags(vs2_val[i]))
-                                      else riscv_f16ToUi16(rm_3b, vs2_val[i]),
+                                16 => riscv_f16ToUi16(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToUi32(rm_3b, vs2_val[i]),
                                 64 => riscv_f64ToUi64(rm_3b, vs2_val[i])
                               };
@@ -457,8 +455,7 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
                             },
         FV_CVT_X_F       => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => if get_altfmt() then riscv_f32ToI16(rm_3b, bf16_to_f32_set_flags(vs2_val[i]))
-                                      else riscv_f16ToI16(rm_3b, vs2_val[i]),
+                                16 => riscv_f16ToI16(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToI32(rm_3b, vs2_val[i]),
                                 64 => riscv_f64ToI64(rm_3b, vs2_val[i])
                               };
@@ -467,11 +464,7 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
                             },
         FV_CVT_F_XU      => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => if get_altfmt() then {
-                                        let (ff1, f32) = riscv_ui32ToF32(rm_3b, zero_extend(vs2_val[i]));
-                                        let (ff2, bf16) = riscv_f32ToBF16(rm_3b, f32);
-                                        (ff1 | ff2, bf16)
-                                      } else riscv_ui32ToF16(rm_3b, zero_extend(vs2_val[i])),
+                                16 => riscv_ui32ToF16(rm_3b, zero_extend(vs2_val[i])),
                                 32 => riscv_ui32ToF32(rm_3b, vs2_val[i]),
                                 64 => riscv_ui64ToF64(rm_3b, vs2_val[i])
                               };
@@ -480,11 +473,7 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
                             },
         FV_CVT_F_X       => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => if get_altfmt() then {
-                                        let (ff1, f32) = riscv_i32ToF32(rm_3b, sign_extend(vs2_val[i]));
-                                        let (ff2, bf16) = riscv_f32ToBF16(rm_3b, f32);
-                                        (ff1 | ff2, bf16)
-                                      } else riscv_i32ToF16(rm_3b, sign_extend(vs2_val[i])),
+                                16 => riscv_i32ToF16(rm_3b, sign_extend(vs2_val[i])),
                                 32 => riscv_i32ToF32(rm_3b, vs2_val[i]),
                                 64 => riscv_i64ToF64(rm_3b, vs2_val[i])
                               };
@@ -493,8 +482,7 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
                             },
         FV_CVT_RTZ_XU_F  => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => if get_altfmt() then riscv_f32ToUi16(0b001, bf16_to_f32_set_flags(vs2_val[i]))
-                                      else riscv_f16ToUi16(0b001, vs2_val[i]),
+                                16 => riscv_f16ToUi16(0b001, vs2_val[i]),
                                 32 => riscv_f32ToUi32(0b001, vs2_val[i]),
                                 64 => riscv_f64ToUi64(0b001, vs2_val[i])
                               };
@@ -503,8 +491,7 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
                             },
         FV_CVT_RTZ_X_F   => {
                               let (fflags, elem) : (bits_fflags, bits('m)) = match 'm {
-                                16 => if get_altfmt() then riscv_f32ToI16(0b001, bf16_to_f32_set_flags(vs2_val[i]))
-                                      else riscv_f16ToI16(0b001, vs2_val[i]),
+                                16 => riscv_f16ToI16(0b001, vs2_val[i]),
                                 32 => riscv_f32ToI32(0b001, vs2_val[i]),
                                 64 => riscv_f64ToI64(0b001, vs2_val[i])
                               };
@@ -559,8 +546,7 @@ function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
   let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
-      not(valid_widening_fp_conversion(vfwunary0))
+      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
 
   assert(SEW >= 8 & SEW_widen <= 64);
@@ -596,8 +582,7 @@ function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
         FWV_CVT_X_F      => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
                                 8  => return Illegal_Instruction(),
-                                16 => if get_altfmt() then riscv_f32ToI32(rm_3b, bf16_to_f32_set_flags(vs2_val[i]))
-                                      else riscv_f16ToI32(rm_3b, vs2_val[i]),
+                                16 => riscv_f16ToI32(rm_3b, vs2_val[i]),
                                 32 => riscv_f32ToI64(rm_3b, vs2_val[i])
                               };
                               accrue_fflags(fflags);
@@ -642,8 +627,7 @@ function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
         FWV_CVT_RTZ_XU_F => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
                                 8  => return Illegal_Instruction(),
-                                16 => if get_altfmt() then riscv_f32ToUi32(0b001, bf16_to_f32_set_flags(vs2_val[i]))
-                                      else riscv_f16ToUi32(0b001, vs2_val[i]),
+                                16 => riscv_f16ToUi32(0b001, vs2_val[i]),
                                 32 => riscv_f32ToUi64(0b001, vs2_val[i])
                               };
                               accrue_fflags(fflags);
@@ -652,8 +636,7 @@ function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
         FWV_CVT_RTZ_X_F  => {
                               let (fflags, elem) : (bits_fflags, bits('o)) = match 'm {
                                 8  => return Illegal_Instruction(),
-                                16 => if get_altfmt() then riscv_f32ToI32(0b001, bf16_to_f32_set_flags(vs2_val[i]))
-                                      else riscv_f16ToI32(0b001, vs2_val[i]),
+                                16 => riscv_f16ToI32(0b001, vs2_val[i]),
                                 32 => riscv_f32ToI64(0b001, vs2_val[i])
                               };
                               accrue_fflags(fflags);
