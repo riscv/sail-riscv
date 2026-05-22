@@ -361,8 +361,8 @@ union clause instruction = VLXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlew
 
 mapping clause encdec = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
   <-> encdec_nfields(nf) @ 0b0 @ encdec_indexed_mop(mop) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
-     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
+  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= max_index_eew_exp)
+     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= max_index_eew_exp & xlen == 64)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
@@ -426,8 +426,8 @@ union clause instruction = VSXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlew
 
 mapping clause encdec = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
   <-> encdec_nfields(nf) @ 0b0 @ encdec_indexed_mop(mop) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
-     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
+  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= max_index_eew_exp)
+     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= max_index_eew_exp & xlen == 64)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
