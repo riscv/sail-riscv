@@ -262,23 +262,23 @@ unit ModelImpl::print_string(const_sail_string prefix, const_sail_string msg) {
 }
 
 unit ModelImpl::print_log(const_sail_string s) {
-  fprintf(trace_log, "%s\n", s);
+  fprintf(m_trace_log, "%s\n", s);
   return UNIT;
 }
 
 unit ModelImpl::print_log_instr(const_sail_string s, uint64_t pc) {
   auto maybe_symbol = symbolize_address(m_symbols, pc);
   if (maybe_symbol.has_value()) {
-    fprintf(trace_log, "%-80s    %s+%" PRIu64 "\n", s, maybe_symbol->second.c_str(), pc - maybe_symbol->first);
+    fprintf(m_trace_log, "%-80s    %s+%" PRIu64 "\n", s, maybe_symbol->second.c_str(), pc - maybe_symbol->first);
   } else {
-    fprintf(trace_log, "%s\n", s);
+    fprintf(m_trace_log, "%s\n", s);
   }
   return UNIT;
 }
 
 unit ModelImpl::print_step(unit) {
   if (m_config_print_step) {
-    fprintf(trace_log, "\n");
+    fprintf(m_trace_log, "\n");
   }
   return UNIT;
 }
@@ -357,6 +357,11 @@ void ModelImpl::set_elf_symbols(std::map<uint64_t, std::string> symbols) {
 
 void ModelImpl::set_term_fd(int fd) {
   m_term_fd = fd;
+}
+
+void ModelImpl::set_trace_log(FILE *log) {
+  assert(log != nullptr);
+  m_trace_log = log;
 }
 
 void ModelImpl::init_platform_constants() {
