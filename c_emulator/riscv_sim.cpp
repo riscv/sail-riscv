@@ -58,6 +58,7 @@ struct run_info {
   std::optional<rvfi_handler> rvfi;
   // Terminal output goes to stdout unless changed via the `--terminal-log` option.
   int term_fd = STDOUT_FILENO;
+  bool close_term_fd = false;
   steady_clock::time_point init_start;
   steady_clock::time_point init_end;
   uint64_t total_insns = 0;
@@ -439,7 +440,7 @@ void write_signature(const std::string &file, unsigned signature_granularity, co
 }
 
 void close_logs(run_info &run_info) {
-  if (run_info.term_fd != STDOUT_FILENO) {
+  if (run_info.close_term_fd) {
     close(run_info.term_fd);
   }
   if (run_info.trace_log != stdout) {
@@ -604,6 +605,7 @@ void init_logs(const CLIOptions &opts, run_info &run_info) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
+  run_info.close_term_fd = true;
 
   if (!opts.trace_log_path.empty()) {
     run_info.trace_log = fopen(opts.trace_log_path.c_str(), "w+");
