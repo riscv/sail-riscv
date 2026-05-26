@@ -23,9 +23,9 @@ function internal_error(file, line, s) = throw Error_internal_error(file ^ ":" ^
 val reserved_behavior : forall ('a : Type). string -> 'a
 function reserved_behavior(message) = throw Error_reserved_behavior(message)
 
-function print_exception(e : exception) -> unit =
+function string_of_exception(e : exception) -> string =
   match e {
-    Error_not_implemented(s)   => print_endline("Not implemented error: " ^ s),
-    Error_internal_error(s)    => print_endline("Internal error: " ^ s),
-    Error_reserved_behavior(s) => print_endline("Fatal reserved behavior: " ^ s),
+    Error_not_implemented(s)   => "Not implemented error: " ^ s,
+    Error_internal_error(s)    => "Internal error: " ^ s,
+    Error_reserved_behavior(s) => "Fatal reserved behavior: " ^ s,
   }

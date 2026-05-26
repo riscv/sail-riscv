@@ -56,7 +56,8 @@ public:
   bool dtb_within_configured_pma_memory(uint64_t addr, uint64_t size);
   std::string generate_dts();
   std::string generate_isa_string();
-  void print_current_exception();
+  // returns std::nullopt if the model has not thrown an exception.
+  std::optional<std::string> string_of_current_exception();
 
   void tick_clock();
   bool try_step(int64_t step_no, bool exit_wait);

@@ -418,10 +418,19 @@ std::string ModelImpl::generate_isa_string() {
   return isa;
 }
 
-void ModelImpl::print_current_exception() {
-  if (current_exception != nullptr) {
-    zprint_exception(*current_exception);
+std::optional<std::string> ModelImpl::string_of_current_exception() {
+  // `current_exception` is initialized to a non-NULL value in `model_init()`.
+  // So `have_exception` needs to be checked first to see if `current_exception` has
+  // a valid value.
+  if (!have_exception) {
+    return std::nullopt;
   }
+  sail_string str;
+  CREATE(sail_string)(&str);
+  zstring_of_exception(&str, *current_exception);
+  std::string exception_str(str);
+  KILL(sail_string)(&str);
+  return exception_str;
 }
 
 void ModelImpl::tick_clock() {
