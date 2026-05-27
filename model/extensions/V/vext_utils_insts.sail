@@ -83,10 +83,8 @@ function valid_rd_mask(rd : vregidx, vm : bits(1)) -> bool = {
 
 // Check that a vector register number for a vector register group is
 // a multiple of its EMUL. Fractional EMULs are rounded up to 1.
-function valid_reg_group(r : vregidx, EMUL_pow : int) -> bool = {
-  let reg_group_size = if EMUL_pow > 0 then 2 ^ EMUL_pow else 1;
-  unsigned(vregidx_bits(r)) % reg_group_size == 0
-}
+function valid_reg_group(r : vregidx, EMUL_pow : int) -> bool =
+  (unsigned(vregidx_bits(r)) % (2 ^ max(EMUL_pow, 0))) == 0
 
 // For whole register loads/stores: "The nf field encodes how many
 // vector registers to load and store using the NFIELDS encoding. The
@@ -104,8 +102,8 @@ function valid_whole_register(r : vregidx, nf : nfields_pow2) -> bool = {
 // of the source register group.
 // This also checks that the source and destination register groups are valid.
 function valid_reg_overlap(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_pow_rd : int) -> bool = {
-  let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
-  let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
+  let rs_group = 2 ^ max(EMUL_pow_rs, 0);
+  let rd_group = 2 ^ max(EMUL_pow_rd, 0);
   let rs_int = unsigned(vregidx_bits(rs));
   let rd_int = unsigned(vregidx_bits(rd));
 
@@ -121,15 +119,15 @@ function valid_reg_overlap(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_p
 }
 
 function valid_disjoint_reg_groups(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_pow_rd : int) -> bool = {
-  let rs_group = if EMUL_pow_rs > 0 then 2 ^ EMUL_pow_rs else 1;
-  let rd_group = if EMUL_pow_rd > 0 then 2 ^ EMUL_pow_rd else 1;
+  let rs_group = 2 ^ max(EMUL_pow_rs, 0);
+  let rd_group = 2 ^ max(EMUL_pow_rd, 0);
   let rs_int = unsigned(vregidx_bits(rs));
   let rd_int = unsigned(vregidx_bits(rd));
 
   if rs_int % rs_group != 0 | rd_int % rd_group != 0
   then return false;
 
-  rs_int + rs_group <= rd_int | rs_int >= rd_int + rd_group
+  rs_int + rs_group <= rd_int | rd_int + rd_group <= rs_int
 }
 
 // Check for valid overlaps between source register groups: overlaps
@@ -138,8 +136,8 @@ function valid_disjoint_reg_groups(rs : vregidx, rd : vregidx, EMUL_pow_rs : int
 // the register groups are valid.
 function valid_src_overlap(rs1 : vregidx, EEW_rs1 : nat, EMUL_pow_rs1 : int,
                            rs2 : vregidx, EEW_rs2 : nat, EMUL_pow_rs2 : int) -> bool = {
-  let rs1_group = if EMUL_pow_rs1 > 0 then 2 ^ EMUL_pow_rs1 else 1;
-  let rs2_group = if EMUL_pow_rs2 > 0 then 2 ^ EMUL_pow_rs2 else 1;
+  let rs1_group = 2 ^ max(EMUL_pow_rs1, 0);
+  let rs2_group = 2 ^ max(EMUL_pow_rs2, 0);
   let rs1_int = unsigned(vregidx_bits(rs1));
   let rs2_int = unsigned(vregidx_bits(rs2));
 
