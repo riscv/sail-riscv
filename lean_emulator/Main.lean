@@ -1,11 +1,11 @@
 import LeanRiscv
 
 def main (args : List String) : IO UInt32 := do
-  if args.length != 2 then do
+  if args.length != 1 then do
     IO.println "usage: run-riscv-lean <elf_file>"
     pure 255
   else do
-    match (← readElf args[1]!) with
+    match (← readElf args[0]!) with
     | Except.error err => do
       IO.println "Failed to parse ELF file:"
       IO.println err

@@ -273,7 +273,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   }
 }
 
-function loop () : unit -> int = {
+function loop () : unit -> nat = {
   var i : nat = 0;
   var step_no : nat = 0;
   while not(htif_done) do {
