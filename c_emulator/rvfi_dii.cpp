@@ -16,7 +16,7 @@
 #include "rvfi_dii.h"
 #include "sail.h"
 
-rvfi_handler::rvfi_handler(int port, hart::Model &model) : dii_port(port), m_model(model) {
+rvfi_handler::rvfi_handler(int port, ModelImpl &model) : dii_port(port), m_model(model) {
   fprintf(stderr, "using %d as RVFI port.\n", port);
 }
 
