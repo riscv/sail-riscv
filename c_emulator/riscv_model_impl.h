@@ -10,8 +10,6 @@
 #include "sail.h"
 #include "sail_riscv_model.h"
 
-extern FILE *trace_log;
-
 // Model wrapped with an implementation of its platform callbacks.
 class ModelImpl final : public hart::Model {
 public:
@@ -43,6 +41,7 @@ public:
 
   void set_elf_symbols(std::map<uint64_t, std::string> symbols);
   void set_term_fd(int fd);
+  void set_trace_log(FILE *log);
 
   // initialization
 
@@ -162,4 +161,7 @@ private:
 
   // Randomly seeded PRNG.
   std::mt19937_64 m_gen64{seed()};
+
+  // Trace log file
+  FILE *m_trace_log = stdout;
 };

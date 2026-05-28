@@ -56,15 +56,16 @@ struct elf_info {
 
 struct run_info {
   std::optional<rvfi_handler> rvfi;
-  int term_fd = 1;
+  // Terminal output goes to stdout unless changed via the `--terminal-log` option.
+  int term_fd = STDOUT_FILENO;
+  bool close_term_fd = false;
   steady_clock::time_point init_start;
   steady_clock::time_point init_end;
   uint64_t total_insns = 0;
+  FILE *trace_log = stdout;
 };
 
 } // namespace
-
-FILE *trace_log = stdout;
 
 static void print_build_info() {
   std::cout << "Sail RISC-V release: " << version_info::release_version << std::endl;
@@ -438,19 +439,22 @@ void write_signature(const std::string &file, unsigned signature_granularity, co
   fclose(f);
 }
 
-void close_logs() {
+void close_logs(run_info &run_info) {
+  if (run_info.close_term_fd) {
+    close(run_info.term_fd);
+  }
+  if (run_info.trace_log != stdout) {
+    fclose(run_info.trace_log);
+  }
 #ifdef SAILCOV
   if (sail_coverage_exit() != 0) {
     fprintf(stderr, "Could not write coverage information!\n");
     exit(EXIT_FAILURE);
   }
 #endif
-  if (trace_log != stdout) {
-    fclose(trace_log);
-  }
 }
 
-void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, const run_info &run_info) {
+void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, run_info &run_info) {
   // Don't write a signature if there was an internal Sail exception.
   if (!model.had_exception() && !opts.sig_file.empty()) {
     write_signature(opts.sig_file, opts.signature_granularity, elf_info);
@@ -468,14 +472,14 @@ void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, 
     fprintf(stderr, "Instructions:     %" PRIu64 "\n", run_info.total_insns);
     fprintf(stderr, "Performance:      %" PRIu64 " kIPS\n", exec_msecs == 0 ? 0 : run_info.total_insns / exec_msecs);
   }
-  close_logs();
+  close_logs(run_info);
   exit(model.had_exception() ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-void flush_logs() {
+void flush_logs(run_info &run_info) {
   fflush(stderr);
   fflush(stdout);
-  fflush(trace_log);
+  fflush(run_info.trace_log);
 }
 
 void run_sail(
@@ -525,7 +529,7 @@ void run_sail(
         break;
       }
       if (opts.config_print_instr) {
-        flush_logs();
+        flush_logs(run_info);
       }
       if (run_info.rvfi) {
         run_info.rvfi->send_trace(opts.config_print_rvfi);
@@ -545,7 +549,7 @@ void run_sail(
 
     if (!is_waiting) {
       if (opts.config_print_step) {
-        fprintf(trace_log, "\n");
+        fprintf(run_info.trace_log, "\n");
       }
       step_no++;
       insn_cnt++;
@@ -601,10 +605,11 @@ void init_logs(const CLIOptions &opts, run_info &run_info) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
+  run_info.close_term_fd = true;
 
   if (!opts.trace_log_path.empty()) {
-    trace_log = fopen(opts.trace_log_path.c_str(), "w+");
-    if (trace_log == nullptr) {
+    run_info.trace_log = fopen(opts.trace_log_path.c_str(), "w+");
+    if (run_info.trace_log == nullptr) {
       fprintf(stderr, "Cannot create trace log '%s': %s\n", opts.trace_log_path.c_str(), strerror(errno));
       exit(EXIT_FAILURE);
     }
@@ -765,6 +770,8 @@ InitResult preinit_model(
   }
 
   init_logs(opts, run_info);
+  model.set_term_fd(run_info.term_fd);
+  model.set_trace_log(run_info.trace_log);
 
   return InitResult::Continue;
 }
@@ -778,7 +785,6 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
     }
     model.register_callback(&rvfi_cbs);
   }
-  model.set_term_fd(run_info.term_fd);
 
   if (!opts.dtb_file.empty()) {
     fprintf(stderr, "using %s as DTB file.\n", opts.dtb_file.c_str());
@@ -820,7 +826,7 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_inf
     opts.config_print_ptw,
     opts.config_print_tlb,
     opts.config_use_abi_names,
-    trace_log
+    run_info.trace_log
   );
   model.register_callback(&log_cbs);
 
@@ -866,8 +872,8 @@ int inner_main(int argc, char **argv) {
   run_model(opts, model, entry, elf_info, run_info);
 
   model.model_fini();
-  flush_logs();
-  close_logs();
+  flush_logs(run_info);
+  close_logs(run_info);
 
   return EXIT_SUCCESS;
 }
