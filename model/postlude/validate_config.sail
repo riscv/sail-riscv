@@ -153,6 +153,11 @@ private function check_vext_config() -> bool = {
     valid = false;
     print_endline("Zve*x is enabled but ELEN is 2^" ^ dec_str(elen_exp) ^ ": ELEN must be >= 2^5");
   };
+  let max_index_eew = config extensions.V.max_index_eew_exp : nat;
+  if max_index_eew > elen_exp then {
+    valid = false;
+    print_endline("The maximum index EEW is 2^" ^ dec_str(max_index_eew) ^ " but ELEN is 2^" ^ dec_str(elen_exp) ^ ": the index EEW must be less than ELEN.");
+  };
   if vector_support_level >= Float_single & not(config extensions.F.supported : bool) then {
     valid = false;
     print_endline("Zve*f is enabled but F is disabled: supporting Zve*f requires F.");
