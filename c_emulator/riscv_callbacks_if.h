@@ -3,14 +3,6 @@
 #include "riscv_model_impl.h"
 #include "sail.h"
 
-namespace hart {
-
-struct zMemoryAccessTypezIEmem_payloadz5zK;
-struct ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
-struct zPTW_Error;
-struct zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
-} // namespace hart
-
 class callbacks_if {
 public:
   virtual ~callbacks_if() = default;
@@ -53,25 +45,21 @@ public:
   virtual void ptw_start_callback(
     ModelImpl &model,
     uint64_t vpn,
-    hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+    ModelImpl::MemoryAccessType access_type,
+    ModelImpl::Privilege privilege
   );
 
   virtual void ptw_step_callback(ModelImpl &model, int64_t level, sbits pte_addr, uint64_t pte);
 
   virtual void ptw_success_callback(ModelImpl &model, uint64_t final_ppn, int64_t level);
 
-  virtual void ptw_fail_callback(ModelImpl &model, hart::zPTW_Error error_type, int64_t level, sbits pte_addr);
+  virtual void ptw_fail_callback(ModelImpl &model, ModelImpl::PTW_Error error_type, int64_t level, sbits pte_addr);
 
-  virtual void tlb_add_callback(
-    ModelImpl &model,
-    hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-    uint64_t index
-  );
+  virtual void tlb_add_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb, uint64_t index);
 
   virtual void tlb_flush_begin_callback(ModelImpl &model);
 
   virtual void tlb_flush_callback(ModelImpl &model, uint64_t index);
 
-  virtual void tlb_flush_end_callback(ModelImpl &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb);
+  virtual void tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb);
 };

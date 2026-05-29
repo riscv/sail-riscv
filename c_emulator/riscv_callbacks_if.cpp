@@ -99,8 +99,8 @@ void callbacks_if::instret_callback([[maybe_unused]] ModelImpl &model) {
 void callbacks_if::ptw_start_callback(
   [[maybe_unused]] ModelImpl &model,
   [[maybe_unused]] uint64_t vpn,
-  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-  [[maybe_unused]] hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+  [[maybe_unused]] ModelImpl::MemoryAccessType access_type,
+  [[maybe_unused]] ModelImpl::Privilege privilege
 ) {
 }
 
@@ -121,7 +121,7 @@ void callbacks_if::ptw_success_callback(
 
 void callbacks_if::ptw_fail_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] hart::zPTW_Error error_type,
+  [[maybe_unused]] ModelImpl::PTW_Error error_type,
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] sbits pte_addr
 ) {
@@ -129,7 +129,7 @@ void callbacks_if::ptw_fail_callback(
 
 void callbacks_if::tlb_add_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  [[maybe_unused]] ModelImpl::TLB_Entry tlb,
   [[maybe_unused]] uint64_t index
 ) {
 }
@@ -142,6 +142,6 @@ void callbacks_if::tlb_flush_callback([[maybe_unused]] ModelImpl &model, [[maybe
 
 void callbacks_if::tlb_flush_end_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb
+  [[maybe_unused]] ModelImpl::TLB_Entry tlb
 ) {
 }
