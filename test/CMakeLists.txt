@@ -42,45 +42,49 @@ function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME DOWNLOAD_URL)
     endif()
 endfunction()
 
+function(setup_vector_test vlen elen)
+    option(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen}
+        "Enable riscv-vector-tests with vlen=${vlen}, elen=${elen}"
+        OFF)
+
+    if(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen})
+        set(TARBALL_NAME "riscv-vector-tests-v${vlen}x${elen}")
+        set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${TEST_DOWNLOAD_VERSION}")
+        set(DOWNLOAD_URL "${TEST_DOWNLOAD_URL}/${TEST_DOWNLOAD_VERSION}/${TARBALL_NAME}.tar.gz")
+
+        download_riscv_tests(
+            "${DOWNLOAD_PATH}"
+            "${TARBALL_NAME}"
+            "${DOWNLOAD_URL}"
+        )
+
+        # These tests use XLEN=ELEN. There are no tests with XLEN=64 & ELEN=32 or vice versa.
+        set(xlen ${elen})
+
+        file(GLOB elfs CONFIGURE_DEPENDS LIST_DIRECTORIES false
+            "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv${xlen}*"
+        )
+
+        foreach(elf IN LISTS elfs)
+            file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
+            add_test(
+                # `elf_name` includes xlen/vlen/elen so we don't need to add any details.
+                NAME "${elf_name}"
+                COMMAND
+                    $<TARGET_FILE:sail_riscv_sim>
+                    --config "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v${vlen}_e${elen}.json"
+                    ${elf}
+            )
+        endforeach()
+    endif()
+endfunction()
+
 # Download and add RVV tests.
 # NOTE: Setting XLEN independently of ELEN is not
 # supported by the RISC-V Vector Test suite.
 foreach(vlen IN ITEMS 128 256 512)
     foreach(elen IN ITEMS 32 64)
-        option(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen}
-            "Enable riscv-vector-tests with vlen=${vlen}, elen=${elen}"
-            OFF)
-
-        if(ENABLE_RISCV_VECTOR_TESTS_V${vlen}_E${elen})
-            set(TARBALL_NAME "riscv-vector-tests-v${vlen}x${elen}")
-            set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${TEST_DOWNLOAD_VERSION}")
-            set(DOWNLOAD_URL "${TEST_DOWNLOAD_URL}/${TEST_DOWNLOAD_VERSION}/${TARBALL_NAME}.tar.gz")
-
-            download_riscv_tests(
-                "${DOWNLOAD_PATH}"
-                "${TARBALL_NAME}"
-                "${DOWNLOAD_URL}"
-            )
-
-            # These tests use XLEN=ELEN. There are no tests with XLEN=64 & ELEN=32 or vice versa.
-            set(xlen ${elen})
-
-            file(GLOB elfs CONFIGURE_DEPENDS LIST_DIRECTORIES false
-                "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv${xlen}*"
-            )
-
-            foreach(elf IN LISTS elfs)
-                file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
-                add_test(
-                    # `elf_name` includes xlen/vlen/elen so we don't need to add any details.
-                    NAME "${elf_name}"
-                    COMMAND
-                        $<TARGET_FILE:sail_riscv_sim>
-                        --config "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v${vlen}_e${elen}.json"
-                        ${elf}
-                )
-            endforeach()
-        endif()
+        setup_vector_test("${vlen}" "${elen}")
     endforeach()
 endforeach()
 
