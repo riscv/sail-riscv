@@ -68,8 +68,8 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // We should not split the access if (a) virtual memory is not in
   // effect, or (b) it does not cross a page boundary.  But if we do
   // split, perform the split access in the configured order.
-
-  let do_split_access = translationMode(cur_privilege) != Bare & next_page_bytes > 0;
+  let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
+  let do_split_access = translationMode(effPriv) != Bare & next_page_bytes > 0;
 
   // The second condition in the conjunction here and below is needed
   // for the type-checker to satisfy the constraints on
@@ -146,7 +146,8 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
 
-  let do_split_access = translationMode(cur_privilege) != Bare & next_page_bytes > 0;
+  let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
+  let do_split_access = translationMode(effPriv) != Bare & next_page_bytes > 0;
 
   if sys_misaligned_order_decreasing & do_split_access then {
     // Store-conditionals cannot be misaligned.
