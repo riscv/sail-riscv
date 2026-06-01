@@ -81,9 +81,6 @@ register misa : Misa =
     MXL = architecture_bits(if xlen == 32 then RV32 else RV64),
   ]
 
-// whether misa is R/W
-let sys_enable_writable_misa : bool = config base.writable_misa
-
 // Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
 // supervisor mode is implemented and non-bare addressing modes are supported.
 let sys_enable_writable_fiom : bool = config base.writable_fiom
@@ -101,24 +98,24 @@ val ext_veto_disable_C : unit -> bool
 
 private function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   let v = Mk_Misa(v);
-  // Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes
-  if   not(sys_enable_writable_misa) | (v[C] == 0b0 & (nextPC[1] == 0b1 | ext_veto_disable_C()))
+  // Suppress updates to MISA if by disabling C next PC would become misaligned or an extension vetoes
+  if   (v[C] == 0b0 & (nextPC[1] == 0b1 | ext_veto_disable_C()))
   then m
   else [m with
-    A = if hartSupports(Ext_A) then v[A] else 0b0,
-    B = if hartSupports(Ext_B) then v[B] else 0b0,
-    C = if hartSupports(Ext_C) then v[C] else 0b0,
-    D = if hartSupports(Ext_D) & v[F] == 0b1 then v[D] else 0b0,
-    F = if hartSupports(Ext_F) then v[F] else 0b0,
+    A = if hartSupports(Ext_A) then v[A] else if config extensions.A.mutable_misa then m[A] else 0b0,
+    B = if hartSupports(Ext_B) then v[B] else if config extensions.B.mutable_misa then m[B] else 0b0,
+    C = if hartSupports(Ext_C) then v[C] else if config extensions.C.mutable_misa then m[C] else 0b0,
+    D = if hartSupports(Ext_D) & v[F] == 0b1 then v[D] else if config extensions.D.mutable_misa then m[D] else 0b0,
+    F = if hartSupports(Ext_F) then v[F] else if config extensions.F.mutable_misa then m[F] else 0b0,
     H = if hartSupports(Ext_H) then v[H] else 0b0, // TODO: Not fully supported yet
     // Writable I is not currently supported.
     I = bool_to_bit(not(base_E_enabled)),
     E = bool_to_bit(base_E_enabled),
-    M = if hartSupports(Ext_M) then v[M] else 0b0,
+    M = if hartSupports(Ext_M) then v[M] else if config extensions.M.mutable_misa then m[M] else 0b0,
     // Q = if hartSupports(Ext_Q) then v[Q] else 0b0, TODO: Not supported yet
-    S = if hartSupports(Ext_S) & v[U] == 0b1 then v[S] else 0b0,
-    U = if hartSupports(Ext_U) then v[U] else 0b0,
-    V = if hartSupports(Ext_V) & v[F] == 0b1 & v[D] == 0b1 then v[V] else 0b0,
+    S = if hartSupports(Ext_S) & v[U] == 0b1 then v[S] else if config extensions.S.mutable_misa then m[S] else 0b0,
+    U = if hartSupports(Ext_U) then v[U] else if config extensions.U.mutable_misa then m[U] else 0b0,
+    V = if hartSupports(Ext_V) & v[F] == 0b1 & v[D] == 0b1 then v[V] else if config extensions.V.mutable_misa then m[V] else 0b0,
     // X = ... TODO: If custom extensions are present this should be 1
   ]
 }
