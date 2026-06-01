@@ -8,6 +8,8 @@
     by the same hart to the reservation set has been added; see
     `platform.reservation.invalidate_on_same_hart_store`. This defaults
     to false to match previous behavior.
+  - The maximum supported index EEW for the indexed vector addressing
+    mode can be specified; see `extensions.V.max_index_eew_exp`.
   - The alignment constraints of the bases of the `mtvec` and `stvec`
     CSRs can now be specified; see `base.{m,s}tvec.base_alignment`.
   - The `base.scounteren_writable_bits` option now does not ignore the

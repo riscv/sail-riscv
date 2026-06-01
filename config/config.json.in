@@ -388,7 +388,11 @@
       // should be left as 3 (or any other legal value).
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
-      "vl_use_ceil": false
+      "vl_use_ceil": false,
+      // The maximum index EEW for indexed vector addressing mode, as
+      // a power of 2.  This must be at least 3 but must not exceed
+      // the supported ELEN.
+      "max_index_eew_exp": @CONFIG__V__ELEN_EXP@
     },
     "B": {
       "supported": true

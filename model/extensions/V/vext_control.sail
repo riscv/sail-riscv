@@ -25,6 +25,8 @@ function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1)
 function clause currentlyEnabled(Ext_Zvfh)    = hartSupports(Ext_Zvfh)     & currentlyEnabled(Ext_Zve32f) & currentlyEnabled(Ext_Zfhmin)
 function clause currentlyEnabled(Ext_Zvfhmin) = (hartSupports(Ext_Zvfhmin) & currentlyEnabled(Ext_Zve32f)) | currentlyEnabled(Ext_Zvfh)
 
+let max_index_eew_exp : nat = config extensions.V.max_index_eew_exp
+
 // Get the total number of elements in a register group (not considering `vl`).
 // For fractional groups (negative LMUL_pow) we return the number of elements
 // in a single register. The fractional aspect is handled by `init_masked_result()`.
