@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <optional>
+#include <print>
 #include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
@@ -305,7 +306,7 @@ static CLIOptions parse_cli(int argc, char **argv) {
   app.get_formatter()->column_width(column_width);
 
   if (argc == 1) {
-    fprintf(stdout, "%s\n", app.help().c_str());
+    std::print("{}\n", app.help());
     exit(EXIT_FAILURE);
   }
 
