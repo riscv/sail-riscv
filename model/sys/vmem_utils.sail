@@ -90,10 +90,12 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
     }
   };
 
+  // If we did not split the access, all bytes should be accessed.
+  let access_width = if do_split_access then in_page_bytes else width;
   match translateAddr(vaddr, access) {
     Err(e, _) => return Err(memory_exception(vaddr, e)),
 
-    Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, in_page_bytes, aq, rl, res) {
+    Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, access_width, aq, rl, res) {
       Err(e) => return Err(memory_exception(vaddr, e)),
 
       Ok(v)  => {
@@ -101,7 +103,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
           load_reservation(bits_of(paddr), width);
         };
 
-        data[8 * in_page_bytes - 1 .. 0] = v
+        data[8 * access_width - 1 .. 0] = v
       },
     },
   };
@@ -174,6 +176,8 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     }
   };
 
+  // If we did not split the access, all bytes should be accessed.
+  let access_width = if do_split_access then in_page_bytes else width;
   match translateAddr(vaddr, access) {
     Err(e, _) => return Err(memory_exception(vaddr, e)),
 
@@ -191,16 +195,16 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
         // PMP region without write permissions raises a store
         // access-fault exception."
         let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-        match phys_access_check(access, pbmt, effPriv, paddr, in_page_bytes, true) {
+        match phys_access_check(access, pbmt, effPriv, paddr, access_width, true) {
           Err(e) => return Err(memory_exception(vaddr, e)),
           Ok(_)  => write_success = false,
         }
-      } else match mem_write_ea(paddr, in_page_bytes, aq, rl, res) {
+      } else match mem_write_ea(paddr, access_width, aq, rl, res) {
         Err(e) => return Err(memory_exception(vaddr, e)),
 
         Ok(()) => {
-          let write_value = data[8 * in_page_bytes - 1 .. 0];
-          match mem_write_value(paddr, in_page_bytes, write_value, access, pbmt, aq, rl, res) {
+          let write_value = data[8 * access_width - 1 .. 0];
+          match mem_write_value(paddr, access_width, write_value, access, pbmt, aq, rl, res) {
             Err(e) => return Err(memory_exception(vaddr, e)),
             Ok(s)  => write_success = write_success & s,
           }
