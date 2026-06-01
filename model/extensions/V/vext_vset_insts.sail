@@ -49,6 +49,14 @@ mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
   hex_bits_8(ma @ ta @ sew @ lmul)  <-> (ma, ta, sew, lmul),
 }
 
+// For vsetvli and vsetivli, we absorb a reserved vtype fragment
+// (`vtr`) to parameterize reserved behavior, but this fragment cannot
+// be represented in assembly, so a custom mapper is used for the
+// mnemonic.
+val vtr_mnemonic : bits(3) <-> string
+function vtr_mnemonic_forwards(_vtr) = ""
+function vtr_mnemonic_forwards_matches(_vtr) = true
+
 private function handle_illegal_vtype(rd : regidx) -> unit = {
   // Note: Implementations can set vill or trap with an illegal
   // instruction if the vtype setting is not supported.
@@ -138,13 +146,16 @@ private function execute_vsetvl_type(
 }
 
 // ********************************** vsetvli ***********************************
-union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
+union clause instruction = VSETVLI : (bits(3), bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
-mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
+mapping clause encdec = VSETVLI(vtr, ma, ta, sew, lmul, rs1, rd)
+  <-> 0b0 @ vtr @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
+function clause execute VSETVLI(vtr, ma, ta, sew, lmul, rs1, rd) = {
+  if vtr != zeros()
+  then { handle_illegal_vtype(rd); return RETIRE_SUCCESS };
+
   let avl =
     if rs1 != zreg then X(rs1)
     else if rd != zreg then ones()
@@ -155,8 +166,9 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
   execute_vsetvl_type(ma, ta, sew, lmul, avl, requires_fixed_vlmax, rd)
 }
 
-mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
-  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul)
+
+mapping clause assembly = VSETVLI(vtr, ma, ta, sew, lmul, rs1, rd)
+  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul) ^ vtr_mnemonic(vtr)
 
 // ********************************** vsetvl ************************************
 union clause instruction = VSETVL : (regidx, regidx, regidx)
@@ -185,16 +197,19 @@ mapping clause assembly = VSETVL(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 // ********************************* vsetivli ***********************************
-union clause instruction = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
+union clause instruction = VSETIVLI : (bits(3), bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
-mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
-  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
+mapping clause encdec = VSETIVLI(0b0 @ vtr, ma, ta, sew, lmul, uimm, rd)
+  <-> 0b11 @ vtr @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
+function clause execute VSETIVLI(vtr, ma, ta, sew, lmul, uimm, rd) = {
+  if vtr != zeros()
+  then { handle_illegal_vtype(rd); return RETIRE_SUCCESS };
+
   let avl : xlenbits = zero_extend(uimm);
   execute_vsetvl_type(ma, ta, sew, lmul, avl, false, rd)
 }
 
-mapping clause assembly = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
-  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul)
+mapping clause assembly = VSETIVLI(vtr, ma, ta, sew, lmul, uimm, rd)
+  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul) ^ vtr_mnemonic(vtr)
