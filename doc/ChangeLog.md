@@ -25,10 +25,10 @@
     page size).
   - The pre-address-translation `misaligned.exceptions.amo`
     configuration now allows misaligned AMOs to not raise an exception
-    (but see following sentence). In this case, the misalignment will
+    (but see following sentence); in this case, the misalignment will
     be checked by the MAG PMA for the access address. However,
-    exceptions are still raised for misaligned AMOs that straddle page
-    boundaries in the presence of address translation.
+    exceptions are still raised for misaligned AMOs that straddle 4K
+    page boundaries, since the maximum MAG is 2^12.
 
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`

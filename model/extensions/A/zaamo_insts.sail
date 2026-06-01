@@ -95,14 +95,12 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
-  // For now, don't allow misaligned AMOs that cross a page
-  // boundary.  Most implementations are unlikely to support this case,
-  // and since the size of the MAG PMA is bounded by the 4K page size,
-  // these accesses cannot lie within a MAG anyway.
-  let crosses_page_boundary = translationMode(cur_privilege) != Bare &
-                              not(is_access_within_page(vaddr, width));
-  if crosses_page_boundary then {
-    // Look up the PMA for the first page of the split-page access.
+  // Don't allow misaligned AMOs that cross a page boundary, since the
+  // size of the MAG PMA is bounded by the 4K page size and
+  // these accesses cannot lie within a MAG .
+  if not(is_access_within_page(vaddr, width)) then {
+    // To decide which exception to throw here, we need to look at the
+    // PMA. Look up the PMA for the first page of the split-page access.
     // If really needed, address translation could be done for both
     // pages involved, but this should suffice for now.
     let e : ExceptionType = match matching_pma_region(pma_regions, addr, width) {

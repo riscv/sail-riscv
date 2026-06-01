@@ -191,9 +191,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   // Handle misaligned accesses that straddle page-boundaries, as with the
   // AMOs in Zaamo.
-  let crosses_page_boundary = translationMode(cur_privilege) != Bare &
-                              not(is_access_within_page(vaddr, width));
-  if crosses_page_boundary then {
+  if not(is_access_within_page(vaddr, width)) then {
     let e : ExceptionType = match matching_pma_region(pma_regions, paddr, width) {
       None() => E_SAMO_Access_Fault(),
       Some(struct { attributes, _ }) => match attributes.misaligned_exceptions.amo {
