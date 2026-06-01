@@ -71,9 +71,6 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
   let do_split_access = translationMode(effPriv) != Bare & next_page_bytes > 0;
 
-  // The second condition in the conjunction here and below is needed
-  // for the type-checker to satisfy the constraints on
-  // `next_page_bytes` for `mem_read`.
   if sys_misaligned_order_decreasing & do_split_access then {
     // Load-reserved cannot be misaligned.
     assert(not(res));
