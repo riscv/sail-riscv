@@ -15,6 +15,22 @@ private function check_privs() -> bool = {
   true
 }
 
+private function check_tvecs() -> bool = {
+  var valid : bool = true;
+
+  if not(config base.mtvec.direct.supported : bool) & not(config base.mtvec.vectored.supported : bool) then {
+    valid = false;
+    print_endline("`mtvec` specifies neither `direct` or `vectored` is supported; one of the modes must be supported.");
+  };
+
+  if (config extensions.S.supported : bool) & not(config base.stvec.direct.supported : bool) & not(config base.stvec.vectored.supported : bool) then {
+    valid = false;
+    print_endline("`stvec` specifies neither `direct` or `vectored` is supported; one of the modes must be supported.");
+  };
+
+  valid
+}
+
 private function require_Sv32(ext_name : string) -> bool = {
   if not(config extensions.Sv32.supported : bool) then {
     print_endline("The " ^ ext_name ^ " extension is enabled but Sv32 is disabled: " ^ ext_name ^ " depends on Sv32 on RV32.");

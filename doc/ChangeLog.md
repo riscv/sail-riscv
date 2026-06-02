@@ -10,8 +10,9 @@
     to false to match previous behavior.
   - The maximum supported index EEW for the indexed vector addressing
     mode can be specified; see `extensions.V.max_index_eew_exp`.
-  - The alignment constraints of the bases of the `mtvec` and `stvec`
-    CSRs can now be specified; see `base.{m,s}tvec.base_alignment`.
+  - The supported modes of `mtvec` and `stvec` and the alignment
+    constraints of their bases can now be specified; see `base.mtvec`
+    and `base.stvec`.
   - The `base.scounteren_writable_bits` option now does not ignore the
     lowest three bits, governing access to the `cycle`, `time` and
     `instret` CSRs from U-mode.

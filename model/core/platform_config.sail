@@ -8,11 +8,20 @@
 
 // Platform-specific configuration parameters.
 
+// Trap vector mode.
+enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
+
+let plat_mtvec_direct_mode_supported : bool = config base.mtvec.direct.supported
+let plat_mtvec_vectored_mode_supported : bool = config base.mtvec.vectored.supported
+
+let plat_stvec_direct_mode_supported : bool = config base.stvec.direct.supported
+let plat_stvec_vectored_mode_supported : bool = config base.stvec.vectored.supported
+
 // Trap vector alignment.
 type tvec_alignment = range(2, 24)
-let plat_mtvec_base_alignment_direct_exp   : tvec_alignment = config base.mtvec.base_alignment.direct
-let plat_mtvec_base_alignment_vectored_exp : tvec_alignment = config base.mtvec.base_alignment.vectored
-let plat_stvec_base_alignment_vectored_exp : tvec_alignment = config base.stvec.base_alignment.vectored
+let plat_mtvec_direct_base_alignment_exp   : tvec_alignment = config base.mtvec.direct.base_alignment
+let plat_mtvec_vectored_base_alignment_exp : tvec_alignment = config base.mtvec.vectored.base_alignment
+let plat_stvec_vectored_base_alignment_exp : tvec_alignment = config base.stvec.vectored.base_alignment
 
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour

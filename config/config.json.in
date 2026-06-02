@@ -48,21 +48,38 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
-    // The `{m,s}tvec.base_alignment` parameters control the alignment
+    // `mtvec.{direct,vectored}.supported` indicates whether the
+    // corresponding mode is supported for `mtvec`.  At least one mode
+    // should be supported.  If both modes are supported, the mode on
+    // reset is unspecified.
+    // The `mtvec.{direct,vectored}.base_alignment` parameters control the alignment
     // of the trap vector base for each mode.  The alignment is
     // specified as the power of 2 of the desired byte alignment, and
     // can range from a minimum of 2 upto a maximum of 24. If
     // unaligned values are written to these CSRs, the lowest bits
     // will be zeroed to respect the specified alignment.
     "mtvec": {
-      "base_alignment": {
-        "direct" : 2,
-        "vectored" : 2
+      "direct": {
+        "supported": true,
+        "base_alignment": 2
+      },
+      "vectored": {
+        "supported": true,
+        "base_alignment": 2
       }
     },
+    // Similar to `mtvec` above. If `S` mode is not supported, these
+    // values need to be present and legal but are ignored.
     "stvec": {
-      "base_alignment": {
-        "vectored" : 2
+      // The spec requires `base_alignment` for `stvec.direct` to be 2
+      // (i.e. 4-byte alignment), hence there is no configuration
+      // parameter for it.
+      "direct": {
+        "supported": true
+      },
+      "vectored": {
+        "supported": true,
+        "base_alignment": 2
       }
     },
     // These settings control whether the specified exceptions
