@@ -575,6 +575,7 @@ private function check_mmio_devices() -> bool = {
 
 function config_is_valid() -> bool = {
     check_privs()
+  & check_tvecs()
   & check_mmu_config()
   & check_mem_layout()
   & check_mmio_devices()
