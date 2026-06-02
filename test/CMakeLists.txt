@@ -124,7 +124,7 @@ endif()
 # Download and add RISC-V arch tests.
 option(ENABLE_RISCV_ARCH_TESTS "Enable riscv-arch-tests" OFF)
 
-function(filter_arch_tests test_elfs elfs_to_use)
+function(filter_arch_tests test_elfs elfs_to_use_varname)
   # These tests pass with a config matching the one used in
   # `riscv-arch-test`, but which differs from the ones generated in
   # our build.  They can be re-enabled once we support more granular
@@ -155,8 +155,7 @@ function(filter_arch_tests test_elfs elfs_to_use)
   list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/SsstrictSm-06\\.elf$")
   list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/SsstrictU-02\\.elf$")
 
-  set(elfs_to_use "${test_elfs}")
-  return(PROPAGATE elfs_to_use)
+  set(${elfs_to_use_varname} "${test_elfs}" PARENT_SCOPE)
 endfunction()
 
 if(ENABLE_RISCV_ARCH_TESTS)
