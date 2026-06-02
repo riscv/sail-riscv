@@ -40,10 +40,8 @@ mapping ma_flag : string <-> bits(1) = {
   sep() ^ "mu" <-> 0b0,
 }
 
-// For vsetvli and vsetivli, we absorb a reserved vtype fragment
-// (`vtr`) to parameterize reserved behavior, but this fragment cannot
-// be represented in assembly, so a custom mapper is used for the
-// mnemonic.
+// For vsetvli and vsetivli, vtr = 0b000 is implicit in the assembly and
+// cannot be printed.
 val vtr_mnemonic : bits(3) <-> string
 function vtr_mnemonic_forwards(_vtr) = ""
 function vtr_mnemonic_forwards_matches(_vtr) = true
