@@ -55,9 +55,17 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       // less-privileged mode, and it does not complete within an
       // implementation-specific, bounded time limit, the WFI
       // instruction causes an illegal-instruction exception."
-      if   (cur_privilege == Machine | mstatus[TW] == 0b0)
-      then Step_Execute(Retire_Success(), instbits)
-      else Step_Execute(Illegal_Instruction(), instbits)
+
+      // "When S-mode is implemented, then executing WFI in U-mode
+      // causes an illegal-instruction exception, regardless of the
+      // value of the TW bit, unless the instruction completes within
+      // an implementation-specific, bounded time limit."
+
+      let is_illegal = (cur_privilege != Machine & mstatus[TW] == 0b1) |
+          (cur_privilege == User & currentlyEnabled(Ext_S));
+      if is_illegal
+      then Step_Execute(Illegal_Instruction(), instbits)
+      else Step_Execute(Retire_Success(), instbits);
     },
     (WAIT_WRS_STO, _, true) => {
       if   get_config_print_instr()

@@ -19,6 +19,9 @@
   - Writable bits of the `mcounteren` CSR can now be specified;
     see `base.mcounteren_writable_bits`. (This was previously controlled
     by `base.writable_hpm_counters`, which was incorrect.)
+  - The WFI instruction can be optionally made available to User mode;
+    see `platform.wfi_available_to_user_mode`. This is set to false
+    by default for backwards compatibility.
 
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
