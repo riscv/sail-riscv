@@ -780,6 +780,12 @@
     "Smepmp": {
       "supported": true
     },
+    "Smcsrind": {
+      "supported": true
+    },
+    "Sscsrind": {
+      "supported": true
+    },
     "Sstc": {
       "supported": true
     },
