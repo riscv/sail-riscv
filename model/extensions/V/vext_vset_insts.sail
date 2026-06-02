@@ -40,15 +40,6 @@ mapping ma_flag : string <-> bits(1) = {
   sep() ^ "mu" <-> 0b0,
 }
 
-mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
-  // Mnemonics are preferable but there's no mnemonic for lmul=0b100.
-  sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma) <-> (ma, ta, sew, lmul)
-    when sew[2] != 0b1 & lmul != 0b100,
-  // However that is still potentially a legal instruction so you can
-  // use an integer for the whole vtype in that case.
-  hex_bits_8(ma @ ta @ sew @ lmul)  <-> (ma, ta, sew, lmul),
-}
-
 // For vsetvli and vsetivli, we absorb a reserved vtype fragment
 // (`vtr`) to parameterize reserved behavior, but this fragment cannot
 // be represented in assembly, so a custom mapper is used for the
@@ -56,6 +47,15 @@ mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
 val vtr_mnemonic : bits(3) <-> string
 function vtr_mnemonic_forwards(_vtr) = ""
 function vtr_mnemonic_forwards_matches(_vtr) = true
+
+mapping vtype_assembly : (bits(3), bits(1), bits(1), bits(3), bits(3)) <-> string = {
+  // Mnemonics are preferable but there's no mnemonic for lmul=0b100.
+  (vtr, ma, ta, sew, lmul) <-> sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma) ^ vtr_mnemonic(vtr)
+    when sew[2] != 0b1 & lmul != 0b100 & vtr == 0b000,
+  // However that is still potentially a legal instruction so you can
+  // use an integer for the whole vtype in that case.
+  (vtr, ma, ta, sew, lmul) <-> hex_bits_11(vtr @ ma @ ta @ sew @ lmul)
+}
 
 private function handle_illegal_vtype(rd : regidx) -> unit = {
   // Note: Implementations can set vill or trap with an illegal
@@ -168,7 +168,7 @@ function clause execute VSETVLI(vtr, ma, ta, sew, lmul, rs1, rd) = {
 
 
 mapping clause assembly = VSETVLI(vtr, ma, ta, sew, lmul, rs1, rd)
-  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul) ^ vtr_mnemonic(vtr)
+  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vtype_assembly(vtr, ma, ta, sew, lmul)
 
 // ********************************** vsetvl ************************************
 union clause instruction = VSETVL : (regidx, regidx, regidx)
@@ -212,4 +212,4 @@ function clause execute VSETIVLI(vtr, ma, ta, sew, lmul, uimm, rd) = {
 }
 
 mapping clause assembly = VSETIVLI(vtr, ma, ta, sew, lmul, uimm, rd)
-  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul) ^ vtr_mnemonic(vtr)
+  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ vtype_assembly(vtr, ma, ta, sew, lmul)
