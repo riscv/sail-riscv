@@ -9,8 +9,6 @@
 // Platform-specific configuration parameters.
 
 // Trap vector mode.
-enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
-
 let plat_mtvec_direct_mode_supported : bool = config base.mtvec.direct.supported
 let plat_mtvec_vectored_mode_supported : bool = config base.mtvec.vectored.supported
 

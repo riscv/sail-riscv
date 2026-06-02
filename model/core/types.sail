@@ -337,6 +337,7 @@ overload to_str = {trapCause_to_str}
 // trap modes
 
 type tv_mode = bits(2)
+enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
 
 mapping trapVectorMode : tv_mode <-> TrapVectorMode = {
   0b00 <-> TV_Direct,
