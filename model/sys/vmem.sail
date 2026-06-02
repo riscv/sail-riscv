@@ -246,7 +246,8 @@ function satp_to_ppn(satp_val) =
 
 // Compute address translation mode from SATP register
 function translationMode(priv : Privilege) -> SATPMode = {
-  if priv == Machine then Bare
+  // Without S-mode enabled, SATP is inactive and translation is Bare at every privilege.
+  if priv == Machine | not(currentlyEnabled(Ext_S)) then Bare
   else {
     let arch = architecture(Supervisor);
     let mbits : satp_mode = match arch {
