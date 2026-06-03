@@ -39,6 +39,10 @@ val riscv_f16Add = pure {cpp: "softfloat_f16add", lem: "softfloat_f16_add"} : (b
 val riscv_f16Sub = pure {cpp: "softfloat_f16sub", lem: "softfloat_f16_sub"} : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H)
 val riscv_f16Mul = pure {cpp: "softfloat_f16mul", lem: "softfloat_f16_mul"} : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H)
 val riscv_f16Div = pure {cpp: "softfloat_f16div", lem: "softfloat_f16_div"} : (bits_rm, bits_H, bits_H) -> (bits_fflags, bits_H)
+val riscv_bf16Add = pure {cpp: "softfloat_bf16add", lem: "softfloat_bf16_add"} : (bits_rm, bits_BF16, bits_BF16) -> (bits_fflags, bits_BF16)
+val riscv_bf16Sub = pure {cpp: "softfloat_bf16sub", lem: "softfloat_bf16_sub"} : (bits_rm, bits_BF16, bits_BF16) -> (bits_fflags, bits_BF16)
+val riscv_bf16Mul = pure {cpp: "softfloat_bf16mul", lem: "softfloat_bf16_mul"} : (bits_rm, bits_BF16, bits_BF16) -> (bits_fflags, bits_BF16)
+val riscv_bf16Div = pure {cpp: "softfloat_bf16div", lem: "softfloat_bf16_div"} : (bits_rm, bits_BF16, bits_BF16) -> (bits_fflags, bits_BF16)
 val riscv_f32Add = pure {cpp: "softfloat_f32add", lem: "softfloat_f32_add"} : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
 val riscv_f32Sub = pure {cpp: "softfloat_f32sub", lem: "softfloat_f32_sub"} : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
 val riscv_f32Mul = pure {cpp: "softfloat_f32mul", lem: "softfloat_f32_mul"} : (bits_rm, bits_S, bits_S) -> (bits_fflags, bits_S)
@@ -52,6 +56,7 @@ val riscv_f64Div = pure {cpp: "softfloat_f64div", lem: "softfloat_f64_div"} : (b
 // MULTIPLY-ADD
 
 val riscv_f16MulAdd = pure {cpp: "softfloat_f16muladd", lem: "softfloat_f16_muladd"} : (bits_rm, bits_H, bits_H, bits_H) -> (bits_fflags, bits_H)
+val riscv_bf16MulAdd = pure {cpp: "softfloat_bf16muladd", lem: "softfloat_bf16_muladd"} : (bits_rm, bits_BF16, bits_BF16, bits_BF16) -> (bits_fflags, bits_BF16)
 val riscv_f32MulAdd = pure {cpp: "softfloat_f32muladd", lem: "softfloat_f32_muladd"} : (bits_rm, bits_S, bits_S, bits_S) -> (bits_fflags, bits_S)
 val riscv_f64MulAdd = pure {cpp: "softfloat_f64muladd", lem: "softfloat_f64_muladd"} : (bits_rm, bits_D, bits_D, bits_D) -> (bits_fflags, bits_D)
 

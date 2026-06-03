@@ -19,6 +19,11 @@ mapping sew_flag : string <-> bits(3) = {
   "e64"   <-> 0b011,
 }
 
+mapping sew_flag_alt : string <-> bits(3) = {
+  "e8alt"  <-> 0b000,
+  "e16alt" <-> 0b001,
+}
+
 mapping maybe_lmul_flag : string <-> bits(3) = {
   sep() ^ "mf8"   <-> 0b101,
   sep() ^ "mf4"   <-> 0b110,
@@ -40,13 +45,21 @@ mapping ma_flag : string <-> bits(1) = {
   sep() ^ "mu" <-> 0b0,
 }
 
-mapping vtype_assembly : string <-> (bits(1), bits(1), bits(3), bits(3)) = {
+mapping vtype_assembly : string <-> (bits(1), bits(1), bits(1), bits(3), bits(3)) = {
   // Mnemonics are preferable but there's no mnemonic for lmul=0b100.
-  sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma) <-> (ma, ta, sew, lmul)
+  // altfmt=0 path (existing behavior)
+  sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
+    <-> (0b0, ma, ta, sew, lmul)
     when sew[2] != 0b1 & lmul != 0b100,
-  // However that is still potentially a legal instruction so you can
-  // use an integer for the whole vtype in that case.
-  hex_bits_8(ma @ ta @ sew @ lmul)  <-> (ma, ta, sew, lmul),
+  // altfmt=1 path (only e8alt / e16alt)
+  sew_flag_alt(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
+    <-> (0b1, ma, ta, sew, lmul)
+    when sew[2] != 0b1 & lmul != 0b100,
+  // hex fallback
+  hex_bits_9(0b0 @ ma @ ta @ sew @ lmul)
+    <-> (0b0, ma, ta, sew, lmul),
+  hex_bits_9(0b1 @ ma @ ta @ sew @ lmul)
+    <-> (0b1, ma, ta, sew, lmul),
 }
 
 private function handle_illegal_vtype(rd : regidx) -> unit = {
@@ -84,6 +97,7 @@ private function calculate_new_vl(AVL : xlenbits, VLMAX : range(1, vlen)) -> ran
 
 // Execute vsetvl, vsetvli, or vsetivli.
 private function execute_vsetvl_type(
+  altfmt : bits(1),
   ma : bits(1),
   ta : bits(1),
   sew : bits(3),
@@ -96,6 +110,16 @@ private function execute_vsetvl_type(
   if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
     handle_illegal_vtype(rd);
     return RETIRE_SUCCESS;
+  };
+
+  // Check legality of altfmt for Zvfbfa
+  // altfmt=1 is reserved if Zvfbfa is not enabled or SEW not in {8, 16}
+  if altfmt == 0b1 then {
+    let sew_pow = unsigned(sew) + 3;
+    if not(currentlyEnabled(Ext_Zvfbfa)) | (sew_pow != 3 & sew_pow != 4) then {
+      handle_illegal_vtype(rd);
+      return RETIRE_SUCCESS;
+    }
   };
 
   let LMUL_pow_new = signed(lmul);
@@ -121,6 +145,7 @@ private function execute_vsetvl_type(
 
   vtype = [Mk_Vtype(zeros()) with
     vill = 0b0,
+    altfmt = altfmt,
     vma = ma,
     vta = ta,
     vsew = sew,
@@ -138,13 +163,13 @@ private function execute_vsetvl_type(
 }
 
 // ********************************** vsetvli ***********************************
-union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
+union clause instruction = VSETVLI : (bits(1), bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
-mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
+mapping clause encdec = VSETVLI(altfmt, ma, ta, sew, lmul, rs1, rd)
+  <-> 0b000 @ altfmt @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
+function clause execute VSETVLI(altfmt, ma, ta, sew, lmul, rs1, rd) = {
   let avl =
     if rs1 != zreg then X(rs1)
     else if rd != zreg then ones()
@@ -152,11 +177,11 @@ function clause execute VSETVLI(ma, ta, sew, lmul, rs1, rd) = {
 
   let requires_fixed_vlmax = rd == zreg & rs1 == zreg;
 
-  execute_vsetvl_type(ma, ta, sew, lmul, avl, requires_fixed_vlmax, rd)
+  execute_vsetvl_type(altfmt, ma, ta, sew, lmul, avl, requires_fixed_vlmax, rd)
 }
 
-mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
-  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul)
+mapping clause assembly = VSETVLI(altfmt, ma, ta, sew, lmul, rs1, rd)
+  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ vtype_assembly(altfmt, ma, ta, sew, lmul)
 
 // ********************************** vsetvl ************************************
 union clause instruction = VSETVL : (regidx, regidx, regidx)
@@ -178,23 +203,23 @@ function clause execute VSETVL(rs2, rs1, rd) = {
 
   let requires_fixed_vlmax = rd == zreg & rs1 == zreg;
 
-  execute_vsetvl_type(vt[vma], vt[vta], vt[vsew], vt[vlmul], avl, requires_fixed_vlmax, rd)
+  execute_vsetvl_type(vt[altfmt], vt[vma], vt[vta], vt[vsew], vt[vlmul], avl, requires_fixed_vlmax, rd)
 }
 
 mapping clause assembly = VSETVL(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 // ********************************* vsetivli ***********************************
-union clause instruction = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
+union clause instruction = VSETIVLI : ( bits(1), bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
-mapping clause encdec = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
-  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
+mapping clause encdec = VSETIVLI(altfmt, ma, ta, sew, lmul, uimm, rd)
+  <-> 0b110 @ altfmt @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
   when currentlyEnabled(Ext_Zve32x)
 
-function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
+function clause execute VSETIVLI(altfmt, ma, ta, sew, lmul, uimm, rd) = {
   let avl : xlenbits = zero_extend(uimm);
-  execute_vsetvl_type(ma, ta, sew, lmul, avl, false, rd)
+  execute_vsetvl_type(altfmt, ma, ta, sew, lmul, avl, false, rd)
 }
 
-mapping clause assembly = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
-  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ vtype_assembly(ma, ta, sew, lmul)
+mapping clause assembly = VSETIVLI(altfmt, ma, ta, sew, lmul, uimm, rd)
+  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ vtype_assembly(altfmt, ma, ta, sew, lmul)
