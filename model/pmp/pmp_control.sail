@@ -116,9 +116,9 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   width : int('n),
   access : MemoryAccessType(mem_payload),
   priv : Privilege,
-) -> option(ExceptionType) = {
+) -> (option(ExceptionType), option(page_based_mem_type)) = {
 
-  if sys_pmp_count == 0 then return None();
+  if sys_pmp_count == 0 then return (None(), None());
 
   let width : xlenbits = to_bits(width);
 
@@ -136,15 +136,15 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 
     match pmpMatchAddr(addr, width, cfg, pmpReadAddrReg(i), prev_pmpaddr) {
       PMP_NoMatch      => (),
-      PMP_PartialMatch => return Some(accessFaultFromAccessType(access)),
+      PMP_PartialMatch => return (Some(accessFaultFromAccessType(access)), None()),
       PMP_Match        => return (
         if pmpCheckRWX(cfg, access) | (priv == Machine & not(pmpLocked(cfg)))
-        then None()
-        else Some(accessFaultFromAccessType(access))
+        then (None(), Some(page_based_mem_type(cfg[MT])))
+        else (Some(accessFaultFromAccessType(access)), Some(page_based_mem_type(cfg[MT])))
       ),
     };
   };
-  if priv == Machine then None() else Some(accessFaultFromAccessType(access))
+  if priv == Machine then (None(), None()) else (Some(accessFaultFromAccessType(access)), None())
 }
 
 function reset_pmp() -> unit = {
