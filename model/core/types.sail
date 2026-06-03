@@ -365,6 +365,14 @@ mapping extStatus_bits : ExtStatus <-> ext_status = {
 function extStatus_to_bits(e : ExtStatus) -> ext_status = extStatus_bits(e)
 function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
 
+function is_extStatus_valid(ctx : ExtContext, status : ExtStatus) -> bool = {
+  match ctx {
+    ExtContext_Off       => status == Off,
+    ExtContext_TwoState  => status == Off | status == Dirty,
+    ExtContext_FourState => true,
+  }
+}
+
 // supervisor-level address translation modes
 
 type satp_mode = bits(4)

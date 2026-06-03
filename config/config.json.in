@@ -132,8 +132,14 @@
       "rv32zdinx_odd_register": "Zdinx_Illegal"
     },
     "mstatus": {
-      "mstatus_fs_legal_values": [0, 1, 2, 3],
-      "mstatus_vs_writable": false
+      // The legal values for the FS and VS fields in this CSR are
+      // specified by the two fields below.  Their values can be one
+      // of:
+      // - "ExtContext_FourState" allows all values {Off, Initial, Clean, Dirty}.
+      // - "ExtContext_TwoState" allows {Off, Dirty}.
+      // - "ExtContext_Off" allows only {Off}.  This makes the field read-only zero.
+      "fs_legal_states": "ExtContext_FourState",
+      "vs_legal_states": "ExtContext_FourState"
     }
   },
   "memory": {

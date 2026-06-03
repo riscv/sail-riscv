@@ -91,9 +91,6 @@ let sys_enable_writable_fiom : bool = config base.writable_fiom
 // Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored.
 let sys_writable_hpm_counters : bits(32) = config base.writable_hpm_counters
 
-// The mstatus.FS legal values list.
-let mstatus_fs_legal_values : list(int) = config base.mstatus.mstatus_fs_legal_values
-
 // Supervisor timecmp
 function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
 
@@ -152,18 +149,6 @@ function virtual_memory_supported() -> bool = {
 // This measure needs to be > currentlyEnabled_measure(Ext_Sv{32,39,48,57}),
 // currently all equal to 2, see currentlyEnabled_measure in extensions.sail
 termination_measure virtual_memory_supported(_) = 3
-
-function match_fs_legal_values(legal_values : list(int), v : int) -> bool = {
-  match legal_values {
-    [||] => false,
-    value :: rest => (value == v) | match_fs_legal_values(rest, v)
-  }
-}
-
-function is_vs_read_only() -> bool = {
-  let mstatus_vs_writable : bool = config base.mstatus.mstatus_vs_writable;
-  not(hartSupports(Ext_Zve32x)) | (not(hartSupports(Ext_S)) & not(hartSupports(Ext_V)) & mstatus_vs_writable)
-}
 
 //
 // Illegal values legalized to least privileged mode supported.
@@ -242,18 +227,15 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     MXR = if currentlyEnabled(Ext_S) then v[MXR] else 0b0,
     SUM = if virtual_memory_supported() then v[SUM] else 0b0,
     MPRV = if currentlyEnabled(Ext_U) then v[MPRV] else 0b0,
+
     // We don't have any extension context yet.
     XS = extStatus_to_bits(Off),
-    // FS is WARL, and making FS writable can support the M-mode emulation of an FPU
-    // to support code running in S/U-modes.  Spike does this, and for now, we match it,
-    // but only if Zfinx isn't enabled.
-    FS = if not(hartSupports(Ext_Zfinx)) & match_fs_legal_values(mstatus_fs_legal_values, unsigned(v[FS])) then v[FS] else extStatus_to_bits(Off),
+    // Validate FS and VS against their allowed set.
+    FS = if is_extStatus_valid(plat_mstatus_legal_fs, extStatus_bits(v[FS])) then v[FS] else o[FS],
+    VS = if is_extStatus_valid(plat_mstatus_legal_vs, extStatus_bits(v[VS])) then v[VS] else o[VS],
+
     MPP = if have_nominal_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
-    // If neither the v registers nor S-mode is implemented, then VS is
-    // read-only zero. If S-mode is implemented but the v registers are not,
-    // VS may optionally be read-only zero.
-    VS = if is_vs_read_only() then 0b00 else v[VS],
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],

@@ -86,6 +86,16 @@ struct GlobalMisalignedExceptions = {
 // The handling of misaligned accesses before address translation.
 let plat_misaligned_access : GlobalMisalignedExceptions = config memory.misaligned.exceptions
 
+// Legal values for FS and VS.  This is an enumeration to avoid lists.
+enum ExtContext = {
+  ExtContext_Off,        // The extension is always off.
+  ExtContext_TwoState,   // Legal values are Off and Dirty.
+  ExtContext_FourState,  // Legal values are Off, Initial, Clean and Dirty.
+}
+
+let plat_mstatus_legal_fs : ExtContext = config base.mstatus.fs_legal_states
+let plat_mstatus_legal_vs : ExtContext = config base.mstatus.vs_legal_states
+
 // Location of clock-interface, which should match with the spec in the DTB
 let plat_have_clint : bool = config platform.clint.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
