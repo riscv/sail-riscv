@@ -472,6 +472,23 @@ extensions {
     files extensions/Ssqosid/ssqosid.sail
   }
 
+  // Supervisor Domain Access Protection (SMMTT)
+  Smsdid {
+    requires core
+    Smsdid_types {
+      before sys
+      files extensions/Smsdid/smsdid_types.sail
+    }
+    Smsdid_regs {
+      requires core, sys, exceptions, Smsdid_types
+      files extensions/Smsdid/smsdid_regs.sail
+    }
+    Smsdid_insts {
+      requires core, sys, exceptions, Smsdid_types
+      files extensions/Smsdid/smsdid_insts.sail
+    }
+  }
+
   CFI {
     requires core
 

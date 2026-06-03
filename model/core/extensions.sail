@@ -544,6 +544,11 @@ enum clause extension = Ext_Ssqosid
 mapping clause extensionName = Ext_Ssqosid <-> "ssqosid"
 function clause hartSupports(Ext_Ssqosid) = config extensions.Ssqosid.supported
 
+// Supervisor Domain Identifier and Protection Register
+enum clause extension = Ext_Smsdid
+mapping clause extensionName = Ext_Smsdid <-> "smsdid"
+function clause hartSupports(Ext_Smsdid) = sys_enable_experimental_extensions() & config extensions.Smsdid.supported
+
 // When adding a new extension X, we need to make sure that if X being supported
 // depends on Y being supported, then the value associated to X is _greater_ than
 // the value associated to Y. The default value is 0.
