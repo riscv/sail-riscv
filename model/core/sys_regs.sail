@@ -483,19 +483,26 @@ bitfield Mtvec : xlenbits = {
 register mtvec : Mtvec  // Trap Vector
 
 // PUBLIC: invoked from set_{ms}tvec() [exceptions/sys_exceptions.sail]
-function legalize_tvec(o : Mtvec, v : xlenbits, direct_alignment_exp : tvec_alignment, vectored_alignment_exp : tvec_alignment) -> Mtvec = {
+function legalize_tvec(
+  o : Mtvec,
+  v : xlenbits,
+  direct_supported : bool,
+  direct_alignment_exp : tvec_alignment,
+  vectored_supported : bool,
+  vectored_alignment_exp : tvec_alignment
+) -> Mtvec = {
   let v = Mk_Mtvec(v);
   // Legalize mode.
-  let v : Mtvec = match trapVectorMode_of_bits(v[Mode]) {
-    TV_Direct => v,
-    TV_Vector => v,
+  let v : Mtvec = match trapVectorMode(v[Mode]) {
+    TV_Direct => if direct_supported then v else [v with Mode = o[Mode]],
+    TV_Vector => if vectored_supported then v else [v with Mode = o[Mode]],
     _         => match xtvec_mode_reserved_behavior {
       Xtvec_Fatal => reserved_behavior("Tried to write a reserved value (" ^ dec_str(unsigned(v[Mode])) ^ ") to the MODE field of xtvec."),
       Xtvec_Ignore => [v with Mode = o[Mode]],
     },
   };
   // Legalize alignment.
-  let base_alignment : tvec_alignment = match trapVectorMode_of_bits(v[Mode]) {
+  let base_alignment : tvec_alignment = match trapVectorMode(v[Mode]) {
     TV_Direct   => direct_alignment_exp,
     TV_Vector   => vectored_alignment_exp,
     TV_Reserved => // This should never happen due to the check above.
@@ -520,7 +527,7 @@ function clause write_CSR(0x342, value) = { mcause.bits = value; Ok(mcause.bits)
 // Interpreting the trap-vector address
 function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   let base : xlenbits = m[Base] @ 0b00;
-  match (trapVectorMode_of_bits(m[Mode])) {
+  match trapVectorMode(m[Mode]) {
     TV_Direct => Some(base),
     TV_Vector => if   c[IsInterrupt] == 0b1
                  then Some(base + (zero_extend(c[Cause]) << 2))
