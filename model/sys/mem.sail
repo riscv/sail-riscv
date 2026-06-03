@@ -31,20 +31,8 @@
 //   mem_write_value      - both of the above partial applications
 //
 // The internal implementation first performs a PMP check (if PMP is
-// enabled), and then dispatches to MMIO regions or physical memory as
-// per the platform memory map.
-//
-// A helper to check address alignment is also provided in the external API.
-//
-//   is_aligned_addr - checks for alignment of a physical or virtual address
-
-function is_aligned_paddr(Physaddr(addr) : physaddr, width : nat1) -> bool =
-  unsigned(addr) % width == 0
-
-function is_aligned_vaddr(Virtaddr(addr) : virtaddr, width : nat1) -> bool =
-  unsigned(addr) % width == 0
-
-overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr}
+// enabled) and a PMA check, and then dispatches to MMIO regions or physical
+// memory as per the platform memory map.
 
 private function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> read_kind =
   match (aq, rl, res) {
@@ -72,6 +60,30 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
     (true,  false, true)  => internal_error(__FILE__, __LINE__, "Store-conditional with acquire semantics should be unreachable"),
   }
 
+
+// Information used to access physical memory.
+//
+// It specifies whether the access should be split, and if so, the MAG
+// granule to use. In future, this could be extended to cover memory
+// ordering properties.
+
+struct PM_Access_Info = {
+  // If false, the access should not be split; if true, the access
+  // _may_ be split according to the granule below.
+  splittable : Splittability,
+  // The granule size to use for any splitting.
+  granule_size_exp : mag_size_exp,
+}
+
+// The result of a physical memory check.
+//
+// If a PMA or PMP check fails, the result will be a PM_Error of the
+// resulting exception type.  If it succeeds, the resulting PM_Ok
+// contains a PM_Access struct containing information to perform the
+// access.
+
+type PM_Check_Result = result(PM_Access_Info, ExceptionType)
+
 private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 (
   paddr      : physaddr,
@@ -79,94 +91,100 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   access     : MemoryAccessType(mem_payload),
   pbmt       : page_based_mem_type,
   res_or_con : bool,
-)  -> option(ExceptionType) = {
-  match matching_pma_region(pma_regions, paddr, width) {
-    None() => {
-      Some(accessFaultFromAccessType(access))
+)  -> result(PM_Access_Info, ExceptionType) = {
+
+  let attributes : PMA = match matching_pma_region(pma_regions, paddr, width) {
+    None() =>
+      return Err(accessFaultFromAccessType(access)),
+    Some(struct { attributes, _ }) =>
+      override_PMA(attributes, pbmt)
+  };
+
+  // The spec is silent about the order in which PMA checks are done.
+  // The current implementation checks the misalignment atomicity
+  // granule after the other PMAs.
+
+  // Check read/write/execute permissions and PMAs.
+  let canAccess : bool = match access {
+    InstructionFetch()     => attributes.executable,
+    Load(Data)             => {assert(not(res_or_con)); attributes.readable},
+    Load(Vector)           => {assert(not(res_or_con)); attributes.readable},
+    Load(PageTableEntry)   => {assert(not(res_or_con)); attributes.supports_pte_read},
+    Store(Data)            => {assert(not(res_or_con)); attributes.writable},
+    Store(Vector)          => {assert(not(res_or_con)); attributes.writable},
+    Store(PageTableEntry)  => {assert(not(res_or_con)); attributes.supports_pte_write},
+    // For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
+    // or absence (RsrvNonEventual) of an eventual success guarantee.
+    LoadReserved(Data)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
+    StoreConditional(Data) => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
+    Atomic(op, Data, Data)  => {assert(res_or_con); attributes.readable & attributes.writable & pma_allows_atomic_op(attributes.atomic_support, op, width)},
+
+    // "The PMA checks are extended to require memory referenced by shadow stack instructions
+    // to be idempotent."
+    Load(ShadowStack)      => {assert(not(res_or_con)); attributes.readable & attributes.read_idempotent},
+    Store(ShadowStack)     => {assert(not(res_or_con)); attributes.writable & attributes.write_idempotent},
+    Atomic(AMOSWAP, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent & pma_allows_atomic_op(attributes.atomic_support, AMOSWAP, width)},
+
+    // TODO for the CMO extensions: "The PMAs shall be the
+    // same for all physical addresses in the cache block, and
+    // if write permission is granted by the supported access
+    // type PMAs, read permission shall also be granted."
+
+    // "A cache-block zero instruction is permitted to access
+    // the specified cache block whenever a store instruction
+    // is permitted to access the corresponding physical
+    // addresses and when the PMAs indicate that cache-block
+    // zero instructions are a supported access type."
+    CacheAccess(CB_zero())      => attributes.writable & attributes.supports_cbo_zero,
+
+    // "A cache-block management instruction is permitted to
+    // access the specified cache block whenever a load
+    // instruction or store instruction is permitted to access
+    // the corresponding physical addresses. If neither a load
+    // instruction nor store instruction is permitted to
+    // access the physical addresses, but an instruction fetch
+    // is permitted to access the physical addresses, whether
+    // a cache-block management instruction is permitted to
+    // access the cache block is UNSPECIFIED."
+    // TODO: handle the second sentence.
+    CacheAccess(CB_manage(_))   => attributes.readable | attributes.writable,
+
+    // "A cache-block prefetch instruction is permitted to
+    // access the specified cache block whenever a load
+    // instruction, store instruction, or instruction fetch is
+    // permitted to access the corresponding physical
+    // addresses."
+    CacheAccess(CB_prefetch(p)) => match p {
+      PREFETCH_R => attributes.readable,
+      PREFETCH_W => attributes.writable,
+      PREFETCH_I => attributes.executable,
     },
-    Some(struct { attributes, _ }) => {
-      let attributes = override_PMA(attributes, pbmt);
-      let misaligned = not(is_aligned_addr(paddr, width));
-      // Check if we need to raise an exception for misalignment.
-      let misaligned_exception : option(misaligned_exception) =
-        if not(misaligned) then None()
-        // Ensure that `pma_misaligned_exception` is only called for a misaligned access.
-        else pma_misaligned_exception(attributes, access);
 
-      match misaligned_exception {
-        Some(AccessFault)        => return Some(accessFaultFromAccessType(access)),
-        Some(AlignmentException) => return Some(alignmentFaultFromAccessType(access)),
-        None() => {
-          // Check read/write/execute permissions and PMAs.
-          let canAccess : bool = match access {
-            InstructionFetch()     => attributes.executable,
-            Load(Data)             => {assert(not(res_or_con)); attributes.readable},
-            Load(Vector)           => {assert(not(res_or_con)); attributes.readable},
-            Load(PageTableEntry)   => {assert(not(res_or_con)); attributes.supports_pte_read},
-            Store(Data)            => {assert(not(res_or_con)); attributes.writable},
-            Store(Vector)          => {assert(not(res_or_con)); attributes.writable},
-            Store(PageTableEntry)  => {assert(not(res_or_con)); attributes.supports_pte_write},
-            // For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
-            // or absence (RsrvNonEventual) of an eventual success guarantee.
-            LoadReserved(Data)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
-            StoreConditional(Data) => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
-            Atomic(op, Data, Data)  => {assert(res_or_con); attributes.readable & attributes.writable & pma_allows_atomic_op(attributes.atomic_support, op, width)},
+    LoadReserved(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(p)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
 
-            // "The PMA checks are extended to require memory referenced by shadow stack instructions
-            // to be idempotent."
-            Load(ShadowStack)      => {assert(not(res_or_con)); attributes.readable & attributes.read_idempotent},
-            Store(ShadowStack)     => {assert(not(res_or_con)); attributes.writable & attributes.write_idempotent},
-            Atomic(AMOSWAP, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent & pma_allows_atomic_op(attributes.atomic_support, AMOSWAP, width)},
+    Atomic(op, ShadowStack, ShadowStack) => internal_error(__FILE__, __LINE__, "Invalid op (" ^ amo_mnemonic(op) ^ ") for ShadowStack Atomic."),
+    Atomic(_, rp, wp)                    => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+  };
 
-            // TODO for the CMO extensions: "The PMAs shall be the
-            // same for all physical addresses in the cache block, and
-            // if write permission is granted by the supported access
-            // type PMAs, read permission shall also be granted."
+  if get_config_print_pma() & not(canAccess)
+  then print_log("PMA check failed for a " ^ dec_str(width) ^ "-byte wide " ^ to_str(access) ^ " access to address " ^ hex_bits_str(bits_of(paddr)) ^ " with PMA {" ^ to_str(attributes) ^ "}");
 
-            // "A cache-block zero instruction is permitted to access
-            // the specified cache block whenever a store instruction
-            // is permitted to access the corresponding physical
-            // addresses and when the PMAs indicate that cache-block
-            // zero instructions are a supported access type."
-            CacheAccess(CB_zero())      => attributes.writable & attributes.supports_cbo_zero,
+  if not(canAccess) then return Err(accessFaultFromAccessType(access));
 
-            // "A cache-block management instruction is permitted to
-            // access the specified cache block whenever a load
-            // instruction or store instruction is permitted to access
-            // the corresponding physical addresses. If neither a load
-            // instruction nor store instruction is permitted to
-            // access the physical addresses, but an instruction fetch
-            // is permitted to access the physical addresses, whether
-            // a cache-block management instruction is permitted to
-            // access the cache block is UNSPECIFIED."
-            // TODO: handle the second sentence.
-            CacheAccess(CB_manage(_))   => attributes.readable | attributes.writable,
+  // If the access isn't blocked for other reasons, check whether it
+  // is stopped for misalignment reasons.
+  match mag_pma_check(attributes, access, paddr, width) {
+    Ok((splittable, granule)) => Ok(struct { splittable, granule_size_exp = granule }),
 
-            // "A cache-block prefetch instruction is permitted to
-            // access the specified cache block whenever a load
-            // instruction, store instruction, or instruction fetch is
-            // permitted to access the corresponding physical
-            // addresses."
-            CacheAccess(CB_prefetch(p)) => match p {
-              PREFETCH_R => attributes.readable,
-              PREFETCH_W => attributes.writable,
-              PREFETCH_I => attributes.executable,
-            },
-
-            LoadReserved(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
-            StoreConditional(p)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
-
-            Atomic(op, ShadowStack, ShadowStack) => internal_error(__FILE__, __LINE__, "Invalid op (" ^ amo_mnemonic(op) ^ ") for ShadowStack Atomic."),
-            Atomic(_, rp, wp)                    => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
-          };
-
-          if get_config_print_pma() & not(canAccess)
-          then print_log("PMA check failed for a " ^ dec_str(width) ^ "-byte wide " ^ to_str(access) ^ " access to address " ^ hex_bits_str(bits_of(paddr)) ^ " with PMA {" ^ to_str(attributes) ^ "}");
-
-          if canAccess then None() else Some(accessFaultFromAccessType(access))
-        },
+    Err(e) => {
+      if get_config_print_pma()
+      then print_log("MAG PMA check failed for a " ^ dec_str(width) ^ "-byte wide " ^ to_str(access) ^ " access to address " ^ hex_bits_str(bits_of(paddr)) ^ " with PMA {" ^ to_str(attributes) ^ "}");
+      match e {
+        AccessFault        => Err(accessFaultFromAccessType(access)),
+        AlignmentException => Err(alignmentFaultFromAccessType(access)),
       }
-    }
+    },
   }
 }
 
@@ -193,14 +211,15 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   paddr : physaddr,
   width : int('n),
   res_or_con : bool,
-) -> option(ExceptionType) = {
-  let pmpError : option(ExceptionType) = pmpCheck(paddr, width, access, priv);
-  let pmaError : option(ExceptionType) = pmaCheck(paddr, width, access, pbmt, res_or_con);
-  match (pmpError, pmaError) {
-    (None(), None())     => None(),
-    (Some(e), None())    => Some(e),
-    (None(), Some(e))    => Some(e),
-    (Some(e0), Some(e1)) => Some(highestPriorityAlignmentOrAccessFault(e0, e1)),
+) -> PM_Check_Result = {
+
+  let pmpError  : option(ExceptionType) = pmpCheck(paddr, width, access, priv);
+  let pmaResult : PM_Check_Result       = pmaCheck(paddr, width, access, pbmt, res_or_con);
+
+  match (pmpError, pmaResult) {
+    (None(),  pma)      => pma,
+    (Some(e), Ok(_))    => Err(e),
+    (Some(e0), Err(e1)) => Err(highestPriorityAlignmentOrAccessFault(e0, e1)),
   }
 }
 
@@ -217,16 +236,58 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   meta : bool,
 ) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
   match phys_access_check(access, pbmt, priv, paddr, width, res) {
-    Some(e) => Err(e),
-    None() => {
-      if   within_mmio_readable(paddr, width)
-      then MemoryOpResult_add_meta(mmio_read(access, paddr, width), default_meta)
-      else {
-        let rk = read_kind_of_flags(aq, rl, res);
-        Ok(read_ram(rk, paddr, width, meta))
-      }
-    }
+    Err(e) => Err(e),
+
+    Ok(access_info) => {
+      // If the load is misaligned or an allowed misaligned access,
+      // split into `N` (single-copy-atomic) memory operations, each
+      // of `split_width` width. If the load is aligned, then `N` = 1
+      // and `split_width` == `width`.
+      let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
+
+      let paddr_bits = bits_of(paddr);
+
+      var data = zeros(8 * N * split_width);
+      // TODO: handle folding of read metadata across all the splits.
+
+      let (first, last, step) = misaligned_order(N);
+      var i : range(0, 'N - 1) = first;
+      var finished : bool = false;
+
+      repeat {
+        let offset = i;
+        let paddr = Physaddr(paddr_bits + (offset * split_width));
+
+        // Since splitting is within 4K page boundaries and PMAs are
+        // page-aligned, every split will be in a homogeneous region,
+        // though the code looks otherwise.
+
+        let split_data =
+          if   within_mmio_readable(paddr, width)
+          then match mmio_read(access, paddr, split_width) {
+            Err(e) => return Err(e),
+            Ok(mmio_data) => mmio_data,
+          } else {
+            let rk = read_kind_of_flags(aq, rl, res);
+            let (ram_data, _meta) = read_ram(rk, paddr, split_width, meta);
+            ram_data
+          };
+        data[(8 * (offset + 1) * split_width - 1) .. 8 * offset * split_width] = split_data;
+
+        if offset == last then {
+          finished = true
+        } else {
+          i = offset + step
+        }
+      } until finished;
+
+      // See above: metadata is not handled.
+      Ok((data, default_meta))
+    },
   }
+
+// This lets the Rocq extraction know why the repeat loop above terminates
+termination_measure checked_mem_read repeat N
 
 // Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
@@ -283,16 +344,55 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   con : bool,
 ) -> MemoryOpResult(bool) =
   match phys_access_check(access, pbmt, priv, paddr, width, con) {
-    Some(e) => Err(e),
-    None() => {
-      if   within_mmio_writable(paddr, width)
-      then mmio_write(paddr, width, data)
-      else {
-        let wk = write_kind_of_flags(aq, rl, con);
-        Ok(write_ram(wk, paddr, width, data, meta))
-      }
-    }
+    Err(e) => Err(e),
+
+    Ok(access_info) => {
+      // If the store is misaligned or an allowed misaligned access,
+      // split into `N` (single-copy-atomic) memory operations, each
+      // of `split_width` width. If the store is aligned, then `N` = 1
+      // and `split_width` == `width`.
+      let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
+      // TODO: handle any splits of metadata across the splits.
+
+      let paddr_bits = bits_of(paddr);
+      var write_success : bool = true;
+
+      let (first, last, step) = misaligned_order(N);
+      var i : range(0, 'N - 1) = first;
+      var finished : bool = false;
+
+      repeat {
+        let offset = i;
+        let paddr = Physaddr(paddr_bits + (offset * split_width));
+
+        let write_value = data[(8 * (offset + 1) * split_width) - 1 .. 8 * offset * split_width];
+
+        // See comment above in `checked_mem_read` about the
+        // homogeneity of the split accesses.
+        if   within_mmio_writable(paddr, width)
+        then match mmio_write(paddr, split_width, write_value) {
+          Ok(v)  => write_success = write_success & v,
+          Err(e) => return Err(e),
+        } else {
+          let wk = write_kind_of_flags(aq, rl, con);
+          // This assumes that the same metadata applies to every split.
+          let v = write_ram(wk, paddr, split_width, write_value, meta);
+          write_success = write_success & v
+        };
+
+        if offset == last then {
+          finished = true
+        } else {
+          i = offset + step
+        }
+      } until finished;
+
+      Ok(write_success)
+    },
   }
+
+// This lets the Rocq extraction know why the repeat loop above terminates
+termination_measure checked_mem_write repeat N
 
 // Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
