@@ -98,6 +98,9 @@ let plat_sig_size : physaddrbits = zero_extend(0x20)
 
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 
+// Whether WFI is available to User mode.
+let plat_wfi_available_to_usermode : bool = config platform.wfi_available_to_user_mode
+
 // Maximum increment in the time CSR to wait for wait instructions.  This is not
 // used within the model but instead configures the external C++ harness.
 let max_wait_time : nat = config platform.max_time_to_wait
