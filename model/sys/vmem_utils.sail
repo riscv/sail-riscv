@@ -91,9 +91,9 @@ private function plat_misaligned_exception(access : MemoryAccessType(mem_payload
 // External API
 
 // Transforms the effective address based on PMM settings and the current translation mode.
-function transform_effective_address(vaddr : virtaddr, typ : MemoryAccessType(mem_payload)) -> virtaddr = {
-  let eff_privilege = effectivePrivilege(typ, mstatus, cur_privilege);
-  let pmlen = get_pmlen(typ, eff_privilege);
+function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload)) -> virtaddr = {
+  let eff_privilege = effectivePrivilege(access, mstatus, cur_privilege);
+  let pmlen = get_pmlen(access, eff_privilege);
   let mode = translationMode(eff_privilege);
   if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }

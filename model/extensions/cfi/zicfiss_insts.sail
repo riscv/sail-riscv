@@ -24,7 +24,8 @@ function clause execute SSPUSH(rs2) = {
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
   let vaddr_bits = ssp - xlen_bytes;
-  let vaddr = transform_effective_address(Virtaddr(vaddr_bits), Store(ShadowStack));
+  let access = Store(ShadowStack);
+  let vaddr = transform_effective_address(Virtaddr(vaddr_bits), access);
   // "If the virtual address in ssp is not XLEN aligned, then the
   // SSPUSH/C.SSPUSH/SSPOPCHK/C.SSPOPCHK instructions cause a
   // store/AMO access-fault exception."
@@ -38,7 +39,7 @@ function clause execute SSPUSH(rs2) = {
   if not(is_aligned_addr(vaddr, width))
   then return memory_exception(vaddr, E_SAMO_Access_Fault());
 
-  match vmem_write_addr(vaddr, width, X(rs2), Store(ShadowStack), false, false, false) {
+  match vmem_write_addr(vaddr, width, X(rs2), access, false, false, false) {
     Ok(_)  => { ssp = vaddr_bits;
                 csr_write_callback("ssp", ssp);
                 RETIRE_SUCCESS },
@@ -78,14 +79,15 @@ mapping clause encdec = SSPOPCHK(rs1)
 function clause execute SSPOPCHK(rs1) = {
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
-  let ssp_addr = transform_effective_address(Virtaddr(ssp), Load(ShadowStack));
+  let access = Load(ShadowStack);
+  let ssp_addr = transform_effective_address(Virtaddr(ssp), access);
   // See above on checking alignment.
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(ssp_addr, width))
   then return memory_exception(ssp_addr, E_SAMO_Access_Fault());
 
-  match vmem_read_addr(ssp_addr, width, Load(ShadowStack), false, false, false) {
+  match vmem_read_addr(ssp_addr, width, access, false, false, false) {
     Ok(data) => {
       if X(rs1) != data then {
         trap(make_shadow_stack_exception())

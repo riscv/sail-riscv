@@ -8,7 +8,7 @@
 // =======================================================================================
 
 // Return the 2-bit PMM value based on the current effective privilege mode.
-function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = match eff_privilege {
+private function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = match eff_privilege {
   Machine    => pmm_mode(mseccfg[PMM]),
   Supervisor => pmm_mode(menvcfg[PMM]),
   User       => if currentlyEnabled(Ext_S) then pmm_mode(read_senvcfg()[PMM]) else pmm_mode(menvcfg[PMM]),
@@ -18,12 +18,13 @@ function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = match eff_pr
 
 // Check whether PMM is applicable.
 // NOTE: mstatus[MXR] == 1'b1 disables pointer masking in S and U mode, but not in M-mode.
-function is_pmm_applicable(typ : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> bool =
-  typ != InstructionFetch() & (eff_privilege == Machine | mstatus[MXR] == 0b0) & xlen == 64
+private function is_pmm_applicable(access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> bool =
+  access != InstructionFetch() & access != Load(PageTableEntry) &
+  access != Store(PageTableEntry) & (eff_privilege == Machine | mstatus[MXR] == 0b0) & xlen == 64
 
 // Get the effective PMLEN value
-function get_pmlen(typ : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> pm_len = {
-  if is_pmm_applicable(typ, eff_privilege) then {
+function get_pmlen(access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> pm_len = {
+  if is_pmm_applicable(access, eff_privilege) then {
     match get_pmm(eff_privilege) {
       PMM_Disabled => 0,
       PMM_PMLEN_7  => 7,
