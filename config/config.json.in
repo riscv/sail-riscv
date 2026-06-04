@@ -414,7 +414,23 @@
       // The maximum index EEW for indexed vector addressing mode, as
       // a power of 2.  This must be at least 3 but must not exceed
       // the supported ELEN.
-      "max_index_eew_exp": @CONFIG__V__ELEN_EXP@
+      "max_index_eew_exp": @CONFIG__V__ELEN_EXP@,
+      "vstart": {
+        // The vector specification permits implementations to raise an
+        // illegal instruction exception when `vstart` is non-zero for
+        // instructions that cannot produce such a `vstart` value through
+        // normal execution.
+        "zero_required": {
+          // Whether vector arithmetic instructions raise an illegal instruction
+          // exception when `vstart` is non-zero. This also governs instructions
+          // from the Zvbb, Zvbc, Zvabd, Zvfbfmin, and Zvfbfwma extensions.
+          "arith": true,
+          // Whether the vector scalar move instructions (vmv.x.s, vmv.s.x,
+          // vfmv.f.s and vfmv.s.f) raise an illegal instruction exception when
+          // `vstart` is non-zero.
+          "scalar_move": true
+        }
+      }
     },
     "B": {
       "supported": true

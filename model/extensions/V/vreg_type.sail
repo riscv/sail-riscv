@@ -142,3 +142,11 @@ enum fvfmfunct6   = { VFM_VMFEQ, VFM_VMFLE, VFM_VMFLT, VFM_VMFNE, VFM_VMFGT, VFM
 enum vmlsop       = { VLM, VSM }
 
 enum indexed_mop  = { INDEXED_UNORDERED, INDEXED_ORDERED }
+
+// Classifies vector instructions by their vstart trap policy
+enum vstart_class = {
+  VSTART_ARITH,       // vector arithmetic: trap on nonzero vstart (configurable)
+  VSTART_LOAD_STORE,  // memory ops: always accept any vstart
+  VSTART_SCALAR_MOVE, // vmv.x.s, vfmv.f.s etc: always accept any vstart
+  VSTART_MANDATORY    // reductions, vcompress, etc.: always trap on nonzero vstart
+}
