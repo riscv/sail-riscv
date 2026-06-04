@@ -377,9 +377,15 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
 
+  let index_dst_overlap : bool =
+    if nf == 1
+    then not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))          // non-segment indexed load
+    else not(valid_disjoint_reg_groups(vs2, vd, EMUL_index_pow, EMUL_data_pow)); // segment indexed load
+
   if illegal_vstart(VSTART_LOAD_STORE) |
      illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
      not(valid_disjoint_reg_groups(vs2, vd, EMUL_index_pow, EMUL_data_pow)) |
+     index_dst_overlap |
      not(valid_vm_src_overlap(vm, vs2, EEW_index))
   then return Illegal_Instruction();
 
