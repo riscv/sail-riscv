@@ -41,8 +41,8 @@ bitfield Pmpcfg_ent : bits(8) = {
   R : 0         // read
 }
 
-register pmpcfg_n : vector(64, Pmpcfg_ent)
-register pmpaddr_n : vector(64, xlenbits)
+register pmpcfg_n : vector(64, Pmpcfg_ent) = vector_init(Mk_Pmpcfg_ent(zeros()))
+register pmpaddr_n : vector(64, xlenbits) = vector_init(zeros())
 
 // Packing and unpacking pmpcfg regs for xlen-width accesses
 
@@ -91,22 +91,35 @@ private function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
 
 // Helpers to handle locked entries
 private function pmpLocked(cfg: Pmpcfg_ent) -> bool =
-   cfg[L] == 0b1
+  (cfg[L] == 0b1) & (not(currentlyEnabled(Ext_Smepmp)) | mseccfg[RLB] == 0b0)
 
 private function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
-   (cfg[L] == 0b1) & (pmpAddrMatchType_encdec(cfg[A]) == TOR)
+  (cfg[L] == 0b1) & (pmpAddrMatchType_encdec(cfg[A]) == TOR)
+
+private function pmpIgnoreWrite(cfg : Pmpcfg_ent) -> bool =
+  // If locked then configuration is unchanged.
+  pmpLocked(cfg) |
+  // If mseccfg[MML] is set:
+  //
+  // "Adding a rule with executable privileges that either is M-mode-only or a
+  // locked Shared-Region [i.e. L is set] is not possible and such pmpcfg
+  // writes are ignored, leaving pmpcfg unchanged. This restriction can be
+  // temporarily lifted by setting mseccfg.RLB e.g. during the boot process."
+  currentlyEnabled(Ext_Smepmp) & (mseccfg[MML] == 0b1 & mseccfg[RLB] == 0b0 & cfg[L] == 0b1 & cfg[X] == 0b1)
 
 private function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
-  if pmpLocked(cfg) then cfg
+  if pmpIgnoreWrite(cfg) then cfg
   else {
     // Bits 5 and 6 are zero.
-    let cfg = Mk_Pmpcfg_ent(v & 0x9f);
+    let cfg = Mk_Pmpcfg_ent([v with 6 .. 5 = zeros()]);
 
     // "The R, W, and X fields form a collective WARL field for which the combinations with R=0 and W=1 are reserved."
     // if R=0 and W=1, we allow two options currently:
     // 1. exit the simulation with a fatal error
     // 2. R, W and X are all set to 0.
-    let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 then (
+    //
+    // This combination is NOT reserved with Smepmp if mseccfg[MML] is set.
+    let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 & not(currentlyEnabled(Ext_Smepmp) & mseccfg[MML] == 0b1) then (
       match pmp_write_only_reserved_behavior {
         PMP_Fatal => reserved_behavior("pmpcfg with R=0,W=1"),
         PMP_ClearPermissions => [cfg with X = 0b0, W = 0b0, R = 0b0],
