@@ -428,7 +428,7 @@
           // Whether the vector scalar move instructions (vmv.x.s, vmv.s.x,
           // vfmv.f.s and vfmv.s.f) raise an illegal instruction exception when
           // `vstart` is non-zero.
-          "scalar_move": true,
+          "scalar_move": true
         }
       }
     },
