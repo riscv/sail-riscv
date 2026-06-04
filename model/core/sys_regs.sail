@@ -229,10 +229,10 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     MPRV = if currentlyEnabled(Ext_U) then v[MPRV] else 0b0,
 
     // We don't have any extension context yet.
-    XS = extStatus_to_bits(Off),
+    XS = extStatus_map(Off),
     // Validate FS and VS against their allowed set.
-    FS = if is_extStatus_valid(plat_mstatus_legal_fs, extStatus_bits(v[FS])) then v[FS] else o[FS],
-    VS = if is_extStatus_valid(plat_mstatus_legal_vs, extStatus_bits(v[VS])) then v[VS] else o[VS],
+    FS = legalize_extStatus(plat_mstatus_legal_fs, v[FS]),
+    VS = legalize_extStatus(plat_mstatus_legal_vs, v[VS]),
 
     MPP = if have_nominal_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
@@ -243,9 +243,9 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   ];
 
   // Set dirty bit to OR of other status bits.
-  let dirty = extStatus_of_bits(o[FS]) == Dirty |
-              extStatus_of_bits(o[XS]) == Dirty |
-              extStatus_of_bits(o[VS]) == Dirty;
+  let dirty = extStatus_map(o[FS]) == Dirty |
+              extStatus_map(o[XS]) == Dirty |
+              extStatus_map(o[VS]) == Dirty;
 
   [o with SD = bool_to_bit(dirty)]
 }
@@ -714,8 +714,8 @@ private function lower_mstatus(m : Mstatus) -> Sstatus = {
 }
 
 private function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
-  let dirty = extStatus_of_bits(s[FS]) == Dirty | extStatus_of_bits(s[XS]) == Dirty |
-              extStatus_of_bits(s[VS]) == Dirty;
+  let dirty = extStatus_map(s[FS]) == Dirty | extStatus_map(s[XS]) == Dirty |
+              extStatus_map(s[VS]) == Dirty;
 
   [m with
     SD = bool_to_bit(dirty),
