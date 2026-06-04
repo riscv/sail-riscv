@@ -56,9 +56,7 @@ mapping vtype_assembly : (bits(3), bits(1), bits(1), bits(3), bits(3)) <-> strin
 }
 
 private function handle_illegal_vtype(rd : regidx) -> ExecutionResult = {
-  // Note: Implementations can set vill or trap with an illegal
-  // instruction if the vtype setting is not supported.
-  // NOTE: vstart should NOT be zeroed out and rd
+  // Note: vstart should NOT be zeroed out and rd
   //       should NOT be written if trapping.
   match illegal_vtype_reserved_behavior {
     IllegalVtype_Illegal => return Illegal_Instruction(),
