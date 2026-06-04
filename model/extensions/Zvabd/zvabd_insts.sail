@@ -136,12 +136,12 @@ function clause execute ZVWABDATYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  illegal_vstart(VSTART_ARITH) |
-      illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
-      not(valid_vm_src_overlap(vm, vs1, SEW)) |
-      not(valid_vm_src_overlap(vm, vs2, SEW))
+  if illegal_vstart(VSTART_ARITH) |
+     illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW_widen == 16 | SEW_widen == 32);
