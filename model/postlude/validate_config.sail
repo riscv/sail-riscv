@@ -601,7 +601,7 @@ private function check_mstatus_fields() -> bool = {
       print_endline("The vector registers are enabled but `base.mstatus.vs_legal_states` is set to `ExtContext_Off`, which makes `mstatus.VS` read-only zero: it cannot be read-only zero.");
     }
   } else if not(config extensions.S.supported : bool) then {
-    if legal_fs != ExtContext_Off then {
+    if legal_vs != ExtContext_Off then {
       valid = false;
       print_endline("Both supervisor mode (S) and the vector registers are not enabled, but `base.mstatus.vs_legal_states` is not set to `ExtContext_Off`; i.e. `mstatus.VS` is not read-only zero: it should be read-only zero.");
     }
