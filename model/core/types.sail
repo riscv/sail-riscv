@@ -363,7 +363,6 @@ mapping extStatus_map : ExtStatus <-> ext_status = {
 }
 
 function legalize_extStatus(ctx : ExtContext, status : ext_status) -> ext_status = {
-  let status_enum = extStatus_map(status);
   match ctx {
     ExtContext_Off       => extStatus_map(Off),
 
@@ -375,7 +374,7 @@ function legalize_extStatus(ctx : ExtContext, status : ext_status) -> ext_status
     // Dirty."
     //
     // and analogously for VS.
-    ExtContext_TwoState  => if status_enum == Off then status else extStatus_map(Dirty),
+    ExtContext_TwoState  => if extStatus_map(status) == Off then status else extStatus_map(Dirty),
 
     ExtContext_FourState => status,
   }
