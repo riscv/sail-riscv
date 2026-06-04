@@ -158,9 +158,9 @@ enum RV32ZdinxOddRegisterReservedBehavior = {
 }
 
 enum IllegalVtypeReservedBehavior = {
-  Vtype_SetVill,
-  Vtype_Illegal,
-  Vtype_Fatal,
+  IllegalVtype_SetVill,
+  IllegalVtype_Illegal,
+  IllegalVtype_Fatal,
 }
 
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register

@@ -61,9 +61,9 @@ private function handle_illegal_vtype(rd : regidx) -> ExecutionResult = {
   // NOTE: vstart should NOT be zeroed out and rd
   //       should NOT be written if trapping.
   match illegal_vtype_reserved_behavior {
-    Vtype_Illegal => return Illegal_Instruction(),
-    Vtype_Fatal              => reserved_behavior("unsupported or reserved vtype"),
-    Vtype_SetVill            => (),
+    IllegalVtype_Illegal => return Illegal_Instruction(),
+    IllegalVtype_Fatal   => reserved_behavior("unsupported or reserved vtype"),
+    IllegalVtype_SetVill => (),
   };
 
   vtype.bits = 0b1 @ zeros(xlen - 1); // set vtype.vill
@@ -155,7 +155,7 @@ mapping clause encdec = VSETVLI(vtr, ma, ta, sew, lmul, rs1, rd)
 
 function clause execute VSETVLI(vtr, ma, ta, sew, lmul, rs1, rd) = {
   if vtr != zeros()
-  then { handle_illegal_vtype(rd); return RETIRE_SUCCESS };
+  then return handle_illegal_vtype(rd);
 
   let avl =
     if rs1 != zreg then X(rs1)
@@ -206,7 +206,7 @@ mapping clause encdec = VSETIVLI(0b0 @ vtr, ma, ta, sew, lmul, uimm, rd)
 
 function clause execute VSETIVLI(vtr, ma, ta, sew, lmul, uimm, rd) = {
   if vtr != zeros()
-  then { handle_illegal_vtype(rd); return RETIRE_SUCCESS };
+  then return handle_illegal_vtype(rd);
 
   let avl : xlenbits = zero_extend(uimm);
   execute_vsetvl_type(ma, ta, sew, lmul, avl, false, rd)
