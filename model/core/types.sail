@@ -362,8 +362,8 @@ mapping extStatus_map : ExtStatus <-> ext_status = {
   Dirty   <-> 0b11
 }
 
-function legalize_extStatus(ctx : ExtContext, status : ext_status) -> ext_status = {
-  match ctx {
+function legalize_extStatus(policy : ExtContextPolicy, status : ext_status) -> ext_status = {
+  match policy {
     ExtContext_Off       => extStatus_map(Off),
 
     // This emulates the following implementation choice from the spec:

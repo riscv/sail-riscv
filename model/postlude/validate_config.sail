@@ -576,7 +576,7 @@ private function check_mmio_devices() -> bool = {
 private function check_mstatus_fields() -> bool = {
   var valid : bool = true;
 
-  let legal_fs : ExtContext = config base.mstatus.fs_legal_states;
+  let legal_fs : ExtContextPolicy = config base.mstatus.fs_legal_states;
   if (config extensions.Zfinx.supported : bool) then {
     if legal_fs != ExtContext_Off then {
       valid = false;
@@ -594,7 +594,7 @@ private function check_mstatus_fields() -> bool = {
     }
   };
 
-  let legal_vs : ExtContext = config base.mstatus.vs_legal_states;
+  let legal_vs : ExtContextPolicy = config base.mstatus.vs_legal_states;
   if vector_support_level >= Integer then {
     if legal_vs == ExtContext_Off then {
       valid = false;
