@@ -34,6 +34,8 @@
     when `vstart` is non-zero. The default value of true introduces a backward-
     incompatible change compared to previous versions, but can be changed to
     preserve the earlier behaviour.
+  - The handling of attempts to set an unsupported or reserved `vtype`
+    can now be configured; see `extensions.V.illegal_vtype`.
 
 - Performance improvements:
   - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
