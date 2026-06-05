@@ -571,7 +571,7 @@ function clause currentlyEnabled(Ext_Sspm) = hartSupports(Ext_Sspm) & currentlyE
 // Indicates whether pointer masking support is available in user mode
 enum clause extension = Ext_Supm
 mapping clause extensionName = Ext_Supm <-> "supm"
-function clause hartSupports(Ext_Supm) = (hartSupports(Ext_Smnpm) & not(hartSupports(Ext_S))) | (hartSupports(Ext_Ssnpm) & hartSupports(Ext_S))
+function clause hartSupports(Ext_Supm) = hartSupports(Ext_U) & (if hartSupports(Ext_S) then hartSupports(Ext_Ssnpm) else hartSupports(Ext_Smnpm))
 function clause currentlyEnabled(Ext_Supm) = hartSupports(Ext_Supm) & currentlyEnabled(Ext_U)
 
 // When adding a new extension X, we need to make sure that if X being supported
