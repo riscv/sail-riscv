@@ -28,8 +28,9 @@ function clause execute RIVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let SEW_widen = SEW * 2;
+  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_MANDATORY) |
+  if illegal_vstart(VSTART_MANDATORY, num_elem_vs, LMUL_pow) |
      illegal_widening_reduction(SEW_widen) |
      not(valid_vm_src_overlap(vm, vs2, SEW)) |
      not(valid_vm_src_overlap(vm, vs1, SEW_widen))
@@ -37,7 +38,6 @@ function clause execute RIVVTYPE(funct6, vm, vs2, vs1, vd) = {
 
   assert(SEW_widen <= 64);
 
-  let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let num_elem_vd = get_num_elem(0, SEW_widen); // vd regardless of LMUL setting
 
   if unsigned(vl) == 0 then return RETIRE_SUCCESS; // if vl=0, no operation is performed
@@ -51,10 +51,7 @@ function clause execute RIVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let vd_val  : vector('d, bits('o)) = read_vreg(num_elem_vd, SEW_widen, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
 
-  let mask : bits('n) = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let mask : bits('n) = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
   var sum : bits('o) = read_single_element(SEW_widen, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {
@@ -107,7 +104,7 @@ function clause execute RMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let num_elem_vs = get_num_elem(LMUL_pow, SEW);
   let num_elem_vd = get_num_elem(0, SEW); // vd regardless of LMUL setting
 
-  if illegal_vstart(VSTART_MANDATORY) |
+  if illegal_vstart(VSTART_MANDATORY, num_elem_vs, LMUL_pow) |
      illegal_reduction() |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_vm_src_overlap(vm, vs2, SEW)) |
@@ -124,10 +121,7 @@ function clause execute RMVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let vd_val  : vector('d, bits('m)) = read_vreg(num_elem_vd, SEW, 0, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem_vs, SEW, LMUL_pow, vs2);
 
-  let mask : bits('n) = match init_masked_source(num_elem_vs, LMUL_pow, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let mask : bits('n) = init_masked_source(num_elem_vs, LMUL_pow, vm_val);
 
   var sum : bits('m) = read_single_element(SEW, 0, vs1); // vs1 regardless of LMUL setting
   foreach (i from 0 to (num_elem_vs - 1)) {

@@ -34,6 +34,15 @@
     when `vstart` is non-zero. The default value of true introduces a backward-
     incompatible change compared to previous versions, but can be changed to
     preserve the earlier behaviour.
+  - New option `extensions.V.reserved_behavior.vstart_out_of_bounds`
+    (default `Vstart_Illegal`) controls how an out-of-bounds `vstart`
+    (`vstart` >= VLMAX, i.e. one greater than the largest element index
+    for the current `vtype`) is handled. This applies to all vector
+    instructions, including the vector crypto extensions. `Vstart_Illegal`
+    raises an illegal instruction exception, `Vstart_Ignore` treats the
+    instruction as a no-op that writes no elements. The model now enforces
+    this bound by default, correctly accounting for fractional LMUL, which
+    introduces a backward-incompatible change compared to previous versions.
   - The handling of attempts to set an unsupported or reserved `vtype`
     can now be configured; see `extensions.V.reserved_behavior.illegal_vtype`.
   - The supported values for `mstatus.FS` and `mstatus.VS` can be
