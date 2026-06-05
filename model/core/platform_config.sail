@@ -179,4 +179,4 @@ let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config bas
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
 let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reserved_behavior.xtvec_mode
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
-let illegal_vtype_reserved_behavior : IllegalVtypeReservedBehavior = config extensions.V.illegal_vtype
+let illegal_vtype_reserved_behavior : IllegalVtypeReservedBehavior = config extensions.V.reserved_behavior.illegal_vtype

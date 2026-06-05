@@ -420,12 +420,14 @@
       // should be left as 3 (or any other legal value).
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
-      // This determines how to handle attempts by vsetvli, vsetivli,
-      // and vsetvl to set an unsupported or reserved vtype.
-      // "IllegalVtype_SetVill" - set vtype.vill, set vl to zero, clear vstart, and write rd.
-      // "IllegalVtype_Illegal" - treat it as an illegal instruction.
-      // "IllegalVtype_Fatal"   - raise a Sail exception, stopping execution.
-      "illegal_vtype": "IllegalVtype_SetVill",
+      "reserved_behavior": {
+        // This determines how to handle attempts by vsetvli, vsetivli,
+        // and vsetvl to set an unsupported or reserved vtype.
+        // "IllegalVtype_SetVill" - set vtype.vill, set vl to zero, clear vstart, and write rd.
+        // "IllegalVtype_Illegal" - treat it as an illegal instruction.
+        // "IllegalVtype_Fatal"   - raise a Sail exception, stopping execution.
+        "illegal_vtype": "IllegalVtype_SetVill"
+      },
       "vl_use_ceil": false,
       // The maximum index EEW for indexed vector addressing mode, as
       // a power of 2.  This must be at least 3 but must not exceed
