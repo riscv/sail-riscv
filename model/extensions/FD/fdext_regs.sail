@@ -109,7 +109,7 @@ register f31 : fregtype
 
 function dirty_fd_context() -> unit = {
   assert(hartSupports(Ext_F));
-  mstatus[FS] = extStatus_to_bits(Dirty);
+  mstatus[FS] = extStatus_map(Dirty);
   mstatus[SD] = 0b1;
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 }

@@ -567,15 +567,53 @@ private function check_stateen_config() -> bool = {
 private function check_mmio_devices() -> bool = {
   var valid : bool = true;
   if plat_sig_base[1 .. 0] != zeros() then {
-    print_endline("platform.simple_interrupt_generator.base is not 4-byte aligned.");
     valid = false;
+    print_endline("platform.simple_interrupt_generator.base is not 4-byte aligned.");
   };
+  valid
+}
+
+private function check_mstatus_fields() -> bool = {
+  var valid : bool = true;
+
+  let legal_fs : ExtContextPolicy = config base.mstatus.fs_legal_states;
+  if (config extensions.Zfinx.supported : bool) then {
+    if legal_fs != ExtContext_Off then {
+      valid = false;
+      print_endline("The Zfinx extension is enabled but `base.mstatus.fs_legal_states` is not set to `ExtContext_Off`: `mstatus.FS` needs to be read-only zero (i.e. `base.mstatus.fs_legal_states` should be set to `ExtContext_Off`).")
+    }
+  } else if (config extensions.F.supported : bool) then {
+    if legal_fs == ExtContext_Off then {
+      valid = false;
+      print_endline("The F extension is enabled but `base.mstatus.fs_legal_states` is set to `ExtContext_Off`, which makes `mstatus.FS` read-only zero: it cannot be read-only zero.")
+    }
+  } else if not(config extensions.S.supported : bool) then {
+    if legal_fs != ExtContext_Off then {
+      valid = false;
+      print_endline("Both supervisor mode (S) and the F extension are not enabled, but `base.mstatus.fs_legal_states` is not set to `ExtContext_Off`; i.e. `mstatus.FS` is not read-only zero: it should be read-only zero.");
+    }
+  };
+
+  let legal_vs : ExtContextPolicy = config base.mstatus.vs_legal_states;
+  if vector_support_level >= Integer then {
+    if legal_vs == ExtContext_Off then {
+      valid = false;
+      print_endline("The vector registers are enabled but `base.mstatus.vs_legal_states` is set to `ExtContext_Off`, which makes `mstatus.VS` read-only zero: it cannot be read-only zero.");
+    }
+  } else if not(config extensions.S.supported : bool) then {
+    if legal_vs != ExtContext_Off then {
+      valid = false;
+      print_endline("Both supervisor mode (S) and the vector registers are not enabled, but `base.mstatus.vs_legal_states` is not set to `ExtContext_Off`; i.e. `mstatus.VS` is not read-only zero: it should be read-only zero.");
+    }
+  };
+
   valid
 }
 
 function config_is_valid() -> bool = {
     check_privs()
   & check_tvecs()
+  & check_mstatus_fields()
   & check_mmu_config()
   & check_mem_layout()
   & check_mmio_devices()

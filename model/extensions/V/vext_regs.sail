@@ -136,7 +136,7 @@ function rV (Vregno(r) : vregno) -> vlenbits = {
 
 function dirty_v_context() -> unit = {
   assert(hartSupports(Ext_Zve32x));
-  mstatus[VS] = extStatus_to_bits(Dirty);
+  mstatus[VS] = extStatus_map(Dirty);
   mstatus[SD] = 0b1;
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 }

@@ -355,15 +355,30 @@ enum xRET_type = {mRET, sRET}
 type ext_status = bits(2)
 enum ExtStatus = {Off, Initial, Clean, Dirty}
 
-mapping extStatus_bits : ExtStatus <-> ext_status = {
+mapping extStatus_map : ExtStatus <-> ext_status = {
   Off     <-> 0b00,
   Initial <-> 0b01,
   Clean   <-> 0b10,
   Dirty   <-> 0b11
 }
 
-function extStatus_to_bits(e : ExtStatus) -> ext_status = extStatus_bits(e)
-function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
+function legalize_extStatus(policy : ExtContextPolicy, status : ext_status) -> ext_status = {
+  match policy {
+    ExtContext_Off       => extStatus_map(Off),
+
+    // This emulates the following implementation choice from the spec:
+    //
+    // "On other implementations, dirtiness might not be tracked at
+    // all, in which case the valid FS states are Off and Dirty, and
+    // an attempt to set FS to Initial or Clean causes it to be set to
+    // Dirty."
+    //
+    // and analogously for VS.
+    ExtContext_TwoState  => if extStatus_map(status) == Off then status else extStatus_map(Dirty),
+
+    ExtContext_FourState => status,
+  }
+}
 
 // supervisor-level address translation modes
 

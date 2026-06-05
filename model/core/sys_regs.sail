@@ -227,19 +227,15 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     MXR = if currentlyEnabled(Ext_S) then v[MXR] else 0b0,
     SUM = if virtual_memory_supported() then v[SUM] else 0b0,
     MPRV = if currentlyEnabled(Ext_U) then v[MPRV] else 0b0,
+
     // We don't have any extension context yet.
-    XS = extStatus_to_bits(Off),
-    // "If neither the F extension nor S-mode is implemented, then FS is read-only zero.
-    // If S-mode is implemented but the F extension is not, FS may optionally be read-only zero."
-    // TODO: This should be made a platform parameter for the latter case.
-    FS = if hartSupports(Ext_Zfinx) | (not(hartSupports(Ext_F)) & not(currentlyEnabled(Ext_S))) then 0b00 else v[FS],
+    XS = extStatus_map(Off),
+    // Validate FS and VS against their allowed set.
+    FS = legalize_extStatus(plat_mstatus_legal_fs, v[FS]),
+    VS = legalize_extStatus(plat_mstatus_legal_vs, v[VS]),
+
     MPP = if have_nominal_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
-    // If neither the v registers nor S-mode is implemented, then VS is
-    // read-only zero. If S-mode is implemented but the v registers are not,
-    // VS may optionally be read-only zero.
-    // TODO: This should be made a platform parameter for the latter case.
-    VS = if not(hartSupports(Ext_Zve32x)) then 0b00 else v[VS],
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
@@ -247,9 +243,9 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   ];
 
   // Set dirty bit to OR of other status bits.
-  let dirty = extStatus_of_bits(o[FS]) == Dirty |
-              extStatus_of_bits(o[XS]) == Dirty |
-              extStatus_of_bits(o[VS]) == Dirty;
+  let dirty = extStatus_map(o[FS]) == Dirty |
+              extStatus_map(o[XS]) == Dirty |
+              extStatus_map(o[VS]) == Dirty;
 
   [o with SD = bool_to_bit(dirty)]
 }
@@ -718,8 +714,8 @@ private function lower_mstatus(m : Mstatus) -> Sstatus = {
 }
 
 private function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
-  let dirty = extStatus_of_bits(s[FS]) == Dirty | extStatus_of_bits(s[XS]) == Dirty |
-              extStatus_of_bits(s[VS]) == Dirty;
+  let dirty = extStatus_map(s[FS]) == Dirty | extStatus_map(s[XS]) == Dirty |
+              extStatus_map(s[VS]) == Dirty;
 
   [m with
     SD = bool_to_bit(dirty),

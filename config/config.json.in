@@ -130,6 +130,16 @@
       // "Zdinx_Fatal"  – raise a Sail exception, stopping execution.
       // "Zdinx_Illegal" – treat it as an illegal instruction.
       "rv32zdinx_odd_register": "Zdinx_Illegal"
+    },
+    "mstatus": {
+      // The legal values for the FS and VS fields in this CSR are
+      // specified by the two fields below.  Their values can be one
+      // of:
+      // - "ExtContext_FourState" allows all values {Off, Initial, Clean, Dirty}.
+      // - "ExtContext_TwoState" allows {Off, Dirty}, and writes of Initial and Clean get written as Dirty.
+      // - "ExtContext_Off" allows only {Off}.  This makes the field read-only zero.
+      "fs_legal_states": "ExtContext_FourState",
+      "vs_legal_states": "ExtContext_FourState"
     }
   },
   "memory": {
