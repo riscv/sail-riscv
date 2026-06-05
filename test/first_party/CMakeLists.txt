@@ -106,6 +106,13 @@ add_first_party_test("test_pmp_access.c")
 add_first_party_test("test_phys_perms_on_failing_sc.S")
 add_first_party_test("test_wfi_wait.S")
 add_first_party_test("test_tlb_stale_pte_access_fault.S")
+add_first_party_test("test_zvqwdota8i.S")
+
+# Tests in this list are run with --enable-experimental-extensions because
+# they exercise unratified extensions.
+set(experimental_tests
+    "test_zvqwdota8i.S"
+)
 
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
@@ -174,8 +181,14 @@ foreach(idx RANGE 0 ${test_last} 4)
 
     add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config} ${override_config})
 
+    set(extra_sim_flags)
+    list(FIND experimental_tests "${test_source}" _exp_idx)
+    if (_exp_idx GREATER -1)
+        set(extra_sim_flags --enable-experimental-extensions)
+    endif()
+
     add_test(
         NAME "first_party_${arch}_${test_source}"
-        COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} --config-override ${override_config} ${elf}
+        COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} --config-override ${override_config} ${extra_sim_flags} ${elf}
     )
 endforeach()
