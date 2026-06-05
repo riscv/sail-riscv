@@ -35,7 +35,7 @@
     incompatible change compared to previous versions, but can be changed to
     preserve the earlier behaviour.
   - The handling of attempts to set an unsupported or reserved `vtype`
-    can now be configured; see `extensions.V.illegal_vtype`.
+    can now be configured; see `extensions.V.reserved_behavior.illegal_vtype`.
   - The supported values for `mstatus.FS` and `mstatus.VS` can be
     configured; see `base.mstatus.fs_legal_values` and
     `base.mstatus.vs_legal_values`.
