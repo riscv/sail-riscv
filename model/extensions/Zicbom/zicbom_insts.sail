@@ -75,9 +75,9 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
   let negative_offset = (rs1_val & ~(zero_extend(ones(plat_cache_block_size_exp)))) - rs1_val;
 
   // TODO: This is incorrect since CHERI only requires at least one byte
-  // to be in bounds here, whereas `ext_data_get_addr()` checks that all bytes
+  // to be in bounds here, whereas `get_transformed_data_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match ext_data_get_addr(rs1, negative_offset, access, cache_block_size) {
+  match get_transformed_data_addr(rs1, negative_offset, access, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       // vaddr is the aligned address, but errors report the address that

@@ -76,7 +76,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
 
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
-  let vaddr : virtaddr = match ext_data_get_addr(rs1, zeros(), access, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
