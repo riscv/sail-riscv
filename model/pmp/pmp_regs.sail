@@ -22,7 +22,7 @@ let sys_pmp_grain : range(0, 63) = config memory.pmp.grain
 
 // PMP configuration entries
 
-private enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
+enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
 
 private mapping pmpAddrMatchType_encdec : PmpAddrMatchType <-> bits(2) = {
   OFF   <-> 0b00,
