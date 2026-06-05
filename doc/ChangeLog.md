@@ -1,5 +1,24 @@
 # Release notes for the next version
 
+The main highlights of this release are the addition of the pointer
+masking extensions, improved performance, more configuration
+parameters and stricter handling of register constraints in the vector
+extension.
+
+- The following extensions have been added:
+  - Smmpm
+  - Smnpm
+  - Ssnpm
+  - Sspm
+  - Supm
+
+- Performance improvements:
+  - https://github.com/riscv/sail-riscv/pull/1692 : An optional `ENABLE_LTO`
+    build option, when enabled, applies link-time optimization to both the
+    simulator and the bundled libgmp, with performance improvements
+    (e.g. Linux boot time reduced by up to ~50%). This is off by default to keep
+    incremental builds fast, enabled in CI and release builds.
+
 - Updates to the [configuration file](../config/config.json.in):
   - The CLINT and simple interrupt generator can be marked as not
     supported for platforms that do not contain these MMIO devices;
@@ -48,23 +67,17 @@
   - The supported values for `mstatus.FS` and `mstatus.VS` can be
     configured; see `base.mstatus.fs_legal_values` and
     `base.mstatus.vs_legal_values`.
-
-- The following extensions have been added:
-  - Smmpm
-  - Smnpm
-  - Ssnpm
-  - Sspm
-  - Supm
-
-- Performance improvements:
-  - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
-    build option. When enabled, applies link-time optimization to both the
-    simulator and the bundled libgmp, with performance improvements
-    (e.g. Linux boot time reduced by up to ~50%). Off by default to keep
-    incremental builds fast, enabled in CI and release builds.
+  - The supported pointer-masking lengths for the Pointer Masking
+    extensions can be specified; see `extensions.{Ssnpm,Smnpm,Smmpm}`.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1687 : Reserved overlaps of vector source register groups were not checked
+  - https://github.com/riscv/sail-riscv/issues/1709 : Checks of `vill` for some vector instructions were missed
   - https://github.com/riscv/sail-riscv/issues/1711 : A reserved instruction encoding was decoded as `add.uw`.
+
+- Other notes:
+  - The HTIF failure exit code is now printed in hex as well as decimal.
+  - The test suite has been updated to the latest release (2026-05-29) from sail-riscv-tests.
 
 # Release notes for version 0.11
 
