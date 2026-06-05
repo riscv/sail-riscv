@@ -173,7 +173,7 @@ enum IllegalVtypeReservedBehavior = {
   IllegalVtype_Fatal,
 }
 
-enum VstartReservedBehavior = {
+enum OOBVstartReservedBehavior = {
   Vstart_Illegal,
   Vstart_Ignore,
 }
@@ -185,4 +185,4 @@ let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.r
 let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reserved_behavior.xtvec_mode
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
 let illegal_vtype_reserved_behavior : IllegalVtypeReservedBehavior = config extensions.V.reserved_behavior.illegal_vtype
-let vstart_reserved_behavior : VstartReservedBehavior = config extensions.V.reserved_behavior.vstart_out_of_bounds
+let vstart_reserved_behavior : OOBVstartReservedBehavior = config extensions.V.reserved_behavior.vstart_out_of_bounds

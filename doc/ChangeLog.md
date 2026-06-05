@@ -36,8 +36,8 @@
     preserve the earlier behaviour.
   - New option `extensions.V.reserved_behavior.vstart_out_of_bounds`
     (default `Vstart_Illegal`) controls how an out-of-bounds `vstart`
-    (one greater than the largest element index for the current `vtype`,
-    `vstart` >= VLMAX) is handled. This applies to all vector
+    (`vstart` >= VLMAX, i.e. one greater than the largest element index
+    for the current `vtype`) is handled. This applies to all vector
     instructions, including the vector crypto extensions. `Vstart_Illegal`
     raises an illegal instruction exception, `Vstart_Ignore` treats the
     instruction as a no-op that writes no elements. The model now enforces
