@@ -168,6 +168,17 @@ extensions {
       requires exceptions, sys, I, B, M
       files extensions/C/zcb_insts.sail
     }
+    Zcmt {
+      requires sys
+
+      Zcmt_regs {
+        files extensions/Zcmt/zcmt_regs.sail
+      }
+      Zcmt_insts {
+        requires I_insts, Zcmt_regs
+        files extensions/Zcmt/zcmt_insts.sail
+      }
+    }
   }
 
   // Hypervisor
