@@ -375,24 +375,28 @@ void ModelImpl::init_sail(
   const char *config_file,
   const std::optional<uint64_t> &htif_tohost_address
 ) {
+  m_elf_entry = elf_entry;
+  m_config_file = config_file != nullptr ? config_file : "";
+  m_htif_tohost_address = htif_tohost_address;
+
+  init_sail_impl();
+}
+
+void ModelImpl::init_sail_impl() {
   // zset_pc_reset_address must be called before zinit_model
   // because reset happens inside init_model().
-  zset_pc_reset_address(elf_entry);
-  if (htif_tohost_address.has_value()) {
-    zenable_htif(*htif_tohost_address);
+  zset_pc_reset_address(m_elf_entry);
+  if (m_htif_tohost_address.has_value()) {
+    zenable_htif(m_htif_tohost_address.value());
   }
-  zinit_model(config_file != nullptr ? config_file : "");
+  zinit_model(m_config_file.c_str());
   zinit_boot_requirements(UNIT);
 }
 
-void ModelImpl::reinit_sail(
-  uint64_t elf_entry,
-  const char *config_file,
-  const std::optional<uint64_t> &htif_tohost_address
-) {
+void ModelImpl::reinit_sail() {
   model_fini();
   model_init();
-  init_sail(elf_entry, config_file, htif_tohost_address);
+  init_sail_impl();
 }
 
 void ModelImpl::model_init() {

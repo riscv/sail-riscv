@@ -835,7 +835,7 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_inf
     // `run_sail` only returns in the case of rvfi.
     if (run_info.rvfi) {
       /* Reset for next test */
-      model.reinit_sail(entry, opts.config_file.c_str(), elf_info.htif_tohost_address);
+      model.reinit_sail();
       loop_detector.reset();
     }
   } while (run_info.rvfi);

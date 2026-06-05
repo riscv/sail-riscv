@@ -54,7 +54,7 @@ public:
 
   void init_platform_constants();
   void init_sail(uint64_t entry, const char *config_file, const std::optional<uint64_t> &htif_tohost_address);
-  void reinit_sail(uint64_t entry, const char *config_file, const std::optional<uint64_t> &htif_tohost_address);
+  void reinit_sail();
   void model_init();
   void model_fini();
 
@@ -92,6 +92,9 @@ public:
   friend class rvfi_callbacks;
 
 private:
+  // Internal functions.
+  void init_sail_impl();
+
   // These functions are called by the Sail code.
 
   unit fetch_callback(sbits opcode) override;
@@ -158,6 +161,11 @@ private:
   bool m_config_use_abi_names = false;
 
   bool m_config_print_step = false;
+
+  // Initialization.
+  uint64_t m_elf_entry = 0;
+  std::string m_config_file = {};
+  std::optional<uint64_t> m_htif_tohost_address = {};
 
   std::map<uint64_t, std::string> m_symbols;
   int m_term_fd = 1;
