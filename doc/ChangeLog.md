@@ -1,5 +1,10 @@
 # Release notes for the next version
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1750 : Non-segmented indexed loads were trapping on legal overlaps
+
+# Release notes for version 0.12
+
 The main highlights of this release are the addition of the pointer
 masking extensions, improved performance, more configuration
 parameters and stricter handling of register constraints in the vector
