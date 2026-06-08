@@ -180,6 +180,14 @@ function valid_segment(nf : nfields, EMUL_pow : int) -> bool = {
   else nf * 2 ^ EMUL_pow <= 8
 }
 
+// A segment load/store uses NFIELDS register groups of ceil(EMUL) registers
+// each, starting at reg. If those would run past v31 the encoding is
+// reserved, so check the last register stays in range.
+function valid_segment_no_overflow(reg : vregidx, nf : nfields, EMUL_pow : int) -> bool = {
+  let EMUL_reg = 2 ^ max(EMUL_pow, 0);
+  unsigned(vregidx_bits(reg)) + nf * EMUL_reg <= 32
+}
+
 /// "VSMUL.VX and VSMUL.VV are not included in EEW=64 in Zve64*."
 function valid_wide_vvtype(vvtype : vvfunct6) -> bool =
   match vvtype {
@@ -285,24 +293,28 @@ function illegal_widening_reduction(EEW : nat) -> bool = {
 // g. Non-indexed load instruction check
 function illegal_load(vd : vregidx, vm : bits(1), nf : nfields, EEW : nat, EMUL_pow : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
-  not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
+  not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow)) |
+  not(valid_segment_no_overflow(vd, nf, EMUL_pow))
 }
 
 // h. Non-indexed store instruction check (with vs3 rather than vd)
-function illegal_store(nf : nfields, EEW : nat, EMUL_pow : int) -> bool = {
-  not(valid_vtype()) | not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow))
+function illegal_store(vs3 : vregidx, nf : nfields, EEW : nat, EMUL_pow : int) -> bool = {
+  not(valid_vtype()) | not(valid_eew_emul(EEW, EMUL_pow)) | not(valid_segment(nf, EMUL_pow)) |
+  not(valid_segment_no_overflow(vs3, nf, EMUL_pow))
 }
 
 // i. Indexed load instruction check
 function illegal_indexed_load(vd : vregidx, vm : bits(1), nf : nfields, EEW_index : nat, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
   not(valid_vtype()) | not(valid_rd_mask(vd, vm)) |
-  not(valid_eew_emul(EEW_index, EMUL_pow_index)) | not(valid_segment(nf, EMUL_pow_data))
+  not(valid_eew_emul(EEW_index, EMUL_pow_index)) | not(valid_segment(nf, EMUL_pow_data)) |
+  not(valid_segment_no_overflow(vd, nf, EMUL_pow_data))
 }
 
 // j. Indexed store instruction check (with vs3 rather than vd)
-function illegal_indexed_store(nf : nfields, EEW_index : nat, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
+function illegal_indexed_store(vs3 : vregidx, nf : nfields, EEW_index : nat, EMUL_pow_index : int, EMUL_pow_data : int) -> bool = {
   not(valid_vtype()) | not(valid_eew_emul(EEW_index, EMUL_pow_index)) |
-  not(valid_segment(nf, EMUL_pow_data))
+  not(valid_segment(nf, EMUL_pow_data)) |
+  not(valid_segment_no_overflow(vs3, nf, EMUL_pow_data))
 }
 
 // Scalar register shaping
