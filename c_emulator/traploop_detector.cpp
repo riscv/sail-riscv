@@ -15,8 +15,8 @@ void traploop_detector::reset() {
 
 void traploop_detector::trap_callback(ModelImpl &model, bool, fbits) {
   if (nested_trap_count == 0) {
-    mepc_at_first_trap = model.zmepc.bits;
-    sepc_at_first_trap = model.zsepc.bits;
+    mepc_at_first_trap = model.mepc();
+    sepc_at_first_trap = model.sepc();
   }
   nested_trap_count++;
   instrets_since_last_trap = 0;

@@ -37,7 +37,7 @@ void log_callbacks::mem_write_callback(ModelImpl &model, const char *type, sbits
       trace_log,
       "mem[%s,0x%0*" PRIX64 "] <- ",
       type,
-      static_cast<int>((model.zphysaddrbits_len + 3) / 4),
+      static_cast<int>((model.physaddrbits_len() + 3) / 4),
       paddr.bits
     );
     gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
@@ -52,7 +52,7 @@ void log_callbacks::mem_read_callback(ModelImpl &model, const char *type, sbits 
       trace_log,
       "mem[%s,0x%0*" PRIX64 "] -> ",
       type,
-      static_cast<int>((model.zphysaddrbits_len + 3) / 4),
+      static_cast<int>((model.physaddrbits_len() + 3) / 4),
       paddr.bits
     );
     gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
@@ -119,14 +119,13 @@ void log_callbacks::ptw_start_callback(
   hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
 ) {
   if (trace_log != nullptr && config_print_ptw) {
-    sail_string str_ac, str_pr;
-    CREATE(sail_string)(&str_ac);
-    CREATE(sail_string)(&str_pr);
-    model.zaccessType_to_str(&str_ac, access_type);
-    model.zprivLevel_to_str(&str_pr, privilege.ztup0);
-    fprintf(trace_log, "PTW: Start, vpn=0x%" PRIx64 ", access_type=%s, privilege=%s\n", vpn, str_ac, str_pr);
-    KILL(sail_string)(&str_ac);
-    KILL(sail_string)(&str_pr);
+    fprintf(
+      trace_log,
+      "PTW: Start, vpn=0x%" PRIx64 ", access_type=%s, privilege=%s\n",
+      vpn,
+      model.memory_access_type_to_string(access_type).c_str(),
+      model.privilege_to_string(privilege).c_str()
+    );
   }
 }
 
@@ -155,17 +154,13 @@ void log_callbacks::ptw_fail_callback(
   sbits pte_addr
 ) {
   if (trace_log != nullptr && config_print_ptw) {
-    sail_string str_et;
-    CREATE(sail_string)(&str_et);
-    model.zptw_error_to_str(&str_et, error_type);
     fprintf(
       trace_log,
       "PTW: failed, error=%s, level=%" PRId64 ", pte_addr=0x%" PRIX64 "\n",
-      str_et,
+      model.ptw_error_to_string(error_type).c_str(),
       level,
       pte_addr.bits
     );
-    KILL(sail_string)(&str_et);
   }
 }
 

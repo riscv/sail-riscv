@@ -146,11 +146,7 @@ unit ModelImpl::instret_callback(unit) {
   return UNIT;
 }
 
-unit ModelImpl::ptw_start_callback(
-  uint64_t vpn,
-  hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-  hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
-) {
+unit ModelImpl::ptw_start_callback(uint64_t vpn, MemoryAccessType access_type, Privilege privilege) {
   for (auto c : m_callbacks) {
     c->ptw_start_callback(*this, vpn, access_type, privilege);
   }
@@ -171,14 +167,14 @@ unit ModelImpl::ptw_success_callback(uint64_t final_ppn, int64_t level) {
   return UNIT;
 }
 
-unit ModelImpl::ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr) {
+unit ModelImpl::ptw_fail_callback(PTW_Error error_type, int64_t level, sbits pte_addr) {
   for (auto c : m_callbacks) {
     c->ptw_fail_callback(*this, error_type, level, pte_addr);
   }
   return UNIT;
 }
 
-unit ModelImpl::tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index) {
+unit ModelImpl::tlb_add_callback(TLB_Entry tlb, uint64_t index) {
   for (auto c : m_callbacks) {
     c->tlb_add_callback(*this, tlb, index);
   }
@@ -199,7 +195,7 @@ unit ModelImpl::tlb_flush_callback(uint64_t index) {
   return UNIT;
 }
 
-unit ModelImpl::tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+unit ModelImpl::tlb_flush_end_callback(TLB_Entry tlb) {
   for (auto c : m_callbacks) {
     c->tlb_flush_end_callback(*this, tlb);
   }
@@ -399,6 +395,14 @@ void ModelImpl::reinit_sail(
   init_sail(elf_entry, config_file, htif_tohost_address);
 }
 
+void ModelImpl::model_init() {
+  hart::Model::model_init();
+}
+
+void ModelImpl::model_fini() {
+  hart::Model::model_fini();
+}
+
 bool ModelImpl::config_is_valid() {
   return zconfig_is_valid(UNIT);
 }
@@ -438,6 +442,33 @@ std::optional<std::string> ModelImpl::string_of_current_exception() {
   return exception_str;
 }
 
+std::string ModelImpl::memory_access_type_to_string(MemoryAccessType access_type) {
+  sail_string sstr;
+  CREATE(sail_string)(&sstr);
+  zaccessType_to_str(&sstr, access_type);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
+std::string ModelImpl::privilege_to_string(Privilege privilege) {
+  sail_string sstr;
+  CREATE(sail_string)(&sstr);
+  zprivLevel_to_str(&sstr, privilege.ztup0);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
+std::string ModelImpl::ptw_error_to_string(PTW_Error error_type) {
+  sail_string sstr;
+  CREATE(sail_string)(&sstr);
+  zptw_error_to_str(&sstr, error_type);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
 void ModelImpl::tick_clock() {
   ztick_clock(UNIT);
 }
@@ -453,6 +484,18 @@ bool ModelImpl::try_step(int64_t step_no, bool exit_wait) {
 
 int64_t ModelImpl::xlen() const {
   return zxlen;
+}
+
+int64_t ModelImpl::physaddrbits_len() const {
+  return zphysaddrbits_len;
+}
+
+uint64_t ModelImpl::mepc() const {
+  return zmepc.bits;
+}
+
+uint64_t ModelImpl::sepc() const {
+  return zsepc.bits;
 }
 
 uint64_t ModelImpl::htif_exit_code() const {
