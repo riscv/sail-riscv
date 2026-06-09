@@ -529,13 +529,13 @@ function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
   [h with
     STCE  = if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then v[STCE]  else 0b0,
     PBMTE = if currentlyEnabled(Ext_Svpbmt) & menvcfg[PBMTE] == 0b1 then v[PBMTE] else 0b0,
-    ADUE  = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
+    ADUE  = if currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1 then v[ADUE] else 0b0,
     // DTE  = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
     PMM  = if currentlyEnabled(Ext_Ssnpm) then v[PMM] else 0b00,
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then v[CBIE]  else 0b00,
-    SSE   = if currentlyEnabled(Ext_Zicfiss) then v[SSE] else 0b0,
+    SSE   = if currentlyEnabled(Ext_Zicfiss) & menvcfg[SSE] == 0b1 then v[SSE] else 0b0,
     LPE   = if hartSupports(Ext_Zicfilp) then v[LPE]  else 0b0,
     FIOM  = if sys_enable_writable_fiom  then v[FIOM] else 0b0,
   ]

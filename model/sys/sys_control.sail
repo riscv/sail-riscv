@@ -266,13 +266,16 @@ function trap_handler(
 
       mstatus[SPIE] = mstatus[SIE];
       mstatus[SIE]  = 0b0;
-      mstatus[SPP]  = match cur_privilege {
+      // NOTE: Needs an up-to-date Sail Compiler:
+      // https://github.com/rems-project/sail/issues/1683
+      mstatus[SPP] = match cur_privilege {
         User              => 0b0,
-        Supervisor        => 0b1,
-        Machine           => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap"),
         VirtualUser       => 0b0,
+        Supervisor        => 0b1,
         VirtualSupervisor => 0b1,
+        Machine           => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap"),
       };
+
       hstatus[SPV]  = bool_to_bit(inVirtualPrivilege());
       hstatus[SPVP] = if inVirtualPrivilege() then mstatus[SPP] else hstatus[SPVP];
       hstatus[GVA]  = bool_to_bit(excinfo_is_gva);
