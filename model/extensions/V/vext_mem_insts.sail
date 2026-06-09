@@ -371,7 +371,6 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
 
   if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_data_pow) |
      illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_disjoint_reg_groups(vs2, vd, EMUL_index_pow, EMUL_data_pow)) |
      index_dst_overlap |
      not(valid_vm_src_overlap(vm, vs2, EEW_index))
   then return Illegal_Instruction();
