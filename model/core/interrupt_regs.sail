@@ -67,10 +67,14 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     // * the bit of hgeip selected by hstatus.VGEI; and (TODO)
     // * any other platform-specific external interrupt signal directed to VS-Level (TODO)"
     VSEI = if currentlyEnabled(Ext_H) then hvip[VSEI] else 0b0,
-    // NOTE/TODO: "VSTIP is read-only in hip, and is the logical-OR of
+    // " VSTIP is read-only in hip, and is the logical-OR of
     // * hvip.VSTIP; and
-    // * any other platform-specfic timer interrupt signal directed to VS-Level (TODO)"
-    VSTI = if currentlyEnabled(Ext_H) then hvip[VSTI] else 0b0,
+    // * any other platform-specfic timer interrupt signal directed to VS-Level"
+    VSTI = if currentlyEnabled(Ext_H) then (
+      if currentlyEnabled(Ext_Sstc) & henvcfg[STCE] == 0b1 & hcounteren[TM] == 0b1
+      then o[VSTI]    // clint_dispatch() updates it, preserve
+      else hvip[VSTI] // software-only, use hvip
+    ) else 0b0,
     VSSI = if currentlyEnabled(Ext_H) then v[VSSI] else 0b0,
   ]
 }
