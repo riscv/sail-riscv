@@ -30,8 +30,11 @@ mapping clause encdec = HLVTYPE(width, HLVX, true, rs1, rd)
   <-> 0b0110 @ width_enc(width) @ 0b000011 @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b1110011
   when currentlyEnabled(Ext_H) & (width == 2 | width == 4)
 
-// TODO/NOTE: The memory accesses performed by the HLVX.* instructions are not subject to pointer masking
-// TODO: Apply Pointer Masking
+// HLV.*/HSV perform an explicit access with effective privilege VS (hstatus.SPVP=1)
+// or VU (SPVP=0), so their effective address is subject to pointer masking via
+// transform_hlsv_address. HLVX.* pass access = InstructionFetch() and are
+// therefore exempt (HLVX emulates an implicit fetch). See hypervisor.adoc,
+// "Hypervisor Virtual-Machine Load and Store Instructions".
 function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   if inVirtualPrivilege()
   then return Virtual_Instruction()
@@ -43,15 +46,17 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
       HLVX => (InstructionFetch(), LoadExecute(Data)),
     };
     assert(width <= xlen_bytes);
+    let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
     match ext_data_get_addr(rs1, zeros(), access, width) {
       Ext_DataAddr_Error(e)  => { Ext_DataAddr_Check_Failure(e) },
       Ext_DataAddr_OK(vaddr) => {
+        let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
         match plat_misaligned_exception(access, false) {
           Some(AccessFault)        => return Memory_Exception(exception_context(E_Load_Access_Fault(), bits_of(vaddr))),
           Some(AlignmentException) => return Memory_Exception(exception_context(E_Load_Addr_Align(), bits_of(vaddr))),
           None()                   => (),
         };
-        match translateAddr_eff_priv(vaddr, access, privLevel_bits(zero_extend(hstatus[SPVP]), 0b1)) {
+        match translateAddr_eff_priv(vaddr, access, eff_priv) {
           Err(e, _) => Memory_Exception({ e with trap = match op {
               HLV => e.trap,
               // "Although HLVX instructions' explicit memory accesses require execute permissions, they still raise
@@ -78,7 +83,8 @@ mapping clause encdec = HSV(width, rs1, rs2)
   <-> 0b0110 @ width_enc(width) @ 0b1 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ 0b00000 @ 0b1110011
   when currentlyEnabled(Ext_H) & width <= xlen_bytes
 
-// TODO: Apply Pointer Masking
+// HSV performs an explicit VS/VU access and is always subject to pointer masking
+// (see the HLV note above for the PMM-source rules).
 function clause execute(HSV(width, rs1, rs2)) = {
   if inVirtualPrivilege()
   then Virtual_Instruction()
@@ -86,15 +92,17 @@ function clause execute(HSV(width, rs1, rs2)) = {
   then Illegal_Instruction()
   else {
     assert(width <= xlen_bytes);
+    let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
     match ext_data_get_addr(rs1, zeros(), Store(Data), width) {
       Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
       Ext_DataAddr_OK(vaddr) => {
+        let vaddr = transform_hlsv_address(vaddr, Store(Data), eff_priv);
         match plat_misaligned_exception(Store(Data), false) {
           Some(AccessFault)        => return Memory_Exception(exception_context(E_SAMO_Access_Fault(), bits_of(vaddr))),
           Some(AlignmentException) => return Memory_Exception(exception_context(E_SAMO_Addr_Align(), bits_of(vaddr))),
           None()                   => (),
         };
-        match translateAddr_eff_priv(vaddr, Store(Data), privLevel_bits(zero_extend(hstatus[SPVP]), 0b1)) {
+        match translateAddr_eff_priv(vaddr, Store(Data), eff_priv) {
           Err(e, _) => Memory_Exception(e),
           Ok(paddr, pbmt, _) => {
             match mem_write_ea(paddr, width, false, false, false) {

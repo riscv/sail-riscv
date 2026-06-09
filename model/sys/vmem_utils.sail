@@ -57,13 +57,28 @@ private function offset_virtaddr_by(
 
 // External API
 
-// Transforms the effective address based on PMM settings and the current translation mode.
-function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload)) -> virtaddr = {
-  let eff_privilege = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_privilege);
-  let mode = translationMode(eff_privilege);
+// Apply pointer masking to an effective address given a precomputed PMLEN.
+// Whether the address is virtual (sign-extend) or physical (zero-extend) follows
+// the first-stage satp register feeding the address: vsatp for VS/VU, otherwise
+// satp. A guest-physical address (vsatp.MODE == Bare) is treated as physical.
+function pm_transform_for_priv(vaddr : virtaddr, eff_privilege : Privilege, pmlen : {0, 7, 16}) -> virtaddr = {
+  let mode = if eff_privilege == VirtualSupervisor | eff_privilege == VirtualUser
+             then vsatp_mode(eff_privilege)
+             else satp_mode(eff_privilege);
   if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }
+
+// Transforms the effective address of a regular explicit access based on PMM
+// settings and the current translation mode.
+function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload)) -> virtaddr = {
+  let eff_privilege = effectivePrivilege(access, mstatus, cur_privilege);
+  pm_transform_for_priv(vaddr, eff_privilege, get_pmlen(access, eff_privilege))
+}
+
+// Transforms the effective address of an HLV/HSV explicit access, whose effective
+// privilege (VS/VU) is taken from hstatus.SPVP rather than effectivePrivilege.
+function transform_hlsv_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> virtaddr =
+  pm_transform_for_priv(vaddr, eff_privilege, get_hlsv_pmlen(access, eff_privilege))
 
 val vmem_read_addr : forall 'width, is_mem_width('width).
   (virtaddr, int('width), MemoryAccessType(mem_payload), bool, bool, bool)

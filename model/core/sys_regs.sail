@@ -303,7 +303,8 @@ bitfield Hstatus : bits(64) = {
 function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
   let v = Mk_Hstatus(v);
   [h with
-    // HUPMM = if currentlyEnabled(Ext_Ssnpm) & xlen == 64 then v[HUPMM] else 0b00,
+    // HUPMM controls pointer masking for HLV.*/HSV in U-mode (effective VU)
+    HUPMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[HUPMM])) then v[HUPMM] else h[HUPMM],
     // We don't currently support changing VSXL
     // VSXL = v[VSXL]
     VTSR  = v[VTSR],
@@ -530,7 +531,7 @@ function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
     PBMTE = if currentlyEnabled(Ext_Svpbmt) then v[PBMTE] else 0b0,
     ADUE  = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
     // DTE  = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
-    // PMM  = if currentlyEnabled(Ext_Ssnpm) then v[PMM] else 0b0,
+    PMM  = if currentlyEnabled(Ext_Ssnpm) then v[PMM] else 0b00,
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then v[CBIE]  else 0b00,
@@ -692,11 +693,12 @@ function clause is_CSR_accessible(0x106, _, _) = currentlyEnabled(Ext_S) // scou
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); Ok(zero_extend(scounteren.bits)) }
 
-// hcounteren // TODO define hcounteren_writable_bits (see legalize_smcounteren)
-private function legalize_hcounteren(_c : Counteren, v : xlenbits) -> Counteren = {
-  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b111;
-  Mk_Counteren(v[31 .. 0] & supported_counters)
-}
+// Which bits of `hcounteren` are writable.
+let sys_hcounteren_writable_bits : bits(32) = config base.hcounteren_writable_bits
+
+// hcounteren
+private function legalize_hcounteren(_c : Counteren, v : xlenbits) -> Counteren =
+  Mk_Counteren(v[31 .. 0] & sys_hcounteren_writable_bits)
 
 register hcounteren : Counteren
 mapping clause csr_name_map = 0x606 <-> "hcounteren"
