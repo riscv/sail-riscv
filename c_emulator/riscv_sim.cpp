@@ -599,13 +599,14 @@ void run_sail(
 }
 
 void init_logs(const CLIOptions &opts, run_info &run_info) {
-  if (!opts.term_log.empty() &&
-      (run_info.term_fd =
-         open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
-    fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
-    exit(EXIT_FAILURE);
+  if (!opts.term_log.empty()) {
+    if ((run_info.term_fd =
+           open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
+      fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+    run_info.close_term_fd = true;
   }
-  run_info.close_term_fd = true;
 
   if (!opts.trace_log_path.empty()) {
     run_info.trace_log = fopen(opts.trace_log_path.c_str(), "w+");
