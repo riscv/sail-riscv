@@ -198,7 +198,7 @@ function pt_walk(
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
       let pte_ext   = ext_bits_of_PTE(pte);
 
-      if pte_is_invalid(pte_flags, pte_ext) then {
+      if pte_is_invalid(pte_flags, pte_ext, stage) then {
         // Step 3 of VATP.
         ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
         Err(PTW_Invalid_PTE(), ext_ptw)
