@@ -48,6 +48,16 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
+    // The bits in this value control whether the corresponding bits
+    // of the `hcounteren` CSR that control access to HPM counters,
+    // and `cycle`, `time` and `instret` registers from VS/VU-mode,
+    // are read-only zero. A set bit specifies that the corresponding
+    // bit of `hcounteren` is writable, otherwise the bit is read-only
+    // zero. Same layout as `mcounteren`.
+    "hcounteren_writable_bits": {
+      "len": 32,
+      "value": "0xFFFF_FFFF"
+    },
     // `mtvec.{direct,vectored}.supported` indicates whether the
     // corresponding mode is supported for `mtvec`.  At least one mode
     // should be supported.  If both modes are supported, the mode on
