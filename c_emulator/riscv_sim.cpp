@@ -605,7 +605,9 @@ void init_logs(const CLIOptions &opts, run_info &run_info) {
     fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
     exit(EXIT_FAILURE);
   }
-  run_info.close_term_fd = true;
+  // Don't close term_fd unless we opened a file for it, otherwise it's still
+  // stdout, and closing stdout drops buffered output when stdout isn't a terminal.
+  run_info.close_term_fd = !opts.term_log.empty();
 
   if (!opts.trace_log_path.empty()) {
     run_info.trace_log = fopen(opts.trace_log_path.c_str(), "w+");
