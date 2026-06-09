@@ -86,7 +86,7 @@ function clause currentlyEnabled(Ext_Svade) = hartSupports(Ext_Svade)
 function clause currentlyEnabled(Ext_Svadu) = hartSupports(Ext_Svadu)
 
 // Check if a PTE is valid
-private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
+private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext, stage : TranslationStage) -> bool =
     pte_flags[V] == 0b0
   // The encoding R=0, W=1, and X=0, is defined to represent an SS
   // page. When menvcfg.SSE=0, this encoding remains reserved.
@@ -99,6 +99,10 @@ private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> boo
   | (pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1 | pte_ext.bits != zeros()))
   | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
   | (pte_ext[PBMT] != zeros() & (menvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))))
+  | (pte_ext[PBMT] != zeros() & (match stage {
+     VS_Stage => (menvcfg[PBMTE] == 0b0 | henvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))),
+      _       => (menvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))),
+    }))
   | (pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b)))
   | pte_ext[reserved] != zeros()
 
