@@ -12,5 +12,7 @@ FetchContent_Declare(cli11_hpp
 if(DOWNLOAD_CLI11)
   FetchContent_MakeAvailable(cli11_hpp)
   add_library(CLI11 INTERFACE)
-  target_include_directories(CLI11 INTERFACE "${cli11_hpp_SOURCE_DIR}")
+  target_include_directories(CLI11
+    SYSTEM INTERFACE
+    "${cli11_hpp_SOURCE_DIR}")
 endif()

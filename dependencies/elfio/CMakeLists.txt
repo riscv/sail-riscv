@@ -41,9 +41,13 @@ add_library(elfio::elfio ALIAS elfio)
 
 target_include_directories(
     elfio
-    INTERFACE
+    SYSTEM INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+set_source_files_properties(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    PROPERTIES SKIP_LINTING ON
+)
 
 # If this is the top level project, add in logic to install elfio
 if(IS_TOP_PROJECT)

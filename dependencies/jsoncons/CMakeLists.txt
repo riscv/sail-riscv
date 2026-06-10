@@ -15,3 +15,7 @@ FetchContent_Declare(
 if (DOWNLOAD_JSONCONS)
     FetchContent_MakeAvailable(jsoncons)
 endif()
+
+set_target_properties(jsoncons
+    PROPERTIES SKIP_LINTING ON
+)
