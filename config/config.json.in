@@ -140,7 +140,8 @@
       // - "ExtContext_Off" allows only {Off}.  This makes the field read-only zero.
       "fs_legal_states": "ExtContext_FourState",
       "vs_legal_states": "ExtContext_FourState"
-    }
+    },
+    "isa_version": "Isa_Latest"
   },
   "memory": {
     "pmp": {
