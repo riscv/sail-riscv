@@ -1,9 +1,6 @@
 #pragma once
 
 #include "rvfi_dii.h"
-#ifdef SAILCOV
-#include "sail_coverage.h"
-#endif
 
 #include <chrono>
 #include <map>
