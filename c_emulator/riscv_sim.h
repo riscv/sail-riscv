@@ -13,7 +13,7 @@
 
 using std::chrono::steady_clock;
 
-class CLIOptions;
+struct CLIOptions;
 class traploop_detector;
 class ModelImpl;
 
