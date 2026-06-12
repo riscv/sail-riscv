@@ -224,7 +224,25 @@ private function check_PTE_permission(
     StoreConditional(_)         => pte_W,
     Atomic(_)                   => pte_W & pte_R,
     InstructionFetch(_)         => pte_X,
-    LoadExecute(_)              => pte_R & pte_X,
+    // LoadExecute is the access type used by the hypervisor HLVX.HU/HLVX.WU instructions
+    // (see model/extensions/H/hext_insts.sail). HLVX needs careful, two-level handling:
+    //
+    //   * PAGE-TABLE permission (here): X ONLY, read is NOT required. Per the privileged
+    //     spec, HLVX is "the same as HLV.HU/WU, except that execute permission takes the
+    //     place of read permission during address translation ... the memory being read
+    //     must be executable in both stages of address translation, but read permission is
+    //     not required." So an execute-only guest page (X=1, R=0) is readable by HLVX.
+    //
+    //   * PHYSICAL-memory permission (NOT here): BOTH execute AND read are required "the
+    //     supervisor physical memory attributes must grant both execute and read
+    //     permissions." That stricter check lives in model/sys/mem.sail (pmaCheck:
+    //     executable & readable) and model/pmp/pmp_control.sail (R & X). Do not duplicate it
+    //     here.
+    //
+    // HLVX is still a "load", not a fetch: LoadExecute is part of is_load_store (see
+    // model/core/types.sail), so the SUM/U-bit gate above applies to it exactly as it does
+    // to HLV; and translation failures raise load (not fetch) exceptions.
+    LoadExecute(_)              => pte_X,
     CacheAccess(CB_zero())      => pte_W,
     CacheAccess(CB_prefetch(p)) => match p {
       PREFETCH_R => pte_R,
