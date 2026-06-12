@@ -11,15 +11,6 @@ mapping maybe_hlvx : hlvop <-> string = {
   HLVX <-> "x",
 }
 
-function translationExceptionFetch(e : ExceptionType) -> ExceptionType = {
-  match e {
-    E_Fetch_Access_Fault() => E_Load_Access_Fault(),
-    E_Fetch_Page_Fault()   => E_Load_Page_Fault(),
-    E_Fetch_GPage_Fault()  => E_Load_GPage_Fault(),
-    _                      => e,
-  }
-}
-
 union clause instruction = HLVTYPE : (word_width, hlvop, bool, regidx, regidx)
 
 mapping clause encdec = HLVTYPE(width, HLV, is_unsigned, rs1, rd)
@@ -41,9 +32,16 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   else if cur_privilege == User & hstatus[HU] == 0b0
   then return Illegal_Instruction()
   else {
-    let (access, physical_access) : (MemoryAccessType(mem_payload), MemoryAccessType(mem_payload)) = match op {
-      HLV  => (Load(Data), Load(Data)),
-      HLVX => (InstructionFetch(), LoadExecute(Data)),
+    // A single access type is used for BOTH address translation and the physical read.
+    // HLV is an ordinary load. HLVX uses LoadExecute, which models the spec's "execute
+    // permission takes the place of read permission" while still behaving as a "load", it
+    // honours vsstatus.SUM and raises load (not fetch) exceptions. The two-level
+    // permission semantics (X-only in the page tables, but execute+read at the physical
+    // level) are documented at the LoadExecute arms in model/sys/vmem_pte.sail (page-table
+    // check) and model/sys/mem.sail + model/pmp/pmp_control.sail (physical check).
+    let access : MemoryAccessType(mem_payload) = match op {
+      HLV  => Load(Data),
+      HLVX => LoadExecute(Data),
     };
     assert(width <= xlen_bytes);
     let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
@@ -57,14 +55,12 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
           None()                   => (),
         };
         match translateAddr_eff_priv(vaddr, access, eff_priv) {
-          Err(e, _) => Memory_Exception({ e with trap = match op {
-              HLV => e.trap,
-              // "Although HLVX instructions' explicit memory accesses require execute permissions, they still raise
-              // the same exceptions as other load instructions, rather than raising fetch exceptions instead."
-              HLVX => translationExceptionFetch(e.trap),
-            }
-          }),
-          Ok(paddr, pbmt,_) => match mem_read(physical_access, pbmt, paddr, width, false, false, false) {
+          // No fetch->load exception conversion is needed: LoadExecute already raises load
+          // (not fetch) exceptions on translation failure (see model/sys/vmem_ptw.sail),
+          // matching the spec's "[HLVX] still raise the same exceptions as other load
+          // instructions, rather than raising fetch exceptions instead."
+          Err(e, _) => Memory_Exception(e),
+          Ok(paddr, pbmt,_) => match mem_read(access, pbmt, paddr, width, false, false, false) {
             Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
             Err(e) => Memory_Exception(exception_context(e, bits_of(vaddr))),
           },
