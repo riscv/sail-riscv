@@ -342,7 +342,7 @@ extensions {
   }
 
   Svinval {
-    requires core, sys, I
+    requires core, sys, I, H_insts
     files extensions/Svinval/svinval_insts.sail
   }
 
