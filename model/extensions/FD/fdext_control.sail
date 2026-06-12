@@ -16,9 +16,9 @@
 // ***************************************************************
 
 function clause currentlyEnabled(Ext_F) = hartSupports(Ext_F) & misa[F] == 0b1 & currentlyEnabled(Ext_Zicsr) &
-  (if inVirtualPrivilege() then vsstatus[FS] != 0b00 else mstatus[FS] != 0b00)
+  (if inVirtualPrivilege() then vsstatus[FS] != 0b00 & mstatus[FS] != 0b00 else mstatus[FS] != 0b00)
 function clause currentlyEnabled(Ext_D) = hartSupports(Ext_D) & misa[D] == 0b1 & flen >= 64 & currentlyEnabled(Ext_Zicsr) &
-  (if inVirtualPrivilege() then vsstatus[FS] != 0b00 else mstatus[FS] != 0b00)
+  (if inVirtualPrivilege() then vsstatus[FS] != 0b00 & mstatus[FS] != 0b00 else mstatus[FS] != 0b00)
 function clause currentlyEnabled(Ext_Zfinx) = hartSupports(Ext_Zfinx) & currentlyEnabled(Ext_Zicsr) & is_zfinx_enabled_by_stateen()
 
 // Floating Point CSRs
