@@ -68,7 +68,11 @@ add_dependencies(riscv_model generated_sail_riscv_model generated_config_schema)
 ## A binary that can load an ELF file into the model and run it.
 
 add_executable(sail_riscv_sim
+    sail_riscv_sim.cpp
     riscv_sim.cpp
+    riscv_sim.h
+    cli_options.cpp
+    cli_options.h
     rvfi_dii.cpp
     rvfi_dii.h
     riscv_callbacks_log.cpp
