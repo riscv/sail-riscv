@@ -84,7 +84,7 @@ endfunction()
 # supported by the RISC-V Vector Test suite.
 foreach(vlen IN ITEMS 64 128 256 512)
     foreach(elen IN ITEMS 32 64)
-        if((${vlen} STREQUAL 512) AND (${elen} STREQUAL 32))
+        if((${vlen} EQUAL 512) AND (${elen} EQUAL 32))
             # The test suite for this combination is not built due to
             # its long execution time.
             continue()
