@@ -609,7 +609,6 @@ function unsigned_saturation(len, elem) = {
     write_vxsat(0b1);
     ones('m)
   } else {
-    write_vxsat(vcsr[vxsat]);
     elem['m - 1 .. 0]
   }
 }
@@ -624,7 +623,6 @@ function signed_saturation(len, elem) = {
     write_vxsat(0b1);
     0b1 @ zeros('m - 1)
   } else {
-    write_vxsat(vcsr[vxsat]);
     elem['m - 1 .. 0]
   };
 }
