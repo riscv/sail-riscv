@@ -15,9 +15,9 @@ public:
 
   virtual void fetch_callback(ModelImpl &model, sbits opcode);
 
-  virtual void mem_write_callback(ModelImpl &model, const char *type, sbits paddr, uint64_t width, lbits value);
+  virtual void mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value);
 
-  virtual void mem_read_callback(ModelImpl &model, const char *type, sbits paddr, uint64_t width, lbits value);
+  virtual void mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value);
 
   virtual void mem_exception_callback(ModelImpl &model, sbits paddr, uint64_t num_of_exception);
 

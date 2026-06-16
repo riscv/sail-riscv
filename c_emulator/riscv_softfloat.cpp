@@ -358,7 +358,7 @@ bv5_bv16 softfloat_i32tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t res;
-  res = i32_to_f16((int32_t)v);
+  res = i32_to_f16(static_cast<int32_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }
@@ -367,7 +367,7 @@ bv5_bv16 softfloat_ui32tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t res;
-  res = ui32_to_f16((uint32_t)v);
+  res = ui32_to_f16(static_cast<uint32_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }
@@ -376,7 +376,7 @@ bv5_bv16 softfloat_i64tof16(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float16_t res;
-  res = i64_to_f16(v);
+  res = i64_to_f16(static_cast<int64_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }
@@ -394,7 +394,7 @@ bv5_bv32 softfloat_i32tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t res;
-  res = i32_to_f32((int32_t)v);
+  res = i32_to_f32(static_cast<int32_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }
@@ -403,7 +403,7 @@ bv5_bv32 softfloat_ui32tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t res;
-  res = ui32_to_f32((uint32_t)v);
+  res = ui32_to_f32(static_cast<uint32_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }
@@ -412,7 +412,7 @@ bv5_bv32 softfloat_i64tof32(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float32_t res;
-  res = i64_to_f32(v);
+  res = i64_to_f32(static_cast<int64_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }
@@ -430,7 +430,7 @@ bv5_bv64 softfloat_i32tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t res;
-  res = i32_to_f64((int32_t)v);
+  res = i32_to_f64(static_cast<int32_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }
@@ -439,7 +439,7 @@ bv5_bv64 softfloat_ui32tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t res;
-  res = ui32_to_f64((uint32_t)v);
+  res = ui32_to_f64(static_cast<uint32_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }
@@ -448,7 +448,7 @@ bv5_bv64 softfloat_i64tof64(uint64_t rm, uint64_t v) {
   SOFTFLOAT_PRELUDE(rm);
 
   float64_t res;
-  res = i64_to_f64(v);
+  res = i64_to_f64(static_cast<int64_t>(v));
 
   return {softfloat_exceptionFlags, res.v};
 }

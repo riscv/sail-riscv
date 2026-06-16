@@ -53,7 +53,7 @@ unit ModelImpl::fetch_callback(sbits opcode) {
   return UNIT;
 }
 
-unit ModelImpl::mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value) {
+unit ModelImpl::mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) {
   for (auto c : m_callbacks) {
     c->mem_write_callback(*this, type, paddr, width, value);
   }
@@ -62,7 +62,7 @@ unit ModelImpl::mem_write_callback(const char *type, sbits paddr, uint64_t width
   };
   return UNIT;
 }
-unit ModelImpl::mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value) {
+unit ModelImpl::mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) {
   for (auto c : m_callbacks) {
     c->mem_read_callback(*this, type, paddr, width, value);
   }
