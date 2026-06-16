@@ -13,20 +13,20 @@ jobs:
             first_party_tests: true
           - os: ubuntu-22.04
             cmake_version: "4.1.2"
-            first_party_steps: true
+            first_party_tests: true
             run_all_steps: true
           - os: ubuntu-24.04-arm
             cmake_version: "3.20.0"
             first_party_tests: true
           - os: ubuntu-24.04-arm
             cmake_version: "4.1.2"
-            first_party_steps: true
+            first_party_tests: true
           - os: macos-latest
             cmake_version: "3.20.0"
             first_party_tests: true
           - os: macos-latest
             cmake_version: "4.1.2"
-            first_party_steps: true
+            first_party_tests: true
           - os: ubuntu-latest
             container: rockylinux:8.9.20231119
             cmake_version: "3.20.0"
