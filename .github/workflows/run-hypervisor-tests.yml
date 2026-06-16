@@ -160,7 +160,7 @@ jobs:
       - name: Install packages
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends device-tree-compiler \
+          apt-get install -y device-tree-compiler \
             build-essential gcc-riscv64-linux-gnu cmake ninja-build \
             cpio bison flex bc git fakeroot ca-certificates \
             libssl-dev libelf-dev python3 sudo curl wget libgmp-dev pkg-config
