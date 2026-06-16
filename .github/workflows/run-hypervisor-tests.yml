@@ -152,3 +152,33 @@ jobs:
           ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 40000000 \
             --device-tree-blob os-boot/linux/build/sail.dtb \
             build/fw_payload_xvisor.elf
+  Xvisor_Linux:
+    name: "Xvisor boot including Linux Guest"
+    runs-on: ubuntu-latest
+    container: ubuntu:25.10
+    steps:
+      - name: Install packages
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends device-tree-compiler \
+            build-essential gcc-riscv64-linux-gnu cmake ninja-build \
+            cpio bison flex bc git fakeroot ca-certificates \
+            libssl-dev libelf-dev python3 sudo curl wget libgmp-dev pkg-config
+
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build
+
+      - name: Checkout xvisor-linux build scripts
+        shell: bash
+        run: |
+          git clone --recurse-submodules -b main https://github.com/nadime15/riscv-hext-xvisor-linux
+          make -C riscv-hext-xvisor-linux setup
+          make -C riscv-hext-xvisor-linux xvisor
