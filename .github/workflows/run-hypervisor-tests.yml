@@ -182,3 +182,10 @@ jobs:
           git clone --recurse-submodules -b main https://github.com/nadime15/riscv-hext-xvisor-linux
           make -C riscv-hext-xvisor-linux setup
           make -C riscv-hext-xvisor-linux xvisor
+
+      - name: Boot Xvisor + Linux guest on Sail
+        shell: bash
+        run: |
+          cd riscv-hext-xvisor-linux/target
+          "$GITHUB_WORKSPACE/build/c_emulator/sail_riscv_sim" --inst-limit 850000000 \
+            --device-tree-blob ./rv64gch_xvisor.dtb ./opensbi_xvisor_payload.elf
