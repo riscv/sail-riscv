@@ -173,8 +173,8 @@ void write_signature(const std::string &file, unsigned signature_granularity, co
   /* write out words depending on signature granularity in signature area */
   for (uint64_t addr = elf_info.mem_sig_start; addr < elf_info.mem_sig_end; addr += signature_granularity) {
     /* most-significant byte first */
-    for (int i = static_cast<int>(signature_granularity) - 1; i >= 0; i--) {
-      uint8_t byte = (uint8_t)read_mem(addr + i);
+    for (unsigned i = signature_granularity; i > 0; --i) {
+      uint8_t byte = static_cast<uint8_t>(read_mem(addr + i - 1));
       fprintf(f, "%02x", byte);
     }
     fprintf(f, "\n");
