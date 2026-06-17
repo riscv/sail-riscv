@@ -59,8 +59,6 @@ target_compile_definitions(softfloat PRIVATE
 )
 
 set_source_files_properties(
-    DIRECTORY
-       "${CMAKE_CURRENT_SOURCE_DIR}"
-    PROPERTIES
-        SKIP_LINTING ON
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    PROPERTIES SKIP_LINTING ON
 )
