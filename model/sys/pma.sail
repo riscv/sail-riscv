@@ -147,13 +147,13 @@ function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_paylo
     Store(ShadowStack)     => exceptions.load_store,
     Load(Vector)           => exceptions.vector,
     Store(Vector)          => exceptions.vector,
-    Atomic(_, _, _)        => Some(exceptions.amo),
+    Atomic(_)              => Some(exceptions.amo),
 
     // These access types should not be misaligned at the PMA level.
-    InstructionFetch()     => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned instruction fetch."),
-    LoadReserved(p)        => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned load-reserved (" ^ mem_payload_name(p) ^ ")."),
-    StoreConditional(p)    => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned store-conditional (" ^ mem_payload_name(p) ^ ")."),
-    CacheAccess(_)         => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned cache-access."),
+    InstructionFetch()        => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned instruction fetch."),
+    LoadReserved(_, _, p)     => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned load-reserved (" ^ mem_payload_name(p) ^ ")."),
+    StoreConditional(_, _, p) => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned store-conditional (" ^ mem_payload_name(p) ^ ")."),
+    CacheAccess(_)            => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned cache-access."),
   }
 }
 

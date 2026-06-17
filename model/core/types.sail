@@ -104,12 +104,14 @@ union cacheop = {
   CB_prefetch : cbop_zicbop,
 }
 
+// The two bool parameters are the `aq` and `rl` instruction
+// annotations respectively.
 union MemoryAccessType ('a : Type) = {
   Load             : 'a,
   Store            : 'a,
-  LoadReserved     : 'a,
-  StoreConditional : 'a,
-  Atomic           : (amoop, 'a, 'a),
+  LoadReserved     : (bool, bool, 'a),
+  StoreConditional : (bool, bool, 'a),
+  Atomic           : (amoop, bool, bool, 'a, 'a),
   InstructionFetch : unit,
   CacheAccess      : cacheop
 }

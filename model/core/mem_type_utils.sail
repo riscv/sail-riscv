@@ -12,12 +12,12 @@ function accessFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> Ex
     Load(Data)                          => E_Load_Access_Fault(),
     Load(Vector)                        => E_Load_Access_Fault(),
     Load(PageTableEntry)                => E_Load_Access_Fault(),
-    LoadReserved(Data)                  => E_Load_Access_Fault(),
+    LoadReserved(_, _, Data)            => E_Load_Access_Fault(),
     Store(Data)                         => E_SAMO_Access_Fault(),
     Store(Vector)                       => E_SAMO_Access_Fault(),
     Store(PageTableEntry)               => E_SAMO_Access_Fault(),
-    StoreConditional(Data)              => E_SAMO_Access_Fault(),
-    Atomic(_, Data, Data)               => E_SAMO_Access_Fault(),
+    StoreConditional(_, _, Data)        => E_SAMO_Access_Fault(),
+    Atomic(_, _, _, Data, Data)         => E_SAMO_Access_Fault(),
 
     // "For shadow stack instructions, the reported instruction type
     // is always as though it were a store or AMO, even for instructions
@@ -25,11 +25,12 @@ function accessFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> Ex
     // write to it."
     Load(ShadowStack)                   => E_SAMO_Access_Fault(),
     Store(ShadowStack)                  => E_SAMO_Access_Fault(),
-    Atomic(_, ShadowStack, ShadowStack) => E_SAMO_Access_Fault(),
 
-    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
-    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
-    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_str(wp) ^ ") for Atomic."),
+    Atomic(_, _, _, ShadowStack, ShadowStack) => E_SAMO_Access_Fault(),
+
+    LoadReserved(_, _, p)               => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(_, _, p)           => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    Atomic(_, _, _, rp, wp)             => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_str(wp) ^ ") for Atomic."),
 
     // Cache-block management (CB_manage) and zero (CB_zero)
     // instructions raise store faults.
@@ -52,12 +53,12 @@ function alignmentFaultFromAccessType(access : MemoryAccessType(mem_payload)) ->
     Load(Data)                          => E_Load_Addr_Align(),
     Load(Vector)                        => E_Load_Addr_Align(),
     Load(PageTableEntry)                => E_Load_Addr_Align(),
-    LoadReserved(Data)                  => E_Load_Addr_Align(),
+    LoadReserved(_, _, Data)            => E_Load_Addr_Align(),
     Store(Data)                         => E_SAMO_Addr_Align(),
     Store(Vector)                       => E_SAMO_Addr_Align(),
     Store(PageTableEntry)               => E_SAMO_Addr_Align(),
-    StoreConditional(Data)              => E_SAMO_Addr_Align(),
-    Atomic(_, Data, Data)               => E_SAMO_Addr_Align(),
+    StoreConditional(_, _, Data)        => E_SAMO_Addr_Align(),
+    Atomic(_, _, _, Data, Data)         => E_SAMO_Addr_Align(),
 
     // "For shadow stack instructions, the reported instruction type
     // is always as though it were a store or AMO, even for instructions
@@ -65,11 +66,12 @@ function alignmentFaultFromAccessType(access : MemoryAccessType(mem_payload)) ->
     // write to it."
     Load(ShadowStack)                   => E_SAMO_Addr_Align(),
     Store(ShadowStack)                  => E_SAMO_Addr_Align(),
-    Atomic(_, ShadowStack, ShadowStack) => E_SAMO_Addr_Align(),
 
-    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
-    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
-    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_str(wp) ^ ") for Atomic."),
+    Atomic(_, _, _, ShadowStack, ShadowStack) => E_SAMO_Addr_Align(),
+
+    LoadReserved(_, _, p)               => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(_, _, p)           => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    Atomic(_, _, _, rp, wp)             => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_str(wp) ^ ") for Atomic."),
 
     // Cache-block management (CB_manage) and zero (CB_zero)
     // instructions raise store faults.
