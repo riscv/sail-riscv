@@ -12,10 +12,14 @@ add_library(sail_runtime
     "${sail_dir}/lib/cJSON.h"
     "${sail_dir}/lib/sail_config.c"
     "${sail_dir}/lib/sail_config.h"
+    "small_int_util.h"
 )
 
 target_include_directories(sail_runtime
-    PUBLIC "${sail_dir}/lib"
+    PUBLIC
+        "${sail_dir}/lib"
+        # For fast_signed.h.
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_compile_options(sail_runtime PRIVATE -Wno-extra -Wno-unused)
 target_link_libraries(sail_runtime PUBLIC GMP::GMP)
