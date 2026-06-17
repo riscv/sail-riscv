@@ -89,6 +89,8 @@ private function translate_PTE_addr(
   }
 }
 
+termination_measure translate_PTE_addr(_, _, _, _) = 1000
+
 // Update a PTE's A/D bits and write it to memory if needed.  This returns
 // * Ok(Some(pte)) if a write was needed and was successful. pte is the new value.
 // * Ok(None()) if no write was needed.
@@ -125,6 +127,8 @@ private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . 
                    Err(PTW_PTE_Needs_Update())
                  },
   }
+
+termination_measure update_and_write_pte(_, _, _, _, _, _) = 1000
 
 // 'v is the virtual address size.
 private val pt_walk : forall 'v, is_sv_or_svx4_mode('v) . (
@@ -431,6 +435,8 @@ private function translate_TLB_hit forall 'v, is_sv_or_svx4_mode('v) . (
   }
 }
 
+termination_measure translate_TLB_hit(_, _, _, _, _, _, _, _, _, _, _, _) = 1000
+
 // Translate on TLB miss (do a page-table walk)
 private function translate_TLB_miss forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
@@ -474,6 +480,8 @@ private function translate_TLB_miss forall 'v, is_sv_or_svx4_mode('v) . (
   }
 }
 
+termination_measure translate_TLB_miss(_, _, _, _, _, _, _, _, _, _, _) = 1000
+
 // Mapping the SATPMode to the width integer. Note there is also SvBare
 // and it's an error to call this with SvBare.
 mapping satp_mode_width : SATPMode <-> {32, 39, 48, 57} = {
@@ -512,6 +520,8 @@ private function translate forall 'v, is_sv_or_svx4_mode('v) . (
                                            mxr, do_sum, stage, ext_ptw),
   }
 }
+
+termination_measure translate(_, _, _, _, _, _, _, _, _, _, _) = 1000
 
 private function get_mxr(stage : TranslationStage) -> bool =
   if stage == VS_Stage then mstatus[MXR] == 0b1 | vsstatus[MXR] == 0b1 else mstatus[MXR] == 0b1
@@ -559,6 +569,8 @@ private function translate_stage forall 'n 'v, is_sv_or_svx4_mode('v) & 'n >= 'v
   }
 }
 
+termination_measure translate_stage(_, _, _, _, _) = 1000
+
 // Wrapper for VS/S-stage translation (takes virtaddr)
 function translate_vs_stage(
   vaddr  : virtaddr,
@@ -586,6 +598,8 @@ function translate_g_stage(
   assert(sv_width <= gpalen);
   translate_stage(sv_width, gpa, access, p, G_Stage)
 }
+
+termination_measure translate_g_stage(_, _, _) = 1000
 
 // There are three cases in which an access can fail during two-stage address translation.
 //
