@@ -2,19 +2,19 @@
 
 namespace version_info {
 
-const std::string_view release_version() {
+std::string_view release_version() {
   return "@sail_riscv_release_version@";
 }
 
-const std::string_view git_version() {
+std::string_view git_version() {
   return "@sail_riscv_git_version@";
 }
 
-const std::string_view sail_version() {
+std::string_view sail_version() {
   return "@sail_version@";
 }
 
-const std::string_view cxx_compiler_version() {
+std::string_view cxx_compiler_version() {
   return "@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@";
 }
 

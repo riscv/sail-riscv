@@ -4,9 +4,9 @@
 
 namespace version_info {
 
-const std::string_view release_version();
-const std::string_view git_version();
-const std::string_view sail_version();
-const std::string_view cxx_compiler_version();
+std::string_view release_version();
+std::string_view git_version();
+std::string_view sail_version();
+std::string_view cxx_compiler_version();
 
 }; // namespace version_info
