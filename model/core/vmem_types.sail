@@ -31,13 +31,11 @@ function get_root_level(sv_width) = sizeof(root_level('v))
 //
 type level_range('v : Int), is_sv_or_svx4_mode('v) = range(0, root_level('v))
 
-// Log2 of the PTE size in bytes, depending on the virtual mode.
-type log_pte_size_bytes('v : Int), is_sv_or_svx4_mode('v) = if is_sv32_mode('v) then 2 else 3
-
 // Number of VPN bits per page table level, depending on the virtual mode.
 // This is the size for regular levels only. The root level for G-stage
-// modes has 2 extra bits.
-type vpn_level_size('v : Int), is_sv_or_svx4_mode('v) = pagesize_bits - log_pte_size_bytes('v)
+// modes has 2 extra bits. (log2 of PTE size is 2 for Sv32, 3 otherwise.)
+// Inlined rather than via a type function so the Coq backend can print it.
+type vpn_level_size('v : Int), is_sv_or_svx4_mode('v) = pagesize_bits - (if is_sv32_mode('v) then 2 else 3)
 
 val get_vpn_level_size : forall 'v, is_sv_or_svx4_mode('v). int('v) -> int(vpn_level_size('v))
 function get_vpn_level_size(sv_width) = sizeof(vpn_level_size('v))
