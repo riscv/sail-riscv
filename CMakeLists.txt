@@ -48,6 +48,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 # Generally it just simplifies everything for a negligible performance cost.
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
+# Enable clang-tidy.
+option(ENABLE_CLANG_TIDY "Enable clang-tidy linting." OFF)
+if (ENABLE_CLANG_TIDY)
+    find_program(CLANG_TIDY_PATH clang-tidy REQUIRED)
+endif()
+
 # Enable link-time optimization globally. This allows the linker to inline
 # Sail runtime helpers (eq_bits, add_bits_int, etc.) into the generated
 # model code, which is the dominant cost in the simulator hot path.

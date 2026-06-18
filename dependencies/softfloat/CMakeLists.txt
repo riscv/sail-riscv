@@ -35,7 +35,8 @@ add_library(softfloat
     ${riscv_source}
 )
 
-target_include_directories(softfloat PUBLIC
+target_include_directories(softfloat
+    SYSTEM PUBLIC
     "${source_dir}/build/Linux-x86_64-GCC"
     "${source_dir}/source/include"
     "${source_dir}/source/RISCV"
@@ -55,4 +56,9 @@ target_compile_definitions(softfloat PRIVATE
     SOFTFLOAT_FAST_DIV32TO16
     SOFTFLOAT_FAST_DIV64TO32
     SOFTFLOAT_FAST_INT64
+)
+
+set_source_files_properties(
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    PROPERTIES SKIP_LINTING ON
 )

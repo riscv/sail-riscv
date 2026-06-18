@@ -29,7 +29,7 @@ log_callbacks::log_callbacks(
 // Implementations of default callbacks for trace printing.
 // The model assumes that these functions do not change the state of the model.
 
-void log_callbacks::mem_write_callback(ModelImpl &model, const char *type, sbits paddr, uint64_t width, lbits value) {
+void log_callbacks::mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) {
   // This is just passed due to Sail type system requirements.
   (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
@@ -44,7 +44,7 @@ void log_callbacks::mem_write_callback(ModelImpl &model, const char *type, sbits
   }
 }
 
-void log_callbacks::mem_read_callback(ModelImpl &model, const char *type, sbits paddr, uint64_t width, lbits value) {
+void log_callbacks::mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) {
   // This is just passed due to Sail type system requirements.
   (void)width;
   if (trace_log != nullptr && config_print_mem_access) {

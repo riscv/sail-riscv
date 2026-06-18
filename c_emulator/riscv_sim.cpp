@@ -27,10 +27,10 @@ rvfi_callbacks rvfi_cbs;
 } // namespace
 
 static void print_build_info() {
-  std::cout << "Sail RISC-V release: " << version_info::release_version << std::endl;
-  std::cout << "Sail RISC-V git: " << version_info::git_version << std::endl;
-  std::cout << "Sail: " << version_info::sail_version << std::endl;
-  std::cout << "C++ compiler: " << version_info::cxx_compiler_version << std::endl;
+  std::cout << "Sail RISC-V release: " << version_info::release_version() << std::endl;
+  std::cout << "Sail RISC-V git: " << version_info::git_version() << std::endl;
+  std::cout << "Sail: " << version_info::sail_version() << std::endl;
+  std::cout << "C++ compiler: " << version_info::cxx_compiler_version() << std::endl;
   std::cout << "CLI11: " << CLI11_VERSION << std::endl;
   std::cout << "ELFIO: " << ELFIO_VERSION << std::endl;
   std::cout << "JSONCONS: " << jsoncons::version() << std::endl;
@@ -173,8 +173,8 @@ void write_signature(const std::string &file, unsigned signature_granularity, co
   /* write out words depending on signature granularity in signature area */
   for (uint64_t addr = elf_info.mem_sig_start; addr < elf_info.mem_sig_end; addr += signature_granularity) {
     /* most-significant byte first */
-    for (int i = signature_granularity - 1; i >= 0; i--) {
-      uint8_t byte = (uint8_t)read_mem(addr + i);
+    for (unsigned i = signature_granularity; i > 0; --i) {
+      uint8_t byte = static_cast<uint8_t>(read_mem(addr + i - 1));
       fprintf(f, "%02x", byte);
     }
     fprintf(f, "\n");
@@ -343,8 +343,8 @@ void run_sail(
 
 void init_logs(const CLIOptions &opts, run_info &run_info) {
   if (!opts.term_log.empty()) {
-    if ((run_info.term_fd =
-           open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
+    run_info.term_fd = open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+    if (run_info.term_fd < 0) {
       fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
       exit(EXIT_FAILURE);
     }
@@ -371,7 +371,7 @@ void init_logs(const CLIOptions &opts, run_info &run_info) {
 // initialization.
 InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
   if (opts.do_print_version) {
-    std::cout << version_info::release_version << std::endl;
+    std::cout << version_info::release_version() << std::endl;
     return InitResult::ExitSuccess;
   }
   if (opts.do_print_build_info) {

@@ -1,0 +1,8 @@
+---
+Checks: >
+  -*,
+  bugprone*,
+  -bugprone-easily-swappable-parameters
+
+HeaderFilterRegex: ""
+...

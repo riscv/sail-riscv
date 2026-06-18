@@ -21,6 +21,7 @@ jobs:
           - os: ubuntu-24.04-arm
             cmake_version: "4.1.2"
             first_party_tests: true
+            clang_tidy: true
           - os: macos-latest
             cmake_version: "3.20.0"
             first_party_tests: true
@@ -82,6 +83,7 @@ jobs:
             -DENABLE_RISCV_VECTOR_TESTS_V64_E64=TRUE \
             -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE \
             -DENABLE_LTO=TRUE \
+            -DENABLE_CLANG_TIDY=${{ matrix.clang_tidy }} \
             $CLANG_FLAG
           ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
 
