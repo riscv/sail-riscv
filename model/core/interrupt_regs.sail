@@ -13,7 +13,7 @@
 
 // Guest External Interrupt Registers
 
-function legalize_hgeie(v : xlenbits) -> xlenbits = {
+private function legalize_hgeie(v : xlenbits) -> xlenbits = {
   [v with 0 = bitzero]
 }
 
@@ -69,7 +69,7 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     VSEI = if currentlyEnabled(Ext_H) then hvip[VSEI] else 0b0,
     // " VSTIP is read-only in hip, and is the logical-OR of
     // * hvip.VSTIP; and
-    // * any other platform-specfic timer interrupt signal directed to VS-Level"
+    // * any other platform-specific timer interrupt signal directed to VS-Level"
     VSTI = if currentlyEnabled(Ext_H) then (
       if currentlyEnabled(Ext_Sstc) & henvcfg[STCE] == 0b1 & hcounteren[TM] == 0b1
       then o[VSTI]    // clint_dispatch() updates it, preserve
@@ -114,12 +114,11 @@ private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts
     STI   = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
     SSI   = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
     // VS-mode interrupts are always delegated when H-extension is present
-    // TODO: Is this correct? else v[VSEI] ?
-    VSEI = if currentlyEnabled(Ext_H) then 0b1 else v[VSEI],
-    VSTI = if currentlyEnabled(Ext_H) then 0b1 else v[VSTI],
-    VSSI = if currentlyEnabled(Ext_H) then 0b1 else v[VSSI],
-    // TODO: SGEI is always delegated if GEILEN > 0
-    SGEI = if currentlyEnabled(Ext_H) then 0b1 else v[SGEI],
+    VSEI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
+    VSTI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
+    VSSI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
+    // SGEI is always delegated when GEILEN > 0, assumed whenever H is present
+    SGEI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
   ]
 }
 
@@ -230,7 +229,7 @@ function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_m
 function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); Ok(medeleg.bits[63 .. 32]) }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); Ok(mideleg.bits) }
 
-function legalize_hvip(h : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_hvip(h : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [h with
     VSEI = v[VSEI],
@@ -239,7 +238,7 @@ function legalize_hvip(h : Minterrupts, v : xlenbits) -> Minterrupts = {
   ]
 }
 
-function legalize_hie(m : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_hie(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
     SGEI = v[SGEI],
@@ -250,18 +249,18 @@ function legalize_hie(m : Minterrupts, v : xlenbits) -> Minterrupts = {
 }
 
 // NOTE: Only VSSI is writable in hip (SGEI, VSEI, VSTI are read-only)
-function legalize_hip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_hip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with VSSI = v[VSSI]]
 }
 
 // NOTE: hvip.vssi is an alias of mip.vssi, so always read the
 // actual value from mip. The remaining bits come from hvip.
-function lower_mip_to_hvip(m : Minterrupts, h : Minterrupts) -> Minterrupts = {
+private function lower_mip_to_hvip(m : Minterrupts, h : Minterrupts) -> Minterrupts = {
   [h with VSSI = m[VSSI]]
 }
 
-function lower_mie_to_hie(m : Minterrupts) -> Minterrupts = {
+private function lower_mie_to_hie(m : Minterrupts) -> Minterrupts = {
   [Mk_Minterrupts(zeros()) with
     SGEI = m[SGEI],
     VSEI = m[VSEI],
@@ -270,7 +269,7 @@ function lower_mie_to_hie(m : Minterrupts) -> Minterrupts = {
   ]
 }
 
-function lower_mip_to_hip(m : Minterrupts) -> Minterrupts = {
+private function lower_mip_to_hip(m : Minterrupts) -> Minterrupts = {
   [Mk_Minterrupts(zeros()) with
     SGEI = m[SGEI],
     VSEI = m[VSEI],
@@ -293,7 +292,7 @@ function clause write_CSR(0x645, value) = {
   // mip.VSTI and mip.VSEI have a more complex mechanism and depend on hvip.
   // Ideally, they should be handled in legalizer_mip and updated whenever
   // hvip.VSTI/VSEI changes. However, because mip is read directly internally
-  // and changes to hvip dont propate through the system we do it manually,
+  // and changes to hvip don't propagate through the system we do it manually,
   //
   // As a workaround, mip.VSTI and mip.VSEI are updated explicitly whenever
   // their corresponding hvip bits change. We need to change this and remove
@@ -305,7 +304,7 @@ function clause write_CSR(0x645, value) = {
 function clause write_CSR(0x604, value) = { mie = legalize_hie(mie, value); Ok(lower_mie_to_hie(mie).bits) }
 function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(mip).bits) }
 
-function legalize_hedeleg(_m: Medeleg, v: bits(64)) -> Medeleg = {
+private function legalize_hedeleg(_m : Medeleg, v : bits(64)) -> Medeleg = {
   [Mk_Medeleg(v) with
     SAMO_GPage_Fault  = 0b0,
     Virtual_Instr     = 0b0,
@@ -318,7 +317,7 @@ function legalize_hedeleg(_m: Medeleg, v: bits(64)) -> Medeleg = {
   ]
 }
 
-function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
     VSEI = v[VSEI],
@@ -384,8 +383,8 @@ private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 // Returns vsip view of mip (m) as delegated by hideleg (d)
 // Standard S-mode bits in vsip are aliases of corresponding VS-mode bits in
 // hip if delegated by hideleg
-function lower_mip_to_vsip(m : Minterrupts, d : Minterrupts) -> Minterrupts = {
-  [Mk_Minterrupts(zeros()) with
+private function lower_mip_to_vsip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
+  [Mk_Sinterrupts(zeros()) with
     SEI = m[VSEI] & d[VSEI],
     STI = m[VSTI] & d[VSTI],
     SSI = m[VSSI] & d[VSSI],
@@ -393,7 +392,7 @@ function lower_mip_to_vsip(m : Minterrupts, d : Minterrupts) -> Minterrupts = {
 }
 
 // Returns vsie view of mie (m) as delegated by hideleg (d)
-function lower_mie_to_vsie(m : Minterrupts, d : Minterrupts) -> Minterrupts = {
+private function lower_mie_to_vsie(m : Minterrupts, d : Minterrupts) -> Minterrupts = {
   let vs = Mk_Minterrupts(zeros());
   // Standard S-mode bits in vsie are aliases of corresponding VS-mode bits in
   // hie if delegated by hideleg
@@ -418,18 +417,15 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 
 // Virtual Supervisor
 // Returns new mip from previous mip (m) and the written vsip (v) as delegated by hideleg (d)
-function legalize_vsip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_vsip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with VSSI = v[SSI] & d[VSSI]]
 }
 
-// NOTE: Temporarily using xlenbits instead of Sinterrupts as the return type.
-// This is a workaround for a type mismatch between lower_mip_to_vsip and lower_mip.
-// TODO: Revisit and restore the correct Sinterrupts type once the mismatch is resolved.
-function read_sip(read_type : XipReadType) -> xlenbits = {
+function read_sip(read_type : XipReadType) -> Sinterrupts = {
   if inVirtualPrivilege()
-  then lower_mip_to_vsip(read_mip(read_type), hideleg).bits
-  else lower_mip(read_mip(read_type), mideleg).bits
+  then lower_mip_to_vsip(read_mip(read_type), hideleg)
+  else lower_mip(read_mip(read_type), mideleg)
 }
 
 function write_sip(value : xlenbits) -> unit = {
@@ -438,11 +434,10 @@ function write_sip(value : xlenbits) -> unit = {
   else legalize_sip(mip, mideleg, value);
 }
 
-
 mapping clause csr_name_map = 0x144  <-> "sip"
 function clause is_CSR_accessible(0x144, _, _) = currentlyEnabled(Ext_S) // sip
-function clause read_CSR(0x144) = read_sip(ExcludePlatformInterrupts)
-function clause write_CSR(0x144, value) = { write_sip(value); Ok(read_sip(IncludePlatformInterrupts)) }
+function clause read_CSR(0x144) = read_sip(ExcludePlatformInterrupts).bits
+function clause write_CSR(0x144, value) = { write_sip(value); Ok(read_sip(IncludePlatformInterrupts).bits) }
 
 // sie
 // Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d).
@@ -460,7 +455,7 @@ private function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 }
 
 // Returns new mie from previous mie (m) and the written vsie (v) as delegated by hideleg (d)
-function legalize_vsie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_vsie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
     VSEI = v[SEI] & d[VSEI],
@@ -480,6 +475,8 @@ function clause write_CSR(0x104, value) =
   then { mie = legalize_vsie(mie, hideleg, value); Ok(lower_mie_to_vsie(mie, hideleg).bits) }
   else { mie = legalize_sie(mie, mideleg, value); Ok(lower_mie(mie, mideleg).bits) }
 
+// Reserved for AIA (Smaia/Ssaia). In the base H extension vsie/vsip are pure
+// views of mie/mip (see the accessors below), so these hold no state yet.
 register vsie : xlenbits
 register vsip : xlenbits
 

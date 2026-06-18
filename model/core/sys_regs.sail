@@ -300,7 +300,7 @@ bitfield Hstatus : bits(64) = {
   VSBE  : 5,
 }
 
-function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
+private function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
   let v = Mk_Hstatus(v);
   [h with
     // HUPMM controls pointer masking for HLV.*/HSV in U-mode (effective VU)
@@ -328,8 +328,6 @@ mapping clause csr_name_map = 0x600 <-> "hstatus"
 function clause is_CSR_accessible(0x600, _, _) = currentlyEnabled(Ext_H) //hstatus
 function clause read_CSR(0x600) = hstatus.bits[xlen - 1 .. 0]
 function clause write_CSR(0x600, value) = { hstatus = legalize_hstatus(hstatus, zero_extend(value)); Ok(hstatus.bits[xlen - 1 .. 0]) }
-
-// architecture and extension checks
 
 bitfield Seccfg : bits(64) = {
   // Pointer Masking Extension
@@ -478,7 +476,7 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
 register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
 
 // This register is private to ensure that it is read using `read_senvcfg()`.
-register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
+private register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
 
 // "When menvcfg.SSE is 0, the henvcfg.SSE and senvcfg.SSE fields are read-only zero."
 // This function should be used for any read of the `senvcfg` CSR that includes the SSE bit.
@@ -524,7 +522,7 @@ bitfield HEnvcfg : bits(64) = {
 
 register henvcfg : HEnvcfg
 
-function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
+private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
   let v = Mk_HEnvcfg(v);
   [h with
     STCE  = if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then v[STCE]  else 0b0,

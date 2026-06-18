@@ -50,17 +50,13 @@ private function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
     PTE_Ext_Failure(_)  => PTW_No_Permission(),
   }
 
-// TODO: Verify whether access faults are converted to G-stage page faults,
-// and whether alignment faults must be converted as well.
+// In G-stage, only page faults (not access faults) become guest-page faults.
 function convertToGuestException(e: ExceptionType) -> ExceptionType = {
   match (e) {
-    E_Fetch_Access_Fault() => E_Fetch_GPage_Fault(),
-    E_Fetch_Page_Fault()   => E_Fetch_GPage_Fault(),
-    E_Load_Access_Fault()  => E_Load_GPage_Fault(),
-    E_Load_Page_Fault()    => E_Load_GPage_Fault(),
-    E_SAMO_Access_Fault()  => E_SAMO_GPage_Fault(),
-    E_SAMO_Page_Fault()    => E_SAMO_GPage_Fault(),
-    _                      => e
+    E_Fetch_Page_Fault() => E_Fetch_GPage_Fault(),
+    E_Load_Page_Fault()  => E_Load_GPage_Fault(),
+    E_SAMO_Page_Fault()  => E_SAMO_GPage_Fault(),
+    _                    => e
   }
 }
 // Convert translation/PTW failures into architectural exceptions

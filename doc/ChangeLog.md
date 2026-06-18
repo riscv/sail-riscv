@@ -13,6 +13,7 @@ and LLDB](../c_emulator/gdb/README.md).
 
 - The following extensions have been added:
   - Zama16b
+  - H
 
 - Updates to the [configuration file](../config/config.json.in):
   - The version of the privileged ISA specification for the model can

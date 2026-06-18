@@ -86,10 +86,7 @@ add_custom_command(
         --output-schema ${schema_file}
 
         # Optimisations.
-        # NOTE: Latest Sail Compiler Version has a bug.
-        # This flag can be used if used with an up-to-date Sail Compiler
-        # https://github.com/rems-project/sail/issues/1555
-        #-O --Oconstant-fold
+        -O --Oconstant-fold
         # Cache Z3 results in z3_problems file to speed up incremental compilation.
         --memo-z3
         # Output C++ code.
