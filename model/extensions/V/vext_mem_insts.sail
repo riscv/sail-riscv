@@ -370,7 +370,7 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   let index_dst_overlap : bool =
     if nf == 1
     then not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))          // non-segment indexed load
-    else not(valid_disjoint_reg_groups(vs2, vd, EMUL_index_pow, EMUL_data_pow)); // segment indexed load
+    else not(valid_disjoint_reg_groups_segmented(vs2, vd, EMUL_index_pow, EMUL_data_pow, nf)); // segment indexed load
 
   if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_data_pow) |
      illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
