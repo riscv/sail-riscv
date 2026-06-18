@@ -220,7 +220,7 @@ function trap_handler(
   let cause        = trapCause_bits(c);
 
   // TODO: Improve this
-  let (excinfo_is_gva, excinfo, excinfo2, excinst, ext) : (bool, option(xlenbits), option(xlenbits), option(xlenbits), option(  ext_exception)) = match c {
+  let (excinfo_is_gva, excinfo, excinfo2, excinst, ext) : (bool, option(xlenbits), option(xlenbits), option(xlenbits), option(ext_exception)) = match c {
     Interrupt(_) => (false, Some(zeros()), None(), None(), None()),
     Exception(ctx) => (ctx.excinfo_is_gva, Some(ctx.excinfo), ctx.excinfo2, ctx.excinst, ctx.ext),
   };
@@ -296,8 +296,8 @@ function trap_handler(
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
     VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
     VirtualSupervisor => {
-      assert (currentlyEnabled(Ext_H), "no hypervisor-extended supervisor mode present for delegation");
-      assert (inVirtualPrivilege(), "trap to VS-mode but not in virtual privilege");
+      assert(currentlyEnabled(Ext_H), "no hypervisor-extended supervisor mode present for delegation");
+      assert(inVirtualPrivilege(), "trap to VS-mode but not in virtual privilege");
 
       vscause[IsInterrupt] = bool_to_bit(is_interrupt);
       vscause[Cause]       = zero_extend(cause);
