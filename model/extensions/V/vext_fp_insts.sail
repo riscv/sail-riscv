@@ -893,7 +893,8 @@ mapping clause encdec = VFMVFS(vs2, rd)
 function clause execute VFMVFS(vs2, rd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
-  let num_elem = get_num_elem(0, SEW);
+  let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) | illegal_fp_vd_unmasked(SEW, rm_3b) | SEW > flen
   then return Illegal_Instruction();
@@ -1427,7 +1428,8 @@ mapping clause encdec = VFMVSF(rs1, vd)
 function clause execute VFMVSF(rs1, vd) = {
   let rm_3b    = fcsr[FRM];
   let SEW      = get_sew();
-  let num_elem = get_num_elem(0, SEW);
+  let LMUL_pow = get_lmul_pow();
+  let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) | illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
 
@@ -1454,7 +1456,7 @@ function clause execute VFMVSF(rs1, vd) = {
     }
   };
 
-  write_vreg(num_elem, SEW, 0, vd, result);
+  write_vreg(num_elem, SEW, LMUL_pow, vd, result);
   set_vstart(zeros());
   RETIRE_SUCCESS
 }
