@@ -1,6 +1,6 @@
 # CMake options for test downloads
 set(TEST_DOWNLOAD_URL "https://github.com/riscv-software-src/sail-riscv-tests/releases/download" CACHE STRING "Base URL to download precompiled riscv-tests and riscv-vector-tests from")
-set(TEST_DOWNLOAD_VERSION "2026-05-29" CACHE STRING "Version of precompiled tests to download")
+set(TEST_DOWNLOAD_VERSION "2026-06-10" CACHE STRING "Version of precompiled tests to download")
 
 # Function to download and extract test files
 function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME DOWNLOAD_URL)
@@ -82,8 +82,13 @@ endfunction()
 # Download and add RVV tests.
 # NOTE: Setting XLEN independently of ELEN is not
 # supported by the RISC-V Vector Test suite.
-foreach(vlen IN ITEMS 128 256 512)
+foreach(vlen IN ITEMS 64 128 256 512)
     foreach(elen IN ITEMS 32 64)
+        if((${vlen} EQUAL 512) AND (${elen} EQUAL 32))
+            # The test suite for this combination is not built due to
+            # its long execution time.
+            continue()
+        endif()
         setup_vector_test("${vlen}" "${elen}")
     endforeach()
 endforeach()
