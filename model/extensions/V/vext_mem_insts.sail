@@ -194,7 +194,10 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
 
-  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) | illegal_store(vs3, nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) |
+     illegal_store(vs3, nf, EEW, EMUL_pow) |
+     not(valid_reg_group(vs3, EMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs3, EEW))
   then return Illegal_Instruction();
 
   let EMUL_reg = 2 ^ max(EMUL_pow, 0);
