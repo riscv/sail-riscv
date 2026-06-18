@@ -12,6 +12,7 @@ struct zMemoryAccessTypezIEmem_payloadz5zK;
 struct ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
 struct zPTW_Error;
 struct zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
+
 } // namespace hart
 
 // The Model class derives from this one so when Sail calls C callback
