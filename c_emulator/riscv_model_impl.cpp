@@ -53,25 +53,25 @@ unit ModelImpl::fetch_callback(sbits opcode) {
   return UNIT;
 }
 
-unit ModelImpl::mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value) {
+unit ModelImpl::mem_write_callback(const char *type, sbits wid, sbits paddr, uint64_t width, lbits value) {
   for (auto c : m_callbacks) {
-    c->mem_write_callback(*this, type, paddr, width, value);
+    c->mem_write_callback(*this, type, wid, paddr, width, value);
   }
   if (m_reservation_invalidate_on_same_hart_store && match_reservation(paddr)) {
     cancel_reservation(UNIT);
   };
   return UNIT;
 }
-unit ModelImpl::mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value) {
+unit ModelImpl::mem_read_callback(const char *type, sbits wid, sbits paddr, uint64_t width, lbits value) {
   for (auto c : m_callbacks) {
-    c->mem_read_callback(*this, type, paddr, width, value);
+    c->mem_read_callback(*this, type, wid, paddr, width, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::mem_exception_callback(sbits paddr, uint64_t num_of_exception) {
+unit ModelImpl::mem_exception_callback(sbits wid, sbits paddr, uint64_t num_of_exception) {
   for (auto c : m_callbacks) {
-    c->mem_exception_callback(*this, paddr, num_of_exception);
+    c->mem_exception_callback(*this, wid, paddr, num_of_exception);
   }
   return UNIT;
 }

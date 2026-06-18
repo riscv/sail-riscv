@@ -24,6 +24,7 @@ let  tlb_ppn_bits = sizeof(tlb_ppn_bits)
 private struct TLB_Entry = {
   asid       : asidbits,           // address-space id
   global     : bool,               // global translation
+  wid        : xlenbits,           // World ID associated with the translation
   vpn        : bits(tlb_vpn_bits), // Virtual Page Number. SvXX - 12 bits.
   levelMask  : bits(tlb_vpn_bits), // Mask for superpages. The lowest (level * level_bits) bits are 1s.
   ppn        : bits(tlb_ppn_bits), // Physical Page Number, 22 (Sv32), or 44 (Sv39+) bits.
@@ -110,9 +111,10 @@ function write_TLB(index : tlb_index_range, entry : TLB_Entry) -> unit =
 private function match_TLB_Entry(
   ent  : TLB_Entry,
   asid : asidbits,
+  wid  : xlenbits,
   vpn  : bits(tlb_vpn_bits),
 ) -> bool =
-  (ent.global | (ent.asid == asid)) & (ent.vpn == (vpn & ~(ent.levelMask)))
+  (ent.global | (ent.asid == asid)) & (ent.wid == wid) & (ent.vpn == (vpn & ~(ent.levelMask)))
 
 private function flush_TLB_Entry(
   ent   : TLB_Entry,
@@ -137,13 +139,14 @@ private function flush_TLB_Entry(
 function lookup_TLB forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  wid      : xlenbits,
   vpn      : vpn_bits('v),
 ) -> option((tlb_index_range, TLB_Entry)) = {
   let index = tlb_hash('v, vpn);
   match tlb[index] {
     None() => None(),
     Some(entry) => {
-      if match_TLB_Entry(entry, asid, sign_extend(vpn)) then Some((index, entry)) else None()
+      if match_TLB_Entry(entry, asid, wid, sign_extend(vpn)) then Some((index, entry)) else None()
     },
   }
 }
@@ -152,6 +155,7 @@ function lookup_TLB forall 'v, is_sv_mode('v) . (
 function add_to_TLB forall 'v, is_sv_mode('v) . (
   sv_width : int('v),
   asid     : asidbits,
+  wid      : xlenbits,
   vpn      : vpn_bits('v),
   ppn      : ppn_bits('v),
   pte      : pte_bits('v),
@@ -171,6 +175,7 @@ function add_to_TLB forall 'v, is_sv_mode('v) . (
 
   let entry : TLB_Entry = struct{asid      = asid,
                                  global    = global,
+                                 wid       = wid,
                                  pte       = zero_extend(pte),
                                  pteAddr   = pteAddr,
                                  levelMask = zero_extend(levelMask),

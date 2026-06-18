@@ -89,7 +89,8 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
         Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
           let ep = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
+          let wid = current_world_id_for_access(access, ep);
+          match phys_access_check(access, pbmt, ep, wid, paddr, cache_block_size, false) {
             Some(e) => memory_exception(vaddr_for_error, e),
             // If there is no error, the model has no caches so there's no
             // more action required.

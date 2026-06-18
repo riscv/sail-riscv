@@ -553,6 +553,11 @@ function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm)
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
 function clause hartSupports(Ext_Smstateen) = config extensions.Stateen.Smstateen.supported
+// RISC-V world
+enum clause extension = Ext_Smwid
+mapping clause extensionName = Ext_Smwid <-> "smwid"
+function clause hartSupports(Ext_Smwid) = config extensions.Smwid.supported
+function clause currentlyEnabled(Ext_Smwid) = hartSupports(Ext_Smwid) & currentlyEnabled(Ext_Zicsr)
 
 // QoS identifiers
 enum clause extension = Ext_Ssqosid
@@ -628,6 +633,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zve32x => 1, // > Zvl32b
     Ext_Smstateen => 1, // > Zicsr
     Ext_Ssstateen => 1, // > Zicsr
+    Ext_Smwid => 1, // > Zicsr
 
     // Note: even though these match the default case, making them explicit to
     // annotate the chain of dependencies
@@ -833,4 +839,5 @@ let extensions_ordered_for_isa_string = [
   Ext_Smmpm,
   Ext_Smnpm,
   Ext_Smstateen,
+  Ext_Smwid,
 ]

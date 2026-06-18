@@ -70,6 +70,13 @@ struct RISCV_strong_access = {
 // addresses regardless of the actual physical address width.
 function physaddrbits_zero_extend(xs : physaddrbits) -> bits(64) = zero_extend(xs)
 
+// The Sail concurrency v1 interface only exposes a single boolean tag. Smwid's
+// multi-bit WID therefore degrades here to whether the transaction originates
+// from world 0 or from any non-zero world. The full WID continues to flow
+// through the explicit emulator callbacks and MMIO plumbing.
+function memory_transaction_tag(wid : xlenbits) -> bool =
+  wid != zeros()
+
 instantiation sail_mem_write with
   'pa = physaddrbits,
   pa_bits = physaddrbits_zero_extend,
@@ -81,9 +88,9 @@ instantiation sail_mem_write with
   // aborts, so just use unit here too
   'abort = unit
 
-val write_ram : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n), bits(8 * 'n), mem_meta) -> bool
+val write_ram : forall 'n, 0 < 'n <= max_mem_access. (xlenbits, write_kind, physaddr, int('n), bits(8 * 'n), mem_meta) -> bool
 
-function write_ram(wk, Physaddr(addr), width, data, meta) = {
+function write_ram(wid, wk, Physaddr(addr), width, data, meta) = {
   let request : Mem_write_request('n, 64, physaddrbits, unit, RISCV_strong_access) = struct {
     access_kind = match wk {
       Write_plain => AK_explicit(struct { variety = AV_plain, strength = AS_normal }),
@@ -98,7 +105,9 @@ function write_ram(wk, Physaddr(addr), width, data, meta) = {
     translation = (),
     size = width,
     value = Some(data),
-    tag = None(),
+    // Sail concurrency v1 only exposes option(bool) here, so Smwid can only
+    // preserve whether the transaction is tagged with world 0 or a non-zero world.
+    tag = Some(memory_transaction_tag(wid)),
   };
   // Write out metadata only if the value write succeeds.
   // It is assumed for now that this write always succeeds;
@@ -121,8 +130,8 @@ function write_ram_ea(_wk, Physaddr(_addr), _width) = ()
 instantiation sail_mem_read with
   pa_bits = physaddrbits_zero_extend
 
-val read_ram : forall 'n, 0 < 'n <= max_mem_access.  (read_kind, physaddr, int('n), bool) -> (bits(8 * 'n), mem_meta)
-function read_ram(rk, Physaddr(addr), width, read_meta) = {
+val read_ram : forall 'n, 0 < 'n <= max_mem_access.  (xlenbits, read_kind, physaddr, int('n), bool) -> (bits(8 * 'n), mem_meta)
+function read_ram(wid, rk, Physaddr(addr), width, read_meta) = {
   let meta = if read_meta then __ReadRAM_Meta(addr, width) else default_meta;
   let request : Mem_read_request('n, 64, physaddrbits, unit, RISCV_strong_access) = struct {
     access_kind = match rk {
@@ -138,7 +147,8 @@ function read_ram(rk, Physaddr(addr), width, read_meta) = {
     pa = addr,
     translation = (),
     size = width,
-    tag = false,
+    // Sail concurrency v1 only exposes a single bool tag for reads.
+    tag = memory_transaction_tag(wid),
   };
   match sail_mem_read(request) {
     Ok((value, _)) => (value, meta),

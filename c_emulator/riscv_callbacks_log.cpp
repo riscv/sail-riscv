@@ -29,33 +29,67 @@ log_callbacks::log_callbacks(
 // Implementations of default callbacks for trace printing.
 // The model assumes that these functions do not change the state of the model.
 
-void log_callbacks::mem_write_callback(ModelImpl &model, const char *type, sbits paddr, uint64_t width, lbits value) {
+static void print_memory_access(
+  FILE *trace_log,
+  ModelImpl &model,
+  const char *type,
+  sbits wid,
+  sbits paddr,
+  const char *direction,
+  lbits value
+) {
+  fprintf(
+    trace_log,
+    "mem[%s,wid=%" PRIu64 ",0x%0*" PRIX64 "] %s ",
+    type,
+    wid.bits,
+    static_cast<int>((model.physaddrbits_len() + 3) / 4),
+    paddr.bits,
+    direction
+  );
+  gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
+}
+
+void log_callbacks::mem_write_callback(
+  ModelImpl &model,
+  const char *type,
+  sbits wid,
+  sbits paddr,
+  uint64_t width,
+  lbits value
+) {
   // This is just passed due to Sail type system requirements.
   (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
-    fprintf(
-      trace_log,
-      "mem[%s,0x%0*" PRIX64 "] <- ",
-      type,
-      static_cast<int>((model.physaddrbits_len() + 3) / 4),
-      paddr.bits
-    );
-    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
+    print_memory_access(trace_log, model, type, wid, paddr, "<-", value);
   }
 }
 
-void log_callbacks::mem_read_callback(ModelImpl &model, const char *type, sbits paddr, uint64_t width, lbits value) {
+void log_callbacks::mem_read_callback(
+  ModelImpl &model,
+  const char *type,
+  sbits wid,
+  sbits paddr,
+  uint64_t width,
+  lbits value
+) {
   // This is just passed due to Sail type system requirements.
   (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
+    print_memory_access(trace_log, model, type, wid, paddr, "->", value);
+  }
+}
+
+void log_callbacks::mem_exception_callback(ModelImpl &model, sbits wid, sbits paddr, uint64_t num_of_exception) {
+  if (trace_log != nullptr && config_print_mem_access) {
     fprintf(
       trace_log,
-      "mem[%s,0x%0*" PRIX64 "] -> ",
-      type,
+      "mem[wid=%" PRIu64 ",0x%0*" PRIX64 "] !! exception=%" PRIu64 "\n",
+      wid.bits,
       static_cast<int>((model.physaddrbits_len() + 3) / 4),
-      paddr.bits
+      paddr.bits,
+      num_of_exception
     );
-    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
 

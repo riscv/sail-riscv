@@ -391,7 +391,91 @@
     // Note: it is also legal for these instructions to spuriously
     // retire successfully at any point, but there is currently no
     // configuration option for this behaviour.
-    "max_time_to_wait": 10
+    "max_time_to_wait": 10,
+    "worlds": {
+      "enabled": false,
+      "unauthorized_behavior": "Smwid_Fatal",
+      "regions": [
+        {
+          "base": {
+            "len": 64,
+            "value": "0x1000"
+          },
+          "size": {
+            "len": 64,
+            "value": "0x1000"
+          },
+          "read_wids": {
+            "len": 64,
+            "value": "0x1"
+          },
+          "write_wids": {
+            "len": 64,
+            "value": "0x0"
+          },
+          "execute_wids": {
+            "len": 64,
+            "value": "0x0"
+          },
+          "ptw_wids": {
+            "len": 64,
+            "value": "0x0"
+          }
+        },
+        {
+          "base": {
+            "len": 64,
+            "value": "0x2000000"
+          },
+          "size": {
+            "len": 64,
+            "value": "0x2000000"
+          },
+          "read_wids": {
+            "len": 64,
+            "value": "0x1"
+          },
+          "write_wids": {
+            "len": 64,
+            "value": "0x1"
+          },
+          "execute_wids": {
+            "len": 64,
+            "value": "0x0"
+          },
+          "ptw_wids": {
+            "len": 64,
+            "value": "0x0"
+          }
+        },
+        {
+          "base": {
+            "len": 64,
+            "value": "0x80000000"
+          },
+          "size": {
+            "len": 64,
+            "value": "0x80000000"
+          },
+          "read_wids": {
+            "len": 64,
+            "value": "0x1"
+          },
+          "write_wids": {
+            "len": 64,
+            "value": "0x1"
+          },
+          "execute_wids": {
+            "len": 64,
+            "value": "0x1"
+          },
+          "ptw_wids": {
+            "len": 64,
+            "value": "0x1"
+          }
+        }
+      ]
+    }
   },
   "extensions": {
     "M": {
@@ -740,6 +824,19 @@
     },
     "Smcntrpmf": {
       "supported": true
+    },
+    "Smwid": {
+      "supported": false,
+      "nworlds": 2,
+      "pmwid": {
+        "len": 64,
+        "value": "0x0"
+      },
+      "pmwidlist": {
+        "len": 64,
+        "value": "0x1"
+      },
+      "mwid_locked_on_reset": true
     },
     "Svbare": {
       "supported": true,
