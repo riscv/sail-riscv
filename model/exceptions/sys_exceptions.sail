@@ -102,16 +102,11 @@ function reset_tvecs() -> unit = {
   } else if plat_stvec_vectored_mode_supported then {
     stvec[Mode] = trapVectorMode(TV_Vector)
   };
-  //TODO: Uncomment this block once we added config options for vstvec
-  //if plat_vstec_direct_mode_supported then {
-    vstvec[Mode] = trapVectorMode(TV_Direct)
-  //} else if plat_vstec_vectored_mode_supported then {
-  //  vstvec[Mode] = trapVectorMode(TV_Vector)
-  //}
+  // TODO: Define config options for vstvec
+  vstvec[Mode] = trapVectorMode(TV_Direct)
 }
 
 function set_vstvec(value : xlenbits) -> xlenbits = {
-  // TODO: Define config options for vstvec
   vstvec = legalize_tvec(vstvec, value, true, 2, true, 2);
   vstvec.bits
 }

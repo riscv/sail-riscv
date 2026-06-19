@@ -56,14 +56,14 @@ private function cbop_priv_check(p: Privilege) -> checked_cbop = {
                      then encdec_cbie(henvcfg[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
   match (p, mCBIE, sCBIE, hCBIE) {
-    (Machine, _, _ , _                    )    => CBOP_INVAL_INVAL,
-    (_   , CBIE_ILLEGAL, _, _             )    => CBOP_ILLEGAL,         // (priv_mode != M) && mCBIE == 00
-    (User, _, CBIE_ILLEGAL, _             )    => CBOP_ILLEGAL,         // (priv_mode == U) && sCBIE == 00
-    (_   , CBIE_EXEC_FLUSH, _, _          )    => CBOP_INVAL_FLUSH,     // (priv_mode != M) && mCBIE == 01
-    (User, _, CBIE_EXEC_FLUSH, _          )    => CBOP_INVAL_FLUSH,     // (priv_mode == U) && sCBIE == 01
-    (VirtualSupervisor, _, _, CBIE_ILLEGAL)    => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VS) && hCBIE == 00
-    (VirtualUser      , _, _, CBIE_ILLEGAL)    => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VU) && hCBIE == 00
-    (VirtualUser      , _, CBIE_ILLEGAL, _)    => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VU) && sCBIE == 00
+    (Machine, _, _ , _                       ) => CBOP_INVAL_INVAL,
+    (_   , CBIE_ILLEGAL, _, _                ) => CBOP_ILLEGAL,         // (priv_mode != M) && mCBIE == 00
+    (User, _, CBIE_ILLEGAL, _                ) => CBOP_ILLEGAL,         // (priv_mode == U) && sCBIE == 00
+    (_   , CBIE_EXEC_FLUSH, _, _             ) => CBOP_INVAL_FLUSH,     // (priv_mode != M) && mCBIE == 01
+    (User, _, CBIE_EXEC_FLUSH, _             ) => CBOP_INVAL_FLUSH,     // (priv_mode == U) && sCBIE == 01
+    (VirtualSupervisor, _, _, CBIE_ILLEGAL   ) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VS) && hCBIE == 00
+    (VirtualUser      , _, _, CBIE_ILLEGAL   ) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VU) && hCBIE == 00
+    (VirtualUser      , _, CBIE_ILLEGAL, _   ) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VU) && sCBIE == 00
     (VirtualSupervisor, _, _, CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH,     // (priv_mode == VS) && hCBIE == 01
     (VirtualUser      , _, _, CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH,     // (priv_mode == VU) && hCBIE == 01
     (VirtualUser      , _, CBIE_EXEC_FLUSH, _) => CBOP_INVAL_FLUSH,     // (priv_mode == VU) && sCBIE == 01
@@ -97,7 +97,7 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
           // Check PMA and PMP access controls.
           let ep = effectivePrivilege(access, mstatus, cur_privilege);
           match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
-            Err(e)  => Memory_Exception(exception_context(e, bits_of(vaddr_for_error))),
+            Err(e)  => Memory_Exception(mem_exception_context(e, bits_of(vaddr_for_error), access)),
             // If there is no error, the model has no caches so there's no
             // more action required.
             Ok(_)   => RETIRE_SUCCESS

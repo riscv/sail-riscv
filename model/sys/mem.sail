@@ -101,10 +101,10 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
     Load(Data)             => {assert(not(res_or_con)); attributes.readable},
     Load(Vector)           => {assert(not(res_or_con)); attributes.readable},
     Load(PageTableEntry)   => {assert(not(res_or_con)); attributes.supports_pte_read},
-    // LoadExecute = hypervisor HLVX.HU/WU. At the PHYSICAL (PMA) level the spec
-    // requires BOTH execute and read ("the supervisor physical memory attributes
+    // LoadExecute = hypervisor HLVX.HU/WU. At the PMA level the spec
+    // requires both execute and read ("the supervisor physical memory attributes
     // must grant both execute and read permissions"). This is intentionally stricter
-    // than the page-table check, which is X-only for HLVX; see model/sys/vmem_pte.sail.
+    // than the page-table check, which is X-only for HLVX, see model/sys/vmem_pte.sail.
     LoadExecute(Data)      => {assert(not(res_or_con)); attributes.executable & attributes.readable},
     Store(Data)            => {assert(not(res_or_con)); attributes.writable},
     Store(Vector)          => {assert(not(res_or_con)); attributes.writable},

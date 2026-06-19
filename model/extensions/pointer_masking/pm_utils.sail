@@ -29,7 +29,7 @@ private function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = matc
 // For a VS/VU access, "MXR in effect" means HS-level mstatus.MXR (which makes
 // execute-only pages readable across both translation stages) OR vsstatus.MXR
 // (VS-stage only), matching get_mxr(VS_Stage) in vmem.sail and the rules in
-// hypervisor.adoc
+// hypervisor spec.
 private function is_pmm_applicable(access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> bool = {
   let mxr_in_effect : bool = match eff_privilege {
     Machine           => false,

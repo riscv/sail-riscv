@@ -11,6 +11,12 @@ mapping maybe_hlvx : hlvop <-> string = {
   HLVX <-> "x",
 }
 
+// The spec says that "GVA is redundant with field SPV ... except when the
+// explicit memory access of an HLV, HLVX, or HSV instruction causes a fault.
+// In that case, SPV=0 but GVA=1."
+private function hlsv_exception_context(e : ExceptionType, va : xlenbits) -> Exception_Context =
+  make_exception_context(e, va, true, None())
+
 union clause instruction = HLVTYPE : (word_width, hlvop, bool, regidx, regidx)
 
 mapping clause encdec = HLVTYPE(width, HLV, is_unsigned, rs1, rd)
@@ -24,8 +30,7 @@ mapping clause encdec = HLVTYPE(width, HLVX, true, rs1, rd)
 // HLV.*/HSV perform an explicit access with effective privilege VS (hstatus.SPVP=1)
 // or VU (SPVP=0), so their effective address is subject to pointer masking via
 // transform_hlsv_address. HLVX.* pass access = InstructionFetch() and are
-// therefore exempt (HLVX emulates an implicit fetch). See hypervisor.adoc,
-// "Hypervisor Virtual-Machine Load and Store Instructions".
+// therefore exempt (HLVX emulates an implicit fetch).
 function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   if inVirtualPrivilege()
   then return Virtual_Instruction()
@@ -37,8 +42,8 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
     // permission takes the place of read permission" while still behaving as a "load", it
     // honours vsstatus.SUM and raises load (not fetch) exceptions. The two-level
     // permission semantics (X-only in the page tables, but execute+read at the physical
-    // level) are documented at the LoadExecute arms in model/sys/vmem_pte.sail (page-table
-    // check) and model/sys/mem.sail + model/pmp/pmp_control.sail (physical check).
+    // level) are documented at the LoadExecute arms in model/sys/vmem_pte.sail
+    // and model/sys/mem.sail + model/pmp/pmp_control.sail.
     let access : MemoryAccessType(mem_payload) = match op {
       HLV  => Load(Data),
       HLVX => LoadExecute(Data),
@@ -50,8 +55,8 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
       Ext_DataAddr_OK(vaddr) => {
         let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
         match plat_misaligned_exception(access, false) {
-          Some(AccessFault)        => return Memory_Exception(exception_context(E_Load_Access_Fault(), bits_of(vaddr))),
-          Some(AlignmentException) => return Memory_Exception(exception_context(E_Load_Addr_Align(), bits_of(vaddr))),
+          Some(AccessFault)        => return Memory_Exception(hlsv_exception_context(E_Load_Access_Fault(), bits_of(vaddr))),
+          Some(AlignmentException) => return Memory_Exception(hlsv_exception_context(E_Load_Addr_Align(), bits_of(vaddr))),
           None()                   => (),
         };
         match translateAddr_eff_priv(vaddr, access, eff_priv) {
@@ -62,7 +67,7 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
           Err(e, _) => Memory_Exception(e),
           Ok(paddr, pbmt,_) => match mem_read(access, pbmt, paddr, width, false, false, false) {
             Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
-            Err(e) => Memory_Exception(exception_context(e, bits_of(vaddr))),
+            Err(e) => Memory_Exception(hlsv_exception_context(e, bits_of(vaddr))),
           },
         };
       }
@@ -94,20 +99,20 @@ function clause execute(HSV(width, rs1, rs2)) = {
       Ext_DataAddr_OK(vaddr) => {
         let vaddr = transform_hlsv_address(vaddr, Store(Data), eff_priv);
         match plat_misaligned_exception(Store(Data), false) {
-          Some(AccessFault)        => return Memory_Exception(exception_context(E_SAMO_Access_Fault(), bits_of(vaddr))),
-          Some(AlignmentException) => return Memory_Exception(exception_context(E_SAMO_Addr_Align(), bits_of(vaddr))),
+          Some(AccessFault)        => return Memory_Exception(hlsv_exception_context(E_SAMO_Access_Fault(), bits_of(vaddr))),
+          Some(AlignmentException) => return Memory_Exception(hlsv_exception_context(E_SAMO_Addr_Align(), bits_of(vaddr))),
           None()                   => (),
         };
         match translateAddr_eff_priv(vaddr, Store(Data), eff_priv) {
           Err(e, _) => Memory_Exception(e),
           Ok(paddr, pbmt, _) => {
-            match mem_write_ea(paddr, width, false, false, false) {
-              Err(e) => Memory_Exception(exception_context(e, bits_of(vaddr))),
+            match mem_write_ea(paddr, width, Store(Data), pbmt, false, false, false) {
+              Err(e) => Memory_Exception(hlsv_exception_context(e, bits_of(vaddr))),
               Ok(_) => {
                 match mem_write_value(paddr, width, X(rs2)[8 * width - 1 .. 0], Store(Data), pbmt, false, false, false) {
                   Ok(true)  => RETIRE_SUCCESS,
                   Ok(false) => internal_error(__FILE__, __LINE__, "HSV got false from mem_write_value"),
-                  Err(e) => { Memory_Exception(exception_context(e, bits_of(vaddr))) }
+                  Err(e) => { Memory_Exception(hlsv_exception_context(e, bits_of(vaddr))) }
                 }
               }
             }
