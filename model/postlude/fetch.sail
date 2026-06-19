@@ -39,7 +39,6 @@ private function fetch_bytes forall 'n, 'n in {2, 4} . (fetch_start : xlenbits, 
   };
 
   match mem_read(InstructionFetch(), pbmt, paddr, width, false, false, false) {
-    // TODO/NOTE: Do we report the original addr or the original addr + 2?
     Err(e)    => FetchBytes_Exception(exception_context(e, granule_start)),
     Ok(bytes) => FetchBytes_Success(bytes),
   }

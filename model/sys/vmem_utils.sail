@@ -113,6 +113,13 @@ function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType
 function transform_hlsv_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> virtaddr =
   pm_transform_for_priv(vaddr, eff_privilege, get_hlsv_pmlen(access, eff_privilege))
 
+// Whether a data access is effectively to a guest VA (VS/VU mode, or M-mode MPRV+MPV).
+function access_is_gva(access : MemoryAccessType(mem_payload)) -> bool =
+  privLevel_is_virtual(effectivePrivilege(access, mstatus, cur_privilege))
+
+function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> Exception_Context =
+  make_exception_context(e, excinfo, access_is_gva(access), None())
+
 val vmem_read_addr : forall 'width, is_mem_width('width).
   (virtaddr, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
@@ -122,8 +129,8 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(Memory_Exception(exception_context(E_Load_Access_Fault(), bits_of(vaddr)))),
-      Some(AlignmentException) => return Err(Memory_Exception(exception_context(E_Load_Addr_Align(), bits_of(vaddr)))),
+      Some(AccessFault)        => return Err(Memory_Exception(mem_exception_context(E_Load_Access_Fault(), bits_of(vaddr), access))),
+      Some(AlignmentException) => return Err(Memory_Exception(mem_exception_context(E_Load_Addr_Align(), bits_of(vaddr), access))),
       // Even if the CPU does support misaligned accesses, it might be
       // that the PMA doesn't support misaligned accesses so you can
       // still get a fault later, but this will be after address
@@ -150,7 +157,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
       Err(e, _) => return Err(Memory_Exception(e)),
 
       Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, bytes, aq, rl, res) {
-        Err(e) => return Err(Memory_Exception(exception_context(e, vaddr))),
+        Err(e) => return Err(Memory_Exception(mem_exception_context(e, vaddr, access))),
 
         Ok(v) => {
           if res then {
@@ -183,8 +190,8 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(Memory_Exception(exception_context(E_SAMO_Access_Fault(), bits_of(vaddr)))),
-      Some(AlignmentException) => return Err(Memory_Exception(exception_context(E_SAMO_Addr_Align(), bits_of(vaddr)))),
+      Some(AccessFault)        => return Err(Memory_Exception(mem_exception_context(E_SAMO_Access_Fault(), bits_of(vaddr), access))),
+      Some(AlignmentException) => return Err(Memory_Exception(mem_exception_context(E_SAMO_Addr_Align(), bits_of(vaddr), access))),
       None()                   => (),
     };
   };
@@ -220,15 +227,15 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           // access-fault exception."
           let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
           match phys_access_check(access, pbmt, effPriv, paddr, bytes, true) {
-            Some(e) => return Err(Memory_Exception(exception_context(e, vaddr))),
+            Some(e) => return Err(Memory_Exception(mem_exception_context(e, vaddr, access))),
             None()  => write_success = false,
           }
         } else match mem_write_ea(paddr, bytes, access, aq, rl, res) {
-          Err(e) => return Err(Memory_Exception(exception_context(e, vaddr))),
+          Err(e) => return Err(Memory_Exception(mem_exception_context(e, vaddr, access))),
           Ok(()) => {
             let write_value = data[(8 * (offset + 1) * bytes) - 1 .. 8 * offset * bytes];
             match mem_write_value(paddr, bytes, write_value, access, pbmt, aq, rl, res) {
-              Err(e) => return Err(Memory_Exception(exception_context(e, vaddr))),
+              Err(e) => return Err(Memory_Exception(mem_exception_context(e, vaddr, access))),
               Ok(s)  => write_success = write_success & s,
             }
           }

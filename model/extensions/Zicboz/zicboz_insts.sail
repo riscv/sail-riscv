@@ -51,12 +51,12 @@ function clause execute ZICBOZ(rs1) = {
         Err(e, _) => Memory_Exception({ e with excinfo = bits_of(vaddr - negative_offset) }),
         Ok(paddr, pbmt, _) => {
           match mem_write_ea(paddr, cache_block_size, access, false, false, false) {
-            Err(e) => Memory_Exception(exception_context(e, bits_of(vaddr - negative_offset))),
+            Err(e) => Memory_Exception(mem_exception_context(e, bits_of(vaddr - negative_offset), access)),
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {
                 Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                Err(e) => Memory_Exception(exception_context(e, bits_of(vaddr - negative_offset))),
+                Err(e) => Memory_Exception(mem_exception_context(e, bits_of(vaddr - negative_offset), access)),
               }
             }
           }

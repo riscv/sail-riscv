@@ -170,7 +170,6 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
 }
 
 // trap value
-// TODO: Remove this, we can just pass zero... see Exception_Context
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
   match (excinfo) {
     Some(e) => e,
