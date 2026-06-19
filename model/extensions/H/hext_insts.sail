@@ -156,16 +156,9 @@ mapping clause encdec = HFENCE_GVMA(rs1, rs2)
 
 function clause execute HFENCE_GVMA(rs1, rs2) = {
   // Software provides the guest physical address in rs1 right-shifted by 2 bits,
-  // following the htval/tval2 convention for G-stage traps (faulting GPA is
-  // reported as gpa >> 2 to accommodate addresses wider than XLEN). Since the
-  // TLB stores unshifted addresses, shift left by 2 to recover the actual guest
-  // physical address
-  // TODO: There is currently a bug in certain cases. If the address in rs1
-  // happens to use bits 30 or 31, those bits are lost when shifting left by
-  // two due to the limited width of "addr". We need to ensure that we either
-  // support a 34-bit address here, or pass the 32-bit value unchanged and
-  // apply the shift within the TLB instead.
-  let addr = if rs1 != zreg then Some(X(rs1) << 2) else None();
+  // following the htval/tval2 convention for G-stage traps. Pass it unshifted.
+  // flush_TLB_Entry recovers the full GPA in a wide type, which can exceed XLEN on RV32.
+  let addr = if rs1 != zreg then Some(X(rs1)) else None();
   let vmid = if rs2 != zreg then Some(X(rs2)[vmidlen - 1 .. 0]) else None();
   let asid : option(asidbits) = None();
   match cur_privilege {
