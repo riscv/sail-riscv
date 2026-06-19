@@ -651,7 +651,6 @@ function clause execute SRET() = {
         Supervisor
       };
 
-    // TODO/NOTE: This will probably fail without adding VS/VU case support. Potentially turn off this extension
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
 

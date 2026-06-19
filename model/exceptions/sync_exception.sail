@@ -50,7 +50,7 @@ function make_instr_exception_context(
     trap           = trap,
     excinfo_is_gva = false,
     excinfo        = excinfo,
-    excinfo2       = Some(zeros()),
+    excinfo2       = None(),
     excinst        = None(),
     ext            = None(),
   }

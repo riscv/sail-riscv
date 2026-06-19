@@ -54,7 +54,7 @@ function clause execute ZICBOZ(rs1) = {
             Err(exc_addr, e) => {
               // Cache accesses should not get split.
               assert(exc_addr == paddr);
-              Memory_Exception(exception_context(e, bits_of(vaddr - negative_offset)))
+              Memory_Exception(mem_exception_context(e, bits_of(vaddr - negative_offset), access))
             },
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {
@@ -63,7 +63,7 @@ function clause execute ZICBOZ(rs1) = {
                 Err(exc_addr, e) => {
                   // Cache accesses should not get split.
                   assert(exc_addr == paddr);
-                  Memory_Exception(exception_context(e, bits_of(vaddr - negative_offset)))
+                  Memory_Exception(mem_exception_context(e, bits_of(vaddr - negative_offset), access))
                 },
               }
             }

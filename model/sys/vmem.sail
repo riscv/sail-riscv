@@ -6,7 +6,8 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// TODO: Rewrite this paragraph
+// TODO: Rewrite this paragraph once Hypervisor extension is implemented and
+// we have a better sense of how to structure the code.
 // ****************************************************************
 // Virtual memory address translation and memory protection,
 // including PTWs (Page Table Walks) and TLBs (Translation Look-aside Buffers)
@@ -39,10 +40,9 @@ struct PTW_Output('v : Int), is_sv_or_svx4_mode('v) = {
 private type PTW_Result('v : Int), is_sv_or_svx4_mode('v) = result((PTW_Output('v), ext_ptw), (PTW_Error, ext_ptw))
 
 // Result of address translation
-
 type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, page_based_mem_type, ext_ptw), ('failure, ext_ptw))
 
-// TODO: Remove this forward declaration and restructure code.
+// TODO: Remove this forward declaration if possible.
 // G-Stage Translation
 val translate_g_stage : (
   gpabits,

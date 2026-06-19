@@ -20,8 +20,8 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_pay
     Store(PageTableEntry)         => ent[W] == 0b1,
     StoreConditional(_, _, Data)  => ent[W] == 0b1,
     Atomic(_, _, _, Data, Data)   => ent[R] == 0b1 & ent[W] == 0b1,
-    // LoadExecute = hypervisor HLVX.HU/WU. At the PHYSICAL (PMP) level the spec requires
-    // BOTH execute and read, intentionally stricter than the X-only page-table check for
+    // LoadExecute = hypervisor HLVX.HU/WU. At the PMP level the spec requires
+    // both execute and read, intentionally stricter than the X-only page-table check for
     // HLVX (see model/sys/vmem_pte.sail).
     LoadExecute(Data)             => ent[R] == 0b1 & ent[X] == 0b1,
     InstructionFetch()            => ent[X] == 0b1,

@@ -245,25 +245,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
     Step_Execute(Memory_Exception(e), _) => handle_exception(e),
     Step_Execute(Illegal_Instruction(), instbits) =>
-      // TODO/NOTE: Define a new constructor?
-      handle_exception(struct {
-        trap           = E_Illegal_Instr(),
-        excinfo_is_gva = false,
-        excinfo        = zero_extend(instbits),
-        excinfo2       = None(),
-        excinst        = None(),
-        ext            = None(),
-      }),
-    // TODO/NOTE: Define a new constructor?
+      handle_exception(make_instr_exception_context(E_Illegal_Instr(), zero_extend(instbits))),
     Step_Execute(Virtual_Instruction(), instbits) =>
-      handle_exception(struct {
-        trap           = E_Virtual_Instr(),
-        excinfo_is_gva = false,
-        excinfo        = zero_extend(instbits),
-        excinfo2       = None(),
-        excinst        = None(),
-        ext            = None(),
-      }),
+      handle_exception(make_instr_exception_context(E_Virtual_Instr(), zero_extend(instbits))),
     Step_Execute(Enter_Wait(wr), instbits) => {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.

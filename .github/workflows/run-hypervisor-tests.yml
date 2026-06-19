@@ -1,3 +1,4 @@
+# TODO: Decide whether to upstream this workflow or keep it as an internal-only workflow.
 # This workflow is intended for internal testing only.
 # It is not meant to be pushed upstream.
 # Some steps may appear duplicated or unnecessary because
@@ -276,14 +277,11 @@ jobs:
             ./generate_tp_tests.sh --test_plan "$plan"
           done
 
-      - name: Run on Sail and tally
+      - name: Run on Sail
         working-directory: riescue/tp_gen
         shell: bash
         run: |
-          # Whisper-like overrides, fed to Sail inline via process substitution.
-          # No file on disk: <(...) is a /dev/fd path that --config-override accepts,
-          # and it deep-merges over the default config (arrays are replaced, so the
-          # MainMemory region must be given in full).
+          # For now, we match Whisper’s default settings.
           OVERRIDE=$(cat <<'JSON'
           {
             "memory": {
