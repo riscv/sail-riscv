@@ -152,7 +152,12 @@ private function flush_TLB_Entry(
   };
   let addr_matches : bool = match vaddr {
     Some(vaddr) => {
-      let vaddr : bits(64) = sign_extend(vaddr);
+      // G-stage HFENCE operands are GPA >> 2, widen and un-shift so high bits
+      // survive on RV32. VS/S-stage pass the virtual address directly.
+      let vaddr : bits(64) = match stage {
+        G_Stage => zero_extend(vaddr) << 2,
+        _       => sign_extend(vaddr),
+      };
       ent.vpn == (vaddr[58 .. pagesize_bits] & ~(ent.levelMask))
     },
     None() => true,
@@ -173,7 +178,8 @@ function lookup_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   match tlb[index] {
     None() => None(),
     Some(entry) => {
-      if match_TLB_Entry(entry, asid, vmid, sign_extend(vpn), stage) then Some((index, entry)) else None()
+      let vpn : bits(tlb_vpn_bits) = if stage == G_Stage then zero_extend(vpn) else sign_extend(vpn);
+      if match_TLB_Entry(entry, asid, vmid, vpn, stage) then Some((index, entry)) else None()
     },
   }
 }
@@ -208,7 +214,8 @@ function add_to_TLB forall 'v, is_sv_or_svx4_mode('v) . (
                                  pte       = zero_extend(pte),
                                  pteAddr   = pteAddr,
                                  levelMask = zero_extend(levelMask),
-                                 vpn       = sign_extend(vpn),
+                                 // Zero-extend unsigned G-stage GPAs, sign-extend canonical VS/S-stage VA's.
+                                 vpn       = if stage == G_Stage then zero_extend(vpn) else sign_extend(vpn),
                                  ppn       = zero_extend(ppn)};
 
   tlb[index] = Some(entry);
