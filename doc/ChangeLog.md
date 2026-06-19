@@ -3,6 +3,7 @@
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1750 : Non-segmented indexed loads were trapping on legal overlaps
   - https://github.com/riscv/sail-riscv/issues/1748 : Segment loads/stores whose register numbers increment past v31 were not treated as reserved.
+  - https://github.com/riscv/sail-riscv/issues/1069 : `vssubu` did not set `vxsat`
 
 # Release notes for version 0.12
 

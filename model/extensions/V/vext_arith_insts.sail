@@ -112,7 +112,10 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
         VV_VSADDU        => unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, vs1_val[i])),
         VV_VSADD         => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) + sign_extend('m + 1, vs1_val[i])),
         VV_VSSUBU        => {
-                              if unsigned(vs2_val[i]) < unsigned(vs1_val[i]) then zeros()
+                              if unsigned(vs2_val[i]) < unsigned(vs1_val[i]) then {
+                                write_vxsat(0b1);
+                                zeros()
+                              }
                               else unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) - zero_extend('m + 1, vs1_val[i]))
                             },
         VV_VSSUB         => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) - sign_extend('m + 1, vs1_val[i])),
@@ -514,7 +517,10 @@ function clause execute VXTYPE(funct6, vm, vs2, rs1, vd) = {
         VX_VSADDU  => unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) + zero_extend('m + 1, rs1_val) ),
         VX_VSADD   => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) + sign_extend('m + 1, rs1_val) ),
         VX_VSSUBU  => {
-                        if unsigned(vs2_val[i]) < unsigned(rs1_val) then zeros()
+                        if unsigned(vs2_val[i]) < unsigned(rs1_val) then {
+                          write_vxsat(0b1);
+                          zeros()
+                        }
                         else unsigned_saturation('m, zero_extend('m + 1, vs2_val[i]) - zero_extend('m + 1, rs1_val) )
                       },
         VX_VSSUB   => signed_saturation('m, sign_extend('m + 1, vs2_val[i]) - sign_extend('m + 1, rs1_val) ),
