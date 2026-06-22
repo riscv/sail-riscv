@@ -94,11 +94,6 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
-  // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
-  // registers. When the first register of a register pair is
-  // x0, then both halves of the pair read/write as zero.
-  let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
-
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, access, aq & rl, rl, true) {
     Err(e) => return memory_exception(vaddr, e),
     Ok(_)  => match mem_read(access, pbmt, addr, width, aq, aq & rl, true) {
@@ -106,6 +101,14 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       Ok(loaded) => loaded,
     },
   };
+
+  // Sequence the read of `rs2` after the call to `mem_write_ea` with the effective address.
+  // See https://github.com/riscv/sail-riscv/issues/1761.
+
+  // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
+  // registers. When the first register of a register pair is
+  // x0, then both halves of the pair read/write as zero.
+  let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
 
   let result : bits('width * 8) = match op {
     AMOSWAP => rs2_val,
