@@ -49,7 +49,7 @@ jobs:
           dnf install -y git
 
       - name: Check out repository code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
@@ -114,7 +114,7 @@ jobs:
         run: sudo apt-get install -y --no-install-recommends device-tree-compiler
 
       - name: Check out repository code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Common setup
         uses: ./.github/actions/sail-setup
