@@ -896,7 +896,7 @@ function clause execute VFMVFS(vs2, rd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) | illegal_fp_vd_unmasked(SEW, rm_3b) | SEW > flen
+  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, LMUL_pow) | illegal_fp_vd_unmasked(SEW, rm_3b) | SEW > flen
   then return Illegal_Instruction();
 
   assert(num_elem > 0 & SEW != 8);
@@ -1431,7 +1431,7 @@ function clause execute VFMVSF(rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) | illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, LMUL_pow) | illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
 
   assert(num_elem > 0 & SEW != 8);
 

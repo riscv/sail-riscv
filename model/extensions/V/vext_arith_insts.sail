@@ -1925,7 +1925,7 @@ function clause execute VMVXS(vs2, rd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) |
+  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, LMUL_pow) |
      illegal_vd_unmasked()
   then return Illegal_Instruction();
 
@@ -2453,7 +2453,7 @@ function clause execute VMVSX(rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) |
+  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, LMUL_pow) |
      illegal_vd_unmasked()
   then return Illegal_Instruction();
 
