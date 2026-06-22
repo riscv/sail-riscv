@@ -8,7 +8,7 @@ inputs:
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
     required: false
-    default: "0.20.1"
+    default: "0.20.2"
   install-clang:
     description: "Install latest Clang"
     required: false
@@ -18,34 +18,34 @@ inputs:
 #
 #                          | RISC-V Model                 |sail-riscv-tests|first-party-tests|   Rocq    |    Lean        | Linux boot
 #--------------------------------------------------------------------------------------------------------------------------------------
-# ubuntu-22.04 (x86_64):   | Sail:  0.20.1 (binary)       |                |                 |           |                |
+# ubuntu-22.04 (x86_64):   | Sail:  default (binary)      |                |                 |           |                |
 #                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
 #                          | Clang: latest (apt.llvm.org) |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# ubuntu-24.04-arm:        | Sail:  0.20.1 (binary)       |                |                 |           |                |
+# ubuntu-24.04-arm:        | Sail:  default (binary)      |                |                 |           |                |
 #                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
 #                          | Clang: latest (apt.llvm.org) |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# macos-latest:            | Sail:  0.20.1 (opam)         |                |                 |           |                |
+# macos-latest:            | Sail:  default (opam)        |                |                 |           |                |
 #                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
 #                          | Clang: brew versions         |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# ubuntu-latest:           | Sail:  0.20.1 (binary)       |                |                 |           | Sail: latest   |
+# ubuntu-latest:           | Sail:  default (binary)      |                |                 |           | Sail: latest   |
 #                          | CMake: (4.1.2)               |       x        |       x         |           | CMake: (4.1.2) |    x
 #                          | Clang: latest (apt.llvm.org) |                |                 |           | Clang: -       |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # (Container builds)       |                              |                |                 |           |                |
 # ------------------       |                              |                |                 |           |                |
 #                          |                              |                |                 |           |                |
-# rockylinux:8.9           | Sail:  0.20.1                |                |                 |           |                |
+# rockylinux:8.9           | Sail:  default               |                |                 |           |                |
 # runner: ubuntu-latest    | CMake: 3.20.0                |       x        |                 |           |                |
 #                          | Clang: -                     |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# rockylinux:8.9           | Sail:  0.20.1                |                |                 |           |                |
+# rockylinux:8.9           | Sail:  default               |                |                 |           |                |
 # runner: ubuntu-24.04-arm | CMake: 3.20.0                |       x        |                 |           |                |
 #                          | Clang: -                     |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# rocq/rocq-prover:9.0.1   | Sail:  (0.20.1)              |                |                 |           |                |
+# rocq/rocq-prover:9.0.1   | Sail:  (default)             |                |                 |           |                |
 # runner: ubuntu-latest    | CMake: (4.1.2)               |                |                 | coq 9.0.1 |                |
 #                          | Clang: -                     |                |                 |           |                |
 
@@ -111,7 +111,7 @@ runs:
       shell: bash
       run: |
         sudo mkdir -p /usr/local
-        curl --location https://github.com/rems-project/sail/releases/download/${{ inputs.sail-version }}/sail-$(uname)-$(arch).tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+        curl --location https://github.com/rems-project/sail/releases/download/${{ inputs.sail-version }}-binary/sail-$(uname)-$(arch).tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
     - name: Install Sail (macOS opam)
       if: runner.os == 'macOS' && steps.cache-opam-restore.outputs.cache-hit != 'true' && inputs.sail-version != 'latest'
