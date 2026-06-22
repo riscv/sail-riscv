@@ -8,13 +8,13 @@
 #include "riscv_callbacks_if.h"
 #include "symbol_table.h"
 
-void ModelImpl::register_callback(callbacks_if *cb) {
+void ModelImpl::register_callback(std::shared_ptr<callbacks_if> cb) {
   if (std::find(m_callbacks.begin(), m_callbacks.end(), cb) == m_callbacks.end()) {
     m_callbacks.push_back(cb);
   }
 }
 
-void ModelImpl::remove_callback(callbacks_if *cb) {
+void ModelImpl::remove_callback(std::shared_ptr<callbacks_if> cb) {
   m_callbacks.erase(std::remove(m_callbacks.begin(), m_callbacks.end(), cb), m_callbacks.end());
 }
 

@@ -7,12 +7,12 @@
 #include <iostream>
 
 void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_info &elf_info, run_info &run_info) {
-  traploop_detector loop_detector;
+  auto loop_detector = std::make_shared<traploop_detector>();
   if (!opts.disable_trap_loop_detection) {
-    model.register_callback(&loop_detector);
+    model.register_callback(loop_detector);
   }
 
-  log_callbacks log_cbs(
+  auto log_cbs = std::make_shared<log_callbacks>(
     opts.config_print_gpr,
     opts.config_print_fpr,
     opts.config_print_vreg,
@@ -23,7 +23,7 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_inf
     opts.config_use_abi_names,
     run_info.trace_log
   );
-  model.register_callback(&log_cbs);
+  model.register_callback(log_cbs);
 
   do {
     run_sail(model, opts, loop_detector, elf_info, run_info);
@@ -31,7 +31,7 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_inf
     if (run_info.rvfi) {
       /* Reset for next test */
       model.reinit_sail();
-      loop_detector.reset();
+      loop_detector->reset();
     }
   } while (run_info.rvfi);
 }
