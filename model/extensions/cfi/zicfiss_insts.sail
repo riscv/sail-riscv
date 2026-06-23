@@ -168,7 +168,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
                          then return Virtual_Instruction(),
   };
 
-  let access = Atomic(AMOSWAP, ShadowStack, ShadowStack);
+  let access = Atomic(AMOSWAP, aq, rl, ShadowStack, ShadowStack);
 
   let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
@@ -196,7 +196,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // implement multiprocessor synchronization."
 
   let 'width = width;
-  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, aq & rl, rl, true) {
+  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, aq & rl, rl, true) {
     Err(e) => return memory_exception(vaddr, e),
     Ok(_)  => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
       Err(e) => return memory_exception(vaddr, e),

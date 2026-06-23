@@ -106,17 +106,18 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
             Store(Data)            => {assert(not(res_or_con)); attributes.writable},
             Store(Vector)          => {assert(not(res_or_con)); attributes.writable},
             Store(PageTableEntry)  => {assert(not(res_or_con)); attributes.supports_pte_write},
+
             // For LR/SC, we currently don't differentiate between the presence (RsrvEventual)
             // or absence (RsrvNonEventual) of an eventual success guarantee.
-            LoadReserved(Data)     => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
-            StoreConditional(Data) => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
-            Atomic(op, Data, Data)  => {assert(res_or_con); attributes.readable & attributes.writable & pma_allows_atomic_op(attributes.atomic_support, op, width)},
+            LoadReserved(_, _, Data)      => {assert(res_or_con); attributes.readable & attributes.reservability != RsrvNone},
+            StoreConditional(_, _, Data)  => {assert(res_or_con); attributes.writable & attributes.reservability != RsrvNone},
+            Atomic(op, _, _, Data, Data)  => {assert(res_or_con); attributes.readable & attributes.writable & pma_allows_atomic_op(attributes.atomic_support, op, width)},
 
             // "The PMA checks are extended to require memory referenced by shadow stack instructions
             // to be idempotent."
             Load(ShadowStack)      => {assert(not(res_or_con)); attributes.readable & attributes.read_idempotent},
             Store(ShadowStack)     => {assert(not(res_or_con)); attributes.writable & attributes.write_idempotent},
-            Atomic(AMOSWAP, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent & pma_allows_atomic_op(attributes.atomic_support, AMOSWAP, width)},
+            Atomic(AMOSWAP, _, _, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent & pma_allows_atomic_op(attributes.atomic_support, AMOSWAP, width)},
 
             // TODO for the CMO extensions: "The PMAs shall be the
             // same for all physical addresses in the cache block, and
@@ -153,11 +154,11 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
               PREFETCH_I => attributes.executable,
             },
 
-            LoadReserved(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
-            StoreConditional(p)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+            LoadReserved(_, _, p)          => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+            StoreConditional(_, _, p)      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
 
-            Atomic(op, ShadowStack, ShadowStack) => internal_error(__FILE__, __LINE__, "Invalid op (" ^ amo_mnemonic(op) ^ ") for ShadowStack Atomic."),
-            Atomic(_, rp, wp)                    => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+            Atomic(op, _, _, ShadowStack, ShadowStack) => internal_error(__FILE__, __LINE__, "Invalid op (" ^ amo_mnemonic(op) ^ ") for ShadowStack Atomic."),
+            Atomic(_, _, _, rp, wp)                    => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
           };
 
           if get_config_print_pma() & not(canAccess)
@@ -263,8 +264,8 @@ function mem_read_priv (access, pbmt, priv, paddr, width, aq, rl, res) =
 function mem_read (access, pbmt, paddr, width, aq, rel, res) =
   mem_read_priv(access, pbmt, effectivePrivilege(access, mstatus, cur_privilege), paddr, width, aq, rel, res)
 
-val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bool, bool, bool) -> MemoryOpResult(unit)
-function mem_write_ea (addr, width, aq, rl, con) =
+val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), MemoryAccessType(mem_payload), bool, bool, bool) -> MemoryOpResult(unit)
+function mem_write_ea(addr, width, _access, aq, rl, con) =
   if (rl | con) & not(is_aligned_addr(addr, width))
   then Err(E_SAMO_Addr_Align())
   else Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
