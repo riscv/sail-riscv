@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "coq-sail-riscv"
-version: "0.5"
+version: "@sail_riscv_release_version@"
 maintainer: "Sail Devs <cl-sail-dev@lists.cam.ac.uk>"
 authors: "Sail RISC-V contributors"
 homepage: "https://github.com/riscv/sail-riscv/"
