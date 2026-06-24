@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - Smcsrind
+  - Sscsrind
+
 - Updates to the [configuration file](../config/config.json.in):
   - The version of the ISA specification for the model can be
     specified; see `base.isa_version`.
