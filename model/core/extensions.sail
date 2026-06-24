@@ -510,6 +510,10 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 enum clause extension = Ext_Sscounterenw
 mapping clause extensionName = Ext_Sscounterenw <-> "sscounterenw"
 function clause hartSupports(Ext_Sscounterenw) = config extensions.Sscounterenw.supported
+// Supervisor-mode view of the Indirect CSR Access
+enum clause extension = Ext_Sscsrind
+mapping clause extensionName = Ext_Sscsrind <-> "sscsrind"
+function clause hartSupports(Ext_Sscsrind) = config extensions.Sscsrind.supported
 // Double Trap (Supervisor)
 enum clause extension = Ext_Ssdbltrp
 mapping clause extensionName = Ext_Ssdbltrp <-> "ssdbltrp"
@@ -626,6 +630,10 @@ function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Machine-mode view of the Indirect CSR Access
+enum clause extension = Ext_Smcsrind
+mapping clause extensionName = Ext_Smcsrind <-> "smcsrind"
+function clause hartSupports(Ext_Smcsrind) = config extensions.Smcsrind.supported
 // Double Trap (Machine)
 enum clause extension = Ext_Smdbltrp
 mapping clause extensionName = Ext_Smdbltrp <-> "smdbltrp"
@@ -734,6 +742,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zicfiss => 2, // > Zaamo
 
     Ext_Ssccptr => 3, // > Sv39
+    Ext_Sscsrind => 3, // > Smcsrind
     Ext_Supm => 3, // > U
     Ext_Svnapot => 3, // > Sv39
     Ext_Svpbmt => 3, // > Sv39
@@ -915,6 +924,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
+  Ext_Sscsrind,
   Ext_Ssdbltrp,
   Ext_Ssnpm,
   Ext_Sspm,
@@ -947,6 +957,7 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smcsrind,
   Ext_Smdbltrp,
   Ext_Smmpm,
   Ext_Smnpm,

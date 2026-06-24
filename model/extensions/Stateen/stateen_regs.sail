@@ -16,11 +16,12 @@ function is_sstateen_accessible() -> bool = currentlyEnabled(Ext_S) & (currently
 termination_measure is_hstateen_accessible() = 5 // > Ext_H
 termination_measure is_sstateen_accessible() = 2 // > Ext_S
 
-enum stateen_bit = {STATEEN_FCSR, STATEEN_SRMCFG, STATEEN_P1P13, STATEEN_CONTEXT, STATEEN_ENVCFG, STATEEN_SE}
+enum stateen_bit = {STATEEN_FCSR, STATEEN_SRMCFG, STATEEN_P1P13, STATEEN_CONTEXT, STATEEN_CSRIND, STATEEN_ENVCFG, STATEEN_SE}
 
 mapping stateen_bit_index : stateen_bit <-> range(0, 63) = {
   STATEEN_SE      <-> 63,
   STATEEN_ENVCFG  <-> 62,
+  STATEEN_CSRIND  <-> 60,
   STATEEN_CONTEXT <-> 57,
   STATEEN_P1P13   <-> 56,
   STATEEN_SRMCFG  <-> 55,
@@ -58,6 +59,7 @@ function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
   [m with
     SE0     = legalize_csr_bit(mstateen0_se0, true, v[SE0]),
     ENVCFG  = legalize_csr_bit(mstateen0_envcfg, currentlyEnabled(Ext_S), v[ENVCFG]),
+    CSRIND  = legalize_csr_bit(mstateen0_csrind, currentlyEnabled(Ext_Sscsrind), v[CSRIND]),
     CONTEXT = legalize_csr_bit(mstateen0_context, currentlyEnabled(Ext_Sdtrig) & (sdtrig_has_scontext | sdtrig_has_hcontext), v[CONTEXT]),
     P1P13   = legalize_csr_bit(mstateen0_p1p13, delegh_csrs_are_defined & currentlyEnabled(Ext_H) & xlen == 32, v[P1P13]),
     SRMCFG  = legalize_csr_bit(mstateen0_srmcfg, currentlyEnabled(Ext_Ssqosid), v[SRMCFG]),
@@ -133,6 +135,7 @@ function legalize_hstateen0(h : Hstateen0, v : bits(64)) -> Hstateen0 = {
   [h with
     SE0     = v[SE0], // bit 63 of hstateen is always writable
     ENVCFG  = legalize_csr_bit(hstateen0_envcfg, true, v[ENVCFG]),
+    CSRIND  = legalize_csr_bit(hstateen0_csrind, currentlyEnabled(Ext_Sscsrind), v[CSRIND]),
     CONTEXT = legalize_csr_bit(hstateen0_context, currentlyEnabled(Ext_Sdtrig) & sdtrig_has_scontext, v[CONTEXT]),
     FCSR    = legalize_csr_bit(hstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
     C       = legalize_csr_bit(hstateen0_c, true, v[C]),
@@ -209,6 +212,12 @@ termination_measure check_stateen_bit(_, _, _) = 8 // > get_mstateen
 function is_zfinx_enabled_by_stateen() -> bool = check_stateen_bit(cur_privilege, STATEEN_FCSR, 0)
 
 termination_measure is_zfinx_enabled_by_stateen() = 9 // > check_stateen_bit
+
+// Effective mstateen0/hstateen0 CSRIND bit.
+// NOTE: an unimplemented xstateen reads as all-ones, so these report true
+// when stateen is absent but Sscsrind is enabled.
+function is_csrind_enabled_by_mstateen0() -> bool = currentlyEnabled(Ext_Sscsrind) & get_mstateen(0)[stateen_bit_index(STATEEN_CSRIND)] == bitone
+function is_csrind_enabled_by_hstateen0() -> bool = currentlyEnabled(Ext_Sscsrind) & get_hstateen(0)[stateen_bit_index(STATEEN_CSRIND)] == bitone
 
 function reset_stateen() -> unit = {
   mstateen0 = legalize_mstateen0(Mk_Mstateen0(zeros()), zeros());

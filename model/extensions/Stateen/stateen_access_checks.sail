@@ -46,6 +46,22 @@ function stateen_allows_CSR_access(csr : csreg, priv : Privilege, _access_type :
     // sstateen3
     (0x10F, priv) => check_stateen_bit(priv, STATEEN_SE, 3),
 
+    // siselect, sireg*, vsiselect, vsireg*
+    (0x150, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x151, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x152, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x153, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x155, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x156, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x157, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x250, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x251, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x252, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x253, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x255, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x256, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x257, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+
     // senvcfg
     (0x10A, priv) => check_stateen_bit(priv, STATEEN_ENVCFG, 0),
 
