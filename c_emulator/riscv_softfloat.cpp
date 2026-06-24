@@ -5,9 +5,13 @@ extern "C" {
 #include "softfloat.h"
 }
 
-static uint_fast8_t uint8_of_rm(uint64_t rm) {
+namespace {
+
+uint_fast8_t uint8_of_rm(uint64_t rm) {
   return static_cast<uint_fast8_t>(rm);
 }
+
+} // namespace
 
 #define SOFTFLOAT_PRELUDE(rm)                                                                                          \
   softfloat_exceptionFlags = 0;                                                                                        \
