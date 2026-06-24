@@ -20,12 +20,6 @@
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
-namespace {
-
-rvfi_callbacks rvfi_cbs;
-
-} // namespace
-
 static void print_build_info() {
   std::cout << "Sail RISC-V release: " << version_info::release_version() << std::endl;
   std::cout << "Sail RISC-V git: " << version_info::git_version() << std::endl;
@@ -228,7 +222,7 @@ void flush_logs(run_info &run_info) {
 void run_sail(
   ModelImpl &model,
   const CLIOptions &opts,
-  traploop_detector &loop_detector,
+  std::shared_ptr<traploop_detector> loop_detector,
   const elf_info &elf_info,
   run_info &run_info
 ) {
@@ -325,12 +319,12 @@ void run_sail(
       model.tick_clock();
     }
 
-    if (loop_detector.loop_detected()) {
+    if (loop_detector->loop_detected()) {
       fprintf(
         stdout,
         "FAILURE: possible trap loop detected with MEPC=0x%" PRIx64 " and SEPC=0x%" PRIx64 "\n",
-        loop_detector.mepc(),
-        loop_detector.sepc()
+        loop_detector->mepc(),
+        loop_detector->sepc()
       );
       exit(EXIT_FAILURE);
     }
@@ -520,7 +514,7 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
     if (!run_info.rvfi->setup_socket(opts.config_print_rvfi)) {
       return 1;
     }
-    model.register_callback(&rvfi_cbs);
+    model.register_callback(std::make_shared<rvfi_callbacks>());
   }
 
   if (!opts.dtb_file.empty()) {

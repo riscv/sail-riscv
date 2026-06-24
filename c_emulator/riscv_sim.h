@@ -60,7 +60,7 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
 void run_sail(
   ModelImpl &model,
   const CLIOptions &opts,
-  traploop_detector &loop_detector,
+  std::shared_ptr<traploop_detector> loop_detector,
   const elf_info &elf_info,
   run_info &run_info
 );
