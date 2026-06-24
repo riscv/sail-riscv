@@ -143,7 +143,7 @@ function valid_disjoint_reg_groups(rs : vregidx, rd : vregidx, EMUL_pow_rs : int
 }
 
 // Check for valid overlaps in segmented instructions that have an additional number of data fields
-function valid_disjoint_reg_groups_segmented(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_pow_rd : int, data_fields: int) -> bool = {
+function valid_disjoint_reg_groups_segmented(rs : vregidx, rd : vregidx, EMUL_pow_rs : int, EMUL_pow_rd : int, data_fields: nfields) -> bool = {
   let rs_group = 2 ^ max(EMUL_pow_rs, 0);
   let rd_group = 2 ^ max(EMUL_pow_rd, 0);
   let rs_int = unsigned(vregidx_bits(rs));
