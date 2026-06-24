@@ -125,6 +125,7 @@ function legalize_csr_bit(c : CSRBitConfig, feature_enabled : bool, v : bits(1))
 // Stateen
 let mstateen0_se0     : CSRBitConfig = config extensions.Stateen.mstateen0.SE0
 let mstateen0_envcfg  : CSRBitConfig = config extensions.Stateen.mstateen0.ENVCFG
+let mstateen0_csrind  : CSRBitConfig = config extensions.Stateen.mstateen0.CSRIND
 let mstateen0_context : CSRBitConfig = config extensions.Stateen.mstateen0.CONTEXT
 let mstateen0_p1p13   : CSRBitConfig = config extensions.Stateen.mstateen0.P1P13
 let mstateen0_srmcfg  : CSRBitConfig = config extensions.Stateen.mstateen0.SRMCFG
@@ -136,6 +137,7 @@ let mstateen2_se2     : CSRBitConfig = config extensions.Stateen.mstateen2.SE2
 let mstateen3_se3     : CSRBitConfig = config extensions.Stateen.mstateen3.SE3
 
 let hstateen0_envcfg  : CSRBitConfig = config extensions.Stateen.hstateen0.ENVCFG
+let hstateen0_csrind  : CSRBitConfig = config extensions.Stateen.hstateen0.CSRIND
 let hstateen0_context : CSRBitConfig = config extensions.Stateen.hstateen0.CONTEXT
 let hstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.hstateen0.FCSR
 let hstateen0_c       : CSRBitConfig = config extensions.Stateen.hstateen0.C

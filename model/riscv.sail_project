@@ -370,6 +370,11 @@ extensions {
     files extensions/Sstc/sstc.sail
   }
 
+  Csrind {
+    requires core, Stateen
+    files extensions/Csrind/csrind_regs.sail
+  }
+
   Sdtrig {
     requires core
 
