@@ -1,0 +1,31 @@
+name: Test build_emulators.sh script
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages
+        run: sudo apt install -y --no-install-recommends pkg-config curl
+
+      - name: Install sail from binary
+        run: |
+          sudo mkdir -p /usr/local
+          curl --location https://github.com/rems-project/sail/releases/download/0.19-linux-binary/sail.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Build simulator
+        run: ./build_simulators.sh
+
+      - name: Test simulator
+        run: ctest --test-dir build --output-junit tests.xml --output-on-failure
+
+      - name: Upload event payload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: event.json
+          path: ${{ github.event_path }}
