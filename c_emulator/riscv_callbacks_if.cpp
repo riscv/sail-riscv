@@ -17,7 +17,7 @@ void callbacks_if::mem_write_callback(
   [[maybe_unused]] ModelImpl &model,
   [[maybe_unused]] const char *type,
   [[maybe_unused]] sbits paddr,
-  [[maybe_unused]] uint64_t width,
+  [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
 ) {
 }
@@ -26,7 +26,7 @@ void callbacks_if::mem_read_callback(
   [[maybe_unused]] ModelImpl &model,
   [[maybe_unused]] const char *type,
   [[maybe_unused]] sbits paddr,
-  [[maybe_unused]] uint64_t width,
+  [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
 ) {
 }

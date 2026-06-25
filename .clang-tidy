@@ -1,0 +1,13 @@
+---
+Checks: >
+  -*,
+  bugprone*,
+  -bugprone-easily-swappable-parameters,
+  clang-diagnostic-*,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-const-correctness,
+  -misc-no-recursion
+
+HeaderFilterRegex: ""
+...

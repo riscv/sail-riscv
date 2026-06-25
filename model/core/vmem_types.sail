@@ -54,13 +54,13 @@ mapping mem_payload_str : mem_payload <-> string = {
 
 function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
   match access {
-    Load(p)             => "R" ^ mem_payload_str(p),
-    LoadReserved(p)     => "R" ^ mem_payload_str(p),
-    Store(p)            => "W" ^ mem_payload_str(p),
-    StoreConditional(p) => "W" ^ mem_payload_str(p),
-    Atomic(_, lp, sp)   => "R" ^ mem_payload_str(lp) ^ "W" ^ mem_payload_str(sp),
-    InstructionFetch()  => "X",
-    CacheAccess(_)      => "C",
+    Load(p)                   => "R" ^ mem_payload_str(p),
+    LoadReserved(_, _, p)     => "R" ^ mem_payload_str(p),
+    Store(p)                  => "W" ^ mem_payload_str(p),
+    StoreConditional(_, _, p) => "W" ^ mem_payload_str(p),
+    Atomic(_, _, _, lp, sp)   => "R" ^ mem_payload_str(lp) ^ "W" ^ mem_payload_str(sp),
+    InstructionFetch()        => "X",
+    CacheAccess(_)            => "C",
   }
 
 overload to_str = {accessType_to_str}
@@ -69,23 +69,24 @@ function is_shadow_stack_access(access : MemoryAccessType(mem_payload)) -> bool 
   match access {
     Load(ShadowStack)                   => true,
     Store(ShadowStack)                  => true,
-    Atomic(_, ShadowStack, ShadowStack) => true,
+
+    Atomic(_, _, _, ShadowStack, ShadowStack) => true,
 
     InstructionFetch()                  => false,
     Load(Data)                          => false,
     Load(Vector)                        => false,
     Load(PageTableEntry)                => false,
-    LoadReserved(Data)                  => false,
+    LoadReserved(_, _, Data)            => false,
     Store(Data)                         => false,
     Store(Vector)                       => false,
     Store(PageTableEntry)               => false,
-    StoreConditional(Data)              => false,
-    Atomic(_, Data, Data)               => false,
+    StoreConditional(_, _, Data)        => false,
+    Atomic(_, _, _, Data, Data)         => false,
     CacheAccess(_)                      => false,
 
-    LoadReserved(p)                     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
-    StoreConditional(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
-    Atomic(_, rp, wp)                   => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+    LoadReserved(_, _, p)               => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(_, _, p)           => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    Atomic(_, _, _, rp, wp)             => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
   }
 
 function is_amo_access(access : MemoryAccessType(mem_payload)) -> bool =
@@ -96,8 +97,8 @@ function is_amo_access(access : MemoryAccessType(mem_payload)) -> bool =
 
 function is_shadow_stack_amo(access : MemoryAccessType(mem_payload)) -> bool =
   match access {
-    Atomic(_, ShadowStack, ShadowStack) => true,
-    _                                   => false,
+    Atomic(_, _, _, ShadowStack, ShadowStack) => true,
+    _                                         => false,
   }
 
 function is_vector_access(access : MemoryAccessType(mem_payload)) -> bool =

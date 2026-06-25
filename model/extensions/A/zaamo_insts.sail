@@ -72,7 +72,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   // This is checked during decoding.
   assert(width <= xlen_bytes * 2);
 
-  let access = Atomic(op, Data, Data);
+  let access = Atomic(op, aq, rl, Data, Data);
 
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
@@ -99,7 +99,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   // x0, then both halves of the pair read/write as zero.
   let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
 
-  let loaded : bits('width * 8) = match mem_write_ea(addr, width, aq & rl, rl, true) {
+  let loaded : bits('width * 8) = match mem_write_ea(addr, width, access, aq & rl, rl, true) {
     Err(e) => return memory_exception(vaddr, e),
     Ok(_)  => match mem_read(access, pbmt, addr, width, aq, aq & rl, true) {
       Err(e)     => return memory_exception(vaddr, e),

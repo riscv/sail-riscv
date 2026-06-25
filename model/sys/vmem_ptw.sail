@@ -53,9 +53,9 @@ function translationException(access : MemoryAccessType(mem_payload),
                               err : PTW_Error)
                              -> ExceptionType = {
   match (access, err) {
-    (_, PTW_Ext_Error(e))                        => E_Extension(ext_translate_exception(e)),
-    (Atomic(_, Data, Data), PTW_No_Access())     => E_SAMO_Access_Fault(),
-    (Atomic(_, Data, Data), _)                   => E_SAMO_Page_Fault(),
+    (_, PTW_Ext_Error(e))                          => E_Extension(ext_translate_exception(e)),
+    (Atomic(_, _, _, Data, Data), PTW_No_Access()) => E_SAMO_Access_Fault(),
+    (Atomic(_, _, _, Data, Data), _)               => E_SAMO_Page_Fault(),
 
     (Load(Data), PTW_No_Access())                => E_Load_Access_Fault(),
     (Load(Data), _)                              => E_Load_Page_Fault(),
@@ -63,8 +63,8 @@ function translationException(access : MemoryAccessType(mem_payload),
     (Load(Vector), _)                            => E_Load_Page_Fault(),
     (Load(PageTableEntry), PTW_No_Access())      => E_Load_Access_Fault(),
     (Load(PageTableEntry), _)                    => E_Load_Page_Fault(),
-    (LoadReserved(Data), PTW_No_Access())        => E_Load_Access_Fault(),
-    (LoadReserved(Data), _)                      => E_Load_Page_Fault(),
+    (LoadReserved(_, _, Data), PTW_No_Access())  => E_Load_Access_Fault(),
+    (LoadReserved(_, _, Data), _)                => E_Load_Page_Fault(),
 
     (Store(Data), PTW_No_Access())               => E_SAMO_Access_Fault(),
     (Store(Data), _)                             => E_SAMO_Page_Fault(),
@@ -72,15 +72,16 @@ function translationException(access : MemoryAccessType(mem_payload),
     (Store(Vector), _)                           => E_SAMO_Page_Fault(),
     (Store(PageTableEntry), PTW_No_Access())     => E_SAMO_Access_Fault(),
     (Store(PageTableEntry), _)                   => E_SAMO_Page_Fault(),
-    (StoreConditional(Data), PTW_No_Access())    => E_SAMO_Access_Fault(),
-    (StoreConditional(Data), _)                  => E_SAMO_Page_Fault(),
+
+    (StoreConditional(_, _, Data), PTW_No_Access()) => E_SAMO_Access_Fault(),
+    (StoreConditional(_, _, Data), _)               => E_SAMO_Page_Fault(),
 
     // "For shadow stack instructions, the reported instruction type is
     // always as though it were a store or AMO, even for instructions
     // SSPOPCHK and C.SSPOPCHK that only read from memory and do not
     // write to it."
-    (Atomic(_, ShadowStack, ShadowStack), PTW_No_Access()) => E_SAMO_Access_Fault(),
-    (Atomic(_, ShadowStack, ShadowStack), _)               => E_SAMO_Page_Fault(),
+    (Atomic(_, _, _, ShadowStack, ShadowStack), PTW_No_Access()) => E_SAMO_Access_Fault(),
+    (Atomic(_, _, _, ShadowStack, ShadowStack), _)               => E_SAMO_Page_Fault(),
 
     (Load(ShadowStack), PTW_No_Access())         => E_SAMO_Access_Fault(),
     (Load(ShadowStack), _)                       => E_SAMO_Page_Fault(),
@@ -110,8 +111,8 @@ function translationException(access : MemoryAccessType(mem_payload),
       PREFETCH_I => E_Fetch_Page_Fault(),
     },
 
-    (LoadReserved(p), _)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
-    (StoreConditional(p), _)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
-    (Atomic(_, rp, wp), _)              => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+    (LoadReserved(_, _, p), _)          => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    (StoreConditional(_, _, p), _)      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+    (Atomic(_, _, _, rp, wp), _)        => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
   }
 }

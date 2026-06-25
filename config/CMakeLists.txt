@@ -3,7 +3,7 @@ set(generated_config_filenames)
 # Create a variety of configuration files for different XLEN/ELEN/VLENs.
 foreach(CONFIG__BASE__XLEN IN ITEMS 32 64)
     foreach(CONFIG__V__ELEN_EXP RANGE 5 6)
-        foreach(CONFIG__V__VLEN_EXP RANGE 7 9)
+        foreach(CONFIG__V__VLEN_EXP RANGE 6 9)
             math(EXPR vlen "1 << ${CONFIG__V__VLEN_EXP}")
             math(EXPR elen "1 << ${CONFIG__V__ELEN_EXP}")
 
@@ -19,8 +19,12 @@ foreach(CONFIG__BASE__XLEN IN ITEMS 32 64)
 
             if(CONFIG_ELEN_IS_32 STREQUAL true)
               set(CONFIG__V__SUPPORT "Float_single")
-            elseif(CONFIG_ELEN_IS_64 STREQUAL true)
+            # Check if we can enable the full V extension.
+            elseif((CONFIG_ELEN_IS_64 STREQUAL true) AND (vlen GREATER 64))
               set(CONFIG__V__SUPPORT "Full")
+            # Otherwise fallback to Float_double for ELEN=64.
+            elseif(CONFIG_ELEN_IS_64 STREQUAL true)
+              set(CONFIG__V__SUPPORT "Float_double")
             endif()
 
             configure_file(config.json.in ${CMAKE_CURRENT_BINARY_DIR}/${config_filename})

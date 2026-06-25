@@ -11,6 +11,7 @@ import THE_MODULE_NAME.Defs
 
 open Sail
 open ConcurrencyInterfaceV1
+open THE_MODULE_NAME.Defs
 
 def print_bits (_ : String) (_ : BitVec n) : Unit := ()
 def print_string (_ : String) (_ : String) : Unit := ()

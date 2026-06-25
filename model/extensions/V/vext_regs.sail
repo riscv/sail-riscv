@@ -346,6 +346,15 @@ private function write_vcsr(vxrm_val : bits(2), vxsat_val : bits(1)) -> unit = {
   dirty_v_context()
 }
 
+function write_vxsat(vxsat_val: bits(1)) -> unit = {
+  if vcsr[vxsat] != vxsat_val then {
+    vcsr[vxsat] = vxsat_val;
+    dirty_v_context();
+  };
+  csr_write_callback("vxsat", zero_extend(vcsr[vxsat]));
+  csr_write_callback("vcsr", zero_extend(vcsr.bits));
+}
+
 function clause write_CSR(0x008, value) = { set_vstart(value[15 .. 0]); Ok(vstart) }
 function clause write_CSR(0x009, value) = { write_vcsr (vcsr[vxrm], value[0 .. 0]); Ok(zero_extend(vcsr[vxsat])) }
 function clause write_CSR(0x00A, value) = { write_vcsr (value[1 .. 0], vcsr[vxsat]); Ok(zero_extend(vcsr[vxrm])) }

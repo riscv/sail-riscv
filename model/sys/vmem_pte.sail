@@ -169,28 +169,28 @@ private function check_PTE_permission(
       Store(PageTableEntry) => false,
       // "the shadow stack is readable by all instructions that only load from
       // memory."
-      Load(Data)         => true,
-      Load(Vector)       => true,
-      Load(ShadowStack)  => true,
-      LoadReserved(Data) => true,
+      Load(Data)               => true,
+      Load(Vector)             => true,
+      Load(ShadowStack)        => true,
+      LoadReserved(_, _, Data) => true,
 
       // "Memory mapped as an SS page cannot be written to by instructions other
       // than SSAMOSWAP.W/D, SSPUSH, and C.SSPUSH."
-      Store(Data)                         => false,
-      Store(Vector)                       => false,
-      StoreConditional(Data)              => false,
-      Atomic(_, Data, Data)               => false,
-      Store(ShadowStack)                  => true,
-      Atomic(_, ShadowStack, ShadowStack) => true,
+      Store(Data)                               => false,
+      Store(Vector)                             => false,
+      StoreConditional(_, _, Data)              => false,
+      Atomic(_, _, _, Data, Data)               => false,
+      Store(ShadowStack)                        => true,
+      Atomic(_, _, _, ShadowStack, ShadowStack) => true,
 
       // "Access to a SS page using cache-block operation (CBO.*) instructions
       // is not permitted. Such accesses will raise a store/AMO access-fault
       // exception."
       CacheAccess(_) => false,
 
-      LoadReserved(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
-      StoreConditional(p)            => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
-      Atomic(_, rp, wp)              => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+      LoadReserved(_, _, p)          => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+      StoreConditional(_, _, p)      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+      Atomic(_, _, _, rp, wp)        => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
 
     };
     if not(shadow_stack_ok) then return PTE_Check_Failure((), PTE_No_Access());
@@ -213,7 +213,7 @@ private function check_PTE_permission(
     LoadReserved(_)             => pte_R,
     Store(_)                    => pte_W,
     StoreConditional(_)         => pte_W,
-    Atomic(_, _, _)             => pte_W & pte_R,
+    Atomic(_)                   => pte_W & pte_R,
     InstructionFetch(_)         => pte_X,
     CacheAccess(CB_zero())      => pte_W,
     CacheAccess(CB_prefetch(p)) => match p {
@@ -265,7 +265,7 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
                              // _not_ update the D bit if the SC fails for
                              // whatever reason.
                              StoreConditional(_)         => true,
-                             Atomic(_, _, _)             => true,
+                             Atomic(_)                   => true,
                              // "As implied by omission, a cache-block
                              // management instruction does not check the dirty
                              // bit and neither raises an exception nor sets the

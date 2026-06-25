@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <map>
+#include <memory>
 #include <optional>
 #include <random>
 #include <vector>
@@ -22,8 +23,8 @@ public:
 
   // callbacks
 
-  void register_callback(callbacks_if *cb);
-  void remove_callback(callbacks_if *cb);
+  void register_callback(std::shared_ptr<callbacks_if> cb);
+  void remove_callback(std::shared_ptr<callbacks_if> cb);
 
   void call_pre_step_callbacks(bool is_waiting);
   void call_post_step_callbacks(bool is_waiting);
@@ -98,8 +99,8 @@ private:
   // These functions are called by the Sail code.
 
   unit fetch_callback(sbits opcode) override;
-  unit mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;
-  unit mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;
+  unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
+  unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
   unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
   unit freg_write_callback(unsigned reg, sbits value) override;
@@ -170,8 +171,7 @@ private:
   std::map<uint64_t, std::string> m_symbols;
   int m_term_fd = 1;
 
-  // TODO: Probably better with std::shared_ptr<callbacks_if>.
-  std::vector<callbacks_if *> m_callbacks;
+  std::vector<std::shared_ptr<callbacks_if>> m_callbacks;
 
   uint64_t m_reservation = 0;
   uint64_t m_reservation_addr = 0;
