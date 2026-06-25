@@ -11,12 +11,15 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSAIL_MODULES="H;Zca;Zicb
 2. Compile the Lean emulator
 
 Either, in this directory:
+
 ```
 lake update && lake build
 ```
+
 or with CMake:
+
 ```
-cmake --build build --target build_lean_emulator          
+cmake --build build --target build_lean_emulator
 ```
 
 3. Run the Lean emulator on an ELF binary.
