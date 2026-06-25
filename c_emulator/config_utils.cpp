@@ -12,6 +12,8 @@
 #include "sail_config.h"
 #include "sail_riscv_model.h"
 
+namespace {
+
 std::string keypath_to_str(const std::vector<const char *> &keypath) {
   std::string s;
   if (keypath.empty()) {
@@ -24,6 +26,8 @@ std::string keypath_to_str(const std::vector<const char *> &keypath) {
   s.pop_back();
   return s;
 }
+
+} // namespace
 
 uint64_t get_config_uint64(const std::vector<const char *> &keypath) {
   sail_config_json json = sail_config_get(keypath.size(), keypath.data());

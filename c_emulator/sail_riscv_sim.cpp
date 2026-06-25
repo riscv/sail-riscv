@@ -6,7 +6,9 @@
 
 #include <iostream>
 
-void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_info &elf_info, run_info &run_info) {
+namespace {
+
+void run_model(CLIOptions &opts, ModelImpl &model, uint64_t, const elf_info &elf_info, run_info &run_info) {
   auto loop_detector = std::make_shared<traploop_detector>();
   if (!opts.disable_trap_loop_detection) {
     model.register_callback(loop_detector);
@@ -72,6 +74,8 @@ int inner_main(int argc, char **argv) {
 
   return EXIT_SUCCESS;
 }
+
+} // namespace
 
 int main(int argc, char **argv) {
   // Catch all exceptions and print them a bit more nicely than the default.

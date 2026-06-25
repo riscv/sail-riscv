@@ -20,7 +20,11 @@
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
-static void print_build_info() {
+// Internal utilities.
+
+namespace {
+
+void print_build_info() {
   std::cout << "Sail RISC-V release: " << version_info::release_version() << std::endl;
   std::cout << "Sail RISC-V git: " << version_info::git_version() << std::endl;
   std::cout << "Sail: " << version_info::sail_version() << std::endl;
@@ -30,7 +34,7 @@ static void print_build_info() {
   std::cout << "JSONCONS: " << jsoncons::version() << std::endl;
 }
 
-static jsoncons::json parse_json_or_exit(const std::string &json_text, const std::string &source_desc) {
+jsoncons::json parse_json_or_exit(const std::string &json_text, const std::string &source_desc) {
   try {
     return jsoncons::json::parse(json_text);
   } catch (const jsoncons::json_exception &e) {
@@ -54,6 +58,66 @@ void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override) 
     }
   }
 }
+
+void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
+  uint64_t addr = get_config_uint64({"memory", "dtb_address"});
+  uint64_t size = static_cast<uint64_t>(dtb.size());
+
+  // Overflow check for addr + size - 1
+  uint64_t end = addr + size - 1;
+  if (end < addr) {
+    fprintf(stderr, "DTB address/size overflow: addr=0x%0" PRIx64 ", size=0x%0" PRIx64 "\n", addr, size);
+    exit(EXIT_FAILURE);
+  }
+
+  // Validate DTB range against configured PMA memory regions.
+  if (!model.dtb_within_configured_pma_memory(addr, size)) {
+    fprintf(
+      stderr,
+      "DTB does not fit in any configured PMA memory region: "
+      "addr=0x%0" PRIx64 ", size=0x%0" PRIx64 " (end=0x%0" PRIx64 ")\n"
+      "Hint: adjust memory.dtb_address or memory.regions in the config.\n",
+      addr,
+      size,
+      end
+    );
+    exit(EXIT_FAILURE);
+  }
+
+  for (uint8_t d : dtb) {
+    write_mem(addr++, d);
+  }
+}
+
+void write_signature(const std::string &file, unsigned signature_granularity, const elf_info &elf_info) {
+  if (elf_info.mem_sig_start >= elf_info.mem_sig_end) {
+    fprintf(
+      stderr,
+      "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
+      elf_info.mem_sig_start,
+      elf_info.mem_sig_end,
+      file.c_str()
+    );
+    return;
+  }
+  FILE *f = fopen(file.c_str(), "w");
+  if (!f) {
+    fprintf(stderr, "Cannot open file '%s': %s\n", file.c_str(), strerror(errno));
+    return;
+  }
+  /* write out words depending on signature granularity in signature area */
+  for (uint64_t addr = elf_info.mem_sig_start; addr < elf_info.mem_sig_end; addr += signature_granularity) {
+    /* most-significant byte first */
+    for (unsigned i = signature_granularity; i > 0; --i) {
+      uint8_t byte = static_cast<uint8_t>(read_mem(addr + i - 1));
+      fprintf(f, "%02x", byte);
+    }
+    fprintf(f, "\n");
+  }
+  fclose(f);
+}
+
+} // namespace
 
 uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file, elf_info &elf_info) {
   ELF elf = ELF::open(filename);
@@ -116,64 +180,6 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
   }
 
   return elf.entry();
-}
-
-void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
-  uint64_t addr = get_config_uint64({"memory", "dtb_address"});
-  uint64_t size = static_cast<uint64_t>(dtb.size());
-
-  // Overflow check for addr + size - 1
-  uint64_t end = addr + size - 1;
-  if (end < addr) {
-    fprintf(stderr, "DTB address/size overflow: addr=0x%0" PRIx64 ", size=0x%0" PRIx64 "\n", addr, size);
-    exit(EXIT_FAILURE);
-  }
-
-  // Validate DTB range against configured PMA memory regions.
-  if (!model.dtb_within_configured_pma_memory(addr, size)) {
-    fprintf(
-      stderr,
-      "DTB does not fit in any configured PMA memory region: "
-      "addr=0x%0" PRIx64 ", size=0x%0" PRIx64 " (end=0x%0" PRIx64 ")\n"
-      "Hint: adjust memory.dtb_address or memory.regions in the config.\n",
-      addr,
-      size,
-      end
-    );
-    exit(EXIT_FAILURE);
-  }
-
-  for (uint8_t d : dtb) {
-    write_mem(addr++, d);
-  }
-}
-
-void write_signature(const std::string &file, unsigned signature_granularity, const elf_info &elf_info) {
-  if (elf_info.mem_sig_start >= elf_info.mem_sig_end) {
-    fprintf(
-      stderr,
-      "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
-      elf_info.mem_sig_start,
-      elf_info.mem_sig_end,
-      file.c_str()
-    );
-    return;
-  }
-  FILE *f = fopen(file.c_str(), "w");
-  if (!f) {
-    fprintf(stderr, "Cannot open file '%s': %s\n", file.c_str(), strerror(errno));
-    return;
-  }
-  /* write out words depending on signature granularity in signature area */
-  for (uint64_t addr = elf_info.mem_sig_start; addr < elf_info.mem_sig_end; addr += signature_granularity) {
-    /* most-significant byte first */
-    for (unsigned i = signature_granularity; i > 0; --i) {
-      uint8_t byte = static_cast<uint8_t>(read_mem(addr + i - 1));
-      fprintf(f, "%02x", byte);
-    }
-    fprintf(f, "\n");
-  }
-  fclose(f);
 }
 
 void close_logs(run_info &run_info) {

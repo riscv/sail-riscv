@@ -115,8 +115,8 @@ void log_callbacks::vreg_write_callback(ModelImpl &, unsigned reg, lbits value) 
 void log_callbacks::ptw_start_callback(
   ModelImpl &model,
   uint64_t vpn,
-  hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-  hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+  ModelImpl::MemoryAccessType access_type,
+  ModelImpl::Privilege privilege
 ) {
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
@@ -149,7 +149,7 @@ void log_callbacks::ptw_success_callback(ModelImpl & /*model*/, uint64_t final_p
 
 void log_callbacks::ptw_fail_callback(
   ModelImpl &model,
-  struct hart::zPTW_Error error_type,
+  ModelImpl::PTW_Error error_type,
   int64_t level,
   sbits pte_addr
 ) {
@@ -164,10 +164,15 @@ void log_callbacks::ptw_fail_callback(
   }
 }
 
-static void print_tlb(
+namespace {
+
+// TODO: make this a class member and avoid a global.
+std::vector<uint64_t> pending_flush_indices;
+
+void print_tlb(
   FILE *trace_log,
-  ModelImpl &model,
-  hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
+  ModelImpl &,
+  ModelImpl::TLB_Entry tlb,
   const std::vector<uint64_t> &indices,
   bool is_flush
 ) {
@@ -226,29 +231,25 @@ static void print_tlb(
   );
 }
 
-void log_callbacks::tlb_add_callback(
-  ModelImpl &model,
-  hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-  uint64_t index
-) {
+} // namespace
+
+void log_callbacks::tlb_add_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb, uint64_t index) {
   if (trace_log != nullptr && config_print_tlb) {
     print_tlb(trace_log, model, tlb, {index}, false);
   }
 }
 
-std::vector<uint64_t> pending_flush_indices;
-
-void log_callbacks::tlb_flush_begin_callback(ModelImpl &model) {
+void log_callbacks::tlb_flush_begin_callback(ModelImpl &) {
   pending_flush_indices.clear();
 }
 
-void log_callbacks::tlb_flush_callback(ModelImpl &model, uint64_t index) {
+void log_callbacks::tlb_flush_callback(ModelImpl &, uint64_t index) {
   if (config_print_tlb) {
     pending_flush_indices.push_back(index);
   }
 }
 
-void log_callbacks::tlb_flush_end_callback(ModelImpl &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+void log_callbacks::tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb) {
   if (trace_log != nullptr && config_print_tlb && !pending_flush_indices.empty()) {
     print_tlb(trace_log, model, tlb, pending_flush_indices, true);
   }
