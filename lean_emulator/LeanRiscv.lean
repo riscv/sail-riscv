@@ -5,6 +5,9 @@ import LeanRV64DExecutable
 import LeanRV64DExecutable.Step
 import Sail.Sail
 
+open LeanRV64DExecutable
+open Defs
+
 open Register
 
 def readElf (elfFilepath : System.FilePath) : IO (Except String RawELFFile) := do
