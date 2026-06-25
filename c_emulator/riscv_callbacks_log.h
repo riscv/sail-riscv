@@ -19,36 +19,27 @@ public:
   );
 
   // callbacks_if
-  void mem_write_callback(hart::Model &model, const char *type, sbits paddr, uint64_t width, lbits value) override;
-  void mem_read_callback(hart::Model &model, const char *type, sbits paddr, uint64_t width, lbits value) override;
-  void xreg_full_write_callback(hart::Model &model, const_sail_string abi_name, sbits reg, sbits value) override;
-  void freg_write_callback(hart::Model &model, unsigned reg, sbits value) override;
-  void csr_full_write_callback(hart::Model &model, const_sail_string csr_name, unsigned reg, sbits value) override;
-  void csr_full_read_callback(hart::Model &model, const_sail_string csr_name, unsigned reg, sbits value) override;
-  void vreg_write_callback(hart::Model &model, unsigned reg, lbits value) override;
+  void mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) override;
+  void mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) override;
+  void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value) override;
+  void freg_write_callback(ModelImpl &model, unsigned reg, sbits value) override;
+  void csr_full_write_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value) override;
+  void csr_full_read_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value) override;
+  void vreg_write_callback(ModelImpl &model, unsigned reg, lbits value) override;
   // Page table walk callback
   void ptw_start_callback(
-    hart::Model &model,
+    ModelImpl &model,
     uint64_t vpn,
-    hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
+    ModelImpl::MemoryAccessType access_type,
+    ModelImpl::Privilege privilege
   ) override;
-  void ptw_step_callback(hart::Model &model, int64_t level, sbits pte_addr, uint64_t pte) override;
-  void ptw_success_callback(hart::Model &model, uint64_t final_ppn, int64_t level) override;
-  void ptw_fail_callback(
-    hart::Model &model,
-    struct hart::zPTW_Error error_type,
-    int64_t level,
-    sbits pte_addr
-  ) override;
-  void tlb_add_callback(
-    hart::Model &model,
-    hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
-    uint64_t index
-  ) override;
-  void tlb_flush_begin_callback(hart::Model &model) override;
-  void tlb_flush_callback(hart::Model &model, uint64_t index) override;
-  void tlb_flush_end_callback(hart::Model &model, hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) override;
+  void ptw_step_callback(ModelImpl &model, int64_t level, sbits pte_addr, uint64_t pte) override;
+  void ptw_success_callback(ModelImpl &model, uint64_t final_ppn, int64_t level) override;
+  void ptw_fail_callback(ModelImpl &model, ModelImpl::PTW_Error error_type, int64_t level, sbits pte_addr) override;
+  void tlb_add_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb, uint64_t index) override;
+  void tlb_flush_begin_callback(ModelImpl &model) override;
+  void tlb_flush_callback(ModelImpl &model, uint64_t index) override;
+  void tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb) override;
 
 private:
   bool config_print_gpr;

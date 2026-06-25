@@ -1,7 +1,7 @@
 #pragma once
 
+#include "riscv_model_impl.h"
 #include "sail.h"
-#include "sail_riscv_model.h"
 
 enum rvfi_prestep_t {
   RVFI_prestep_continue,  // continue loop
@@ -14,7 +14,7 @@ using packet_reader_fn = void (hart::Model::*)(lbits *rop, unit);
 
 class rvfi_handler {
 public:
-  explicit rvfi_handler(int port, hart::Model &model);
+  explicit rvfi_handler(int port, ModelImpl &model);
 
   bool setup_socket(bool config_print);
   uint64_t get_entry();
@@ -28,5 +28,5 @@ private:
   int dii_port = -1;
   int dii_sock = -1;
 
-  hart::Model &m_model;
+  ModelImpl &m_model;
 };

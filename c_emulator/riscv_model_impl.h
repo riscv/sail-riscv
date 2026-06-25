@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <map>
+#include <memory>
 #include <optional>
 #include <random>
 #include <vector>
@@ -10,15 +11,20 @@
 #include "sail.h"
 #include "sail_riscv_model.h"
 
-extern FILE *trace_log;
-
 // Model wrapped with an implementation of its platform callbacks.
-class ModelImpl final : public hart::Model {
+class ModelImpl final : private hart::Model {
 public:
+  // types
+
+  using Privilege = hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
+  using MemoryAccessType = hart::zMemoryAccessTypezIEmem_payloadz5zK;
+  using PTW_Error = hart::zPTW_Error;
+  using TLB_Entry = hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
+
   // callbacks
 
-  void register_callback(callbacks_if *cb);
-  void remove_callback(callbacks_if *cb);
+  void register_callback(std::shared_ptr<callbacks_if> cb);
+  void remove_callback(std::shared_ptr<callbacks_if> cb);
 
   void call_pre_step_callbacks(bool is_waiting);
   void call_post_step_callbacks(bool is_waiting);
@@ -43,36 +49,58 @@ public:
 
   void set_elf_symbols(std::map<uint64_t, std::string> symbols);
   void set_term_fd(int fd);
+  void set_trace_log(FILE *log);
 
   // initialization
 
   void init_platform_constants();
   void init_sail(uint64_t entry, const char *config_file, const std::optional<uint64_t> &htif_tohost_address);
-  void reinit_sail(uint64_t entry, const char *config_file, const std::optional<uint64_t> &htif_tohost_address);
+  void reinit_sail();
+  void model_init();
+  void model_fini();
 
-  // access to model state
+  // string conversions
+
+  std::string memory_access_type_to_string(MemoryAccessType access_type);
+  std::string privilege_to_string(Privilege privilege);
+  std::string ptw_error_to_string(PTW_Error error_type);
+
+  // access to model configuration
 
   bool config_is_valid();
   bool dtb_within_configured_pma_memory(uint64_t addr, uint64_t size);
   std::string generate_dts();
   std::string generate_isa_string();
-  // returns std::nullopt if the model has not thrown an exception.
-  std::optional<std::string> string_of_current_exception();
+
+  // access to model state
 
   void tick_clock();
   bool try_step(int64_t step_no, bool exit_wait);
 
   int64_t xlen() const;
+  int64_t physaddrbits_len() const;
+  uint64_t mepc() const;
+  uint64_t sepc() const;
   uint64_t htif_exit_code() const;
   bool htif_done() const;
   bool had_exception() const;
+  // returns std::nullopt if the model has not thrown an exception.
+  std::optional<std::string> string_of_current_exception();
+
+  // RVFI support
+
+  friend class rvfi_handler;
+  friend class rvfi_callbacks;
 
 private:
+  // Internal functions.
+  void init_sail_impl();
+
   // These functions are called by the Sail code.
 
   unit fetch_callback(sbits opcode) override;
-  unit mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;
-  unit mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value) override;
+  unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
+  unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
   unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
   unit freg_write_callback(unsigned reg, sbits value) override;
@@ -89,18 +117,14 @@ private:
   unit instret_callback(unit) override;
 
   // Page table walk callbacks
-  unit ptw_start_callback(
-    uint64_t vpn,
-    hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-    hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
-  ) override;
+  unit ptw_start_callback(uint64_t vpn, MemoryAccessType access_type, Privilege privilege) override;
   unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte) override;
   unit ptw_success_callback(uint64_t final_ppn, int64_t level) override;
-  unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr) override;
-  unit tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index) override;
+  unit ptw_fail_callback(PTW_Error error_type, int64_t level, sbits pte_addr) override;
+  unit tlb_add_callback(TLB_Entry tlb, uint64_t index) override;
   unit tlb_flush_begin_callback(unit) override;
   unit tlb_flush_callback(uint64_t index) override;
-  unit tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) override;
+  unit tlb_flush_end_callback(TLB_Entry tlb) override;
   // Provides entropy for the scalar cryptography extension.
   mach_bits plat_get_16_random_bits(unit) override;
 
@@ -139,11 +163,15 @@ private:
 
   bool m_config_print_step = false;
 
+  // Initialization.
+  uint64_t m_elf_entry = 0;
+  std::string m_config_file = {};
+  std::optional<uint64_t> m_htif_tohost_address = {};
+
   std::map<uint64_t, std::string> m_symbols;
   int m_term_fd = 1;
 
-  // TODO: Probably better with std::shared_ptr<callbacks_if>.
-  std::vector<callbacks_if *> m_callbacks;
+  std::vector<std::shared_ptr<callbacks_if>> m_callbacks;
 
   uint64_t m_reservation = 0;
   uint64_t m_reservation_addr = 0;
@@ -162,4 +190,7 @@ private:
 
   // Randomly seeded PRNG.
   std::mt19937_64 m_gen64{seed()};
+
+  // Trace log file
+  FILE *m_trace_log = stdout;
 };

@@ -104,12 +104,14 @@ union cacheop = {
   CB_prefetch : cbop_zicbop,
 }
 
+// The two bool parameters are the `aq` and `rl` instruction
+// annotations respectively.
 union MemoryAccessType ('a : Type) = {
   Load             : 'a,
   Store            : 'a,
-  LoadReserved     : 'a,
-  StoreConditional : 'a,
-  Atomic           : (amoop, 'a, 'a),
+  LoadReserved     : (bool, bool, 'a),
+  StoreConditional : (bool, bool, 'a),
+  Atomic           : (amoop, bool, bool, 'a, 'a),
   InstructionFetch : unit,
   CacheAccess      : cacheop
 }
@@ -339,12 +341,12 @@ overload to_str = {trapCause_to_str}
 type tv_mode = bits(2)
 enum TrapVectorMode = {TV_Direct, TV_Vector, TV_Reserved}
 
-function trapVectorMode_of_bits(m : tv_mode) -> TrapVectorMode =
-  match (m) {
-    0b00 => TV_Direct,
-    0b01 => TV_Vector,
-    _    => TV_Reserved
-  }
+mapping trapVectorMode : tv_mode <-> TrapVectorMode = {
+  0b00 <-> TV_Direct,
+  0b01 <-> TV_Vector,
+  0b10 <-> TV_Reserved,
+  0b11 <-> TV_Reserved,
+}
 
 // xRET types
 // (capitalized versions conflict with the instructions themselves)
@@ -355,15 +357,30 @@ enum xRET_type = {mRET, sRET}
 type ext_status = bits(2)
 enum ExtStatus = {Off, Initial, Clean, Dirty}
 
-mapping extStatus_bits : ExtStatus <-> ext_status = {
+mapping extStatus_map : ExtStatus <-> ext_status = {
   Off     <-> 0b00,
   Initial <-> 0b01,
   Clean   <-> 0b10,
   Dirty   <-> 0b11
 }
 
-function extStatus_to_bits(e : ExtStatus) -> ext_status = extStatus_bits(e)
-function extStatus_of_bits(b : ext_status) -> ExtStatus = extStatus_bits(b)
+function legalize_extStatus(policy : ExtContextPolicy, status : ext_status) -> ext_status = {
+  match policy {
+    ExtContext_Off       => extStatus_map(Off),
+
+    // This emulates the following implementation choice from the spec:
+    //
+    // "On other implementations, dirtiness might not be tracked at
+    // all, in which case the valid FS states are Off and Dirty, and
+    // an attempt to set FS to Initial or Clean causes it to be set to
+    // Dirty."
+    //
+    // and analogously for VS.
+    ExtContext_TwoState  => if extStatus_map(status) == Off then status else extStatus_map(Dirty),
+
+    ExtContext_FourState => status,
+  }
+}
 
 // supervisor-level address translation modes
 

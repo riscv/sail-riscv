@@ -13,20 +13,21 @@ jobs:
             first_party_tests: true
           - os: ubuntu-22.04
             cmake_version: "4.1.2"
-            first_party_steps: true
+            first_party_tests: true
             run_all_steps: true
           - os: ubuntu-24.04-arm
             cmake_version: "3.20.0"
             first_party_tests: true
           - os: ubuntu-24.04-arm
             cmake_version: "4.1.2"
-            first_party_steps: true
+            first_party_tests: true
+            clang_tidy: true
           - os: macos-latest
             cmake_version: "3.20.0"
             first_party_tests: true
           - os: macos-latest
             cmake_version: "4.1.2"
-            first_party_steps: true
+            first_party_tests: true
           - os: ubuntu-latest
             container: rockylinux:8.9.20231119
             cmake_version: "3.20.0"
@@ -48,7 +49,7 @@ jobs:
           dnf install -y git
 
       - name: Check out repository code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
@@ -79,8 +80,10 @@ jobs:
             -DFIRST_PARTY_TESTS=${{ matrix.first_party_tests }} \
             -DENABLE_RISCV_TESTS=TRUE \
             -DENABLE_RISCV_ARCH_TESTS=TRUE \
+            -DENABLE_RISCV_VECTOR_TESTS_V64_E64=TRUE \
             -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE \
             -DENABLE_LTO=TRUE \
+            -DENABLE_CLANG_TIDY=${{ matrix.clang_tidy }} \
             $CLANG_FLAG
           ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
 
@@ -111,7 +114,7 @@ jobs:
         run: sudo apt-get install -y --no-install-recommends device-tree-compiler
 
       - name: Check out repository code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Common setup
         uses: ./.github/actions/sail-setup

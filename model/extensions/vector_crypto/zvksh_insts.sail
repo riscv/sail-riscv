@@ -13,7 +13,7 @@ union clause instruction = VSM3ME_VV : (vregidx, vregidx, vregidx)
 $[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VSM3ME_VV(vs2, vs1, vd)
   <-> 0b100000 @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-   when currentlyEnabled(Ext_Zvksh) & get_sew() == 32 & zvk_check_encdec(256, 8) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
+  when currentlyEnabled(Ext_Zvksh) & get_sew() == 32 & zvk_check_encdec(256, 8) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
 
 function clause execute VSM3ME_VV(vs2, vs1, vd) = {
   let 'SEW     = get_sew();

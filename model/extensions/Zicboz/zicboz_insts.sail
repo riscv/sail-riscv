@@ -37,7 +37,7 @@ function clause execute ZICBOZ(rs1) = {
   // is aligned to the cache block, or negative if rs1 is misaligned.
   let negative_offset = (rs1_val & ~(zero_extend(ones(plat_cache_block_size_exp)))) - rs1_val;
 
-  match ext_data_get_addr(rs1, negative_offset, access, cache_block_size) {
+  match get_transformed_data_addr(rs1, negative_offset, access, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       // "An implementation may update the bytes in any order and with any granularity
@@ -51,7 +51,7 @@ function clause execute ZICBOZ(rs1) = {
         // equal to rs1, but pointer masking can change that.
         Err(e, _) => memory_exception(vaddr - negative_offset, e),
         Ok(paddr, pbmt, _) => {
-          match mem_write_ea(paddr, cache_block_size, false, false, false) {
+          match mem_write_ea(paddr, cache_block_size, access, false, false, false) {
             Err(e) => memory_exception(vaddr - negative_offset, e),
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {

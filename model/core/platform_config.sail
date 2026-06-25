@@ -8,11 +8,18 @@
 
 // Platform-specific configuration parameters.
 
+// Trap vector mode.
+let plat_mtvec_direct_mode_supported : bool = config base.mtvec.direct.supported
+let plat_mtvec_vectored_mode_supported : bool = config base.mtvec.vectored.supported
+
+let plat_stvec_direct_mode_supported : bool = config base.stvec.direct.supported
+let plat_stvec_vectored_mode_supported : bool = config base.stvec.vectored.supported
+
 // Trap vector alignment.
 type tvec_alignment = range(2, 24)
-let plat_mtvec_base_alignment_direct_exp   : tvec_alignment = config base.mtvec.base_alignment.direct
-let plat_mtvec_base_alignment_vectored_exp : tvec_alignment = config base.mtvec.base_alignment.vectored
-let plat_stvec_base_alignment_vectored_exp : tvec_alignment = config base.stvec.base_alignment.vectored
+let plat_mtvec_direct_base_alignment_exp   : tvec_alignment = config base.mtvec.direct.base_alignment
+let plat_mtvec_vectored_base_alignment_exp : tvec_alignment = config base.mtvec.vectored.base_alignment
+let plat_stvec_vectored_base_alignment_exp : tvec_alignment = config base.stvec.vectored.base_alignment
 
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
@@ -79,6 +86,16 @@ struct GlobalMisalignedExceptions = {
 // The handling of misaligned accesses before address translation.
 let plat_misaligned_access : GlobalMisalignedExceptions = config memory.misaligned.exceptions
 
+// Legal values for FS and VS.  This is an enumeration to avoid lists.
+enum ExtContextPolicy = {
+  ExtContext_Off,        // The extension is always off.
+  ExtContext_TwoState,   // Legal values are Off and Dirty.
+  ExtContext_FourState,  // Legal values are Off, Initial, Clean and Dirty.
+}
+
+let plat_mstatus_legal_fs : ExtContextPolicy = config base.mstatus.fs_legal_states
+let plat_mstatus_legal_vs : ExtContextPolicy = config base.mstatus.vs_legal_states
+
 // Location of clock-interface, which should match with the spec in the DTB
 let plat_have_clint : bool = config platform.clint.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
@@ -90,6 +107,9 @@ let plat_sig_base : physaddrbits = to_bits_checked(config platform.simple_interr
 let plat_sig_size : physaddrbits = zero_extend(0x20)
 
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
+
+// Whether WFI is available to User mode.
+let plat_wfi_available_to_usermode : bool = config platform.wfi_available_to_user_mode
 
 // Maximum increment in the time CSR to wait for wait instructions.  This is not
 // used within the model but instead configures the external C++ harness.
@@ -147,9 +167,22 @@ enum RV32ZdinxOddRegisterReservedBehavior = {
   Zdinx_Illegal,
 }
 
+enum IllegalVtypeReservedBehavior = {
+  IllegalVtype_SetVill,
+  IllegalVtype_Illegal,
+  IllegalVtype_Fatal,
+}
+
+enum OOBVstartReservedBehavior = {
+  Vstart_Illegal,
+  Vstart_Ignore,
+}
+
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
 let fcsr_rm_reserved_behavior : FcsrRmReservedBehavior = config base.reserved_behavior.fcsr_rm
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
 let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reserved_behavior.xtvec_mode
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
+let illegal_vtype_reserved_behavior : IllegalVtypeReservedBehavior = config extensions.V.reserved_behavior.illegal_vtype
+let vstart_reserved_behavior : OOBVstartReservedBehavior = config extensions.V.reserved_behavior.vstart_out_of_bounds

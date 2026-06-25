@@ -342,6 +342,10 @@ function reset_sys() -> unit = {
   mstatus[MIE] = 0b0;
   mstatus[MPRV] = 0b0;
 
+  // Though {ms}tvec are unspecified on reset, their mode should hold
+  // a supported value when read.
+  reset_tvecs();
+
   // "If little-endian memory accesses are supported, the mstatus/mstatush field
   // MBE is reset to 0."
   // TODO: The handling of mstatush is a bit awkward currently, but the model

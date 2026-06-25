@@ -24,7 +24,8 @@ function clause execute SSPUSH(rs2) = {
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
   let vaddr_bits = ssp - xlen_bytes;
-  let vaddr = Virtaddr(vaddr_bits);
+  let access = Store(ShadowStack);
+  let vaddr = transform_effective_address(Virtaddr(vaddr_bits), access);
   // "If the virtual address in ssp is not XLEN aligned, then the
   // SSPUSH/C.SSPUSH/SSPOPCHK/C.SSPOPCHK instructions cause a
   // store/AMO access-fault exception."
@@ -38,7 +39,7 @@ function clause execute SSPUSH(rs2) = {
   if not(is_aligned_addr(vaddr, width))
   then return memory_exception(vaddr, E_SAMO_Access_Fault());
 
-  match vmem_write_addr(vaddr, width, X(rs2), Store(ShadowStack), false, false, false) {
+  match vmem_write_addr(vaddr, width, X(rs2), access, false, false, false) {
     Ok(_)  => { ssp = vaddr_bits;
                 csr_write_callback("ssp", ssp);
                 RETIRE_SUCCESS },
@@ -78,14 +79,15 @@ mapping clause encdec = SSPOPCHK(rs1)
 function clause execute SSPOPCHK(rs1) = {
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
-  let ssp_addr = Virtaddr(ssp);
+  let access = Load(ShadowStack);
+  let ssp_addr = transform_effective_address(Virtaddr(ssp), access);
   // See above on checking alignment.
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(ssp_addr, width))
   then return memory_exception(ssp_addr, E_SAMO_Access_Fault());
 
-  match vmem_read_addr(ssp_addr, width, Load(ShadowStack), false, false, false) {
+  match vmem_read_addr(ssp_addr, width, access, false, false, false) {
     Ok(data) => {
       if X(rs1) != data then {
         trap(make_shadow_stack_exception())
@@ -166,9 +168,9 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
                          then return Virtual_Instruction(),
   };
 
-  let access = Atomic(AMOSWAP, ShadowStack, ShadowStack);
+  let access = Atomic(AMOSWAP, aq, rl, ShadowStack, ShadowStack);
 
-  let vaddr : virtaddr = match ext_data_get_addr(rs1, zeros(), access, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
@@ -194,7 +196,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // implement multiprocessor synchronization."
 
   let 'width = width;
-  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, aq & rl, rl, true) {
+  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, aq & rl, rl, true) {
     Err(e) => return memory_exception(vaddr, e),
     Ok(_)  => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
       Err(e) => return memory_exception(vaddr, e),

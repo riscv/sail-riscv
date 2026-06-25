@@ -1,5 +1,31 @@
 # Release notes for the next version
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1750 : Non-segmented indexed loads were trapping on legal overlaps
+  - https://github.com/riscv/sail-riscv/issues/1748 : Segment loads/stores whose register numbers increment past v31 were not treated as reserved.
+  - https://github.com/riscv/sail-riscv/issues/1069 : `vssubu` did not set `vxsat`
+
+# Release notes for version 0.12
+
+The main highlights of this release are the addition of the pointer
+masking extensions, improved performance, more configuration
+parameters and stricter handling of register constraints in the vector
+extension.
+
+- The following extensions have been added:
+  - Smmpm
+  - Smnpm
+  - Ssnpm
+  - Sspm
+  - Supm
+
+- Performance improvements:
+  - https://github.com/riscv/sail-riscv/pull/1692 : An optional `ENABLE_LTO`
+    build option, when enabled, applies link-time optimization to both the
+    simulator and the bundled libgmp, with performance improvements
+    (e.g. Linux boot time reduced by up to ~50%). This is off by default to keep
+    incremental builds fast, enabled in CI and release builds.
+
 - Updates to the [configuration file](../config/config.json.in):
   - The CLINT and simple interrupt generator can be marked as not
     supported for platforms that do not contain these MMIO devices;
@@ -8,24 +34,57 @@
     by the same hart to the reservation set has been added; see
     `platform.reservation.invalidate_on_same_hart_store`. This defaults
     to false to match previous behavior.
-  - The alignment constraints of the bases of the `mtvec` and `stvec`
-    CSRs can now be specified; see `base.{m,s}tvec.base_alignment`.
+  - The maximum supported index EEW for the indexed vector addressing
+    mode can be specified; see `extensions.V.max_index_eew_exp`.
+  - The supported modes of `mtvec` and `stvec` and the alignment
+    constraints of their bases can now be specified; see `base.mtvec`
+    and `base.stvec`.
   - The `base.scounteren_writable_bits` option now does not ignore the
     lowest three bits, governing access to the `cycle`, `time` and
     `instret` CSRs from U-mode.
   - Writable bits of the `mcounteren` CSR can now be specified;
     see `base.mcounteren_writable_bits`. (This was previously controlled
     by `base.writable_hpm_counters`, which was incorrect.)
-
-- Performance improvements:
-  - https://github.com/riscv/sail-riscv/pull/1692 : Optional `ENABLE_LTO`
-    build option. When enabled, applies link-time optimization to both the
-    simulator and the bundled libgmp, with performance improvements
-    (e.g. Linux boot time reduced by up to ~50%). Off by default to keep
-    incremental builds fast, enabled in CI and release builds.
+  - The WFI instruction can be optionally made available to User mode;
+    see `platform.wfi_available_to_user_mode`. This is set to false
+    by default for backwards compatibility.
+  - New option `extensions.V.vstart.zero_required.arith` (default `true`)
+    controls whether vector arithmetic instructions raise an illegal instruction
+    exception when vstart is non-zero. This option also governs instructions from
+    the Zvbb, Zvbc, Zvabd, Zvfbfmin, and Zvfbfwma extensions. The default value of
+    true introduces a backward-incompatible change compared to previous versions,
+    but can be changed to preserve the earlier behaviour.
+  - New option `extensions.V.vstart.zero_required.scalar_move` (default
+    `true`) controls whether the scalar move instructions (`vmv.x.s`,
+    `vmv.s.x`, `vfmv.f.s`, `vfmv.s.f`) raise an illegal instruction exception
+    when `vstart` is non-zero. The default value of true introduces a backward-
+    incompatible change compared to previous versions, but can be changed to
+    preserve the earlier behaviour.
+  - New option `extensions.V.reserved_behavior.vstart_out_of_bounds`
+    (default `Vstart_Illegal`) controls how an out-of-bounds `vstart`
+    (`vstart` >= VLMAX, i.e. one greater than the largest element index
+    for the current `vtype`) is handled. This applies to all vector
+    instructions, including the vector crypto extensions. `Vstart_Illegal`
+    raises an illegal instruction exception, `Vstart_Ignore` treats the
+    instruction as a no-op that writes no elements. The model now enforces
+    this bound by default, correctly accounting for fractional LMUL, which
+    introduces a backward-incompatible change compared to previous versions.
+  - The handling of attempts to set an unsupported or reserved `vtype`
+    can now be configured; see `extensions.V.reserved_behavior.illegal_vtype`.
+  - The supported values for `mstatus.FS` and `mstatus.VS` can be
+    configured; see `base.mstatus.fs_legal_values` and
+    `base.mstatus.vs_legal_values`.
+  - The supported pointer-masking lengths for the Pointer Masking
+    extensions can be specified; see `extensions.{Ssnpm,Smnpm,Smmpm}`.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1687 : Reserved overlaps of vector source register groups were not checked
+  - https://github.com/riscv/sail-riscv/issues/1709 : Checks of `vill` for some vector instructions were missed
   - https://github.com/riscv/sail-riscv/issues/1711 : A reserved instruction encoding was decoded as `add.uw`.
+
+- Other notes:
+  - The HTIF failure exit code is now printed in hex as well as decimal.
+  - The test suite has been updated to the latest release (2026-05-29) from sail-riscv-tests.
 
 # Release notes for version 0.11
 

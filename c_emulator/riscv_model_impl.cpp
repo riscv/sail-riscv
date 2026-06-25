@@ -8,13 +8,13 @@
 #include "riscv_callbacks_if.h"
 #include "symbol_table.h"
 
-void ModelImpl::register_callback(callbacks_if *cb) {
+void ModelImpl::register_callback(std::shared_ptr<callbacks_if> cb) {
   if (std::find(m_callbacks.begin(), m_callbacks.end(), cb) == m_callbacks.end()) {
     m_callbacks.push_back(cb);
   }
 }
 
-void ModelImpl::remove_callback(callbacks_if *cb) {
+void ModelImpl::remove_callback(std::shared_ptr<callbacks_if> cb) {
   m_callbacks.erase(std::remove(m_callbacks.begin(), m_callbacks.end(), cb), m_callbacks.end());
 }
 
@@ -53,7 +53,7 @@ unit ModelImpl::fetch_callback(sbits opcode) {
   return UNIT;
 }
 
-unit ModelImpl::mem_write_callback(const char *type, sbits paddr, uint64_t width, lbits value) {
+unit ModelImpl::mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) {
   for (auto c : m_callbacks) {
     c->mem_write_callback(*this, type, paddr, width, value);
   }
@@ -62,7 +62,7 @@ unit ModelImpl::mem_write_callback(const char *type, sbits paddr, uint64_t width
   };
   return UNIT;
 }
-unit ModelImpl::mem_read_callback(const char *type, sbits paddr, uint64_t width, lbits value) {
+unit ModelImpl::mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) {
   for (auto c : m_callbacks) {
     c->mem_read_callback(*this, type, paddr, width, value);
   }
@@ -146,11 +146,7 @@ unit ModelImpl::instret_callback(unit) {
   return UNIT;
 }
 
-unit ModelImpl::ptw_start_callback(
-  uint64_t vpn,
-  hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
-  hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9 privilege
-) {
+unit ModelImpl::ptw_start_callback(uint64_t vpn, MemoryAccessType access_type, Privilege privilege) {
   for (auto c : m_callbacks) {
     c->ptw_start_callback(*this, vpn, access_type, privilege);
   }
@@ -171,14 +167,14 @@ unit ModelImpl::ptw_success_callback(uint64_t final_ppn, int64_t level) {
   return UNIT;
 }
 
-unit ModelImpl::ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr) {
+unit ModelImpl::ptw_fail_callback(PTW_Error error_type, int64_t level, sbits pte_addr) {
   for (auto c : m_callbacks) {
     c->ptw_fail_callback(*this, error_type, level, pte_addr);
   }
   return UNIT;
 }
 
-unit ModelImpl::tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index) {
+unit ModelImpl::tlb_add_callback(TLB_Entry tlb, uint64_t index) {
   for (auto c : m_callbacks) {
     c->tlb_add_callback(*this, tlb, index);
   }
@@ -199,7 +195,7 @@ unit ModelImpl::tlb_flush_callback(uint64_t index) {
   return UNIT;
 }
 
-unit ModelImpl::tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+unit ModelImpl::tlb_flush_end_callback(TLB_Entry tlb) {
   for (auto c : m_callbacks) {
     c->tlb_flush_end_callback(*this, tlb);
   }
@@ -262,23 +258,23 @@ unit ModelImpl::print_string(const_sail_string prefix, const_sail_string msg) {
 }
 
 unit ModelImpl::print_log(const_sail_string s) {
-  fprintf(trace_log, "%s\n", s);
+  fprintf(m_trace_log, "%s\n", s);
   return UNIT;
 }
 
 unit ModelImpl::print_log_instr(const_sail_string s, uint64_t pc) {
   auto maybe_symbol = symbolize_address(m_symbols, pc);
   if (maybe_symbol.has_value()) {
-    fprintf(trace_log, "%-80s    %s+%" PRIu64 "\n", s, maybe_symbol->second.c_str(), pc - maybe_symbol->first);
+    fprintf(m_trace_log, "%-80s    %s+%" PRIu64 "\n", s, maybe_symbol->second.c_str(), pc - maybe_symbol->first);
   } else {
-    fprintf(trace_log, "%s\n", s);
+    fprintf(m_trace_log, "%s\n", s);
   }
   return UNIT;
 }
 
 unit ModelImpl::print_step(unit) {
   if (m_config_print_step) {
-    fprintf(trace_log, "\n");
+    fprintf(m_trace_log, "\n");
   }
   return UNIT;
 }
@@ -359,6 +355,11 @@ void ModelImpl::set_term_fd(int fd) {
   m_term_fd = fd;
 }
 
+void ModelImpl::set_trace_log(FILE *log) {
+  assert(log != nullptr);
+  m_trace_log = log;
+}
+
 void ModelImpl::init_platform_constants() {
   set_reservation_set_size_exp(get_config_uint64({"platform", "reservation", "reservation_set_size_exp"}));
   set_reservation_require_exact_addr_match(
@@ -374,24 +375,36 @@ void ModelImpl::init_sail(
   const char *config_file,
   const std::optional<uint64_t> &htif_tohost_address
 ) {
+  m_elf_entry = elf_entry;
+  m_config_file = config_file != nullptr ? config_file : "";
+  m_htif_tohost_address = htif_tohost_address;
+
+  init_sail_impl();
+}
+
+void ModelImpl::init_sail_impl() {
   // zset_pc_reset_address must be called before zinit_model
   // because reset happens inside init_model().
-  zset_pc_reset_address(elf_entry);
-  if (htif_tohost_address.has_value()) {
-    zenable_htif(*htif_tohost_address);
+  zset_pc_reset_address(m_elf_entry);
+  if (m_htif_tohost_address.has_value()) {
+    zenable_htif(m_htif_tohost_address.value());
   }
-  zinit_model(config_file != nullptr ? config_file : "");
+  zinit_model(m_config_file.c_str());
   zinit_boot_requirements(UNIT);
 }
 
-void ModelImpl::reinit_sail(
-  uint64_t elf_entry,
-  const char *config_file,
-  const std::optional<uint64_t> &htif_tohost_address
-) {
+void ModelImpl::reinit_sail() {
   model_fini();
   model_init();
-  init_sail(elf_entry, config_file, htif_tohost_address);
+  init_sail_impl();
+}
+
+void ModelImpl::model_init() {
+  hart::Model::model_init();
+}
+
+void ModelImpl::model_fini() {
+  hart::Model::model_fini();
 }
 
 bool ModelImpl::config_is_valid() {
@@ -433,6 +446,33 @@ std::optional<std::string> ModelImpl::string_of_current_exception() {
   return exception_str;
 }
 
+std::string ModelImpl::memory_access_type_to_string(MemoryAccessType access_type) {
+  sail_string sstr;
+  CREATE(sail_string)(&sstr);
+  zaccessType_to_str(&sstr, access_type);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
+std::string ModelImpl::privilege_to_string(Privilege privilege) {
+  sail_string sstr;
+  CREATE(sail_string)(&sstr);
+  zprivLevel_to_str(&sstr, privilege.ztup0);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
+std::string ModelImpl::ptw_error_to_string(PTW_Error error_type) {
+  sail_string sstr;
+  CREATE(sail_string)(&sstr);
+  zptw_error_to_str(&sstr, error_type);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
 void ModelImpl::tick_clock() {
   ztick_clock(UNIT);
 }
@@ -448,6 +488,18 @@ bool ModelImpl::try_step(int64_t step_no, bool exit_wait) {
 
 int64_t ModelImpl::xlen() const {
   return zxlen;
+}
+
+int64_t ModelImpl::physaddrbits_len() const {
+  return zphysaddrbits_len;
+}
+
+uint64_t ModelImpl::mepc() const {
+  return zmepc.bits;
+}
+
+uint64_t ModelImpl::sepc() const {
+  return zsepc.bits;
 }
 
 uint64_t ModelImpl::htif_exit_code() const {

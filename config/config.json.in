@@ -48,21 +48,38 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
-    // The `{m,s}tvec.base_alignment` parameters control the alignment
+    // `mtvec.{direct,vectored}.supported` indicates whether the
+    // corresponding mode is supported for `mtvec`.  At least one mode
+    // should be supported.  If both modes are supported, the mode on
+    // reset is unspecified.
+    // The `mtvec.{direct,vectored}.base_alignment` parameters control the alignment
     // of the trap vector base for each mode.  The alignment is
     // specified as the power of 2 of the desired byte alignment, and
     // can range from a minimum of 2 upto a maximum of 24. If
     // unaligned values are written to these CSRs, the lowest bits
     // will be zeroed to respect the specified alignment.
     "mtvec": {
-      "base_alignment": {
-        "direct" : 2,
-        "vectored" : 2
+      "direct": {
+        "supported": true,
+        "base_alignment": 2
+      },
+      "vectored": {
+        "supported": true,
+        "base_alignment": 2
       }
     },
+    // Similar to `mtvec` above. If `S` mode is not supported, these
+    // values need to be present and legal but are ignored.
     "stvec": {
-      "base_alignment": {
-        "vectored" : 2
+      // The spec requires `base_alignment` for `stvec.direct` to be 2
+      // (i.e. 4-byte alignment), hence there is no configuration
+      // parameter for it.
+      "direct": {
+        "supported": true
+      },
+      "vectored": {
+        "supported": true,
+        "base_alignment": 2
       }
     },
     // These settings control whether the specified exceptions
@@ -113,7 +130,21 @@
       // "Zdinx_Fatal"  – raise a Sail exception, stopping execution.
       // "Zdinx_Illegal" – treat it as an illegal instruction.
       "rv32zdinx_odd_register": "Zdinx_Illegal"
-    }
+    },
+    "mstatus": {
+      // The legal values for the FS and VS fields in this CSR are
+      // specified by the two fields below.  Their values can be one
+      // of:
+      // - "ExtContext_FourState" allows all values {Off, Initial, Clean, Dirty}.
+      // - "ExtContext_TwoState" allows {Off, Dirty}, and writes of Initial and Clean get written as Dirty.
+      // - "ExtContext_Off" allows only {Off}.  This makes the field read-only zero.
+      "fs_legal_states": "ExtContext_FourState",
+      "vs_legal_states": "ExtContext_FourState"
+    },
+    // Set the ISA manual version to use. Isa_Latest is always the latest that
+    // the Sail model supports. Other values include Isa_20240411, Isa_20211203, etc.
+    // See isa_version.sail for the complete list and the behaviours it affects.
+    "isa_version": "Isa_Latest"
   },
   "memory": {
     "pmp": {
@@ -344,6 +375,11 @@
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
     "wfi_is_nop": false,
+    // WFI is optionally available to User mode.  Note that even if
+    // `wfi_is_nop` is set to `true` above, it will still not be
+    // available to User mode unless `wfi_available_to_user_mode` is
+    // also `true`.
+    "wfi_available_to_user_mode": false,
     // The maximum increment in the time CSR before a wait instruction
     // (e.g. WFI, WRS.NTO, WRS.STO) that is not a NOP expires its
     // wait. It is not possible to wait indefinitely.
@@ -388,7 +424,40 @@
       // should be left as 3 (or any other legal value).
       "vlen_exp": @CONFIG__V__VLEN_EXP@,
       "elen_exp": @CONFIG__V__ELEN_EXP@,
-      "vl_use_ceil": false
+      "reserved_behavior": {
+        // This determines how to handle attempts by vsetvli, vsetivli,
+        // and vsetvl to set an unsupported or reserved vtype.
+        // "IllegalVtype_SetVill" - set vtype.vill, set vl to zero, clear vstart, and write rd.
+        // "IllegalVtype_Illegal" - treat it as an illegal instruction.
+        // "IllegalVtype_Fatal"   - raise a Sail exception, stopping execution.
+        "illegal_vtype": "IllegalVtype_SetVill",
+        // This determines how to handle an out-of-bounds vstart (vstart >= VLMAX), which the
+        // vector spec marks reserved and recommends, but does not require, trapping.
+        // "Vstart_Illegal" - raise an illegal instruction exception.
+        // "Vstart_Ignore"  - treat as a no-op, the instruction writes nothing.
+        "vstart_out_of_bounds": "Vstart_Illegal"
+      },
+      "vl_use_ceil": false,
+      // The maximum index EEW for indexed vector addressing mode, as
+      // a power of 2.  This must be at least 3 but must not exceed
+      // the supported ELEN.
+      "max_index_eew_exp": @CONFIG__V__ELEN_EXP@,
+      "vstart": {
+        // The vector specification permits implementations to raise an
+        // illegal instruction exception when `vstart` is non-zero for
+        // instructions that cannot produce such a `vstart` value through
+        // normal execution.
+        "zero_required": {
+          // Whether vector arithmetic instructions raise an illegal instruction
+          // exception when `vstart` is non-zero. This also governs instructions
+          // from the Zvbb, Zvbc, Zvabd, Zvfbfmin, and Zvfbfwma extensions.
+          "arith": true,
+          // Whether the vector scalar move instructions (vmv.x.s, vmv.s.x,
+          // vfmv.f.s and vfmv.s.f) raise an illegal instruction exception when
+          // `vstart` is non-zero.
+          "scalar_move": true
+        }
+      }
     },
     "B": {
       "supported": true
@@ -653,6 +722,21 @@
     },
     "Svnapot": {
       "supported": @CONFIG_XLEN_IS_64@
+    },
+    "Ssnpm": {
+      "supported": @CONFIG_XLEN_IS_64@,
+      "supported_pmlen_7": true,
+      "supported_pmlen_16": true
+    },
+    "Smnpm": {
+      "supported": @CONFIG_XLEN_IS_64@,
+      "supported_pmlen_7": true,
+      "supported_pmlen_16": true
+    },
+    "Smmpm": {
+      "supported": @CONFIG_XLEN_IS_64@,
+      "supported_pmlen_7": true,
+      "supported_pmlen_16": true
     },
     "Smcntrpmf": {
       "supported": true

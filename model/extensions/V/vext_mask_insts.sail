@@ -34,7 +34,7 @@ function clause execute MMTYPE(funct6, vs2, vs1, vd) = {
   let SEW      = get_sew();
   let num_elem = vlen;
 
-  if illegal_vd_unmasked() then return Illegal_Instruction();
+  if illegal_vd_unmasked() | illegal_vstart(VSTART_ARITH, num_elem, 0) then return Illegal_Instruction();
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -43,10 +43,7 @@ function clause execute MMTYPE(funct6, vs2, vs1, vd) = {
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_carry(num_elem, SEW, 0, vd_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (bits('n), bits('n)) = init_masked_result_carry(num_elem, SEW, 0, vd_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -94,17 +91,14 @@ mapping clause encdec = VCPOP_M(vm, vs2, rd)
 function clause execute VCPOP_M(vm, vs2, rd) = {
   let num_elem = vlen;
 
-  if illegal_vd_unmasked() | not(assert_vstart(0)) then return Illegal_Instruction();
+  if illegal_vd_unmasked() | illegal_vstart(VSTART_MANDATORY, num_elem, 0) then return Illegal_Instruction();
 
   let 'n = num_elem;
 
   let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
 
-  let mask : bits('n) = match init_masked_source(num_elem, 0, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let mask : bits('n) = init_masked_source(num_elem, 0, vm_val);
 
   X(rd) = to_bits(xlen, count_ones(mask & vs2_val));
   set_vstart(zeros());
@@ -125,17 +119,14 @@ mapping clause encdec = VFIRST_M(vm, vs2, rd)
 function clause execute VFIRST_M(vm, vs2, rd) = {
   let num_elem = vlen;
 
-  if illegal_vd_unmasked() | not(assert_vstart(0)) then return Illegal_Instruction();
+  if illegal_vd_unmasked() | illegal_vstart(VSTART_MANDATORY, num_elem, 0) then return Illegal_Instruction();
 
   let 'n = num_elem;
 
   let vm_val  : bits('n) = read_vmask(num_elem, vm, zvreg);
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
 
-  let mask : bits('n) = match init_masked_source(num_elem, 0, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let mask : bits('n) = init_masked_source(num_elem, 0, vm_val);
 
   let active = mask & vs2_val;
 
@@ -159,7 +150,7 @@ function clause execute VMSBF_M(vm, vs2, vd) = {
   let SEW      = get_sew();
   let num_elem = vlen;
 
-  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
+  if illegal_vstart(VSTART_MANDATORY, num_elem, 0) | illegal_normal(vd, vm) | vd == vs2
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -169,10 +160,7 @@ function clause execute VMSBF_M(vm, vs2, vd) = {
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (bits('n), bits('n)) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
 
   var found_elem : bool = false;
@@ -203,7 +191,7 @@ function clause execute VMSIF_M(vm, vs2, vd) = {
   let SEW      = get_sew();
   let num_elem = vlen;
 
-  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
+  if illegal_vstart(VSTART_MANDATORY, num_elem, 0) | illegal_normal(vd, vm) | vd == vs2
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -213,10 +201,7 @@ function clause execute VMSIF_M(vm, vs2, vd) = {
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (bits('n), bits('n)) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
 
   var found_elem : bool = false;
@@ -247,7 +232,7 @@ function clause execute VMSOF_M(vm, vs2, vd) = {
   let SEW      = get_sew();
   let num_elem = vlen;
 
-  if illegal_normal(vd, vm) | not(assert_vstart(0)) | vd == vs2
+  if illegal_vstart(VSTART_MANDATORY, num_elem, 0) | illegal_normal(vd, vm) | vd == vs2
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -257,10 +242,7 @@ function clause execute VMSOF_M(vm, vs2, vd) = {
   let vs2_val : bits('n) = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : bits('n) = read_vmask(num_elem, 0b0, vd);
 
-  let (initial_result, mask) : (bits('n), bits('n)) = match init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (bits('n), bits('n)) = init_masked_result_cmp(num_elem, SEW, 0, vd_val, vm_val);
   var result = initial_result;
 
   var found_elem : bool = false;
@@ -296,8 +278,8 @@ function clause execute VIOTA_M(vm, vs2, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) |
-     not(assert_vstart(0)) |
+  if illegal_vstart(VSTART_MANDATORY, num_elem, LMUL_pow) |
+     illegal_normal(vd, vm) |
      not(valid_reg_group(vd, LMUL_pow)) |
      vd == vs2
   then return Illegal_Instruction();
@@ -309,10 +291,7 @@ function clause execute VIOTA_M(vm, vs2, vd) = {
   let vs2_val : bits('n)             = read_vmask(num_elem, 0b0, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   var sum : int = 0;
@@ -344,7 +323,7 @@ function clause execute VID_V(vm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) | not(valid_reg_group(vd, LMUL_pow))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) | illegal_normal(vd, vm) | not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -353,10 +332,7 @@ function clause execute VID_V(vm, vd) = {
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)    => v,
-    Err(())  => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {

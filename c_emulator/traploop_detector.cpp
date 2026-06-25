@@ -1,5 +1,4 @@
 #include "traploop_detector.h"
-#include "sail_riscv_model.h"
 #include <cstdlib>
 #include <inttypes.h>
 
@@ -14,20 +13,20 @@ void traploop_detector::reset() {
   nested_trap_count = 0;
 }
 
-void traploop_detector::trap_callback(hart::Model &model, bool, fbits) {
+void traploop_detector::trap_callback(ModelImpl &model, bool, fbits) {
   if (nested_trap_count == 0) {
-    mepc_at_first_trap = model.zmepc.bits;
-    sepc_at_first_trap = model.zsepc.bits;
+    mepc_at_first_trap = model.mepc();
+    sepc_at_first_trap = model.sepc();
   }
   nested_trap_count++;
   instrets_since_last_trap = 0;
 }
 
-void traploop_detector::xret_callback(hart::Model &, bool) {
+void traploop_detector::xret_callback(ModelImpl &, bool) {
   reset();
 }
 
-void traploop_detector::instret_callback(hart::Model &) {
+void traploop_detector::instret_callback(ModelImpl &) {
   if (nested_trap_count != 0) {
     instrets_since_last_trap++;
     if (instrets_since_last_trap > instrets_to_reset_loop) {

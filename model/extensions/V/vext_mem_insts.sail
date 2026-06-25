@@ -60,22 +60,19 @@ function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
-  then return Illegal_Instruction();
-
   let num_elem = get_num_elem(EMUL_pow, EEW); // # of element of each register group
   assert(num_elem > 0);
 
-  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) | illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
+  let EMUL_reg = 2 ^ max(EMUL_pow, 0);
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
 
   let 'm = nf * load_width_bytes * 8;
   let 'n = num_elem;
-  let (result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, 'm, EMUL_pow, vd_seg, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, 'm, EMUL_pow, vd_seg, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
@@ -120,23 +117,20 @@ function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
-  then return Illegal_Instruction();
-
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
 
-  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) | illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
+  let EMUL_reg = 2 ^ max(EMUL_pow, 0);
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vd_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
   let tail_ag = get_vtype_vta();
 
   let 'm = nf * load_width_bytes * 8;
   let 'n = num_elem;
-  let (result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
   var trimmed : bool = false;
   foreach (i from 0 to (num_elem - 1)) {
@@ -197,21 +191,18 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
-  then return Illegal_Instruction();
-
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
 
-  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) | illegal_store(vs3, nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  then return Illegal_Instruction();
+
+  let EMUL_reg = 2 ^ max(EMUL_pow, 0);
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
 
   let 'n = num_elem;
-  let mask : bits('n) = match init_masked_source(num_elem, EMUL_pow, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let mask : bits('n) = init_masked_source(num_elem, EMUL_pow, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
@@ -254,23 +245,20 @@ function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
-  then return Illegal_Instruction();
-
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
 
-  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) | illegal_load(vd, vm, nf, EEW, EMUL_pow) | not(valid_reg_group(vd, EMUL_pow))
+  then return Illegal_Instruction();
+
+  let EMUL_reg = 2 ^ max(EMUL_pow, 0);
   let vm_val  = read_vmask(num_elem, vm, zvreg);
   let vd_seg  = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vd);
   let rs2_val = unsigned(get_scalar(rs2, xlen));
 
   let 'm = nf * load_width_bytes * 8;
   let 'n = num_elem;
-  let (result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, nf * load_width_bytes * 8, EMUL_pow, vd_seg, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
@@ -315,22 +303,22 @@ function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
 
   assert(-3 <= EMUL_pow & EMUL_pow <= 3);
 
-  if illegal_store(nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
-  then return Illegal_Instruction();
-
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
 
-  let EMUL_reg = if EMUL_pow <= 0 then 1 else 2 ^ EMUL_pow;
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) |
+     illegal_store(vs3, nf, EEW, EMUL_pow) |
+     not(valid_reg_group(vs3, EMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs3, EEW))
+  then return Illegal_Instruction();
+
+  let EMUL_reg = 2 ^ max(EMUL_pow, 0);
   let vm_val = read_vmask(num_elem, vm, zvreg);
   let vs3_seg = read_vreg_seg(num_elem, load_width_bytes * 8, EMUL_pow, nf, vs3);
   let rs2_val = unsigned(get_scalar(rs2, xlen));
 
   let 'n = num_elem;
-  let mask : bits('n) = match init_masked_source(num_elem, EMUL_pow, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let mask : bits('n) = init_masked_source(num_elem, EMUL_pow, vm_val);
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
@@ -361,25 +349,31 @@ union clause instruction = VLXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlew
 
 mapping clause encdec = VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, mop)
   <-> encdec_nfields(nf) @ 0b0 @ encdec_indexed_mop(mop) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vd) @ 0b0000111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
-     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
+   when currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= max_index_eew_exp
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
 function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   let EEW_index_pow = vlewidth_pow(width);
+  let EEW_index = 2 ^ EEW_index_pow;
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
-
-  if illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))
-  then return Illegal_Instruction();
-
   let num_elem = get_num_elem(EMUL_data_pow, EEW_data_bytes * 8);
   assert(num_elem > 0);
+
+  let index_dst_overlap : bool =
+    if nf == 1
+    then not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))          // non-segment indexed load
+    else not(valid_disjoint_reg_groups(vs2, vd, EMUL_index_pow, EMUL_data_pow)); // segment indexed load
+
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_data_pow) |
+     illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
+     index_dst_overlap |
+     not(valid_vm_src_overlap(vm, vs2, EEW_index))
+  then return Illegal_Instruction();
 
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
   let vm_val = read_vmask(num_elem, vm, zvreg);
@@ -389,10 +383,7 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   let 'm = nf * EEW_data_bytes * 8;
   let 'n = num_elem;
   let (result, mask) : (vector('n, bits('m)), bits('n)) =
-    match init_masked_result(num_elem, nf * EEW_data_bytes * 8, EMUL_data_pow, vd_seg, vm_val) {
-      Ok(v)   => v,
-      Err(()) => return Illegal_Instruction()
-    };
+    init_masked_result(num_elem, nf * EEW_data_bytes * 8, EMUL_data_pow, vd_seg, vm_val);
 
   // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
@@ -426,15 +417,16 @@ union clause instruction = VSXSEGTYPE : (nfields, bits(1), vregidx, regidx, vlew
 
 mapping clause encdec = VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, mop)
   <-> encdec_nfields(nf) @ 0b0 @ encdec_indexed_mop(mop) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ encdec_vlewidth(width) @ encdec_vreg(vs3) @ 0b0100111
-  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= 5)
-     | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6 & xlen == 64)
+  when (currentlyEnabled(Ext_Zve32x) & vlewidth_pow(width) <= max_index_eew_exp)
 
 // `mop` selects between the ordered and unordered variants of these instructions.  This function currently
 // only implements the ordered variant, hence `mop` is ignored.
 function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, _mop) = {
   let EEW_index_pow = vlewidth_pow(width);
+  let EEW_index = 2 ^ EEW_index_pow;
   let EEW_index_bytes = 2 ^ (EEW_index_pow - 3);
   let EEW_data_pow = get_sew_pow();
+  let EEW_data = 2 ^ EEW_data_pow;
   let EEW_data_bytes = get_sew_bytes();
   let EMUL_data_pow = get_lmul_pow();
   let EMUL_index_pow = EEW_index_pow - EEW_data_pow + EMUL_data_pow;
@@ -442,9 +434,11 @@ function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, _mop) = {
 
   assert(num_elem > 0);
 
-  if illegal_indexed_store(nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_reg_group(vs2, EMUL_index_pow)) |
-     not(valid_reg_group(vs3, EMUL_data_pow))
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_data_pow) |
+     illegal_indexed_store(vs3, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
+     not(valid_src_overlap(vs2, EEW_index, EMUL_index_pow, vs3, EEW_data, EMUL_data_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, EEW_index)) |
+     not(valid_vm_src_overlap(vm, vs3, EEW_data))
   then return Illegal_Instruction();
 
   let EMUL_data_reg = if EMUL_data_pow <= 0 then 1 else 2 ^ EMUL_data_pow;
@@ -453,10 +447,7 @@ function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, _mop) = {
   let vs2_val = read_vreg(num_elem, EEW_index_bytes * 8, EMUL_index_pow, vs2);
 
   let 'n = num_elem;
-  let mask : bits('n) = match init_masked_source(num_elem, EMUL_data_pow, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let mask : bits('n) = init_masked_source(num_elem, EMUL_data_pow, vm_val);
 
   // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
@@ -491,19 +482,19 @@ mapping clause encdec = VLRETYPE(nf, rs1, width, vd)
      | (currentlyEnabled(Ext_Zve64x) & vlewidth_pow(width) <= 6)
 
 function clause execute VLRETYPE(nf, rs1, width, vd) = {
-  if not(valid_whole_register(vd, nf)) then return Illegal_Instruction();
-
   let EEW_pow = vlewidth_pow(width);
   let load_width_bytes = 2 ^ (EEW_pow - 3);
   let EEW = 2 ^ EEW_pow;
   let elem_per_reg = vlen / EEW;
   assert(elem_per_reg >= 0);
 
-  let start_element : nat = match get_start_element() {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
-  if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS; // no elements are written if vstart >= evl
+  if illegal_vstart(VSTART_LOAD_STORE, nf * elem_per_reg, 0) | not(valid_whole_register(vd, nf)) then return Illegal_Instruction();
+
+  let start_element = get_start_element();
+  // NOTE: Non-trapping path, vstart >= evl writes no elements. Currently
+  // unreachable because illegal_vstart above always traps on out-of-bounds
+  // vstart, but kept so this stays correct if that trap is ever made optional.
+  if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS;
   let elem_to_align : int = start_element % elem_per_reg;
   var cur_field : int = start_element / elem_per_reg;
   var cur_elem  : int = start_element;
@@ -548,18 +539,18 @@ mapping clause encdec = VSRETYPE(nf, rs1, vs3)
   when currentlyEnabled(Ext_Zve32x)
 
 function clause execute VSRETYPE(nf, rs1, vs3) = {
-  if not(valid_whole_register(vs3, nf)) then return Illegal_Instruction();
-
   let load_width_bytes = 1;
   let EEW = 8;
   let elem_per_reg = vlen / EEW;
   assert(elem_per_reg >= 0);
 
-  let start_element : nat = match get_start_element() {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
-  if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS; // no elements are written if vstart >= evl
+  if illegal_vstart(VSTART_LOAD_STORE, nf * elem_per_reg, 0) | not(valid_whole_register(vs3, nf)) then return Illegal_Instruction();
+
+  let start_element = get_start_element();
+  // NOTE: Non-trapping path, vstart >= evl writes no elements. Currently
+  // unreachable because illegal_vstart above always traps on out-of-bounds
+  // vstart, but kept so this stays correct if that trap is ever made optional.
+  if start_element >= nf * elem_per_reg then return RETIRE_SUCCESS;
   let elem_to_align : int = start_element % elem_per_reg;
   var cur_field : int = start_element / elem_per_reg;
   var cur_elem  : int = start_element;
@@ -620,13 +611,10 @@ function clause execute VMTYPE(rs1, vd_or_vs3, op) = {
   let evl : int = if vl_val % 8 == 0 then vl_val / 8 else vl_val / 8 + 1; // the effective vector length is evl=ceil(vl/8)
   let num_elem = get_num_elem(EMUL_pow, EEW);
 
-  if illegal_vd_unmasked() then return Illegal_Instruction();
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) | illegal_vd_unmasked() then return Illegal_Instruction();
 
   assert(evl >= 0);
-  let start_element : nat = match get_start_element() {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let start_element = get_start_element();
   let 'n = num_elem;
   let vd_or_vs3_val : vector('n, bits(8)) = read_vreg(num_elem, 8, 0, vd_or_vs3);
 

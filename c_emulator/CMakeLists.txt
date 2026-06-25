@@ -49,6 +49,10 @@ add_library(riscv_model
     "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
 )
 
+set_source_files_properties("${CMAKE_BINARY_DIR}/sail_riscv_model.cpp" "${CMAKE_BINARY_DIR}/sail_riscv_model.h"
+    PROPERTIES SKIP_LINTING ON
+)
+
 target_include_directories(riscv_model
     PUBLIC
         # So the generated C can find riscv_platform/prelude.h"
@@ -65,10 +69,20 @@ target_link_libraries(riscv_model
 
 add_dependencies(riscv_model generated_sail_riscv_model generated_config_schema)
 
+if (ENABLE_CLANG_TIDY)
+    set_target_properties(riscv_model
+        PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_PATH}"
+    )
+endif()
+
 ## A binary that can load an ELF file into the model and run it.
 
 add_executable(sail_riscv_sim
+    sail_riscv_sim.cpp
     riscv_sim.cpp
+    riscv_sim.h
+    cli_options.cpp
+    cli_options.h
     rvfi_dii.cpp
     rvfi_dii.h
     riscv_callbacks_log.cpp
@@ -96,6 +110,12 @@ add_dependencies(sail_riscv_sim generated_sail_riscv_model)
 target_link_libraries(sail_riscv_sim
     PRIVATE CLI11 riscv_model
 )
+
+if (ENABLE_CLANG_TIDY)
+    set_target_properties(sail_riscv_sim
+        PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_PATH}"
+    )
+endif()
 
 # After the emulator is built, use it to validate the generated config files.
 foreach (config_filename IN LISTS generated_config_filenames)

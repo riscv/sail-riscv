@@ -657,7 +657,7 @@ function clause execute WFI() =
     // mstatus[TW] is checked when the wait times out in
     // `run_hart_waiting()`.
     Supervisor        => Enter_Wait(WAIT_WFI),
-    User              => Illegal_Instruction(),
+    User              => if plat_wfi_available_to_usermode then Enter_Wait(WAIT_WFI) else Illegal_Instruction(),
     VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
   }

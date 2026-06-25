@@ -39,10 +39,13 @@ function clause execute FVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -55,10 +58,7 @@ function clause execute FVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -124,10 +124,13 @@ function clause execute FVVMATYPE(funct6, vm, vs2, vs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -140,10 +143,7 @@ function clause execute FVVMATYPE(funct6, vm, vs2, vs1, vd) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -203,9 +203,12 @@ function clause execute FWVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -220,10 +223,7 @@ function clause execute FWVVTYPE(funct6, vm, vs2, vs1, vd) = {
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -275,9 +275,12 @@ function clause execute FWVVMATYPE(funct6, vm, vs1, vs2, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -292,10 +295,7 @@ function clause execute FWVVMATYPE(funct6, vm, vs1, vs2, vd) = {
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -346,9 +346,12 @@ function clause execute FWVTYPE(funct6, vm, vs2, vs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
-      not(valid_reg_group(vs2, LMUL_pow_widen))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_src_overlap(vs2, SEW_widen, LMUL_pow_widen, vs1, SEW, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW_widen))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -363,10 +366,7 @@ function clause execute FWVTYPE(funct6, vm, vs2, vs1, vd) = {
   let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -415,9 +415,11 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -429,10 +431,7 @@ function clause execute VFUNARY0(vm, vs2, vfunary0, vd) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -539,8 +538,10 @@ function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 8 & SEW_widen <= 64);
@@ -554,10 +555,7 @@ function clause execute VFWUNARY0(vm, vs2, vfwunary0, vd) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vd);
 
-  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -675,8 +673,10 @@ function clause execute VFNUNARY0(vm, vs2, vfnunary0, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW_widen))
   then return Illegal_Instruction();
 
   assert(SEW != 64);
@@ -689,10 +689,7 @@ function clause execute VFNUNARY0(vm, vs2, vfnunary0, vd) = {
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -815,9 +812,11 @@ function clause execute VFUNARY1(vm, vs2, vfunary1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -829,10 +828,7 @@ function clause execute VFUNARY1(vm, vs2, vfunary1, vd) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -899,7 +895,7 @@ function clause execute VFMVFS(vs2, rd) = {
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
 
-  if illegal_fp_vd_unmasked(SEW, rm_3b) | SEW > flen
+  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) | illegal_fp_vd_unmasked(SEW, rm_3b) | SEW > flen
   then return Illegal_Instruction();
 
   assert(num_elem > 0 & SEW != 8);
@@ -957,9 +953,11 @@ function clause execute FVFTYPE(funct6, vm, vs2, rs1, vd) = {
   // group. Otherwise, the instruction encoding is reserved."
   let src_dst_overlap = funct6 == VF_VSLIDE1UP & vs2 == vd;
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW)) |
      src_dst_overlap
   then return Illegal_Instruction();
 
@@ -973,10 +971,7 @@ function clause execute FVFTYPE(funct6, vm, vs2, rs1, vd) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -1056,9 +1051,11 @@ function clause execute FVFMATYPE(funct6, vm, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_normal(vd, vm, SEW, rm_3b) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_normal(vd, vm, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -1071,10 +1068,7 @@ function clause execute FVFMATYPE(funct6, vm, vs2, rs1, vd) = {
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -1134,8 +1128,10 @@ function clause execute FWVFTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1150,10 +1146,7 @@ function clause execute FWVFTYPE(funct6, vm, vs2, rs1, vd) = {
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -1205,8 +1198,10 @@ function clause execute FWVFMATYPE(funct6, vm, rs1, vs2, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if  illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
-      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1221,10 +1216,7 @@ function clause execute FWVFMATYPE(funct6, vm, rs1, vs2, vd) = {
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -1275,9 +1267,11 @@ function clause execute FWFTYPE(funct6, vm, vs2, rs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  if illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_group(vs2, LMUL_pow_widen)) |
-     not(valid_reg_group(vd, LMUL_pow_widen))
+     not(valid_reg_group(vd, LMUL_pow_widen)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW_widen))
   then return Illegal_Instruction();
 
   assert(SEW >= 16 & SEW_widen <= 64);
@@ -1292,10 +1286,7 @@ function clause execute FWFTYPE(funct6, vm, vs2, rs1, vd) = {
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vs2_val : vector('n, bits('o)) = read_vreg(num_elem, SEW_widen, LMUL_pow_widen, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = match init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -1332,19 +1323,18 @@ mapping clause encdec = VFMERGE(vs2, rs1, vd)
 
 function clause execute VFMERGE(vs2, rs1, vd) = {
   let rm_3b         = fcsr[FRM];
-  let start_element : nat = match get_start_element() {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let start_element = get_start_element();
   let end_element   = get_end_element();
   let SEW           = get_sew();
   let LMUL_pow      = get_lmul_pow();
   let num_elem      = get_num_elem(LMUL_pow, SEW); // max(VLMAX,VLEN/SEW))
   let real_num_elem = if LMUL_pow >= 0 then num_elem else num_elem / (0 - LMUL_pow); // VLMAX
 
-  if illegal_fp_vd_masked(vd, SEW, rm_3b) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_vd_masked(vd, SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(0b0, vs2, SEW))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -1397,7 +1387,8 @@ function clause execute VFMV(rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_fp_vd_unmasked(SEW, rm_3b) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_fp_vd_unmasked(SEW, rm_3b) |
      not(valid_reg_group(vd, LMUL_pow))
   then return Illegal_Instruction();
 
@@ -1409,10 +1400,7 @@ function clause execute VFMV(rs1, vd) = {
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, LMUL_pow, vd_val, ones()) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, ones());
   var result = initial_result;
 
   foreach (i from 0 to (num_elem - 1)) {
@@ -1441,7 +1429,7 @@ function clause execute VFMVSF(rs1, vd) = {
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
 
-  if illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
+  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) | illegal_fp_vd_unmasked(SEW, rm_3b) then return Illegal_Instruction();
 
   assert(num_elem > 0 & SEW != 8);
 
@@ -1451,10 +1439,7 @@ function clause execute VFMVSF(rs1, vd) = {
   let rs1_val : bits('m)             = get_scalar_fp(rs1, 'm);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, 0, vd);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result(num_elem, SEW, 0, vd_val, ones()) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result(num_elem, SEW, 0, vd_val, ones());
   var result = initial_result;
 
   // one body element

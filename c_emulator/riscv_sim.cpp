@@ -1,82 +1,40 @@
-#include <cassert>
-#include <chrono>
-#include <climits>
-#include <cstring>
-#include <ctype.h>
-#include <errno.h>
-#include <exception>
-#include <fcntl.h>
-#include <iostream>
-#include <optional>
-#include <stdexcept>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <vector>
-
+#include "riscv_sim.h"
 #include "CLI11.hpp"
+#include "cli_options.h"
+#include "config_utils.h"
 #include "elf_loader.h"
+#include "file_utils.h"
 #include "jsoncons/config/version.hpp"
 #include "jsoncons/json.hpp"
-#include "rts.h"
-#include "sail.h"
-#include "sail_config.h"
-#include "symbol_table.h"
+#include "riscv_callbacks_rvfi.h"
+#include "riscv_model_impl.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
 #endif
-#include "config_utils.h"
-#include "file_utils.h"
-#include "riscv_callbacks_log.h"
-#include "riscv_callbacks_rvfi.h"
-#include "riscv_model_impl.h"
-#include "rvfi_dii.h"
 #include "sail_riscv_version.h"
+#include "symbol_table.h"
 #include "traploop_detector.h"
+
+#include <fcntl.h>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
-using std::chrono::steady_clock;
+
+// Internal utilities.
 
 namespace {
 
-rvfi_callbacks rvfi_cbs;
-
-struct elf_info {
-  // The address of the HTIF tohost port, if it is enabled.
-  std::optional<uint64_t> htif_tohost_address;
-  uint64_t mem_sig_start = 0;
-  uint64_t mem_sig_end = 0;
-  std::map<uint64_t, std::string> symbols;
-};
-
-struct run_info {
-  std::optional<rvfi_handler> rvfi;
-  int term_fd = 1;
-  steady_clock::time_point init_start;
-  steady_clock::time_point init_end;
-  uint64_t total_insns = 0;
-};
-
-} // namespace
-
-FILE *trace_log = stdout;
-
-static void print_build_info() {
-  std::cout << "Sail RISC-V release: " << version_info::release_version << std::endl;
-  std::cout << "Sail RISC-V git: " << version_info::git_version << std::endl;
-  std::cout << "Sail: " << version_info::sail_version << std::endl;
-  std::cout << "C++ compiler: " << version_info::cxx_compiler_version << std::endl;
+void print_build_info() {
+  std::cout << "Sail RISC-V release: " << version_info::release_version() << std::endl;
+  std::cout << "Sail RISC-V git: " << version_info::git_version() << std::endl;
+  std::cout << "Sail: " << version_info::sail_version() << std::endl;
+  std::cout << "C++ compiler: " << version_info::cxx_compiler_version() << std::endl;
   std::cout << "CLI11: " << CLI11_VERSION << std::endl;
   std::cout << "ELFIO: " << ELFIO_VERSION << std::endl;
   std::cout << "JSONCONS: " << jsoncons::version() << std::endl;
 }
 
-static jsoncons::json parse_json_or_exit(const std::string &json_text, const std::string &source_desc) {
+jsoncons::json parse_json_or_exit(const std::string &json_text, const std::string &source_desc) {
   try {
     return jsoncons::json::parse(json_text);
   } catch (const jsoncons::json_exception &e) {
@@ -101,221 +59,65 @@ void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override) 
   }
 }
 
-const unsigned DEFAULT_SIGNATURE_GRANULARITY = 4;
+void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
+  uint64_t addr = get_config_uint64({"memory", "dtb_address"});
+  uint64_t size = static_cast<uint64_t>(dtb.size());
 
-struct CLIOptions {
-  bool do_show_times = false;
-  bool do_print_version = false;
-  bool do_print_build_info = false;
-  bool do_print_default_config = false;
-  bool do_print_config_schema = false;
-  bool do_print_dts = false;
-  bool do_validate_config = false;
-  bool do_print_isa = false;
-
-  bool use_rv32_default = false;
-  bool disable_trap_loop_detection = false;
-  std::string config_file;
-  std::vector<std::string> config_overrides;
-  std::string term_log;
-  std::string trace_log_path;
-  std::string dtb_file;
-  unsigned rvfi_dii_port = 0;
-  std::vector<std::string> elfs;
-  uint64_t insn_limit = 0;
-
-  std::string sig_file;
-  unsigned signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
-
-#ifdef SAILCOV
-  std::string sailcov_file;
-#endif
-
-  bool config_print_instr = false;
-  bool config_print_gpr = false;
-  bool config_print_fpr = false;
-  bool config_print_vreg = false;
-  bool config_print_csr = false;
-  bool config_print_mem_access = false;
-  bool config_print_clint = false;
-  bool config_print_exception = false;
-  bool config_print_interrupt = false;
-  bool config_print_htif = false;
-  bool config_print_pma = false;
-  bool config_print_rvfi = false;
-  bool config_print_step = false;
-  bool config_print_ptw = false;
-  bool config_print_tlb = false;
-
-  bool config_use_abi_names = false;
-
-  bool config_enable_experimental_extensions = false;
-};
-
-// Parse CLI options. This calls `exit()` on failure.
-static CLIOptions parse_cli(int argc, char **argv) {
-  CLI::App app("Sail RISC-V Model");
-  argv = app.ensure_utf8(argv);
-
-  CLIOptions opts;
-
-  app.add_flag("--show-times", opts.do_show_times, "Show execution times");
-  app.add_flag("--version", opts.do_print_version, "Print model version");
-  app.add_flag("--build-info", opts.do_print_build_info, "Print build information");
-  app.add_flag("--print-default-config", opts.do_print_default_config, "Print default configuration");
-  app.add_flag("--print-config-schema", opts.do_print_config_schema, "Print configuration schema");
-  app.add_flag("--validate-config", opts.do_validate_config, "Exit after config validation (it is always validated)");
-  app.add_flag("--print-device-tree", opts.do_print_dts, "Print device tree");
-  app.add_flag("--print-isa-string", opts.do_print_isa, "Print ISA string");
-  app.add_flag(
-    "--enable-experimental-extensions",
-    opts.config_enable_experimental_extensions,
-    "Enable experimental extensions"
-  );
-  app.add_flag("--use-abi-names", opts.config_use_abi_names, "Use ABI register names in trace log");
-  app.add_flag("--rv32", opts.use_rv32_default, "Use the default RV32 configuration");
-  app.add_flag(
-    "--disable-trap-loop-detection",
-    opts.disable_trap_loop_detection,
-    "Disable detection of potentially infinite trap loops"
-  );
-
-  app.add_option("--device-tree-blob", opts.dtb_file, "Device tree blob file")
-    ->check(CLI::ExistingFile)
-    ->option_text("<file>");
-  app.add_option("--terminal-log", opts.term_log, "Terminal log output file")->option_text("<file>");
-  app.add_option("--test-signature", opts.sig_file, "Test signature file")->option_text("<file>");
-  app.add_option("--config", opts.config_file, "Configuration file")
-    ->check(CLI::ExistingFile)
-    ->option_text("<file>")
-    ->excludes("--rv32");
-  app
-    .add_option(
-      "--config-override",
-      opts.config_overrides,
-      "Configuration override file (repeatable; later files override earlier ones). Use this when you only want to "
-      "change a small part of the base configuration."
-    )
-    ->check(CLI::ExistingFile)
-    ->option_text("<file>")
-    ->allow_extra_args(false);
-  app.add_option("--trace-output", opts.trace_log_path, "Trace output file")->option_text("<file>");
-
-  app.add_option("--signature-granularity", opts.signature_granularity, "Signature granularity")
-    ->option_text("<uint>")
-    ->check(CLI::PositiveNumber);
-  app.add_option("--rvfi-dii", opts.rvfi_dii_port, "RVFI DII port")
-    ->check(CLI::Range(1, 65535))
-    ->option_text("<int> (within [1 - 65535])");
-  app.add_option("--inst-limit", opts.insn_limit, "Instruction limit")->option_text("<uint>");
-#ifdef SAILCOV
-  app.add_option("--sailcov-file", opts.sailcov_file, "Sail coverage output file")->option_text("<file>");
-#endif
-
-  app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
-  app.add_flag("--trace-ptw", opts.config_print_ptw, "Enable trace output for Page Table walk");
-  app.add_flag("--trace-tlb", opts.config_print_tlb, "Enable trace output for TLB adds and flushes");
-  app.add_flag(
-    "--trace-gpr",
-    opts.config_print_gpr,
-    "Enable trace output for general purpose register reads and writes"
-  );
-  app.add_flag(
-    "--trace-fpr",
-    opts.config_print_fpr,
-    "Enable trace output for floating-point registers reads and writes"
-  );
-  app.add_flag("--trace-vreg", opts.config_print_vreg, "Enable trace output for vector register reads and writes");
-  app.add_flag("--trace-csr", opts.config_print_csr, "Enable trace output for CSR reads and writes");
-  app.add_flag_callback(
-    "--trace-arch-regs",
-    [&opts] {
-      opts.config_print_gpr = true;
-      opts.config_print_fpr = true;
-      opts.config_print_vreg = true;
-    },
-    "Enable trace output for architectural register reads and writes (i.e. general purpose, floating-point, and "
-    "vector registers)"
-  );
-  app.add_flag_callback(
-    "--trace-reg",
-    [&opts] {
-      opts.config_print_gpr = true;
-      opts.config_print_fpr = true;
-      opts.config_print_vreg = true;
-      opts.config_print_csr = true;
-    },
-    "Enable trace output for register access"
-  );
-  app.add_flag("--trace-mem", opts.config_print_mem_access, "Enable trace output for memory accesses");
-  app.add_flag("--trace-rvfi", opts.config_print_rvfi, "Enable trace output for RVFI");
-  app.add_flag("--trace-clint", opts.config_print_clint, "Enable trace output for CLINT memory accesses and status");
-  app.add_flag("--trace-exception", opts.config_print_exception, "Enable trace output for exceptions");
-  app.add_flag("--trace-interrupt", opts.config_print_interrupt, "Enable trace output for interrupts");
-  app.add_flag("--trace-htif", opts.config_print_htif, "Enable trace output for HTIF operations");
-  app.add_flag("--trace-pma", opts.config_print_pma, "Enable trace output for PMA checks");
-  app.add_flag_callback(
-    "--trace-platform",
-    [&opts] {
-      opts.config_print_clint = true;
-      opts.config_print_exception = true;
-      opts.config_print_interrupt = true;
-      opts.config_print_htif = true;
-      opts.config_print_pma = true;
-    },
-    "Enable trace output for platform-level events (MMIO, interrupts, "
-    "exceptions, CLINT, HTIF, PMA)"
-  );
-  app.add_flag("--trace-step", opts.config_print_step, "Add a blank line between steps in the trace output");
-
-  app.add_flag_callback(
-    "--trace",
-    [&opts] {
-      opts.config_print_instr = true;
-      opts.config_print_gpr = true;
-      opts.config_print_fpr = true;
-      opts.config_print_vreg = true;
-      opts.config_print_csr = true;
-      opts.config_print_mem_access = true;
-      opts.config_print_rvfi = true;
-      opts.config_print_clint = true;
-      opts.config_print_exception = true;
-      opts.config_print_interrupt = true;
-      opts.config_print_htif = true;
-      opts.config_print_pma = true;
-      opts.config_print_step = true;
-    },
-    "Enable all trace output except TLB and PTW traces"
-  );
-
-  // All positional arguments are treated as ELF files.  All ELF files
-  // are loaded into memory, but only the first is scanned for the
-  // magic `tohost/{begin,end}_signature` symbols.
-  app.add_option(
-    "elfs",
-    opts.elfs,
-    "List of ELF files to load. They will be loaded in order, possibly "
-    "overwriting each other. PC will be set to the entry point of the first "
-    "file. This is optional with some arguments, e.g. --print-isa-string."
-  );
-
-  std::size_t column_width = 45;
-  app.get_formatter()->long_option_alignment_ratio(6.f / column_width);
-  app.get_formatter()->column_width(column_width);
-
-  if (argc == 1) {
-    fprintf(stdout, "%s\n", app.help().c_str());
+  // Overflow check for addr + size - 1
+  uint64_t end = addr + size - 1;
+  if (end < addr) {
+    fprintf(stderr, "DTB address/size overflow: addr=0x%0" PRIx64 ", size=0x%0" PRIx64 "\n", addr, size);
     exit(EXIT_FAILURE);
   }
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError &e) {
-    exit(app.exit(e));
+  // Validate DTB range against configured PMA memory regions.
+  if (!model.dtb_within_configured_pma_memory(addr, size)) {
+    fprintf(
+      stderr,
+      "DTB does not fit in any configured PMA memory region: "
+      "addr=0x%0" PRIx64 ", size=0x%0" PRIx64 " (end=0x%0" PRIx64 ")\n"
+      "Hint: adjust memory.dtb_address or memory.regions in the config.\n",
+      addr,
+      size,
+      end
+    );
+    exit(EXIT_FAILURE);
   }
 
-  return opts;
+  for (uint8_t d : dtb) {
+    write_mem(addr++, d);
+  }
 }
+
+void write_signature(const std::string &file, unsigned signature_granularity, const elf_info &elf_info) {
+  if (elf_info.mem_sig_start >= elf_info.mem_sig_end) {
+    fprintf(
+      stderr,
+      "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
+      elf_info.mem_sig_start,
+      elf_info.mem_sig_end,
+      file.c_str()
+    );
+    return;
+  }
+  FILE *f = fopen(file.c_str(), "w");
+  if (!f) {
+    fprintf(stderr, "Cannot open file '%s': %s\n", file.c_str(), strerror(errno));
+    return;
+  }
+  /* write out words depending on signature granularity in signature area */
+  for (uint64_t addr = elf_info.mem_sig_start; addr < elf_info.mem_sig_end; addr += signature_granularity) {
+    /* most-significant byte first */
+    for (unsigned i = signature_granularity; i > 0; --i) {
+      uint8_t byte = static_cast<uint8_t>(read_mem(addr + i - 1));
+      fprintf(f, "%02x", byte);
+    }
+    fprintf(f, "\n");
+  }
+  fclose(f);
+}
+
+} // namespace
 
 uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file, elf_info &elf_info) {
   ELF elf = ELF::open(filename);
@@ -380,77 +182,22 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
   return elf.entry();
 }
 
-void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
-  uint64_t addr = get_config_uint64({"memory", "dtb_address"});
-  uint64_t size = static_cast<uint64_t>(dtb.size());
-
-  // Overflow check for addr + size - 1
-  uint64_t end = addr + size - 1;
-  if (end < addr) {
-    fprintf(stderr, "DTB address/size overflow: addr=0x%0" PRIx64 ", size=0x%0" PRIx64 "\n", addr, size);
-    exit(EXIT_FAILURE);
+void close_logs(run_info &run_info) {
+  if (run_info.close_term_fd) {
+    close(run_info.term_fd);
   }
-
-  // Validate DTB range against configured PMA memory regions.
-  if (!model.dtb_within_configured_pma_memory(addr, size)) {
-    fprintf(
-      stderr,
-      "DTB does not fit in any configured PMA memory region: "
-      "addr=0x%0" PRIx64 ", size=0x%0" PRIx64 " (end=0x%0" PRIx64 ")\n"
-      "Hint: adjust memory.dtb_address or memory.regions in the config.\n",
-      addr,
-      size,
-      end
-    );
-    exit(EXIT_FAILURE);
+  if (run_info.trace_log != stdout) {
+    fclose(run_info.trace_log);
   }
-
-  for (uint8_t d : dtb) {
-    write_mem(addr++, d);
-  }
-}
-
-void write_signature(const std::string &file, unsigned signature_granularity, const elf_info &elf_info) {
-  if (elf_info.mem_sig_start >= elf_info.mem_sig_end) {
-    fprintf(
-      stderr,
-      "Invalid signature region [0x%0" PRIx64 ",0x%0" PRIx64 "] to %s.\n",
-      elf_info.mem_sig_start,
-      elf_info.mem_sig_end,
-      file.c_str()
-    );
-    return;
-  }
-  FILE *f = fopen(file.c_str(), "w");
-  if (!f) {
-    fprintf(stderr, "Cannot open file '%s': %s\n", file.c_str(), strerror(errno));
-    return;
-  }
-  /* write out words depending on signature granularity in signature area */
-  for (uint64_t addr = elf_info.mem_sig_start; addr < elf_info.mem_sig_end; addr += signature_granularity) {
-    /* most-significant byte first */
-    for (int i = signature_granularity - 1; i >= 0; i--) {
-      uint8_t byte = (uint8_t)read_mem(addr + i);
-      fprintf(f, "%02x", byte);
-    }
-    fprintf(f, "\n");
-  }
-  fclose(f);
-}
-
-void close_logs() {
 #ifdef SAILCOV
   if (sail_coverage_exit() != 0) {
     fprintf(stderr, "Could not write coverage information!\n");
     exit(EXIT_FAILURE);
   }
 #endif
-  if (trace_log != stdout) {
-    fclose(trace_log);
-  }
 }
 
-void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, const run_info &run_info) {
+void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, run_info &run_info) {
   // Don't write a signature if there was an internal Sail exception.
   if (!model.had_exception() && !opts.sig_file.empty()) {
     write_signature(opts.sig_file, opts.signature_granularity, elf_info);
@@ -468,20 +215,20 @@ void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, 
     fprintf(stderr, "Instructions:     %" PRIu64 "\n", run_info.total_insns);
     fprintf(stderr, "Performance:      %" PRIu64 " kIPS\n", exec_msecs == 0 ? 0 : run_info.total_insns / exec_msecs);
   }
-  close_logs();
+  close_logs(run_info);
   exit(model.had_exception() ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-void flush_logs() {
+void flush_logs(run_info &run_info) {
   fflush(stderr);
   fflush(stdout);
-  fflush(trace_log);
+  fflush(run_info.trace_log);
 }
 
 void run_sail(
   ModelImpl &model,
   const CLIOptions &opts,
-  traploop_detector &loop_detector,
+  std::shared_ptr<traploop_detector> loop_detector,
   const elf_info &elf_info,
   run_info &run_info
 ) {
@@ -525,7 +272,7 @@ void run_sail(
         break;
       }
       if (opts.config_print_instr) {
-        flush_logs();
+        flush_logs(run_info);
       }
       if (run_info.rvfi) {
         run_info.rvfi->send_trace(opts.config_print_rvfi);
@@ -545,7 +292,7 @@ void run_sail(
 
     if (!is_waiting) {
       if (opts.config_print_step) {
-        fprintf(trace_log, "\n");
+        fprintf(run_info.trace_log, "\n");
       }
       step_no++;
       insn_cnt++;
@@ -578,12 +325,12 @@ void run_sail(
       model.tick_clock();
     }
 
-    if (loop_detector.loop_detected()) {
+    if (loop_detector->loop_detected()) {
       fprintf(
         stdout,
         "FAILURE: possible trap loop detected with MEPC=0x%" PRIx64 " and SEPC=0x%" PRIx64 "\n",
-        loop_detector.mepc(),
-        loop_detector.sepc()
+        loop_detector->mepc(),
+        loop_detector->sepc()
       );
       exit(EXIT_FAILURE);
     }
@@ -595,16 +342,18 @@ void run_sail(
 }
 
 void init_logs(const CLIOptions &opts, run_info &run_info) {
-  if (!opts.term_log.empty() &&
-      (run_info.term_fd =
-         open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR)) < 0) {
-    fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
-    exit(EXIT_FAILURE);
+  if (!opts.term_log.empty()) {
+    run_info.term_fd = open(opts.term_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+    if (run_info.term_fd < 0) {
+      fprintf(stderr, "Cannot create terminal log '%s': %s\n", opts.term_log.c_str(), strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+    run_info.close_term_fd = true;
   }
 
   if (!opts.trace_log_path.empty()) {
-    trace_log = fopen(opts.trace_log_path.c_str(), "w+");
-    if (trace_log == nullptr) {
+    run_info.trace_log = fopen(opts.trace_log_path.c_str(), "w+");
+    if (run_info.trace_log == nullptr) {
       fprintf(stderr, "Cannot create trace log '%s': %s\n", opts.trace_log_path.c_str(), strerror(errno));
       exit(EXIT_FAILURE);
     }
@@ -617,19 +366,12 @@ void init_logs(const CLIOptions &opts, run_info &run_info) {
 #endif
 }
 
-// Initialization result used during startup.
-enum class InitResult {
-  ExitFailure,
-  ExitSuccess,
-  Continue,
-};
-
 // Processes options that don't need an initialized model and gets the
 // json configuration string; returns whether to continue with model
 // initialization.
 InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
   if (opts.do_print_version) {
-    std::cout << version_info::release_version << std::endl;
+    std::cout << version_info::release_version() << std::endl;
     return InitResult::ExitSuccess;
   }
   if (opts.do_print_build_info) {
@@ -765,6 +507,8 @@ InitResult preinit_model(
   }
 
   init_logs(opts, run_info);
+  model.set_term_fd(run_info.term_fd);
+  model.set_trace_log(run_info.trace_log);
 
   return InitResult::Continue;
 }
@@ -776,9 +520,8 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
     if (!run_info.rvfi->setup_socket(opts.config_print_rvfi)) {
       return 1;
     }
-    model.register_callback(&rvfi_cbs);
+    model.register_callback(std::make_shared<rvfi_callbacks>());
   }
-  model.set_term_fd(run_info.term_fd);
 
   if (!opts.dtb_file.empty()) {
     fprintf(stderr, "using %s as DTB file.\n", opts.dtb_file.c_str());
@@ -803,81 +546,4 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
   run_info.init_end = steady_clock::now();
 
   return entry;
-}
-
-void run_model(CLIOptions &opts, ModelImpl &model, uint64_t entry, const elf_info &elf_info, run_info &run_info) {
-  traploop_detector loop_detector;
-  if (!opts.disable_trap_loop_detection) {
-    model.register_callback(&loop_detector);
-  }
-
-  log_callbacks log_cbs(
-    opts.config_print_gpr,
-    opts.config_print_fpr,
-    opts.config_print_vreg,
-    opts.config_print_csr,
-    opts.config_print_mem_access,
-    opts.config_print_ptw,
-    opts.config_print_tlb,
-    opts.config_use_abi_names,
-    trace_log
-  );
-  model.register_callback(&log_cbs);
-
-  do {
-    run_sail(model, opts, loop_detector, elf_info, run_info);
-    // `run_sail` only returns in the case of rvfi.
-    if (run_info.rvfi) {
-      /* Reset for next test */
-      model.reinit_sail(entry, opts.config_file.c_str(), elf_info.htif_tohost_address);
-      loop_detector.reset();
-    }
-  } while (run_info.rvfi);
-}
-
-int inner_main(int argc, char **argv) {
-
-  CLIOptions opts = parse_cli(argc, argv);
-
-  std::string config_json_string;
-  switch (preinit_args(opts, config_json_string)) {
-  case InitResult::ExitSuccess:
-    return EXIT_SUCCESS;
-  case InitResult::ExitFailure:
-    return EXIT_FAILURE;
-  case InitResult::Continue:
-    break;
-  }
-
-  ModelImpl model;
-  run_info run_info;
-  switch (preinit_model(opts, model, config_json_string, run_info)) {
-  case InitResult::ExitSuccess:
-    return EXIT_SUCCESS;
-  case InitResult::ExitFailure:
-    return EXIT_FAILURE;
-  case InitResult::Continue:
-    break;
-  }
-
-  elf_info elf_info;
-  uint64_t entry = init_model(opts, model, elf_info, run_info);
-
-  run_model(opts, model, entry, elf_info, run_info);
-
-  model.model_fini();
-  flush_logs();
-  close_logs();
-
-  return EXIT_SUCCESS;
-}
-
-int main(int argc, char **argv) {
-  // Catch all exceptions and print them a bit more nicely than the default.
-  try {
-    return inner_main(argc, argv);
-  } catch (const std::exception &exc) {
-    std::cerr << "Error: " << exc.what() << std::endl;
-  }
-  return EXIT_FAILURE;
 }

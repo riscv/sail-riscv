@@ -71,13 +71,38 @@ function get_stvec() -> xlenbits =
   stvec.bits
 
 function set_mtvec(value : xlenbits) -> xlenbits = {
-  mtvec = legalize_tvec(mtvec, value, plat_mtvec_base_alignment_direct_exp, plat_mtvec_base_alignment_vectored_exp);
+  mtvec = legalize_tvec(mtvec,
+                        value,
+                        plat_mtvec_direct_mode_supported,
+                        plat_mtvec_direct_base_alignment_exp,
+                        plat_mtvec_vectored_mode_supported,
+                        plat_mtvec_vectored_base_alignment_exp);
   mtvec.bits
 }
 
 function set_stvec(value : xlenbits) -> xlenbits = {
-  stvec = legalize_tvec(stvec, value, 2, plat_stvec_base_alignment_vectored_exp);
+  stvec = legalize_tvec(stvec,
+                        value,
+                        plat_stvec_direct_mode_supported,
+                        2,
+                        plat_stvec_vectored_mode_supported,
+                        plat_stvec_vectored_base_alignment_exp);
   stvec.bits
+}
+
+// Ensure that xtvec[Mode] contains a supported value on reset.
+// This would matter if these fields are read-only for the DUT.
+function reset_tvecs() -> unit = {
+  if plat_mtvec_direct_mode_supported then {
+    mtvec[Mode] = trapVectorMode(TV_Direct)
+  } else if plat_mtvec_vectored_mode_supported then {
+    mtvec[Mode] = trapVectorMode(TV_Vector)
+  };
+  if plat_stvec_direct_mode_supported then {
+    stvec[Mode] = trapVectorMode(TV_Direct)
+  } else if plat_stvec_vectored_mode_supported then {
+    stvec[Mode] = trapVectorMode(TV_Vector)
+  };
 }
 
 mapping clause csr_name_map = 0x105  <-> "stvec"

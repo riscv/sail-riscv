@@ -16,7 +16,7 @@
 #include "rvfi_dii.h"
 #include "sail.h"
 
-rvfi_handler::rvfi_handler(int port, hart::Model &model) : dii_port(port), m_model(model) {
+rvfi_handler::rvfi_handler(int port, ModelImpl &model) : dii_port(port), m_model(model) {
   fprintf(stderr, "using %d as RVFI port.\n", port);
 }
 
@@ -134,7 +134,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print) {
   if (config_print) {
     fprintf(stderr, "Waiting for cmd packet... ");
   }
-  int res = read(dii_sock, &instr_bits, sizeof(instr_bits));
+  ssize_t res = read(dii_sock, &instr_bits, sizeof(instr_bits));
   if (config_print) {
     fprintf(stderr, "Read cmd packet: %016jx\n", (intmax_t)instr_bits);
     m_model.zprint_instr_packet(instr_bits);

@@ -21,14 +21,18 @@ mapping clause assembly = VCLMUL_VV (vm, vs2, vs1, vd)
 function clause execute VCLMUL_VV(vm, vs2, vs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
+  let num_elem  = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_normal(vd, vm) |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
-  let 'n = get_num_elem(LMUL_pow, SEW);
+  let 'n = num_elem;
   let 'm = SEW;
 
   let vm_val  : bits('n) = read_vmask('n, vm, zvreg);
@@ -36,10 +40,7 @@ function clause execute VCLMUL_VV(vm, vs2, vs1, vd) = {
   let vs1_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to ('n - 1)) {
@@ -66,13 +67,16 @@ mapping clause assembly = VCLMUL_VX (vm, vs2, rs1, vd)
 function clause execute VCLMUL_VX(vm, vs2, rs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
+  let num_elem  = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_normal(vd, vm) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
-  let 'n = get_num_elem(LMUL_pow, SEW);
+  let 'n = num_elem;
   let 'm = SEW;
 
   let vm_val  : bits('n) = read_vmask('n, vm, zvreg);
@@ -80,10 +84,7 @@ function clause execute VCLMUL_VX(vm, vs2, rs1, vd) = {
   let vd_val  : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to ('n - 1)) {
@@ -110,14 +111,18 @@ mapping clause assembly = VCLMULH_VV (vm, vs2, vs1, vd)
 function clause execute VCLMULH_VV(vm, vs2, vs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
+  let num_elem  = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_normal(vd, vm) |
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
-  let 'n = get_num_elem(LMUL_pow, SEW);
+  let 'n = num_elem;
   let 'm = SEW;
 
   let vm_val  : bits('n) = read_vmask('n, vm, zvreg);
@@ -125,10 +130,7 @@ function clause execute VCLMULH_VV(vm, vs2, vs1, vd) = {
   let vs1_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to ('n - 1)) {
@@ -155,13 +157,16 @@ mapping clause assembly = VCLMULH_VX (vm, vs2, rs1, vd)
 function clause execute VCLMULH_VX(vm, vs2, rs1, vd) = {
   let SEW       = get_sew();
   let LMUL_pow  = get_lmul_pow();
+  let num_elem  = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_normal(vd, vm) |
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_normal(vd, vm) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+     not(valid_reg_group(vd, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
-  let 'n = get_num_elem(LMUL_pow, SEW);
+  let 'n = num_elem;
   let 'm = SEW;
 
   let vm_val  : bits('n) = read_vmask('n, vm, zvreg);
@@ -169,10 +174,7 @@ function clause execute VCLMULH_VX(vm, vs2, rs1, vd) = {
   let vd_val  : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vd);
   let vs2_val : vector('n, bits('m)) = read_vreg('n, SEW, LMUL_pow, vs2);
 
-  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = match init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val) {
-    Ok(v)   => v,
-    Err(()) => return Illegal_Instruction()
-  };
+  let (initial_result, mask) : (vector('n, bits('m)), bits('n)) = init_masked_result('n, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
 
   foreach (i from 0 to ('n - 1)) {

@@ -136,7 +136,7 @@ function rV (Vregno(r) : vregno) -> vlenbits = {
 
 function dirty_v_context() -> unit = {
   assert(hartSupports(Ext_Zve32x));
-  mstatus[VS] = extStatus_to_bits(Dirty);
+  mstatus[VS] = extStatus_map(Dirty);
   mstatus[SD] = 0b1;
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
 }
@@ -344,6 +344,15 @@ private function write_vcsr(vxrm_val : bits(2), vxsat_val : bits(1)) -> unit = {
   vcsr[vxrm]  = vxrm_val; // Note: frm can be an illegal value, 101, 110, 111
   vcsr[vxsat] = vxsat_val;
   dirty_v_context()
+}
+
+function write_vxsat(vxsat_val: bits(1)) -> unit = {
+  if vcsr[vxsat] != vxsat_val then {
+    vcsr[vxsat] = vxsat_val;
+    dirty_v_context();
+  };
+  csr_write_callback("vxsat", zero_extend(vcsr[vxsat]));
+  csr_write_callback("vcsr", zero_extend(vcsr.bits));
 }
 
 function clause write_CSR(0x008, value) = { set_vstart(value[15 .. 0]); Ok(vstart) }

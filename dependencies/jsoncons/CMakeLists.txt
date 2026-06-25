@@ -8,10 +8,14 @@ set(JSONCONS_BUILD_TESTS OFF)
 
 FetchContent_Declare(
   jsoncons
-  URL https://github.com/danielaparker/jsoncons/archive/refs/tags/v1.4.3.tar.gz
-  URL_HASH SHA3_256=7AE49B206A2D271C4B1A122824FA76EFAAD91703F3124AC7A66A26D1EEA1D07E
+  URL https://github.com/danielaparker/jsoncons/archive/refs/tags/v1.8.1.tar.gz
+  URL_HASH SHA3_256=c1f7957049ce756005ce67917ce8b6f09c0cf56e630664edeb272365229baada
 )
 
 if (DOWNLOAD_JSONCONS)
     FetchContent_MakeAvailable(jsoncons)
 endif()
+
+set_target_properties(jsoncons
+    PROPERTIES SKIP_LINTING ON
+)

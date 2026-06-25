@@ -13,6 +13,7 @@ open import Sail2_values
 open import Sail2_operators_bitlists
 open import Sail2_concurrency_interface
 open import Sail2_monadic_combinators
+open import Sail2_undefined_concurrency_interface
 
 type bitvector = list Sail2_values.bitU
 
@@ -31,9 +32,7 @@ val plat_term_read : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'transl
 let plat_term_read () = return []
 declare ocaml target_rep function plat_term_read = `Platform.term_read`
 
-val plat_get_16_random_bits : forall 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv 'e. Register_Value 'rv =>
-  unit -> monad 'abort 'barrier 'cache_op 'fault 'pa 'tlb_op 'translation_summary 'trans_start 'trans_end 'arch_ak 'rv bitvector 'e
-let plat_get_16_random_bits () = choose_bitvector "plat_get_16_random_bits" 16
+let plat_get_16_random_bits () = undefined_bitvector 16
 declare ocaml target_rep function plat_get_16_random_bits = `Platform.get_16_random_bits`
 
 let sys_enable_experimental_extensions () = false

@@ -15,8 +15,14 @@ function zvk_valid_reg_overlap(rs : vregidx, rd : vregidx, emul_pow : int) -> bo
 
 function zvk_check_encdec(EGW : nat, EGS : nat1) -> bool = {
   let LMUL_pow = get_lmul_pow();
-  let LMUL_times_VLEN = if LMUL_pow < 0 then vlen / (2 ^ abs_int(LMUL_pow)) else (2 ^ LMUL_pow) * vlen in
-  (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & LMUL_times_VLEN >= EGW
+  let LMUL_times_VLEN = if LMUL_pow < 0 then vlen / (2 ^ abs_int(LMUL_pow)) else (2 ^ LMUL_pow) * vlen;
+  let VLMAX = LMUL_times_VLEN / get_sew();
+  // An out-of-bounds vstart (>= VLMAX) is reserved, whether it traps is configurable.
+  let vstart_in_bounds : bool = match vstart_reserved_behavior {
+    Vstart_Illegal => unsigned(vstart) < VLMAX,
+    Vstart_Ignore  => true,
+  };
+  (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & LMUL_times_VLEN >= EGW & vstart_in_bounds
 }
 
 // Utility functions for Zvknh[ab]
