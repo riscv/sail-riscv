@@ -34,17 +34,6 @@
 // enabled), and then dispatches to MMIO regions or physical memory as
 // per the platform memory map.
 //
-// A helper to check address alignment is also provided in the external API.
-//
-//   is_aligned_addr - checks for alignment of a physical or virtual address
-
-function is_aligned_paddr(Physaddr(addr) : physaddr, width : nat1) -> bool =
-  unsigned(addr) % width == 0
-
-function is_aligned_vaddr(Virtaddr(addr) : virtaddr, width : nat1) -> bool =
-  unsigned(addr) % width == 0
-
-overload is_aligned_addr = {is_aligned_paddr, is_aligned_vaddr}
 
 private function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> read_kind =
   match (aq, rl, res) {
