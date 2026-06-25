@@ -1,0 +1,329 @@
+# TODO: Decide whether to upstream this workflow or keep it as an internal-only workflow.
+# This workflow is intended for internal testing only.
+# It is not meant to be pushed upstream.
+# Some steps may appear duplicated or unnecessary because
+# this workflow is designed to run with ACT in a containerized environment.
+# Dependent workflows (e.g., sail-setup) detect this context and may skip steps accordingly.
+
+name: Run hypervisor tests
+on: [push, pull_request, workflow_dispatch, merge_group]
+jobs:
+  run-hypervisor-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          # Git history is needed for `git describe` in the build to work.
+          fetch-depth: 0
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          install-clang: "true"
+
+      - name: Cache RISC-V toolchain
+        id: cache-riscv
+        uses: actions/cache@v4
+        with:
+          path: /opt/riscv
+          key: riscv-toolchain-2026.03.13
+
+      - name: Install RISC-V toolchains
+        if: steps.cache-riscv.outputs.cache-hit != 'true'
+        run: |
+          wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2026.03.13/riscv64-elf-ubuntu-22.04-gcc.tar.xz
+          mkdir -p /opt/riscv
+          tar -xf riscv64-elf-ubuntu-22.04-gcc.tar.xz --strip-components=1 -C /opt/riscv
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld ninja-build gcc g++ cmake
+
+      - name: Add toolchain to PATH
+        run: echo "/opt/riscv/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies
+        run: pip3 install pyyaml --break-system-packages
+
+      - name: Set environment variables
+        run: |
+          echo "RISCV=/opt/riscv" >> $GITHUB_ENV
+          echo "SAIL=$(pwd)/build/c_emulator/sail_riscv_sim" >> $GITHUB_ENV
+
+      - name: Checkout riscv-hypervisor-tests fork
+        shell: bash
+        run: |
+          git clone --recurse-submodules -b main https://github.com/nadime15/riscv-hypervisor-tests.git
+          make -C riscv-hypervisor-tests build
+
+      - name: Checkout riscv-test
+        shell: bash
+        run: |
+          git clone --recurse-submodules -b master https://github.com/riscv-software-src/riscv-tests
+          cd riscv-tests
+          autoconf
+          ./configure
+          make -C isa hypervisor hypervisor-svadu
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build all
+
+      - name: Run hypervisor tests
+        run: |
+          make -C riscv-hypervisor-tests run SAIL=${{ env.SAIL }}
+
+      - name: Run riscv-test hypervisor tests
+        shell: bash
+        run: |
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-p-2-stage_translation
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-p-2-stage_translation_implicit_load_error
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-p-2-stage_translation_implicit_load_error_hs
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-svadu-p-2-stage_translation_implicit_store_error
+          ${{ env.SAIL }} ./riscv-tests/isa/hypervisor-svadu-p-2-stage_translation_implicit_store_error_hs
+
+  Xvisor:
+    name: "Xvisor boot"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages
+        run: sudo apt-get install -y --no-install-recommends device-tree-compiler
+
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build
+
+      - name: Install RISC-V toolchains
+        run: |
+          wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2026.03.13/riscv64-elf-ubuntu-22.04-gcc.tar.xz
+          mkdir -p /opt/riscv
+          tar -xf riscv64-elf-ubuntu-22.04-gcc.tar.xz --strip-components=1 -C /opt/riscv
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld ninja-build gcc g++ cmake
+
+      - name: Add toolchain to PATH
+        run: echo "/opt/riscv/bin" >> $GITHUB_PATH
+
+      - name: Checkout Xvisor & build
+        shell: bash
+        run: |
+          git clone --recurse-submodules -b master https://github.com/xvisor/xvisor.git
+          cd xvisor
+          export ARCH=riscv CROSS_COMPILE=riscv64-unknown-elf-
+          make generic-64b-defconfig
+          make -j$(nproc)
+          echo "XVISOR=$(pwd)/build/vmm.bin" >> $GITHUB_ENV
+
+      - name: Setup gcc and opensbi
+        run: |
+          make -C os-boot/linux build/gcc/bin/riscv64-buildroot-linux-gnu-gcc
+          make -C os-boot/linux build/opensbi/Makefile
+
+      - name: Generate DTB
+        run: make -C os-boot/linux build/sail.dtb
+
+      - name: Build OpenSBI with Xvisor as payload
+        run: |
+          CROSS=$(pwd)/os-boot/linux/build/gcc/bin/riscv64-buildroot-linux-gnu-
+          make -C os-boot/linux/build/opensbi \
+            FW_TEXT_START=0x80000000 \
+            FW_PAYLOAD=y \
+            FW_PAYLOAD_PATH=${{ env.XVISOR }} \
+            PLATFORM=generic \
+            CROSS_COMPILE=$CROSS
+          cp os-boot/linux/build/opensbi/build/platform/generic/firmware/fw_payload.elf build/fw_payload_xvisor.elf
+
+      - name: Xvisor boot
+        run: |
+          ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 40000000 \
+            --device-tree-blob os-boot/linux/build/sail.dtb \
+            build/fw_payload_xvisor.elf
+  Xvisor_Linux:
+    name: "Xvisor boot + Linux Guest"
+    runs-on: ubuntu-latest
+    container: ubuntu:25.10
+    steps:
+      - name: Install packages
+        run: |
+          apt-get update
+          apt-get install -y device-tree-compiler \
+            build-essential gcc-riscv64-linux-gnu cmake ninja-build \
+            cpio bison flex bc git fakeroot ca-certificates \
+            libssl-dev libelf-dev python3 sudo curl wget libgmp-dev pkg-config
+
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build
+
+      - name: Checkout xvisor-linux build scripts
+        shell: bash
+        run: |
+          git clone --recurse-submodules -b main https://github.com/nadime15/riscv-hext-xvisor-linux
+          make -C riscv-hext-xvisor-linux setup
+          make -C riscv-hext-xvisor-linux xvisor
+
+      - name: Run boot Xvisor + Linux guest on Sail
+        shell: bash
+        run: |
+          cd riscv-hext-xvisor-linux/target
+          "$GITHUB_WORKSPACE/build/c_emulator/sail_riscv_sim" --inst-limit 850000000 \
+            --device-tree-blob ./rv64gch_xvisor.dtb ./opensbi_xvisor_payload.elf
+
+  coretp-hypervisor-tests:
+    name: "coretp/riescue hypervisor suite"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          install-clang: "true"
+
+      - name: Cache RISC-V toolchain
+        id: cache-riscv
+        uses: actions/cache@v4
+        with:
+          path: /opt/riscv
+          key: riscv-toolchain-2026.03.13
+
+      - name: Install RISC-V toolchain
+        if: steps.cache-riscv.outputs.cache-hit != 'true'
+        run: |
+          wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2026.03.13/riscv64-elf-ubuntu-22.04-gcc.tar.xz
+          mkdir -p /opt/riscv
+          tar -xf riscv64-elf-ubuntu-22.04-gcc.tar.xz --strip-components=1 -C /opt/riscv
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld ninja-build gcc g++ cmake \
+            python3 python3-venv python3-pip libboost-all-dev liblz4-dev
+
+      - name: Add toolchain to PATH
+        run: echo "/opt/riscv/bin" >> $GITHUB_PATH
+
+      - name: Set environment variables
+        run: |
+          echo "RISCV=/opt/riscv" >> $GITHUB_ENV
+          echo "SAIL=$(pwd)/build/c_emulator/sail_riscv_sim" >> $GITHUB_ENV
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build all
+
+      - name: Build whisper
+        shell: bash
+        run: |
+          git clone --recurse-submodules https://github.com/tenstorrent/whisper.git
+          make -C whisper -j$(nproc)
+          echo "$(pwd)/whisper/build-Linux" >> $GITHUB_PATH
+
+      - name: Set up riescue + coretp
+        shell: bash
+        run: |
+          git clone -b main https://github.com/nadime15/riescue.git
+          git clone -b origin/main https://github.com/nadime15/riscv-coretp.git
+          python3 -m venv riescue/.venv
+          source riescue/.venv/bin/activate
+          pip install -e riescue
+          pip install -e riscv-coretp          # editable override of riescue's pinned coretp
+          echo "$(pwd)/riescue/.venv/bin" >> $GITHUB_PATH
+
+      - name: Generate hypervisor tests
+        working-directory: riescue/tp_gen
+        shell: bash
+        run: |
+          for plan in \
+            hypervisor_exceptions \
+            hypervisor_paging_basic \
+            hypervisor_paging_permissions_023 \
+            hypervisor_paging_permissions_024 \
+            hypervisor_paging_csr \
+            hypervisor_paging_a_bit \
+            hypervisor_paging_d_bit \
+            hypervisor_paging_faults_vs \
+            hypervisor_paging_faults_g_invalid \
+            hypervisor_paging_faults_g_misaligned \
+            hypervisor_paging_faults_g_reserved ; do
+            ./generate_tp_tests.sh --test_plan "$plan"
+          done
+
+      - name: Run on Sail
+        working-directory: riescue/tp_gen
+        shell: bash
+        run: |
+          # For now, we match Whisper’s default settings.
+          OVERRIDE=$(cat <<'JSON'
+          {
+            "memory": {
+              "pmp": { "count": 0, "usable_count": 0 },
+              "regions": [
+                { "base": { "len": 64, "value": "0x1000" },
+                  "size": { "len": 64, "value": "0xfffffffffffff000" },
+                  "attributes": {
+                    "mem_type": "MainMemory",
+                    "cacheable": true, "coherent": true, "executable": true,
+                    "readable": true, "writable": true,
+                    "read_idempotent": true, "write_idempotent": true,
+                    "misaligned_exceptions": { "load_store": {"None": null}, "vector": {"None": null}, "amo": "AccessFault" },
+                    "atomic_support": "AMOCASQ", "reservability": "RsrvEventual",
+                    "supports_cbo_zero": true, "supports_pte_read": true, "supports_pte_write": true },
+                  "include_in_device_tree": true } ]
+            },
+            "platform": {
+              "clint": { "supported": false },
+              "simple_interrupt_generator": { "supported": false }
+            },
+            "extensions": {
+              "Stateen": { "Smstateen": { "supported": false }, "Ssstateen": { "supported": false } }
+            }
+          }
+          JSON
+          )
+
+          GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
+          pass=0; fail=0
+          while IFS= read -r elf; do
+            name=${elf#testsuite/}
+            if timeout 200 "$SAIL" --inst-limit 2000000 \
+                --config-override <(printf '%s' "$OVERRIDE") "$elf" 2>/dev/null \
+                | grep -q 'RVCP:.*PASSED'; then
+              pass=$((pass+1))
+              printf '[TEST] %s - %bPassed%b\n' "$name" "$GREEN" "$NC"
+            else
+              fail=$((fail+1))
+              printf '[TEST] %s - %bFailed%b\n' "$name" "$RED" "$NC"
+            fi
+          done < <(find testsuite -type f -name 'tp_*' ! -name '*.S' | sort)
+
+          echo "passed=$pass failed=$fail"
+          [ "$fail" -eq 0 ]

@@ -169,6 +169,19 @@ namespace {
 // TODO: make this a class member and avoid a global.
 std::vector<uint64_t> pending_flush_indices;
 
+const char *stage_str(hart::zTranslationStage stage) {
+  switch (stage) {
+  case hart::zS_Stage:
+    return "S_Stage ";
+  case hart::zVS_Stage:
+    return "VS_Stage";
+  case hart::zG_Stage:
+    return "G_Stage ";
+  default:
+    return "Unknown";
+  }
+}
+
 void print_tlb(
   FILE *trace_log,
   ModelImpl &,
@@ -179,32 +192,30 @@ void print_tlb(
   fprintf(
     trace_log,
     "TLB %s [ len=%zu ]\n"
-    "╔═════╦════╦══════════╦══════════════════════╦══════════════════════╦══════════════════════╦══════════════════════"
-    "╦══════════════════════"
-    "╗\n"
-    "║ IDX ║ GL ║   ASID   ║         VPN          ║         PTE          ║     LEVEL_MASK       ║         PPN          "
-    "║       PTE_ADDR       "
-    "║\n"
-    "╠═════╬════╬══════════╬══════════════════════╬══════════════════════╬══════════════════════╬══════════════════════"
-    "╬══════════════════════"
-    "╣\n",
+    "╔═════╦════╦══════════╦══════════╦══════════╦══════════════════════╦══════════════════════╦══════════════════════╦"
+    "══════════════════════╦══════════════════════╗\n"
+    "║ IDX ║ GL ║   ASID   ║   VMID   ║  STAGE   ║         VPN          ║         PTE          ║     LEVEL_MASK       "
+    "║         PPN          ║       PTE_ADDR       ║\n"
+    "╠═════╬════╬══════════╬══════════╬══════════╬══════════════════════╬══════════════════════╬══════════════════════╬"
+    "══════════════════════╬══════════════════════╣\n",
     is_flush ? "flush" : "add",
     tlb.len
   );
   for (size_t i = 0; i < tlb.len; i++) {
     bool is_entry_selected = std::find(indices.begin(), indices.end(), i) != indices.end();
     const char *annotation = is_entry_selected ? (is_flush ? "  <- flushed" : "  <- added") : "";
-
     const auto &entry = tlb.data[i];
     if (entry.kind == hart::Kind_zSomezIRTLB_EntryzK) {
       const auto &e = entry.variants.zSomezIRTLB_EntryzK;
       fprintf(
         trace_log,
-        "║ %3zu ║  %c ║ 0x%06" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64
-        " ║ 0x%018" PRIX64 " ║%s\n",
+        "║ %3zu ║  %c ║ 0x%06" PRIX64 " ║ 0x%06" PRIX64 " ║ %s ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64
+        " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║%s\n",
         i,
         e.zglobal ? 'Y' : 'N',
         e.zasid.bits,
+        e.zvmid.bits,
+        stage_str(e.zstage),
         e.zvpn,
         e.zpte,
         e.zlevelMask,
@@ -215,9 +226,8 @@ void print_tlb(
     } else {
       fprintf(
         trace_log,
-        "║ %3zu ║  - ║   ----   ║         ----         ║         ----         ║         ----         ║         ----    "
-        "     ║         ----    "
-        "     ║%s\n",
+        "║ %3zu ║  - ║   ----   ║   ----   ║   ----   ║         ----         ║         ----         ║         ----     "
+        "    ║         ----         ║         ----         ║%s\n",
         i,
         annotation
       );
@@ -225,9 +235,8 @@ void print_tlb(
   }
   fprintf(
     trace_log,
-    "╚═════╩════╩══════════╩══════════════════════╩══════════════════════╩══════════════════════╩══════════════════════"
-    "╩══════════════════════"
-    "╝\n"
+    "╚═════╩════╩══════════╩══════════╩══════════╩══════════════════════╩══════════════════════╩══════════════════════╩"
+    "══════════════════════╩══════════════════════╝\n"
   );
 }
 

@@ -501,16 +501,20 @@ private function check_misc_extension_dependencies() -> bool = {
     // written with the faulting instruction.
     // TODO: add validation for virtual-instruction exceptions.
     valid = valid & check_required_sstvala_option("load page-faults", load_page_fault_writes_xtval);
+    valid = valid & check_required_sstvala_option("load guest page-faults", load_guest_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("load access-faults", load_access_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("misaligned load exceptions", misaligned_load_writes_xtval);
     valid = valid & check_required_sstvala_option("store/AMO page-faults", samo_page_fault_writes_xtval);
+    valid = valid & check_required_sstvala_option("store/AMO guest page-faults", samo_guest_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("store/AMO access-faults", samo_access_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("misaligned store/AMO exceptions", misaligned_samo_writes_xtval);
     valid = valid & check_required_sstvala_option("fetch page-faults", fetch_page_fault_writes_xtval);
+    valid = valid & check_required_sstvala_option("fetch guest page-faults", fetch_guest_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("fetch access-faults", fetch_access_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("misaligned fetch exceptions", misaligned_fetch_writes_xtval);
     valid = valid & check_required_sstvala_option("hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
     valid = valid & check_required_sstvala_option("illegal instruction exceptions", illegal_instruction_writes_xtval);
+    valid = valid & check_required_sstvala_option("virtual instruction exceptions", virtual_instruction_writes_xtval);
   };
   if (config extensions.Ssqosid.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
@@ -523,6 +527,12 @@ private function check_misc_extension_dependencies() -> bool = {
   if (xlen == 32 & ((config extensions.Ssnpm.supported : bool) | (config extensions.Smmpm.supported : bool) | (config extensions.Smnpm.supported : bool))) then {
     valid = false;
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
+  };
+  if (config extensions.H.supported : bool) & (not(config extensions.Zicsr.supported : bool) |
+    not(config extensions.S.supported: bool) | not(if xlen == 64 then (config extensions.Sv39.supported : bool) else (config extensions.Sv32.supported : bool))) then {
+    valid = false;
+    print_endline("The H extension is enabled but one or more of Zicsr, S, and " ^ (if xlen == 64 then "Sv39" else "Sv32") ^
+                  " are disabled: supporting H requires Zicsr, S, and " ^ (if xlen == 64 then "Sv39" else "Sv32") ^ " on RV" ^ dec_str(xlen) ^ ".");
   };
   valid
 }

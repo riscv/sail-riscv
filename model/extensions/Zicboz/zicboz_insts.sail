@@ -22,8 +22,7 @@ mapping clause assembly = ZICBOZ(rs1)
   <-> "cbo.zero" ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 function clause execute ZICBOZ(rs1) = {
-  // TODO: Pass read_henvcfg()[CBZE] once henvcfg is implemented.
-  match feature_enabled_for_priv(cur_privilege, menvcfg[CBZE], read_senvcfg()[CBZE], 0b0) {
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBZE], read_senvcfg()[CBZE], henvcfg[CBZE]) {
     FEATURE_ENABLED => (),
     FEATURE_ILLEGAL => return Illegal_Instruction(),
     FEATURE_VIRTUAL => return Virtual_Instruction(),
@@ -49,15 +48,15 @@ function clause execute ZICBOZ(rs1) = {
         // was encoded in the instruction. We subtract the negative offset
         // (add the positive offset) to get it. Normally this will be
         // equal to rs1, but pointer masking can change that.
-        Err(e, _) => memory_exception(vaddr - negative_offset, e),
+        Err(e, _) => Memory_Exception({ e with excinfo = bits_of(vaddr - negative_offset) }),
         Ok(paddr, pbmt, _) => {
           match mem_write_ea(paddr, cache_block_size, access, false, false, false) {
-            Err(e) => memory_exception(vaddr - negative_offset, e),
+            Err(e) => Memory_Exception(mem_exception_context(e, bits_of(vaddr - negative_offset), access)),
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {
                 Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                Err(e)    => memory_exception(vaddr - negative_offset, e),
+                Err(e) => Memory_Exception(mem_exception_context(e, bits_of(vaddr - negative_offset), access)),
               }
             }
           }

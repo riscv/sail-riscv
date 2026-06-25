@@ -68,7 +68,7 @@ function clause hartSupports(Ext_U) = config extensions.U.supported
 // Hypervisor
 enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
-function clause hartSupports(Ext_H) = false
+function clause hartSupports(Ext_H) = config extensions.H.supported
 
 enum clause extension = Ext_Zibi
 mapping clause extensionName = Ext_Zibi <-> "zibi"
@@ -93,11 +93,17 @@ function clause hartSupports(Ext_Zicboz) = config extensions.Zicboz.supported
 // Control-flow Integrity: Landing Pad
 enum clause extension = Ext_Zicfilp
 mapping clause extensionName = Ext_Zicfilp <-> "zicfilp"
-function clause hartSupports(Ext_Zicfilp) = config extensions.Zicfilp.supported
+// TODO: Hypervisor support is incomplete.
+// Currently disabled to prevent simulation failures.
+// Will be implemented before the PR is finalized.
+function clause hartSupports(Ext_Zicfilp) = false //config extensions.Zicfilp.supported
 // Control-flow Integrity: Shadow Stack
 enum clause extension = Ext_Zicfiss
 mapping clause extensionName = Ext_Zicfiss <-> "zicfiss"
-function clause hartSupports(Ext_Zicfiss) = config extensions.Zicfiss.supported
+// TODO: Hypervisor support is incomplete.
+// Currently disabled to prevent simulation failures.
+// Will be implemented before the PR is finalized.
+function clause hartSupports(Ext_Zicfiss) = false //config extensions.Zicfiss.supported
 // Base Counters and Timers
 enum clause extension = Ext_Zicntr
 mapping clause extensionName = Ext_Zicntr <-> "zicntr"

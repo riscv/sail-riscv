@@ -10,7 +10,7 @@
 
 function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus, priv : Privilege) -> Privilege =
   if   access != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_bits(m[MPP], 0b0) // TODO: use m[MPV] if hypervisor enabled
+  then privLevel_bits(m[MPP], m[MPV])
   else priv
 
 // CSR access control
@@ -44,13 +44,6 @@ function check_CSR_priv(csr : csreg, p : Privilege) -> bool =
 function check_CSR_access(csr : csreg, access_type : CSRAccessType) -> bool =
   not((access_type == CSRWrite | access_type == CSRReadWrite) & (csrAccess(csr) == 0b11))
 
-// CSR check results
-union CSRCheckResult = {
-  CSR_Check_OK : unit,
-  CSR_Illegal  : unit,
-  CSR_Virtual  : unit,
-}
-
 function check_CSR(csr : csreg, p : Privilege, access_type : CSRAccessType) -> bool =
     check_CSR_priv(csr, p)
   & check_CSR_access(csr, access_type)
@@ -71,11 +64,17 @@ function check_CSR_result(csr : csreg, p : Privilege, access_type : CSRAccessTyp
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx = unsigned(exceptionType_bits(e));
   let super = bit_to_bool(medeleg.bits[idx]);
-  // TODO: check VS/VU-mode if hypervisor extension enabled
-  let deleg = if currentlyEnabled(Ext_S) & super then Supervisor else Machine;
-  // We cannot transition to a less-privileged mode.
-  if   privLevel_to_bits(deleg) <_u privLevel_to_bits(p)
-  then p else deleg
+  let virtual = bit_to_bool(hedeleg.bits[idx]) & inVirtualPrivilege();
+
+  let deleg = if currentlyEnabled(Ext_S) & super
+              then if currentlyEnabled(Ext_H) & virtual
+                   then VirtualSupervisor
+                   else Supervisor
+              else Machine;
+
+  // Cannot delegate to a less privileged mode.
+  if privLevel_to_bits(deleg) >=_u privLevel_to_bits(p)
+  then deleg else p
 }
 
 // "Multiple simultaneous interrupts destined for M-mode are handled
@@ -83,12 +82,18 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
 // SSI, STI, LCOFI."
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   let ip = Mk_Minterrupts(ip);
-  if      ip[MEI] == 0b1 then Some(I_M_External)
-  else if ip[MSI] == 0b1 then Some(I_M_Software)
-  else if ip[MTI] == 0b1 then Some(I_M_Timer)
-  else if ip[SEI] == 0b1 then Some(I_S_External)
-  else if ip[SSI] == 0b1 then Some(I_S_Software)
-  else if ip[STI] == 0b1 then Some(I_S_Timer)
+  if      ip[MEI]   == 0b1 then Some(I_M_External)
+  else if ip[MSI]   == 0b1 then Some(I_M_Software)
+  else if ip[MTI]   == 0b1 then Some(I_M_Timer)
+  else if ip[SEI]   == 0b1 then Some(I_S_External)
+  else if ip[SSI]   == 0b1 then Some(I_S_Software)
+  else if ip[STI]   == 0b1 then Some(I_S_Timer)
+  else if ip[SGEI]  == 0b1 then Some(I_SG_External)
+  // NOTE: VSEI, VSSI, and VSTI are cleared beforehand. By the time
+  // findPendingInterrupt observes these bits, they are already zero,
+  else if ip[VSEI]  == 0b1 then Some(I_VS_External)
+  else if ip[VSSI]  == 0b1 then Some(I_VS_Software)
+  else if ip[VSTI]  == 0b1 then Some(I_VS_Timer)
   else if ip[LCOFI] == 0b1 then Some(I_COF)
   else                        None()
 }
@@ -100,23 +105,32 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
 // allows for example the M_Timer to be delegated to the S-mode.
 //
 // This is used when the hart is in the Active state.
-//
-// TODO: check hip/hie if hypervisor enabled.
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // mideleg can only be non-zero if we support Supervisor mode.
   assert(currentlyEnabled(Ext_S) | mideleg.bits == zeros());
 
   // Read mip with the external platform interrupts ORed in.
-  let mip_bits = read_mip(IncludePlatformInterrupts).bits;
+  let pending    = read_mip(IncludePlatformInterrupts).bits & mie.bits;
+  let pending_m  = pending & ~(mideleg.bits);
+  let pending_s  = pending &   mideleg.bits  & ~(hideleg.bits);
+  let pending_vs = pending &   mideleg.bits  &   hideleg.bits;
 
-  let pending_m = mip_bits & mie.bits & ~(mideleg.bits);
-  let pending_s = mip_bits & mie.bits & mideleg.bits;
+  let mIE  = (priv == Machine           & mstatus[MIE] == 0b1)  | priv == Supervisor | priv == User | priv == VirtualSupervisor | priv == VirtualUser;
+  let sIE  = (priv == Supervisor        & mstatus[SIE] == 0b1)  | priv == User | priv == VirtualSupervisor | priv == VirtualUser;
+  let vsIE = (priv == VirtualSupervisor & vsstatus[SIE] == 0b1) | priv == VirtualUser;
 
-  let mIE = (priv == Machine    & mstatus[MIE] == 0b1) | priv == Supervisor | priv == User;
-  let sIE = (priv == Supervisor & mstatus[SIE] == 0b1) | priv == User;
-
-  if      mIE & (pending_m != zeros()) then Some((pending_m, Machine))
-  else if sIE & (pending_s != zeros()) then Some((pending_s, Supervisor))
+  if      mIE  & (pending_m  != zeros()) then Some((pending_m, Machine))
+  else if sIE  & (pending_s  != zeros()) then Some((pending_s, Supervisor))
+  else if vsIE & (pending_vs != zeros()) then {
+    // Translate VS-level interrupts to their S-level counterpart
+    let vs = Mk_Minterrupts(pending_vs);
+    let translated = [vs with
+      SEI = vs[VSEI], VSEI = 0b0,
+      SSI = vs[VSSI], VSSI = 0b0,
+      STI = vs[VSTI], VSTI = 0b0,
+    ];
+    Some((translated.bits, VirtualSupervisor))
+  }
   else None()
 }
 
@@ -156,7 +170,6 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
 }
 
 // trap value
-
 function tval(excinfo : option(xlenbits)) -> xlenbits = {
   match (excinfo) {
     Some(e) => e,
@@ -178,23 +191,37 @@ function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> uni
       csr_write_callback("sepc", sepc);
     },
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualSupervisor => {
+      csr_write_callback("vscause", vscause.bits);
+      csr_write_callback("vstval", vstval);
+      csr_write_callback("vsepc", vsepc);
+    },
   };
 
   trap_callback(is_interrupt, cause);
 }
 
 // handle exceptional ctl flow by updating nextPC and operating privilege
-function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
-                     -> xlenbits = {
+function trap_handler(
+  del_priv       : Privilege,
+  c              : TrapCause,
+  pc             : xlenbits,
+) -> xlenbits = {
   let is_interrupt = trapCause_is_interrupt(c);
   let cause        = trapCause_bits(c);
 
+  // TODO: Improve this
+  let (excinfo_is_gva, excinfo, excinfo2, excinst, ext) : (bool, option(xlenbits), option(xlenbits), option(xlenbits), option(ext_exception)) = match c {
+    Interrupt(_) => (false, Some(zeros()), None(), None(), None()),
+    Exception(ctx) => (ctx.excinfo_is_gva, Some(ctx.excinfo), ctx.excinfo2, ctx.excinst, ctx.ext),
+  };
+
   if   get_config_print_exception() | get_config_print_interrupt()
-  then print_log("handling " ^ to_str(c)
-                      ^ " at priv " ^ to_str(del_priv)
-                      ^ " with tval " ^ bits_str(tval(info)));
+  then print_log("handling " ^ to_str(c) ^ " at priv " ^ to_str(del_priv) ^
+          " | tval="  ^ bits_str(tval(excinfo))  ^
+          " | tval2=" ^ bits_str(tval(excinfo2)) ^
+          " | tinst=" ^ bits_str(tval(excinst)));
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
@@ -206,7 +233,13 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
       mstatus[MPIE] = mstatus[MIE];
       mstatus[MIE]  = 0b0;
       mstatus[MPP]  = privLevel_to_bits(cur_privilege);
-      mtval         = tval(info);
+
+      mstatus[MPV] = bool_to_bit(inVirtualPrivilege());
+      mstatus[GVA] = bool_to_bit(excinfo_is_gva);
+
+      mtval         = tval(excinfo);
+      mtval2        = tval(excinfo2);
+      mtinst        = tval(excinst);
       mepc          = pc;
 
       cur_privilege = del_priv;
@@ -225,14 +258,23 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
       mstatus[SPIE] = mstatus[SIE];
       mstatus[SIE]  = 0b0;
-      mstatus[SPP]  = match cur_privilege {
+      // NOTE: Needs an up-to-date Sail Compiler:
+      // https://github.com/rems-project/sail/issues/1683
+      mstatus[SPP] = match cur_privilege {
         User              => 0b0,
+        VirtualUser       => 0b0,
         Supervisor        => 0b1,
+        VirtualSupervisor => 0b1,
         Machine           => internal_error(__FILE__, __LINE__, "invalid privilege for s-mode trap"),
-        VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-        VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
       };
-      stval           = tval(info);
+
+      hstatus[SPV]  = bool_to_bit(inVirtualPrivilege());
+      hstatus[SPVP] = if inVirtualPrivilege() then mstatus[SPP] else hstatus[SPVP];
+      hstatus[GVA]  = bool_to_bit(excinfo_is_gva);
+
+      stval           = tval(excinfo);
+      htval           = tval(excinfo2);
+      htinst          = tval(excinst);
       sepc            = pc;
 
       cur_privilege   = del_priv;
@@ -244,18 +286,44 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
       prepare_trap_vector(del_priv, scause)
     },
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualSupervisor => {
+      assert(currentlyEnabled(Ext_H), "no hypervisor-extended supervisor mode present for delegation");
+      assert(inVirtualPrivilege(), "trap to VS-mode but not in virtual privilege");
+
+      vscause[IsInterrupt] = bool_to_bit(is_interrupt);
+      vscause[Cause]       = zero_extend(cause);
+
+      vsstatus[SPIE] = vsstatus[SIE];
+      vsstatus[SIE]  = 0b0;
+      vsstatus[SPP]  = match cur_privilege {
+        VirtualUser       => 0b0,
+        VirtualSupervisor => 0b1,
+        _                 => internal_error(__FILE__, __LINE__, "invalid privilege for vs-mode trap"),
+      };
+
+      vsepc          = pc;
+      vstval         = tval(excinfo);
+
+      cur_privilege  = del_priv;
+
+      handle_trap_extension(del_priv, pc, ext);
+
+      track_trap(del_priv, is_interrupt, cause);
+
+      prepare_trap_vector(del_priv, vscause)
+    },
   };
 }
 
-function exception_handler(cur_priv : Privilege, exc : sync_exception, pc : xlenbits) -> xlenbits = {
-  let del_priv = exception_delegatee(exc.trap, cur_priv);
+function exception_handler(cur_priv : Privilege, exc_context : Exception_Context, pc: xlenbits) -> xlenbits = {
+  let del_priv = exception_delegatee(exc_context.trap, cur_priv);
   if   get_config_print_exception()
   then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
-                      ^ " to handle " ^ to_str(exc.trap));
-  trap_handler(del_priv, Exception(exc.trap), pc, exc.excinfo, exc.ext)
+                          ^ " to handle " ^ to_str(exc_context.trap));
+  trap_handler(del_priv, Exception(exc_context), pc);
 }
+
 // Compute the value to write to mtval on a trap.
 function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
@@ -289,22 +357,19 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
-function make_sync_exception(e : ExceptionType, xtval : xlenbits) -> sync_exception =
-  struct { trap    = e,
-           excinfo = xtval_exception_value(e, xtval),
-           ext     = None() }
-
-function handle_exception(xtval : xlenbits, e : ExceptionType) -> unit =
-  set_next_pc(exception_handler(cur_privilege, make_sync_exception(e, xtval), PC))
+function handle_exception(c : Exception_Context) -> unit = {
+  set_next_pc(exception_handler(cur_privilege, c, PC))
+}
 
 function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, Interrupt(i), PC, None(), None()))
+  set_next_pc(trap_handler(del_priv, Interrupt(i), PC))
 
 // Reset misa to enable the maximal set of supported extensions.
 function reset_misa() -> unit = {
   misa[A]   = bool_to_bit(hartSupports(Ext_A));   // atomics
   misa[C]   = bool_to_bit(hartSupports(Ext_C));   // RVC
   misa[B]   = bool_to_bit(hartSupports(Ext_B));   // Bit-manipulation
+  misa[H]   = bool_to_bit(hartSupports(Ext_H));   // hypervisor
   misa[M]   = bool_to_bit(hartSupports(Ext_M));   // integer multiply/divide
   misa[U]   = bool_to_bit(hartSupports(Ext_U));   // user-mode
   misa[S]   = bool_to_bit(hartSupports(Ext_S));   // supervisor-mode
