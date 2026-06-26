@@ -253,11 +253,29 @@ function mem_read_priv (access, pbmt, priv, paddr, width, aq, rl, res) =
 function mem_read (access, pbmt, paddr, width, aq, rel, res) =
   mem_read_priv(access, pbmt, effectivePrivilege(access, mstatus, cur_privilege), paddr, width, aq, rel, res)
 
-val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), MemoryAccessType(mem_payload), bool, bool, bool) -> MemoryOpResult(unit)
-function mem_write_ea(addr, width, _access, aq, rl, con) =
-  if (rl | con) & not(is_aligned_addr(addr, width))
-  then Err(E_SAMO_Addr_Align())
-  else Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
+// This function is always called before `mem_write_value`, i.e. it is not used before `mem_write_value_priv`.
+// It hence operates at effective privilege.
+val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(unit)
+function mem_write_ea(addr, width, access, pbmt, aq, rl, con) = {
+  let priv = effectivePrivilege(access, mstatus, cur_privilege);
+
+  // This function should only succeed when `mem_write_value` would
+  // succeed, and fail when `mem_write_value` would fail. This means
+  // it should at least perform the same PMP/PMA checks. However,
+  // there is a corner case that is not handled here: writes to MMIO
+  // regions, where the failure of those writes can only be determined
+  // currently by actually trying to perform those writes. In such
+  // cases, `mem_write_ea` could still succeed when the
+  // `mem_write_value` would fail. Since `mem_write_ea` is used only
+  // for the concurrency model, this will be an issue when that model
+  // is extended for MMIO, but until then, this should suffice for
+  // concurrency of RAM accesses.
+
+  match phys_access_check(access, pbmt, priv, addr, width, con) {
+    None()  => Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width)),
+    Some(e) => Err(e)
+  }
+}
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (

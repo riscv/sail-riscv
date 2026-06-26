@@ -94,7 +94,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
-  let loaded : bits('width * 8) = match mem_write_ea(addr, width, access, aq & rl, rl, true) {
+  let loaded : bits('width * 8) = match mem_write_ea(addr, width, access, pbmt, aq & rl, rl, true) {
     Err(e) => return memory_exception(vaddr, e),
     Ok(_)  => match mem_read(access, pbmt, addr, width, aq, aq & rl, true) {
       Err(e)     => return memory_exception(vaddr, e),
