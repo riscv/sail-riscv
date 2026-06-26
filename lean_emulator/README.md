@@ -28,7 +28,7 @@ cmake --build build --target build_lean_emulator
 lake exec lean_riscv_emulator -- path/to/riscv/binary.elf
 ```
 
-You can download the Spike test ELFs by running the following
+You can test the emulator with the `riscv-test` suite by running the following
 
 ```
 ctest --test-dir build -R lean_emulator
