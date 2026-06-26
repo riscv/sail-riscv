@@ -195,6 +195,9 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // release consistency semantics, using the aq and rl bits, to help
   // implement multiprocessor synchronization."
 
+ // Sequence the read of `rs2` after the call to `mem_write_ea` with the effective address.
+ // See https://github.com/riscv/sail-riscv/issues/1761.
+
   let 'width = width;
   let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, aq & rl, rl, true) {
     Err(e) => return memory_exception(vaddr, e),
