@@ -1929,8 +1929,12 @@ mapping clause encdec = VMVXS(vs2, rd)
 function clause execute VMVXS(vs2, rd) = {
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
+  // Scalar move instructions disregard LMUL, but for the purposes of finding an illegal vstart,
+  // some implementations use LMUL for the bounds check, and this helps match those implementations.
+  let LMUL_pow = get_lmul_pow();
+  let num_elem_vstart = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) |
+  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem_vstart, LMUL_pow) |
      illegal_vd_unmasked()
   then return Illegal_Instruction();
 
@@ -2456,8 +2460,11 @@ mapping clause encdec = VMVSX(rs1, vd)
 function clause execute VMVSX(rs1, vd) = {
   let SEW      = get_sew();
   let num_elem = get_num_elem(0, SEW);
+  // See above comment in VMVXS for why LMUL is used here
+  let LMUL_pow = get_lmul_pow();
+  let num_elem_vstart = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem, 0) |
+  if illegal_vstart(VSTART_SCALAR_MOVE, num_elem_vstart, LMUL_pow) |
      illegal_vd_unmasked()
   then return Illegal_Instruction();
 

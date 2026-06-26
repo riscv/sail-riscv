@@ -194,7 +194,10 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
 
-  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) | illegal_store(vs3, nf, EEW, EMUL_pow) | not(valid_reg_group(vs3, EMUL_pow))
+  if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_pow) |
+     illegal_store(vs3, nf, EEW, EMUL_pow) |
+     not(valid_reg_group(vs3, EMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs3, EEW))
   then return Illegal_Instruction();
 
   let EMUL_reg = 2 ^ max(EMUL_pow, 0);
@@ -367,7 +370,7 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   let index_dst_overlap : bool =
     if nf == 1
     then not(valid_reg_overlap(vs2, vd, EMUL_index_pow, EMUL_data_pow))          // non-segment indexed load
-    else not(valid_disjoint_reg_groups(vs2, vd, EMUL_index_pow, EMUL_data_pow)); // segment indexed load
+    else not(valid_disjoint_reg_groups_segmented(vs2, vd, EMUL_index_pow, EMUL_data_pow, nf)); // segment indexed load
 
   if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_data_pow) |
      illegal_indexed_load(vd, vm, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
