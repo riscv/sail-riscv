@@ -20,6 +20,9 @@ let sys_pmp_usable_count : range(0, 64) = config memory.pmp.usable_count
 // G=0 -> 4 bytes, G=10 -> 4096 bytes.
 let sys_pmp_grain : range(0, 63) = config memory.pmp.grain
 
+// Number of active PMP entries
+register pmp_active_count : nat
+
 // PMP configuration entries
 
 private enum PmpAddrMatchType = {OFF, TOR, NA4, NAPOT}
@@ -43,6 +46,8 @@ bitfield Pmpcfg_ent : bits(8) = {
 
 register pmpcfg_n : vector(64, Pmpcfg_ent)
 register pmpaddr_n : vector(64, xlenbits)
+// Cached effective PMP addresses
+register pmpaddr_n_eff : vector(64, xlenbits)
 
 // Packing and unpacking pmpcfg regs for xlen-width accesses
 
@@ -87,6 +92,17 @@ private function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
 
     _ => addr,
   }
+}
+
+// Update cached PMP effective addresses and active entry count (after CSR writes)
+private function pmpUpdateCache() -> unit = {
+  pmp_active_count = 0;
+  foreach (i from 0 to sys_pmp_count - 1) {
+    pmpaddr_n_eff[i] = pmpReadAddrReg(i);
+    if pmpAddrMatchType_encdec(pmpcfg_n[i][A]) != OFF then {
+      pmp_active_count = pmp_active_count + 1;
+    }
+  };
 }
 
 // Helpers to handle locked entries
@@ -138,7 +154,7 @@ private function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
     foreach (i from 0 to 3) {
       let idx = n*4 + i;
       if idx < sys_pmp_usable_count then
-        pmpcfg_n[idx]  = pmpWriteCfg(pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
+        pmpcfg_n[idx] = pmpWriteCfg(pmpcfg_n[idx], v[8*i+7 .. 8*i]);
     }
   }
   else {
@@ -146,9 +162,10 @@ private function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
     foreach (i from 0 to 7) {
       let idx = n*4 + i;
       if idx < sys_pmp_usable_count then
-        pmpcfg_n[idx]  = pmpWriteCfg(pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
+        pmpcfg_n[idx] = pmpWriteCfg(pmpcfg_n[idx], v[8*i+7 .. 8*i]);
     }
-  }
+  };
+  pmpUpdateCache()
 }
 
 private function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
@@ -164,6 +181,7 @@ private function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
       pmpaddr_n[n],
       v,
     );
+  pmpUpdateCache()
 }
 
 // PMP CSRs
