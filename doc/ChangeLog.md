@@ -86,6 +86,10 @@ extension.
   - The HTIF failure exit code is now printed in hex as well as decimal.
   - The test suite has been updated to the latest release (2026-05-29) from sail-riscv-tests.
 
+- The command line interface has been updated:
+  - A `--trace-trigger` command-line option has been added to track
+    triggers in the execution trace.
+
 # Release notes for version 0.11
 
 - Updates to the [configuration file](../config/config.json.in):
@@ -141,6 +145,7 @@ extension.
   - Zicclsm
   - Ziccrse
   - Zicfiss
+  - Sdtrig (partial: only icount, itrigger, and etrigger triggers; tdata3 and {m,h,s}context are not yet supported)
   - Ssccptr
   - Sscounterenw
   - Svade

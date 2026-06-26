@@ -100,6 +100,7 @@ CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag("--trace-clint", opts.config_print_clint, "Enable trace output for CLINT memory accesses and status");
   app.add_flag("--trace-exception", opts.config_print_exception, "Enable trace output for exceptions");
   app.add_flag("--trace-interrupt", opts.config_print_interrupt, "Enable trace output for interrupts");
+  app.add_flag("--trace-trigger", opts.config_print_trigger, "Enable trace output for triggers");
   app.add_flag("--trace-htif", opts.config_print_htif, "Enable trace output for HTIF operations");
   app.add_flag("--trace-pma", opts.config_print_pma, "Enable trace output for PMA checks");
   app.add_flag_callback(
