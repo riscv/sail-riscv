@@ -11,6 +11,11 @@ on:
       - reopened
       - labeled
       - unlabeled
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   run-full-tests:
     # If triggered by a PR event, only run if the 'run-full-tests' label is present
