@@ -15,6 +15,7 @@ struct CLIOptions {
   bool do_print_dts = false;
   bool do_validate_config = false;
   bool do_print_isa = false;
+  bool do_dump_memory = false;
 
   bool use_rv32_default = false;
   bool disable_trap_loop_detection = false;
