@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@ struct CLIOptions {
   unsigned rvfi_dii_port = 0;
   std::vector<std::string> elfs;
   uint64_t insn_limit = 0;
+  std::optional<uint64_t> stop_at_pc;
 
   std::string sig_file = {};
   unsigned signature_granularity = DEFAULT_SIGNATURE_GRANULARITY;
