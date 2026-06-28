@@ -11,6 +11,11 @@
 #include "sail.h"
 #include "sail_riscv_model.h"
 
+struct MemoryRegion {
+  uint64_t base = 0;
+  uint64_t size = 0;
+};
+
 // Model wrapped with an implementation of its platform callbacks.
 class ModelImpl final : private hart::Model {
 public:
@@ -69,6 +74,7 @@ public:
 
   bool config_is_valid();
   bool dtb_within_configured_pma_memory(uint64_t addr, uint64_t size);
+  std::vector<MemoryRegion> main_memory_regions() const;
   std::string generate_dts();
   std::string generate_isa_string();
 
