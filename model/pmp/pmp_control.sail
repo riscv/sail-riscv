@@ -120,6 +120,11 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 
   if sys_pmp_count == 0 then return None();
 
+  if pmp_active_count == 0 then return (
+    if priv == Machine then None()
+    else Some(accessFaultFromAccessType(access))
+  );
+
   let width : xlenbits = to_bits(width);
 
   // TODO for accesses of type CacheAccess:
@@ -130,11 +135,12 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   // block, and if write permission is granted by the PMP access
   // control bits, read permission shall also be granted."
 
-  foreach (i from 0 to sys_pmp_count - 1) {
-    let prev_pmpaddr = if i > 0 then pmpReadAddrReg(i - 1) else zeros();
+  var prev_pmpaddr : xlenbits = zeros();
+  foreach (i from 0 to sys_pmp_usable_count - 1) {
+    let cur_pmpaddr = pmpaddr_n_eff[i];
     let cfg = pmpcfg_n[i];
 
-    match pmpMatchAddr(addr, width, cfg, pmpReadAddrReg(i), prev_pmpaddr) {
+    match pmpMatchAddr(addr, width, cfg, cur_pmpaddr, prev_pmpaddr) {
       PMP_NoMatch      => (),
       PMP_PartialMatch => return Some(accessFaultFromAccessType(access)),
       PMP_Match        => return (
@@ -143,6 +149,7 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
         else Some(accessFaultFromAccessType(access))
       ),
     };
+    prev_pmpaddr = cur_pmpaddr
   };
   if priv == Machine then None() else Some(accessFaultFromAccessType(access))
 }
@@ -152,5 +159,7 @@ function reset_pmp() -> unit = {
     // On reset the PMP register's A and L bits are set to 0 unless the platform
     // mandates a different value.
     pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_encdec(OFF), L = 0b0];
+    pmpaddr_n_eff[i] = zeros();
   };
+  pmp_active_count = 0
 }
