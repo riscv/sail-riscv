@@ -5,6 +5,9 @@
   - https://github.com/riscv/sail-riscv/issues/1748 : Segment loads/stores whose register numbers increment past v31 were not treated as reserved.
   - https://github.com/riscv/sail-riscv/issues/1069 : `vssubu` did not set `vxsat`
 
+- Other notes:
+  - The model now requires the Sail 0.20.2 compiler version.
+
 # Release notes for version 0.12
 
 The main highlights of this release are the addition of the pointer
