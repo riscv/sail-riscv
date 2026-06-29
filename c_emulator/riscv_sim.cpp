@@ -460,6 +460,7 @@ InitResult preinit_model(
   model.set_config_print_clint(opts.config_print_clint);
   model.set_config_print_exception(opts.config_print_exception);
   model.set_config_print_interrupt(opts.config_print_interrupt);
+  model.set_config_print_trigger(opts.config_print_trigger);
   model.set_config_print_htif(opts.config_print_htif);
   model.set_config_print_pma(opts.config_print_pma);
   model.set_config_rvfi(run_info.rvfi.has_value());

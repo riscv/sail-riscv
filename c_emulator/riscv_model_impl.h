@@ -40,6 +40,7 @@ public:
   void set_config_print_clint(bool on);
   void set_config_print_exception(bool on);
   void set_config_print_interrupt(bool on);
+  void set_config_print_trigger(bool on);
   void set_config_print_htif(bool on);
   void set_config_print_pma(bool on);
   void set_config_print_step(bool on);
@@ -115,6 +116,8 @@ private:
   unit trap_callback(bool is_interrupt, fbits cause) override;
   unit xret_callback(bool is_mret) override;
   unit instret_callback(unit) override;
+  unit trigger_match_callback(sail_int index) override;
+  unit trigger_fire_callback(sail_int index) override;
 
   // Page table walk callbacks
   unit ptw_start_callback(uint64_t vpn, MemoryAccessType access_type, Privilege privilege) override;
@@ -147,6 +150,7 @@ private:
   bool get_config_print_clint(unit) override;
   bool get_config_print_exception(unit) override;
   bool get_config_print_interrupt(unit) override;
+  bool get_config_print_trigger(unit) override;
   bool get_config_print_htif(unit) override;
   bool get_config_print_pma(unit) override;
   bool get_config_rvfi(unit) override;
@@ -156,6 +160,7 @@ private:
   bool m_config_print_clint = false;
   bool m_config_print_exception = false;
   bool m_config_print_interrupt = false;
+  bool m_config_print_trigger = false;
   bool m_config_print_htif = false;
   bool m_config_print_pma = false;
   bool m_config_rvfi = false;
