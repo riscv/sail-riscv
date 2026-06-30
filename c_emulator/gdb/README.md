@@ -5,8 +5,7 @@ simulator. This requires that the debugger support the RISC-V target.
 
 ## Usage
 
-To use the simulator in this mode, configure and build it with
-the CMake option `-DENABLE_GDBSERVER=TRUE`, and run it as:
+To use the simulator in this mode, run it as:
 
 ```
 $ sail_riscv_sim [other options] [--trace-gdbserver] --gdb-server-port <port> <elf_file>

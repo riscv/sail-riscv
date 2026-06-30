@@ -1,17 +1,14 @@
 #include "cli_options.h"
+#include "gdb/gdb_run_info.h"
+#include "gdb/gdbserver.h"
+#include "gdb/target_regs.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_model_impl.h"
 #include "riscv_sim.h"
 #include "traploop_detector.h"
 
-#include <iostream>
-
-#ifdef ENABLE_GDBSERVER
-#include "gdb/gdb_run_info.h"
-#include "gdb/gdbserver.h"
-#include "gdb/target_regs.h"
 #include <asio.hpp>
-#endif
+#include <iostream>
 
 namespace {
 
@@ -74,13 +71,11 @@ int inner_main(int argc, char **argv) {
   uint64_t entry = init_model(opts, model, elf_info, run_info);
 
   if (opts.gdb_server_port != 0) {
-#ifdef ENABLE_GDBSERVER
     gdb_run_info info = {
       .enable_trace = opts.config_print_gdbserver,
       .trace_log = run_info.trace_log,
     };
     run_gdbserver(model, info, opts.gdb_server_port);
-#endif
   } else {
     run_model(opts, model, entry, elf_info, run_info);
   }
