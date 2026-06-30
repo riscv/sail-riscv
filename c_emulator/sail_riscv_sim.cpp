@@ -1,5 +1,6 @@
 #include "cli_options.h"
 #include "riscv_callbacks_log.h"
+#include "riscv_callbacks_stop_at_pc.h"
 #include "riscv_model_impl.h"
 #include "riscv_sim.h"
 #include "traploop_detector.h"
@@ -12,6 +13,11 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t, const elf_info &elf
   auto loop_detector = std::make_shared<traploop_detector>();
   if (!opts.disable_trap_loop_detection) {
     model.register_callback(loop_detector);
+  }
+  std::shared_ptr<stop_at_pc_callbacks> stop_at_pc;
+  if (opts.stop_at_pc.has_value()) {
+    stop_at_pc = std::make_shared<stop_at_pc_callbacks>(*opts.stop_at_pc);
+    model.register_callback(stop_at_pc);
   }
 
   auto log_cbs = std::make_shared<log_callbacks>(
@@ -28,7 +34,7 @@ void run_model(CLIOptions &opts, ModelImpl &model, uint64_t, const elf_info &elf
   model.register_callback(log_cbs);
 
   do {
-    run_sail(model, opts, loop_detector, elf_info, run_info);
+    run_sail(model, opts, loop_detector, stop_at_pc, elf_info, run_info);
     // `run_sail` only returns in the case of rvfi.
     if (run_info.rvfi) {
       /* Reset for next test */

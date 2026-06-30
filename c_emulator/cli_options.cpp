@@ -56,6 +56,7 @@ CLIOptions parse_cli(int argc, char **argv) {
     ->check(CLI::Range(1, 65535))
     ->option_text("<int> (within [1 - 65535])");
   app.add_option("--inst-limit", opts.insn_limit, "Instruction limit")->option_text("<uint>");
+  app.add_option("--stop-at-pc", opts.stop_at_pc, "Stop execution when PC reaches address")->option_text("<address>");
 #ifdef SAILCOV
   app.add_option("--sailcov-file", opts.sailcov_file, "Sail coverage output file")->option_text("<file>");
 #endif
