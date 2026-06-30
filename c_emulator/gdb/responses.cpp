@@ -154,13 +154,10 @@ void qXfer_features_read::dispatch(protocol_handler &proto_handler, gdb_run_info
     proto_handler.send_response(buf.str());
   } else {
     if (info.enable_trace) {
-      fprintf(
-        info.trace_log,
-        "qXfer_features_read: unrecognized annex: %s offs:%" PRIu64 " len:%" PRIu64 ")\n",
-        m_annex.c_str(),
-        m_offset,
-        m_length
-      );
+      std::ostringstream msg;
+      msg << "qXfer_features_read: unrecognized annex: " << m_annex << " (offs:" << m_offset << " len:" << m_length
+          << ").";
+      fprintf(info.trace_log, "%s\n", msg.str().c_str());
     }
     proto_handler.send_response("");
   }
@@ -213,6 +210,7 @@ void write_binary_data::dispatch(protocol_handler &proto_handler, gdb_run_info &
 void vkill::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
   // We have only one process, assume that's the one specified, even
   // though the pid seems somewhat random.
+  (void)m_pid;
   proto_handler.reset();
   proto_handler.send_response("OK");
 }

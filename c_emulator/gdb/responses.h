@@ -188,7 +188,7 @@ public:
 private:
   uint64_t m_addr = 0;
   uint64_t m_length = 0;
-  std::string m_data = 0;
+  std::string m_data;
 };
 
 class vkill : public response_handler {
@@ -199,7 +199,7 @@ public:
   void dispatch(protocol_handler &, gdb_run_info &) override;
 
 private:
-  [[maybe_unused]] uint64_t m_pid = 0;
+  uint64_t m_pid = 0;
 };
 
 enum class TriggerCmd {

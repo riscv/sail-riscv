@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <inttypes.h>
 #include <iostream>
+#include <sstream>
 
 namespace {
 
@@ -450,24 +451,18 @@ public:
     std::string data = cmd.substr(idx);
     if (data.length() < length) {
       if (info.enable_trace) {
-        fprintf(
-          info.trace_log,
-          "write_binary_data: packet specifies %" PRIu64 " bytes of data, but payload has only %" PRIu64 " bytes.\n",
-          length,
-          data.length()
-        );
+        std::ostringstream msg;
+        msg << "write_binary_data: packet specifies " << length << " bytes of data, but payload has only "
+            << data.length() << " bytes.";
+        fprintf(info.trace_log, "%s\n", msg.str().c_str());
       }
       return std::nullopt;
     } else if (data.length() > length) {
       if (info.enable_trace) {
-        fprintf(
-          info.trace_log,
-          "write_binary_data: packet specifies %" PRIu64 " bytes of data; trimming excess %" PRIu64
-          " bytes from payload of %" PRIu64 " bytes.\n",
-          length,
-          data.length() - length,
-          data.length()
-        );
+        std::ostringstream msg;
+        msg << "write_binary_data: packet specifies " << length << " bytes of data; trimming excess "
+            << data.length() - length << " bytes from payload of " << data.length() << " bytes.";
+        fprintf(info.trace_log, "%s\n", msg.str().c_str());
       }
       data.erase(length);
     }
