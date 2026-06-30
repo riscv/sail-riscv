@@ -90,15 +90,15 @@ public:
 
   // These state accessors are not const due to the generated read
   // accessors not being marked const in hart::Model.
-  uint64_t peek_xreg(int64_t reg);
-  uint64_t peek_freg(int64_t reg);
+  uint64_t xreg(int64_t reg);
+  uint64_t freg(int64_t reg);
   // returns std::nullopt if the model has not thrown an exception.
   std::optional<std::string> string_of_current_exception();
 
   // write access to model state
 
-  void poke_xreg(int64_t reg, uint64_t val);
-  void poke_freg(int64_t reg, uint64_t val);
+  void set_xreg(int64_t reg, uint64_t val);
+  void set_freg(int64_t reg, uint64_t val);
   void set_pc(uint64_t val);
   void set_fcsr(uint64_t val);
 

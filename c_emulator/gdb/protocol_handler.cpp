@@ -1,6 +1,7 @@
 #include "protocol_handler.h"
 #include "connection.h"
 #include "gdb_run_info.h"
+#include "parse_utils.h"
 #include "responses.h"
 #include <iomanip>
 #include <iostream>
@@ -20,21 +21,13 @@ void protocol_handler::parse() {
   while (!m_parse_buffer.empty()) {
     char c = m_parse_buffer[0];
 
-    // The protocol also includes notification packets starting with
-    // '%' instead of '$'.  But the currently defined notification
-    // packets are sent by the stub/server, not by the debugger
-    // client.  So this parser does not handle notifications.
-    if (c != '-' && c != '\x03' && c != '+' && c != '$') {
-      std::cerr << "Leading $, + or ^C not found in [" << m_parse_buffer << "]" << std::endl;
-      std::exit(EXIT_FAILURE);
-    }
-
-    if (c == '-') {
-      std::cerr << "Peer indicates receipt error, requests retransmission; likely protocol error, exiting."
-                << std::endl;
-      std::exit(EXIT_FAILURE);
-    }
-    if (c == '\x03') {
+    switch (c) {
+    case '-': {
+      std::ostringstream msg;
+      msg << "Peer indicates receipt error, requests retransmission; likely protocol error, exiting." << std::endl;
+      throw std::runtime_error(msg.str());
+    };
+    case '\x03': {
       if (m_run_info.enable_trace) {
         fprintf(m_run_info.trace_log, "Received Ctrl^C!\n");
       }
@@ -42,32 +35,50 @@ void protocol_handler::parse() {
       auto resp = response::interrupt();
       resp.dispatch(*this, m_run_info);
       continue;
-    }
-    if (c == '+') {
+    };
+    case '+':
       m_parse_buffer.erase(0, 1);
       continue;
-    }
+    case '$':
+      // Handle this outside the switch.
+      break;
+    default: {
+      // The protocol also includes notification packets starting with
+      // '%' instead of '$'.  But the currently defined notification
+      // packets are sent by the stub/server, not by the debugger
+      // client.  So this parser does not handle notifications.
+      std::ostringstream msg;
+      msg << "Leading $, + or ^C not found in [" << m_parse_buffer << "]" << std::endl;
+      throw std::runtime_error(msg.str());
+    };
+    };
+
     // buffer begins with '$'.
     auto hash_idx = m_parse_buffer.find('#');
     if (hash_idx == std::string::npos || hash_idx + 2 >= m_parse_buffer.length()) {
-      if (m_run_info.enable_trace) {
-        fprintf(m_run_info.trace_log, "Incomplete request: [%s]\n", m_parse_buffer.c_str());
-      }
-      break;
+      // This is an incomplete request; wait for more data.
+      return;
     }
     // Handle checksum.
-    int checksum = 0;
+    uint8_t checksum = 0;
     for (std::string::size_type i = 1; i < hash_idx; ++i) {
-      checksum += m_parse_buffer[i];
+      checksum += static_cast<uint8_t>(m_parse_buffer[i]);
     }
-    checksum &= 255;
-    auto pkt_checksum_str = std::string(m_parse_buffer, hash_idx + 1, hash_idx + 3);
-    int pkt_checksum = std::stoi(pkt_checksum_str, nullptr, 16);
-    if (pkt_checksum != checksum) {
-      std::cerr << "Checksum mismatch: computed " << checksum << " but got " << pkt_checksum << "(" << pkt_checksum_str
-                << ")" << std::endl;
-      std::cerr << " for msg " << m_parse_buffer << std::endl;
-      std::exit(EXIT_FAILURE);
+    auto pkt_checksum_str = m_parse_buffer.substr(hash_idx + 1, 2);
+    {
+      auto opt_pkt_checksum = string_to_opt_uint64t(pkt_checksum_str);
+      std::ostringstream msg;
+      if (!opt_pkt_checksum.has_value()) {
+        msg << "Invalid checksum received: " << pkt_checksum_str << std::endl;
+        throw std::runtime_error(msg.str());
+      }
+      if (opt_pkt_checksum.value() != static_cast<uint64_t>(checksum)) {
+        msg << "Checksum mismatch: computed " << std::hex << std::setw(2) << std::setfill('0')
+            << static_cast<int>(checksum) << " but got " << opt_pkt_checksum.value() << "(" << pkt_checksum_str << ")"
+            << std::endl;
+        msg << " for msg " << m_parse_buffer << std::endl;
+        throw std::runtime_error(msg.str());
+      }
     }
     // Skip the leading '$' and checksum.
     auto raw_req = m_parse_buffer.substr(1, hash_idx - 1);
@@ -78,10 +89,19 @@ void protocol_handler::parse() {
 
 void protocol_handler::process_raw_request(std::string req) {
   // Unescape the buffer.
-  std::string::size_type read_idx = 0, write_idx = 0, len = req.length();
+  std::string::size_type read_idx = 0;
+  std::string::size_type write_idx = 0;
+  std::string::size_type len = req.length();
+
+  bool had_error = false;
   while (read_idx < len) {
     if (req[read_idx] == '}') {
       ++read_idx;
+      if (read_idx >= len) {
+        // Fail the unescape due to bound overshoot.
+        had_error = true;
+        break;
+      }
       req[write_idx] = static_cast<char>(req[read_idx] ^ 0x20);
     } else {
       req[write_idx] = req[read_idx];
@@ -89,6 +109,14 @@ void protocol_handler::process_raw_request(std::string req) {
     ++read_idx;
     ++write_idx;
   }
+
+  if (had_error) {
+    std::cerr << "Error unescaping request payload." << std::endl;
+    // Treat this like an unrecognized request, see below.
+    return;
+  }
+
+  // Unescaping shrinks the payload; remove excess bytes.
   req.erase(write_idx);
 
   std::optional<response_handler_ptr> resp;
@@ -101,7 +129,7 @@ void protocol_handler::process_raw_request(std::string req) {
   if (resp.has_value()) {
     queue_response(std::move(resp.value()));
   } else {
-    std::cerr << "Request was not recognized!" << std::endl;
+    std::cerr << "Request was not recognized: [" << req << "]" << std::endl;
     // TODO: We should generally send an unsupported response.  But we
     // don't send any response for now since the interaction stops
     // without a response and this helps to find remaining protocol
@@ -123,13 +151,12 @@ void protocol_handler::send_response(const std::string &resp) {
   data.append("#");
   {
     // Compute checksum.
-    int checksum = 0;
+    uint8_t checksum = 0;
     for (const auto &c : resp) {
       checksum += c;
     }
-    checksum &= 255;
     std::stringstream cs;
-    cs << std::setfill('0') << std::setw(2) << std::hex << checksum;
+    cs << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(checksum);
     data.append(cs.str());
   }
   send_data(data);
@@ -152,11 +179,7 @@ void protocol_handler::send_stop_reply() {
     auto exit_code = m_model.htif_exit_code();
     int n = static_cast<int>(sizeof(exit_code));
     std::ostringstream buf;
-    buf << "W" << std::hex << std::setfill('0');
-    for (int i = n - 1; i >= 0; --i) {
-      unsigned byte = (exit_code >> (i * 8)) & 0xFF;
-      buf << std::setw(2) << byte;
-    }
+    buf << "W" << std::hex << std::setfill('0') << std::setw(n) << exit_code;
     send_response(buf.str());
     return;
   }

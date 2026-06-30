@@ -124,7 +124,7 @@ std::string get_general_regs(ModelImpl &model) {
   int64_t n_intbytes = model.xlen() / 8;
 
   for (int64_t i = 0; i < map.pc_offset; ++i) {
-    const uint64_t reg = model.peek_xreg(i);
+    const uint64_t reg = model.xreg(i);
     append_reg(buf, reg, n_intbytes);
   }
   append_reg(buf, model.pc(), n_intbytes);
@@ -134,7 +134,7 @@ std::string get_general_regs(ModelImpl &model) {
   if (have_double | have_single) {
     int64_t n_floatbytes = model.flen() / 8;
     for (int64_t i = 0; i < 32; ++i) {
-      const uint64_t freg = model.peek_freg(i);
+      const uint64_t freg = model.freg(i);
       append_reg(buf, freg, n_floatbytes);
     }
     append_reg(buf, model.fcsr(), 4);
@@ -154,7 +154,7 @@ std::string get_register(ModelImpl &model, uint64_t regidx) {
   bool have_single = get_config_bool({"extensions", "F", "supported"});
 
   if (0 <= idx && idx < map.pc_offset) {
-    uint64_t reg = model.peek_xreg(idx);
+    uint64_t reg = model.xreg(idx);
     append_reg(buf, reg, n_intbytes);
   } else if (idx == map.pc_offset) {
     append_reg(buf, model.pc(), n_intbytes);
@@ -163,7 +163,7 @@ std::string get_register(ModelImpl &model, uint64_t regidx) {
       append_reg(buf, model.fcsr(), 4);
     } else {
       idx -= map.fpr_offset;
-      const uint64_t freg = model.peek_freg(idx);
+      const uint64_t freg = model.freg(idx);
       int64_t n_floatbytes = model.flen() / 8;
       append_reg(buf, freg, n_floatbytes);
     }
@@ -181,7 +181,7 @@ std::string set_register(ModelImpl &model, uint64_t regidx, uint64_t regval) {
   bool have_single = get_config_bool({"extensions", "F", "supported"});
 
   if (0 <= idx && idx < map.pc_offset) {
-    model.poke_xreg(idx, regval);
+    model.set_xreg(idx, regval);
   } else if (idx == map.pc_offset) {
     model.set_pc(regval);
   } else if ((have_single | have_double) && map.fpr_offset <= idx && idx <= map.fcsr_offset) {
@@ -189,7 +189,7 @@ std::string set_register(ModelImpl &model, uint64_t regidx, uint64_t regval) {
       model.set_fcsr(regval);
     } else {
       idx -= map.fpr_offset;
-      model.poke_freg(idx, regval);
+      model.set_freg(idx, regval);
     }
   } else {
     return "E.invalid_register_idx";

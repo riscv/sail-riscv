@@ -1,10 +1,14 @@
 #include "parse_utils.h"
 
-std::optional<uint64_t> string_to_opt_uint64t(const std::string &istr) {
-  try {
-    unsigned long long num = std::stoull(istr, nullptr, 16);
-    return static_cast<uint64_t>(num);
-  } catch (const std::exception &) {
-    return std::nullopt;
+#include <charconv>
+#include <system_error>
+
+std::optional<uint64_t> string_to_opt_uint64t(const std::string &str) {
+  uint64_t result{};
+  const char *end = str.data() + str.size();
+  auto [ptr, ec] = std::from_chars(str.data(), end, result, 16);
+  if (ec == std::errc() && ptr == end) {
+    return result;
   }
+  return std::nullopt;
 }

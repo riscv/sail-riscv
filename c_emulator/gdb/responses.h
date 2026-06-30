@@ -110,7 +110,7 @@ public:
   void dispatch(protocol_handler &, gdb_run_info &) override;
 
 private:
-  uint64_t m_regidx;
+  uint64_t m_regidx = 0;
 };
 
 class write_register : public response_handler {
@@ -121,8 +121,8 @@ public:
   void dispatch(protocol_handler &, gdb_run_info &) override;
 
 private:
-  uint64_t m_regidx;
-  uint64_t m_regval;
+  uint64_t m_regidx = 0;
+  uint64_t m_regval = 0;
 };
 
 class qXfer_features_read : public response_handler {
@@ -149,8 +149,8 @@ public:
   void dispatch(protocol_handler &, gdb_run_info &) override;
 
 private:
-  uint64_t m_addr;
-  uint64_t m_length;
+  uint64_t m_addr = 0;
+  uint64_t m_length = 0;
 };
 
 class single_step : public response_handler {
@@ -186,9 +186,9 @@ public:
   void dispatch(protocol_handler &, gdb_run_info &) override;
 
 private:
-  uint64_t m_addr;
-  uint64_t m_length;
-  std::string m_data;
+  uint64_t m_addr = 0;
+  uint64_t m_length = 0;
+  std::string m_data = 0;
 };
 
 class vkill : public response_handler {
@@ -199,7 +199,7 @@ public:
   void dispatch(protocol_handler &, gdb_run_info &) override;
 
 private:
-  [[maybe_unused]] uint64_t m_pid;
+  [[maybe_unused]] uint64_t m_pid = 0;
 };
 
 enum class TriggerCmd {
@@ -226,7 +226,7 @@ public:
 private:
   BreakpointType m_type;
   TriggerCmd m_cmd;
-  uint64_t m_addr;
+  uint64_t m_addr = 0;
   std::string m_kind;
 };
 
@@ -244,8 +244,8 @@ public:
 private:
   WatchType m_type;
   TriggerCmd m_cmd;
-  uint64_t m_addr;
-  uint64_t m_kind;
+  uint64_t m_addr = 0;
+  uint64_t m_kind = 0;
 };
 
 } // namespace response

@@ -526,21 +526,21 @@ bool ModelImpl::had_exception() const {
   return have_exception;
 }
 
-uint64_t ModelImpl::peek_xreg(int64_t reg) {
+uint64_t ModelImpl::xreg(int64_t reg) {
   // For the E base ISA, this assert should use 16.
   assert(reg < 32);
   const sbits val = zrX(reg);
   return val.bits;
 }
 
-uint64_t ModelImpl::peek_freg(int64_t reg) {
+uint64_t ModelImpl::freg(int64_t reg) {
   // For the E base ISA, this assert should use 16.
   assert(reg < 32);
   const sbits val = zrF(reg);
   return val.bits;
 }
 
-void ModelImpl::poke_xreg(int64_t reg, uint64_t val) {
+void ModelImpl::set_xreg(int64_t reg, uint64_t val) {
   // For the E base ISA, this assert should use 16.
   assert(reg < 32);
   sbits sail_val;
@@ -549,7 +549,7 @@ void ModelImpl::poke_xreg(int64_t reg, uint64_t val) {
   (void)zwX(reg, sail_val);
 }
 
-void ModelImpl::poke_freg(int64_t reg, uint64_t val) {
+void ModelImpl::set_freg(int64_t reg, uint64_t val) {
   assert(reg < 32);
   sbits sail_val;
   sail_val.len = zxlen;
@@ -558,9 +558,16 @@ void ModelImpl::poke_freg(int64_t reg, uint64_t val) {
 }
 
 void ModelImpl::set_pc(uint64_t val) {
-  zPC.bits = val;
+  sbits sail_val;
+  sail_val.len = zPC.len;
+  sail_val.bits = val;
+  (void)zset_next_pc(sail_val);
 }
 
 void ModelImpl::set_fcsr(uint64_t val) {
+  // The debugger might want to write reserved bits of fcsr, so set
+  // the bits directly instead of using `write_fcsr()`.
   zfcsr.zbits = val;
+  // Writing this CSR has side-effects.
+  zdirty_fd_context_if_present(UNIT);
 }

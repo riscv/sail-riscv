@@ -125,7 +125,7 @@ bool triggers::at_watchpoint(AccessType t, uint64_t addr, int64_t width) {
   for (const auto &w : m_watchpoints) {
     // Match an overlapping access of the right type.  This assumes
     // that the provided ranges don't wrap if width-1 is used.
-    if ((addr + width - 1 < w.first) | (w.first + w.second.width - 1 < addr)) {
+    if ((addr + (width - 1) < w.first) | (w.first + (w.second.width - 1) < addr)) {
       continue;
     }
 

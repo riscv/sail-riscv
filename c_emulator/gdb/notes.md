@@ -1,4 +1,9 @@
-Some notes about this implementation of the Remote Serial Protocol:
+== Some notes about this implementation of the Remote Serial Protocol.
+
+The protocol is described in
+https://sourceware.org/gdb/current/onlinedocs/gdb.html/Remote-Protocol.html#Remote-Protocol
+and the LLDB extensions are spelled out in
+https://github.com/llvm/llvm-project/blob/main/lldb/docs/resources/lldbgdbremote.md
 
 - It depends on `asio` for asynchronous networking. Despite being a
   mostly synchronous request-response protocol, it does have an
@@ -53,3 +58,15 @@ Some notes about this implementation of the Remote Serial Protocol:
   another client, the model will likely need to be re-initialized and
   the ELF file re-loaded, and current APIs would need to be extended
   if this use case really needs to be supported.
+
+- The comments describing packet formats use spaces for clarity, but
+  spaces are not in the packets themselves. This allows the packet
+  descriptions to match those in the specification:
+  (see https://sourceware.org/gdb/current/onlinedocs/gdb.html/Overview.html#Overview:
+  "We include spaces in some of the templates for clarity; these are
+  not part of the packet’s syntax. No GDB packet uses spaces to
+  separate its components. For example, a template like ‘foo bar baz’
+  describes a packet beginning with the three ASCII bytes ‘foo’,
+  followed by a bar, followed directly by a baz. GDB does not transmit
+  a space character between the ‘foo’ and the bar, or between the bar
+  and the baz.")
