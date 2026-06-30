@@ -197,6 +197,32 @@ if(ENABLE_RISCV_ARCH_TESTS)
     endforeach()
 endif()
 
+# Download and add Lean emulator tests.
+option(ENABLE_LEAN_EMULATOR_TESTS "Enable Lean emulator tests" OFF)
+
+if(ENABLE_LEAN_EMULATOR_TESTS)
+    set(TARBALL_NAME "riscv-tests")
+    set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${TEST_DOWNLOAD_VERSION}")
+    set(DOWNLOAD_URL "${TEST_DOWNLOAD_URL}/${TEST_DOWNLOAD_VERSION}/${TARBALL_NAME}.tar.gz")
+
+    download_riscv_tests(
+        "${DOWNLOAD_PATH}"
+        "${TARBALL_NAME}"
+        "${DOWNLOAD_URL}"
+    )
+
+    include(lean_emulator_test_files.cmake)
+    set(lean_emulator ${PROJECT_SOURCE_DIR}/lean_emulator/.lake/build/bin/lean_riscv_emulator)
+    foreach(elf IN LISTS lean_elf_files)
+        add_test(
+            NAME "lean_emulator_${elf}"
+            COMMAND
+              ${lean_emulator}
+              ${DOWNLOAD_PATH}/riscv-tests/${elf}
+        )
+    endforeach()
+endif()
+
 # This is off by default so we don't require people who
 # just want to build the model to have Clang or RISC-V GCC
 # installed.
