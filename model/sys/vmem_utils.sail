@@ -150,7 +150,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
             Some(e) => return Err(memory_exception(Virtaddr(vaddr), e)),
             None()  => write_success = false,
           }
-        } else match mem_write_ea(paddr, bytes, access, aq, rl, res) {
+        } else match mem_write_ea(paddr, bytes, access, pbmt, aq, rl, res) {
           Err(e) => return Err(memory_exception(Virtaddr(vaddr), e)),
 
           Ok(()) => {

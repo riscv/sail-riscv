@@ -199,7 +199,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
  // See https://github.com/riscv/sail-riscv/issues/1761.
 
   let 'width = width;
-  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, aq & rl, rl, true) {
+  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, pbmt, aq & rl, rl, true) {
     Err(e) => return memory_exception(vaddr, e),
     Ok(_)  => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
       Err(e) => return memory_exception(vaddr, e),
