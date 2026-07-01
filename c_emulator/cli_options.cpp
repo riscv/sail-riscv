@@ -15,6 +15,7 @@ CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag("--validate-config", opts.do_validate_config, "Exit after config validation (it is always validated)");
   app.add_flag("--print-device-tree", opts.do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", opts.do_print_isa, "Print ISA string");
+  app.add_flag("--print-gdb-target-xml", opts.do_print_gdb_target_xml, "Print GDB XML target description");
   app.add_flag(
     "--enable-experimental-extensions",
     opts.config_enable_experimental_extensions,
@@ -115,6 +116,7 @@ CLIOptions parse_cli(int argc, char **argv) {
     "exceptions, CLINT, HTIF, PMA)"
   );
   app.add_flag("--trace-step", opts.config_print_step, "Add a blank line between steps in the trace output");
+  app.add_flag("--trace-gdbserver", opts.config_print_gdbserver, "Enable trace output for gdbserver");
 
   app.add_flag_callback(
     "--trace",
@@ -133,8 +135,16 @@ CLIOptions parse_cli(int argc, char **argv) {
       opts.config_print_pma = true;
       opts.config_print_step = true;
     },
-    "Enable all trace output except TLB and PTW traces"
+    "Enable all trace output except TLB, PTW and gdbserver traces"
   );
+
+  app.add_option("--gdb-server-port", opts.gdb_server_port, "GDB server port")
+    ->check(CLI::Range(1, 65535))
+    ->option_text("<int> (within [1 - 65535])")
+    ->excludes("--test-signature")
+    ->excludes("--signature-granularity")
+    ->excludes("--rvfi-dii")
+    ->excludes("--inst-limit");
 
   // All positional arguments are treated as ELF files.  All ELF files
   // are loaded into memory, but only the first is scanned for the

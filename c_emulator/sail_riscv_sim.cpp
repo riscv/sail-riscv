@@ -1,9 +1,13 @@
 #include "cli_options.h"
+#include "gdb/gdb_run_info.h"
+#include "gdb/gdbserver.h"
+#include "gdb/target_regs.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_model_impl.h"
 #include "riscv_sim.h"
 #include "traploop_detector.h"
 
+#include <asio.hpp>
 #include <iostream>
 
 namespace {
@@ -66,7 +70,15 @@ int inner_main(int argc, char **argv) {
   elf_info elf_info;
   uint64_t entry = init_model(opts, model, elf_info, run_info);
 
-  run_model(opts, model, entry, elf_info, run_info);
+  if (opts.gdb_server_port != 0) {
+    gdb_run_info info = {
+      .enable_trace = opts.config_print_gdbserver,
+      .trace_log = run_info.trace_log,
+    };
+    run_gdbserver(model, info, opts.gdb_server_port);
+  } else {
+    run_model(opts, model, entry, elf_info, run_info);
+  }
 
   model.model_fini();
   flush_logs(run_info);

@@ -121,6 +121,12 @@ whose fields take precedence over those in the base configuration.
 For booting operating system images, see the information under the
 [os-boot/](os-boot/) subdirectory.
 
+### Attaching a debugger
+
+The simulator can offer a `gdbserver`-like endpoint for debuggers like
+GDB and LLDB. See [here](c_emulator/gdb/README.md) for more
+information.
+
 ## Supported RISC-V ISA features
 
 ### The Sail specification currently captures the following ISA extensions and features:
