@@ -15,6 +15,7 @@ CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag("--validate-config", opts.do_validate_config, "Exit after config validation (it is always validated)");
   app.add_flag("--print-device-tree", opts.do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", opts.do_print_isa, "Print ISA string");
+  app.add_flag("--dump-memory", opts.do_dump_memory, "Dump MainMemory regions at end of simulation");
   app.add_flag(
     "--enable-experimental-extensions",
     opts.config_enable_experimental_extensions,
