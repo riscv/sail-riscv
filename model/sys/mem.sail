@@ -77,8 +77,11 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
       override_PMA(attributes, pbmt),
   };
 
-  // The spec is silent about the order in which PMA checks are done.
-  // This implementation checks for misalignment after the other PMAs.
+  // The spec is silent about the order in which PMA checks are done,
+  // but after address translation (i.e. here), access faults have
+  // higher priority than misaligned exceptions so those are checked
+  // first. See the "Synchronous exception priority in decreasing
+  // priority order." table in the ISA manual.
 
   let canAccess : bool = match access {
     InstructionFetch()     => attributes.executable,
@@ -183,9 +186,6 @@ private function alignmentOrAccessFaultPriority(exc : ExceptionType) -> range(0,
   }
 }
 
-private function highestPriorityAlignmentOrAccessFault  (l : ExceptionType, r : ExceptionType) -> ExceptionType =
-  if alignmentOrAccessFaultPriority(l) > alignmentOrAccessFaultPriority(r) then l else r
-
 // Check if access is permitted according to PMPs and PMAs.
 function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
@@ -195,13 +195,16 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   width : int('n),
   res_or_con : bool,
 ) -> option(ExceptionType) = {
-  let pmpError : option(ExceptionType) = pmpCheck(paddr, width, access, priv);
-  let pmaError : option(ExceptionType) = pmaCheck(paddr, width, access, pbmt, res_or_con);
-  match (pmpError, pmaError) {
-    (None(), None())     => None(),
-    (Some(e), None())    => Some(e),
-    (None(), Some(e))    => Some(e),
-    (Some(e0), Some(e1)) => Some(highestPriorityAlignmentOrAccessFault(e0, e1)),
+
+  // Although the relative ordering of PMA and PMP checks is
+  // unspecified, access faults do have a higher priority than
+  // misaligned exceptions (see comment in `pmaCheck()` above).  This
+  // implementation prioritizes PMP checks before PMA checks, as PMP
+  // checks do not raise misaligned exceptions.
+
+  match pmpCheck(paddr, width, access, priv) {
+    Some(e) => Some(e),
+    None()  => pmaCheck(paddr, width, access, pbmt, res_or_con)
   }
 }
 
