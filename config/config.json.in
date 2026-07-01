@@ -141,9 +141,13 @@
       "fs_legal_states": "ExtContext_FourState",
       "vs_legal_states": "ExtContext_FourState"
     },
-    // Set the ISA manual version to use. Isa_Latest is always the latest that
-    // the Sail model supports. Other values include Isa_20240411, Isa_20211203, etc.
-    // See isa_version.sail for the complete list and the behaviours it affects.
+    // Set the ISA manual version to use. `Isa_Latest` is always the latest that
+    // the Sail model supports.  The other supported values for this field are:
+    // - Isa_20191213         (for the version tagged Ratified-IMAFDQC)
+    // - Isa_Draft_20211102   (commit a432a8997892d0a103798c2e436d36ae66da7d34, which required reserved PTE bits to be zero)
+    // - Isa_20211203         (for the version tagged Priv-v1.12)
+    // - Isa_20240411
+    // See isa_version.sail for more details and the affected behaviours.
     "isa_version": "Isa_Latest"
   },
   "memory": {

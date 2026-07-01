@@ -45,3 +45,7 @@ let isa_version : IsaVersion = config base.isa_version
 // in PTEs must be zero otherwise the PTE is invalid.
 // TODO: This is not used yet; this is an example that will be implemented in a future commit.
 let pte_reserved_bits_must_be_zero = isa_version >= Isa_Draft_20211102
+
+// The 20211203 version defined the `{m,s,h}envcfg` CSRs. These CSRs
+// are not available in earlier versions.
+let xenvcfg_csrs_are_defined = isa_version >= Isa_20211203
