@@ -1,6 +1,11 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - The version of the ISA specification for the model can be
+    specified; see `base.isa_version`.
+
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1753 : Access to `xenvcfg` CSRs need to be gated by the specification version
   - https://github.com/riscv/sail-riscv/issues/1750 : Non-segmented indexed loads were trapping on legal overlaps
   - https://github.com/riscv/sail-riscv/issues/1748 : Segment loads/stores whose register numbers increment past v31 were not treated as reserved.
   - https://github.com/riscv/sail-riscv/issues/1069 : `vssubu` did not set `vxsat`
