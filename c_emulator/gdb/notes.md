@@ -1,4 +1,4 @@
-== Some notes about this implementation of the Remote Serial Protocol.
+## Some notes about this implementation of the Remote Serial Protocol.
 
 The protocol is described in
 https://sourceware.org/gdb/current/onlinedocs/gdb.html/Remote-Protocol.html#Remote-Protocol
