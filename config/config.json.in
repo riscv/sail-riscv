@@ -82,6 +82,28 @@
         "base_alignment": 2
       }
     },
+    "medeleg": {
+      // A bit set to 1 in this value specifies that the corresponding
+      // bit of `medeleg` can be set to 1. It represents the subset of
+      // delegatable traps of the implementation. Bits for traps that
+      // cannot be delegated as per the specification will be ignored.
+      "delegatable_bits": {
+        "len": 64,
+        "value": "0xFFFF_FFFF_FFFF_FFFF"
+      }
+    },
+    "mideleg": {
+      // A bit set to 1 in this value specifies that the corresponding
+      // bit of `mideleg` can be set to 1. It represents the subset of
+      // delegatable interrupts of the implementation. Bits that
+      // cannot be delegated as per the specification will be ignored.
+      // For RV32 implementations, this value is still 64-bits wide
+      // but the upper 32 bits are ignored.
+      "delegatable_bits": {
+        "len": 64,
+        "value": "0xFFFF_FFFF_FFFF_FFFF"
+      }
+    },
     // These settings control whether the specified exceptions
     // cause information to be written into the appropriate
     // `xtval` registers.
