@@ -174,18 +174,6 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   opt_exception
 }
 
-private function alignmentOrAccessFaultPriority(exc : ExceptionType) -> range(0, 1) = {
-  match exc {
-    E_Fetch_Access_Fault() => 1,
-    E_Load_Access_Fault()  => 1,
-    E_SAMO_Access_Fault()  => 1,
-    E_Fetch_Addr_Align()   => 0,
-    E_Load_Addr_Align()    => 0,
-    E_SAMO_Addr_Align()    => 0,
-    _                      => internal_error(__FILE__, __LINE__, "Invalid exception: " ^ to_str(exc))
-  }
-}
-
 // Check if access is permitted according to PMPs and PMAs.
 function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
