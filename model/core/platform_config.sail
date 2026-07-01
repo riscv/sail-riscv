@@ -21,6 +21,10 @@ let plat_mtvec_direct_base_alignment_exp   : tvec_alignment = config base.mtvec.
 let plat_mtvec_vectored_base_alignment_exp : tvec_alignment = config base.mtvec.vectored.base_alignment
 let plat_stvec_vectored_base_alignment_exp : tvec_alignment = config base.stvec.vectored.base_alignment
 
+// Delegatable bits of `medeleg` and `mideleg`.
+let plat_medeleg_delegatable_bits : bits(64) = config base.medeleg.delegatable_bits
+let plat_mideleg_delegatable_bits : bits(64) = config base.mideleg.delegatable_bits
+
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.

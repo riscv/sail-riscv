@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - Delegatable subsets of `medeleg` and `mideleg` can be specified;
+    see `base.medeleg.delegatable_bits` and `base.mideleg.delegatable_bits`.
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1750 : Non-segmented indexed loads were trapping on legal overlaps
   - https://github.com/riscv/sail-riscv/issues/1748 : Segment loads/stores whose register numbers increment past v31 were not treated as reserved.
