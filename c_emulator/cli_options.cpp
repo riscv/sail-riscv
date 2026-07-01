@@ -59,6 +59,7 @@ CLIOptions parse_cli(int argc, char **argv) {
 #ifdef SAILCOV
   app.add_option("--sailcov-file", opts.sailcov_file, "Sail coverage output file")->option_text("<file>");
 #endif
+  app.add_flag("--dump-memory", opts.dump_memory, "Dump memory to an ELF file at the end of the test");
 
   app.add_flag("--trace-instr", opts.config_print_instr, "Enable trace output for instruction execution");
   app.add_flag("--trace-ptw", opts.config_print_ptw, "Enable trace output for Page Table walk");

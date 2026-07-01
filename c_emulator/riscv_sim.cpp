@@ -6,6 +6,7 @@
 #include "file_utils.h"
 #include "jsoncons/config/version.hpp"
 #include "jsoncons/json.hpp"
+#include "mem_dump.h"
 #include "riscv_callbacks_rvfi.h"
 #include "riscv_model_impl.h"
 #ifdef SAILCOV
@@ -138,12 +139,8 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
   }
 
   // Load into memory.
-  elf.load([](uint64_t address, const uint8_t *data, uint64_t length) {
-    // TODO: We could definitely improve on rts.c's memory implementation
-    // (which is O(N^2)) and writing one byte at a time here.
-    for (uint64_t i = 0; i < length; ++i) {
-      write_mem(address + i, data[i]);
-    }
+  elf.load([&model](uint64_t address, const uint8_t *data, uint64_t length) {
+    model.memory().write_bytes(address, 64, data, length);
   });
 
   // Load the entire symbol table.
@@ -230,7 +227,8 @@ void run_sail(
   const CLIOptions &opts,
   std::shared_ptr<traploop_detector> loop_detector,
   const elf_info &elf_info,
-  run_info &run_info
+  run_info &run_info,
+  uint64_t entry
 ) {
   bool is_waiting = false;
   // The emulator tick increments time by 1 at every step, so the number
@@ -309,6 +307,9 @@ void run_sail(
     }
 
     if (model.htif_done()) {
+      if (opts.dump_memory) {
+        dump_memory_to_elf(model, "dump.elf", entry);
+      }
       /* check exit code */
       if (model.htif_exit_code() == 0) {
         fprintf(stdout, "SUCCESS\n");

@@ -62,7 +62,8 @@ void run_sail(
   const CLIOptions &opts,
   std::shared_ptr<traploop_detector> loop_detector,
   const elf_info &elf_info,
-  run_info &run_info
+  run_info &run_info,
+  uint64_t entry
 );
 
 void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, run_info &run_info);
