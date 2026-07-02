@@ -12,6 +12,7 @@ using std::chrono::steady_clock;
 
 struct CLIOptions;
 class traploop_detector;
+class stop_at_pc_callbacks;
 class ModelImpl;
 
 struct elf_info {
@@ -61,6 +62,7 @@ void run_sail(
   ModelImpl &model,
   const CLIOptions &opts,
   std::shared_ptr<traploop_detector> loop_detector,
+  std::shared_ptr<stop_at_pc_callbacks> stop_at_pc,
   const elf_info &elf_info,
   run_info &run_info
 );

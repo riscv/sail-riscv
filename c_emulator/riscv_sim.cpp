@@ -7,6 +7,7 @@
 #include "jsoncons/config/version.hpp"
 #include "jsoncons/json.hpp"
 #include "riscv_callbacks_rvfi.h"
+#include "riscv_callbacks_stop_at_pc.h"
 #include "riscv_model_impl.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
@@ -229,6 +230,7 @@ void run_sail(
   ModelImpl &model,
   const CLIOptions &opts,
   std::shared_ptr<traploop_detector> loop_detector,
+  std::shared_ptr<stop_at_pc_callbacks> stop_at_pc,
   const elf_info &elf_info,
   run_info &run_info
 ) {
@@ -246,7 +248,8 @@ void run_sail(
 
   auto interval_start = steady_clock::now();
 
-  while (!model.htif_done() && (opts.insn_limit == 0 || run_info.total_insns < opts.insn_limit)) {
+  while (!model.htif_done() && !(stop_at_pc && stop_at_pc->stop_requested()) &&
+         (opts.insn_limit == 0 || run_info.total_insns < opts.insn_limit)) {
     if (run_info.rvfi.has_value()) {
       switch (run_info.rvfi->pre_step(opts.config_print_rvfi)) {
       case RVFI_prestep_continue:
