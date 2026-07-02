@@ -88,7 +88,7 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
   let 'm = SEW;
 
   let vm_val  : bits('n)             = read_vmask(num_elem, vm, zvreg);
-  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1); // not used for VV_VRGATHEREI16.
+  let vs1_val : vector('n, bits('m)) = if funct6 == VV_VRGATHEREI16 then vector_init(zeros()) else read_vreg(num_elem, SEW, LMUL_pow, vs1);
   let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
   let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
