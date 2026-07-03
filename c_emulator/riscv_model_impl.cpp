@@ -458,7 +458,7 @@ std::string ModelImpl::memory_access_type_to_string(MemoryAccessType access_type
 std::string ModelImpl::privilege_to_string(Privilege privilege) {
   sail_string sstr;
   CREATE(sail_string)(&sstr);
-  zprivLevel_to_str(&sstr, privilege.ztup0);
+  zprivLevel_to_str(&sstr, privilege);
   std::string str(sstr);
   KILL(sail_string)(&sstr);
   return str;

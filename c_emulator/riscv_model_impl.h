@@ -16,7 +16,7 @@ class ModelImpl final : private hart::Model {
 public:
   // types
 
-  using Privilege = hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
+  using Privilege = hart::zPrivilege;
   using MemoryAccessType = hart::zMemoryAccessTypezIEmem_payloadz5zK;
   using PTW_Error = hart::zPTW_Error;
   using TLB_Entry = hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
