@@ -149,7 +149,7 @@ CLIOptions parse_cli(int argc, char **argv) {
   );
 
   std::size_t column_width = 45;
-  app.get_formatter()->long_option_alignment_ratio(6.f / static_cast<float>(column_width));
+  app.get_formatter()->long_option_alignment_ratio(6.F / static_cast<float>(column_width));
   app.get_formatter()->column_width(column_width);
 
   if (argc == 1) {

@@ -17,7 +17,7 @@ public:
   explicit rvfi_handler(int port, ModelImpl &model);
 
   bool setup_socket(bool config_print);
-  uint64_t get_entry();
+  static uint64_t get_entry();
   void send_trace(bool config_print);
   rvfi_prestep_t pre_step(bool config_print);
 

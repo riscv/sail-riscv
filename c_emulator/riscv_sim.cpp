@@ -102,7 +102,7 @@ void write_signature(const std::string &file, unsigned signature_granularity, co
     return;
   }
   FILE *f = fopen(file.c_str(), "w");
-  if (!f) {
+  if (f == nullptr) {
     fprintf(stderr, "Cannot open file '%s': %s\n", file.c_str(), strerror(errno));
     return;
   }
@@ -531,7 +531,7 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
     write_dtb_to_rom(model, read_file(opts.dtb_file));
   }
 
-  uint64_t entry = run_info.rvfi.has_value() ? run_info.rvfi->get_entry()
+  uint64_t entry = run_info.rvfi.has_value() ? rvfi_handler::get_entry()
                                              : load_sail(model, opts.elfs[0], /*main_file=*/true, elf_info);
 
   fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
