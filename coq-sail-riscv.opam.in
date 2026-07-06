@@ -17,18 +17,18 @@ install: [
   ["sh" "-c" "install build/rocq/* `coqc -where`/user-contrib/Riscv"]
 ]
 depends: [
-  "sail" {>= "0.20.2"}
-  "sail_c_backend" {>= "0.20.2"}
-  "sail_coq_backend" {>= "0.20.2"}
-  "sail_doc_backend" {>= "0.20.2"}
-  "sail_latex_backend" {>= "0.20.2"}
-  "sail_lean_backend" {>= "0.20.2"}
-  "sail_lem_backend" {>= "0.20.2"}
-  "sail_smt_backend" {>= "0.20.2"}
-  "sail_sv_backend" {>= "0.20.2"}
-  "sail_ocaml_backend" {>= "0.20.2"}
-  "sail_output" {>= "0.20.2"}
-  "coq-sail-stdpp" {>= "0.20.2"}
+  "sail" {>= "@sail_required_version_rocq@"}
+  "sail_c_backend" {>= "@sail_required_version_rocq@"}
+  "sail_coq_backend" {>= "@sail_required_version_rocq@"}
+  "sail_doc_backend" {>= "@sail_required_version_rocq@"}
+  "sail_latex_backend" {>= "@sail_required_version_rocq@"}
+  "sail_lean_backend" {>= "@sail_required_version_rocq@"}
+  "sail_lem_backend" {>= "@sail_required_version_rocq@"}
+  "sail_smt_backend" {>= "@sail_required_version_rocq@"}
+  "sail_sv_backend" {>= "@sail_required_version_rocq@"}
+  "sail_ocaml_backend" {>= "@sail_required_version_rocq@"}
+  "sail_output" {>= "@sail_required_version_rocq@"}
+  "coq-sail-stdpp" {>= "@sail_required_version_rocq@"}
   "conf-cmake"
 ]
 synopsis:

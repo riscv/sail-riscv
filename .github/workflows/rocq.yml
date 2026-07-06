@@ -9,7 +9,6 @@ jobs:
       OPAMROOT: /home/rocq/.opam
       # See root comment below
       OPAMROOTISOK: true
-      SAIL_VERSION: "0.20.2"
     container:
       image: rocq/rocq-prover:9.0.1
       # github requires root to access some resources from outside the container
@@ -27,8 +26,18 @@ jobs:
       - name: Update Debian package information
         run: apt update
 
+      - name: Extract version numbers
+        run: |
+          if [ -f cmake/sail_required_version_rocq.txt ]; then \
+            echo "SAIL_VERSION=$(cat cmake/sail_required_version_rocq.txt)" >> "$GITHUB_ENV"; \
+          else \
+            echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"; \
+          fi
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
+        with:
+          sail-version: ${{ env.SAIL_VERSION }}
 
       - name: Install Rocq-specific opam packages
         run: |
