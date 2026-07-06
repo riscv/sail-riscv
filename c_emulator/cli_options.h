@@ -16,6 +16,7 @@ struct CLIOptions {
   bool do_print_dts = false;
   bool do_validate_config = false;
   bool do_print_isa = false;
+  std::string dump_memory_prefix = {};
 
   bool use_rv32_default = false;
   bool disable_trap_loop_detection = false;

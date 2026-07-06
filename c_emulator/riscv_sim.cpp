@@ -16,7 +16,11 @@
 #include "symbol_table.h"
 #include "traploop_detector.h"
 
+#include <algorithm>
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>
+#include <sstream>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -118,6 +122,41 @@ void write_signature(const std::string &file, unsigned signature_granularity, co
   fclose(f);
 }
 
+void write_memory_dump(const MemoryRegion &region, const std::string &prefix) {
+  std::ostringstream file_os;
+  file_os << prefix << ".0x" << std::hex << region.base << ".bin";
+  const std::string file = file_os.str();
+
+  FILE *f = fopen(file.c_str(), "wb");
+  if (!f) {
+    fprintf(stderr, "Cannot create memory dump '%s': %s\n", file.c_str(), strerror(errno));
+    return;
+  }
+
+  constexpr size_t buffer_size = 64 * 1024;
+  std::vector<uint8_t> buffer(buffer_size);
+  uint64_t offset = 0;
+  while (offset < region.size) {
+    size_t chunk = static_cast<size_t>(std::min<uint64_t>(buffer.size(), region.size - offset));
+    for (size_t i = 0; i < chunk; ++i) {
+      buffer[i] = static_cast<uint8_t>(read_mem(region.base + offset + i));
+    }
+    if (fwrite(buffer.data(), 1, chunk, f) != chunk) {
+      fprintf(stderr, "Could not write memory dump '%s': %s\n", file.c_str(), strerror(errno));
+      break;
+    }
+    offset += chunk;
+  }
+
+  fclose(f);
+}
+
+void write_memory_dumps(const std::vector<MemoryRegion> &regions, const std::string &prefix) {
+  for (const auto &region : regions) {
+    write_memory_dump(region, prefix);
+  }
+}
+
 } // namespace
 
 uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file, elf_info &elf_info) {
@@ -202,6 +241,9 @@ void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, 
   // Don't write a signature if there was an internal Sail exception.
   if (!model.had_exception() && !opts.sig_file.empty()) {
     write_signature(opts.sig_file, opts.signature_granularity, elf_info);
+  }
+  if (!opts.dump_memory_prefix.empty()) {
+    write_memory_dumps(model.main_memory_regions(), opts.dump_memory_prefix);
   }
 
   // `model_fini()` exits with failure if there was a Sail exception.
@@ -404,6 +446,9 @@ InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
   }
   if (!opts.trace_log_path.empty()) {
     fprintf(stderr, "using %s for trace output.\n", opts.trace_log_path.c_str());
+  }
+  if (!opts.dump_memory_prefix.empty()) {
+    fprintf(stderr, "will dump main memory on completion using prefix '%s'.\n", opts.dump_memory_prefix.c_str());
   }
 
   if (!opts.config_file.empty()) {
