@@ -128,12 +128,12 @@ void write_memory_dump(const MemoryRegion &region, const std::string &prefix) {
   const std::string file = file_os.str();
 
   FILE *f = fopen(file.c_str(), "wb");
-  if (!f) {
+  if (f == nullptr) {
     fprintf(stderr, "Cannot create memory dump '%s': %s\n", file.c_str(), strerror(errno));
     return;
   }
 
-  constexpr size_t buffer_size = 64 * 1024;
+  constexpr size_t buffer_size = static_cast<size_t>(64 * 1024);
   std::vector<uint8_t> buffer(buffer_size);
   uint64_t offset = 0;
   while (offset < region.size) {

@@ -417,7 +417,7 @@ bool ModelImpl::dtb_within_configured_pma_memory(uint64_t addr, uint64_t size) {
 
 std::vector<MemoryRegion> ModelImpl::main_memory_regions() const {
   std::vector<MemoryRegion> regions;
-  for (auto region = zpma_regions; region != nullptr; region = region->tl) {
+  for (auto *region = zpma_regions; region != nullptr; region = region->tl) {
     if (region->hd.zattributes.zmem_type == hart::zMainMemory) {
       regions.push_back({region->hd.zbase, region->hd.zsizze});
     }
