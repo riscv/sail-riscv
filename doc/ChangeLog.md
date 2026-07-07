@@ -1,8 +1,10 @@
 # Release notes for the next version
 
 - Updates to the [configuration file](../config/config.json.in):
-  - The version of the ISA specification for the model can be
-    specified; see `base.isa_version`.
+  - The version of the privileged ISA specification for the model can
+    be specified; see `base.privileged_isa_version`. Note that not
+    all versions can be specified as yet, and not all version-affected
+    functionality is implemented.
   - Delegatable subsets of `medeleg` and `mideleg` can be specified;
     see `base.medeleg.delegatable_bits` and `base.mideleg.delegatable_bits`.
 
