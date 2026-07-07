@@ -20,18 +20,26 @@ enum IregType = { Mireg, Sireg }
 
 function legalize_iselect(v : xlenbits) -> Iselect = Mk_Iselect(zero_extend(v[11 .. 0]))
 
-function is_ireg_accessible(i: Iselect, ireg : IregType) -> bool =
-    match ireg {
-        Mireg => match i[csr] {
-            _ => false
-        },
-        Sireg => match i[csr] {
-            _ => false
-        },
-    }
+val sspmp_ireg_accessible : (Iselect, IregType) -> bool
+val sspmp_ireg_read       : (IregType, range(0, 6)) -> xlenbits
+val sspmp_ireg_write      : (IregType, range(0, 6), xlenbits) -> xlenbits
 
-function get_ireg(ireg : IregType, i : range(0, 6)) -> xlenbits = zeros()
-function set_ireg(ireg : IregType, i : range(0, 6), value : xlenbits) -> xlenbits = zeros()
+function is_ireg_accessible(i: Iselect, ireg : IregType) -> bool =
+  currentlyEnabled(Ext_Sspmp) & sspmp_ireg_accessible(i, ireg)
+
+function get_ireg(ireg : IregType, i : range(0, 6)) -> xlenbits = {
+  let sel : Iselect = match ireg { Mireg => miselect, Sireg => siselect };
+  if currentlyEnabled(Ext_Sspmp) & sspmp_ireg_accessible(sel, ireg)
+  then sspmp_ireg_read(ireg, i)
+  else zeros()
+}
+
+function set_ireg(ireg : IregType, i : range(0, 6), value : xlenbits) -> xlenbits = {
+  let sel : Iselect = match ireg { Mireg => miselect, Sireg => siselect };
+  if currentlyEnabled(Ext_Sspmp) & sspmp_ireg_accessible(sel, ireg)
+  then sspmp_ireg_write(ireg, i, value)
+  else zeros()
+}
 
 /* Machine indirect register select and alias CSRs */
 mapping clause csr_name_map = 0x350  <-> "miselect"

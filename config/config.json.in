@@ -797,6 +797,9 @@
     "Sspmpen": {
       "supported": true
     },
+    "Sspmpss": {
+      "supported": true
+    },
     "Sstc": {
       "supported": true
     },

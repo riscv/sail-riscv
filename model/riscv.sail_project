@@ -364,6 +364,16 @@ extensions {
     files extensions/Smcsrind/csrind_regs.sail
   }
 
+  Sspmp_indirect {
+    requires core, spmp, Smcsrind
+    files extensions/Sspmp_indirect/sspmp_indirect.sail
+  }
+
+  Sspmpss {
+    requires core, spmp, Zicfiss
+    files extensions/Sspmpss/sspmpss.sail
+  }
+
   Sscofpmf {
     requires core, Zihpm
     files extensions/Sscofpmf/sscofpmf.sail

@@ -136,7 +136,7 @@ function CheckRWX(ent, acc) = {
           LoadReserved(_) => true,
           Store(_) => true,
           StoreConditional(_) => true,
-          Atomic(_, _, _) => true,  // AMO needs both R and W
+          Atomic(_) => true,  // AMO needs both R and W
           CacheAccess(CB_manage(_)) => true,
           CacheAccess(CB_zero()) => true,
           CacheAccess(CB_prefetch(PREFETCH_R)) => true,
@@ -453,7 +453,7 @@ function accessToSpmpFault(acc : MemoryAccessType(mem_payload)) -> ExceptionType
       Store(_)            => E_SAMO_GPage_Fault(),   // Exception code 23
       LoadReserved(_)     => E_Load_GPage_Fault(),   // Exception code 21
       StoreConditional(_) => E_SAMO_GPage_Fault(),   // Exception code 23
-      Atomic(_, _, _)     => E_SAMO_GPage_Fault(),   // Exception code 23
+      Atomic(_)           => E_SAMO_GPage_Fault(),   // Exception code 23
       CacheAccess(_)      => E_SAMO_GPage_Fault()    // CMO faults are store-like here
     }
   } else {
@@ -464,7 +464,7 @@ function accessToSpmpFault(acc : MemoryAccessType(mem_payload)) -> ExceptionType
       Store(_)            => E_SAMO_Page_Fault(),   // Exception code 15
       LoadReserved(_)     => E_Load_Page_Fault(),   // Exception code 13
       StoreConditional(_) => E_SAMO_Page_Fault(),   // Exception code 15
-      Atomic(_, _, _)     => E_SAMO_Page_Fault(),   // Exception code 15
+      Atomic(_)           => E_SAMO_Page_Fault(),   // Exception code 15
       CacheAccess(_)      => E_SAMO_Page_Fault()    // CMO faults are store-like here
     }
   }
@@ -543,6 +543,10 @@ function spmpEntryActive(hw_idx: range(0, 63), cfg: Spmpcfg_ent) -> bool = {
  * Implemented in sys/vmem.sail */
 val translationMode : Privilege -> SATPMode
 
+val spmp_is_ss_region       : Spmpcfg_ent -> bool
+val spmp_check_ss_privilege : (Spmpcfg_ent, MemoryAccessType(mem_payload), Privilege) -> bool
+val spmp_check_ss_access    : (MemoryAccessType(mem_payload), Privilege) -> bool
+
 /*=======================================================================================*/
 /*  Main SPMP Checking Function                                                         */
 /*                                                                                       */
@@ -591,7 +595,7 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   /* SPMP Enablement Check: SPMP is only active when satp.mode == Bare
    * When paged virtual memory is active (satp.mode != Bare), SPMP is disabled
    * and this function should allow all accesses to proceed */
-  if not(hartSupports(Ext_Sspmp)) then return None();  // SPMP not implemented
+  if not(currentlyEnabled(Ext_Sspmp)) then return None();
 
   /* Check SPMP and Paging interaction:
    * - Machine mode: Always uses SPMP if implemented (Machine mode doesn't use virtual memory)
@@ -708,14 +712,20 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
           /* No match, continue to next entry */
           ()
         },
-        SPMP_PartialMatch => {
-          /* Partial match is a violation - deny access */
-          print_endline("SPMP Partial Match Deny: " ^ hex_bits_str(paddr));
-          return Some(accessToSpmpFault(acc))
-        },
+        SPMP_PartialMatch =>
+          return Some(accessToSpmpFault(acc)),
         SPMP_Match => {
-          /* Full match - check permissions */
-          if spmpCheckPerms(cfg, acc, effective_priv) then {
+          /* SPMP privilege failures use page faults. Shadow-stack access failures use access faults. */
+          if spmp_is_ss_region(cfg) then {
+            if not(spmp_check_ss_privilege(cfg, acc, effective_priv)) then
+              return Some(accessToSpmpFault(acc))
+            else if spmp_check_ss_access(acc, effective_priv) then
+              return None()
+            else
+              return Some(accessFaultFromAccessType(acc))
+          } else if is_shadow_stack_access(acc) then {
+            return Some(accessFaultFromAccessType(acc))
+          } else if spmpCheckPerms(cfg, acc, effective_priv) then {
             /* Permission granted */
             return None()
           } else {
@@ -744,7 +754,10 @@ function spmpCheck forall 'n, 0 < 'n <= max_mem_access . (
    *
    * EXCEPTION: When no SPMP entries are active (all switches off or A=OFF),
    * SPMP provides no protection and access is allowed for backward compatibility. */
-  if has_implemented_entries & has_active_entries then {
+  if is_shadow_stack_access(acc) then {
+    /* Shadow-stack accesses require a matching shadow-stack region. */
+    Some(accessFaultFromAccessType(acc))
+  } else if has_implemented_entries & has_active_entries then {
     /* At least one SPMP entry is both implemented AND active, deny unmatched access */
     // let Physaddr(paddr) = addr;
     // print_endline("SPMP No Match Deny: " ^ hex_bits_str(paddr));

@@ -479,10 +479,16 @@ function clause hartSupports(Ext_Ssstateen) = config extensions.Stateen.Ssstatee
 enum clause extension = Ext_Sspmp
 mapping clause extensionName = Ext_Sspmp <-> "sspmp"
 function clause hartSupports(Ext_Sspmp) = config extensions.Sspmp.supported
+function clause currentlyEnabled(Ext_Sspmp) = hartSupports(Ext_Sspmp) & currentlyEnabled(Ext_S)
 // SPMP per-entry enable (context-switch optimization)
 enum clause extension = Ext_Sspmpen
 mapping clause extensionName = Ext_Sspmpen <-> "sspmpen"
 function clause hartSupports(Ext_Sspmpen) = hartSupports(Ext_Sspmp) & config extensions.Sspmpen.supported
+function clause currentlyEnabled(Ext_Sspmpen) = hartSupports(Ext_Sspmpen) & currentlyEnabled(Ext_Sspmp)
+// Supervisor-level PMP Shadow Stack
+enum clause extension = Ext_Sspmpss
+mapping clause extensionName = Ext_Sspmpss <-> "sspmpss"
+function clause hartSupports(Ext_Sspmpss) = sys_enable_experimental_extensions() & config extensions.Sspmpss.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -663,6 +669,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_Ssccptr => 3, // > Sv39
     Ext_Sscsrind => 3, // > Smcsrind
+    Ext_Sspmpss => 3, // > Zicfiss, Sspmp
     Ext_Supm => 3, // > U
     Ext_Svnapot => 3, // > Sv39
     Ext_Svpbmt => 3, // > Sv39
@@ -837,6 +844,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Sspm,
   Ext_Sspmp,
   Ext_Sspmpen,
+  Ext_Sspmpss,
   Ext_Ssqosid,
   Ext_Ssstateen,
   Ext_Sstc,
