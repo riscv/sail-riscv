@@ -113,10 +113,10 @@ private function execute_vsetvl_type(
   let lmul_sew_ratio_new = LMUL_pow_new - SEW_pow_new;
 
   // Check the following:
-  // . SEW cannot exceed ELEN.
-  // . "For a given supported fractional LMUL setting, implementations must
+  // - SEW cannot exceed ELEN.
+  // - "For a given supported fractional LMUL setting, implementations must
   //   support SEW settings between SEWMIN and LMUL * ELEN, inclusive."
-  // . Also some cases require that VLMAX doesn't change (i.e. LMUL/SEW is constant).
+  // - Also some cases require that VLMAX doesn't change (i.e. LMUL/SEW is constant).
   if SEW_pow_new > elen_exp |
      SEW_pow_new > (LMUL_pow_new + elen_exp) |
      (requires_fixed_vlmax & (lmul_sew_ratio != lmul_sew_ratio_new | not(valid_vtype()))) then {
