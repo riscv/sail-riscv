@@ -1,0 +1,16 @@
+{
+  "extensions": {
+    "V": {
+      "support_level": "Float_single",
+      "vlen_exp": 7,
+      "elen_exp": 5,
+      "max_index_eew_exp": 5
+    },
+    "Zvbc": {
+      "supported": false
+    },
+    "Zvknhb": {
+      "supported": false
+    }
+  }
+}
