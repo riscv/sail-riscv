@@ -54,10 +54,8 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 }
 
 private function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
+  let v = Mk_Minterrupts(v & plat_mideleg_delegatable_bits);
   // M-mode interrupt delegation bits "should" be hardwired to 0.
-  // TODO: Configuration options specifying whether M-mode interrupts
-  // can be delegated.
-  let v = Mk_Minterrupts(v);
   [o with
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     MEI   = 0b0,
@@ -88,7 +86,7 @@ bitfield Medeleg : bits(64) = {
 
 private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
   // M-EnvCalls delegation is not supported
-  [Mk_Medeleg(v) with MEnvCall = 0b0]
+  [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with MEnvCall = 0b0]
 }
 
 // Note that mip's MEIP and SEIP had special handling. MEIP is always
