@@ -223,7 +223,7 @@
       // 2^allowed_within_exp sized regions will be split into multiple
       // memory operations. 0 means all misaligned accesses will be split.
       // The maximum value is 12 (one page).
-      "allowed_within_exp": 0,
+      "allowed_within_exp": 12,
       // If the access gets split due to `allowed_within_exp` then the size
       // of the operations will be one byte if `byte_by_byte` is set, otherwise
       // they will be the maximum size possible based on the alignment. For
@@ -326,7 +326,7 @@
         },
         "size": {
           "len": 64,
-          "value": "0x80000000"
+          "value": "0x40000000"
         },
         "attributes": {
           "mem_type": "MainMemory",
@@ -343,6 +343,43 @@
             },
             "vector": {
               "None" : null
+            },
+            "amo": "AccessFault"
+          },
+          "atomic_support": "AMOCASQ",
+          "reservability": "RsrvEventual",
+          "supports_cbo_zero": true,
+          "supports_pte_read": true,
+          "supports_pte_write": true
+        },
+        "include_in_device_tree": true
+      },
+      // RAM that raises access faults on misaligned access.
+      // This is for testing/demo purposes.
+      {
+        "base": {
+          "len": 64,
+          "value": "0xF0000000"
+        },
+        "size": {
+          "len": 64,
+          "value": "0x10000000"
+        },
+        "attributes": {
+          "mem_type": "IOMemory",
+          "cacheable": true,
+          "coherent": true,
+          "executable": true,
+          "readable": true,
+          "writable": true,
+          "read_idempotent": true,
+          "write_idempotent": true,
+          "misaligned_exceptions": {
+            "load_store": {
+              "Some": "AccessFault"
+            },
+            "vector": {
+              "Some": "AccessFault"
             },
             "amo": "AccessFault"
           },
