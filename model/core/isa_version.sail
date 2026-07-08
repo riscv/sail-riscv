@@ -14,9 +14,15 @@
 // different versions.  But for now, there is a single version for
 // both for simplicity.
 
+// The ratification commits (or the closest such commits) for the
+// versions in the specification repository are specified in comments
+// when available.
 enum Privileged_ISA_Version = {
+  // commit f467e5dfd4acb4391870b8bfcfd687a0e5d8eddc (tag: Ratified-IMFDQC-and-Priv-v1.11)
   Privileged_ISA_1_11,
+  // commit 75b2fbbdd783d539da69826fc3c11478b070c10b
   Privileged_ISA_1_12,
+  // commit 2c07aa2bcc02fd5fb2e53e42a32dc62a3eb0aa62 (tag: riscv-isa-release-2c07aa2-2024-10-18)
   Privileged_ISA_1_13,
 }
 
