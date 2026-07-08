@@ -428,6 +428,20 @@ bitfield SEnvcfg : bits(64) = {
   FIOM   : 0,
 }
 
+bitfield HEnvcfg : bits(64) = {
+  STCE  : 63,
+  PBMTE : 62,
+  ADUE  : 61,
+  DTE   : 59,
+  PMM   : 33 .. 32,
+  CBZE  : 7,
+  CBCFE : 6,
+  CBIE  : 5 .. 4,
+  SSE   : 3,
+  LPE   : 2,
+  FIOM  : 0,
+}
+
 private function legalize_xenvcfg_cbie(cbie : bits(2)) -> bits(2) = {
   if cbie != 0b10 then {
     cbie
@@ -475,53 +489,6 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
 // Initialised to legal values in case some bits are hard-coded to 1.
 register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
 
-// This register is private to ensure that it is read using `read_senvcfg()`.
-private register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
-
-// "When menvcfg.SSE is 0, the henvcfg.SSE and senvcfg.SSE fields are read-only zero."
-// This function should be used for any read of the `senvcfg` CSR that includes the SSE bit.
-// TODO: When henvcfg.SSE is 0, the senvcfg.SSE field will read as zero and is read-only.
-function read_senvcfg() -> SEnvcfg =
-  [senvcfg with SSE = menvcfg[SSE] & senvcfg[SSE]]
-
-mapping clause csr_name_map = 0x30A  <-> "menvcfg"
-mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
-mapping clause csr_name_map = 0x10A  <-> "senvcfg"
-
-function clause is_CSR_accessible(0x30A, _, _) = currentlyEnabled(Ext_U) & xenvcfg_csrs_are_defined // menvcfg
-function clause is_CSR_accessible(0x31A, _, _) = currentlyEnabled(Ext_U) & (xlen == 32) & xenvcfg_csrs_are_defined // menvcfgh
-
-// This should ideally also check `xstateen.ENVCFG`, but due to module
-// interdependency issues, that is handled by `stateen_allows_CSR_access`.
-function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) & xenvcfg_csrs_are_defined // senvcfg
-
-function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
-function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
-function clause read_CSR(0x10A) = read_senvcfg().bits[xlen - 1 .. 0]
-
-function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Ok(menvcfg.bits[31 .. 0]) }
-function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); Ok(menvcfg.bits) }
-function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Ok(menvcfg.bits[63 .. 32]) }
-function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(read_senvcfg().bits[xlen - 1 .. 0]) }
-
-// Hypervisor Environment Configuration
-
-bitfield HEnvcfg : bits(64) = {
-  STCE  : 63,
-  PBMTE : 62,
-  ADUE  : 61,
-  DTE   : 59,
-  PMM   : 33 .. 32,
-  CBZE  : 7,
-  CBCFE : 6,
-  CBIE  : 5 .. 4,
-  SSE   : 3,
-  LPE   : 2,
-  FIOM  : 0,
-}
-
-register henvcfg : HEnvcfg
-
 private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
   let v = Mk_HEnvcfg(v);
   [h with
@@ -539,15 +506,49 @@ private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
   ]
 }
 
+// This register is private to ensure that it is read using `read_senvcfg()`.
+private register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
+
+register henvcfg : HEnvcfg = legalize_henvcfg(Mk_HEnvcfg(zeros()), zeros())
+
+function read_senvcfg() -> SEnvcfg = {
+  let SSE : bool = match cur_privilege {
+    Machine           => menvcfg[SSE] == 0b1,
+    Supervisor        => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
+    User              => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
+    VirtualSupervisor => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1,
+    VirtualUser       => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
+  };
+  [senvcfg with SSE = bool_bit(SSE)];
+}
+
+mapping clause csr_name_map = 0x30A  <-> "menvcfg"
+mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
+mapping clause csr_name_map = 0x10A  <-> "senvcfg"
 mapping clause csr_name_map = 0x60A <-> "henvcfg"
 mapping clause csr_name_map = 0x61A <-> "henvcfgh"
+
+function clause is_CSR_accessible(0x30A, _, _) = currentlyEnabled(Ext_U) & xenvcfg_csrs_are_defined // menvcfg
+function clause is_CSR_accessible(0x31A, _, _) = currentlyEnabled(Ext_U) & (xlen == 32) & xenvcfg_csrs_are_defined // menvcfgh
+
+// This should ideally also check `xstateen.ENVCFG`, but due to module
+// interdependency issues, that is handled by `stateen_allows_CSR_access`.
+function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) & xenvcfg_csrs_are_defined // senvcfg
 
 function clause is_CSR_accessible(0x60A, _, _) = currentlyEnabled(Ext_H) // henvcfg
 function clause is_CSR_accessible(0x61A, _, _) = currentlyEnabled(Ext_H) & xlen == 32 // henvcfgh
 
+function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
+function clause read_CSR(0x10A) = read_senvcfg().bits[xlen - 1 .. 0]
+
 function clause read_CSR(0x60A) = henvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x61A if xlen == 32) = henvcfg.bits[63 .. 32]
 
+function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Ok(menvcfg.bits[31 .. 0]) }
+function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); Ok(menvcfg.bits) }
+function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Ok(menvcfg.bits[63 .. 32]) }
+function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(read_senvcfg().bits[xlen - 1 .. 0]) }
 function clause write_CSR((0x60A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, henvcfg.bits[63 .. 32] @ value); Ok(henvcfg.bits[xlen - 1 .. 0]) }
 function clause write_CSR((0x60A, value) if xlen == 64) = { henvcfg = legalize_henvcfg(henvcfg, value); Ok(henvcfg.bits[xlen - 1 .. 0]) }
 function clause write_CSR((0x61A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, value @ henvcfg.bits[31 .. 0]); Ok(henvcfg.bits[63 .. 32]) }

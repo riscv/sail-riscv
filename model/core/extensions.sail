@@ -97,10 +97,7 @@ function clause hartSupports(Ext_Zicfilp) = config extensions.Zicfilp.supported
 // Control-flow Integrity: Shadow Stack
 enum clause extension = Ext_Zicfiss
 mapping clause extensionName = Ext_Zicfiss <-> "zicfiss"
-// TODO: Hypervisor support is incomplete.
-// Currently disabled to prevent simulation failures.
-// Will be implemented before the PR is finalized.
-function clause hartSupports(Ext_Zicfiss) = false //config extensions.Zicfiss.supported
+function clause hartSupports(Ext_Zicfiss) = config extensions.Zicfiss.supported
 // Base Counters and Timers
 enum clause extension = Ext_Zicntr
 mapping clause extensionName = Ext_Zicntr <-> "zicntr"
