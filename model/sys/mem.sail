@@ -67,7 +67,7 @@ function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
 // granule to use. In future, this could be extended to cover memory
 // ordering properties.
 
-struct PM_Access_Info = {
+struct Phys_Mem_Access_Info = {
   // Whether the access should be split.
   splittable : Splittability,
   // The granule size to use for any splitting.
@@ -81,7 +81,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   access     : MemoryAccessType(mem_payload),
   pbmt       : page_based_mem_type,
   res_or_con : bool,
-)  -> result(PM_Access_Info, ExceptionType) = {
+)  -> result(Phys_Mem_Access_Info, ExceptionType) = {
 
   let attributes : PMA = match matching_pma_region(pma_regions, paddr, width) {
     None() =>
@@ -169,7 +169,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   // Check if we need to raise an exception for misalignment.
 
   match mag_pma_check(attributes, access, paddr, width) {
-    Ok((splittable, granule)) => Ok(struct { splittable, granule_size_exp = granule }),
+    Ok((splittable, granule_size_exp)) => Ok(struct { splittable, granule_size_exp }),
 
     Err(e) => {
       if get_config_print_pma()
@@ -190,7 +190,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   paddr : physaddr,
   width : int('n),
   res_or_con : bool,
-) -> result(PM_Access_Info, ExceptionType) = {
+) -> result(Phys_Mem_Access_Info, ExceptionType) = {
 
   // Although the relative ordering of PMA and PMP checks is
   // unspecified, access faults do have a higher priority than
