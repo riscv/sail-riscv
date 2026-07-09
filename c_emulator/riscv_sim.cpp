@@ -133,6 +133,9 @@ void write_memory_dump(const MemoryRegion &region, const std::string &prefix) {
     return;
   }
 
+  // TODO: In C++23 we can use a literal suffix: 64 * 1024ZU
+  // (upper-case due to the clang-tidy
+  // `readability-uppercase-literal-suffix` check).
   constexpr size_t buffer_size = static_cast<size_t>(64 * 1024);
   std::vector<uint8_t> buffer(buffer_size);
   uint64_t offset = 0;
