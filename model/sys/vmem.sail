@@ -258,7 +258,9 @@ function pt_walk(
                 ppn
               };
 
-              let pbmt = if menvcfg[PBMTE] == 0b0 then PBMT_PMA else page_based_mem_type(pte_ext[PBMT]);
+              let pbmt = if menvcfg[PBMTE] == 0b0 | (stage == VS_Stage & henvcfg[PBMTE] == 0b0)
+                         then PBMT_PMA
+                         else page_based_mem_type(pte_ext[PBMT]);
 
               ptw_success_callback(zero_extend(ppn), level);
               // Store the original (pre-translation) PTE address for 2-stage translation in VS-Stage.
