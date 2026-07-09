@@ -139,6 +139,13 @@ function dirty_v_context() -> unit = {
   mstatus[VS] = extStatus_map(Dirty);
   mstatus[SD] = 0b1;
   long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+  // When V=1 both vsstatus.VS and mstatus.VS are in effect, and modifying
+  // vector state must set both to Dirty.
+  if inVirtualPrivilege() then {
+    vsstatus[VS] = extStatus_map(Dirty);
+    vsstatus[SD] = 0b1;
+    csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0]);
+  }
 }
 
 function wV (Vregno(r) : vregno, v : vlenbits) -> unit = {
