@@ -159,7 +159,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
                          then return Illegal_Instruction(),
     VirtualSupervisor => if menvcfg[SSE] == 0b0
                          then return Illegal_Instruction()
-                         else if henvcfg[SSE] == 0b0
+                         else if read_henvcfg()[SSE] == 0b0
                          then return Virtual_Instruction(),
     VirtualUser       => if menvcfg[SSE] == 0b0
                          then return Illegal_Instruction()

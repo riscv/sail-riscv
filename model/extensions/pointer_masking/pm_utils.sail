@@ -17,7 +17,7 @@ private function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = matc
   // NOTE: HLV/HSV executed from U-mode (hstatus.HU=1) instead take their PMM
   // from hstatus.HUPMM, not senvcfg.PMM. get_pmm cannot distinguish that case
   // from a regular VU access, so HLV/HSV use get_hlsv_pmlen below instead.
-  VirtualSupervisor => pmm_mode(henvcfg[PMM]),
+  VirtualSupervisor => pmm_mode(read_henvcfg()[PMM]),
   VirtualUser       => pmm_mode(read_senvcfg()[PMM]),
 }
 

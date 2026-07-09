@@ -53,7 +53,7 @@ private function cbop_priv_check(p: Privilege) -> checked_cbop = {
                      then encdec_cbie(read_senvcfg()[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
   let hCBIE : cbie = if currentlyEnabled(Ext_H)
-                     then encdec_cbie(henvcfg[CBIE])
+                     then encdec_cbie(read_henvcfg()[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
   match (p, mCBIE, sCBIE, hCBIE) {
     (Machine, _, _ , _                       ) => CBOP_INVAL_INVAL,
@@ -110,14 +110,14 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
 }
 
 function clause execute ZICBOM(CBO_CLEAN, rs1) =
-  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], henvcfg[CBCFE]) {
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], read_henvcfg()[CBCFE]) {
     FEATURE_ENABLED => process_clean_inval(rs1, CBO_CLEAN),
     FEATURE_ILLEGAL => Illegal_Instruction(),
     FEATURE_VIRTUAL => Virtual_Instruction(),
   }
 
 function clause execute ZICBOM(CBO_FLUSH, rs1) =
-  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], henvcfg[CBCFE]) {
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], read_henvcfg()[CBCFE]) {
     FEATURE_ENABLED => process_clean_inval(rs1, CBO_FLUSH),
     FEATURE_ILLEGAL => Illegal_Instruction(),
     FEATURE_VIRTUAL => Virtual_Instruction(),

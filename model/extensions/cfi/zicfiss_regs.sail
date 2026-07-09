@@ -23,7 +23,7 @@ function zicfiss_xSSE(priv : Privilege) -> bool =
     Machine           => // "Use of Zicfiss in M-mode is not supported."
                          false,
     Supervisor        => bool_bit(menvcfg[SSE]),
-    VirtualSupervisor => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1,
+    VirtualSupervisor => menvcfg[SSE] == 0b1 & read_henvcfg()[SSE] == 0b1,
     User              => bool_bit(read_senvcfg()[SSE]),
     VirtualUser       => bool_bit(read_senvcfg()[SSE]),
   })
@@ -37,8 +37,8 @@ private function is_ssp_accessible(priv : Privilege) -> bool =
     User              => menvcfg[SSE] == 0b1 & (read_senvcfg()[SSE] == 0b1 | not(currentlyEnabled(Ext_S))),
     // NOTE: In theory we only have to call read_senvcfg() for VS/VU but I prefer to be more explicit.
     // IMHO we should get rid of read_senvcfg and just explicit apply the (m/s/h)envcfg.SEE rule.
-    VirtualSupervisor => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1,
-    VirtualUser       => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1 & read_senvcfg()[SSE] == 0b1,
+    VirtualSupervisor => menvcfg[SSE] == 0b1 & read_henvcfg()[SSE] == 0b1,
+    VirtualUser       => menvcfg[SSE] == 0b1 & read_henvcfg()[SSE] == 0b1 & read_senvcfg()[SSE] == 0b1,
   })
 
 register ssp : xlenbits = zeros()

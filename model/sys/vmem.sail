@@ -109,7 +109,7 @@ private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . 
     Some(pte) => // The PTE has new A/D bits.  If neither Svadu or Svade is supported,
                  // the current default is to update the PTE.
                 if (currentlyEnabled(Ext_Svadu) & (match stage {
-                    VS_Stage => henvcfg[ADUE] == 0b1,
+                    VS_Stage => read_henvcfg()[ADUE] == 0b1,
                     _        => menvcfg[ADUE] == 0b1,
                     }))
                   | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)))
@@ -258,7 +258,7 @@ function pt_walk(
                 ppn
               };
 
-              let pbmt = if menvcfg[PBMTE] == 0b0 | (stage == VS_Stage & henvcfg[PBMTE] == 0b0)
+              let pbmt = if menvcfg[PBMTE] == 0b0 | (stage == VS_Stage & read_henvcfg()[PBMTE] == 0b0)
                          then PBMT_PMA
                          else page_based_mem_type(pte_ext[PBMT]);
 

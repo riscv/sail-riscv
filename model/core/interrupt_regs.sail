@@ -71,7 +71,7 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     // * hvip.VSTIP; and
     // * any other platform-specific timer interrupt signal directed to VS-Level"
     VSTI = if currentlyEnabled(Ext_H) then (
-      if currentlyEnabled(Ext_Sstc) & henvcfg[STCE] == 0b1
+      if currentlyEnabled(Ext_Sstc) & read_henvcfg()[STCE] == 0b1
       then o[VSTI]    // clint_dispatch() updates it, preserve
       else hvip[VSTI] // software-only, use hvip
     ) else 0b0,

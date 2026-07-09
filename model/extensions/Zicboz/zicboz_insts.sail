@@ -22,7 +22,7 @@ mapping clause assembly = ZICBOZ(rs1)
   <-> "cbo.zero" ^ spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
 function clause execute ZICBOZ(rs1) = {
-  match feature_enabled_for_priv(cur_privilege, menvcfg[CBZE], read_senvcfg()[CBZE], henvcfg[CBZE]) {
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBZE], read_senvcfg()[CBZE], read_henvcfg()[CBZE]) {
     FEATURE_ENABLED => (),
     FEATURE_ILLEGAL => return Illegal_Instruction(),
     FEATURE_VIRTUAL => return Virtual_Instruction(),
