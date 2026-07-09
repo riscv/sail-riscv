@@ -147,7 +147,7 @@ private function clint_dispatch(mip_was_written : bool) -> unit = {
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
     mip[STI] = bool_to_bit(stimecmp <=_u mtime);
   };
-  if currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) & henvcfg[STCE] == 0b1 & hcounteren[TM] == 0b1 then {
+  if currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) & henvcfg[STCE] == 0b1 then {
     // VSTI is the OR of hvip.VSTI and the hardware timer comparator.
     // The comparator result changes when mtime ticks, htimedelta changes,
     // vstimecmp changes, OR the enable bits become 1.
