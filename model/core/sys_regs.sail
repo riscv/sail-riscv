@@ -509,7 +509,16 @@ private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
 // This register is private to ensure that it is read using `read_senvcfg()`.
 private register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
 
-register henvcfg : HEnvcfg = legalize_henvcfg(Mk_HEnvcfg(zeros()), zeros())
+// This register is private to ensure that it is read using `read_henvcfg()`.
+private register henvcfg : HEnvcfg = legalize_henvcfg(Mk_HEnvcfg(zeros()), zeros())
+
+function read_henvcfg() -> HEnvcfg =
+  [henvcfg with
+    STCE  = menvcfg[STCE]  & henvcfg[STCE],
+    PBMTE = menvcfg[PBMTE] & henvcfg[PBMTE],
+    ADUE  = menvcfg[ADUE]  & henvcfg[ADUE],
+    SSE   = menvcfg[SSE]   & henvcfg[SSE],
+  ]
 
 function read_senvcfg() -> SEnvcfg = {
   let SSE : bool = match cur_privilege {
@@ -542,16 +551,16 @@ function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
 function clause read_CSR(0x10A) = read_senvcfg().bits[xlen - 1 .. 0]
 
-function clause read_CSR(0x60A) = henvcfg.bits[xlen - 1 .. 0]
-function clause read_CSR(0x61A if xlen == 32) = henvcfg.bits[63 .. 32]
+function clause read_CSR(0x60A) = read_henvcfg().bits[xlen - 1 .. 0]
+function clause read_CSR(0x61A if xlen == 32) = read_henvcfg().bits[63 .. 32]
 
 function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Ok(menvcfg.bits[31 .. 0]) }
 function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); Ok(menvcfg.bits) }
 function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Ok(menvcfg.bits[63 .. 32]) }
 function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(read_senvcfg().bits[xlen - 1 .. 0]) }
-function clause write_CSR((0x60A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, henvcfg.bits[63 .. 32] @ value); Ok(henvcfg.bits[xlen - 1 .. 0]) }
-function clause write_CSR((0x60A, value) if xlen == 64) = { henvcfg = legalize_henvcfg(henvcfg, value); Ok(henvcfg.bits[xlen - 1 .. 0]) }
-function clause write_CSR((0x61A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, value @ henvcfg.bits[31 .. 0]); Ok(henvcfg.bits[63 .. 32]) }
+function clause write_CSR((0x60A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, henvcfg.bits[63 .. 32] @ value); Ok(read_henvcfg().bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x60A, value) if xlen == 64) = { henvcfg = legalize_henvcfg(henvcfg, value); Ok(read_henvcfg().bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x61A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, value @ henvcfg.bits[31 .. 0]); Ok(read_henvcfg().bits[63 .. 32]) }
 
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences

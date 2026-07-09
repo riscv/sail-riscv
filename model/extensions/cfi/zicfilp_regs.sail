@@ -27,7 +27,7 @@ function get_xLPE(p : Privilege) -> bool =
     User              => if   currentlyEnabled(Ext_S)
                          then bool_bit(read_senvcfg()[LPE])
                          else bool_bit(menvcfg[LPE]),
-    VirtualSupervisor => bool_bit(henvcfg[LPE]),
+    VirtualSupervisor => bool_bit(read_henvcfg()[LPE]),
     VirtualUser       => bool_bit(read_senvcfg()[LPE]),
   }
 

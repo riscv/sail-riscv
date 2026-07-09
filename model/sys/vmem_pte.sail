@@ -101,7 +101,7 @@ private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext, stage 
     // N/PBMT/60t59b are reserved if not implemented.
     | pte_ext[N]          != zeros() & not(currentlyEnabled(Ext_Svnapot))
     | pte_ext[PBMT]       != zeros() & (match stage {
-        VS_Stage => (menvcfg[PBMTE] == 0b0 | henvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))),
+        VS_Stage => (menvcfg[PBMTE] == 0b0 | read_henvcfg()[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))),
         _        => (menvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))),
       })
     | pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b))
