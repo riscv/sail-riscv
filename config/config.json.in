@@ -426,7 +426,17 @@
       "supported": true
     },
     "F": {
-      "supported": true
+      "supported": true,
+      // When to set mstatus[FS] and mstatus[SD] to 1, as a result of fflags
+      // being set. There are three options:
+      //
+      // - Fflags_Dirty_Precise: Only set FS/SD when absolutely required, because
+      //                         fflags has actually changed value.
+      // - Fflags_Dirty_Flag: Set FS/SD when the instruction sets a flag, even
+      //                      if that flag is already set.
+      // - Fflags_Dirty_Instruction: Set FS/SD when we execute an instruction that
+      //                             might set a flag, even if it actually doesn't.
+      "fflags_dirty_policy": "Fflags_Dirty_Precise"
     },
     "D": {
       "supported": true

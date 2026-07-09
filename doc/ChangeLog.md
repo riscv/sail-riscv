@@ -5,6 +5,8 @@
     specified; see `base.isa_version`.
   - Delegatable subsets of `medeleg` and `mideleg` can be specified;
     see `base.medeleg.delegatable_bits` and `base.mideleg.delegatable_bits`.
+  - Add the `extensions.F.fflags_dirty_policy` option to configure exactly
+    when mstatus[FS/SD] is set by floating point instructions.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1794 : `vtype.vill` was not set when SEW was configured to exceed ELEN

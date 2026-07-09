@@ -190,3 +190,14 @@ let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reser
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
 let illegal_vtype_reserved_behavior : IllegalVtypeReservedBehavior = config extensions.V.reserved_behavior.illegal_vtype
 let vstart_reserved_behavior : OOBVstartReservedBehavior = config extensions.V.reserved_behavior.vstart_out_of_bounds
+
+enum FflagsDirtyPolicy = {
+  // Only set dirty bits when required (fflags value changes).
+  Fflags_Dirty_Precise,
+  // Set dirty bits when an instruction would set a new fflag (even if it was already set).
+  Fflags_Dirty_Flag,
+  // Set dirty bits when an instruction is executed that *could* set an fflag.
+  Fflags_Dirty_Instruction,
+}
+
+let fflags_dirty_policy : FflagsDirtyPolicy = config extensions.F.fflags_dirty_policy
