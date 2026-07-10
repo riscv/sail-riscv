@@ -49,6 +49,11 @@ function stateen_allows_CSR_access(csr : csreg, priv : Privilege, _access_type :
     // senvcfg
     (0x10A, priv) => check_stateen_bit(priv, STATEEN_ENVCFG, 0),
 
+    // henvcfg
+    (0x60A, priv) => check_stateen_bit(priv, STATEEN_ENVCFG, 0),
+    // henvcfgh
+    (0x61A, priv) => check_stateen_bit(priv, STATEEN_ENVCFG, 0),
+
     // srmcfg
     (0x181, priv) => check_stateen_bit(priv, STATEEN_SRMCFG, 0),
 
