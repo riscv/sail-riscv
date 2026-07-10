@@ -304,18 +304,13 @@ function clause write_CSR(0x645, value) = {
 function clause write_CSR(0x604, value) = { mie = legalize_hie(mie, value); Ok(lower_mie_to_hie(mie).bits) }
 function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(mip).bits) }
 
-private function legalize_hedeleg(_m : Medeleg, v : bits(64)) -> Medeleg = {
-  [Mk_Medeleg(v) with
-    SAMO_GPage_Fault  = 0b0,
-    Virtual_Instr     = 0b0,
-    Load_GPage_Fault  = 0b0,
-    Fetch_GPage_Fault = 0b0,
-    // TODO: Double Trap are read-only 0
-    MEnvCall          = 0b0,
-    VSEnvCall         = 0b0,
-    SEnvCall          = 0b0,
-  ]
-}
+// hedeleg is writable only for the synchronous exceptions that may be
+// delegated to VS-mode. Codes 0-8, 12, 13, 15, 18, everything else is
+// read-only zero.
+let hedeleg_writable_mask : bits(64) = 0x000000000004B1FF
+
+private function legalize_hedeleg(_m : Medeleg, v : bits(64)) -> Medeleg =
+  Mk_Medeleg(v & hedeleg_writable_mask)
 
 private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
