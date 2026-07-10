@@ -499,7 +499,7 @@ private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
     PMM  = if currentlyEnabled(Ext_Ssnpm) then v[PMM] else 0b00,
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE  = if currentlyEnabled(Ext_Zicbom) then v[CBIE]  else 0b00,
+    CBIE  = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
     SSE   = if currentlyEnabled(Ext_Zicfiss) & menvcfg[SSE] == 0b1 then v[SSE] else 0b0,
     LPE   = if hartSupports(Ext_Zicfilp) then v[LPE]  else 0b0,
     FIOM  = if sys_enable_writable_fiom  then v[FIOM] else 0b0,
