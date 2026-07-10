@@ -496,7 +496,7 @@ private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
     PBMTE = if currentlyEnabled(Ext_Svpbmt) & menvcfg[PBMTE] == 0b1 then v[PBMTE] else 0b0,
     ADUE  = if currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1 then v[ADUE] else 0b0,
     // DTE  = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
-    PMM  = if currentlyEnabled(Ext_Ssnpm) then v[PMM] else 0b00,
+    PMM  = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else h[PMM],
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE  = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
