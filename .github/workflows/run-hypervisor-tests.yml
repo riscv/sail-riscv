@@ -327,3 +327,82 @@ jobs:
 
           echo "passed=$pass failed=$fail"
           [ "$fail" -eq 0 ]
+
+  alibaba-hypervisor-tests:
+    name: "XUANTIE-RV/damo-rv-priv-ats alibaba hypervisor suite"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          # Git history is needed for `git describe` in the build to work.
+          fetch-depth: 0
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          install-clang: "true"
+
+      - name: Cache RISC-V toolchain
+        id: cache-riscv
+        uses: actions/cache@v4
+        with:
+          path: /opt/riscv
+          key: riscv-toolchain-2026.03.13
+
+      - name: Install RISC-V toolchains
+        if: steps.cache-riscv.outputs.cache-hit != 'true'
+        run: |
+          wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2026.03.13/riscv64-elf-ubuntu-22.04-gcc.tar.xz
+          mkdir -p /opt/riscv
+          tar -xf riscv64-elf-ubuntu-22.04-gcc.tar.xz --strip-components=1 -C /opt/riscv
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld ninja-build gcc g++ cmake
+
+      - name: Add toolchain to PATH
+        run: echo "/opt/riscv/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies
+        run: pip3 install pyyaml --break-system-packages
+
+      - name: Set environment variables
+        run: |
+          echo "RISCV=/opt/riscv" >> $GITHUB_ENV
+          echo "SAIL=$(pwd)/build/c_emulator/sail_riscv_sim" >> $GITHUB_ENV
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          ninja -C build all
+
+      - name: Checkout XUANTIE-RV/damo-rv-priv-ats and build hypervisor tests
+        shell: bash
+        run: |
+          git clone https://github.com/XUANTIE-RV/damo-rv-priv-ats.git
+          git -C damo-rv-priv-ats checkout 96c5cfab
+
+      - name: Run XUANTIE-RV/damo-rv-priv-ats hypervisor tests
+        shell: bash
+        run: |
+          EXTS="Hypervisor
+                Sv39x4 Sv48x4 Sv57x4
+                Sv39x4_Sv39 Sv39x4_Sv48 Sv39x4_Sv57
+                Sv48x4_Sv39 Sv48x4_Sv48 Sv48x4_Sv57
+                Sv57x4_Sv39 Sv57x4_Sv48 Sv57x4_Sv57
+                Hypervisor_Smstateen Hypervisor_Ssccptr Hypervisor_Ssstateen
+                Hypervisor_Sstc Hypervisor_Sstvala Hypervisor_Svadu
+                Hypervisor_Svinval Hypervisor_Svnapot Hypervisor_Svpbmt
+                Sha Shgatpa Shcounterenw Shlcofideleg
+                Shtvala Shvsatpa Shvstvala Shvstvecd"
+
+          fail=0
+          for ext in $EXTS; do
+            make -C damo-rv-priv-ats/$ext sail \
+              CROSS_COMPILER=riscv64-unknown-elf- SAIL=${{ env.SAIL }} || fail=1
+          done
+          exit $fail
