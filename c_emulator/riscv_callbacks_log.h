@@ -51,4 +51,5 @@ private:
   bool config_print_ptw;
   bool config_print_tlb;
   FILE *trace_log;
+  std::vector<uint64_t> pending_flush_indices{};
 };

@@ -166,9 +166,6 @@ void log_callbacks::ptw_fail_callback(
 
 namespace {
 
-// TODO: make this a class member and avoid a global.
-std::vector<uint64_t> pending_flush_indices;
-
 void print_tlb(FILE *trace_log, ModelImpl &, ModelImpl::TLB tlb, const std::vector<uint64_t> &indices, bool is_flush) {
   fprintf(
     trace_log,
