@@ -183,6 +183,8 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 }
 
 // Check if access is permitted according to PMPs and PMAs.
+// NOTE: this function is only used for unsplit accesses such
+// as CBOs and an unpaired SC.
 function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
   pbmt : page_based_mem_type,
@@ -215,57 +217,69 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   rl : bool,
   res: bool,
   meta : bool,
-) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  match phys_access_check(access, pbmt, priv, paddr, width, res) {
-    Err(e) => Err(e),
+) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
 
-    Ok(access_info) => {
-      // If the load is misaligned or an allowed misaligned access,
-      // split into `N` (single-copy-atomic) memory operations, each
-      // of `split_width` width. If the load is aligned, then `N` = 1
-      // and `split_width` == `width`.
-      let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
+  // PMA checks might require splitting the access due to the MAG
+  // PMA. If the access is split, the spec requires that PMP checks
+  // must be done on each decomposed access.  So PMA checks are done
+  // before PMP checks.
+  let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, res) {
+    Err(e)          => return Err(e),
+    Ok(access_info) => access_info,
+  };
 
-      let paddr_bits = bits_of(paddr);
+  // If the load is misaligned or an allowed misaligned access,
+  // split into `N` (single-copy-atomic) memory operations, each
+  // of `split_width` width. If the load is aligned, then `N` = 1
+  // and `split_width` == `width`.
+  let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
 
-      var data = zeros(8 * N * split_width);
-      // TODO: handle folding of read metadata across all the splits.
+  let paddr_bits = bits_of(paddr);
 
-      let (first, last, step) = misaligned_order(N);
-      var i : range(0, 'N - 1) = first;
-      var finished : bool = false;
+  var data = zeros(8 * N * split_width);
+  // TODO: handle folding of read metadata across all the splits.
 
-      repeat {
-        let offset = i;
-        let paddr = Physaddr(paddr_bits + (offset * split_width));
+  let (first, last, step) = misaligned_order(N);
+  var i : range(0, 'N - 1) = first;
+  var finished : bool = false;
 
-        // Since splitting is within 4K page boundaries and PMAs are
-        // page-aligned, every split will be in a homogeneous region,
-        // though the code looks otherwise.
+  let rk = read_kind_of_flags(aq, rl, res);
 
-        let split_data =
-          if   within_mmio_readable(paddr, width)
-          then match mmio_read(access, paddr, split_width) {
-            Err(e) => return Err(e),
-            Ok(mmio_data) => mmio_data,
-          } else {
-            let rk = read_kind_of_flags(aq, rl, res);
-            let (ram_data, _meta) = read_ram(rk, paddr, split_width, meta);
-            ram_data
-          };
-        data[(8 * (offset + 1) * split_width - 1) .. 8 * offset * split_width] = split_data;
+  repeat {
+    let offset = i;
+    let paddr = Physaddr(paddr_bits + (offset * split_width));
 
-        if offset == last then {
-          finished = true
-        } else {
-          i = offset + step
-        }
-      } until finished;
+    // As mentioned above, PMP checks are done on each split access.
+    match pmpCheck(paddr, split_width, access, priv) {
+      Some(e) => return Err(e),
+      None()  => (),
+    };
 
-      // See above: metadata is not handled.
-      Ok((data, default_meta))
-    },
-  }
+    // Since splitting is within 4K page boundaries and PMAs are
+    // page-aligned, every split will be in a homogeneous region,
+    // though the code looks otherwise.
+
+    let split_data =
+      if   within_mmio_readable(paddr, split_width)
+      then match mmio_read(access, paddr, split_width) {
+        Err(e) => return Err(e),
+        Ok(mmio_data) => mmio_data,
+      } else {
+        let (ram_data, _meta) = read_ram(rk, paddr, split_width, meta);
+        ram_data
+      };
+    data[(8 * (offset + 1) * split_width - 1) .. 8 * offset * split_width] = split_data;
+
+    if offset == last then {
+      finished = true
+    } else {
+      i = offset + step
+    }
+  } until finished;
+
+  // See above: metadata is not handled.
+  Ok((data, default_meta))
+}
 
 // This lets the Rocq extraction know why the repeat loop above terminates
 termination_measure checked_mem_read repeat N
@@ -305,25 +319,58 @@ function mem_read (access, pbmt, paddr, width, aq, rel, res) =
 // This function is always called before `mem_write_value`, i.e. it is not used before `mem_write_value_priv`.
 // It hence operates at effective privilege.
 val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(unit)
-function mem_write_ea(addr, width, access, pbmt, aq, rl, con) = {
+function mem_write_ea(paddr, width, access, pbmt, aq, rl, con) = {
   let priv = effectivePrivilege(access, mstatus, cur_privilege);
 
   // This function should only succeed when `mem_write_value` would
   // succeed, and fail when `mem_write_value` would fail. This means
-  // it should at least perform the same PMP/PMA checks. However,
-  // there is a corner case that is not handled here: writes to MMIO
-  // regions, where the failure of those writes can only be determined
-  // currently by actually trying to perform those writes. In such
-  // cases, `mem_write_ea` could still succeed when the
-  // `mem_write_value` would fail. Since `mem_write_ea` is used only
-  // for the concurrency model, this will be an issue when that model
-  // is extended for MMIO, but until then, this should suffice for
-  // concurrency of RAM accesses.
+  // it should at least perform the same PMP/PMA checks, and includes
+  // matching behavior for split accesses.
+  //
+  // However, there is a corner case that is not handled here: writes
+  // to MMIO regions, where the failure of those writes can only be
+  // determined currently by actually trying to perform those
+  // writes. In such cases, `mem_write_ea` could still succeed when
+  // the `mem_write_value` would fail. Since `mem_write_ea` is used
+  // only for the concurrency model, this will be an issue when that
+  // model is extended for MMIO, but until then, this should suffice
+  // for concurrency of RAM accesses.
 
-  match phys_access_check(access, pbmt, priv, addr, width, con) {
-    Ok(_)   => Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width)),
-    Err(e)  => Err(e)
-  }
+  // See comment in `checked_mem_read()` on the ordering of PMA and PMP checks.
+
+  let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, con) {
+    Err(e)          => return Err(e),
+    Ok(access_info) => access_info,
+  };
+
+  let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
+
+  let paddr_bits = bits_of(paddr);
+
+  let (first, last, step) = misaligned_order(N);
+  var i : range(0, 'N - 1) = first;
+  var finished : bool = false;
+
+  let wk = write_kind_of_flags(aq, rl, con);
+
+  repeat {
+    let offset = i;
+    let paddr = Physaddr(paddr_bits + (offset * split_width));
+
+    match pmpCheck(paddr, split_width, access, priv) {
+      Some(e) => return Err(e),
+      None()  => write_ram_ea(wk, paddr, split_width),
+    };
+
+    if offset == last then {
+      finished = true
+    } else {
+      i = offset + step
+    }
+
+  } until finished;
+
+  Ok(())
 }
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
@@ -338,54 +385,64 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   aq : bool,
   rl : bool,
   con : bool,
-) -> MemoryOpResult(bool) =
-  match phys_access_check(access, pbmt, priv, paddr, width, con) {
-    Err(e) => Err(e),
+) -> MemoryOpResult(bool) = {
 
-    Ok(access_info) => {
-      // If the store is misaligned or an allowed misaligned access,
-      // split into `N` (single-copy-atomic) memory operations, each
-      // of `split_width` width. If the store is aligned, then `N` = 1
-      // and `split_width` == `width`.
-      let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
-      // TODO: handle any splits of metadata across the splits.
+  // See `checked_mem_read()` above on the ordering of PMA and PMP checks.
+  let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, con) {
+    Err(e)          => return Err(e),
+    Ok(access_info) => access_info,
+  };
 
-      let paddr_bits = bits_of(paddr);
-      var write_success : bool = true;
+  // If the store is misaligned or an allowed misaligned access,
+  // split into `N` (single-copy-atomic) memory operations, each
+  // of `split_width` width. If the store is aligned, then `N` = 1
+  // and `split_width` == `width`.
+  let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
+  // TODO: handle any splits of metadata across the splits.
 
-      let (first, last, step) = misaligned_order(N);
-      var i : range(0, 'N - 1) = first;
-      var finished : bool = false;
+  let paddr_bits = bits_of(paddr);
+  var write_success : bool = true;
 
-      repeat {
-        let offset = i;
-        let paddr = Physaddr(paddr_bits + (offset * split_width));
+  let (first, last, step) = misaligned_order(N);
+  var i : range(0, 'N - 1) = first;
+  var finished : bool = false;
 
-        let write_value = data[(8 * (offset + 1) * split_width) - 1 .. 8 * offset * split_width];
+  let wk = write_kind_of_flags(aq, rl, con);
 
-        // See comment above in `checked_mem_read` about the
-        // homogeneity of the split accesses.
-        if   within_mmio_writable(paddr, width)
-        then match mmio_write(paddr, split_width, write_value) {
-          Ok(v)  => write_success = write_success & v,
-          Err(e) => return Err(e),
-        } else {
-          let wk = write_kind_of_flags(aq, rl, con);
-          // This assumes that the same metadata applies to every split.
-          let v = write_ram(wk, paddr, split_width, write_value, meta);
-          write_success = write_success & v
-        };
+  repeat {
+    let offset = i;
+    let paddr = Physaddr(paddr_bits + (offset * split_width));
 
-        if offset == last then {
-          finished = true
-        } else {
-          i = offset + step
-        }
-      } until finished;
+    // As mentioned above (see `checked_mem_read()`), PMP checks are
+    // done on each split access.
+    match pmpCheck(paddr, split_width, access, priv) {
+      Some(e) => return Err(e),
+      None()  => (),
+    };
 
-      Ok(write_success)
-    },
-  }
+    let write_value = data[(8 * (offset + 1) * split_width) - 1 .. 8 * offset * split_width];
+
+    // See comment above in `checked_mem_read` about the
+    // homogeneity of the split accesses.
+    if   within_mmio_writable(paddr, split_width)
+    then match mmio_write(paddr, split_width, write_value) {
+      Ok(v)  => write_success = write_success & v,
+      Err(e) => return Err(e),
+    } else {
+      // This assumes that the same metadata applies to every split.
+      let v = write_ram(wk, paddr, split_width, write_value, meta);
+      write_success = write_success & v
+    };
+
+    if offset == last then {
+      finished = true
+    } else {
+      i = offset + step
+    }
+  } until finished;
+
+  Ok(write_success)
+}
 
 // This lets the Rocq extraction know why the repeat loop above terminates
 termination_measure checked_mem_write repeat N
