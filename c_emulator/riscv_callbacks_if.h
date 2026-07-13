@@ -55,11 +55,11 @@ public:
 
   virtual void ptw_fail_callback(ModelImpl &model, ModelImpl::PTW_Error error_type, int64_t level, sbits pte_addr);
 
-  virtual void tlb_add_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb, uint64_t index);
+  virtual void tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index);
 
   virtual void tlb_flush_begin_callback(ModelImpl &model);
 
   virtual void tlb_flush_callback(ModelImpl &model, uint64_t index);
 
-  virtual void tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb);
+  virtual void tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB tlb);
 };

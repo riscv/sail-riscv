@@ -169,13 +169,7 @@ namespace {
 // TODO: make this a class member and avoid a global.
 std::vector<uint64_t> pending_flush_indices;
 
-void print_tlb(
-  FILE *trace_log,
-  ModelImpl &,
-  ModelImpl::TLB_Entry tlb,
-  const std::vector<uint64_t> &indices,
-  bool is_flush
-) {
+void print_tlb(FILE *trace_log, ModelImpl &, ModelImpl::TLB tlb, const std::vector<uint64_t> &indices, bool is_flush) {
   fprintf(
     trace_log,
     "TLB %s [ len=%zu ]\n"
@@ -233,7 +227,7 @@ void print_tlb(
 
 } // namespace
 
-void log_callbacks::tlb_add_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb, uint64_t index) {
+void log_callbacks::tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index) {
   if (trace_log != nullptr && config_print_tlb) {
     print_tlb(trace_log, model, tlb, {index}, false);
   }
@@ -249,7 +243,7 @@ void log_callbacks::tlb_flush_callback(ModelImpl &, uint64_t index) {
   }
 }
 
-void log_callbacks::tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb) {
+void log_callbacks::tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB tlb) {
   if (trace_log != nullptr && config_print_tlb && !pending_flush_indices.empty()) {
     print_tlb(trace_log, model, tlb, pending_flush_indices, true);
   }
