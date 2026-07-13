@@ -30,9 +30,6 @@
 // do not cross a page boundary are passed down intact to `mem.sail`,
 // where PMA checks are done.
 
-function is_access_within_page(Virtaddr(addr) : virtaddr, width : word_width_wide) -> bool =
-  access_within(addr, width, pagesize_bits)
-
 function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res : bool) -> option(misaligned_exception) = {
   if is_amo_access(access) then plat_misaligned_access.amo
   else if res then Some(plat_misaligned_access.lrsc)
