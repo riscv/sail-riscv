@@ -76,6 +76,12 @@ jobs:
         with:
           sail-version: "latest"
 
+      - name: Setup Lean
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          lake-package-directory: "lean_emulator"
+
       - name: Test the Lean emulator
         run: |
           eval $(opam config env)
