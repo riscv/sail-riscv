@@ -219,12 +219,25 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   meta : bool,
 ) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
 
-  // PMA checks might require splitting the access due to the MAG
-  // PMA. If the access is split, the spec requires that PMP checks
-  // must be done on each decomposed access.  So PMA checks are done
-  // before PMP checks.
+  // There are two issues to handle here:
+  //
+  // - PMA checks might require splitting the access due to the MAG
+  //   PMA. If the access is split, the spec requires that PMP checks
+  //   must be done on each decomposed access.
+  //
+  // - If a PMP check results in an access fault, it has higher
+  //   priority than a misaligned fault from a PMA check.
+
   let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, res) {
-    Err(e)          => return Err(e),
+    Err(pmaExc) => {
+      // Access fault exceptions from PMP checks have higher priority
+      // than a potential misaligned exception from a PMA check.
+      let exc : ExceptionType = match pmpCheck(paddr, width, access, priv) {
+        Some(pmpExc) => pmpExc,
+        None()       => pmaExc,
+      };
+      return Err(exc)
+    },
     Ok(access_info) => access_info,
   };
 
@@ -337,9 +350,14 @@ function mem_write_ea(paddr, width, access, pbmt, aq, rl, con) = {
   // for concurrency of RAM accesses.
 
   // See comment in `checked_mem_read()` on the ordering of PMA and PMP checks.
-
   let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, con) {
-    Err(e)          => return Err(e),
+    Err(pmaExc) => {
+      let exc : ExceptionType = match pmpCheck(paddr, width, access, priv) {
+        Some(pmpExc) => pmpExc,
+        None()       => pmaExc,
+      };
+      return Err(exc)
+    },
     Ok(access_info) => access_info,
   };
 
@@ -387,9 +405,15 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   con : bool,
 ) -> MemoryOpResult(bool) = {
 
-  // See `checked_mem_read()` above on the ordering of PMA and PMP checks.
+  // See comment in `checked_mem_read()` on the ordering of PMA and PMP checks.
   let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, con) {
-    Err(e)          => return Err(e),
+    Err(pmaExc) => {
+      let exc : ExceptionType = match pmpCheck(paddr, width, access, priv) {
+        Some(pmpExc) => pmpExc,
+        None()       => pmaExc,
+      };
+      return Err(exc)
+    },
     Ok(access_info) => access_info,
   };
 
