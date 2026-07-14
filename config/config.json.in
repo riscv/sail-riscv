@@ -87,8 +87,8 @@
       // bit of `medeleg` can be set to 1. It represents the subset of
       // delegatable traps of the implementation. Bits should not be
       // set for traps that cannot be delegated as per the
-      // specification, and for reserved and custom traps. This value
-      // is ignored when the `medeleg` CSR does not exist.
+      // specification, and for reserved traps. This value is ignored
+      // when the `medeleg` CSR does not exist.
       "delegatable_bits": {
         "len": 64,
         "value": "0x0000_0000_000c_b3FF"

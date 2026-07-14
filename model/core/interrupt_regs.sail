@@ -55,12 +55,13 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 
 private function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v & plat_mideleg_delegatable_bits);
-  // M-mode interrupt delegation bits "should" be hardwired to 0.
   [o with
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
-    MEI   = 0b0,
-    MTI   = 0b0,
-    MSI   = 0b0,
+    // M-mode interrupts can be delegated;
+    // see https://github.com/riscv/riscv-isa-manual/issues/3162
+    MEI   = v[MEI],
+    MTI   = v[MTI],
+    MSI   = v[MSI],
     SEI   = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     STI   = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
     SSI   = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
@@ -88,27 +89,10 @@ bitfield Medeleg : bits(64) = {
 }
 
 function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
-  let v = Mk_Medeleg(v & plat_medeleg_delegatable_bits);
-  // M-EnvCalls and DoubleTrap cannot be delegated, and reserved and
-  // custom fields should be read-only zero.
-  [Mk_Medeleg(zeros()) with
-    HardwareError      = v[HardwareError],
-    SoftwareCheck      = v[SoftwareCheck],
+  [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with
+    // M-EnvCalls and DoubleTrap cannot be delegated.
     DoubleTrap         = 0b0,
-    SAMO_Page_Fault    = v[SAMO_Page_Fault],
-    Load_Page_Fault    = v[Load_Page_Fault],
-    Fetch_Page_Fault   = v[Fetch_Page_Fault],
     MEnvCall           = 0b0,
-    SEnvCall           = v[SEnvCall],
-    UEnvCall           = v[UEnvCall],
-    SAMO_Access_Fault  = v[SAMO_Access_Fault],
-    SAMO_Addr_Align    = v[SAMO_Addr_Align],
-    Load_Access_Fault  = v[Load_Access_Fault],
-    Load_Addr_Align    = v[Load_Addr_Align],
-    Breakpoint         = v[Breakpoint],
-    Illegal_Instr      = v[Illegal_Instr],
-    Fetch_Access_Fault = v[Fetch_Access_Fault],
-    Fetch_Addr_Align   = v[Fetch_Addr_Align],
   ]
 }
 
