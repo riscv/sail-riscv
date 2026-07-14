@@ -550,6 +550,33 @@ private function check_extension_param_constraints() -> bool = {
       print_endline("The Zicclsm extension is enabled, but misaligned vector loads/stores raise access faults before address translation (as per `memory.misaligned.exceptions.vector`); Zicclsm requires no exceptions or only misaligned exceptions for such accesses.");
     };
   };
+  if (config extensions.S.supported : bool) then {
+    let medelegation = Mk_Medeleg(config base.medeleg.delegatable_bits);
+    if medelegation[DoubleTrap] != 0b0 then {
+      valid = false;
+      print_endline("Bit 16 (Double Trap) in `base.medeleg.delegatable_bits` is set; Double Trap cannot be delegated.");
+    };
+    if medelegation[MEnvCall] != 0b0 then {
+      valid = false;
+      print_endline("Bit 11 (Environment call from M-mode) in `base.medeleg.delegatable_bits` is set; this environment call cannot be delegated.");
+    };
+    if valid & (medelegation.bits != (legalize_medeleg(Mk_Medeleg(zeros()), config base.medeleg.delegatable_bits)).bits) then {
+      valid = false;
+      print_endline("Bits for reserved or custom exceptions are set in `base.medeleg.delegatable_bits`.");
+    };
+
+    let midelegation = Mk_Minterrupts(config base.mideleg.delegatable_bits);
+    if midelegation[MEI] != 0b0 | midelegation[MTI] != 0b0 | midelegation[MSI] != 0b0 then {
+      valid = false;
+      print_endline("One or more bits for machine-mode interrupts (i.e. bits 3, 7, 11) are set in `base.mideleg.delegatable_bits`; machine-mode interrupts cannot be delegated.");
+    };
+    // Ignore bits set for interrupts designated for platform use.
+    let reserved_interrupt_mask : xlenbits = zero_extend(0xD555);
+    if valid & (midelegation.bits & reserved_interrupt_mask) != zeros() then {
+      valid = false;
+      print_endline("Bits for reserved interrupts are set in `base.mideleg.delegatable_bits`.");
+    }
+  };
   valid
 }
 

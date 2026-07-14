@@ -68,6 +68,9 @@ private function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts 
 }
 
 bitfield Medeleg : bits(64) = {
+  HardwareError     : 19,
+  SoftwareCheck     : 18,
+  DoubleTrap        : 16,
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
@@ -84,9 +87,29 @@ bitfield Medeleg : bits(64) = {
   Fetch_Addr_Align  : 0
 }
 
-private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
-  // M-EnvCalls delegation is not supported
-  [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with MEnvCall = 0b0]
+function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
+  let v = Mk_Medeleg(v & plat_medeleg_delegatable_bits);
+  // M-EnvCalls and DoubleTrap cannot be delegated, and reserved and
+  // custom fields should be read-only zero.
+  [Mk_Medeleg(zeros()) with
+    HardwareError      = v[HardwareError],
+    SoftwareCheck      = v[SoftwareCheck],
+    DoubleTrap         = 0b0,
+    SAMO_Page_Fault    = v[SAMO_Page_Fault],
+    Load_Page_Fault    = v[Load_Page_Fault],
+    Fetch_Page_Fault   = v[Fetch_Page_Fault],
+    MEnvCall           = 0b0,
+    SEnvCall           = v[SEnvCall],
+    UEnvCall           = v[UEnvCall],
+    SAMO_Access_Fault  = v[SAMO_Access_Fault],
+    SAMO_Addr_Align    = v[SAMO_Addr_Align],
+    Load_Access_Fault  = v[Load_Access_Fault],
+    Load_Addr_Align    = v[Load_Addr_Align],
+    Breakpoint         = v[Breakpoint],
+    Illegal_Instr      = v[Illegal_Instr],
+    Fetch_Access_Fault = v[Fetch_Access_Fault],
+    Fetch_Addr_Align   = v[Fetch_Addr_Align],
+  ]
 }
 
 // Note that mip's MEIP and SEIP had special handling. MEIP is always
