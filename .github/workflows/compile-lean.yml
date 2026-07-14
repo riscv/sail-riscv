@@ -82,7 +82,7 @@ jobs:
           auto-config: false
           lake-package-directory: "lean_emulator"
 
-      - name: Test the Lean emulator
+      - name: Build and test the Lean emulator
         run: |
           eval $(opam config env)
           cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSAIL_MODULES="H;Zca;Zicbom_insts;Zicboz;Zicsr_insts;Zkr;Sscofpmf;postlude" -DPRINT_EFFECTS=true -DENABLE_LEAN_EMULATOR_TESTS=TRUE
