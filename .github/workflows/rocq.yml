@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OPAMROOT: /home/rocq/.opam
-      SAIL_VERSION: "0.20.2"
+      # See root comment below
+      OPAMROOTISOK: true
     container:
       image: rocq/rocq-prover:9.0.1
       # github requires root to access some resources from outside the container
@@ -25,8 +26,18 @@ jobs:
       - name: Update Debian package information
         run: apt update
 
+      - name: Extract version numbers
+        run: |
+          if [ -f cmake/sail_required_version_rocq.txt ]; then \
+            echo "SAIL_VERSION=$(cat cmake/sail_required_version_rocq.txt)" >> "$GITHUB_ENV"; \
+          else \
+            echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"; \
+          fi
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
+        with:
+          sail-version: ${{ env.SAIL_VERSION }}
 
       - name: Install Rocq-specific opam packages
         run: |
@@ -34,13 +45,40 @@ jobs:
           opam update
           # We're still using Rocq's old name for compatibility with versions < 9
           opam install -y coq=9.0.1 coq-sail-stdpp=$SAIL_VERSION
+          # We're using the Sail binary release, so fake sail opam packages and avoid dune dependency hell
+          # This will also install fake dependencies, so it has to be the last install before the build
+          opam install --fake --yes --ignore-constraints-on=dune \
+            sail.$SAIL_VERSION \
+            sail_c_backend.$SAIL_VERSION \
+            sail_coq_backend.$SAIL_VERSION \
+            sail_doc_backend.$SAIL_VERSION \
+            sail_latex_backend.$SAIL_VERSION \
+            sail_lean_backend.$SAIL_VERSION \
+            sail_lem_backend.$SAIL_VERSION \
+            sail_smt_backend.$SAIL_VERSION \
+            sail_sv_backend.$SAIL_VERSION \
+            sail_ocaml_backend.$SAIL_VERSION \
+            sail_output.$SAIL_VERSION
 
-      - name: Generate Rocq model
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_GMP=FALSE
-          cmake --build build --target generated_rocq_rv64d
-
-      - name: Compile Rocq output
+      - name: Build Rocq model
         run: |
           eval `opam env --safe`
-          cmake --build build --target build_rocq_rv64d
+          # The cmake fragment that computes the version uses git, which needs to be
+          # reassured about github action's use of root.
+          git config --global --add safe.directory /__w/sail-riscv/sail-riscv
+          cmake -P coq-sail-riscv.cmake
+          # Ignore dune constraints because they come from the fake sail packages
+          # Assume depexts because we've already installed cmake, but opam doesn't realise
+          opam install --yes --ignore-constraints-on=dune --assume-depexts ./coq-sail-riscv.opam
+
+      - name: Locate Rocq sources
+        run: |
+          eval `opam env --safe`
+          echo "artifactPath=$(coqc -where)/user-contrib/Riscv/*.v" >> $GITHUB_ENV
+          echo "artifactName=rocq-sail-riscv-$(opam var coq-sail-riscv:version)-ci" >> $GITHUB_ENV
+
+      - name: Upload Rocq sources
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.artifactName }}
+          path: ${{ env.artifactPath }}

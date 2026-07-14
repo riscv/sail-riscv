@@ -1,0 +1,2 @@
+file(READ "${CMAKE_CURRENT_LIST_DIR}/sail_required_version.txt" SAIL_REQUIRED_VER)
+string(STRIP "${SAIL_REQUIRED_VER}" SAIL_REQUIRED_VER)
