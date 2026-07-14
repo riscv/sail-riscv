@@ -7,7 +7,14 @@ Checks: >
   misc-*,
   -misc-include-cleaner,
   -misc-const-correctness,
-  -misc-no-recursion
+  -misc-no-recursion,
+  readability-*,
+  -readability-identifier-length,
+  -readability-isolate-declaration,
+  -readability-named-parameter,
+  -readability-avoid-nested-conditional-operator,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity
 
 HeaderFilterRegex: ""
 ...

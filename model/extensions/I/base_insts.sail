@@ -319,6 +319,10 @@ function clause execute STORE(imm, rs2, rs1, width) = {
   // This is checked during decoding.
   assert(width <= xlen_bytes);
 
+  // FIXME: the read of `rs2` should not be done before the
+  // `mem_write_ea` of the effective address.
+  // See https://github.com/riscv/sail-riscv/issues/1761.
+
   let data = X(rs2)[width * 8 - 1 .. 0];
   match vmem_write(rs1, offset, width, data, Store(Data), false, false, false) {
     Ok(_) => RETIRE_SUCCESS,

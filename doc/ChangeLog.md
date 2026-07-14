@@ -1,9 +1,24 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - The version of the privileged ISA specification for the model can
+    be specified; see `base.privileged_isa_version`. Note that not
+    all versions can be specified as yet, and not all version-affected
+    functionality is implemented.
+  - Delegatable subsets of `medeleg` and `mideleg` can be specified;
+    see `base.medeleg.delegatable_bits` and `base.mideleg.delegatable_bits`.
+  - Add the `extensions.F.fflags_dirty_policy` option to configure exactly
+    when mstatus[FS/SD] is set by floating point instructions.
+
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1794 : `vtype.vill` was not set when SEW was configured to exceed ELEN
+  - https://github.com/riscv/sail-riscv/issues/1753 : Access to `xenvcfg` CSRs need to be gated by the specification version
   - https://github.com/riscv/sail-riscv/issues/1750 : Non-segmented indexed loads were trapping on legal overlaps
   - https://github.com/riscv/sail-riscv/issues/1748 : Segment loads/stores whose register numbers increment past v31 were not treated as reserved.
   - https://github.com/riscv/sail-riscv/issues/1069 : `vssubu` did not set `vxsat`
+
+- Other notes:
+  - The model now requires the Sail 0.20.2 compiler version.
 
 # Release notes for version 0.12
 

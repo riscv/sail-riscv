@@ -6,42 +6,50 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-// Privileged and unprivileged spec versions. The versioning system for specifications
-// is unclear so we specify the riscv-isa-manual Git commit hashes in comments. Any commit you need
-// to refer to should be added to this enum IN ORDER FROM OLDEST TO NEWEST.
-enum IsaVersion = {
-  // Tag: Ratified-IMAFDQC (AKA 20191213). Commit: 66bed2470f68520fadc4bf86c6c000d817fe73f2
-  Isa_20191213,
+// Privileged spec version. This uses the same version for both of
+// what the specification sometimes calls "Machine ISA" and
+// "Supervisor ISA", and just the "Machine" and "Supervisor" privilege
+// levels in the latest version of the spec.  It is conceivable that
+// in the future, the Machine and Supervisor portions could get
+// different versions.  But for now, there is a single version for
+// both for simplicity.
 
-  // Requires PTE reserved bits to be zero. Commit: a432a8997892d0a103798c2e436d36ae66da7d34
-  Isa_Draft_20211102,
-
-  // Tag: Priv-v1.12 (AKA 20211203). Commit: 98964261c931d51884f733664b22efe43de93033
-  Isa_20211203,
-
-  // Tag: 20240411. Commit: 6ee57d8997021aaa8025e208164763fe12e03c19
-  Isa_20240411,
-
-  // Arbitrary version that is later than all other versions.
-  Isa_Latest,
+// The ratification commits (or the closest such commits) for the
+// versions in the specification repository are specified in comments
+// when available.
+enum Privileged_ISA_Version = {
+  // commit f467e5dfd4acb4391870b8bfcfd687a0e5d8eddc (tag: Ratified-IMFDQC-and-Priv-v1.11)
+  Privileged_ISA_1_11,
+  // commit 75b2fbbdd783d539da69826fc3c11478b070c10b
+  Privileged_ISA_1_12,
+  // commit 2c07aa2bcc02fd5fb2e53e42a32dc62a3eb0aa62 (tag: riscv-isa-release-2c07aa2-2024-10-18)
+  Privileged_ISA_1_13,
 }
 
-// For convenience, version comparison operators. This relies on the order of hashes in the enum.
-function isa_version_lt(x : IsaVersion, y : IsaVersion) -> bool = num_of_IsaVersion(x) < num_of_IsaVersion(y)
-function isa_version_gt(x : IsaVersion, y : IsaVersion) -> bool = num_of_IsaVersion(x) > num_of_IsaVersion(y)
-function isa_version_le(x : IsaVersion, y : IsaVersion) -> bool = num_of_IsaVersion(x) <= num_of_IsaVersion(y)
-function isa_version_ge(x : IsaVersion, y : IsaVersion) -> bool = num_of_IsaVersion(x) >= num_of_IsaVersion(y)
+// For convenience, version comparison operators. This relies on the order of values in the enum.
+function privileged_isa_version_lt(x : Privileged_ISA_Version, y : Privileged_ISA_Version) -> bool =
+  num_of_Privileged_ISA_Version(x) < num_of_Privileged_ISA_Version(y)
+function privileged_isa_version_gt(x : Privileged_ISA_Version, y : Privileged_ISA_Version) -> bool =
+  num_of_Privileged_ISA_Version(x) > num_of_Privileged_ISA_Version(y)
+function privileged_isa_version_le(x : Privileged_ISA_Version, y : Privileged_ISA_Version) -> bool =
+  num_of_Privileged_ISA_Version(x) <= num_of_Privileged_ISA_Version(y)
+function privileged_isa_version_ge(x : Privileged_ISA_Version, y : Privileged_ISA_Version) -> bool =
+  num_of_Privileged_ISA_Version(x) >= num_of_Privileged_ISA_Version(y)
 
-overload operator < = {isa_version_lt}
-overload operator > = {isa_version_gt}
-overload operator <= = {isa_version_le}
-overload operator >= = {isa_version_ge}
+overload operator <  = {privileged_isa_version_lt}
+overload operator >  = {privileged_isa_version_gt}
+overload operator <= = {privileged_isa_version_le}
+overload operator >= = {privileged_isa_version_ge}
 
-let isa_version : IsaVersion = config base.isa_version
+let priv_isa_version : Privileged_ISA_Version = config base.privileged_isa_version
 
 // Behavioural changes based on the version. These are named constants for readability.
 
-// In this commit, a new requirement was added that reserved bits
+// In this version, a new requirement was added that reserved bits
 // in PTEs must be zero otherwise the PTE is invalid.
 // TODO: This is not used yet; this is an example that will be implemented in a future commit.
-let pte_reserved_bits_must_be_zero = isa_version >= Isa_Draft_20211102
+let pte_reserved_bits_must_be_zero = priv_isa_version >= Privileged_ISA_1_12
+
+// This version defined the `{m,s,h}envcfg` CSRs. These CSRs are not
+// available in earlier versions.
+let xenvcfg_csrs_are_defined = priv_isa_version >= Privileged_ISA_1_12

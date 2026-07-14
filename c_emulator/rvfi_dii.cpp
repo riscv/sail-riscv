@@ -67,9 +67,14 @@ bool rvfi_handler::setup_socket(bool config_print) {
     return false;
   }
   if (config_print) {
-    fprintf(stderr, "RVFI socket fd flags=%d, nonblocking=%d\n", fd_flags, (fd_flags & O_NONBLOCK) != 0);
+    fprintf(
+      stderr,
+      "RVFI socket fd flags=%d, nonblocking=%s\n",
+      fd_flags,
+      ((fd_flags & O_NONBLOCK) != 0) ? "true" : "false"
+    );
   }
-  if (fd_flags & O_NONBLOCK) {
+  if ((fd_flags & O_NONBLOCK) != 0) {
     fprintf(stderr, "Socket was non-blocking, this will not work!\n");
     return false;
   }
@@ -173,11 +178,10 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print) {
       }
       get_and_send_packet(&hart::Model::zrvfi_get_v2_support_packet, config_print);
       return RVFI_prestep_continue;
-    } else {
-      m_model.zrvfi_halt_exec_packet(UNIT);
-      send_trace(trace_version);
-      return RVFI_prestep_end_trace;
     }
+    m_model.zrvfi_halt_exec_packet(UNIT);
+    send_trace(trace_version != 0);
+    return RVFI_prestep_end_trace;
   }
   case 1: /* Instruction */
     break;

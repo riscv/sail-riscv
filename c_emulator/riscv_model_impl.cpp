@@ -415,6 +415,16 @@ bool ModelImpl::dtb_within_configured_pma_memory(uint64_t addr, uint64_t size) {
   return zdtb_within_configured_pma_memory(addr, size);
 }
 
+std::vector<MemoryRegion> ModelImpl::main_memory_regions() const {
+  std::vector<MemoryRegion> regions;
+  for (const auto *region = zpma_regions; region != nullptr; region = region->tl) {
+    if (region->hd.zattributes.zmem_type == hart::zMainMemory) {
+      regions.push_back({region->hd.zbase, region->hd.zsizze});
+    }
+  }
+  return regions;
+}
+
 std::string ModelImpl::generate_dts() {
   char *c_dts = nullptr;
   zgenerate_dts(&c_dts, UNIT);

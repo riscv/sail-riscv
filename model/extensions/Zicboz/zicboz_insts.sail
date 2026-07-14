@@ -51,7 +51,7 @@ function clause execute ZICBOZ(rs1) = {
         // equal to rs1, but pointer masking can change that.
         Err(e, _) => memory_exception(vaddr - negative_offset, e),
         Ok(paddr, pbmt, _) => {
-          match mem_write_ea(paddr, cache_block_size, access, false, false, false) {
+          match mem_write_ea(paddr, cache_block_size, access, pbmt, false, false, false) {
             Err(e) => memory_exception(vaddr - negative_offset, e),
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {

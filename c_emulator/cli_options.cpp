@@ -15,6 +15,13 @@ CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag("--validate-config", opts.do_validate_config, "Exit after config validation (it is always validated)");
   app.add_flag("--print-device-tree", opts.do_print_dts, "Print device tree");
   app.add_flag("--print-isa-string", opts.do_print_isa, "Print ISA string");
+  app
+    .add_option(
+      "--dump-memory",
+      opts.dump_memory_prefix,
+      "Dump MainMemory regions at end of simulation using the given prefix"
+    )
+    ->option_text("<prefix>");
   app.add_flag(
     "--enable-experimental-extensions",
     opts.config_enable_experimental_extensions,
@@ -56,6 +63,7 @@ CLIOptions parse_cli(int argc, char **argv) {
     ->check(CLI::Range(1, 65535))
     ->option_text("<int> (within [1 - 65535])");
   app.add_option("--inst-limit", opts.insn_limit, "Instruction limit")->option_text("<uint>");
+  app.add_option("--stop-at-pc", opts.stop_at_pc, "Stop execution when PC reaches address")->option_text("<address>");
 #ifdef SAILCOV
   app.add_option("--sailcov-file", opts.sailcov_file, "Sail coverage output file")->option_text("<file>");
 #endif
@@ -148,7 +156,7 @@ CLIOptions parse_cli(int argc, char **argv) {
   );
 
   std::size_t column_width = 45;
-  app.get_formatter()->long_option_alignment_ratio(6.f / static_cast<float>(column_width));
+  app.get_formatter()->long_option_alignment_ratio(6.F / static_cast<float>(column_width));
   app.get_formatter()->column_width(column_width);
 
   if (argc == 1) {

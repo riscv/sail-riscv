@@ -71,6 +71,7 @@ sys {
     sys/platform.sail,
     sys/pma.sail,
     sys/mem_utils.sail,
+    sys/split_access_utils.sail,
     sys/mem.sail,
     sys/vmem_pte.sail,
     sys/vmem_ptw.sail,

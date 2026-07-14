@@ -438,12 +438,19 @@ function write_fcsr(frm : bits(3), fflags : bits(5)) -> unit = {
 
 // OR flags into the fflags register.
 function accrue_fflags(flags : bits(5)) -> unit = {
-  let f = fcsr[FFLAGS] | flags;
-  if  fcsr[FFLAGS] != f
-  then {
-    fcsr[FFLAGS] = f;
-    dirty_fd_context_if_present();
+  let new_fflags = fcsr[FFLAGS] | flags;
+  let fflags_changed = fcsr[FFLAGS] != new_fflags;
+
+  let set_dirty : bool = match fflags_dirty_policy {
+    Fflags_Dirty_Precise => fflags_changed,
+    Fflags_Dirty_Flag => flags != zeros(),
+    Fflags_Dirty_Instruction => true,
   };
+
+  fcsr[FFLAGS] = new_fflags;
+
+  if set_dirty then dirty_fd_context_if_present();
+
   csr_write_callback("fflags", zero_extend(fcsr[FFLAGS]));
   csr_write_callback("fcsr", zero_extend(fcsr.bits));
 }

@@ -19,7 +19,7 @@ std::string keypath_to_str(const std::vector<const char *> &keypath) {
   if (keypath.empty()) {
     return s;
   }
-  for (auto part : keypath) {
+  for (const auto *part : keypath) {
     s += part;
     s += ".";
   }

@@ -37,6 +37,7 @@ function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
   if illegal_vstart(VSTART_MANDATORY, num_elem_vs, LMUL_pow) |
      illegal_fp_reduction(SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW)) |
      not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
@@ -111,7 +112,8 @@ function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
 
   if illegal_vstart(VSTART_MANDATORY, num_elem_vs, LMUL_pow) |
      illegal_fp_widening_reduction(SEW, rm_3b, SEW_widen) |
-     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_src_overlap(vs2, SEW, LMUL_pow, vs1, SEW_widen, 0)) |
+     not(valid_vm_src_overlap(vm, vs1, SEW_widen)) |
      not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 

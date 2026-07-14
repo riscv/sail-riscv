@@ -32,6 +32,7 @@ function clause execute RIVVTYPE(funct6, vm, vs2, vs1, vd) = {
 
   if illegal_vstart(VSTART_MANDATORY, num_elem_vs, LMUL_pow) |
      illegal_widening_reduction(SEW_widen) |
+     not(valid_src_overlap(vs2, SEW, LMUL_pow, vs1, SEW_widen, 0)) |
      not(valid_vm_src_overlap(vm, vs2, SEW)) |
      not(valid_vm_src_overlap(vm, vs1, SEW_widen))
   then return Illegal_Instruction();

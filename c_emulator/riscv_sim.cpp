@@ -7,6 +7,7 @@
 #include "jsoncons/config/version.hpp"
 #include "jsoncons/json.hpp"
 #include "riscv_callbacks_rvfi.h"
+#include "riscv_callbacks_stop_at_pc.h"
 #include "riscv_model_impl.h"
 #ifdef SAILCOV
 #include "sail_coverage.h"
@@ -15,7 +16,11 @@
 #include "symbol_table.h"
 #include "traploop_detector.h"
 
+#include <algorithm>
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>
+#include <sstream>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -101,7 +106,7 @@ void write_signature(const std::string &file, unsigned signature_granularity, co
     return;
   }
   FILE *f = fopen(file.c_str(), "w");
-  if (!f) {
+  if (f == nullptr) {
     fprintf(stderr, "Cannot open file '%s': %s\n", file.c_str(), strerror(errno));
     return;
   }
@@ -115,6 +120,44 @@ void write_signature(const std::string &file, unsigned signature_granularity, co
     fprintf(f, "\n");
   }
   fclose(f);
+}
+
+void write_memory_dump(const MemoryRegion &region, const std::string &prefix) {
+  std::ostringstream file_os;
+  file_os << prefix << ".0x" << std::hex << region.base << ".bin";
+  const std::string file = file_os.str();
+
+  FILE *f = fopen(file.c_str(), "wb");
+  if (f == nullptr) {
+    fprintf(stderr, "Cannot create memory dump '%s': %s\n", file.c_str(), strerror(errno));
+    return;
+  }
+
+  // TODO: In C++23 we can use a literal suffix: 64 * 1024ZU
+  // (upper-case due to the clang-tidy
+  // `readability-uppercase-literal-suffix` check).
+  constexpr size_t buffer_size = static_cast<size_t>(64 * 1024);
+  std::vector<uint8_t> buffer(buffer_size);
+  uint64_t offset = 0;
+  while (offset < region.size) {
+    size_t chunk = static_cast<size_t>(std::min<uint64_t>(buffer.size(), region.size - offset));
+    for (size_t i = 0; i < chunk; ++i) {
+      buffer[i] = static_cast<uint8_t>(read_mem(region.base + offset + i));
+    }
+    if (fwrite(buffer.data(), 1, chunk, f) != chunk) {
+      fprintf(stderr, "Could not write memory dump '%s': %s\n", file.c_str(), strerror(errno));
+      break;
+    }
+    offset += chunk;
+  }
+
+  fclose(f);
+}
+
+void write_memory_dumps(const std::vector<MemoryRegion> &regions, const std::string &prefix) {
+  for (const auto &region : regions) {
+    write_memory_dump(region, prefix);
+  }
 }
 
 } // namespace
@@ -202,6 +245,9 @@ void finish(ModelImpl &model, const CLIOptions &opts, const elf_info &elf_info, 
   if (!model.had_exception() && !opts.sig_file.empty()) {
     write_signature(opts.sig_file, opts.signature_granularity, elf_info);
   }
+  if (!opts.dump_memory_prefix.empty()) {
+    write_memory_dumps(model.main_memory_regions(), opts.dump_memory_prefix);
+  }
 
   // `model_fini()` exits with failure if there was a Sail exception.
   model.model_fini();
@@ -229,6 +275,7 @@ void run_sail(
   ModelImpl &model,
   const CLIOptions &opts,
   std::shared_ptr<traploop_detector> loop_detector,
+  std::shared_ptr<stop_at_pc_callbacks> stop_at_pc,
   const elf_info &elf_info,
   run_info &run_info
 ) {
@@ -246,7 +293,8 @@ void run_sail(
 
   auto interval_start = steady_clock::now();
 
-  while (!model.htif_done() && (opts.insn_limit == 0 || run_info.total_insns < opts.insn_limit)) {
+  while (!model.htif_done() && !(stop_at_pc && stop_at_pc->stop_requested()) &&
+         (opts.insn_limit == 0 || run_info.total_insns < opts.insn_limit)) {
     if (run_info.rvfi.has_value()) {
       switch (run_info.rvfi->pre_step(opts.config_print_rvfi)) {
       case RVFI_prestep_continue:
@@ -402,6 +450,9 @@ InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
   if (!opts.trace_log_path.empty()) {
     fprintf(stderr, "using %s for trace output.\n", opts.trace_log_path.c_str());
   }
+  if (!opts.dump_memory_prefix.empty()) {
+    fprintf(stderr, "will dump main memory on completion using prefix '%s'.\n", opts.dump_memory_prefix.c_str());
+  }
 
   if (!opts.config_file.empty()) {
     config_json_string = read_file_to_string(opts.config_file);
@@ -528,7 +579,7 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
     write_dtb_to_rom(model, read_file(opts.dtb_file));
   }
 
-  uint64_t entry = run_info.rvfi.has_value() ? run_info.rvfi->get_entry()
+  uint64_t entry = run_info.rvfi.has_value() ? rvfi_handler::get_entry()
                                              : load_sail(model, opts.elfs[0], /*main_file=*/true, elf_info);
 
   fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);

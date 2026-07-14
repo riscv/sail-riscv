@@ -82,6 +82,27 @@
         "base_alignment": 2
       }
     },
+    "medeleg": {
+      // A bit set to 1 in this value specifies that the corresponding
+      // bit of `medeleg` can be set to 1. It represents the subset of
+      // delegatable traps of the implementation. Bits for traps that
+      // cannot be delegated as per the specification will be ignored.
+      "delegatable_bits": {
+        "len": 64,
+        "value": "0xFFFF_FFFF_FFFF_FFFF"
+      }
+    },
+    "mideleg": {
+      // A bit set to 1 in this value specifies that the corresponding
+      // bit of `mideleg` can be set to 1. It represents the subset of
+      // delegatable interrupts of the implementation. Bits for
+      // interrupts that cannot be delegated as per the specification
+      // will be ignored.
+      "delegatable_bits": {
+        "len": "xlen",
+        "value": "@CONFIG_MIDELEG_DELEGATABLE_BITS_VALUE@"
+      }
+    },
     // These settings control whether the specified exceptions
     // cause information to be written into the appropriate
     // `xtval` registers.
@@ -141,10 +162,15 @@
       "fs_legal_states": "ExtContext_FourState",
       "vs_legal_states": "ExtContext_FourState"
     },
-    // Set the ISA manual version to use. Isa_Latest is always the latest that
-    // the Sail model supports. Other values include Isa_20240411, Isa_20211203, etc.
-    // See isa_version.sail for the complete list and the behaviours it affects.
-    "isa_version": "Isa_Latest"
+    // Set the version of the privileged ISA. `"Privileged_ISA_1_13"`
+    // is the latest that the Sail model supports.  The other
+    // supported value for this field is:
+    // - `"Privileged_ISA_1_12"`
+    // - `"Privileged_ISA_1_11"`
+    // Note that currently, not all functionality for these versions
+    // is available currently, and not all versions of the privileged
+    // ISA can be specified.
+    "privileged_isa_version": "Privileged_ISA_1_13"
   },
   "memory": {
     "pmp": {
@@ -401,7 +427,17 @@
       "supported": true
     },
     "F": {
-      "supported": true
+      "supported": true,
+      // When to set mstatus[FS] and mstatus[SD] to 1, as a result of fflags
+      // being set. There are three options:
+      //
+      // - Fflags_Dirty_Precise: Only set FS/SD when absolutely required, because
+      //                         fflags has actually changed value.
+      // - Fflags_Dirty_Flag: Set FS/SD when the instruction sets a flag, even
+      //                      if that flag is already set.
+      // - Fflags_Dirty_Instruction: Set FS/SD when we execute an instruction that
+      //                             might set a flag, even if it actually doesn't.
+      "fflags_dirty_policy": "Fflags_Dirty_Precise"
     },
     "D": {
       "supported": true

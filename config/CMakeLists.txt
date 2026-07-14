@@ -13,6 +13,12 @@ foreach(CONFIG__BASE__XLEN IN ITEMS 32 64)
             set(CONFIG_XLEN_IS_64 "false")
             set(CONFIG_XLEN_IS_${CONFIG__BASE__XLEN} "true")
 
+            if (${CONFIG__BASE__XLEN} EQUAL 32)
+              set(CONFIG_MIDELEG_DELEGATABLE_BITS_VALUE "0xFFFF_FFFF")
+            else()
+              set(CONFIG_MIDELEG_DELEGATABLE_BITS_VALUE "0xFFFF_FFFF_FFFF_FFFF")
+            endif()
+
             set(CONFIG_ELEN_IS_32 "false")
             set(CONFIG_ELEN_IS_64 "false")
             set(CONFIG_ELEN_IS_${elen} "true")

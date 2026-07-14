@@ -21,6 +21,10 @@ let plat_mtvec_direct_base_alignment_exp   : tvec_alignment = config base.mtvec.
 let plat_mtvec_vectored_base_alignment_exp : tvec_alignment = config base.mtvec.vectored.base_alignment
 let plat_stvec_vectored_base_alignment_exp : tvec_alignment = config base.stvec.vectored.base_alignment
 
+// Delegatable bits of `medeleg` and `mideleg`.
+let plat_medeleg_delegatable_bits : bits(64) = config base.medeleg.delegatable_bits
+let plat_mideleg_delegatable_bits : xlenbits = config base.mideleg.delegatable_bits
+
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.
@@ -186,3 +190,14 @@ let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reser
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
 let illegal_vtype_reserved_behavior : IllegalVtypeReservedBehavior = config extensions.V.reserved_behavior.illegal_vtype
 let vstart_reserved_behavior : OOBVstartReservedBehavior = config extensions.V.reserved_behavior.vstart_out_of_bounds
+
+enum FflagsDirtyPolicy = {
+  // Only set dirty bits when required (fflags value changes).
+  Fflags_Dirty_Precise,
+  // Set dirty bits when an instruction would set a new fflag (even if it was already set).
+  Fflags_Dirty_Flag,
+  // Set dirty bits when an instruction is executed that *could* set an fflag.
+  Fflags_Dirty_Instruction,
+}
+
+let fflags_dirty_policy : FflagsDirtyPolicy = config extensions.F.fflags_dirty_policy

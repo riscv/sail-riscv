@@ -6,10 +6,22 @@
 # 1. Clang, which is sensibly designed to be able to cross-compile to any architecture it supports.
 #    Unfortunately it is possible to build it without RISC-V support, e.g. RHEL 8 does this, so we
 #    need to check that. You can download a binary from https://github.com/llvm/llvm-project/releases
+#    On macOS, /usr/bin/clang is in $PATH by default but does not support the RISC-V target, so we default to
+#    a version installed by homebrew if we can find it.
 # 2. GCC via riscv32-unknown-elf-gcc. Unlike Clang you have to specifically build GCC as a cross
 #    compiler. You can download a binary from https://github.com/riscv-collab/riscv-gnu-toolchain/releases
 # 3. GCC via riscv64-unknown-elf-gcc, but only if it has "multilib" support, so we'll try riscv32-... first.
-
+if (APPLE)
+    find_program(HOMEBREW brew)
+    execute_process(
+        COMMAND ${HOMEBREW} --prefix llvm
+        OUTPUT_VARIABLE HOMEBREW_LLVM_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL NONE
+    )
+    find_program(CLANG_BIN "clang" PATHS "${HOMEBREW_LLVM_DIR}/bin" NO_DEFAULT_PATH)
+endif()
+# On macOS, this call is a no-op if already found in HOMEBREW_LLVM_DIR
 find_program(CLANG_BIN "clang")
 find_program(GCC_BIN_RV32 "riscv32-unknown-elf-gcc")
 find_program(GCC_BIN_RV64 "riscv64-unknown-elf-gcc")
@@ -31,7 +43,7 @@ set(CROSS_COMPILER_COMMAND_RV64)
 if (CLANG_BIN)
     # Check it supports RISC-V.
     execute_process(
-        COMMAND clang -print-targets
+        COMMAND ${CLANG_BIN} -print-targets
         OUTPUT_VARIABLE clang_targets
         COMMAND_ERROR_IS_FATAL ANY
     )
@@ -96,6 +108,11 @@ macro(add_first_party_test name)
     add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "no_override.json")
     add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "no_override.json")
 endmacro()
+macro(add_first_party_override_test name override)
+    set(isa_extension gcv_zfbfmin)
+    add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "${override}")
+    add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "${override}")
+endmacro()
 
 add_first_party_test("test_bf16_nan_boxing.S")
 add_first_party_test("test_hello_world.c")
@@ -105,7 +122,10 @@ add_first_party_test("test_misaligned_vector_register_groups.S")
 add_first_party_test("test_pmp_access.c")
 add_first_party_test("test_phys_perms_on_failing_sc.S")
 add_first_party_test("test_wfi_wait.S")
+add_first_party_test("test_vrgatherei16_reg_group.S")
 add_first_party_test("test_tlb_stale_pte_access_fault.S")
+
+add_first_party_override_test("test_sew_elen_bound.S" "elen_32.json")
 
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
