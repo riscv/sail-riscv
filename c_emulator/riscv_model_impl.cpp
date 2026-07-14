@@ -448,7 +448,7 @@ std::optional<std::string> ModelImpl::string_of_current_exception() {
   if (!have_exception) {
     return std::nullopt;
   }
-  sail_string str{};
+  sail_string str = nullptr;
   CREATE(sail_string)(&str);
   zstring_of_exception(&str, *current_exception);
   std::string exception_str(str);
@@ -457,7 +457,7 @@ std::optional<std::string> ModelImpl::string_of_current_exception() {
 }
 
 std::string ModelImpl::memory_access_type_to_string(MemoryAccessType access_type) {
-  sail_string sstr{};
+  sail_string sstr = nullptr;
   CREATE(sail_string)(&sstr);
   zaccessType_to_str(&sstr, access_type);
   std::string str(sstr);
@@ -466,7 +466,7 @@ std::string ModelImpl::memory_access_type_to_string(MemoryAccessType access_type
 }
 
 std::string ModelImpl::privilege_to_string(Privilege privilege) {
-  sail_string sstr{};
+  sail_string sstr = nullptr;
   CREATE(sail_string)(&sstr);
   zprivLevel_to_str(&sstr, privilege.ztup0);
   std::string str(sstr);
@@ -475,7 +475,7 @@ std::string ModelImpl::privilege_to_string(Privilege privilege) {
 }
 
 std::string ModelImpl::ptw_error_to_string(PTW_Error error_type) {
-  sail_string sstr{};
+  sail_string sstr = nullptr;
   CREATE(sail_string)(&sstr);
   zptw_error_to_str(&sstr, error_type);
   std::string str(sstr);
