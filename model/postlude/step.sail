@@ -310,7 +310,7 @@ function loop () : unit -> nat = {
   if exit_val == 0
     then print_endline("SUCCESS")
     else print_int("FAILURE: ", exit_val);
-  return exit_val
+  exit_val
 }
 
 // Termination measures for loops are not supported by the Lean backend, so they

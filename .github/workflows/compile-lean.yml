@@ -52,6 +52,30 @@ jobs:
         with:
           lake-package-directory: "build/model/Lean_RV64D/"
 
+  lean-emulator:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+        with:
+          # Git history is needed for `git describe` in the build to work.
+          fetch-depth: 0
+
+      - name: System dependencies (ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install cvc4
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          sail-version: "latest"
+
       - name: Test the Lean emulator
         run: |
           eval $(opam config env)

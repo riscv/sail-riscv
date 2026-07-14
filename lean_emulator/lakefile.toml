@@ -1,5 +1,4 @@
 name = "lean-riscv"
-version = "0.1.0"
 defaultTargets = ["lean_riscv_emulator"]
 
 [[lean_lib]]

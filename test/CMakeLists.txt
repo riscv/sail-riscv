@@ -212,7 +212,7 @@ if(ENABLE_LEAN_EMULATOR_TESTS)
     )
 
     include(lean_emulator_test_files.cmake)
-    set(lean_emulator ${PROJECT_SOURCE_DIR}/lean_emulator/.lake/build/bin/lean_riscv_emulator)
+    set(lean_emulator ${CMAKE_CURRENT_BINARY_DIR}/lean-emulator-build/build/bin/lean_riscv_emulator)
     foreach(elf IN LISTS lean_elf_files)
         add_test(
             NAME "lean_emulator_${elf}"
