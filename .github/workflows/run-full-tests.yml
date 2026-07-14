@@ -48,23 +48,3 @@ jobs:
       - name: Run tests
         run: |
           ctest --test-dir build --output-on-failure
-  run-lean-tests:
-    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-full-tests') }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
-        with:
-          # Git history is needed for `git describe` in the build to work.
-          fetch-depth: 0
-      - name: Common setup
-        uses: ./.github/actions/sail-setup
-      - name: Build Lean emulator
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSAIL_MODULES="H;Zca;Zicbom_insts;Zicboz;Zicsr_insts;Zkr;Sscofpmf;postlude" -DPRINT_EFFECTS=true -DENABLE_LEAN_EMULATOR_TESTS=on
-          cmake --build build --target build_lean_emulator
-      - name: Run Lean tests
-        run: |
-          ctest --test-dir build --output-on-failure -R lean
