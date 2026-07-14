@@ -2,7 +2,7 @@ import LeanRiscv
 
 def main (args : List String) : IO UInt32 := do
   if args.length != 1 then do
-    IO.println "usage: run-riscv-lean <elf_file>"
+    IO.println "usage: lean_riscv_emulator <elf_file>"
     pure 255
   else do
     match (← readElf args[0]!) with
