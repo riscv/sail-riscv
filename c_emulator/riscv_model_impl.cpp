@@ -174,7 +174,7 @@ unit ModelImpl::ptw_fail_callback(PTW_Error error_type, int64_t level, sbits pte
   return UNIT;
 }
 
-unit ModelImpl::tlb_add_callback(TLB_Entry tlb, uint64_t index) {
+unit ModelImpl::tlb_add_callback(TLB tlb, uint64_t index) {
   for (auto c : m_callbacks) {
     c->tlb_add_callback(*this, tlb, index);
   }
@@ -195,7 +195,7 @@ unit ModelImpl::tlb_flush_callback(uint64_t index) {
   return UNIT;
 }
 
-unit ModelImpl::tlb_flush_end_callback(TLB_Entry tlb) {
+unit ModelImpl::tlb_flush_end_callback(TLB tlb) {
   for (auto c : m_callbacks) {
     c->tlb_flush_end_callback(*this, tlb);
   }

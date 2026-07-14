@@ -36,10 +36,10 @@ public:
   void ptw_step_callback(ModelImpl &model, int64_t level, sbits pte_addr, uint64_t pte) override;
   void ptw_success_callback(ModelImpl &model, uint64_t final_ppn, int64_t level) override;
   void ptw_fail_callback(ModelImpl &model, ModelImpl::PTW_Error error_type, int64_t level, sbits pte_addr) override;
-  void tlb_add_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb, uint64_t index) override;
+  void tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index) override;
   void tlb_flush_begin_callback(ModelImpl &model) override;
   void tlb_flush_callback(ModelImpl &model, uint64_t index) override;
-  void tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB_Entry tlb) override;
+  void tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB tlb) override;
 
 private:
   bool config_print_gpr;

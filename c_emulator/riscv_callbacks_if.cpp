@@ -129,7 +129,7 @@ void callbacks_if::ptw_fail_callback(
 
 void callbacks_if::tlb_add_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] ModelImpl::TLB_Entry tlb,
+  [[maybe_unused]] ModelImpl::TLB tlb,
   [[maybe_unused]] uint64_t index
 ) {
 }
@@ -140,8 +140,5 @@ void callbacks_if::tlb_flush_begin_callback([[maybe_unused]] ModelImpl &model) {
 void callbacks_if::tlb_flush_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] uint64_t index) {
 }
 
-void callbacks_if::tlb_flush_end_callback(
-  [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] ModelImpl::TLB_Entry tlb
-) {
+void callbacks_if::tlb_flush_end_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] ModelImpl::TLB tlb) {
 }
