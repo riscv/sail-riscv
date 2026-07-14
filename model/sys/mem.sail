@@ -391,6 +391,9 @@ function mem_write_ea(paddr, width, access, pbmt, aq, rl, con) = {
   Ok(())
 }
 
+// This lets the Rocq extraction know why the repeat loop above terminates
+termination_measure mem_write_ea repeat N
+
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   paddr : physaddr,

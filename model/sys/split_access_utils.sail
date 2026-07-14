@@ -41,6 +41,28 @@ let sys_misaligned_allowed_within_exp : mag_size_exp = config memory.misaligned.
 // performs misaligned accesses.
 let sys_misaligned_order_decreasing : bool = config memory.misaligned.order_decreasing
 
+private val split_access : forall 'n 'width, 13 <= 'n <= 64 & 0 < 'width <= max_mem_access.
+  (bits('n), int('width)) -> {'m 'bytes, 'width == 'm * 'bytes & 'bytes > 0. (int('m), int('bytes))}
+
+function split_access(addr, width) = {
+  // Use the minimum alignment of the address and the specified width.
+  let addr_align  = count_trailing_zeros(addr);
+  let width_align = count_trailing_zeros(to_bits(sizeof(pagesize_bits) + 1, width));
+  let bytes_per_access = 2 ^ min(addr_align, width_align);
+  let num_accesses = width / bytes_per_access;
+  assert(width == num_accesses * bytes_per_access);
+  (num_accesses, bytes_per_access)
+}
+
+// Though this property seems redundant given the type signature
+// above, the test ensures that the assert does not trip.
+$[property]
+private val prop_split_access : forall 'width, 0 < 'width <= max_mem_access. (bits(16), int('width)) -> bool
+function prop_split_access(addr, width) = {
+  let (splits, split_width) = split_access(addr, width);
+  splits * split_width == width
+}
+
 // This is an external option that, when true, causes misaligned load/store accesses
 // to be split into single byte operations.  Otherwise, such misaligned accesses
 // are split into multiple accesses of smaller widths such that each of the latter
@@ -59,15 +81,7 @@ function split_misaligned(Physaddr(addr), width, allowed_within_exp, splittable)
 
   if do_not_split then (1, width)
   else if sys_misaligned_byte_by_byte then (width, 1)
-  else {
-    // Use the minimum alignment of the address and the specified width.
-    let addr_align  = count_trailing_zeros(addr);
-    let width_align = count_trailing_zeros(to_bits(sizeof(pagesize_bits) + 1, width));
-    let bytes_per_access = 2 ^ min(addr_align, width_align);
-    let num_accesses = width / bytes_per_access;
-    assert(width == num_accesses * bytes_per_access);
-    (num_accesses, bytes_per_access)
-  }
+  else split_access(addr, width)
 }
 
 type valid_misaligned_order('n, 'first, 'last, 'step) -> Bool =
