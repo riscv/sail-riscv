@@ -50,7 +50,7 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 enum Splittability = {CanSplit, CannotSplit}
 
 private val split_misaligned : forall 'width, 0 < 'width <= max_mem_access.
-  (physaddr, int('width), range(0, 12), Splittability) -> {'n 'bytes, 'width == 'n * 'bytes & 'bytes > 0. (int('n), int('bytes))}
+  (physaddr, int('width), mag_size_exp, Splittability) -> {'n 'bytes, 'width == 'n * 'bytes & 'bytes > 0. (int('n), int('bytes))}
 
 function split_misaligned(Physaddr(addr), width, allowed_within_exp, splittable) = {
   let do_not_split = splittable == CannotSplit |
@@ -60,7 +60,10 @@ function split_misaligned(Physaddr(addr), width, allowed_within_exp, splittable)
   if do_not_split then (1, width)
   else if sys_misaligned_byte_by_byte then (width, 1)
   else {
-    let bytes_per_access = 2 ^ count_trailing_zeros(addr);
+    // Use the minimum alignment of the address and the specified width.
+    let addr_align  = count_trailing_zeros(addr);
+    let width_align = count_trailing_zeros(to_bits(sizeof(pagesize_bits) + 1, width));
+    let bytes_per_access = 2 ^ min(addr_align, width_align);
     let num_accesses = width / bytes_per_access;
     assert(width == num_accesses * bytes_per_access);
     (num_accesses, bytes_per_access)
@@ -97,8 +100,8 @@ function split_on_page_boundary(addr, width) = {
 }
 
 $[property]
-private val access_in_same_page : forall 'width, is_mem_width('width). (bits(16), int('width)) -> bool
-function access_in_same_page(addr, width) = {
+private val prop_access_in_same_page : forall 'width, is_mem_width('width). (bits(16), int('width)) -> bool
+function prop_access_in_same_page(addr, width) = {
   let (p, q) = split_on_page_boundary(addr, width);
   let page_mask : bits(16) = 0xF000;
   (q == 0 ==> (addr & page_mask) == ((addr + width - 1) & page_mask))
@@ -106,8 +109,8 @@ function access_in_same_page(addr, width) = {
 }
 
 $[property]
-private val access_across_page_boundary : forall 'width, is_mem_width('width). (bits(16), int('width)) -> bool
-function access_across_page_boundary(addr, width) = {
+private val prop_access_across_page_boundary : forall 'width, is_mem_width('width). (bits(16), int('width)) -> bool
+function prop_access_across_page_boundary(addr, width) = {
   let (p, q) = split_on_page_boundary(addr, width);
   let page_mask : bits(16) = 0xF000;
   (q != 0 ==> (addr & page_mask) != ((addr + width - 1) & page_mask))
