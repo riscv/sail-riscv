@@ -46,6 +46,7 @@ struct CLIOptions {
   bool config_print_clint = false;
   bool config_print_exception = false;
   bool config_print_interrupt = false;
+  bool config_print_trigger = false;
   bool config_print_htif = false;
   bool config_print_pma = false;
   bool config_print_rvfi = false;

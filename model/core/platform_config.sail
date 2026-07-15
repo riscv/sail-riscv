@@ -139,6 +139,27 @@ let fetch_guest_page_fault_writes_xtval : bool = false
 let software_check_fault_writes_xtval : bool = config base.xtval_nonzero.software_check
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
 
+// Sdtrig configuration
+let sdtrig_has_tcontrol : bool = config extensions.Sdtrig.tcontrol.supported
+let sdtrig_has_icount   : bool = config extensions.Sdtrig.icount.supported
+let sdtrig_has_etrigger : bool = config extensions.Sdtrig.etrigger.supported
+let sdtrig_has_itrigger : bool = config extensions.Sdtrig.itrigger.supported
+
+let sdtrig_has_scontext : bool = false
+let sdtrig_has_mcontext : bool = false
+
+type num_triggers : Int = config extensions.Sdtrig.num_triggers
+// The number of bits to index the triggers needs to fit into `tselect`,
+// but for practical reasons is constrained to be much smaller.
+constraint 0 <= num_triggers <= 15
+
+enum Sdtrig_breakpoint_reentrancy = {
+  Use_tcontrol,
+  Use_interrupt_enables,
+  No_reentrancy_support,
+}
+let sdtrig_breakpoint_reentrancy : Sdtrig_breakpoint_reentrancy = config extensions.Sdtrig.breakpoint_reentrancy
+
 // Define the policy for handling reserved behaviors.
 
 enum AmocasOddRegisterReservedBehavior = {
