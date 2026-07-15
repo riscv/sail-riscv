@@ -88,7 +88,7 @@ bitfield Medeleg : bits(64) = {
   Fetch_Addr_Align  : 0
 }
 
-function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
+private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
   [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with
     // M-EnvCalls and DoubleTrap cannot be delegated.
     DoubleTrap         = 0b0,

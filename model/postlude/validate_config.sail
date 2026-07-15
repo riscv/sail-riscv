@@ -561,7 +561,7 @@ private function check_extension_param_constraints() -> bool = {
       print_endline("Bit 11 (Environment call from M-mode) in `base.medeleg.delegatable_bits` is set; this environment call cannot be delegated.");
     };
     let reserved_exception_mask : bits(64) = zero_extend(0x0_FFFF_00F2_4400);
-    if valid & (medelegation.bits & reserved_exception_mask) != zeros() then {
+    if (medelegation.bits & reserved_exception_mask) != zeros() then {
       valid = false;
       print_endline("Bits for reserved exceptions are set in `base.medeleg.delegatable_bits`.");
     };
@@ -569,7 +569,7 @@ private function check_extension_param_constraints() -> bool = {
     let midelegation = Mk_Minterrupts(config base.mideleg.delegatable_bits);
     // Ignore bits set for interrupts designated for platform use.
     let reserved_interrupt_mask : xlenbits = zero_extend(0xD555);
-    if valid & (midelegation.bits & reserved_interrupt_mask) != zeros() then {
+    if (midelegation.bits & reserved_interrupt_mask) != zeros() then {
       valid = false;
       print_endline("Bits for reserved interrupts are set in `base.mideleg.delegatable_bits`.");
     }
