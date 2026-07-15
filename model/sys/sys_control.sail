@@ -70,6 +70,8 @@ function check_CSR_result(csr : csreg, p : Privilege, access_type : CSRAccessTyp
 // it occurred, returns the privilege at which it should be handled.
 function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
   let idx = unsigned(exceptionType_bits(e));
+  // Note that `medeleg` can have bits set for custom exceptions (see
+  // `core/interrupt_regs.sail:legalize_medeleg()`).
   let super = bit_to_bool(medeleg.bits[idx]);
   // TODO: check VS/VU-mode if hypervisor extension enabled
   let deleg = if currentlyEnabled(Ext_S) & super then Supervisor else Machine;
@@ -109,6 +111,10 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // Read mip with the external platform interrupts ORed in.
   let mip_bits = read_mip(IncludePlatformInterrupts).bits;
 
+  // Note that `mideleg` can have bits set for interrupts designated
+  // for platform use (see
+  // `core/interrupt_regs.sail:legalize_mideleg()`), but those
+  // interrupts are not known in `findPendingInterrupt()` above.
   let pending_m = mip_bits & mie.bits & ~(mideleg.bits);
   let pending_s = mip_bits & mie.bits & mideleg.bits;
 

@@ -53,9 +53,16 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   ]
 }
 
-private function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v & plat_mideleg_delegatable_bits);
-  [o with
+  // Using `v` allows bits to be set for interrupts designated for
+  // platform use. This is useful for bit-matching test frameworks
+  // like ACT, but these bits do not affect the model as those
+  // interrupts are not known. (Even if the corresponding bits are set
+  // in `mip` and `mie` (see `sys/sys_control.sail:getPendingSet()`,
+  // they will not be used (see
+  // `sys/sys_control.sail:findPendingInterrupt()`).
+  [v with
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     // M-mode interrupts can be delegated;
     // see https://github.com/riscv/riscv-isa-manual/issues/3162
@@ -89,6 +96,10 @@ bitfield Medeleg : bits(64) = {
 }
 
 private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
+  // Using `v` allows bits for custom exceptions to be set. This is
+  // useful for bit-matching test frameworks like ACT, but these bits
+  // do not affect the model as those exceptions are not known (see
+  // `sys/sys_control.sail:exception_delegatee()`).
   [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with
     // M-EnvCalls and DoubleTrap cannot be delegated.
     DoubleTrap         = 0b0,
