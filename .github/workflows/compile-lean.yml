@@ -34,7 +34,7 @@ jobs:
         run: |
           eval $(opam config env)
           cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -G Ninja
-          cmake --build build/ --target generated_lean_rv64d generated_lean_executable_rv64d
+          cmake --build build/ --target generated_lean_rv64d
 
       # Use a separate initial setup step so that we can run lake update before the build
       - name: Setup Lean
