@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <array>
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/ip.h>
@@ -36,7 +37,7 @@ bool rvfi_handler::setup_socket(bool config_print) {
     fprintf(stderr, "Unable to set reuseaddr on socket: %s\n", strerror(errno));
     return false;
   }
-  struct sockaddr_in addr;
+  struct sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   addr.sin_port = htons(dii_port);
@@ -135,7 +136,7 @@ void rvfi_handler::send_trace(bool config_print) {
 }
 
 rvfi_prestep_t rvfi_handler::pre_step(bool config_print) {
-  mach_bits instr_bits;
+  mach_bits instr_bits{};
   if (config_print) {
     fprintf(stderr, "Waiting for cmd packet... ");
   }
@@ -201,7 +202,7 @@ rvfi_prestep_t rvfi_handler::pre_step(bool config_print) {
     // From now on send traces in the requested format
     trace_version = insn;
     struct {
-      char msg[8];
+      std::array<char, 8> msg;
       uint64_t version;
     } version_response = {{'v', 'e', 'r', 's', 'i', 'o', 'n', '='}, trace_version};
     if (write(dii_sock, &version_response, sizeof(version_response)) != sizeof(version_response)) {
