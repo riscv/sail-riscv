@@ -49,6 +49,10 @@ function clause hartSupports(Ext_F) = config extensions.F.supported
 enum clause extension = Ext_D
 mapping clause extensionName = Ext_D <-> "d"
 function clause hartSupports(Ext_D) = constraint(ext_d_supported) & hartSupports(Ext_F)
+// Quad-Precision Floating-Point
+enum clause extension = Ext_Q
+mapping clause extensionName = Ext_Q <-> "q"
+function clause hartSupports(Ext_Q) = constraint(ext_q_supported) & hartSupports(Ext_D)
 // Bit Manipulation
 enum clause extension = Ext_B
 mapping clause extensionName = Ext_B <-> "b"
@@ -593,6 +597,7 @@ function hartSupports_measure(ext : extension) -> int =
     Ext_Zvkng => 2, // > Zvkn
     Ext_Zvksc => 2, // > Zvks
     Ext_Zvksg => 2, // > Zvks
+    Ext_Q => 2, // > D
 
     _ => 0,
   }

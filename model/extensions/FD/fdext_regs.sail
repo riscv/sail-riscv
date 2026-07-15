@@ -6,14 +6,14 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// ***************************************************************
-// Floating point register file and accessors for F, D extensions
+// *****************************************************************
+// Floating point register file and accessors for F, D, Q extensions
 // Floating point CSR and accessors
-// ***************************************************************
+// *****************************************************************
 
 // Original version written by Rishiyur S. Nikhil, Sept-Oct 2019
 
-// ***************************************************************
+// *****************************************************************
 // NaN boxing/unboxing.
 
 // Canonical NaNs are used when an invalid boxed value is unboxed.
@@ -250,11 +250,23 @@ function wF_S(i : fregidx, data : bits(32)) -> unit = {
 function rF_D(i : fregidx) -> bits(64) = {
   assert(flen >= 64);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
-  F(i)
+  nan_unbox(F(i))
 }
 
 function wF_D(i : fregidx, data : bits(64)) -> unit = {
   assert(flen >= 64);
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
+  F(i) = nan_box(data)
+}
+
+function rF_Q(i : fregidx) -> bits(128) = {
+  assert(flen >= 128);
+  assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
+  F(i)
+}
+
+function wF_Q(i : fregidx, data : bits(128)) -> unit = {
+  assert(flen >= 128);
   assert(hartSupports(Ext_F) & not(hartSupports(Ext_Zfinx)));
   F(i) = data
 }
@@ -263,6 +275,7 @@ overload F_BF16 = { rF_BF16, wF_BF16 }
 overload F_H = { rF_H, wF_H }
 overload F_S = { rF_S, wF_S }
 overload F_D = { rF_D, wF_D }
+overload F_Q = { rF_Q, wF_Q }
 
 function rF_or_X_H(i : fregidx) -> bits(16) = {
   assert(flen >= 16);

@@ -14,10 +14,10 @@
 
 // Original version written by Rishiyur S. Nikhil, Sept-Oct 2019
 
-// ***************************************************************
+// ****************************************************************
 // IMPORTANT!
-// The files 'fext_insts.sail', 'dext_insts.sail' and
-// 'zfh_insts.sail' define the F, D and Zfh extensions,
+// The files 'fext_insts.sail', 'dext_insts.sail', 'qext_insts.sail'
+// and 'zfh_insts.sail' define the F, D, Q, and Zfh extensions,
 // respectively.
 // The texts follow each other very closely; please try to maintain
 // this correspondence as the files are maintained for bug-fixes,

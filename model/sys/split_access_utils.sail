@@ -47,7 +47,7 @@ let sys_misaligned_byte_by_byte : bool = config memory.misaligned.byte_by_byte
 // spanning pages always work.
 let sys_misaligned_allowed_within_exp : range(0, 12) = config memory.misaligned.allowed_within_exp
 
-private val split_misaligned : forall 'width, is_mem_width('width).
+private val split_misaligned : forall 'width, is_mem_width_wide('width).
   (virtaddr, int('width)) -> {'n 'bytes, 'width == 'n * 'bytes & 'bytes > 0. (int('n), int('bytes))}
 
 function split_misaligned(vaddr, width) = {

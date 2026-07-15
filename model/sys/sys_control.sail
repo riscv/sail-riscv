@@ -323,10 +323,13 @@ function reset_misa() -> unit = {
   if   hartSupports(Ext_F) & hartSupports(Ext_Zfinx)
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
 
-  // We currently support both F and D
+  // We support F, D, and Q
   misa[F]   = bool_to_bit(hartSupports(Ext_F));      // single-precision
   misa[D]   = if   flen >= 64
               then bool_to_bit(hartSupports(Ext_D))  // double-precision
+              else 0b0;
+  misa[Q]   = if   flen >= 128
+              then bool_to_bit(hartSupports(Ext_Q))  /* quad-precision */
               else 0b0;
   csr_write_callback("misa", misa.bits);
 }

@@ -145,6 +145,8 @@ enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
 
 type is_mem_width('w) = 'w in {1, 2, 4, 8}
 
+type is_mem_width_wide('w) = 'w in {1, 2, 4, 8, 16}
+
 // architectural interrupt definitions
 
 enum InterruptType = {

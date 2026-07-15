@@ -36,7 +36,7 @@ public:
 
   virtual unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value);
 
-  virtual unit freg_write_callback(unsigned reg, sbits value);
+  virtual unit freg_write_callback(unsigned reg, lbits value);
 
   virtual unit csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value);
 

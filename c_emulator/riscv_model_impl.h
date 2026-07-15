@@ -109,7 +109,7 @@ private:
   unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
   unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
-  unit freg_write_callback(unsigned reg, sbits value) override;
+  unit freg_write_callback(unsigned reg, lbits value) override;
   // `full` indicates that the name and index of the CSR are provided.
   // 64 bit CSRs use a long_csr_write_callback Sail function that automatically
   // makes two csr_full_write_callback calls on RV32.
