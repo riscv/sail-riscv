@@ -46,6 +46,9 @@ vector extensions (`vlen`) respectively. These widths are specified
 as `config` values, which means their value is derived from the
 configuration file for the model.
 
+[isa_version.sail](../model/core/isa_version.sail) contains parameters
+to control behavior that depend on the ISA version.
+
 The lowest level memory access primitives are defined in
 [phys_mem_interface.sail](../model/core/phys_mem_interface.sail) and are
 implemented by the various Sail backends.
@@ -168,6 +171,9 @@ implemented in [simple_interrupt_generator.sail](../model/sys/simple_interrupt_g
 and [simple_interrupt_generator_regs.sail](../model/sys/simple_interrupt_generator_regs.sail).
 This enables testing the model with external interrupts, as described in
 its [documentation](SimpleInterruptGenerator.md).
+
+[split_access_utils.sail](../model/sys/split_access_utils.sail) has
+utilities for handling the splitting of misaligned accesses.
 
 [pma.sail](../model/sys/pma.sail) implements Physical Memory Attributes
 (PMAs), in terms of which the physical memory layout is configured in
@@ -355,3 +361,9 @@ directory.
 The Sail compiler generates a JSON schema for the configuration in
 `sail_riscv_config_schema.json`; this schema file is used to validate
 the user-provided configuration (as indicated by the purple arrow).
+
+The C++ harness also provides experimental support to serve as a
+remote target for debuggers implementing the remote serial protocol
+like GDB and LLDB. This support is implemented by the files under
+[c_emulator/gdb](../c_emulator/gdb); see the accompanying
+[notes](../c_emulator/gdb/notes.md) for more information.

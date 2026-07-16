@@ -1,5 +1,13 @@
 # Release notes for the next version
 
+# Release notes for version 0.13
+
+The main highlights of this release are the addition of the misaligned
+atomicity granule PMA, an [experimental RISC-V
+emulator](../lean_emulator/README.md) in Lean extracted from the Sail
+model, and experimental support for a [remote server endpoint for GDB
+and LLDB](../c_emulator/gdb/README.md).
+
 - The following extensions have been added:
   - Zama16b
 
@@ -12,8 +20,8 @@
     see `memory.physaddr_bits`.
   - Delegatable subsets of `medeleg` and `mideleg` can be specified;
     see `base.medeleg.delegatable_bits` and `base.mideleg.delegatable_bits`.
-  - Add the `extensions.F.fflags_dirty_policy` option to configure exactly
-    when mstatus[FS/SD] is set by floating point instructions.
+  - Finer-grained control on when `mstatus.FD` is dirtied by changes
+    to `fflags` is now possible; see `extensions.F.fflags_dirty_policy`.
   - PMA regions now have two additional attributes to support the
     Misaligned Atomicity Granule PMA: `misaligned_atomicity_granule_size_exp`
     and `vector_misaligned_atomicity_granule_size_exp`, specifying the
@@ -28,17 +36,24 @@
     page boundaries when virtual memory is active, since the maximum
     MAG is 2^12. The default has been changed to not raise exceptions;
     this is not compatible with previous versions. To recover previous
-    behavior, specify `memory.misaligned.exceptions.amo` as `{"Some":
-"AccessFault"}`.
+    behavior, specify `memory.misaligned.exceptions.amo` as
+    `{"Some": "AccessFault"}`.
   - `memory.misaligned.allowed_within_exp` was renamed to
     `memory.misaligned.default_allowed_within_exp` to indicate that
     this parameter now specifies the default misaligned atomicity
     granule that is used when no MAG PMA is specified for a memory
     region.
 
+- The command line interface has been updated:
+  - A `--stop-at-pc` option terminates execution when the program counter
+    reaches the specified address.
+  - A `--dump-memory` option can be used to generate raw memory dump files
+    for each main memory region after execution ends.
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1807 : fix assertion on non-zero `mideleg` triggered by clearing `misa.S`
   - https://github.com/riscv/sail-riscv/issues/1794 : `vtype.vill` was not set when SEW was configured to exceed ELEN
+  - https://github.com/riscv/sail-riscv/issues/1782 : Invalid register group assertion for `vrgatherei16.vv`
   - https://github.com/riscv/sail-riscv/issues/1753 : Access to `xenvcfg` CSRs need to be gated by the specification version
   - https://github.com/riscv/sail-riscv/issues/1750 : Non-segmented indexed loads were trapping on legal overlaps
   - https://github.com/riscv/sail-riscv/issues/1748 : Segment loads/stores whose register numbers increment past v31 were not treated as reserved.
@@ -46,6 +61,8 @@
 
 - Other notes:
   - The model now requires the Sail 0.20.2 compiler version.
+  - The test suite has been updated to the latest release (2026-06-10)
+    from sail-riscv-tests. VLEN=64 is now tested in CI.
 
 # Release notes for version 0.12
 

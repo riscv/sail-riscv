@@ -1,5 +1,5 @@
 # Increment this appropriately at tag-and-release time.
-set(sail_riscv_release_version "0.12")
+set(sail_riscv_release_version "0.13")
 
 # Sets GIT_EXECUTABLE
 find_package(Git)
