@@ -53,14 +53,20 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   ]
 }
 
-private function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts = {
+private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v & plat_mideleg_delegatable_bits);
-  // M-mode interrupt delegation bits "should" be hardwired to 0.
-  [o with
+  // Using `v` allows bits to be set for interrupts designated for
+  // platform use. This is useful for bit-matching test frameworks
+  // like ACT, but these bits do not affect the model as those
+  // interrupts are not known. (Even if the corresponding bits are set
+  // in `mip` and `mie` (see `sys/sys_control.sail:getPendingSet()`,
+  // they will not be used (see
+  // `sys/sys_control.sail:findPendingInterrupt()`).
+  //
+  // Note also that M-mode interrupts (MTI, MSI, MEI) can be delegated;
+  // see https://github.com/riscv/riscv-isa-manual/issues/3162
+  [v with
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
-    MEI   = 0b0,
-    MTI   = 0b0,
-    MSI   = 0b0,
     SEI   = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     STI   = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
     SSI   = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
@@ -68,6 +74,9 @@ private function legalize_mideleg(o : Minterrupts, v : xlenbits) -> Minterrupts 
 }
 
 bitfield Medeleg : bits(64) = {
+  Hardware_Error    : 19,
+  Software_Check    : 18,
+  Double_Trap       : 16,
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
@@ -85,8 +94,15 @@ bitfield Medeleg : bits(64) = {
 }
 
 private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
-  // M-EnvCalls delegation is not supported
-  [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with MEnvCall = 0b0]
+  // Using `v` allows bits for custom exceptions to be set. This is
+  // useful for bit-matching test frameworks like ACT, but these bits
+  // do not affect the model as those exceptions are not known (see
+  // `sys/sys_control.sail:exception_delegatee()`).
+  [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with
+    // M-EnvCalls and DoubleTrap cannot be delegated.
+    Double_Trap        = 0b0,
+    MEnvCall           = 0b0,
+  ]
 }
 
 // Note that mip's MEIP and SEIP had special handling. MEIP is always

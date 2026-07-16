@@ -85,19 +85,25 @@
     "medeleg": {
       // A bit set to 1 in this value specifies that the corresponding
       // bit of `medeleg` can be set to 1. It represents the subset of
-      // delegatable traps of the implementation. Bits for traps that
-      // cannot be delegated as per the specification will be ignored.
+      // delegatable traps of the implementation. Bits should not be
+      // set for traps that cannot be delegated as per the
+      // specification, and delegation of reserved traps is not
+      // supported.  This value is ignored when the `medeleg` CSR does
+      // not exist.
       "delegatable_bits": {
         "len": 64,
-        "value": "0xFFFF_FFFF_FFFF_FFFF"
+        "value": "0x0000_0000_000c_b3FF"
       }
     },
     "mideleg": {
       // A bit set to 1 in this value specifies that the corresponding
       // bit of `mideleg` can be set to 1. It represents the subset of
-      // delegatable interrupts of the implementation. Bits for
-      // interrupts that cannot be delegated as per the specification
-      // will be ignored.
+      // delegatable interrupts of the implementation. Bits should not
+      // be set for interrupts that cannot be delegated as per the
+      // specification, and delegation of reserved interrupts is not
+      // supported. Bits set for interrupts designated for platform
+      // use are ignored. This value is ignored when the `mideleg` CSR
+      // does not exist.
       "delegatable_bits": {
         "len": "xlen",
         "value": "@CONFIG_MIDELEG_DELEGATABLE_BITS_VALUE@"
