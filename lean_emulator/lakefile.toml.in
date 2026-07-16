@@ -15,4 +15,4 @@ rev = "7e68e68e836025df741de04a5bb83439fe88d956"
 
 [[require]]
 name = "Lean_RV64D_executable"
-path = "../build/model/Lean_RV64D_executable/"
+path = "@lean_rv64d_executable_dir@"
