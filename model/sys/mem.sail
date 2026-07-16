@@ -182,7 +182,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   }
 }
 
-// Check if access is permitted according to PMPs and PMAs.
+// Check if access is permitted according to PMPs _and_ PMAs.
 // NOTE: this function is only used for unsplit accesses such
 // as CBOs and an unpaired SC.
 function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
@@ -206,6 +206,45 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   }
 }
 
+// Local helper to check a possibly-split access against PMAs,
+// prioritizing PMP check failures above failed PMA checks.
+//
+// There are two issues to handle here:
+//
+// - PMA checks might require splitting the access due to the MAG
+//   PMA. If the access is split, the spec requires that PMP checks
+//   must be done on each decomposed access.
+//
+// - If a PMP check results in an access fault, it has higher
+//   priority than a misaligned fault from a PMA check.
+//
+// The PMA check runs first since its result determines the splitting.
+// In case it fails, any access fault from the (full-width) PMP check
+// has higher priority than a misaligned exception from the PMA check.
+//
+// Note that unlike `phys_access_check()` above, the PMP check is
+// _not_ done in this function when the PMA check succeeds, but later
+// per split in the individual checked_mem_{read,write} and mem_write_ea
+// functions.
+private function check_pma_with_pmp_priority forall 'n, 0 < 'n <= max_mem_access . (
+  access     : MemoryAccessType(mem_payload),
+  pbmt       : page_based_mem_type,
+  priv       : Privilege,
+  paddr      : physaddr,
+  width      : int('n),
+  res_or_con : bool,
+) -> result(Phys_Mem_Access_Info, ExceptionType) =
+  match pmaCheck(paddr, width, access, pbmt, res_or_con) {
+    // PMP checks are done later per-split, and might still fail.
+    Ok(access_info) => Ok(access_info),
+
+    // Prioritize PMP failures above PMA failures.
+    Err(pmaExc) => match pmpCheck(paddr, width, access, priv) {
+      Some(pmpExc) => Err(pmpExc),
+      None()       => Err(pmaExc),
+    },
+  }
+
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   access : MemoryAccessType(mem_payload),
@@ -219,26 +258,9 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   meta : bool,
 ) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
 
-  // There are two issues to handle here:
-  //
-  // - PMA checks might require splitting the access due to the MAG
-  //   PMA. If the access is split, the spec requires that PMP checks
-  //   must be done on each decomposed access.
-  //
-  // - If a PMP check results in an access fault, it has higher
-  //   priority than a misaligned fault from a PMA check.
-
-  let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, res) {
-    Err(pmaExc) => {
-      // Access fault exceptions from PMP checks have higher priority
-      // than a potential misaligned exception from a PMA check.
-      let exc : ExceptionType = match pmpCheck(paddr, width, access, priv) {
-        Some(pmpExc) => pmpExc,
-        None()       => pmaExc,
-      };
-      return Err(exc)
-    },
+  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, res) {
     Ok(access_info) => access_info,
+    Err(e)          => return Err(e),
   };
 
   // If the load is misaligned or an allowed misaligned access,
@@ -349,16 +371,9 @@ function mem_write_ea(paddr, width, access, pbmt, aq, rl, con) = {
   // model is extended for MMIO, but until then, this should suffice
   // for concurrency of RAM accesses.
 
-  // See comment in `checked_mem_read()` on the ordering of PMA and PMP checks.
-  let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, con) {
-    Err(pmaExc) => {
-      let exc : ExceptionType = match pmpCheck(paddr, width, access, priv) {
-        Some(pmpExc) => pmpExc,
-        None()       => pmaExc,
-      };
-      return Err(exc)
-    },
+  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, con) {
     Ok(access_info) => access_info,
+    Err(e)          => return Err(e),
   };
 
   let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
@@ -408,16 +423,9 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   con : bool,
 ) -> MemoryOpResult(bool) = {
 
-  // See comment in `checked_mem_read()` on the ordering of PMA and PMP checks.
-  let access_info : Phys_Mem_Access_Info = match pmaCheck(paddr, width, access, pbmt, con) {
-    Err(pmaExc) => {
-      let exc : ExceptionType = match pmpCheck(paddr, width, access, priv) {
-        Some(pmpExc) => pmpExc,
-        None()       => pmaExc,
-      };
-      return Err(exc)
-    },
+  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, con) {
     Ok(access_info) => access_info,
+    Err(e)          => return Err(e),
   };
 
   // If the store is misaligned or an allowed misaligned access,
