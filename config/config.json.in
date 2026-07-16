@@ -230,18 +230,19 @@
       // `exceptions` above, the PMAs for the access, including the
       // optional Misaligned Atomicity Granule (MAG) PMA, specify how
       // it is handled.  If no MAG PMA is specified, or the MAG does
-      // not apply to the access, the `allowed_within_exp` value below
-      // specifies this handling.
+      // not apply to the access, the `default_allowed_within_exp`
+      // value below specifies this handling.
       //
       // Memory accesses that span multiple naturally aligned
-      // 2^allowed_within_exp sized regions will be split into multiple
-      // memory operations. 0 means all misaligned accesses will be split.
-      // The maximum value is 12 (one page).
-      "allowed_within_exp": 0,
-      // If the access gets split due to `allowed_within_exp` then the size
-      // of the operations will be one byte if `byte_by_byte` is set, otherwise
-      // they will be the maximum size possible based on the alignment. For
-      // example a 4-byte access to address 0x2 will use two 2-byte operations.
+      // 2^default_allowed_within_exp sized regions will be split into
+      // multiple memory operations. 0 means all misaligned accesses
+      // will be split.  The maximum value is 12 (one page).
+      "default_allowed_within_exp": 0,
+      // If the access gets split due to `default_allowed_within_exp`
+      // then the size of the operations will be one byte if
+      // `byte_by_byte` is set, otherwise they will be the maximum
+      // size possible based on the alignment. For example a 4-byte
+      // access to address 0x2 will use two 2-byte operations.
       "byte_by_byte": false
     },
     // Address to write DTB to (if provided). This must be in a suitable memory

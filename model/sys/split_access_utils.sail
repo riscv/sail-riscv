@@ -35,7 +35,7 @@ type mag_size_exp = range(0, pagesize_bits)
 // memory operations.  For the current implementation this region must
 // not be more than the page size (i.e. 2^12 = 4096 bytes).
 
-let sys_misaligned_allowed_within_exp : mag_size_exp = config memory.misaligned.allowed_within_exp
+let sys_misaligned_allowed_within_exp : mag_size_exp = config memory.misaligned.default_allowed_within_exp
 
 // This is a external option that controls the order in which the model
 // performs misaligned accesses.

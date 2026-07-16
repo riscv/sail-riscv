@@ -25,6 +25,11 @@
     this is not compatible with previous versions. To recover previous
     behavior, specify `memory.misaligned.exceptions.amo` as `{"Some":
 "AccessFault"}`.
+  - `memory.misaligned.allowed_within_exp` was renamed to
+    `memory.misaligned.default_allowed_within_exp` to indicate that
+    this parameter now specifies the default misaligned atomicity
+    granule that is used when no MAG PMA is specified for a memory
+    region.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1794 : `vtype.vill` was not set when SEW was configured to exceed ELEN
