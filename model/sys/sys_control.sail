@@ -10,7 +10,8 @@
 
 function effectivePrivilege(access : MemoryAccessType(mem_payload), m : Mstatus, priv : Privilege) -> Privilege =
   if   access != InstructionFetch() & m[MPRV] == 0b1
-  then privLevel_bits(m[MPP], m[MPV])
+  // MPV is ignored when MPP=3, as there is no virtual machine mode
+  then privLevel_bits(m[MPP], if m[MPP] == 0b11 then 0b0 else m[MPV])
   else priv
 
 // CSR access control
