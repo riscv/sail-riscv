@@ -263,9 +263,8 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
     Err(e)          => return Err(e),
   };
 
-  // If the load is misaligned or an allowed misaligned access,
-  // split into `N` (single-copy-atomic) memory operations, each
-  // of `split_width` width. If the load is aligned, then `N` = 1
+  // Split into `N` (single-copy-atomic) memory operations, each
+  // of `split_width` width. If the access is aligned, then `N` = 1
   // and `split_width` == `width`.
   let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
 
@@ -428,9 +427,8 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
     Err(e)          => return Err(e),
   };
 
-  // If the store is misaligned or an allowed misaligned access,
-  // split into `N` (single-copy-atomic) memory operations, each
-  // of `split_width` width. If the store is aligned, then `N` = 1
+  // Split into `N` (single-copy-atomic) memory operations, each
+  // of `split_width` width. If the access is aligned, then `N` = 1
   // and `split_width` == `width`.
   let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
   // TODO: handle any splits of metadata across the splits.

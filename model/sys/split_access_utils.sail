@@ -77,7 +77,7 @@ private val split_misaligned : forall 'width, 0 < 'width <= max_mem_access.
 function split_misaligned(Physaddr(addr), width, allowed_within_exp, splittable) = {
   let do_not_split = splittable == CannotSplit |
      (unsigned(addr) % width == 0) |
-     allowed_misaligned(addr[xlen -1 .. 0], width, allowed_within_exp);
+     allowed_misaligned(addr[xlen - 1 .. 0], width, allowed_within_exp);
 
   if do_not_split then (1, width)
   else if sys_misaligned_byte_by_byte then (width, 1)
@@ -107,7 +107,7 @@ function split_on_page_boundary(addr, width) = {
   let intra_page_access = (addr & page_mask) == ((addr + width - 1) & page_mask);
   if intra_page_access then (width, 0)
   else {
-    let nbytes_to_boundary = sizeof(max_mem_width) - unsigned(addr[sizeof(max_mem_width_bits) - 1 .. 0]);
+    let nbytes_to_boundary = sizeof(max_mem_width_bytes) - unsigned(addr[sizeof(max_mem_width_bytes_exp) - 1 .. 0]);
     assert(nbytes_to_boundary < width);
     (nbytes_to_boundary, width - nbytes_to_boundary)
   }
