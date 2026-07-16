@@ -216,7 +216,8 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
 //   must be done on each decomposed access.
 //
 // - If a PMP check results in an access fault, it has higher
-//   priority than a misaligned fault from a PMA check.
+//   priority than a misaligned fault from a PMA check (since these
+//   checks here are after address translation).
 //
 // The PMA check runs first since its result determines the splitting.
 // In case it fails, any access fault from the (full-width) PMP check
