@@ -62,13 +62,11 @@ private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts
   // in `mip` and `mie` (see `sys/sys_control.sail:getPendingSet()`,
   // they will not be used (see
   // `sys/sys_control.sail:findPendingInterrupt()`).
+  //
+  // Note also that M-mode interrupts (MTI, MSI, MEI) can be delegated;
+  // see https://github.com/riscv/riscv-isa-manual/issues/3162
   [v with
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
-    // M-mode interrupts can be delegated;
-    // see https://github.com/riscv/riscv-isa-manual/issues/3162
-    MEI   = v[MEI],
-    MTI   = v[MTI],
-    MSI   = v[MSI],
     SEI   = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     STI   = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
     SSI   = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
@@ -76,9 +74,9 @@ private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts
 }
 
 bitfield Medeleg : bits(64) = {
-  HardwareError     : 19,
-  SoftwareCheck     : 18,
-  DoubleTrap        : 16,
+  Hardware_Error    : 19,
+  Software_Check    : 18,
+  Double_Trap       : 16,
   SAMO_Page_Fault   : 15,
   Load_Page_Fault   : 13,
   Fetch_Page_Fault  : 12,
@@ -102,7 +100,7 @@ private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
   // `sys/sys_control.sail:exception_delegatee()`).
   [Mk_Medeleg(v & plat_medeleg_delegatable_bits) with
     // M-EnvCalls and DoubleTrap cannot be delegated.
-    DoubleTrap         = 0b0,
+    Double_Trap        = 0b0,
     MEnvCall           = 0b0,
   ]
 }

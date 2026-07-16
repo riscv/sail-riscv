@@ -552,7 +552,7 @@ private function check_extension_param_constraints() -> bool = {
   };
   if (config extensions.S.supported : bool) then {
     let medelegation = Mk_Medeleg(config base.medeleg.delegatable_bits);
-    if medelegation[DoubleTrap] != 0b0 then {
+    if medelegation[Double_Trap] != 0b0 then {
       valid = false;
       print_endline("Bit 16 (Double Trap) in `base.medeleg.delegatable_bits` is set; Double Trap cannot be delegated.");
     };
