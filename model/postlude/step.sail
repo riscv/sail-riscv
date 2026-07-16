@@ -281,7 +281,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   }
 }
 
-function loop () : unit -> unit = {
+function loop () : unit -> nat = {
   var i : nat = 0;
   var step_no : nat = 0;
   while not(htif_done) do {
@@ -296,12 +296,7 @@ function loop () : unit -> unit = {
       sail_end_cycle()
     };
 
-    // check htif exit
-    if htif_done then {
-      let exit_val = unsigned(htif_exit_code);
-      if exit_val == 0 then print("SUCCESS")
-      else print_endline("FAILURE: " ^ dec_str(exit_val) ^ " (" ^ bits_str(htif_exit_code) ^ ")");
-    } else {
+    if not(htif_done) then {
       // update time
       i = i + 1;
       if i == plat_insns_per_tick then {
@@ -309,7 +304,13 @@ function loop () : unit -> unit = {
         i = 0;
       }
     }
-  }
+  };
+
+  let exit_val = unsigned(htif_exit_code);
+  if exit_val == 0
+    then print_endline("SUCCESS")
+    else print_int("FAILURE: ", exit_val);
+  exit_val
 }
 
 // Termination measures for loops are not supported by the Lean backend, so they

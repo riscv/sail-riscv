@@ -34,7 +34,7 @@ jobs:
         run: |
           eval $(opam config env)
           cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -G Ninja
-          cmake --build build/ --target generated_lean_rv64d generated_lean_executable_rv64d
+          cmake --build build/ --target generated_lean_rv64d
 
       # Use a separate initial setup step so that we can run lake update before the build
       - name: Setup Lean
@@ -51,3 +51,40 @@ jobs:
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: "build/model/Lean_RV64D/"
+
+  lean-emulator:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+        with:
+          # Git history is needed for `git describe` in the build to work.
+          fetch-depth: 0
+
+      - name: System dependencies (ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install cvc4
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          sail-version: "latest"
+
+      - name: Setup Lean
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          lake-package-directory: "lean_emulator"
+
+      - name: Build and test the Lean emulator
+        run: |
+          eval $(opam config env)
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSAIL_MODULES="H;Zca;Zicbom_insts;Zicboz;Zicsr_insts;Zkr;Sscofpmf;postlude" -DPRINT_EFFECTS=true -DENABLE_LEAN_EMULATOR_TESTS=TRUE
+          cmake --build build --target build_lean_emulator
+          ctest --test-dir build -R lean_emulator
