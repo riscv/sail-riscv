@@ -31,7 +31,7 @@ function clause execute ZICBOZ(rs1) = {
 
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
-  let access = Store(Data);
+  let access : MemoryAccessType(mem_payload) = CacheAccess(CB_zero());
 
   // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
   // is aligned to the cache block, or negative if rs1 is misaligned.
