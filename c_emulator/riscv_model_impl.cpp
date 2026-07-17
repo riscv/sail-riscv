@@ -562,7 +562,7 @@ void ModelImpl::set_xreg(int64_t reg, uint64_t val) {
 void ModelImpl::set_freg(int64_t reg, uint64_t val) {
   assert(reg < 32);
   sbits sail_val;
-  sail_val.len = zxlen;
+  sail_val.len = zflen;
   sail_val.bits = val;
   (void)zwF(reg, sail_val);
 }
