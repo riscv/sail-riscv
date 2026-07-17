@@ -292,6 +292,7 @@ private function check_pma_region(region : PMA_Region) -> bool = {
 }
 
 private struct pma_check_opts = {
+  zama16b  : bool,
   ziccamoa : bool,
   ziccamoc : bool,
   ziccif   : bool,
@@ -320,6 +321,14 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
 
       let attributes = region.attributes;
       if attributes.mem_type == MainMemory & attributes.cacheable & attributes.coherent then {
+        if check_opts.zama16b & attributes.misaligned_atomicity_granule_size_exp != 4 then {
+          let mag = attributes.misaligned_atomicity_granule_size_exp;
+          print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^
+                        (if mag == 0 then "no specified misaligned atomicity granule PMA"
+                         else "a misaligned atomicity granule size of 2^" ^ dec_str(mag)) ^
+                        ", but Zama16b is enabled which requires granule size of 2^4 bytes.");
+          return false;
+        };
         if check_opts.ziccamoa & attributes.atomic_support < AMOArithmetic then {
           print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^ atomic_support_str(attributes.atomic_support) ^ " atomicity support, but Ziccamoa is enabled which requires AMOArithmetic support.");
           return false;
@@ -388,6 +397,7 @@ private function check_mem_layout() -> bool =
     false
   } else {
     let check_opts : pma_check_opts = struct {
+      zama16b  = config extensions.Zama16b.supported,
       ziccamoa = config extensions.Ziccamoa.supported,
       ziccamoc = config extensions.Ziccamoc.supported,
       ziccif   = config extensions.Ziccif.supported,
