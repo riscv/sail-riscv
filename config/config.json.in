@@ -201,7 +201,7 @@
       // it will have a higher priority than memory-protection faults arising from
       // that access if it were allowed to proceed.
       "exceptions": {
-        // A misaligned scalar or vector load/store can either proceed
+        // A misaligned scalar or vector load/store, or an AMO, can either proceed
         // without a fault (use `{"None" : null}`), or raise an access fault
         // (use `{"Some": "AccessFault"}`) or a misaligned exception
         // (use `{"Some": "AlignmentException"}`).
@@ -215,32 +215,41 @@
         "vector": {
           "None": null
         },
+        // Similarly, a misaligned AMO can be configured with the same
+        // option values.
+        "amo": {
+          "None": null
+        },
         // A misaligned LR/SC currently always faults, and this field can specify
         // whether it generates an access fault (use `"AccessFault"`)
         // or a misaligned exception (use `"AlignmentException"`).
-        "lrsc": "AccessFault",
-        // Similarly, a misaligned AMO currently always faults, and this field
-        // can specify either `"AccessFault"` or `"AlignmentException"`.
-        "amo": "AccessFault"
+        "lrsc": "AccessFault"
       },
-      // If a misaligned access was specified to have no fault in `exceptions` above, the
-      // fields below specify how it is handled.
+      // If multiple memory operations are needed (e.g. when an access
+      // straddles a page boundary), this controls whether they are
+      // done in increasing or decreasing address order. This is
+      // architecturally observable because some store operations may
+      // succeed, and even for loads the resulting `xtval` may depend
+      // on this setting.
+      "order_decreasing": false,
+      // If a misaligned access was specified to have no fault in
+      // `exceptions` above, the PMAs for the access, including the
+      // optional Misaligned Atomicity Granule (MAG) PMA, specify how
+      // it is handled.  If no MAG PMA is specified, or the MAG does
+      // not apply to the access, the `default_allowed_within_exp`
+      // value below specifies this handling.
       //
       // Memory accesses that span multiple naturally aligned
-      // 2^allowed_within_exp sized regions will be split into multiple
-      // memory operations. 0 means all misaligned accesses will be split.
-      // The maximum value is 12 (one page).
-      "allowed_within_exp": 0,
-      // If the access gets split due to `allowed_within_exp` then the size
-      // of the operations will be one byte if `byte_by_byte` is set, otherwise
-      // they will be the maximum size possible based on the alignment. For
-      // example a 4-byte access to address 0x2 will use two 2-byte operations.
-      "byte_by_byte": false,
-      // If multiple memory operations are needed, this controls whether they
-      // are done in increasing or decreasing address order. This is architecturally
-      // observable because some store operations may succeed, and even for
-      // loads the resulting `xtval` may depend on this setting.
-      "order_decreasing": false
+      // 2^default_allowed_within_exp sized regions will be split into
+      // multiple memory operations. 0 means all misaligned accesses
+      // will be split.  The maximum value is 12 (one page).
+      "default_allowed_within_exp": 0,
+      // If the access gets split due to `default_allowed_within_exp`
+      // then the size of the operations will be one byte if
+      // `byte_by_byte` is set, otherwise they will be the maximum
+      // size possible based on the alignment. For example a 4-byte
+      // access to address 0x2 will use two 2-byte operations.
+      "byte_by_byte": false
     },
     // Address to write DTB to (if provided). This must be in a suitable memory
     // region (see `memory.regions`).
@@ -252,6 +261,9 @@
     // are required to be aligned to 4K (page) boundaries.  To specify
     // the `misaligned` PMA attribute for a region, see the comments for
     // `memory.misaligned.exceptions` above.
+    // The optional misaligned atomicity granule (MAG) can be specified as a
+    // power of 2, upto a maximum of a page size (i.e. 12).  A value of 0
+    // indicates that the MAG attribute is not present.
     "regions": [
       // ROM
       {
@@ -282,6 +294,8 @@
             "amo": "AccessFault"
           },
           "atomic_support": "AMONone",
+          "misaligned_atomicity_granule_size_exp": 0,
+          "vector_misaligned_atomicity_granule_size_exp": 0,
           "reservability": "RsrvNone",
           "supports_cbo_zero": false,
           "supports_pte_read": false,
@@ -318,6 +332,8 @@
             "amo": "AccessFault"
           },
           "atomic_support": "AMONone",
+          "misaligned_atomicity_granule_size_exp": 0,
+          "vector_misaligned_atomicity_granule_size_exp": 0,
           "reservability": "RsrvNone",
           "supports_cbo_zero": false,
           "supports_pte_read": false,
@@ -354,6 +370,8 @@
             "amo": "AccessFault"
           },
           "atomic_support": "AMOCASQ",
+          "misaligned_atomicity_granule_size_exp": 4,
+          "vector_misaligned_atomicity_granule_size_exp": 4,
           "reservability": "RsrvEventual",
           "supports_cbo_zero": true,
           "supports_pte_read": true,

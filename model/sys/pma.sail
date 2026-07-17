@@ -114,7 +114,11 @@ struct PMA = {
   supports_pte_read : bool,
   // Flags whether this memory supports hardware page table writes.
   supports_pte_write : bool,
-  // TODO: Misaligned Atomicity Granule PMA
+  // The size of the optional misaligned atomicity granule is 2^misaligned_atomicity_granule_exp.
+  // The value of 0 is used to indicate the attribute is absent.
+  misaligned_atomicity_granule_size_exp : mag_size_exp,
+  // The same as above but for vector accesses.
+  vector_misaligned_atomicity_granule_size_exp : mag_size_exp,
   // TODO: Memory Ordering PMA
 }
 
@@ -140,20 +144,106 @@ function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_paylo
   let exceptions = pma.misaligned_exceptions;
   match access {
     Load(Data)             => exceptions.load_store,
-    Load(PageTableEntry)   => exceptions.load_store,
-    Load(ShadowStack)      => exceptions.load_store,
     Store(Data)            => exceptions.load_store,
-    Store(PageTableEntry)  => exceptions.load_store,
-    Store(ShadowStack)     => exceptions.load_store,
     Load(Vector)           => exceptions.vector,
     Store(Vector)          => exceptions.vector,
     Atomic(_)              => Some(exceptions.amo),
 
     // These access types should not be misaligned at the PMA level.
     InstructionFetch()        => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned instruction fetch."),
+    Load(PageTableEntry)      => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned load of page-table entry."),
+    Store(PageTableEntry)     => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned store of page-table entry."),
     LoadReserved(_, _, p)     => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned load-reserved (" ^ mem_payload_name(p) ^ ")."),
     StoreConditional(_, _, p) => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned store-conditional (" ^ mem_payload_name(p) ^ ")."),
+    Load(ShadowStack)         => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned shadow-stack load."),
+    Store(ShadowStack)        => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned shadow-stack store."),
     CacheAccess(_)            => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned cache-access."),
+  }
+}
+
+private function is_mag_applicable_access(access : MemoryAccessType(mem_payload), width : nat) -> bool =
+  // Note below that most of the accesses to which the MAG does not
+  // apply cannot be misaligned at the PMA level.
+  match access {
+    // Loads/stores need to be XLEN bits or less.
+    Load(Data)                          => width <= xlen_bytes,
+    Store(Data)                         => width <= xlen_bytes,
+    // Vector accesses use a separate MAG PMA; currently, this doesn't
+    // condition the accesses on width like the scalar MAG does above.
+    Load(Vector)                        => true,
+    Store(Vector)                       => true,
+    // Not applicable to implicit accesses.
+    Load(PageTableEntry)                => false,
+    Store(PageTableEntry)               => false,
+    // Not in the base ISA.
+    Load(ShadowStack)                   => false,
+    Store(ShadowStack)                  => false,
+    // AMOs
+    Atomic(_, _, _, Data, Data)         => true,
+    // Treat like an AMO.
+    Atomic(_, _, _, ShadowStack, ShadowStack) => true,
+
+    // Other not applicable.
+    InstructionFetch()                  => false,
+    LoadReserved(_, _, Data)            => false,
+    StoreConditional(_, _, Data)        => false,
+    CacheAccess(_)                      => false,
+
+    Atomic(_, _, _, rp, wp)             => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
+    LoadReserved(_, _, p)               => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
+    StoreConditional(_, _, p)           => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
+  }
+
+function mag_of_pma(pma : PMA, is_vector : bool) -> option(range(1, 12)) = {
+  let mag = if is_vector
+            then pma.vector_misaligned_atomicity_granule_size_exp
+            else pma.misaligned_atomicity_granule_size_exp;
+  // 0 implies no MAG present
+  if  mag == 0 then None() else Some(mag)
+}
+
+// Check whether an access location is within a misaligned atomicity granule, if present.
+function within_pma_mag forall 'n, 0 < 'n <= max_mem_access. (pma : PMA, Physaddr(addr) : physaddr, width : int('n), is_vector : bool) -> bool =
+  match mag_of_pma(pma, is_vector) {
+    None()    => false,
+    // PMAs are restricted to page boundaries, so we can use the lowest xlen bits of the address.
+    Some(mag) => allowed_misaligned(addr[xlen - 1 .. 0], width, mag),
+  }
+
+// This function implements the check for the MAG PMA.
+function mag_pma_check forall 'n, 0 < 'n <= max_mem_access.
+(
+  pma     : PMA,
+  access  : MemoryAccessType(mem_payload),
+  paddr   : physaddr,
+  width   : int('n)
+) -> result((Splittability, mag_size_exp), misaligned_exception) = {
+
+  let is_mag_applicable = is_mag_applicable_access(access, width);
+
+  // If the access is aligned, it cannot be split, irrespective of the
+  // MAG PMA.  If it is misaligned and the MAG PMA is applicable, it
+  // cannot be split if the access is within the MAG granule.
+  if is_aligned_addr(paddr, width) |
+     (is_mag_applicable & within_pma_mag(pma, paddr, width, is_vector_access(access)))
+  then return Ok((CannotSplit, 0));
+
+  // If we get here, the misaligned access cannot be done in a single
+  // (i.e. unsplit) memory operation.  Either the access can be split,
+  // or an exception needs to be raised.  If the MAG is not applicable
+  // to the misaligned access, e.g. for wide (> XLEN bits) F/D/Q
+  // loads/stores, the access is handled according to the misaligned
+  // exception for the PMA.
+  match pma_misaligned_exception(pma, access) {
+    Some(e) => Err(e),
+
+    // If there is no misaligned exception, then the misaligned access
+    // may proceed without atomicity.
+    None() =>  match (is_mag_applicable, mag_of_pma(pma, is_vector_access(access))) {
+      (true, Some(mag)) => Ok((CanSplit, mag)),
+      // If the MAG is not applicable, or no MAG is specified, use the global setting.
+      (_,    _        ) => Ok((CanSplit, sys_misaligned_allowed_within_exp)),
+    }
   }
 }
 
@@ -210,6 +300,8 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.supports_cbo_zero then " supports-cbo-zero" else "") ^
   (if attr.supports_pte_read then " supports-pte-read" else "") ^
   (if attr.supports_pte_write then " supports-pte-write" else "") ^
+  " misaligned_atomicity_granule_size_exp=" ^ dec_str(attr.misaligned_atomicity_granule_size_exp) ^
+  " vector_misaligned_atomicity_granule_size_exp=" ^ dec_str(attr.vector_misaligned_atomicity_granule_size_exp) ^
   " "
 
 function pma_region_to_str(region : PMA_Region) -> string =

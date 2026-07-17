@@ -160,6 +160,16 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/SsstrictSm-06\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/SsstrictU-02\\.elf$")
 
+    # These tests fail because
+    # https://github.com/riscv/sail-riscv/pull/1734 does not raise
+    # exceptions for misaligned atomics before address translation by
+    # default.  Instead, exception behavior in these cases is handled
+    # by the MAG PMA.  These tests pass if `misaligned.exceptions.amo`
+    # is specified with the previous default value (`"Some": "AccessFault"`).
+    list(FILTER test_elfs EXCLUDE REGEX ".*/sv3[29]_exceptions_Zaamo_[MSU]mode\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/ExceptionsZaamo-00\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/Zama16b-00\\.elf$")
+
     set(${elfs_to_use_varname} "${test_elfs}" PARENT_SCOPE)
 endfunction()
 

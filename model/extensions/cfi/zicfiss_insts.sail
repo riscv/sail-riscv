@@ -178,11 +178,15 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // "The same exception options [as AMOs in the A extension] apply if
   // the address is not naturally aligned."
   if not(is_aligned_addr(vaddr, width)) then {
-    let exc : ExceptionType = match plat_misaligned_access.amo {
-      AccessFault        => E_SAMO_Access_Fault(),
-      AlignmentException => E_SAMO_Addr_Align(),
+    // Check if the model is configured to raise an exception based on
+    // the misaligned virtual address.
+    match plat_misaligned_exception(access, false) {
+      Some(AccessFault)        => return memory_exception(vaddr, E_SAMO_Access_Fault()),
+      Some(AlignmentException) => return memory_exception(vaddr, E_SAMO_Addr_Align()),
+      // No exception yet, but we may still get one based on the
+      // physical address after address translation and checking PMAs.
+      None()                   => (),
     };
-    return memory_exception(vaddr, exc)
   };
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
@@ -195,8 +199,10 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // release consistency semantics, using the aq and rl bits, to help
   // implement multiprocessor synchronization."
 
- // Sequence the read of `rs2` after the call to `mem_write_ea` with the effective address.
- // See https://github.com/riscv/sail-riscv/issues/1761.
+  // FIXME: the AMO could lie outside a MAG PMA region, which will be
+  // determined by the following `mem_write_value`.  This might result
+  // in a `mem_write_ea` without a matching write of a value to
+  // memory.  See https://github.com/riscv/sail-riscv/issues/1761.
 
   let 'width = width;
   let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, pbmt, aq & rl, rl, true) {
@@ -209,6 +215,9 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   // This constraint is ensured by the instruction decode clause.
   assert('width == 4 | (xlen == 64 & width == 8));
+
+  // Sequence the read of `rs2` after the call to `mem_write_ea` with the effective address.
+  // See https://github.com/riscv/sail-riscv/issues/1761.
   let write_val : bits('width * 8) = X(rs2)['width * 8 - 1 .. 0];
   match mem_write_value(paddr, width, write_val, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => X(rd) = sign_extend(mem_val),

@@ -52,8 +52,8 @@ function clause execute ZICBOP(cbop, rs1, offset) = {
           // Check PMA and PMP access controls.
           let ep = effectivePrivilege(access, mstatus, cur_privilege);
           match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
-            Some(_e) => (), // No access to cache; no-op.
-            None()   => (), // The model has no caches so there's no action required.
+            Err(_e)  => (), // No access to cache; no-op.
+            Ok(_)    => (), // The model has no caches so there's no action required.
           }
       },
       Err(_) => (), // No access to cache; no-op.
