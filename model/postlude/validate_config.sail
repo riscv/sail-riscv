@@ -586,7 +586,11 @@ private function check_extension_param_constraints() -> bool = {
       valid = false;
       print_endline("Bit 11 (Environment call from M-mode) in `base.medeleg.delegatable_bits` is set; this environment call cannot be delegated.");
     };
-    let reserved_exception_mask : bits(64) = zero_extend(0x0_FFFF_00F2_4400);
+    let reserved_exception_mask : bits(64) =
+      if config extensions.H.supported : bool
+      // Hypervisos codes 10,20-23 are valid, not reserved
+      then zero_extend(0x0_FFFF_0002_4000)
+      else zero_extend(0x0_FFFF_00F2_4400);
     if (medelegation.bits & reserved_exception_mask) != zeros() then {
       valid = false;
       print_endline("Bits for reserved exceptions are set in `base.medeleg.delegatable_bits`.");
