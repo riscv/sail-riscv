@@ -419,7 +419,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
     PMM = if currentlyEnabled(Ext_Smnpm) & is_supported_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
-    PBMTE = if hartSupports(Ext_Svpbmt) then v[PBMTE] else 0b0,
+    PBMTE = if currentlyEnabled(Ext_Svpbmt) then v[PBMTE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }
