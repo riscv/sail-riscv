@@ -1,7 +1,6 @@
 #include "cli_options.h"
 #include "gdb/gdb_run_info.h"
 #include "gdb/gdbserver.h"
-#include "gdb/target_regs.h"
 #include "riscv_callbacks_log.h"
 #include "riscv_callbacks_stop_at_pc.h"
 #include "riscv_model_impl.h"

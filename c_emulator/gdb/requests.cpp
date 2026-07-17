@@ -93,9 +93,9 @@ class simple : public request::request_parser {
 public:
   simple() = default;
 
-  // H op thread-id
-  // "Set thread for subsequent operations (‘m’, ‘M’, ‘g’, ‘G’, et.al.)."
   std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+    // H op thread-id
+    // "Set thread for subsequent operations (‘m’, ‘M’, ‘g’, ‘G’, et.al.)."
     if (cmd.find("H") == 0) {
       // Since we don't have any threads, send 'OK' for success.  Another
       // implementation choice seems to be to send an empty response (i.e. command

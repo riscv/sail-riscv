@@ -61,8 +61,8 @@ void qsupported::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
 }
 
 void qstartnoackmode::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
-  proto_handler.send_response("OK");
   proto_handler.enter_noack_mode();
+  proto_handler.send_response("OK");
 }
 
 void qhostinfo::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
