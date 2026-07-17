@@ -41,7 +41,7 @@ function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType
   if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }
 
-val vmem_read_addr : forall 'width, is_mem_width('width).
+val vmem_read_addr : forall 'width, is_mem_width_wide('width).
   (virtaddr, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
@@ -102,7 +102,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
 // This lets the Rocq extraction know why the repeat loop above terminates
 termination_measure vmem_read_addr repeat n
 
-val vmem_write_addr : forall 'width, is_mem_width('width).
+val vmem_write_addr : forall 'width, is_mem_width_wide('width).
   (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bool, ExecutionResult)
 
@@ -189,7 +189,7 @@ function get_transformed_data_addr(base : regidx, offset : xlenbits, acc : Memor
   }
 }
 
-val vmem_read : forall 'width, is_mem_width('width).
+val vmem_read : forall 'width, is_mem_width_wide('width).
   (regidx, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
@@ -204,7 +204,7 @@ function vmem_read(rs, offset, width, access, aq, rl, res) = {
   vmem_read_addr(vaddr, width, access, aq, rl, res)
 }
 
-val vmem_write : forall 'width, is_mem_width('width).
+val vmem_write : forall 'width, is_mem_width_wide('width).
   (regidx, xlenbits, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bool, ExecutionResult)
 

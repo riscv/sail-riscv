@@ -448,6 +448,9 @@
     "D": {
       "supported": true
     },
+    "Q": {
+      "supported": true
+    },
     "V": {
       // `support_level` must be one of the below strings:
       // . "Disabled" for no vector extension support

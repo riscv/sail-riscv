@@ -55,6 +55,10 @@ target_compile_definitions(softfloat PRIVATE
     INLINE_LEVEL=5
     SOFTFLOAT_FAST_DIV32TO16
     SOFTFLOAT_FAST_DIV64TO32
+)
+
+# Expose SOFTFLOAT_FAST_INT64 so the functions that it guards are accessible in the softfloat bindings
+target_compile_definitions(softfloat PUBLIC
     SOFTFLOAT_FAST_INT64
 )
 

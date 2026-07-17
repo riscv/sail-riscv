@@ -299,6 +299,10 @@ function in32BitMode() -> bool = {
   architecture(cur_privilege) == RV32
 }
 
+function in64BitMode() -> bool = {
+  architecture(cur_privilege) == RV64
+}
+
 bitfield Seccfg : bits(64) = {
   // Pointer Masking Extension
   PMM    : 33 .. 32,

@@ -14,10 +14,10 @@
 
 // Original version written by Rishiyur S. Nikhil, Sept-Oct 2019
 
-// ***************************************************************
+// ****************************************************************
 // IMPORTANT!
-// The files 'fext_insts.sail', 'dext_insts.sail' and
-// 'zfh_insts.sail' define the F, D and Zfh extensions,
+// The files 'fext_insts.sail', 'dext_insts.sail', 'qext_insts.sail'
+// and 'zfh_insts.sail' define the F, D, Q, and Zfh extensions,
 // respectively.
 // The texts follow each other very closely; please try to maintain
 // this correspondence as the files are maintained for bug-fixes,
@@ -252,27 +252,28 @@ function fle_S(v1 : bits(32), v2 : bits(32), is_quiet : bool) -> (bool, bits(5))
 
 function haveSingleFPU() -> bool = currentlyEnabled(Ext_F) | currentlyEnabled(Ext_Zfinx)
 
-function float_load_store_width_supported(width : word_width) -> bool =
+function float_load_store_width_supported(width : word_width_wide) -> bool =
   match width {
     1 => false,
     2 => currentlyEnabled(Ext_Zfhmin) | currentlyEnabled(Ext_Zfbfmin),
     4 => currentlyEnabled(Ext_F),
     8 => currentlyEnabled(Ext_D),
+    16 => currentlyEnabled(Ext_Q),
   }
 
 // *****************************************************************
 // Floating-point loads
 
 // instruction
-// FLH, FLW and FLD; H/W/D is encoded in 'word_width'
+// FLH, FLW, FLD and FLQ; H/W/D/Q is encoded in 'word_width_wide'
 
-union clause instruction = LOAD_FP : (bits(12), regidx, fregidx, word_width)
+union clause instruction = LOAD_FP : (bits(12), regidx, fregidx, word_width_wide)
 
 // instruction <-> Binary encoding ================================
 
 $[wavedrom "offset[11:0] base _ _ dest LOAD-FP"]
 mapping clause encdec = LOAD_FP(imm, rs1, rd, width)
-  <-> imm @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ encdec_freg(rd) @ 0b000_0111
+  <-> imm @ encdec_reg(rs1) @ width_enc_wide(width) @ encdec_freg(rd) @ 0b000_0111
   when float_load_store_width_supported(width)
 
 // Execution semantics ================================
@@ -291,7 +292,7 @@ function clause execute LOAD_FP(imm, rs1, rd, width) = {
 // instruction -> Assembly notation ================================
 
 mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
-                      <-> "fl" ^ width_mnemonic(width)
+                      <-> "fl" ^ width_mnemonic_wide(width)
                           ^ spc() ^ freg_or_reg_name(rd)
                           ^ sep() ^ hex_bits_signed_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
@@ -300,15 +301,15 @@ mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
 // Floating-point stores
 
 // instruction
-// FSH, FSW and FSD; H/W/D is encoded in 'word_width'
+// FSH, FSW, FSD and FSQ; H/W/D/Q is encoded in 'word_width_wide'
 
-union clause instruction = STORE_FP : (bits(12), fregidx, regidx, word_width)
+union clause instruction = STORE_FP : (bits(12), fregidx, regidx, word_width_wide)
 
 // instruction <-> Binary encoding ================================
 
 $[wavedrom "offset[11:5] src base _ _ offset[4:0] STORE-FP"]
 mapping clause encdec = STORE_FP(imm, rs2, rs1, width)
-  <-> imm[11..5] @ encdec_freg(rs2) @ encdec_reg(rs1) @ 0b0 @ width_enc(width) @ imm[4..0] @ 0b010_0111
+  <-> imm[11..5] @ encdec_freg(rs2) @ encdec_reg(rs1) @ width_enc_wide(width) @ imm[4..0] @ 0b010_0111
   when float_load_store_width_supported(width)
 
 // Execution semantics ================================
@@ -329,7 +330,7 @@ function clause execute STORE_FP(imm, rs2, rs1, width) = {
 // instruction -> Assembly notation ================================
 
 mapping clause assembly = STORE_FP(imm, rs2, rs1, width)
-                      <-> "fs" ^ width_mnemonic(width)
+                      <-> "fs" ^ width_mnemonic_wide(width)
                           ^ spc() ^ freg_name(rs2)
                           ^ sep() ^ hex_bits_signed_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"

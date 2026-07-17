@@ -69,12 +69,11 @@ void log_callbacks::xreg_full_write_callback(ModelImpl &, const_sail_string abi_
   }
 }
 
-void log_callbacks::freg_write_callback(ModelImpl &, unsigned reg, sbits value) {
+void log_callbacks::freg_write_callback(ModelImpl &, unsigned reg, lbits value) {
   // TODO: will only print bits; should we print in floating point format?
   if (trace_log != nullptr && config_print_fpr) {
-    // TODO: Might need to change from PRIX64 to PRIX128 once the "Q"
-    // extension is supported
-    fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg, static_cast<int>(value.len / 4), value.bits);
+    fprintf(trace_log, "f%d <- 0x", reg);
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
 

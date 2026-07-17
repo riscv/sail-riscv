@@ -201,6 +201,7 @@ extensions {
         extensions/FD/zcf_insts.sail,
         extensions/FD/dext_insts.sail,
         extensions/FD/zcd_insts.sail,
+        extensions/FD/qext_insts.sail,
         extensions/FD/zfh_insts.sail,
         extensions/FD/zfa_insts.sail,
     }

@@ -83,7 +83,7 @@ unit ModelImpl::xreg_full_write_callback(const_sail_string abi_name, sbits reg, 
   return UNIT;
 }
 
-unit ModelImpl::freg_write_callback(unsigned reg, sbits value) {
+unit ModelImpl::freg_write_callback(unsigned reg, lbits value) {
   for (auto c : m_callbacks) {
     c->freg_write_callback(*this, reg, value);
   }
