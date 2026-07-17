@@ -105,8 +105,9 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
 //
 // TODO: check hip/hie if hypervisor enabled.
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
-  // mideleg can only be non-zero if we support Supervisor mode.
-  assert(currentlyEnabled(Ext_S) | mideleg.bits == zeros());
+  // If supervisor mode is not currently enabled then ignore mideleg
+  // (it does not exist).
+  let mideleg_bits = if currentlyEnabled(Ext_S) then mideleg.bits else zeros();
 
   // Read mip with the external platform interrupts ORed in.
   let mip_bits = read_mip(IncludePlatformInterrupts).bits;
