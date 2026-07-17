@@ -1,3 +1,6 @@
+configure_file("lakefile.toml.in" "${CMAKE_CURRENT_SOURCE_DIR}/lakefile.toml" @ONLY)
+configure_file("lake-manifest.json.in" "${CMAKE_CURRENT_SOURCE_DIR}/lake-manifest.json" @ONLY)
+
 add_custom_command(
   OUTPUT ${CMAKE_BINARY_DIR}/lean-emulator-build
   COMMENT "Creating symlink for the Lean emulator output."

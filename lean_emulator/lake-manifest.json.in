@@ -8,7 +8,7 @@
       "name": "Lean_RV64D_executable",
       "manifestFile": "lake-manifest.json",
       "inherited": false,
-      "dir": "../build/model/Lean_RV64D_executable/",
+      "dir": "@lean_rv64d_executable_dir@",
       "configFile": "lakefile.toml"
     },
     {

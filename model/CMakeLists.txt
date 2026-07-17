@@ -480,6 +480,9 @@ foreach (xlen IN ITEMS 32 64)
     add_custom_target(generated_lean_${arch} DEPENDS "Lean_${arch_uppercase}/Lean${arch_uppercase}.lean")
     add_custom_target(generated_lean_executable_${arch} DEPENDS "Lean_${arch_uppercase}_executable/Lean${arch_uppercase}Executable.lean")
 
+    # Make the directories with executable definitions known to the lean_emulator build.
+    set(lean_${arch}_executable_dir "${CMAKE_CURRENT_BINARY_DIR}/Lean_${arch_uppercase}_executable" PARENT_SCOPE)
+
     ############# Lem #############
 
     # Build Lem definitions, en route to Isabelle or HOL4.
