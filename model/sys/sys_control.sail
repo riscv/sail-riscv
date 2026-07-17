@@ -413,7 +413,7 @@ function reset_sys() -> unit = {
 
 // memory access exceptions, defined here for use by the platform model.
 
-type MemoryOpResult('a : Type) = result('a, ExceptionType)
+type MemoryOpResult('a : Type) = result('a, (physaddr, ExceptionType))
 
 val MemoryOpResult_add_meta : forall ('t : Type). (MemoryOpResult('t), mem_meta) -> MemoryOpResult(('t, mem_meta))
 function MemoryOpResult_add_meta(r, m) = match r {

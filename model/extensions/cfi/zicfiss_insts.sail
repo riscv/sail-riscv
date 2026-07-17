@@ -206,9 +206,17 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   let 'width = width;
   let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, pbmt, aq & rl, rl, true) {
-    Err(e) => return memory_exception(vaddr, e),
-    Ok(_)  => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
-      Err(e) => return memory_exception(vaddr, e),
+    Err(exc_addr, e) => {
+      // AMOs should not get split.
+      assert(exc_addr == paddr);
+      return memory_exception(vaddr, e)
+    },
+    Ok(_) => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
+      Err(exc_addr, e) => {
+        // AMOs should not get split.
+        assert(exc_addr == paddr);
+        return memory_exception(vaddr, e)
+      },
       Ok(v)  => v,
     },
   };
@@ -222,7 +230,11 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   match mem_write_value(paddr, width, write_val, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => X(rd) = sign_extend(mem_val),
     Ok(false) => internal_error(__FILE__, __LINE__, "AMOSWAP_SS got false from mem_write_value"),
-    Err(e)    => return memory_exception(vaddr, e),
+    Err(exc_addr, e) => {
+      // AMOs should not get split.
+      assert(exc_addr == paddr);
+      return memory_exception(vaddr, e)
+    },
   };
 
   RETIRE_SUCCESS

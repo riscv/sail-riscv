@@ -39,7 +39,11 @@ private function fetch_bytes forall 'n, 'n in {2, 4} . (fetch_start : xlenbits, 
   };
 
   match mem_read(InstructionFetch(), pbmt, paddr, width, false, false, false) {
-    Err(e)    => FetchBytes_Exception(e),
+    Err(exc_addr, e) => {
+      // Instruction fetches are not currently split at the physical memory layer.
+      assert(exc_addr == paddr);
+      FetchBytes_Exception(e)
+    },
     Ok(bytes) => FetchBytes_Success(bytes),
   }
 }

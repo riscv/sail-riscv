@@ -261,7 +261,7 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
 
   let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, res) {
     Ok(access_info) => access_info,
-    Err(e)          => return Err(e),
+    Err(e)          => return Err(paddr, e),
   };
 
   // Split into `N` (single-copy-atomic) memory operations, each
@@ -286,7 +286,7 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
 
     // As mentioned above, PMP checks are done on each split access.
     match pmpCheck(paddr, split_width, access, priv) {
-      Some(e) => return Err(e),
+      Some(e) => return Err(paddr, e),
       None()  => (),
     };
 
@@ -335,7 +335,7 @@ function mem_read_priv_meta (access, pbmt, priv, paddr, width, aq, rl, res, meta
   };
   match result {
     Ok(value, _) => mem_read_callback(to_str(access), bits_of(paddr), width, value),
-    Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
+    Err(addr, e) => mem_exception_callback(bits_of(addr), exceptionType_bits(e)),
   };
   result
 }
@@ -373,7 +373,7 @@ function mem_write_ea(paddr, width, access, pbmt, aq, rl, con) = {
 
   let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, con) {
     Ok(access_info) => access_info,
-    Err(e)          => return Err(e),
+    Err(e)          => return Err(paddr, e),
   };
 
   let ('N, 'split_width) = split_misaligned(paddr, width, access_info.granule_size_exp, access_info.splittable);
@@ -391,7 +391,7 @@ function mem_write_ea(paddr, width, access, pbmt, aq, rl, con) = {
     let paddr = Physaddr(paddr_bits + (offset * split_width));
 
     match pmpCheck(paddr, split_width, access, priv) {
-      Some(e) => return Err(e),
+      Some(e) => return Err(paddr, e),
       None()  => write_ram_ea(wk, paddr, split_width),
     };
 
@@ -425,7 +425,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
 
   let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, con) {
     Ok(access_info) => access_info,
-    Err(e)          => return Err(e),
+    Err(e)          => return Err(paddr, e),
   };
 
   // Split into `N` (single-copy-atomic) memory operations, each
@@ -450,7 +450,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
     // As mentioned above (see `checked_mem_read()`), PMP checks are
     // done on each split access.
     match pmpCheck(paddr, split_width, access, priv) {
-      Some(e) => return Err(e),
+      Some(e) => return Err(paddr, e),
       None()  => (),
     };
 
@@ -491,7 +491,7 @@ function mem_write_value_priv_meta (paddr, width, value, access, pbmt, priv, met
   let result = checked_mem_write(paddr, width, value, access, pbmt, priv, meta, aq, rl, con);
   match result {
     Ok(_) => mem_write_callback(to_str(access), bits_of(paddr), width, value),
-    Err(e) => mem_exception_callback(bits_of(paddr), exceptionType_bits(e)),
+    Err(addr, e) => mem_exception_callback(bits_of(addr), exceptionType_bits(e)),
   };
   result
 }
