@@ -199,11 +199,6 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // release consistency semantics, using the aq and rl bits, to help
   // implement multiprocessor synchronization."
 
-  // FIXME: the AMO could lie outside a MAG PMA region, which will be
-  // determined by the following `mem_write_value`.  This might result
-  // in a `mem_write_ea` without a matching write of a value to
-  // memory.  See https://github.com/riscv/sail-riscv/issues/1761.
-
   let 'width = width;
   let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, pbmt, aq & rl, rl, true) {
     Err(exc_addr, e) => {
