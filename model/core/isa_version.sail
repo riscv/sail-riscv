@@ -26,6 +26,12 @@ enum Privileged_ISA_Version = {
   Privileged_ISA_1_13,
 }
 
+mapping privileged_isa_version_name : Privileged_ISA_Version <-> string = {
+  Privileged_ISA_1_11 <-> "1.11",
+  Privileged_ISA_1_12 <-> "1.12",
+  Privileged_ISA_1_13 <-> "1.13",
+}
+
 // For convenience, version comparison operators. This relies on the order of values in the enum.
 function privileged_isa_version_lt(x : Privileged_ISA_Version, y : Privileged_ISA_Version) -> bool =
   num_of_Privileged_ISA_Version(x) < num_of_Privileged_ISA_Version(y)
@@ -50,6 +56,15 @@ let priv_isa_version : Privileged_ISA_Version = config base.privileged_isa_versi
 // TODO: This is not used yet; this is an example that will be implemented in a future commit.
 let pte_reserved_bits_must_be_zero = priv_isa_version >= Privileged_ISA_1_12
 
-// This version defined the `{m,s,h}envcfg` CSRs. These CSRs are not
+
+// CSRs added in version 1.12. These CSRs are not
 // available in earlier versions.
 let xenvcfg_csrs_are_defined = priv_isa_version >= Privileged_ISA_1_12
+let mconfigptr_is_defined = priv_isa_version >= Privileged_ISA_1_12
+let mseccfg_csrs_are_defined = priv_isa_version >= Privileged_ISA_1_12
+let mstatush_is_defined = priv_isa_version >= Privileged_ISA_1_12
+// PMP register count is checked in validate_config() by check_version_constraints().
+
+// CSRs added in version 1.13. These CSRs are not
+// available in earlier versions.
+let delegh_csrs_are_defined = priv_isa_version >= Privileged_ISA_1_13

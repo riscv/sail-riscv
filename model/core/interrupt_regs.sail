@@ -137,7 +137,7 @@ mapping clause csr_name_map = 0x303  <-> "mideleg"
 function clause is_CSR_accessible(0x304, _, _) = true // mie
 function clause is_CSR_accessible(0x344, _, _) = true // mip
 function clause is_CSR_accessible(0x302, _, _) = currentlyEnabled(Ext_S) // medeleg
-function clause is_CSR_accessible(0x312, _, _) = currentlyEnabled(Ext_S) & xlen == 32 // medelegh
+function clause is_CSR_accessible(0x312, _, _) = delegh_csrs_are_defined & currentlyEnabled(Ext_S) & xlen == 32 // medelegh
 function clause is_CSR_accessible(0x303, _, _) = currentlyEnabled(Ext_S) // mideleg
 
 enum XipReadType = {
