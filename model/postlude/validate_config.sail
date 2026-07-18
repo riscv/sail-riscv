@@ -321,8 +321,8 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
 
       let attributes = region.attributes;
       if attributes.mem_type == MainMemory & attributes.cacheable & attributes.coherent then {
-        if check_opts.zama16b & attributes.misaligned_atomicity_granule_size_exp != 4 then {
-          let mag = attributes.misaligned_atomicity_granule_size_exp;
+        let mag = attributes.misaligned_atomicity_granule_size_exp;
+        if check_opts.zama16b & mag != 4 then {
           print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^
                         (if mag == 0 then "no specified misaligned atomicity granule PMA"
                          else "a misaligned atomicity granule size of 2^" ^ dec_str(mag)) ^
