@@ -840,6 +840,12 @@
     },
     "Svvptc": {
       "supported": true
+    },
+    "Sscsrind": {
+      "supported": true
+    },
+    "Smcsrind": {
+      "supported": true
     }
   }
 }

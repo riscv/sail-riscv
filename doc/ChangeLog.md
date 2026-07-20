@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - Smcsrind
+  - Sscsrind
+
 - Updates to the [configuration file](../config/config.json.in):
   - The version of the privileged ISA specification for the model can
     be specified; see `base.privileged_isa_version`. Note that not
