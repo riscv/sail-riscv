@@ -500,8 +500,16 @@ int64_t ModelImpl::xlen() const {
   return zxlen;
 }
 
+int64_t ModelImpl::flen() const {
+  return zflen;
+}
+
 int64_t ModelImpl::physaddrbits_len() const {
   return zphysaddrbits_len;
+}
+
+uint64_t ModelImpl::pc() const {
+  return zPC.bits;
 }
 
 uint64_t ModelImpl::mepc() const {
@@ -510,6 +518,10 @@ uint64_t ModelImpl::mepc() const {
 
 uint64_t ModelImpl::sepc() const {
   return zsepc.bits;
+}
+
+uint64_t ModelImpl::fcsr() const {
+  return zfcsr.zbits;
 }
 
 uint64_t ModelImpl::htif_exit_code() const {
@@ -522,4 +534,51 @@ bool ModelImpl::htif_done() const {
 
 bool ModelImpl::had_exception() const {
   return have_exception;
+}
+
+uint64_t ModelImpl::xreg(int64_t reg) {
+  // For the E base ISA, this assert should use 16.
+  assert(reg < 32);
+  const sbits val = zrX(reg);
+  return val.bits;
+}
+
+uint64_t ModelImpl::freg(int64_t reg) {
+  // For the E base ISA, this assert should use 16.
+  assert(reg < 32);
+  const sbits val = zrF(reg);
+  return val.bits;
+}
+
+void ModelImpl::set_xreg(int64_t reg, uint64_t val) {
+  // For the E base ISA, this assert should use 16.
+  assert(reg < 32);
+  sbits sail_val;
+  sail_val.len = zxlen;
+  sail_val.bits = val;
+  (void)zwX(reg, sail_val);
+}
+
+void ModelImpl::set_freg(int64_t reg, uint64_t val) {
+  assert(reg < 32);
+  sbits sail_val;
+  sail_val.len = zflen;
+  sail_val.bits = val;
+  (void)zwF(reg, sail_val);
+}
+
+void ModelImpl::set_pc(uint64_t val) {
+  sbits sail_val;
+  sail_val.len = zPC.len;
+  sail_val.bits = val;
+  (void)zset_next_pc(sail_val);
+}
+
+void ModelImpl::set_fcsr(uint64_t val) {
+  // Split this into the FRM (val[7..5]) and FFLAGS (val[4..0]) fields.
+  uint64_t frm = (val >> 5) & UINT64_C(0x7);
+  uint64_t fflags = val & UINT64_C(0x1F);
+
+  // Writing this CSR has side-effects: it dirties the FD context.
+  zwrite_fcsr(frm, fflags);
 }

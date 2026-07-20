@@ -91,6 +91,23 @@ add_executable(sail_riscv_sim
     riscv_callbacks_rvfi.h
     traploop_detector.cpp
     traploop_detector.h
+    gdb/gdb_run_info.h
+    gdb/gdbserver.cpp
+    gdb/gdbserver.h
+    gdb/connection.cpp
+    gdb/connection.h
+    gdb/parse_utils.h
+    gdb/parse_utils.cpp
+    gdb/protocol_handler.cpp
+    gdb/protocol_handler.h
+    gdb/requests.cpp
+    gdb/requests.h
+    gdb/responses.cpp
+    gdb/responses.h
+    gdb/target_regs.cpp
+    gdb/target_regs.h
+    gdb/triggers.cpp
+    gdb/triggers.h
 )
 
 # The generated C model is not warnings-clean, silence them.
@@ -108,7 +125,7 @@ set_source_files_properties(
 add_dependencies(sail_riscv_sim generated_sail_riscv_model)
 
 target_link_libraries(sail_riscv_sim
-    PRIVATE CLI11 riscv_model
+    PRIVATE CLI11 riscv_model asio
 )
 
 if (ENABLE_CLANG_TIDY)
