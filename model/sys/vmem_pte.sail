@@ -74,7 +74,7 @@ private function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
 // NAPOT Translation Contiguity
 function clause currentlyEnabled(Ext_Svnapot) = hartSupports(Ext_Svnapot) & currentlyEnabled(Ext_Sv39)
 // Page-Based Memory Types
-function clause currentlyEnabled(Ext_Svpbmt) =  hartSupports(Ext_Svpbmt) & currentlyEnabled(Ext_Sv39)
+function clause currentlyEnabled(Ext_Svpbmt) = hartSupports(Ext_Svpbmt) & currentlyEnabled(Ext_Sv39)
 // Svrsw60t59b: PTE Reserved for software bits 60-59
 function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b) & currentlyEnabled(Ext_Sv39)
 // Obviating Memory-management Instructions after Marking PTEs valid
@@ -93,14 +93,19 @@ private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> boo
   // TODO: handle V=1 and henvcfg.SSE=0 at VS/VU levels
   | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b0 & menvcfg[SSE] == 0b0)
   | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b1)
-  // Note, the following requirements depend on the privileged spec version.
-  // Early versions do not require this check. This will need to be behind
-  // a flag when the Sail model allows specifying the spec version.
-  | (pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1 | pte_ext.bits != zeros()))
-  | (pte_ext[N] != 0b0 & not(currentlyEnabled(Ext_Svnapot)))
-  | (pte_ext[PBMT] != zeros() & (menvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))))
-  | (pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b)))
-  | pte_ext[reserved] != zeros()
+  // Reserved encodings mean the PTE is invalid.
+  | not(page_based_mem_type_forwards_matches(pte_ext[PBMT])) & currentlyEnabled(Ext_Svpbmt)
+  // Early versions of the spec did not require reserved bits to be zero.
+  | pte_reserved_bits_must_be_zero & (
+    // A/D/U and all ext bits are currently reserved for non-leaf PTEs.
+      pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1 | pte_ext.bits != zeros())
+    // N/PBMT/60t59b are reserved if not implemented.
+    | pte_ext[N]          != zeros() & not(currentlyEnabled(Ext_Svnapot))
+    | pte_ext[PBMT]       != zeros() & (menvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT])))
+    | pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b))
+    // Reserved bits are reserved even for leaf PTEs.
+    | pte_ext[reserved] != zeros()
+  )
 
 // ----------------
 // Check access permissions in PTE
@@ -112,7 +117,7 @@ union pte_check_failure = {
 }
 
 // For (non-standard) extensions: this function gets the extension-available bits
-// of the PTE in extPte, and the accumulated information of the page-table-walk
+// of the PTE in PTE_Ext, and the accumulated information of the page-table-walk
 // in ext_ptw. It should return the updated ext_ptw in both success and failure cases.
 
 union PTE_Check = {
