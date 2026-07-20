@@ -74,7 +74,7 @@ private function pte_is_non_leaf(pte_flags : PTE_Flags) -> bool =
 // NAPOT Translation Contiguity
 function clause currentlyEnabled(Ext_Svnapot) = hartSupports(Ext_Svnapot) & currentlyEnabled(Ext_Sv39)
 // Page-Based Memory Types
-function clause currentlyEnabled(Ext_Svpbmt) =  hartSupports(Ext_Svpbmt) & currentlyEnabled(Ext_Sv39)
+function clause currentlyEnabled(Ext_Svpbmt) = menvcfg[PBMTE] == 0b1
 // Svrsw60t59b: PTE Reserved for software bits 60-59
 function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b) & currentlyEnabled(Ext_Sv39)
 // Obviating Memory-management Instructions after Marking PTEs valid
