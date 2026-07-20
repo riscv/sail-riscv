@@ -262,8 +262,9 @@
     // the `misaligned` PMA attribute for a region, see the comments for
     // `memory.misaligned.exceptions` above.
     // The optional misaligned atomicity granule (MAG) can be specified as a
-    // power of 2, upto a maximum of a page size (i.e. 12).  A value of 0
-    // indicates that the MAG attribute is not present.
+    // power of 2, upto a maximum of a page size (i.e. 12). For
+    // Zama16b, for e.g., the specified value should be 4. A value of
+    // 0 indicates that the MAG attribute is not present.
     "regions": [
       // ROM
       {
@@ -605,6 +606,14 @@
     },
     "Zalrsc": {
       "supported": false
+    },
+    // This extension just asserts that each memory region has a MAG
+    // PMA of 16 bytes.  If you enable this you also need to ensure
+    // `misaligned_atomicity_granule_size_exp` for each coherent and
+    // cacheable main memory region is 4, otherwise you will get a
+    // config validation error.
+    "Zama16b": {
+      "supported": true
     },
     "Zawrs": {
       "supported": true,

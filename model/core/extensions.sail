@@ -152,6 +152,11 @@ function clause hartSupports(Ext_Zacas) = config extensions.Zacas.supported
 enum clause extension = Ext_Zalrsc
 mapping clause extensionName = Ext_Zalrsc <-> "zalrsc"
 function clause hartSupports(Ext_Zalrsc) = config extensions.Zalrsc.supported
+// Extension for 16-byte Misaligned Atomicity
+enum clause extension = Ext_Zama16b
+mapping clause extensionName = Ext_Zama16b <-> "zama16b"
+function clause hartSupports(Ext_Zama16b) = config extensions.Zama16b.supported
+function clause currentlyEnabled(Ext_Zama16b) = hartSupports(Ext_Zama16b)
 // Wait-On-Reservation-Set
 enum clause extension = Ext_Zawrs
 mapping clause extensionName = Ext_Zawrs <-> "zawrs"
@@ -722,6 +727,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zabha,
   Ext_Zacas,
   Ext_Zalrsc,
+  Ext_Zama16b,
   Ext_Zawrs,
 
   // Zf, Zd, and Zq

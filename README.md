@@ -150,6 +150,7 @@ For booting operating system images, see the information under the
 - Zaamo extension for atomic memory operations, v1.0
 - Za64rs extension for reservation sets that are contiguous, naturally aligned, and a maximum of 64 bytes, v1.0
 - Za128rs extension for reservation sets that are contiguous, naturally aligned, and at most 128 bytes in size, v1.0
+- Zama16b extension for 16-byte Misaligned Atomicity, v1.0
 - Zawrs extension for Wait-on-Reservation-Set instructions, v1.01
 - Zabha extension for byte and halfword atomic memory operations, v1.0
 - Zacas extension atomic Compare-and-Swap (CAS) instructions, v1.0.0
