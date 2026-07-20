@@ -180,7 +180,8 @@ function pt_walk(
             PTE_Check_Success(ext_ptw) => {
               let ppn = if level > 0 then {
                 // NAPOT PTEs are currently reserved for level > 0.
-                if pte_ext[N] == 0b1 then return Err(PTW_Invalid_PTE(), ext_ptw);
+                if pte_ext[N] == 0b1 & pte_reserved_bits_must_be_zero
+                then return Err(PTW_Invalid_PTE(), ext_ptw);
 
                 // Compose final PA in superpage:
                 // Superpage PPN @ lower VPNs @ page-offset
