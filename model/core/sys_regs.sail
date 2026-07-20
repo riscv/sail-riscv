@@ -808,7 +808,8 @@ function legalize_satp(
   if xlen == 32 then {
     let s = Mk_Satp32(written_value);
     let s = [s with
-      // Bits above the physically addressable memory are read only zero.
+      // Bits above the number of implemented physical address bits
+      // are read only zero.
       PPN = zero_extend(s[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
     match satpMode_of_bits(arch, 0b000 @ s[Mode]) {
@@ -822,8 +823,8 @@ function legalize_satp(
   } else if xlen == 64 then {
     let s = Mk_Satp64(written_value);
     let s = [s with
-      // PPN field size is 44 bits.
-      // Bits above the physically addressable memory are read only zero.
+      // PPN field size is 44 bits, and bits above the number of
+      // implemented physical address bits are read only zero.
       PPN = zero_extend(s[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
     match satpMode_of_bits(arch, s[Mode]) {

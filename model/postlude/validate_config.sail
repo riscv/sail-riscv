@@ -315,11 +315,11 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
                       " is not above the end of the previous region starting at " ^
                       bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
         return false;
-      } else if region.base + region.size >_u zero_extend(ones(physaddr_bits)) + 1 then {
+      } else if unsigned(region.base) + unsigned(region.size) > 2 ^ physaddr_bits then {
           print_endline("Memory region starting at " ^ bits_str(region.base) ^
-                        " exclusive ends at " ^ bits_str(region.base + region.size) ^
-                        " which is above the representable limit of the physical address bit size (" ^
-                        dec_str(physaddr_bits) ^ ").");
+                        " ends at " ^ bits_str(region.base + region.size) ^
+                        " which is above the representable limit of the physical address bit size (i.e. " ^
+                        dec_str(physaddr_bits) ^ " from `memory.physaddr_bits`).");
           return false;
       };
 
@@ -657,16 +657,16 @@ private function check_mstatus_fields() -> bool = {
 private function check_physaddr_bits() -> bool = {
   let physaddr_bits_nat : nat = physaddr_bits;
   if physaddr_bits_nat > 64 then {
-    print_endline("physaddr_bits is " ^ dec_str(physaddr_bits) ^ " but cannot be greater than 64.");
+    print_endline("`memory.physaddr_bits` is " ^ dec_str(physaddr_bits) ^ " but cannot be greater than 64.");
     false
   } else if physaddr_bits_nat > 34 & xlen == 32 then {
-    print_endline("physaddr_bits is " ^ dec_str(physaddr_bits) ^ " but cannot be bigger than 34 when xlen is 32.");
+    print_endline("`memory.physaddr_bits` is " ^ dec_str(physaddr_bits) ^ " but cannot be greater than 34 for RV32.");
     false
-  } else if physaddr_bits_nat > 32 & xlen == 32 & not(hartSupports(Ext_Sv32)) then {
-    print_endline("physaddr_bits is " ^ dec_str(physaddr_bits) ^ " but Sv32 is disabled: physaddr_bits greater than 32 requires Sv32 to be enabled.");
+  } else if physaddr_bits_nat > 32 & xlen == 32 & not(config extensions.Sv32.supported : bool) then {
+    print_endline("`memory.physaddr_bits` is " ^ dec_str(physaddr_bits) ^ " but Sv32 is disabled: values greater than 32 requires Sv32 to be enabled.");
     false
   } else if physaddr_bits_nat < 13 then {
-    print_endline("physaddr_bits is  " ^ dec_str(physaddr_bits) ^ " but values smaller than 13 are not supported.");
+    print_endline("`memory.physaddr_bits` is " ^ dec_str(physaddr_bits) ^ " but values smaller than 13 are not supported.");
     false
   } else { true }
 }

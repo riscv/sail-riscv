@@ -6,12 +6,12 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// Note: virtaddr includes physical addresses when address translation is disabled.
-// It is used where the address would be virtual if address translation is active.
+// These two definitions refer to the architectural physical address.
 type physaddrbits = bits(physaddrbits_len)
-
 let physaddrbits_len = sizeof(physaddrbits_len)
 
+// Note: `virtaddr` includes physical addresses when address translation is disabled.
+// It is used where the address would be virtual if address translation is active.
 newtype physaddr = Physaddr : physaddrbits
 newtype virtaddr = Virtaddr : xlenbits
 
@@ -25,7 +25,9 @@ overload operator - = { sub_virtaddr_xlenbits }
 
 overload bits_of = { bits_of_physaddr, bits_of_virtaddr }
 
+// This refers to the size of an _implemented_ physical address, which
+// may be smaller than the architectural physical address.
 type physaddr_bits : Int = config memory.physaddr_bits
-// the lower bound of 13 is required to prevent empty bitvectors during address translation
+// The lower bound of 13 is required to prevent empty bitvectors during address translation.
 constraint 13 <= physaddr_bits & physaddr_bits <= (if xlen == 32 then 34 else 64)
 let physaddr_bits = sizeof(physaddr_bits)

@@ -8,6 +8,8 @@
     be specified; see `base.privileged_isa_version`. Note that not
     all versions can be specified as yet, and not all version-affected
     functionality is implemented.
+  - The number of implemented physical address bits can be specified;
+    see `memory.physaddr_bits`.
   - Delegatable subsets of `medeleg` and `mideleg` can be specified;
     see `base.medeleg.delegatable_bits` and `base.mideleg.delegatable_bits`.
   - Add the `extensions.F.fflags_dirty_policy` option to configure exactly
