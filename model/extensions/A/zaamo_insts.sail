@@ -98,15 +98,18 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
-  // FIXME: the AMO could lie outside a MAG PMA region, which will be
-  // determined by the following `mem_write_value`.  This might result
-  // in a `mem_write_ea` without a matching write of a value to
-  // memory.  See https://github.com/riscv/sail-riscv/issues/1761.
-
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, access, pbmt, aq & rl, rl, true) {
-    Err(e) => return memory_exception(vaddr, e),
+    Err(exc_addr, e) => {
+      // AMOs should not get split.
+      assert(exc_addr == addr);
+      return memory_exception(vaddr, e)
+    },
     Ok(_)  => match mem_read(access, pbmt, addr, width, aq, aq & rl, true) {
-      Err(e)     => return memory_exception(vaddr, e),
+      Err(exc_addr, e) => {
+        // AMOs should not get split.
+        assert(exc_addr == addr);
+        return memory_exception(vaddr, e)
+      },
       Ok(loaded) => loaded,
     },
   };
@@ -148,7 +151,11 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       RETIRE_SUCCESS
     },
     Ok(false) => internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value"),
-    Err(e)    => memory_exception(vaddr, e),
+    Err(exc_addr, e) => {
+      // AMOs should not get split.
+      assert(exc_addr == addr);
+      memory_exception(vaddr, e)
+    }
   }
 }
 

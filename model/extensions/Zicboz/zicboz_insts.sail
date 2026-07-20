@@ -52,12 +52,20 @@ function clause execute ZICBOZ(rs1) = {
         Err(e, _) => memory_exception(vaddr - negative_offset, e),
         Ok(paddr, pbmt, _) => {
           match mem_write_ea(paddr, cache_block_size, access, pbmt, false, false, false) {
-            Err(e) => memory_exception(vaddr - negative_offset, e),
+            Err(exc_addr, e) => {
+              // Cache accesses should not get split.
+              assert(exc_addr == paddr);
+              memory_exception(vaddr - negative_offset, e)
+            },
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {
                 Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                Err(e)    => memory_exception(vaddr - negative_offset, e),
+                Err(exc_addr, e) => {
+                  // Cache accesses should not get split.
+                  assert(exc_addr == paddr);
+                  memory_exception(vaddr - negative_offset, e)
+                },
               }
             }
           }

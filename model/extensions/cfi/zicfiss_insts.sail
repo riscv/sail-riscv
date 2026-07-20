@@ -199,16 +199,19 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // release consistency semantics, using the aq and rl bits, to help
   // implement multiprocessor synchronization."
 
-  // FIXME: the AMO could lie outside a MAG PMA region, which will be
-  // determined by the following `mem_write_value`.  This might result
-  // in a `mem_write_ea` without a matching write of a value to
-  // memory.  See https://github.com/riscv/sail-riscv/issues/1761.
-
   let 'width = width;
   let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, pbmt, aq & rl, rl, true) {
-    Err(e) => return memory_exception(vaddr, e),
-    Ok(_)  => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
-      Err(e) => return memory_exception(vaddr, e),
+    Err(exc_addr, e) => {
+      // AMOs should not get split.
+      assert(exc_addr == paddr);
+      return memory_exception(vaddr, e)
+    },
+    Ok(_) => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
+      Err(exc_addr, e) => {
+        // AMOs should not get split.
+        assert(exc_addr == paddr);
+        return memory_exception(vaddr, e)
+      },
       Ok(v)  => v,
     },
   };
@@ -222,7 +225,11 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   match mem_write_value(paddr, width, write_val, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => X(rd) = sign_extend(mem_val),
     Ok(false) => internal_error(__FILE__, __LINE__, "AMOSWAP_SS got false from mem_write_value"),
-    Err(e)    => return memory_exception(vaddr, e),
+    Err(exc_addr, e) => {
+      // AMOs should not get split.
+      assert(exc_addr == paddr);
+      return memory_exception(vaddr, e)
+    },
   };
 
   RETIRE_SUCCESS

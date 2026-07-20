@@ -82,7 +82,8 @@ let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
 let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
 
 private val clint_load : forall 'n, 'n > 0. (MemoryAccessType(mem_payload), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
-function clint_load(access, Physaddr(addr), width) = {
+function clint_load(access, paddr, width) = {
+  let Physaddr(addr) = paddr;
   let addr = addr - plat_clint_base;
   // FIXME: For now, only allow exact aligned access.
   if addr == MSIP_BASE & ('n == 8 | 'n == 4)
@@ -133,7 +134,7 @@ function clint_load(access, Physaddr(addr), width) = {
   else {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> <not-mapped>");
-    Err(accessFaultFromAccessType(access))
+    Err(paddr, accessFaultFromAccessType(access))
   }
 }
 
@@ -151,7 +152,8 @@ private function clint_dispatch(mip_was_written : bool) -> unit = {
 }
 
 private val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
-function clint_store(Physaddr(addr), width, data) = {
+function clint_store(paddr, width, data) = {
+  let Physaddr(addr) = paddr;
   let addr = addr - plat_clint_base;
   if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
     if   get_config_print_clint()
@@ -198,7 +200,7 @@ function clint_store(Physaddr(addr), width, data) = {
   } else {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (<unmapped>)");
-    Err(E_SAMO_Access_Fault())
+    Err(paddr, E_SAMO_Access_Fault())
   }
 }
 
@@ -259,7 +261,8 @@ private function reset_htif () -> unit = {
 // dispatched the address.
 
 private val htif_load : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
-function htif_load(access, Physaddr(paddr), width) = {
+function htif_load(access, addr, width) = {
+  let Physaddr(paddr) = addr;
   if   get_config_print_htif()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] -> " ^ bits_str(htif_tohost));
 
@@ -275,11 +278,12 @@ function htif_load(access, Physaddr(paddr), width) = {
   then    Ok(zero_extend(32, htif_tohost[31..0]))  // FIXME: Redundant zero_extend currently required by Lem backend
   else if width == 4 & paddr == base + 4
   then    Ok(zero_extend(32, htif_tohost[63..32])) // FIXME: Redundant zero_extend currently required by Lem backend
-  else    Err(accessFaultFromAccessType(access))
+  else    Err(addr, accessFaultFromAccessType(access))
 }
 
 private val htif_store : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n)) -> MemoryOpResult(bool)
-function htif_store(Physaddr(paddr), width, data) = {
+function htif_store(addr, width, data) = {
+  let Physaddr(paddr) = addr;
   if   get_config_print_htif()
   then print_log("htif[" ^ hex_bits_str(paddr) ^ "] <- " ^ bits_str(data));
 
@@ -305,7 +309,7 @@ function htif_store(Physaddr(paddr), width, data) = {
             else htif_payload_writes = 0x1;
             htif_cmd_write = 0b1;
             htif_tohost = vector_update_subrange(htif_tohost, 63, 32, data) }
-  else return Err(E_SAMO_Access_Fault());
+  else return Err(addr, E_SAMO_Access_Fault());
 
   // Execute if there were repeated writes of the same payload without
   // a cmd (e.g. in riscv-tests), or we have a complete htif command.
@@ -359,7 +363,7 @@ function mmio_read forall 'n, 0 < 'n <= max_mem_access . (access : MemoryAccessT
   then sig_load(access, paddr, width)
   else if within_htif_readable(paddr, width)
   then htif_load(access, paddr, width)
-  else Err(accessFaultFromAccessType(access))
+  else Err(paddr, accessFaultFromAccessType(access))
 
 function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, width : int('n), data: bits(8 * 'n)) -> MemoryOpResult(bool) =
   if   within_clint(paddr, width)
@@ -368,4 +372,4 @@ function mmio_write forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddr, wid
   then sig_store(paddr, width, data)
   else if within_htif_writable(paddr, width)
   then htif_store(paddr, width, data)
-  else Err(E_SAMO_Access_Fault())
+  else Err(paddr, E_SAMO_Access_Fault())
