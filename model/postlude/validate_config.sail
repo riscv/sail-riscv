@@ -316,11 +316,11 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
                       bits_str(prev_base) ^ " and ending at " ^ bits_str(prev_base + prev_size) ^ ".");
         return false;
       } else if unsigned(region.base) + unsigned(region.size) > 2 ^ physaddr_bits then {
-          print_endline("Memory region starting at " ^ bits_str(region.base) ^
-                        " ends at " ^ bits_str(region.base + region.size) ^
-                        " which is above the representable limit of the physical address bit size (i.e. " ^
-                        dec_str(physaddr_bits) ^ " from `memory.physaddr_bits`).");
-          return false;
+        print_endline("Memory region starting at " ^ bits_str(region.base) ^
+                      " ends at " ^ bits_str(region.base + region.size) ^
+                      " which is above the representable limit of the physical address bit size (i.e. " ^
+                      dec_str(physaddr_bits) ^ " from `memory.physaddr_bits`).");
+        return false;
       };
 
       if not(check_pma_region(region)) then return false;
