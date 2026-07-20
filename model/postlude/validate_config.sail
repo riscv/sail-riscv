@@ -638,6 +638,19 @@ private function check_mstatus_fields() -> bool = {
   valid
 }
 
+function check_version_constraints() -> bool = {
+  var valid : bool = true;
+
+  // The internal variables are used here rather than the `config` constructs due to their non-trivial types.
+  if (sys_pmp_count > 16 & priv_isa_version < Privileged_ISA_1_12) then {
+    valid = false;
+    print_endline("More than 16 PMP registers are specified, but the privileged ISA version is set to " ^
+                  privileged_isa_version_name(priv_isa_version) ^ " which only allows 16 PMP registers.");
+  };
+
+  valid
+}
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_tvecs()
@@ -650,5 +663,6 @@ function config_is_valid() -> bool = {
   & check_pmp()
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
+  & check_version_constraints()
   & check_stateen_config()
 }
