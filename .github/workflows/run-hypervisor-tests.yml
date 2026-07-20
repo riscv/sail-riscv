@@ -288,14 +288,15 @@ jobs:
               "pmp": { "count": 0, "usable_count": 0 },
               "regions": [
                 { "base": { "len": 64, "value": "0x1000" },
-                  "size": { "len": 64, "value": "0xfffffffffffff000" },
+                  "size": { "len": 64, "value": "0xfffffffffff000" },
                   "attributes": {
                     "mem_type": "MainMemory",
                     "cacheable": true, "coherent": true, "executable": true,
                     "readable": true, "writable": true,
                     "read_idempotent": true, "write_idempotent": true,
                     "misaligned_exceptions": { "load_store": {"None": null}, "vector": {"None": null}, "amo": "AccessFault" },
-                    "atomic_support": "AMOCASQ", "reservability": "RsrvEventual",
+                    "atomic_support": "AMOCASQ", "misaligned_atomicity_granule_size_exp": 0,
+                    "vector_misaligned_atomicity_granule_size_exp": 0, "reservability": "RsrvEventual",
                     "supports_cbo_zero": true, "supports_pte_read": true, "supports_pte_write": true },
                   "include_in_device_tree": true } ]
             },
@@ -304,6 +305,7 @@ jobs:
               "simple_interrupt_generator": { "supported": false }
             },
             "extensions": {
+              "Zama16b": { "supported": false },
               "Stateen": { "Smstateen": { "supported": false }, "Ssstateen": { "supported": false } }
             }
           }
@@ -314,9 +316,12 @@ jobs:
           pass=0; fail=0
           while IFS= read -r elf; do
             name=${elf#testsuite/}
-            if timeout 200 "$SAIL" --inst-limit 2000000 \
-                --config-override <(printf '%s' "$OVERRIDE") "$elf" 2>/dev/null \
-                | grep -q 'RVCP:.*PASSED'; then
+            # Pass = clean sim exit AND a PASSED line. grep alone would hide
+            # crashes that happen after the first passing subtest printed.
+            rc=0
+            out=$(timeout 200 "$SAIL" --inst-limit 2000000 \
+                --config-override <(printf '%s' "$OVERRIDE") "$elf" 2>/dev/null) || rc=$?
+            if [ "$rc" -eq 0 ] && grep -q 'RVCP:.*PASSED' <<<"$out"; then
               pass=$((pass+1))
               printf '[TEST] %s - %bPassed%b\n' "$name" "$GREEN" "$NC"
             else
