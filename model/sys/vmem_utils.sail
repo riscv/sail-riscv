@@ -45,7 +45,7 @@ function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res :
 // Since `virtaddr` accesses that straddle page boundaries are already
 // split, the offset computation is quite simple.
 
-private function offset_virtaddr_by(
+function offset_virtaddr_by(
   Virtaddr(base_vaddr) : virtaddr,
   Physaddr(base_paddr) : physaddr,
   Physaddr(exc_paddr)  : physaddr,
@@ -97,7 +97,7 @@ private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_a
     Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, width, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
+        Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
       },
 
       Ok(v) => Ok(paddr, v),
@@ -133,7 +133,10 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // virtual memory is in effect, and (b) it crosses a page boundary.
   // If we do split, perform the split access in the configured order.
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-  let do_split_access = translationMode(effPriv) != Bare & next_page_bytes > 0;
+  let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
+  then vsatp_mode(cur_privilege) != Bare | hgatp_mode(cur_privilege) != HBare
+  else satp_mode(cur_privilege) != Bare;
+  let do_split_access = vmem_active & next_page_bytes > 0;
 
   if sys_misaligned_order_decreasing & do_split_access then {
     // Load-reserved cannot be misaligned.
@@ -193,7 +196,7 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
       Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
+          Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
         },
 
         Ok(s) => Ok(s),
@@ -230,7 +233,10 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
 
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-  let do_split_access = translationMode(effPriv) != Bare & next_page_bytes > 0;
+  let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
+  then vsatp_mode(cur_privilege) != Bare | hgatp_mode(cur_privilege) != HBare
+  else satp_mode(cur_privilege) != Bare;
+  let do_split_access = vmem_active & next_page_bytes > 0;
 
   if sys_misaligned_order_decreasing & do_split_access then {
     // Store-conditionals cannot be misaligned.
@@ -260,13 +266,13 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
         // access-fault exception."
         let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
         match phys_access_check(access, pbmt, effPriv, paddr, access_width, true) {
-          Err(e) => return Err(Memory_Exception(exception_context((e, bits_of(vaddr))))),
+          Err(e) => return Err(Memory_Exception(mem_exception_context(e, bits_of(vaddr), access))),
           Ok(_)  => write_success = false,
         }
       } else match mem_write_ea(paddr, access_width, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
+          return Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
         },
 
         Ok(()) => {
@@ -274,7 +280,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           match mem_write_value(paddr, access_width, write_value, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-              return Err(Memory_Exception(exception_context((e, bits_of(exc_vaddr)))))
+              return Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
             },
             Ok(s)  => write_success = write_success & s,
           }
