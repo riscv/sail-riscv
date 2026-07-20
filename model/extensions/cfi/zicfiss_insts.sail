@@ -180,8 +180,8 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     // Check if the model is configured to raise an exception based on
     // the misaligned virtual address.
     match plat_misaligned_exception(access, false) {
-      Some(AccessFault)        => return Memory_Exception(exception_context(E_SAMO_Access_Fault(), bits_of(vaddr), access)),
-      Some(AlignmentException) => return Memory_Exception(exception_context(E_SAMO_Addr_Align(), bits_of(vaddr), access)),
+      Some(AccessFault)        => return Memory_Exception(mem_exception_context(E_SAMO_Access_Fault(), bits_of(vaddr), access)),
+      Some(AlignmentException) => return Memory_Exception(mem_exception_context(E_SAMO_Addr_Align(), bits_of(vaddr), access)),
       // No exception yet, but we may still get one based on the
       // physical address after address translation and checking PMAs.
       None()                   => (),
