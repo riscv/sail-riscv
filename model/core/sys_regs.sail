@@ -335,7 +335,7 @@ mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // For Sm1p12 and later, "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = mseccfg_csrs_are_defined & currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm) // mseccfg
+function clause is_CSR_accessible(0x747, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm)) // mseccfg
 function clause is_CSR_accessible(0x757, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32 // mseccfgh
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
