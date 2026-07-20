@@ -584,7 +584,9 @@ public:
 
 } // namespace
 
-request_parsers::request_parsers() {
+std::vector<request_parser_ptr> create_request_parsers() {
+  std::vector<request_parser_ptr> parsers;
+
   parsers.push_back(request_parser_ptr(new qsupported()));
   parsers.push_back(request_parser_ptr(new empty_responses()));
   parsers.push_back(request_parser_ptr(new simple()));
@@ -597,8 +599,6 @@ request_parsers::request_parsers() {
   parsers.push_back(request_parser_ptr(new forward_continue()));
   parsers.push_back(request_parser_ptr(new vkill()));
   parsers.push_back(request_parser_ptr(new trigger()));
-}
 
-const std::vector<request_parser_ptr> &request_parsers::get_parsers() const {
   return parsers;
 }

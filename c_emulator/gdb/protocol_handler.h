@@ -25,6 +25,7 @@ public:
   ) :
       m_executor(std::move(executor)),
       m_connection{connection},
+      m_parsers{create_request_parsers()},
       m_model{model},
       m_run_info{info},
       m_triggers{info} {
@@ -110,7 +111,7 @@ private:
   asio::any_io_executor m_executor;
   connection &m_connection;
   std::string m_parse_buffer;
-  request_parsers m_parsers;
+  std::vector<request_parser_ptr> m_parsers;
   std::deque<response_handler_ptr> m_pending_responses;
   bool m_in_noack_mode = false;
 

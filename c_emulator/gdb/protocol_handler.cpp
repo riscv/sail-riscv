@@ -120,7 +120,7 @@ void protocol_handler::process_raw_request(std::string req) {
   req.erase(write_idx);
 
   std::optional<response_handler_ptr> resp;
-  for (const auto &parser : m_parsers.get_parsers()) {
+  for (const auto &parser : m_parsers) {
     resp = parser->parse(req, m_run_info);
     if (resp.has_value()) {
       break;

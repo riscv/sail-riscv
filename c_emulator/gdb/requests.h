@@ -31,13 +31,4 @@ protected:
 
 using request_parser_ptr = std::shared_ptr<request::request_parser>;
 
-class request_parsers {
-public:
-  request_parsers();
-  ~request_parsers() = default;
-
-  const std::vector<request_parser_ptr> &get_parsers() const;
-
-private:
-  std::vector<request_parser_ptr> parsers;
-};
+std::vector<request_parser_ptr> create_request_parsers();
