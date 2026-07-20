@@ -188,7 +188,88 @@ function wV_bits(i: vregidx, data: vlenbits) -> unit = {
   wV(vregidx_to_vregno(i)) = data
 }
 
-overload V = {rV_bits, wV_bits, rV, wV}
+$ifdef SYMBOLIC
+let VPRs : vector(32, dec, register(vlenbits)) = [
+    ref vr31,
+    ref vr30,
+    ref vr29,
+    ref vr28,
+    ref vr27,
+    ref vr26,
+    ref vr25,
+    ref vr24,
+    ref vr23,
+    ref vr22,
+    ref vr21,
+    ref vr20,
+    ref vr19,
+    ref vr18,
+    ref vr17,
+    ref vr16,
+    ref vr15,
+    ref vr14,
+    ref vr13,
+    ref vr12,
+    ref vr11,
+    ref vr10,
+    ref vr9,
+    ref vr8,
+    ref vr7,
+    ref vr6,
+    ref vr5,
+    ref vr4,
+    ref vr3,
+    ref vr2,
+    ref vr1,
+    ref vr0
+]
+
+register __isla_vector_vpr: bool = false
+
+val rV_from_vector = monadic "read_register_from_vector" : forall 'n, 0 <= 'n <= 31. (int('n), vector(32, dec, register(vlenbits))) -> vlenbits
+
+val get_V_bits : vregidx -> vlenbits effect {rreg}
+
+function get_V_bits(i: vregidx) = if __isla_vector_vpr then rV_from_vector(unsigned(vregidx_bits(i)), VPRs) else rV_bits(i)
+
+val get_V : vregno -> vlenbits effect {rreg}
+
+function get_V(Vregno(r) : vregno) = if __isla_vector_vpr then rV_from_vector(r, VPRs) else rV(Vregno(r))
+
+val wV_from_vector = monadic "write_register_from_vector" : forall 'n, 0 <= 'n <= 31. (int('n), vlenbits, vector(32, dec, register(vlenbits))) -> unit
+
+val set_V_bits : (vregidx, vlenbits) -> unit effect {wreg}
+
+function set_V_bits(i: vregidx, data : vlenbits) = {
+    if __isla_vector_vpr then wV_from_vector(unsigned(vregidx_bits(i)), data, VPRs) else wV_bits(i, data)
+}
+
+val set_V : (vregno, vlenbits) -> unit effect {wreg}
+
+function set_V(Vregno(r) : vregno, v) = {
+    if __isla_vector_vpr then wV_from_vector(r, v, VPRs) else wV(Vregno(r), v)
+}
+$else
+val get_V_bits : vregidx -> vlenbits effect {rreg}
+
+function get_V_bits(i: vregidx) = rV_bits(i)
+
+val get_V : vregno -> vlenbits effect {rreg}
+
+function get_V(Vregno(r) : vregno) = rV(Vregno(r))
+
+val set_V_bits : (vregidx, vlenbits) -> unit effect {wreg}
+
+function set_V_bits(i: vregidx, data : vlenbits) = {
+    wV_bits(i, data)
+}
+
+val set_V : (vregno, vlenbits) -> unit effect {wreg}
+
+function set_V(Vregno(r) : vregno, v) = wV(Vregno(r), v)
+$endif
+
+overload V = {get_V_bits, set_V_bits, get_V, set_V}
 
 function init_vregs() -> unit = {
   let zero_vreg : vlenbits = zeros();
