@@ -89,8 +89,14 @@ function clause currentlyEnabled(Ext_Svadu) = hartSupports(Ext_Svadu)
 private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext, stage : TranslationStage) -> bool =
     pte_flags[V] == 0b0
   // The encoding R=0, W=1, and X=0, is defined to represent an SS
-  // page. When menvcfg.SSE=0, this encoding remains reserved.
-  | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b0 & menvcfg[SSE] == 0b0)
+  // page, reserved unless SSE is enabled. For VS-stage, both
+  // menvcfg.SSE and henvcfg.SSE must be set. G-stage is unaffected
+  // by Zicfiss, so it stays reserved there regardless of SSE.
+  | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b0 & (match stage {
+      G_Stage  => true,
+      VS_Stage => menvcfg[SSE] == 0b0 | read_henvcfg()[SSE] == 0b0,
+      S_Stage  => menvcfg[SSE] == 0b0,
+    }))
   | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b1)
   // Reserved encodings mean the PTE is invalid.
   | not(page_based_mem_type_forwards_matches(pte_ext[PBMT])) & currentlyEnabled(Ext_Svpbmt)
