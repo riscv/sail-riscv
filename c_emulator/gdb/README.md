@@ -62,6 +62,10 @@ and increasingly more verbose logging with
 
 If the debugger closes the connection, the simulator exits.
 
+## Known limitations
+
+Access to vector registers and CSRs is currently not supported.
+
 ## Reporting issues
 
 Please run the simulator with `--trace-gdbserver` and share the trace
