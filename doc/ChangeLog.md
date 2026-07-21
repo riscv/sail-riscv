@@ -20,7 +20,7 @@ and LLDB](../c_emulator/gdb/README.md).
     see `memory.physaddr_bits`.
   - Delegatable subsets of `medeleg` and `mideleg` can be specified;
     see `base.medeleg.delegatable_bits` and `base.mideleg.delegatable_bits`.
-  - Finer-grained control on when `mstatus.FD` is dirtied by changes
+  - Finer-grained control on when `mstatus.FS` is dirtied by changes
     to `fflags` is now possible; see `extensions.F.fflags_dirty_policy`.
   - PMA regions now have two additional attributes to support the
     Misaligned Atomicity Granule PMA: `misaligned_atomicity_granule_size_exp`
