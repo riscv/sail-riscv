@@ -151,10 +151,14 @@ private function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
   }
 }
 
-private function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits =
-  if   xlen == 32
-  then { if (locked | tor_locked) then reg else v }
-  else { if (locked | tor_locked) then reg else zero_extend(v[53..0]) }
+private function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: xlenbits) -> xlenbits = {
+  if locked | tor_locked then return reg;
+
+  // Trim to the number of implemented physical address bits.
+  if xlen == 32
+  then zero_extend(v[physaddr_bits - 3 .. 0])
+  else zero_extend(v[min(physaddr_bits - 3, 53) .. 0]);
+}
 
 private function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
   if n < sys_pmp_usable_count then

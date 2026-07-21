@@ -458,7 +458,13 @@ function translateAddr(
         // On RV64 paddr can be 34 or 56 bits, so we zero extend to 64.
         // On RV32 paddr can only be 34 bits. Sail knows this due to
         // the assertion above.
-        Ok(Physaddr(zero_extend(paddr)), pbmt, ext_ptw)
+        let paddr : physaddrbits = zero_extend(paddr);
+
+        // Trim the physical address based on the number of
+        // implemented physical address bits.
+        let paddr : physaddrbits = zero_extend(paddr[physaddr_bits - 1 .. 0]);
+
+        Ok(Physaddr(paddr), pbmt, ext_ptw)
       },
       Err(f, ext_ptw)  => Err(translationException(access, f), ext_ptw)
     }
