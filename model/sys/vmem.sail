@@ -459,8 +459,8 @@ function translateAddr(
         // the assertion above.
         let paddr : physaddrbits = zero_extend(paddr);
 
-        // Trim the PPN based on the number of implemented physical
-        // address bits.
+        // Trim the physical address based on the number of
+        // implemented physical address bits.
         let paddr : physaddrbits = zero_extend(paddr[physaddr_bits - 1 .. 0]);
 
         Ok(Physaddr(paddr), pbmt, ext_ptw)
