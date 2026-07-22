@@ -332,6 +332,10 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       // mcountinhibit[IR] or minstretcfg.
       if retired & minstret_increment then minstret = minstret + 1;
 
+      // Dispatch any events.
+      dispatch_events();
+      clear_written_event_index();
+
       // Update any triggers that were written.
       update_triggers();
 

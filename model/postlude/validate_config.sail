@@ -774,6 +774,13 @@ private function check_misc_extension_dependencies() -> bool = {
     };
     valid = valid & require_virtual_memory("H");
   };
+  if (config extensions.Sscofpmf.supported : bool) & plat_hpmevent_width_bits > 56 then {
+      valid = false;
+      print_endline("The Sscofpmf extension is enabled and the event selector fields in `mhpmevent` CSRs have " ^ dec_str(plat_hpmevent_width_bits) ^ " implemented bits: this field cannot exceed 56 bits in width.");
+  } else if not(config extensions.Sscofpmf.supported : bool) & xlen == 32 & plat_hpmevent_width_bits > 32 then {
+      valid = false;
+      print_endline("The `mhpmevent` CSRs have " ^ dec_str(plat_hpmevent_width_bits) ^ " implemented bits on RV32, but Sscofpmf is not enabled: this cannot exceed 32 without Sscofpmf being supported.");
+  };
   if xlen == 32 then {
     if sys_hgatp_sv39x4_supported | sys_hgatp_sv48x4_supported | sys_hgatp_sv57x4_supported then {
       valid = false;
@@ -1069,6 +1076,13 @@ private function check_version_constraints() -> bool = {
   valid
 }
 
+// Checks for selector-value validity are done in C++ for efficiency
+// since Sail does not have a `set` type.
+val validate_event_selectors = pure {cpp:"validate_event_selectors"} : unit -> bool
+
+private function check_platform_constraints() -> bool =
+  validate_event_selectors()
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_tvecs()
@@ -1084,5 +1098,6 @@ function config_is_valid() -> bool = {
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
   & check_version_constraints()
+  & check_platform_constraints()
   & check_stateen_config()
 }

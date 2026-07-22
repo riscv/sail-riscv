@@ -36,10 +36,11 @@ core {
     core/regs.sail,
     core/pc_access.sail,
     core/sys_regs.sail,
-    core/counters.sail,
+    core/events.sail,
     core/ext_regs.sail,
     core/interrupt_interface.sail,
     core/interrupt_regs.sail,
+    core/counters.sail,
     core/addr_checks_common.sail,
     core/addr_checks.sail,
     core/misa_ext.sail,
@@ -360,7 +361,7 @@ extensions {
   }
 
   Sscofpmf {
-    requires core, Zihpm
+    requires core
     files extensions/Sscofpmf/sscofpmf.sail
   }
 
