@@ -206,7 +206,7 @@ unit ModelImpl::tlb_flush_end_callback(TLB tlb) {
 mach_bits ModelImpl::plat_get_16_random_bits(unit) {
   // This function can be changed to support deterministic sequences of
   // pseudo-random bytes. This is useful for testing.
-  return m_gen64();
+  return m_gen64() & 0xFFFF;
 }
 
 // Note: Store-Conditionals are allowed to spuriously fail. If you want
