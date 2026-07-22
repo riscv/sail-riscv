@@ -1002,6 +1002,12 @@ function legalize_hgatp(
     let v = Mk_Hgatp32(written_value);
     // Force 16 KiB alignment with PPN[1:0] = 0b00
     let h = Mk_Hgatp32(v[Mode] @ 0b00 @ v[VMID] @ v[PPN][21 .. 2] @ 0b00);
+    // Bits above the number of implemented physical address bits
+    // are read only zero, since the G-stage root page table lives
+    // in real physical memory.
+    let h = [h with
+      PPN = zero_extend(h[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
+    ];
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
@@ -1014,6 +1020,12 @@ function legalize_hgatp(
     let v = Mk_Hgatp64(written_value);
     // Force 16 KiB alignment with PPN[1:0] = 0b00
     let h = Mk_Hgatp64(v[Mode] @ 0b00 @ v[VMID] @ v[PPN][43 .. 2] @ 0b00);
+    // PPN field size is 44 bits, and bits above the number of
+    // implemented physical address bits are read only zero, since
+    // the G-stage root page table lives in real physical memory.
+    let h = [h with
+      PPN = zero_extend(h[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
+    ];
     match hgatpMode_of_bits(arch, h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
@@ -1049,14 +1061,19 @@ bitfield Satp32 : bits(32) = {
 // and does not legalize the asid field if asidlen is not the maximum.
 function legalize_satp(
   arch : Architecture,
+  is_vsatp : bool,
   prev_value : xlenbits,
   written_value : xlenbits,
 ) -> xlenbits = {
+  // vsatp.PPN points into guest-physical, not real physical, address
+  // space. It is the root of the VS-stage page table, which is itself
+  // G-stage translated before touching real memory. So it must not be
+  // masked to physaddr_bits, which only bounds real physical memory.
   if xlen == 32 then {
     let s = Mk_Satp32(written_value);
-    let s = [s with
-      // Bits above the number of implemented physical address bits
-      // are read only zero.
+    // vsatp's PPN addresses guest-physical memory, bounded only by
+    // the field's own width, not the host's physaddr_bits.
+    let s = if is_vsatp then s else [s with
       PPN = zero_extend(s[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
     match satpMode_of_bits(arch, 0b000 @ s[Mode]) {
@@ -1069,9 +1086,9 @@ function legalize_satp(
     }
   } else if xlen == 64 then {
     let s = Mk_Satp64(written_value);
-    let s = [s with
-      // PPN field size is 44 bits, and bits above the number of
-      // implemented physical address bits are read only zero.
+    // vsatp's PPN addresses guest-physical memory, bounded only by
+    // the field's own width, not the host's physaddr_bits.
+    let s = if is_vsatp then s else [s with
       PPN = zero_extend(s[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
     match satpMode_of_bits(arch, s[Mode]) {
