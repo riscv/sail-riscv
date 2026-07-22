@@ -65,6 +65,23 @@ function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType
   if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }
 
+// Helper for translated read access.
+private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_access.
+  (vaddr : virtaddr, width : int('width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
+  -> result((physaddr, bits(8 * 'width)), ExecutionResult) =
+  match translateAddr(vaddr, access) {
+    Err(e, _) => Err(memory_exception(vaddr, e)),
+
+    Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, width, aq, rl, res) {
+      Err(exc_paddr, e) => {
+        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+        Err(memory_exception(exc_vaddr, e))
+      },
+
+      Ok(v) => Ok(paddr, v),
+    }
+  }
+
 val vmem_read_addr : forall 'width, is_mem_width('width).
   (virtaddr, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
@@ -102,37 +119,24 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
 
     // Do next page access first.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translateAddr(access_addr, access) {
-      Err(e,_) => return Err(memory_exception(access_addr, e)),
-
-      Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, next_page_bytes, aq, rl, res) {
-        Err(exc_paddr, e) => {
-          let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
-        },
-        Ok(v)  => data[8 * width - 1 .. 8 * in_page_bytes] = v,
-      },
+    match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
+      Err(e)   => return Err(e),
+      Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
   };
 
   // If the access was split, only the in-page bytes should be
   // accessed, otherwise all bytes should be accessed.
   let access_width = if do_split_access then in_page_bytes else width;
-  match translateAddr(vaddr, access) {
-    Err(e, _) => return Err(memory_exception(vaddr, e)),
-
-    Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, access_width, aq, rl, res) {
-      Err(exc_paddr, e) => {
-        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        return Err(memory_exception(exc_vaddr, e))
-      },
-      Ok(v)  => {
-        if res then {
-          load_reservation(bits_of(paddr), width);
-        };
-
-        data[8 * access_width - 1 .. 0] = v
-      },
+  match translate_and_read_value(vaddr, access_width, access, aq, rl, res) {
+    Err(e)       => return Err(e),
+    Ok(paddr, v) => {
+      if res then {
+        // LR is not split.
+        assert(width == access_width);
+        load_reservation(bits_of(paddr), width);
+      };
+      data[8 * access_width - 1 .. 0] = v
     },
   };
 
@@ -142,21 +146,38 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
 
     // Do next page access next.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translateAddr(access_addr, access) {
-      Err(e,_) => return Err(memory_exception(access_addr, e)),
-
-      Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, next_page_bytes, aq, rl, res) {
-        Err(exc_paddr, e) => {
-          let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
-        },
-        Ok(v)  => data[8 * width - 1 .. 8 * in_page_bytes] = v,
-      },
+    match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
+      Err(e)   => return Err(e),
+      Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
   };
 
   Ok(data)
 }
+
+// Helper for translated write access.
+private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_access.
+  (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
+  -> result(bool, ExecutionResult) =
+  match translateAddr(vaddr, access) {
+    Err(e, _) => Err(memory_exception(vaddr, e)),
+
+    Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, access, pbmt, aq, rl, res) {
+      Err(exc_paddr, e) => {
+        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+        Err(memory_exception(exc_vaddr, e))
+      },
+
+      Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
+        Err(exc_paddr, e) => {
+          let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+          Err(memory_exception(exc_vaddr, e))
+        },
+
+        Ok(s) => Ok(s),
+      },
+    },
+  }
 
 val vmem_write_addr : forall 'width, is_mem_width('width).
   (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
@@ -194,26 +215,10 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     assert(not(is_store_conditional(access)));
 
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translateAddr(access_addr, access) {
-      Err(e, _) => return Err(memory_exception(access_addr, e)),
-
-      Ok(paddr, pbmt, _) => match mem_write_ea(paddr, next_page_bytes, access, pbmt, aq, rl, res) {
-        Err(exc_paddr, e) => {
-          let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
-        },
-
-        Ok(()) => {
-          let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-          match mem_write_value(paddr, next_page_bytes, write_value, access, pbmt, aq, rl, res) {
-            Err(exc_paddr, e) => {
-              let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-              return Err(memory_exception(exc_vaddr, e))
-            },
-            Ok(s)  => write_success = write_success & s,
-          }
-        },
-      },
+    let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
+    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
+      Err(e) => return Err(e),
+      Ok(s)  => write_success = write_success & s,
     }
   };
 
@@ -261,26 +266,10 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     assert(not(is_store_conditional(access)));
 
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translateAddr(access_addr, access) {
-      Err(e, _) => return Err(memory_exception(access_addr, e)),
-
-      Ok(paddr, pbmt, _) => match mem_write_ea(paddr, next_page_bytes, access, pbmt, aq, rl, res) {
-        Err(exc_paddr, e) => {
-          let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
-        },
-
-        Ok(()) => {
-          let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-          match mem_write_value(paddr, next_page_bytes, write_value, access, pbmt, aq, rl, res) {
-            Err(exc_paddr, e) => {
-              let exc_vaddr = offset_virtaddr_by(access_addr, paddr, exc_paddr);
-              return Err(memory_exception(exc_vaddr, e))
-            },
-            Ok(s)  => write_success = write_success & s,
-          }
-        },
-      },
+    let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
+    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
+      Err(e) => return Err(e),
+      Ok(s)  => write_success = write_success & s,
     }
   };
 
