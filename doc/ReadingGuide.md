@@ -120,8 +120,10 @@ contains helpers to interpret their content, such as WLRL and WARL
 fields. CSRs dealing with interrupts are in
 [interrupt_regs.sail](../model/core/interrupt_regs.sail).
 
-[counters.sail](../model/core/counters.sail) defines the machine counters
-and hardware performance monitoring CSRs.
+[events.sail](../model/core/events.sail) contains the basic Sail-side
+infrastructure for the events in the model. The rest of the
+infrastructure is implemented in the C++ harness in
+[c_emulator/riscv_model_impl.cpp](../c_emulator/riscv_model_impl.cpp).
 
 [ext_regs.sail](../model/core/ext_regs.sail) contains some register
 handling definitions that can be overridden by out-of-tree extensions.
@@ -132,6 +134,9 @@ implemented by multiple interrupt controllers.
 
 [interrupt_regs.sail](../model/core/interrupt_regs.sail) contains the
 definitions and legalizers for interrupt-related CSRs.
+
+[counters.sail](../model/core/counters.sail) defines the machine counters
+and hardware performance monitoring CSRs.
 
 [addr_checks_common.sail](../model/core/addr_checks_common.sail)
 and [addr_checks.sail](../model/core/addr_checks.sail)

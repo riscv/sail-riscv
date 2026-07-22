@@ -295,6 +295,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       // mcountinhibit[IR] or minstretcfg.
       if retired & minstret_increment then minstret = minstret + 1;
 
+      dispatch_events();
+      clear_written_event_index();
+
       // Record the next PC for RVFI.
       // TODO: Remove this and implement it in C.
       if get_config_rvfi() then {

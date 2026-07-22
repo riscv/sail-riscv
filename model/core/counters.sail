@@ -128,15 +128,16 @@ bitfield HpmEvent : bits(64) = {
   VSINH : 59,
   VUINH : 58,
 
-  event : 31 .. 0,
+  event : 55 .. 0,
 }
 
 // HPM events selector. These control what the HPM counters measure. The lowest
 // three values are not used but they are defined for simplicity.
-register mhpmevent : vector(32, HpmEvent)
+register mhpmevent : vector(32, bits(64))
 
 // HPM (Hardware Performance Monitoring) counters. The lowest three values are
-// not used but they are defined for simplicity.
+// not used but they are defined for simplicity.  The platform-defined width of
+// the counters is given by `plat_hpmcounter_width_bits`.
 register mhpmcounter : vector(32, bits(64))
 
 // Valid HPM counter indices. The lowest three are used for mcycle, mtime and minstret.
@@ -149,7 +150,13 @@ function hpmidx_from_bits(b : bits(5)) -> hpmidx = {
   index
 }
 
-function legalize_hpmevent(v : HpmEvent) -> HpmEvent = {
+function legalize_hpmevent(v : bits(64)) -> bits(64) = {
+  if not(currentlyEnabled(Ext_Sscofpmf))
+  then return zero_extend(v[plat_hpmevent_width_bits - 1 .. 0]);
+
+  assert(plat_hpmevent_width_bits <= 56);
+  let v = Mk_HpmEvent(v);
+  // TODO: we could use event_csr_write_callback as a legalizer for the event field.
   [ Mk_HpmEvent(zeros()) with
     OF = if currentlyEnabled(Ext_Sscofpmf) then v[OF] else 0b0,
     MINH  = if currentlyEnabled(Ext_Sscofpmf) then v[MINH] else 0b0,
@@ -157,28 +164,75 @@ function legalize_hpmevent(v : HpmEvent) -> HpmEvent = {
     UINH  = if currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_U) then v[UINH] else 0b0,
     VSINH = if currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_H) then v[VSINH] else 0b0,
     VUINH = if currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_H) then v[VUINH] else 0b0,
-    event = v[event],
-  ]
+    event = zero_extend(v[event][plat_hpmevent_width_bits - 1 .. 0]),
+  ].bits
 }
+
+function legalize_hpmcounter_value(v : bits(64)) -> bits(64) =
+  zero_extend(v[plat_hpmcounter_width_bits - 1 .. 0])
+
+function legalize_hpmcounter_value_xlen(v : xlenbits) -> xlenbits =
+  legalize_hpmcounter_value(zero_extend(v))[xlen - 1 .. 0]
 
 function read_mhpmcounter(index : hpmidx) -> xlenbits = mhpmcounter[index][(xlen - 1) .. 0]
 function read_mhpmcounterh(index : hpmidx) -> bits(32) = mhpmcounter[index][63 .. 32]
-function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index].bits[(xlen - 1) .. 0]
+function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index][(xlen - 1) .. 0]
 
-// Write the HPM CSRs. These return the new value of the CSR, for use in writeCSR.
+// This index tracks any HPM event selector CSR and counter CSR
+// written by the current instruction. If the event for that counter
+// fires during that write, the counter should not be incremented,
+// since according to the spec:
+//
+//  "Any CSR write takes effect after the writing instruction has
+//   otherwise completed."
+//
+// As the model dispatches events after instruction execution, it
+// should not overwrite any CSR writes (similar to the handling of
+// minstret).
+//
+// This index is also used to implement the
+// counter-increments-in-self-hpmevent-write configuration.
+
+private enum event_csr = {EV_EVENT, EV_COUNTER}
+register written_event_index : option((hpmidx, event_csr)) = None()
+
+// Called at the end of the step, after any events have been
+// dispatched.
+function clear_written_event_index() -> unit =
+  written_event_index = None()
+
+// Write the HPM CSRs.
 function write_mhpmcounter(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then mhpmcounter[index][(xlen - 1) .. 0] = value
+  if sys_writable_hpm_counters[index] == 0b1 then {
+    let value = legalize_hpmcounter_value_xlen(value);
+    mhpmcounter[index][(xlen - 1) .. 0] = value;
+    written_event_index = Some(index, EV_COUNTER)
+  }
 
 function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then mhpmcounter[index][63 .. 32] = value
+  if sys_writable_hpm_counters[index] == 0b1 then {
+    let value = legalize_hpmcounter_value(value @ mhpmcounter[index][31 .. 0]);
+    mhpmcounter[index][63 .. 32] = value[63 .. 32];
+    written_event_index = Some(index, EV_COUNTER)
+  }
+
+val event_csr_write_callback = pure {cpp: "event_csr_write_callback"} : (hpmidx, bits(64), bits(64)) -> unit
 
 function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then
-  mhpmevent[index] = legalize_hpmevent(Mk_HpmEvent(match xlen {
-    32 => mhpmevent[index].bits[63 .. 32] @ value,
-    64 => value,
-    _ => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
-  }))
+  if sys_writable_hpm_counters[index] == 0b1 then {
+    let old_value = mhpmevent[index];
+    let value = legalize_hpmevent(match xlen {
+      32 => mhpmevent[index][63 .. 32] @ value,
+      64 => value,
+      _  => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
+    });
+    mhpmevent[index] = value;
+
+    written_event_index = Some(index, EV_EVENT);
+
+    // C++ callback to update the [selector -> counter register(s)] map.
+    event_csr_write_callback(index, selector_value(old_value), selector_value(value))
+  }
 
 // Hardware Performance Monitoring event selection
 function clause is_CSR_accessible((0b0011001 /* 0x320 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = true // mhpmevent3..31
@@ -205,4 +259,64 @@ function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xl
   let index = hpmidx_from_bits(index);
   write_mhpmcounterh(index, value);
   Ok(read_mhpmcounterh(index))
+}
+
+// Dispatch an event.  The privilege at which the event occurred is
+// tracked in case the privilege changed after the event occurred.
+function dispatchEventCounter(index : hpmidx, event_priv : Privilege) -> unit = {
+  // This must be a writable event counter.
+  assert(sys_writable_hpm_counters[index] == 0b1);
+
+  // Filter the privilege mode according to Sscofpmf.
+  if currentlyEnabled(Ext_Sscofpmf) then {
+    let event_cfg = Mk_HpmEvent(mhpmevent[index]);
+    let is_inhibited_bit : bits(1) = match event_priv {
+      Machine           => event_cfg[MINH],
+      Supervisor        => event_cfg[SINH],
+      User              => event_cfg[UINH],
+      VirtualSupervisor => event_cfg[VSINH],
+      VirtualUser       => event_cfg[VUINH],
+    };
+
+    if is_inhibited_bit == 0b1 then return ();
+  };
+
+  match written_event_index {
+    // Ensure that an event does not increment a counter that was
+    // written by the current instruction.
+    Some(idx, EV_COUNTER) => if idx == index then return (),
+    // The mhpmevent was written by the current instruction.
+    Some(idx, EV_EVENT)   => if idx == index & not(plat_hpmcounter_increments_in_self_hpmevent_write)
+                             then return (),
+    // Event CSRs were undisturbed by the current instruction; proceed.
+    None()                => (),
+  };
+
+  let index_bits  : bits(5) = to_bits(index);
+  let counter_csr : csreg   = 0b1011000 /* 0xB00 */ @ index_bits;
+  let event_csr   : csreg   = 0b0011001 /* 0x320 */ @ index_bits;
+
+  // Check overflow and increment.
+  let count : xlenbits = mhpmcounter[index][(xlen - 1) .. 0];
+  let overflowed : bool = count == legalize_hpmcounter_value_xlen(ones());
+  let new_count = legalize_hpmcounter_value_xlen(count + 1);
+
+  mhpmcounter[index][(xlen - 1) .. 0] = new_count;
+  csr_write_callback(counter_csr, new_count);
+
+  // Set OF and LCOFI if needed.
+  if currentlyEnabled(Ext_Sscofpmf) & overflowed then {
+    let event_cfg = Mk_HpmEvent(mhpmevent[index]);
+    let previously_overflowed = event_cfg[OF] == 0b1;
+    if not(previously_overflowed) then {
+      let new_event_cfg = [event_cfg with OF = 0b1];
+      mhpmevent[index] = new_event_cfg.bits;
+      mip = supported_interrupts_mask([mip with LCOFI = 0b1]);
+
+      // Use the long-form callback since we're writing 64 bits.
+      let event_csr_name = csr_name_map(event_csr);
+      long_csr_write_callback(event_csr_name, event_csr_name ^ "h", new_event_cfg.bits);
+      csr_write_callback("mip", read_mip(IncludePlatformInterrupts).bits);
+    }
+  }
 }
