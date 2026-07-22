@@ -58,7 +58,7 @@ function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
 
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+  if EMUL_pow < -3 | EMUL_pow > 3 then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW); // # of element of each register group
   assert(num_elem > 0);
@@ -115,7 +115,7 @@ function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
 
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+  if EMUL_pow < -3 | EMUL_pow > 3 then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
@@ -189,7 +189,7 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
 
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+  if EMUL_pow < -3 | EMUL_pow > 3 then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
@@ -246,7 +246,7 @@ function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
 
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+  if EMUL_pow < -3 | EMUL_pow > 3 then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
@@ -304,7 +304,7 @@ function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
   let LMUL_pow = get_lmul_pow();
   let EMUL_pow = EEW_pow - SEW_pow + LMUL_pow;
 
-  assert(-3 <= EMUL_pow & EMUL_pow <= 3);
+  if EMUL_pow < -3 | EMUL_pow > 3 then return Illegal_Instruction();
 
   let num_elem = get_num_elem(EMUL_pow, EEW);
   assert(num_elem > 0);
