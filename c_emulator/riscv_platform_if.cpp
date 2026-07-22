@@ -154,6 +154,22 @@ bool PlatformInterface::valid_reservation(unit) {
   return false;
 }
 
+bool PlatformInterface::validate_event_selectors(unit) {
+  return true;
+}
+
+unit PlatformInterface::event_callback(hart::zEvent, hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9) {
+  return UNIT;
+}
+
+unit PlatformInterface::event_csr_write_callback(int64_t, uint64_t, uint64_t) {
+  return UNIT;
+}
+
+unit PlatformInterface::dispatch_events(unit) {
+  return UNIT;
+}
+
 unit PlatformInterface::plat_term_write(mach_bits) {
   return UNIT;
 }
