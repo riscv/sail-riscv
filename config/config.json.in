@@ -450,7 +450,38 @@
     // Note: it is also legal for these instructions to spuriously
     // retire successfully at any point, but there is currently no
     // configuration option for this behaviour.
-    "max_time_to_wait": 10
+    "max_time_to_wait": 10,
+
+    // The model can generate the following events that can be tracked
+    // using the HPM counters:
+    // - EV_MISALIGNED_LOAD
+    // - EV_MISALIGNED_STORE
+    // - EV_TLB_MISS
+    //
+    // An event can be mapped to a selector value, that when written
+    // to the lowest 56 bits of an `mhpmeventNN` CSR, will increment
+    // the corresponding `mhpmcounterNN` CSR as per the specification
+    // (e.g. the `Sscofpmf` extension).
+    //
+    // The `event_selectors` list can contain any subset of these
+    // supported events.  Events cannot be repeated in the list,
+    // and the selector values should be unique.
+    "event_selectors": [
+      {
+        "event": "EV_MISALIGNED_LOAD",
+        "selector": {
+          "len": 56,
+          "value": "0x1"
+        }
+      },
+      {
+        "event": "EV_MISALIGNED_STORE",
+        "selector": {
+          "len": 56,
+          "value": "0x2"
+        }
+      }
+    ]
   },
   "extensions": {
     "M": {

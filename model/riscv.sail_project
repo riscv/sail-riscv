@@ -36,6 +36,7 @@ core {
     core/regs.sail,
     core/pc_access.sail,
     core/sys_regs.sail,
+    core/events.sail,
     core/ext_regs.sail,
     core/interrupt_regs.sail,
     core/addr_checks_common.sail,
@@ -567,7 +568,7 @@ mops {
 postlude {
   after extensions, mops, core
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts, Zihpm
 
   files
     postlude/insts_end.sail,

@@ -684,6 +684,16 @@ private function check_version_constraints() -> bool = {
   valid
 }
 
+// Checks for selector-value validity are done in C++ for efficiency
+// since Sail does not have a `set` type.
+private val validate_event_selectors = pure {cpp:"validate_event_selectors"} : unit -> bool
+// FIXME: Uncomment this default for other backends once this bug is fixed:
+// https://github.com/rems-project/sail/issues/1713
+// function validate_event_selectors () = true
+
+private function check_platform_constraints() -> bool =
+  validate_event_selectors()
+
 function config_is_valid() -> bool = {
     check_privs()
   & check_tvecs()
@@ -698,5 +708,6 @@ function config_is_valid() -> bool = {
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
   & check_version_constraints()
+  & check_platform_constraints()
   & check_stateen_config()
 }

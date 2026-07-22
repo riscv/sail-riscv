@@ -205,6 +205,8 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
+  generate_trap_event(c);
+
   match (del_priv) {
     Machine => {
       mcause[IsInterrupt] = bool_to_bit(is_interrupt);

@@ -1,0 +1,11 @@
+{
+  "memory": {
+    "misaligned": {
+      "exceptions": {
+        "load_store": {
+          "Some": "AlignmentException"
+        }
+      }
+    }
+  }
+}

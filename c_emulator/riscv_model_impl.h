@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <random>
+#include <set>
 #include <vector>
 
 #include "sail.h"
@@ -25,6 +26,9 @@ public:
   using MemoryAccessType = hart::zMemoryAccessTypezIEmem_payloadz5zK;
   using PTW_Error = hart::zPTW_Error;
   using TLB = hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
+  using Event = hart::zEvent;
+  using EventSelector = uint64_t;
+  using HpmIdx = int64_t;
 
   // callbacks
 
@@ -150,10 +154,18 @@ private:
   // Provides entropy for the scalar cryptography extension.
   mach_bits plat_get_16_random_bits(unit) override;
 
+  // Reservation handling
   unit load_reservation(sbits, uint64_t) override;
   bool match_reservation(sbits) override;
   unit cancel_reservation(unit) override;
   bool valid_reservation(unit) override;
+
+  // Events
+  std::string name_of_event(Event ev);
+  bool validate_event_selectors(unit) override;
+  unit event_callback(Event ev, Privilege priv) override;
+  unit event_csr_write_callback(HpmIdx index, EventSelector old_selector, EventSelector new_selector) override;
+  unit dispatch_events(unit) override;
 
   unit plat_term_write(mach_bits) override;
 
@@ -204,6 +216,15 @@ private:
   uint64_t m_reservation_set_addr_mask = 0;
   bool m_reservation_require_exact_addr = false;
   bool m_reservation_invalidate_on_same_hart_store = false;
+
+  // Map from events to their selector values.
+  std::map<Event, EventSelector> m_event_to_selector;
+  // Map from selectors to the indices of `mhpmevent` containing
+  // those selectors.  Multiple `mhpmevent` CSRs could be written with the
+  // same selector.
+  std::map<EventSelector, std::set<HpmIdx>> m_selector_to_hpmidxs;
+  // Events that triggered during the current instruction.
+  std::vector<std::pair<Event, Privilege>> triggered_events;
 
   bool m_enable_experimental_extensions = false;
 

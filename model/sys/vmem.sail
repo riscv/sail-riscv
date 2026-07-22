@@ -379,10 +379,14 @@ private function translate forall 'v, is_sv_mode('v) . (
   // On first reading, assume lookup_TLB returns None(), since TLBs
   // are not part of RISC-V archticture spec (see TLB NOTE above)
   match lookup_TLB(sv_width, asid, vpn) {
-    Some(index, ent) => translate_TLB_hit(sv_width, asid, vpn, access, priv,
-                                          mxr, do_sum, ext_ptw, index, ent),
-    None()           => translate_TLB_miss(sv_width, asid, base_ppn, vpn, access, priv,
-                                           mxr, do_sum, ext_ptw),
+    Some(index, ent) =>
+      translate_TLB_hit(sv_width, asid, vpn, access, priv,
+                        mxr, do_sum, ext_ptw, index, ent),
+    None()           => {
+      generate_event(EV_TLB_MISS);
+      translate_TLB_miss(sv_width, asid, base_ppn, vpn, access, priv,
+                         mxr, do_sum, ext_ptw)
+    },
   }
 }
 
