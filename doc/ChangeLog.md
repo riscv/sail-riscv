@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1829 : seed CSR OPST field contained random values
+
 # Release notes for version 0.13
 
 The main highlights of this release are the addition of the misaligned
