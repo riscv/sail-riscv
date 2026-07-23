@@ -47,6 +47,7 @@ public:
   void set_config_print_interrupt(bool on);
   void set_config_print_htif(bool on);
   void set_config_print_pma(bool on);
+  void set_config_print_pmp(bool on);
   void set_config_print_step(bool on);
 
   void set_config_rvfi(bool on);
@@ -170,6 +171,7 @@ private:
   bool get_config_print_interrupt(unit) override;
   bool get_config_print_htif(unit) override;
   bool get_config_print_pma(unit) override;
+  bool get_config_print_pmp(unit) override;
   bool get_config_rvfi(unit) override;
   bool get_config_use_abi_names(unit) override;
 
@@ -179,6 +181,7 @@ private:
   bool m_config_print_interrupt = false;
   bool m_config_print_htif = false;
   bool m_config_print_pma = false;
+  bool m_config_print_pmp = false;
   bool m_config_rvfi = false;
   bool m_config_use_abi_names = false;
 

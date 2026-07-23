@@ -207,6 +207,10 @@ bool PlatformInterface::get_config_print_pma(unit) {
   return false;
 }
 
+bool PlatformInterface::get_config_print_pmp(unit) {
+  return false;
+}
+
 bool PlatformInterface::get_config_rvfi(unit) {
   return false;
 }

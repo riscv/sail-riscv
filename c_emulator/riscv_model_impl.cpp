@@ -303,6 +303,10 @@ bool ModelImpl::get_config_print_pma(unit) {
   return m_config_print_pma;
 }
 
+bool ModelImpl::get_config_print_pmp(unit) {
+  return m_config_print_pmp;
+}
+
 bool ModelImpl::get_config_rvfi(unit) {
   return m_config_rvfi;
 }
@@ -333,6 +337,10 @@ void ModelImpl::set_config_print_htif(bool on) {
 
 void ModelImpl::set_config_print_pma(bool on) {
   m_config_print_pma = on;
+}
+
+void ModelImpl::set_config_print_pmp(bool on) {
+  m_config_print_pmp = on;
 }
 
 void ModelImpl::set_config_rvfi(bool on) {
