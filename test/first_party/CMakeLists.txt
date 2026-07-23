@@ -7,7 +7,7 @@
 #    Unfortunately it is possible to build it without RISC-V support, e.g. RHEL 8 does this, so we
 #    need to check that. You can download a binary from https://github.com/llvm/llvm-project/releases
 #    On macOS, /usr/bin/clang is in $PATH by default but does not support the RISC-V target, so we default to
-#    a version installed by homebrew if we can find it.
+#    a version installed by homebrew if we can find one.
 # 2. GCC via riscv32-unknown-elf-gcc. Unlike Clang you have to specifically build GCC as a cross
 #    compiler. You can download a binary from https://github.com/riscv-collab/riscv-gnu-toolchain/releases
 # 3. GCC via riscv64-unknown-elf-gcc, but only if it has "multilib" support, so we'll try riscv32-... first.
@@ -89,6 +89,9 @@ endif()
 message(STATUS "Compiling RV32 tests with: ${CROSS_COMPILER_COMMAND_RV32}")
 message(STATUS "Compiling RV64 tests with: ${CROSS_COMPILER_COMMAND_RV64}")
 
+# Python is needed to run the RVVI-TEXT validation tests.
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
 set(common_deps
     "src/common/crt0.S"
     "src/common/encoding.h"
@@ -97,6 +100,10 @@ set(common_deps
     "src/common/nanoprintf.h"
     "src/common/runtime.c"
     "src/common/runtime.h"
+    "src/common/rvviTextChecker.py"
+    "src/common/lint_rvvi_trace.py"
+    "src/common/compare_rvvi_golden.py"
+    "src/common/test_rvvi_text_negative.py"
 )
 
 set(tests)
@@ -141,6 +148,25 @@ add_first_party_override_test("test_satp_asidlen.S" "satp_asidlen.json")
 add_first_party_override_test("test_satp_asidlen_partial.S" "satp_asidlen_partial.json")
 add_first_party_override_test("test_hgatp_vmidlen.S" "hgatp_vmidlen.json")
 add_first_party_override_test("test_hgatp_vmidlen_partial.S" "hgatp_vmidlen_partial.json")
+
+# RVVI-TEXT tests. Built like other first_party tests; CTest diffs the
+# simulator output against src/golden/ (see src/regenerate_golden.sh).
+set(rvvi_tests)
+macro(add_first_party_rvvi_test name)
+    set(isa_extension gcv_zfbfmin)
+    list(APPEND rvvi_tests "${name}" "rv32${isa_extension}" 32)
+    list(APPEND rvvi_tests "${name}" "rv64${isa_extension}" 64)
+endmacro()
+
+add_first_party_rvvi_test("test_rvvi_text_basic.S")
+add_first_party_rvvi_test("test_rvvi_text_vmem.S")
+add_first_party_rvvi_test("test_rvvi_text_mem_widths.S")
+add_first_party_rvvi_test("test_rvvi_text_fp.S")
+add_first_party_rvvi_test("test_rvvi_text_amo.S")
+add_first_party_rvvi_test("test_rvvi_text_compressed.S")
+add_first_party_rvvi_test("test_rvvi_text_trap_mem.S")
+add_first_party_rvvi_test("test_rvvi_text_sc.S")
+add_first_party_rvvi_test("test_rvvi_text_vector.S")
 
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
@@ -222,3 +248,74 @@ foreach(idx RANGE 0 ${test_last} 4)
         PROPERTY LABELS TestAtBuildTime
     )
 endforeach()
+
+# RVVI-TEXT tests: compile each ELF, then golden-diff the --trace-rvvi-text output.
+list(LENGTH rvvi_tests rvvi_tests_len)
+math(EXPR rvvi_test_last "${rvvi_tests_len} - 1")
+set(rvvi_checker "${CMAKE_CURRENT_SOURCE_DIR}/src/common/rvviTextChecker.py")
+set(rvvi_lint "${CMAKE_CURRENT_SOURCE_DIR}/src/common/lint_rvvi_trace.py")
+foreach(idx RANGE 0 ${rvvi_test_last} 3)
+    list(SUBLIST rvvi_tests ${idx} 3 entry)
+    list(GET entry 0 test_source)
+    list(GET entry 1 march)
+    list(GET entry 2 xlen)
+
+    set(arch "rv${xlen}d")
+    if (xlen EQUAL 32)
+        set(mabi "ilp32")
+    else()
+        set(mabi "lp64")
+    endif()
+    set(config "${CMAKE_BINARY_DIR}/config/${arch}_v256_e${xlen}.json")
+    set(override_config "${CMAKE_CURRENT_SOURCE_DIR}/src/no_override.json")
+
+    set(elf "${arch}_${test_source}.elf")
+
+    add_custom_command(
+        OUTPUT ${elf}
+        DEPENDS ${common_deps} "src/${test_source}"
+        COMMAND ${CROSS_COMPILER_COMMAND_RV${xlen}}
+            -march=${march}
+            -mabi=${mabi}d
+            -mno-relax
+            -ffreestanding
+            -nostdlib
+            -static
+            -mcmodel=medany
+            -g
+            -Og
+            -Wall
+            -Werror
+            -T "${CMAKE_CURRENT_SOURCE_DIR}/src/common/link.ld"
+            -o ${elf}
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/crt0.S"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/nanoprintf.c"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/runtime.c"
+        VERBATIM
+        COMMENT "Compiling ${test_source} (RVVI-TEXT test)"
+    )
+
+    add_custom_target(build_rvvi_${arch}_${test_source} ALL DEPENDS ${elf} ${config} ${override_config})
+
+    set(golden "${CMAKE_CURRENT_SOURCE_DIR}/src/golden/${arch}_${test_source}.rvvi")
+    add_test(
+        NAME "first_party_${arch}_${test_source}_rvvi_golden"
+        COMMAND ${Python3_EXECUTABLE}
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/compare_rvvi_golden.py"
+            --sim $<TARGET_FILE:sail_riscv_sim>
+            --elf ${elf}
+            --config ${config}
+            --config-override ${override_config}
+            --golden ${golden}
+            --checker ${rvvi_checker}
+            --lint ${rvvi_lint}
+            --inst-limit 10000
+    )
+endforeach()
+
+add_test(
+    NAME first_party_rvvi_text_negative
+    COMMAND ${Python3_EXECUTABLE}
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/common/test_rvvi_text_negative.py"
+)
