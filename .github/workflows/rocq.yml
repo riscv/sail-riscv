@@ -39,7 +39,15 @@ jobs:
         with:
           sail-version: ${{ env.SAIL_VERSION }}
 
+      - name: Restore cached Rocq opam packages
+        id: cache-rocq-opam-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.opam
+          key: ${{ runner.os }}-${{ runner.arch }}-rocq-opam-sail-${{ env.SAIL_VERSION }}
+
       - name: Install Rocq-specific opam packages
+        if: steps.cache-rocq-opam-restore.outputs.cache-hit != 'true'
         run: |
           eval `opam env --safe`
           opam update
@@ -59,6 +67,14 @@ jobs:
             sail_sv_backend.$SAIL_VERSION \
             sail_ocaml_backend.$SAIL_VERSION \
             sail_output.$SAIL_VERSION
+
+      - name: Cache Rocq opam packages
+        id: cache-rocq-opam-save
+        if: steps.cache-rocq-opam-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.opam
+          key: ${{ steps.cache-rocq-opam-restore.outputs.cache-primary-key }}
 
       - name: Build Rocq model
         run: |
