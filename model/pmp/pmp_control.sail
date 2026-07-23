@@ -136,15 +136,27 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
 
     match pmpMatchAddr(addr, width, cfg, pmpReadAddrReg(i), prev_pmpaddr) {
       PMP_NoMatch      => (),
-      PMP_PartialMatch => return Some(accessFaultFromAccessType(access)),
-      PMP_Match        => return (
+      PMP_PartialMatch => {
+        if get_config_print_pmp()
+        then print_log("PMP check failed with a partial match at entry #" ^ dec_str(i) ^ ".");
+        return Some(accessFaultFromAccessType(access))
+      },
+      PMP_Match        =>
         if pmpCheckRWX(cfg, access) | (priv == Machine & not(pmpLocked(cfg)))
-        then None()
-        else Some(accessFaultFromAccessType(access))
-      ),
+        then return None()
+        else {
+          if get_config_print_pmp()
+          then print_log("PMP check failed at matching entry #" ^ dec_str(i) ^ ".");
+          return Some(accessFaultFromAccessType(access))
+        },
     };
   };
-  if priv == Machine then None() else Some(accessFaultFromAccessType(access))
+  if priv == Machine then None()
+  else {
+    if get_config_print_pmp()
+    then print_log("PMP check failed with no matching entry.");
+    Some(accessFaultFromAccessType(access))
+  }
 }
 
 function reset_pmp() -> unit = {

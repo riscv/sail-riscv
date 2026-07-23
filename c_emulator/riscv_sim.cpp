@@ -512,6 +512,7 @@ InitResult preinit_model(
   model.set_config_print_interrupt(opts.config_print_interrupt);
   model.set_config_print_htif(opts.config_print_htif);
   model.set_config_print_pma(opts.config_print_pma);
+  model.set_config_print_pmp(opts.config_print_pmp);
   model.set_config_rvfi(run_info.rvfi.has_value());
   model.set_config_use_abi_names(opts.config_use_abi_names);
 

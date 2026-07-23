@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- The command line interface has been updated:
+  - A new `--trace-pmp` option has been added to enable trace output
+    for PMP checks.
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1829 : seed CSR OPST field contained random values
 

@@ -50,6 +50,7 @@ struct CLIOptions {
   bool config_print_interrupt = false;
   bool config_print_htif = false;
   bool config_print_pma = false;
+  bool config_print_pmp = false;
   bool config_print_rvfi = false;
   bool config_print_step = false;
   bool config_print_ptw = false;
