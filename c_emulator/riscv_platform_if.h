@@ -34,6 +34,9 @@ public:
 
   virtual unit mem_exception_callback(sbits paddr, uint64_t num_of_exception);
 
+  // See vmem_access_callback in model/core/callbacks.sail for details.
+  virtual unit vmem_access_callback(sbits vaddr, sbits paddr, bool is_fetch, bool is_write);
+
   virtual unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value);
 
   virtual unit freg_write_callback(unsigned reg, sbits value);

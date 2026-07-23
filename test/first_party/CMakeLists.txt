@@ -7,7 +7,7 @@
 #    Unfortunately it is possible to build it without RISC-V support, e.g. RHEL 8 does this, so we
 #    need to check that. You can download a binary from https://github.com/llvm/llvm-project/releases
 #    On macOS, /usr/bin/clang is in $PATH by default but does not support the RISC-V target, so we default to
-#    a version installed by homebrew if we can find it.
+#    a version installed by homebrew if we can find one.
 # 2. GCC via riscv32-unknown-elf-gcc. Unlike Clang you have to specifically build GCC as a cross
 #    compiler. You can download a binary from https://github.com/riscv-collab/riscv-gnu-toolchain/releases
 # 3. GCC via riscv64-unknown-elf-gcc, but only if it has "multilib" support, so we'll try riscv32-... first.
@@ -89,6 +89,9 @@ endif()
 message(STATUS "Compiling RV32 tests with: ${CROSS_COMPILER_COMMAND_RV32}")
 message(STATUS "Compiling RV64 tests with: ${CROSS_COMPILER_COMMAND_RV64}")
 
+# Python is needed to run the RVVI-TEXT validation tests.
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
 set(common_deps
     "src/common/crt0.S"
     "src/common/encoding.h"
@@ -97,6 +100,10 @@ set(common_deps
     "src/common/nanoprintf.h"
     "src/common/runtime.c"
     "src/common/runtime.h"
+    "src/common/validate_rvvi_text.py"
+    "src/common/rvviTextChecker.py"
+    "src/common/sail_to_rvvi_spec.py"
+    "src/common/compare_rvvi_test.py"
 )
 
 set(tests)
@@ -136,6 +143,29 @@ add_first_party_test("test_tlb_stale_pte_access_fault.S")
 add_first_party_override_test("test_sew_elen_bound.S" "elen_32.json")
 add_first_party_override_test("test_satp_physaddr_bits.S" "satp_physaddr_bits.json")
 add_first_party_experimental_test("test_zilx.S")
+
+# RVVI-TEXT validation tests. Each test is compiled to an ELF (same as a
+# normal first_party test) and validated in two ways:
+# 1. validate_rvvi_text.py: runs the simulator with --trace-rvvi-text,
+#    validates the trace with rvviTextChecker.py, and checks for expected
+#    RVVI-TEXT elements (RET, X, C, MEM, TRAP).
+# 2. compare_rvvi_test.py: runs the simulator with both standard trace
+#    and --trace-rvvi-text, converts the standard trace with
+#    sail_to_rvvi_spec.py, and compares the two RVVI-TEXT outputs
+#    (within the scope the conversion script supports).
+#
+# The expect_trap flag is TRUE for tests that produce trap events.
+# The expect_mem flag is TRUE for tests that exercise virtual memory
+# (page-table walks produce MEM entries with PT signals).
+set(rvvi_tests)
+macro(add_first_party_rvvi_test name expect_trap expect_mem)
+    set(isa_extension gcv_zfbfmin)
+    list(APPEND rvvi_tests "${name}" "rv32${isa_extension}" 32 "${expect_trap}" "${expect_mem}")
+    list(APPEND rvvi_tests "${name}" "rv64${isa_extension}" 64 "${expect_trap}" "${expect_mem}")
+endmacro()
+
+add_first_party_rvvi_test("test_rvvi_text_basic.S" TRUE FALSE)
+add_first_party_rvvi_test("test_rvvi_text_vmem.S" TRUE TRUE)
 
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
@@ -212,5 +242,97 @@ foreach(idx RANGE 0 ${test_last} 4)
     add_test(
         NAME "first_party_${arch}_${test_source}"
         COMMAND $<TARGET_FILE:sail_riscv_sim> ${simulator_options} --config ${config} --config-override ${override_config} ${elf}
+    )
+endforeach()
+
+# Build and run RVVI-TEXT validation and comparison tests. Each test is
+# compiled the same way as a normal first_party test, but instead of
+# running the simulator directly, CTest invokes Python scripts that run
+# the simulator and validate/compare the output.
+list(LENGTH rvvi_tests rvvi_tests_len)
+math(EXPR rvvi_test_last "${rvvi_tests_len} - 1")
+foreach(idx RANGE 0 ${rvvi_test_last} 5)
+    list(SUBLIST rvvi_tests ${idx} 5 entry)
+    list(GET entry 0 test_source)
+    list(GET entry 1 march)
+    list(GET entry 2 xlen)
+    list(GET entry 3 expect_trap)
+    list(GET entry 4 expect_mem)
+
+    set(arch "rv${xlen}d")
+    if (xlen EQUAL 32)
+        set(mabi "ilp32")
+    else()
+        set(mabi "lp64")
+    endif()
+    set(config "${CMAKE_BINARY_DIR}/config/${arch}_v256_e${xlen}.json")
+    set(override_config "${CMAKE_CURRENT_SOURCE_DIR}/src/no_override.json")
+
+    set(elf "${arch}_${test_source}.elf")
+
+    add_custom_command(
+        OUTPUT ${elf}
+        DEPENDS ${common_deps} "src/${test_source}"
+        COMMAND ${CROSS_COMPILER_COMMAND_RV${xlen}}
+            -march=${march}
+            -mabi=${mabi}d
+            -mno-relax
+            -ffreestanding
+            -nostdlib
+            -static
+            -mcmodel=medany
+            -g
+            -Og
+            -Wall
+            -Werror
+            -T "${CMAKE_CURRENT_SOURCE_DIR}/src/common/link.ld"
+            -o ${elf}
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/${test_source}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/crt0.S"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/nanoprintf.c"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/runtime.c"
+        VERBATIM
+        COMMENT "Compiling ${test_source} (RVVI-TEXT test)"
+    )
+
+    add_custom_target(build_rvvi_${arch}_${test_source} ALL DEPENDS ${elf} ${config} ${override_config})
+
+    set(rvvi_checker "${CMAKE_CURRENT_SOURCE_DIR}/src/common/rvviTextChecker.py")
+    set(sail_to_rvvi "${CMAKE_CURRENT_SOURCE_DIR}/src/common/sail_to_rvvi_spec.py")
+
+    # Build --expect-* args for validate_rvvi_text.py
+    set(rvvi_validate_args "--rvvi-checker" ${rvvi_checker})
+    if(expect_trap)
+        list(APPEND rvvi_validate_args "--expect-trap")
+    endif()
+    if(expect_mem)
+        list(APPEND rvvi_validate_args "--expect-mem")
+    endif()
+
+    # Test 1: Validate native RVVI-TEXT output with rvviTextChecker.py
+    add_test(
+        NAME "first_party_${arch}_${test_source}_rvvi_validate"
+        COMMAND ${Python3_EXECUTABLE}
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/validate_rvvi_text.py"
+            --sim $<TARGET_FILE:sail_riscv_sim>
+            --elf ${elf}
+            --config ${config}
+            --config-override ${override_config}
+            ${rvvi_validate_args}
+    )
+
+    # Test 2: Compare native RVVI-TEXT with sail_to_rvvi_spec.py output
+    add_test(
+        NAME "first_party_${arch}_${test_source}_rvvi_compare"
+        COMMAND ${Python3_EXECUTABLE}
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/compare_rvvi_test.py"
+            --sim $<TARGET_FILE:sail_riscv_sim>
+            --elf ${elf}
+            --config ${config}
+            --config-override ${override_config}
+            --sail-to-rvvi ${sail_to_rvvi}
+            --rvvi-checker ${rvvi_checker}
+            --xlen ${xlen}
+            --vlen 256
     )
 endforeach()

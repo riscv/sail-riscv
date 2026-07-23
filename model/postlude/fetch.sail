@@ -38,6 +38,8 @@ private function fetch_bytes forall 'n, 'n in {2, 4} . (fetch_start : xlenbits, 
     Ok(paddr, pbmt, _) => (paddr, pbmt),
   };
 
+  vmem_access_callback(zero_extend(granule_start), bits_of(paddr), true, false);
+
   match mem_read(InstructionFetch(), pbmt, paddr, width, false, false, false) {
     Err(exc_addr, e) => {
       // Instruction fetches are not currently split at the physical memory layer.

@@ -97,13 +97,16 @@ private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_a
   match translateAddr(vaddr, access) {
     Err(e, _) => Err(trap(e)),
 
-    Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, width, aq, rl, res) {
-      Err(exc_paddr, e) => {
-        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(e, bits_of(exc_vaddr), access))
-      },
+    Ok(paddr, pbmt, _) => {
+      vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), false, false);
+      match mem_read(access, pbmt, paddr, width, aq, rl, res) {
+        Err(exc_paddr, e) => {
+          let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+          Err(memory_exception(e, bits_of(exc_vaddr), access))
+        },
 
-      Ok(v) => Ok(paddr, v),
+        Ok(v) => Ok(paddr, v),
+      }
     }
   }
 
@@ -190,20 +193,23 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
   match translateAddr(vaddr, access) {
     Err(e, _) => Err(trap(e)),
 
-    Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, access, pbmt, aq, rl, res) {
-      Err(exc_paddr, e) => {
-        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(e, bits_of(exc_vaddr), access))
-      },
-
-      Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
+    Ok(paddr, pbmt, _) => {
+      vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), false, true);
+      match mem_write_ea(paddr, width, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
           Err(memory_exception(e, bits_of(exc_vaddr), access))
         },
 
-        Ok(s) => Ok(s),
-      },
+        Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
+          Err(exc_paddr, e) => {
+            let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+            Err(memory_exception(e, bits_of(exc_vaddr), access))
+          },
+
+          Ok(s) => Ok(s),
+        },
+      }
     },
   }
 
