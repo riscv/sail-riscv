@@ -192,9 +192,15 @@ function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> uni
   trap_callback(is_interrupt, cause);
 }
 
-// handle exceptional ctl flow by updating nextPC and operating privilege
-function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info : option(xlenbits), ext : option(ext_exception))
-                     -> xlenbits = {
+// Handle traps, after we have checked for double traps.
+function trap_handler_inner(
+  del_priv : Privilege,
+  c : TrapCause,
+  pc : xlenbits,
+  info : option(xlenbits),
+  ext : option(ext_exception),
+) -> xlenbits = {
+
   let is_interrupt = trapCause_is_interrupt(c);
   let cause        = trapCause_bits(c);
 
@@ -205,7 +211,7 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
-  match (del_priv) {
+  match del_priv {
     Machine => {
       mcause[IsInterrupt] = bool_to_bit(is_interrupt);
       mcause[Cause]       = zero_extend(cause);
@@ -256,6 +262,60 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits, info :
   };
 }
 
+// Handle a trap but check for double traps first.
+function trap_handler(
+  del_priv : Privilege,
+  c : TrapCause,
+  pc : xlenbits,
+  info : option(xlenbits),
+  ext : option(ext_exception),
+) -> xlenbits = {
+
+  let is_interrupt = trapCause_is_interrupt(c);
+  let cause        = trapCause_bits(c);
+
+  // If an unexpected double trap exception is taken in machine mode then we
+  // must not update any architectural state. This must therefore be before
+  // anything else.
+  match del_priv {
+    Machine => {
+      if currentlyEnabled(Ext_Smdbltrp) then {
+        if mstatus[MDT] == 0b0
+        then mstatus[MDT] = 0b1
+        else {
+          // Unexpected trap. When Srnmi is not implemented (currently unsupported)
+          // we enter a "critical-error" state where execution ceases.
+          // In this implementation we currently just assert.
+          // TODO: This should probably actually be a return from try_step() with
+          // a special "double trap" result. Or possibly an exception.
+          assert(false, "Unexpected double trap in machine mode");
+        };
+      };
+    },
+    Supervisor => {
+      if currentlyEnabled(Ext_Ssdbltrp) then {
+        if mstatus[SDT] == 0b0
+        then mstatus[SDT] = 0b1
+        else {
+          // Unexpected trap. Deliver double trap exception to machine mode.
+          // mcause is set to the double trap exception and mtval2 is set to
+          // the original cause.
+          mtval2 = [Mk_Mcause(zeros()) with
+            IsInterrupt = bool_to_bit(is_interrupt),
+            Cause = zero_extend(cause),
+          ].bits;
+          return trap_handler_inner(Machine, Exception(E_Double_Trap()), pc, info, ext);
+        };
+      };
+    },
+    User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  };
+
+  trap_handler_inner(del_priv, c, pc, info, ext)
+}
+
 function exception_handler(cur_priv : Privilege, exc : sync_exception, pc : xlenbits) -> xlenbits = {
   let del_priv = exception_delegatee(exc.trap, cur_priv);
   if   get_config_print_exception()
@@ -288,9 +348,11 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
     E_VS_EnvCall() => false,
     E_M_EnvCall()  => false,
     E_Extension(_) => true,
+    // Double trap exceptions should not be raised directly so we should never
+    // get to this point - they will use the result of the underlying trap.
+    E_Double_Trap() => internal_error(__FILE__, __LINE__, "Double trap exception should not be directly raised"),
     // the rest are all reserved exceptions
     E_Reserved_14() => reserved_exceptions_write_xtval,
-    E_Reserved_16() => reserved_exceptions_write_xtval,
     E_Reserved_17() => reserved_exceptions_write_xtval,
     E_Reserved_19() => reserved_exceptions_write_xtval,
   } then Some(excinfo) else None()
@@ -348,6 +410,9 @@ function reset_sys() -> unit = {
   // "The mstatus fields MIE and MPRV are reset to 0."
   mstatus[MIE] = 0b0;
   mstatus[MPRV] = 0b0;
+
+  // "Upon reset, the MDT field is set to 1."
+  if hartSupports(Ext_Smdbltrp) then mstatus[MDT] = 0b1;
 
   // Though {ms}tvec are unspecified on reset, their mode should hold
   // a supported value when read.
