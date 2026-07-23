@@ -848,4 +848,4 @@ mapping f_un_x_type_mnemonic_H : f_un_x_op_H <-> string = {
 mapping clause assembly = F_UN_X_TYPE_H(rs1, rd, op)
                       <-> f_un_x_type_mnemonic_H(op)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_or_reg_name(rs1)
