@@ -11,6 +11,8 @@
 // Chapter 14: Vector Reduction Instructions
 // ******************************************************************************
 
+let canonicalize_nan_on_empty_sum_reduction : bool = config extensions.V.reductions.canonicalize_nan_on_empty_unordered_sum
+
 // ********************* OPFVV (Single-Width Floating-Point Reduction) ***********************
 union clause instruction = RFVVTYPE : (rfvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
@@ -66,6 +68,10 @@ function clause execute RFVVTYPE(funct6, vm, vs2, vs1, vd) = {
         FVV_VFREDMIN    => fp_min(sum, vs2_val[i]),
       }
     }
+  };
+
+  if canonicalize_nan_on_empty_sum_reduction & funct6 == FVV_VFREDUSUM & unsigned(mask) == 0 & f_is_NaN(sum) then {
+    sum = canonical_NaN('m)
   };
 
   write_single_element(SEW, 0, vd, sum);
@@ -142,6 +148,10 @@ function clause execute RFWVVTYPE(_funct6, vm, vs2, vs1, vd) = {
     }
   };
 
+  if canonicalize_nan_on_empty_sum_reduction & unsigned(mask) == 0 & f_is_NaN(sum) then {
+    sum = canonical_NaN('o)
+  };
+
   write_single_element(SEW_widen, 0, vd, sum);
   // other elements in vd are treated as tail elements, currently remain unchanged
   // TODO: configuration support for agnostic behavior
@@ -156,3 +166,4 @@ mapping rfwvvtype_mnemonic : rfwvvfunct6 <-> string = {
 
 mapping clause assembly = RFWVVTYPE(funct6, vm, vs2, vs1, vd)
   <-> rfwvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+  
