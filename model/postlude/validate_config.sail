@@ -681,6 +681,21 @@ private function check_version_constraints() -> bool = {
                   privileged_isa_version_name(priv_isa_version) ^ " which only allows 16 PMP registers.");
   };
 
+  // These extensions were ratified alongside priv 1.12, which is also when
+  // reserved PTE bits/encodings were required to fault. Allowing them on 1.11
+  // would make the reserved-encoding checks ambiguous.
+  if hartSupports(Ext_Svnapot) & priv_isa_version < Privileged_ISA_1_12 then {
+    valid = false;
+    print_endline("Svnapot is enabled, but it requires privileged ISA version 1.12 or later (version is set to " ^
+                  privileged_isa_version_name(priv_isa_version) ^ ").");
+  };
+
+  if hartSupports(Ext_Svpbmt) & priv_isa_version < Privileged_ISA_1_12 then {
+    valid = false;
+    print_endline("Svpbmt is enabled, but it requires privileged ISA version 1.12 or later (version is set to " ^
+                  privileged_isa_version_name(priv_isa_version) ^ ").");
+  };
+
   valid
 }
 
