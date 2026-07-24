@@ -65,7 +65,7 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
           // matching the spec's "[HLVX] still raise the same exceptions as other load
           // instructions, rather than raising fetch exceptions instead."
           Err(e, _) => Memory_Exception(e),
-          Ok(paddr, pbmt,_) => match mem_read(access, pbmt, paddr, width, false, false, false) {
+          Ok(paddr, pbmt,_) => match mem_read_priv(access, pbmt, eff_priv, paddr, width, false, false, false) {
             Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
             Err(exc_addr, e) => {
               assert(exc_addr == paddr);
@@ -109,13 +109,13 @@ function clause execute(HSV(width, rs1, rs2)) = {
         match translateAddr_eff_priv(vaddr, Store(Data), eff_priv) {
           Err(e, _) => Memory_Exception(e),
           Ok(paddr, pbmt, _) => {
-            match mem_write_ea(paddr, width, Store(Data), pbmt, false, false, false) {
+            match mem_write_ea_priv(paddr, width, eff_priv, Store(Data), pbmt, false, false, false) {
               Err(exc_paddr, e) => {
                 let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
                 return Memory_Exception(hlsv_exception_context(e, bits_of(exc_vaddr)))
               },
               Ok(_) => {
-                match mem_write_value(paddr, width, X(rs2)[8 * width - 1 .. 0], Store(Data), pbmt, false, false, false) {
+                match mem_write_value_priv(paddr, width, X(rs2)[8 * width - 1 .. 0], eff_priv, Store(Data), pbmt, false, false, false) {
                   Ok(true)  => RETIRE_SUCCESS,
                   Ok(false) => internal_error(__FILE__, __LINE__, "HSV got false from mem_write_value"),
                   Err(exc_paddr, e) => {
