@@ -328,11 +328,11 @@ private function check_pma_regions(regions : list(PMA_Region), prev_base : bits(
       let attributes = region.attributes;
       if attributes.mem_type == MainMemory & attributes.cacheable & attributes.coherent then {
         let mag = attributes.misaligned_atomicity_granule_size_exp;
-        if check_opts.zama16b & mag != 4 then {
+        if check_opts.zama16b & mag < 4 then {
           print_endline("Main memory region starting at " ^ bits_str(region.base) ^ " is coherent and cacheable with " ^
                         (if mag == 0 then "no specified misaligned atomicity granule PMA"
                          else "a misaligned atomicity granule size of 2^" ^ dec_str(mag)) ^
-                        ", but Zama16b is enabled which requires granule size of 2^4 bytes.");
+                        ", but Zama16b is enabled which requires granule size of at least 2^4 bytes.");
           return false;
         };
         if check_opts.ziccamoa & attributes.atomic_support < AMOArithmetic then {
