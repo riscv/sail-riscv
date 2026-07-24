@@ -29,8 +29,9 @@ mapping clause encdec = HLVTYPE(width, HLVX, true, rs1, rd)
 
 // HLV.*/HSV perform an explicit access with effective privilege VS (hstatus.SPVP=1)
 // or VU (SPVP=0), so their effective address is subject to pointer masking via
-// transform_hlsv_address. HLVX.* pass access = InstructionFetch() and are
-// therefore exempt (HLVX emulates an implicit fetch).
+// transform_hlsv_address. HLVX.* are exempt (HLVX emulates an implicit fetch,
+// and the PMM fields only cover HLV.*/HSV.*): is_pmm_applicable excludes their
+// LoadExecute access type.
 function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   if inVirtualPrivilege()
   then return Virtual_Instruction()

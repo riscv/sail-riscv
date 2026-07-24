@@ -23,8 +23,9 @@ private function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = matc
 
 // Check whether PMM is applicable.
 // Pointer masking does not apply to implicit accesses (page-table walks),
-// instruction fetches, outside RV64, or when MXR is in effect at the
-// effective privilege mode. MXR does not disable pointer masking in M-mode.
+// instruction fetches, HLVX (LoadExecute: the spec's PMM fields cover only
+// HLV.*/HSV.*), outside RV64, or when MXR is in effect at the effective
+// privilege mode. MXR does not disable pointer masking in M-mode.
 //
 // For a VS/VU access, "MXR in effect" means HS-level mstatus.MXR (which makes
 // execute-only pages readable across both translation stages) OR vsstatus.MXR
@@ -37,8 +38,9 @@ private function is_pmm_applicable(access : MemoryAccessType(mem_payload), eff_p
     VirtualUser       => mstatus[MXR] == 0b1 | vsstatus[MXR] == 0b1,
     _                 => mstatus[MXR] == 0b1,
   };
-  access != InstructionFetch() & access != Load(PageTableEntry) &
-  access != Store(PageTableEntry) & not(mxr_in_effect) & xlen == 64
+  access != InstructionFetch() & access != LoadExecute(Data) &
+  access != Load(PageTableEntry) & access != Store(PageTableEntry) &
+  not(mxr_in_effect) & xlen == 64
 }
 
 // Map a pointer-masking mode to its PMLEN.
@@ -56,7 +58,7 @@ function get_pmlen(access : MemoryAccessType(mem_payload), eff_privilege : Privi
 // Get the effective PMLEN for an HLV/HSV explicit access. These execute with an
 // effective privilege of VS or VU (taken from hstatus.SPVP), when executed from
 // U-mode the VU PMM is sourced from hstatus.HUPMM rather than senvcfg.PMM.
-// HLVX.* pass access = InstructionFetch() and are therefore exempt via
+// HLVX.* pass access = LoadExecute(Data) and are therefore exempt via
 // is_pmm_applicable (returning PMLEN 0).
 function get_hlsv_pmlen(access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> pm_len = {
   let pmm = if eff_privilege == VirtualUser & cur_privilege == User
