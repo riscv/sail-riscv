@@ -570,8 +570,8 @@ function is_fiom_active() -> bool = {
     Machine           => false,
     Supervisor        => menvcfg[FIOM] == 0b1,
     User              => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
-    VirtualSupervisor => henvcfg[FIOM] == 0b1,
-    VirtualUser       => henvcfg[FIOM] == 0b1,
+    VirtualSupervisor => (menvcfg[FIOM] | henvcfg[FIOM]) == 0b1,
+    VirtualUser       => (menvcfg[FIOM] | henvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
 
