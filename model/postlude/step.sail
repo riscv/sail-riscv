@@ -95,15 +95,11 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       // the TW bit in mstatus is clear, and the WRS.NTO does not complete
       // within an implementation-specific bounded time limit, the WRS.NTO
       // instruction will cause a virtual-instruction exception."
-      match cur_privilege {
-        Machine           => Step_Execute(Retire_Success(), instbits),
-        VirtualSupervisor => if hstatus[VTW] == 0b1
-                             then Step_Execute(Virtual_Instruction(), instbits)
-                             else Step_Execute(Retire_Success(), instbits),
-        _                 => if mstatus[TW] == 0b1
-                             then Step_Execute(Illegal_Instruction(), instbits)
-                             else Step_Execute(Retire_Success(), instbits),
-      }
+      if      cur_privilege == Machine then Step_Execute(Retire_Success(), instbits)
+      else if mstatus[TW] == 0b1       then Step_Execute(Illegal_Instruction(), instbits)
+      else if inVirtualPrivilege() & hstatus[VTW] == 0b1
+                                       then Step_Execute(Virtual_Instruction(), instbits)
+      else Step_Execute(Retire_Success(), instbits)
     },
     // remain waiting
     (_, _, false) => {
