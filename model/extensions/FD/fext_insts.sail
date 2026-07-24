@@ -919,7 +919,7 @@ mapping f_un_type_mnemonic_x_S : f_un_op_x_S <-> string = {
 mapping clause assembly = F_UN_TYPE_X_S(rs1, rd, op)
                       <-> f_un_type_mnemonic_x_S(op)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_or_reg_name(rs1)
 
 mapping f_un_type_mnemonic_f_S : f_un_op_f_S <-> string = {
     FMV_W_X  <-> "fmv.w.x"

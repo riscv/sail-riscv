@@ -871,7 +871,7 @@ mapping f_un_x_type_mnemonic_D : f_un_x_op_D <-> string = {
 mapping clause assembly = F_UN_X_TYPE_D(rs1, rd, op)
                       <-> f_un_x_type_mnemonic_D(op)
                           ^ spc() ^ reg_name(rd)
-                          ^ sep() ^ freg_name(rs1)
+                          ^ sep() ^ freg_or_reg_name(rs1)
 
 mapping f_un_f_type_mnemonic_D : f_un_f_op_D <-> string = {
     FMV_D_X  <-> "fmv.d.x"
