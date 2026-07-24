@@ -62,6 +62,9 @@ register mtimecmp : bits(64)
 // Unlike mtimecmp, stimecmp is a real CSR; not memory mapped.
 register stimecmp : bits(64)
 
+// vstimecmp is a real CSR; not memory mapped.
+register vstimecmp : bits(64)
+
 // CLINT memory-mapped IO
 
 // relative address map:
@@ -143,6 +146,20 @@ private function clint_dispatch(mip_was_written : bool) -> unit = {
   mip[MTI] = bool_to_bit(mtimecmp <=_u mtime);
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
     mip[STI] = bool_to_bit(stimecmp <=_u mtime);
+  };
+  if currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) & read_henvcfg()[STCE] == 0b1 then {
+    // VSTI is the OR of hvip.VSTI and the hardware timer comparator.
+    // The comparator result changes when mtime ticks, htimedelta changes,
+    // vstimecmp changes, OR the enable bits become 1.
+    // Rather than tracking all these events individually, we rely on clint_dispatch()
+    // being called periodically (every tick) to re-evaluate and update mip[VSTI].
+    // This is sufficient per the spec's "eventually" requirement.
+    //
+    // NOTE: If the result of this comparison changes, it is guaranteed to be reflected in VSTIP eventually,
+    // but not necessarily immediately. The interrupt remains posted until vstimecmp becomes greater
+    // than (time + htimedelta), typically as a result of writing vstimecmp. The interrupt will be
+    // taken based on the standard interrupt enable and delegation rules while V=1.
+   mip[VSTI] = hvip[VSTI] | bool_to_bit(vstimecmp <=_u (mtime + htimedelta));
   };
   if get_config_print_clint()
   then print_log("clint mtime " ^ bits_str(mtime));

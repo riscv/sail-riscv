@@ -20,6 +20,7 @@ private union PTW_Error = {
   PTW_No_Permission    : unit,
   PTW_Misaligned       : unit,          // misaligned superpage
   PTW_PTE_Needs_Update : unit,          // PTE update needed but not enabled
+  PTW_Implicit_Error   : (ExceptionType, gpabits, MemoryAccessType(mem_payload)), // fault during PTE access in VS-stage when translating the PTE address
   PTW_Ext_Error        : ext_ptw_error  // parameterized for errors from extensions
 }
 
@@ -31,6 +32,7 @@ private function ptw_error_to_str(e : PTW_Error) -> string = {
     PTW_No_Permission()    => "no-permission",
     PTW_Misaligned()       => "misaligned-superpage",
     PTW_PTE_Needs_Update() => "pte-update-needed",
+    PTW_Implicit_Error(_)  => "implicit-pte-vs-stage-fault",
     PTW_Ext_Error(_)       => "extension-error"
   }
 }
@@ -48,6 +50,15 @@ private function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
     PTE_Ext_Failure(_)  => PTW_No_Permission(),
   }
 
+// In G-stage, only page faults (not access faults) become guest-page faults.
+function convertToGuestException(e: ExceptionType) -> ExceptionType = {
+  match (e) {
+    E_Fetch_Page_Fault() => E_Fetch_GPage_Fault(),
+    E_Load_Page_Fault()  => E_Load_GPage_Fault(),
+    E_SAMO_Page_Fault()  => E_SAMO_GPage_Fault(),
+    _                    => e
+  }
+}
 // Convert translation/PTW failures into architectural exceptions
 function translationException(access : MemoryAccessType(mem_payload),
                               err : PTW_Error)
@@ -63,6 +74,10 @@ function translationException(access : MemoryAccessType(mem_payload),
     (Load(Vector), _)                            => E_Load_Page_Fault(),
     (Load(PageTableEntry), PTW_No_Access())      => E_Load_Access_Fault(),
     (Load(PageTableEntry), _)                    => E_Load_Page_Fault(),
+
+    (LoadExecute(Data), PTW_No_Access())         => E_Load_Access_Fault(),
+    (LoadExecute(Data), _)                       => E_Load_Page_Fault(),
+
     (LoadReserved(_, _, Data), PTW_No_Access())  => E_Load_Access_Fault(),
     (LoadReserved(_, _, Data), _)                => E_Load_Page_Fault(),
 
@@ -111,6 +126,8 @@ function translationException(access : MemoryAccessType(mem_payload),
       PREFETCH_I => E_Fetch_Page_Fault(),
     },
 
+
+    (LoadExecute(p), _)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
     (LoadReserved(_, _, p), _)          => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
     (StoreConditional(_, _, p), _)      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
     (Atomic(_, _, _, rp, wp), _)        => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),

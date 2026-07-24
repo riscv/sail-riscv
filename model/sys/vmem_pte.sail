@@ -86,12 +86,17 @@ function clause currentlyEnabled(Ext_Svade) = hartSupports(Ext_Svade)
 function clause currentlyEnabled(Ext_Svadu) = hartSupports(Ext_Svadu)
 
 // Check if a PTE is valid
-private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> bool =
+private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext, stage : TranslationStage) -> bool =
     pte_flags[V] == 0b0
   // The encoding R=0, W=1, and X=0, is defined to represent an SS
-  // page. When menvcfg.SSE=0, this encoding remains reserved.
-  // TODO: handle V=1 and henvcfg.SSE=0 at VS/VU levels
-  | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b0 & menvcfg[SSE] == 0b0)
+  // page, reserved unless SSE is enabled. For VS-stage, both
+  // menvcfg.SSE and henvcfg.SSE must be set. G-stage is unaffected
+  // by Zicfiss, so it stays reserved there regardless of SSE.
+  | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b0 & (match stage {
+      G_Stage  => true,
+      VS_Stage => menvcfg[SSE] == 0b0 | read_henvcfg()[SSE] == 0b0,
+      S_Stage  => menvcfg[SSE] == 0b0,
+    }))
   | (pte_flags[R] == 0b0 & pte_flags[W] == 0b1 & pte_flags[X] == 0b1)
   // Reserved encodings mean the PTE is invalid.
   | not(page_based_mem_type_forwards_matches(pte_ext[PBMT])) & currentlyEnabled(Ext_Svpbmt)
@@ -101,7 +106,10 @@ private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext) -> boo
       pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1 | pte_ext.bits != zeros())
     // N/PBMT/60t59b are reserved if not implemented.
     | pte_ext[N]          != zeros() & not(currentlyEnabled(Ext_Svnapot))
-    | pte_ext[PBMT]       != zeros() & (menvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT])))
+    | pte_ext[PBMT]       != zeros() & (match stage {
+        VS_Stage => (menvcfg[PBMTE] == 0b0 | read_henvcfg()[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))),
+        _        => (menvcfg[PBMTE] == 0b0 | not(page_based_mem_type_forwards_matches(pte_ext[PBMT]))),
+      })
     | pte_ext[RSW_60t59b] != zeros() & not(currentlyEnabled(Ext_Svrsw60t59b))
     // Reserved bits are reserved even for leaf PTEs.
     | pte_ext[reserved] != zeros()
@@ -154,8 +162,8 @@ private function check_PTE_permission(
     // loads and stores; not instruction fetch.
     Supervisor => not(pte_U) | (do_sum & is_load_store(access)),
     Machine    => internal_error(__FILE__, __LINE__, "m-mode mem perm check"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser => pte_U,
+    VirtualSupervisor => not(pte_U) | (do_sum & is_load_store(access)),
   };
   if not(priv_ok) then return PTE_Check_Failure((), PTE_No_Permission());
 
@@ -177,6 +185,7 @@ private function check_PTE_permission(
       Load(Data)               => true,
       Load(Vector)             => true,
       Load(ShadowStack)        => true,
+      LoadExecute(Data)        => true,
       LoadReserved(_, _, Data) => true,
 
       // "Memory mapped as an SS page cannot be written to by instructions other
@@ -193,6 +202,7 @@ private function check_PTE_permission(
       // exception."
       CacheAccess(_) => false,
 
+      LoadExecute(p)                 => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
       LoadReserved(_, _, p)          => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
       StoreConditional(_, _, p)      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
       Atomic(_, _, _, rp, wp)        => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
@@ -220,6 +230,25 @@ private function check_PTE_permission(
     StoreConditional(_)         => pte_W,
     Atomic(_)                   => pte_W & pte_R,
     InstructionFetch(_)         => pte_X,
+    // LoadExecute is the access type used by the hypervisor HLVX.HU/HLVX.WU instructions
+    // (see model/extensions/H/hext_insts.sail). HLVX needs careful, two-level handling:
+    //
+    //   * Page-table permission (here): X only, read is not required. Per the spec,
+    //     HLVX is "the same as HLV.HU/WU, except that execute permission takes the
+    //     place of read permission during address translation ... the memory being read
+    //     must be executable in both stages of address translation, but read permission is
+    //     not required." So an execute-only guest page (X=1, R=0) is readable by HLVX.
+    //
+    //   * Physical-memory permission (NOT here): Both execute and read are required "the
+    //     supervisor physical memory attributes must grant both execute and read
+    //     permissions." That stricter check lives in model/sys/mem.sail (pmaCheck:
+    //     executable & readable) and model/pmp/pmp_control.sail (R & X). Do not duplicate it
+    //     here.
+    //
+    // HLVX is still a "load", not a fetch: LoadExecute is part of is_load_store (see
+    // model/core/types.sail), so the SUM/U-bit gate above applies to it exactly as it does
+    // to HLV and translation failures raise load (not fetch) exceptions.
+    LoadExecute(_)              => pte_X,
     CacheAccess(CB_zero())      => pte_W,
     CacheAccess(CB_prefetch(p)) => match p {
       PREFETCH_R => pte_R,
@@ -254,6 +283,7 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   let update_d : bool = (pte_flags[D] == 0b0)
                         & (match access {
                              InstructionFetch()          => false,
+                             LoadExecute(_)              => false,
                              Load(_)                     => false,
                              LoadReserved(_)             => false,
                              Store(_)                    => true,

@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// Machine-mode and supervisor-mode state definitions.
+// Machine-mode, hypervisor-mode, supervisor-mode state definitions.
 
 // privilege level
 
@@ -133,6 +133,10 @@ function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); O
 // you are technically allowed to have writable misa[U/S].
 function clause currentlyEnabled(Ext_U) = hartSupports(Ext_U) & misa[U] == 0b1 & currentlyEnabled(Ext_Zicsr)
 function clause currentlyEnabled(Ext_S) = hartSupports(Ext_S) & misa[S] == 0b1 & currentlyEnabled(Ext_Zicsr)
+function clause currentlyEnabled(Ext_H) =
+  hartSupports(Ext_H) & misa[H] == 0b1 & misa[I] == 0b1 &
+  currentlyEnabled(Ext_S) & currentlyEnabled(Ext_Zicsr) &
+  (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
 // This will need adjusting for dynamic XLEN.
 function clause currentlyEnabled(Ext_Ssu64xl) = hartSupports(Ext_Ssu64xl) & currentlyEnabled(Ext_S)
 
@@ -145,6 +149,8 @@ function clause currentlyEnabled(Ext_Sv57) = hartSupports(Ext_Sv57) &  currently
 function virtual_memory_supported() -> bool = {
   currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
 }
+
+function inVirtualPrivilege() -> bool = privLevel_is_virtual(cur_privilege)
 
 // This measure needs to be > currentlyEnabled_measure(Ext_Sv{32,39,48,57}),
 // currently all equal to 2, see currentlyEnabled_measure in extensions.sail
@@ -170,8 +176,8 @@ bitfield Mstatus : bits(64) = {
   //MDT  : 42,
   MPELP: 41,
 
-  //MPV  : 39,
-  //GVA  : 38,
+  MPV  : 39,
+  GVA  : 38,
 
   MBE  : 37,
   SBE  : 36,
@@ -211,8 +217,8 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   let o = [o with
     // MDT = v[MDT],
     MPELP = if hartSupports(Ext_Zicfilp) then v[MPELP] else 0b0,
-    // MPV = v[MPV],
-    // GVA = v[GVA],
+    MPV   = if currentlyEnabled(Ext_H) then v[MPV] else 0b0,
+    GVA   = if currentlyEnabled(Ext_H) then v[GVA] else 0b0,
     // We don't currently support changing MBE and SBE.
     // MBE = v[MBE],
     // SBE = v[SBE],
@@ -280,24 +286,48 @@ function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_m
 function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); Ok(mstatus.bits[31 .. 0]) }
 function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); Ok(mstatus.bits[63 .. 32]) }
 
-// architecture and extension checks
-
-function architecture(priv : Privilege) -> Architecture = {
-  if   xlen == 32
-  then return RV32;
-
-  architecture_bits(match priv {
-    Machine           => misa[MXL],
-    Supervisor        => mstatus[SXL],
-    User              => mstatus[UXL],
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-  })
+bitfield Hstatus : bits(64) = {
+  HUPMM : 49 .. 48,
+  VSXL  : 33 .. 32,
+  VTSR  : 22,
+  VTW   : 21,
+  VTVM  : 20,
+  VGEIN : 17 .. 12,
+  HU    : 9,
+  SPVP  : 8,
+  SPV   : 7,
+  GVA   : 6,
+  VSBE  : 5,
 }
 
-function in32BitMode() -> bool = {
-  architecture(cur_privilege) == RV32
+private function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
+  let v = Mk_Hstatus(v);
+  [h with
+    // HUPMM controls pointer masking for HLV.*/HSV in U-mode (effective VU)
+    HUPMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[HUPMM])) then v[HUPMM] else h[HUPMM],
+    // We don't currently support changing VSXL
+    // VSXL = v[VSXL]
+    VTSR  = v[VTSR],
+    VTW   = v[VTW],
+    VTVM  = v[VTVM],
+    VGEIN = v[VGEIN], // TODO: Add config option
+    HU    = v[HU],
+    SPVP  = v[SPVP],
+    SPV   = v[SPV],
+    GVA   = v[GVA],
+    // We don't currently support changing VSBE
+    // VSBE  = v[VSBE],
+  ]
 }
+
+register hstatus : Hstatus = [Mk_Hstatus(zeros()) with
+  VSXL = architecture_bits(if xlen == 32 then RV32 else RV64)
+]
+
+mapping clause csr_name_map = 0x600 <-> "hstatus"
+function clause is_CSR_accessible(0x600, _, _) = currentlyEnabled(Ext_H) //hstatus
+function clause read_CSR(0x600) = hstatus.bits[xlen - 1 .. 0]
+function clause write_CSR(0x600, value) = { hstatus = legalize_hstatus(hstatus, zero_extend(value)); Ok(hstatus.bits[xlen - 1 .. 0]) }
 
 bitfield Seccfg : bits(64) = {
   // Pointer Masking Extension
@@ -398,6 +428,20 @@ bitfield SEnvcfg : bits(64) = {
   FIOM   : 0,
 }
 
+bitfield HEnvcfg : bits(64) = {
+  STCE  : 63,
+  PBMTE : 62,
+  ADUE  : 61,
+  DTE   : 59,
+  PMM   : 33 .. 32,
+  CBZE  : 7,
+  CBCFE : 6,
+  CBIE  : 5 .. 4,
+  SSE   : 3,
+  LPE   : 2,
+  FIOM  : 0,
+}
+
 private function legalize_xenvcfg_cbie(cbie : bits(2)) -> bits(2) = {
   if cbie != 0b10 then {
     cbie
@@ -445,18 +489,53 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
 // Initialised to legal values in case some bits are hard-coded to 1.
 register menvcfg : MEnvcfg = legalize_menvcfg(Mk_MEnvcfg(zeros()), zeros())
 
+private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
+  let v = Mk_HEnvcfg(v);
+  [h with
+    STCE  = if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then v[STCE]  else 0b0,
+    PBMTE = if currentlyEnabled(Ext_Svpbmt) & menvcfg[PBMTE] == 0b1 then v[PBMTE] else 0b0,
+    ADUE  = if currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1 then v[ADUE] else 0b0,
+    // DTE  = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
+    PMM  = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else h[PMM],
+    CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
+    CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
+    CBIE  = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
+    SSE   = if currentlyEnabled(Ext_Zicfiss) & menvcfg[SSE] == 0b1 then v[SSE] else 0b0,
+    LPE   = if hartSupports(Ext_Zicfilp) then v[LPE]  else 0b0,
+    FIOM  = if sys_enable_writable_fiom  then v[FIOM] else 0b0,
+  ]
+}
+
 // This register is private to ensure that it is read using `read_senvcfg()`.
 private register senvcfg : SEnvcfg = legalize_senvcfg(Mk_SEnvcfg(zeros()), zeros())
 
-// "When menvcfg.SSE is 0, the henvcfg.SSE and senvcfg.SSE fields are read-only zero."
-// This function should be used for any read of the `senvcfg` CSR that includes the SSE bit.
-// TODO: When henvcfg.SSE is 0, the senvcfg.SSE field will read as zero and is read-only.
-function read_senvcfg() -> SEnvcfg =
-  [senvcfg with SSE = menvcfg[SSE] & senvcfg[SSE]]
+// This register is private to ensure that it is read using `read_henvcfg()`.
+private register henvcfg : HEnvcfg = legalize_henvcfg(Mk_HEnvcfg(zeros()), zeros())
+
+function read_henvcfg() -> HEnvcfg =
+  [henvcfg with
+    STCE  = menvcfg[STCE]  & henvcfg[STCE],
+    PBMTE = menvcfg[PBMTE] & henvcfg[PBMTE],
+    ADUE  = menvcfg[ADUE]  & henvcfg[ADUE],
+    SSE   = menvcfg[SSE]   & henvcfg[SSE],
+  ]
+
+function read_senvcfg() -> SEnvcfg = {
+  let SSE : bool = match cur_privilege {
+    Machine           => menvcfg[SSE] == 0b1,
+    Supervisor        => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
+    User              => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
+    VirtualSupervisor => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1,
+    VirtualUser       => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
+  };
+  [senvcfg with SSE = bool_bit(SSE)];
+}
 
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
 mapping clause csr_name_map = 0x10A  <-> "senvcfg"
+mapping clause csr_name_map = 0x60A <-> "henvcfg"
+mapping clause csr_name_map = 0x61A <-> "henvcfgh"
 
 function clause is_CSR_accessible(0x30A, _, _) = currentlyEnabled(Ext_U) & xenvcfg_csrs_are_defined // menvcfg
 function clause is_CSR_accessible(0x31A, _, _) = currentlyEnabled(Ext_U) & (xlen == 32) & xenvcfg_csrs_are_defined // menvcfgh
@@ -465,14 +544,23 @@ function clause is_CSR_accessible(0x31A, _, _) = currentlyEnabled(Ext_U) & (xlen
 // interdependency issues, that is handled by `stateen_allows_CSR_access`.
 function clause is_CSR_accessible(0x10A, _, _) = currentlyEnabled(Ext_S) & xenvcfg_csrs_are_defined // senvcfg
 
+function clause is_CSR_accessible(0x60A, _, _) = currentlyEnabled(Ext_H) // henvcfg
+function clause is_CSR_accessible(0x61A, _, _) = currentlyEnabled(Ext_H) & xlen == 32 // henvcfgh
+
 function clause read_CSR(0x30A) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x31A if xlen == 32) = menvcfg.bits[63 .. 32]
 function clause read_CSR(0x10A) = read_senvcfg().bits[xlen - 1 .. 0]
+
+function clause read_CSR(0x60A) = read_henvcfg().bits[xlen - 1 .. 0]
+function clause read_CSR(0x61A if xlen == 32) = read_henvcfg().bits[63 .. 32]
 
 function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Ok(menvcfg.bits[31 .. 0]) }
 function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); Ok(menvcfg.bits) }
 function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Ok(menvcfg.bits[63 .. 32]) }
 function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(read_senvcfg().bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x60A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, henvcfg.bits[63 .. 32] @ value); Ok(read_henvcfg().bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x60A, value) if xlen == 64) = { henvcfg = legalize_henvcfg(henvcfg, value); Ok(read_henvcfg().bits[xlen - 1 .. 0]) }
+function clause write_CSR((0x61A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, value @ henvcfg.bits[31 .. 0]); Ok(read_henvcfg().bits[63 .. 32]) }
 
 // Return whether or not FIOM is currently active, based on the current
 // privilege and the menvcfg/senvcfg settings. This means that I/O fences
@@ -482,8 +570,8 @@ function is_fiom_active() -> bool = {
     Machine           => false,
     Supervisor        => menvcfg[FIOM] == 0b1,
     User              => (menvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => henvcfg[FIOM] == 0b1,
+    VirtualUser       => henvcfg[FIOM] == 0b1,
   }
 }
 
@@ -613,6 +701,19 @@ function clause is_CSR_accessible(0x106, _, _) = currentlyEnabled(Ext_S) // scou
 function clause read_CSR(0x106) = zero_extend(scounteren.bits)
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); Ok(zero_extend(scounteren.bits)) }
 
+// Which bits of `hcounteren` are writable.
+let sys_hcounteren_writable_bits : bits(32) = config base.hcounteren_writable_bits
+
+// hcounteren
+private function legalize_hcounteren(_c : Counteren, v : xlenbits) -> Counteren =
+  Mk_Counteren(v[31 .. 0] & sys_hcounteren_writable_bits)
+
+register hcounteren : Counteren
+mapping clause csr_name_map = 0x606 <-> "hcounteren"
+function clause is_CSR_accessible(0x606, _, _) = currentlyEnabled(Ext_H)
+function clause read_CSR(0x606) = zero_extend(hcounteren.bits)
+function clause write_CSR(0x606, value) = { hcounteren = legalize_hcounteren(hcounteren, value); Ok(zero_extend(hcounteren.bits)) }
+
 // Which bits of `mcounteren` are writable.
 let sys_mcounteren_writable_bits : bits(32) = config base.mcounteren_writable_bits
 
@@ -626,7 +727,6 @@ mapping clause csr_name_map = 0x306  <-> "mcounteren"
 function clause is_CSR_accessible(0x306, _, _) = currentlyEnabled(Ext_U) // mcounteren
 function clause read_CSR(0x306) = zero_extend(mcounteren.bits)
 function clause write_CSR(0x306, value) = { mcounteren = legalize_mcounteren(mcounteren, value); Ok(zero_extend(mcounteren.bits)) }
-
 
 // mcountinhibit
 bitfield Counterin : bits(32) = {
@@ -691,6 +791,55 @@ function clause read_CSR(0xF13) = mimpid
 function clause read_CSR(0xF14) = mhartid
 function clause read_CSR(0xF15) = mconfigptr
 
+// Additional M-mode registers introduced by hypervisor extension
+
+// TODO: Add config options and legalization functions for mtinst and mtval2
+register mtinst : xlenbits
+register mtval2 : xlenbits
+
+mapping clause csr_name_map = 0x34A  <-> "mtinst"
+mapping clause csr_name_map = 0x34B  <-> "mtval2"
+
+function clause is_CSR_accessible(0x34A, _, _) = currentlyEnabled(Ext_H) // mtinst
+function clause is_CSR_accessible(0x34B, _, _) = currentlyEnabled(Ext_H) // mtval2
+
+function clause read_CSR(0x34A) = mtinst
+function clause read_CSR(0x34B) = mtval2
+
+function clause write_CSR(0x34A, value) = { mtinst = value; Ok(mtinst) }
+function clause write_CSR(0x34B, value) = { mtval2 = value; Ok(mtval2) }
+
+// HS-mode registers
+
+register htimedelta : bits(64)
+
+mapping clause csr_name_map = 0x605 <-> "htimedelta"
+mapping clause csr_name_map = 0x615 <-> "htimedeltah"
+
+function clause is_CSR_accessible(0x605, _, _) = currentlyEnabled(Ext_H) // htimedelta
+function clause is_CSR_accessible(0x615, _, _) = currentlyEnabled(Ext_H) & xlen == 32 // htimedeltah
+
+function clause read_CSR(0x605) = htimedelta[xlen - 1 .. 0]
+function clause read_CSR(0x615 if xlen == 32) = htimedelta[63 .. 32]
+
+function clause write_CSR(0x605, value) = { htimedelta[xlen - 1 .. 0] = value; Ok(htimedelta[xlen - 1 .. 0]) }
+function clause write_CSR((0x615, value) if xlen == 32) = { htimedelta[63 .. 32] = value; Ok(htimedelta[63 .. 32]) }
+
+register htval  : xlenbits
+register htinst : xlenbits
+
+mapping clause csr_name_map = 0x643 <-> "htval"
+mapping clause csr_name_map = 0x64A <-> "htinst"
+
+function clause is_CSR_accessible(0x643, _, _) = currentlyEnabled(Ext_H) // htval
+function clause is_CSR_accessible(0x64A, _, _) = currentlyEnabled(Ext_H) // htinst
+
+function clause read_CSR(0x643) = htval
+function clause read_CSR(0x64A) = htinst
+
+function clause write_CSR(0x643, value) = { htval = value; Ok(htval) }
+function clause write_CSR(0x64A, value) = { htinst = value; Ok(htinst) }
+
 // S-mode registers
 
 // sstatus reveals a subset of mstatus
@@ -754,10 +903,46 @@ private function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
 }
 
+// vsstatus
+register vsstatus : Mstatus = [Mk_Mstatus(zeros()) with
+  UXL = architecture_bits(if xlen == 32 then RV32 else RV64)
+]
+
+mapping clause csr_name_map = 0x200  <-> "vsstatus"
+function clause is_CSR_accessible(0x200, _, _) = currentlyEnabled(Ext_H) // vsstatus
+function clause read_CSR(0x200) = lower_mstatus(vsstatus).bits[xlen - 1 .. 0]
+function clause write_CSR(0x200, value) = { vsstatus = legalize_sstatus(vsstatus, value); Ok(lower_mstatus(vsstatus).bits[xlen - 1 .. 0]) }
+
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
-function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, value); Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0]) }
+function clause read_CSR(0x100) = lower_mstatus(if inVirtualPrivilege() then vsstatus else mstatus).bits[xlen - 1 .. 0]
+function clause write_CSR(0x100, value) =
+  if inVirtualPrivilege()
+  then { vsstatus = legalize_sstatus(vsstatus, value); Ok(lower_mstatus(vsstatus).bits[xlen - 1 .. 0]) }
+  else { mstatus  = legalize_sstatus(mstatus, value);  Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0])  }
+
+// Virtual Supervisor related state register
+register vstvec    : Mtvec
+register vsscratch : xlenbits
+register vsepc     : xlenbits
+register vscause   : Mcause
+register vstval    : xlenbits
+
+mapping clause csr_name_map = 0x240  <-> "vsscratch"
+mapping clause csr_name_map = 0x242  <-> "vscause"
+mapping clause csr_name_map = 0x243  <-> "vstval"
+
+function clause is_CSR_accessible(0x240, _, _) = currentlyEnabled(Ext_H) // vsscratch
+function clause is_CSR_accessible(0x242, _, _) = currentlyEnabled(Ext_H) // vscause
+function clause is_CSR_accessible(0x243, _, _) = currentlyEnabled(Ext_H) // vstval
+
+function clause read_CSR(0x240) = vsscratch
+function clause read_CSR(0x242) = vscause.bits
+function clause read_CSR(0x243) = vstval
+
+function clause write_CSR(0x240, value) = { vsscratch = value; Ok(vsscratch) }
+function clause write_CSR(0x242, value) = { vscause.bits = value; Ok(vscause.bits) }
+function clause write_CSR(0x243, value) = { vstval = value; Ok(vstval) }
 
 // other non-VM related supervisor state
 register stvec    : Mtvec
@@ -774,13 +959,87 @@ function clause is_CSR_accessible(0x140, _, _) = currentlyEnabled(Ext_S) // sscr
 function clause is_CSR_accessible(0x142, _, _) = currentlyEnabled(Ext_S) // scause
 function clause is_CSR_accessible(0x143, _, _) = currentlyEnabled(Ext_S) // stval
 
-function clause read_CSR(0x140) = sscratch
-function clause read_CSR(0x142) = scause.bits
-function clause read_CSR(0x143) = stval
+function clause read_CSR(0x140) = if inVirtualPrivilege() then vsscratch else sscratch
+function clause read_CSR(0x142) = if inVirtualPrivilege() then vscause.bits else scause.bits
+function clause read_CSR(0x143) = if inVirtualPrivilege() then vstval else stval
 
-function clause write_CSR(0x140, value) = { sscratch = value; Ok(sscratch) }
-function clause write_CSR(0x142, value) = { scause.bits = value; Ok(scause.bits) }
-function clause write_CSR(0x143, value) = { stval = value; Ok(stval) }
+function clause write_CSR(0x140, value) = if inVirtualPrivilege() then { vsscratch = value; Ok(vsscratch) } else { sscratch = value; Ok(sscratch) }
+function clause write_CSR(0x142, value) = if inVirtualPrivilege() then { vscause.bits = value; Ok(vscause.bits) } else { scause.bits = value; Ok(scause.bits) }
+function clause write_CSR(0x143, value) = if inVirtualPrivilege() then { vstval = value; Ok(vstval) } else { stval = value; Ok(stval) }
+
+//
+// HS-mode address translation and protection (hgatp) layout.
+// The actual hgatp register is defined in an architecture-specific file.
+bitfield Hgatp64 : bits(64) = {
+  Mode : 63 .. 60,
+  VMID : 57 .. 44,
+  PPN  : 43 .. 0
+}
+
+bitfield Hgatp32 : bits(32) = {
+  Mode : 31,
+  VMID : 28 .. 22,
+  PPN  : 21 .. 0
+}
+
+// TODO: Add these options to config file once Hypervisor supported is added
+let HBare_supported  : bool = true
+let Sv32x4_supported : bool = HBare_supported  & xlen == 32
+let Sv39x4_supported : bool = HBare_supported  & xlen == 64
+let Sv48x4_supported : bool = Sv39x4_supported & xlen == 64
+let Sv57x4_supported : bool = Sv48x4_supported & xlen == 64
+
+// TODO: Add VMIDLEN config option and mask VMID field to implemented width
+function legalize_hgatp(
+  arch : Architecture,
+  prev_value : xlenbits,
+  written_value : xlenbits,
+) -> xlenbits = {
+  // Unlike satp, a write to hgatp with an unsupported MODE value is not ignored.
+  // Instead, the fields are WARL in the normal way: an unsupported MODE falls
+  // back to HBare while preserving the other fields (VMID, PPN).
+  if xlen == 32 then {
+    let v = Mk_Hgatp32(written_value);
+    // Force 16 KiB alignment with PPN[1:0] = 0b00
+    let h = Mk_Hgatp32(v[Mode] @ 0b00 @ v[VMID] @ v[PPN][21 .. 2] @ 0b00);
+    // Bits above the number of implemented physical address bits
+    // are read only zero, since the G-stage root page table lives
+    // in real physical memory.
+    let h = [h with
+      PPN = zero_extend(h[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
+    ];
+    match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
+      None() => prev_value,
+      Some(mode) => match mode {
+        HBare  if HBare_supported  => h.bits,
+        Sv32x4 if Sv32x4_supported => h.bits,
+        _ => [h with Mode = zeros()].bits,
+      }
+    }
+  } else if xlen == 64 then {
+    let v = Mk_Hgatp64(written_value);
+    // Force 16 KiB alignment with PPN[1:0] = 0b00
+    let h = Mk_Hgatp64(v[Mode] @ 0b00 @ v[VMID] @ v[PPN][43 .. 2] @ 0b00);
+    // PPN field size is 44 bits, and bits above the number of
+    // implemented physical address bits are read only zero, since
+    // the G-stage root page table lives in real physical memory.
+    let h = [h with
+      PPN = zero_extend(h[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
+    ];
+    match hgatpMode_of_bits(arch, h[Mode]) {
+      None() => prev_value,
+      Some(mode) => match mode {
+        HBare  if HBare_supported  => h.bits,
+        Sv39x4 if Sv39x4_supported => h.bits,
+        Sv48x4 if Sv48x4_supported => h.bits,
+        Sv57x4 if Sv57x4_supported => h.bits,
+        _ => [h with Mode = zeros()].bits,
+      }
+    }
+  } else {
+    internal_error(__FILE__, __LINE__, "Unsupported xlen " ^ dec_str(xlen))
+  }
+}
 
 //
 // S-mode address translation and protection (satp) layout.
@@ -802,14 +1061,19 @@ bitfield Satp32 : bits(32) = {
 // and does not legalize the asid field if asidlen is not the maximum.
 function legalize_satp(
   arch : Architecture,
+  is_vsatp : bool,
   prev_value : xlenbits,
   written_value : xlenbits,
 ) -> xlenbits = {
+  // vsatp.PPN points into guest-physical, not real physical, address
+  // space. It is the root of the VS-stage page table, which is itself
+  // G-stage translated before touching real memory. So it must not be
+  // masked to physaddr_bits, which only bounds real physical memory.
   if xlen == 32 then {
     let s = Mk_Satp32(written_value);
-    let s = [s with
-      // Bits above the number of implemented physical address bits
-      // are read only zero.
+    // vsatp's PPN addresses guest-physical memory, bounded only by
+    // the field's own width, not the host's physaddr_bits.
+    let s = if is_vsatp then s else [s with
       PPN = zero_extend(s[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
     match satpMode_of_bits(arch, 0b000 @ s[Mode]) {
@@ -822,9 +1086,9 @@ function legalize_satp(
     }
   } else if xlen == 64 then {
     let s = Mk_Satp64(written_value);
-    let s = [s with
-      // PPN field size is 44 bits, and bits above the number of
-      // implemented physical address bits are read only zero.
+    // vsatp's PPN addresses guest-physical memory, bounded only by
+    // the field's own width, not the host's physaddr_bits.
+    let s = if is_vsatp then s else [s with
       PPN = zero_extend(s[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
     match satpMode_of_bits(arch, s[Mode]) {
@@ -886,13 +1150,28 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), s
                        else FEATURE_ENABLED,
 }
 
-// Backward-compatible wrapper around feature_enabled_for_priv for callers that
-// do not yet distinguish between illegal-instruction and virtual-instruction
-// exceptions. Required for upcoming Hypervisor extension support.
-function feature_enabled_for_priv_bool(p : Privilege, m : bits(1), s : bits(1), h : bits(1)) -> bool =
-  feature_enabled_for_priv(p, m, s, h) == FEATURE_ENABLED
-
 // Return true if the counter is enabled.
 // TODO: Pass hcounteren.bits[index] once hcounteren is implemented.
 function counter_enabled(index: range(0, 31), priv : Privilege) -> bool =
-  feature_enabled_for_priv_bool(priv, mcounteren.bits[index], scounteren.bits[index], 0b0)
+  match feature_enabled_for_priv(priv, mcounteren.bits[index], scounteren.bits[index], hcounteren.bits[index]) {
+    FEATURE_ENABLED => true,
+    _               => false,
+  }
+
+// Return the effective architecture for the given privilege mode
+function architecture(priv : Privilege) -> Architecture = {
+  if   xlen == 32
+  then return RV32;
+
+  architecture_bits(match priv {
+    Machine           => misa[MXL],
+    Supervisor        => mstatus[SXL],
+    User              => mstatus[UXL],
+    VirtualSupervisor => hstatus[VSXL],
+    VirtualUser       => vsstatus[UXL],
+  })
+}
+
+function in32BitMode() -> bool = {
+  architecture(cur_privilege) == RV32
+}
