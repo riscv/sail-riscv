@@ -79,10 +79,10 @@ function zicfilp_preserve_elp_on_trap(x : Privilege) -> unit = {
   reset_elp();
 }
 
-// When executing an xRET instruction, if the new privilege mode is y,
-// then ELP is set to the value of xPELP if yLPE is 1; otherwise, it
-// is set to NO_LP_EXPECTED; xPELP is set to NO_LP_EXPECTED.
-function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = {
+// When executing an xRET instruction in privilege mode x, if the new
+// privilege mode is y, then ELP is set to the value of xPELP if yLPE is 1;
+// otherwise, it is set to NO_LP_EXPECTED; xPELP is set to NO_LP_EXPECTED.
+function zicfilp_restore_elp_on_xret(xret : xRET_type, x : Privilege, y : Privilege) -> unit = {
   let pelp : bits(1) = match xret {
     mRET => {
       let pelp = mstatus[MPELP];
@@ -90,7 +90,9 @@ function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = 
       pelp
     },
     sRET => {
-      if privLevel_is_virtual(y) then {
+      // sPELP is vsstatus.SPELP only when the SRET executed with V=1,
+      // not when it merely returns to a virtual mode.
+      if privLevel_is_virtual(x) then {
         let pelp = vsstatus[SPELP];
         vsstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
         pelp
