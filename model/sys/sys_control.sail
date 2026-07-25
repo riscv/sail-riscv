@@ -92,8 +92,10 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else if ip[SSI]   == 0b1 then Some(I_S_Software)
   else if ip[STI]   == 0b1 then Some(I_S_Timer)
   else if ip[SGEI]  == 0b1 then Some(I_SG_External)
-  // NOTE: VSEI, VSSI, and VSTI are cleared beforehand. By the time
-  // findPendingInterrupt observes these bits, they are already zero,
+  // NOTE: VSEI, VSSI, and VSTI only reach here via the pending_s set,
+  // i.e. when hideleg leaves them undelegated and they are taken in
+  // HS-mode. getPendingSet() translates them to their S-level
+  // counterparts on the pending_vs path, so they are zero there.
   else if ip[VSEI]  == 0b1 then Some(I_VS_External)
   else if ip[VSSI]  == 0b1 then Some(I_VS_Software)
   else if ip[VSTI]  == 0b1 then Some(I_VS_Timer)
@@ -266,8 +268,6 @@ function trap_handler(
 
       mstatus[SPIE] = mstatus[SIE];
       mstatus[SIE]  = 0b0;
-      // NOTE: Needs an up-to-date Sail Compiler:
-      // https://github.com/rems-project/sail/issues/1683
       mstatus[SPP] = match cur_privilege {
         User              => 0b0,
         VirtualUser       => 0b0,

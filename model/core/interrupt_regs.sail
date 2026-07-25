@@ -20,7 +20,10 @@ private function legalize_hgeie(v : xlenbits) -> xlenbits = {
 register hgeie : xlenbits
 register hgeip : xlenbits
 
-// TODO: Add GEILEN config
+// GEILEN is XLEN-1, so hgeie bits 1..XLEN-1 are writable. hgeip stays
+// zero because no interrupt controller in the model asserts guest
+// external interrupts, which also makes mip.SGEIP permanently zero.
+// TODO: Add GEILEN config once one does.
 mapping clause csr_name_map = 0x607 <-> "hgeie"
 mapping clause csr_name_map = 0xE12 <-> "hgeip"
 
@@ -62,10 +65,12 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
       if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
     ) else 0b0,
     SGEI = if currentlyEnabled(Ext_H) then bool_to_bit((hgeip & hgeie) != zeros()) else 0b0,
-    // NOTE/TODO: "VSEIP is read-only in hip, and is the logical-OR of these interrupt sources.
-    // * bit VSEIP of hvip;"
-    // * the bit of hgeip selected by hstatus.VGEI; and (TODO)
-    // * any other platform-specific external interrupt signal directed to VS-Level (TODO)"
+    // "VSEIP is read-only in hip, and is the logical-OR of these interrupt sources:
+    // * bit VSEIP of hvip;
+    // * the bit of hgeip selected by hstatus.VGEIN; and
+    // * any other platform-specific external interrupt signal directed to VS-Level"
+    // The hgeip term is always zero (see GEILEN above) and there are no
+    // platform-specific VS-level signals, so only hvip is left.
     VSEI = if currentlyEnabled(Ext_H) then hvip[VSEI] else 0b0,
     // " VSTIP is read-only in hip, and is the logical-OR of
     // * hvip.VSTIP; and

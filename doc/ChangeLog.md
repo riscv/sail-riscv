@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - H
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
 
@@ -28,7 +31,6 @@ and LLDB](../c_emulator/gdb/README.md).
 
 - The following extensions have been added:
   - Zama16b
-  - H
 
 - Updates to the [configuration file](../config/config.json.in):
   - The version of the privileged ISA specification for the model can

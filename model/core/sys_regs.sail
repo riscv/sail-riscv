@@ -310,7 +310,7 @@ private function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
     VTSR  = v[VTSR],
     VTW   = v[VTW],
     VTVM  = v[VTVM],
-    VGEIN = v[VGEIN], // TODO: Add config option
+    VGEIN = v[VGEIN],
     HU    = v[HU],
     SPVP  = v[SPVP],
     SPV   = v[SPV],
@@ -1151,7 +1151,6 @@ function feature_enabled_for_priv(p : Privilege, machine_enable_bit : bits(1), s
 }
 
 // Return true if the counter is enabled.
-// TODO: Pass hcounteren.bits[index] once hcounteren is implemented.
 function counter_enabled(index: range(0, 31), priv : Privilege) -> bool =
   match feature_enabled_for_priv(priv, mcounteren.bits[index], scounteren.bits[index], hcounteren.bits[index]) {
     FEATURE_ENABLED => true,
