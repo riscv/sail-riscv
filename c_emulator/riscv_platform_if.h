@@ -91,6 +91,7 @@ public:
   virtual bool get_config_print_interrupt(unit);
   virtual bool get_config_print_htif(unit);
   virtual bool get_config_print_pma(unit);
+  virtual bool get_config_print_pmp(unit);
   virtual bool get_config_rvfi(unit);
   virtual bool get_config_use_abi_names(unit);
 };

@@ -71,6 +71,7 @@ val get_config_print_exception = pure {cpp:"get_config_print_exception"} : unit 
 val get_config_print_interrupt = pure {cpp:"get_config_print_interrupt"} : unit -> bool
 val get_config_print_htif = pure {cpp:"get_config_print_htif"} : unit -> bool
 val get_config_print_pma = pure {cpp:"get_config_print_pma"} : unit -> bool
+val get_config_print_pmp = pure {cpp:"get_config_print_pmp"} : unit -> bool
 val get_config_rvfi = pure {cpp:"get_config_rvfi"} : unit -> bool
 val get_config_use_abi_names = pure {cpp:"get_config_use_abi_names"} : unit -> bool
 // defaults for other backends
@@ -80,6 +81,7 @@ function get_config_print_exception () = false
 function get_config_print_interrupt () = false
 function get_config_print_htif () = false
 function get_config_print_pma () = false
+function get_config_print_pmp () = false
 function get_config_rvfi () = false
 function get_config_use_abi_names () = false
 
