@@ -116,8 +116,8 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // for platform use (see
   // `core/interrupt_regs.sail:legalize_mideleg()`), but those
   // interrupts are not known in `findPendingInterrupt()` above.
-  let pending_m = mip_bits & mie.bits & ~(mideleg.bits);
-  let pending_s = mip_bits & mie.bits & mideleg.bits;
+  let pending_m = mip_bits & mie.bits & ~(mideleg_bits);
+  let pending_s = mip_bits & mie.bits & mideleg_bits;
 
   let mIE = (priv == Machine    & mstatus[MIE] == 0b1) | priv == Supervisor | priv == User;
   let sIE = (priv == Supervisor & mstatus[SIE] == 0b1) | priv == User;
