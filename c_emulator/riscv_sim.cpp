@@ -47,20 +47,88 @@ jsoncons::json parse_json_or_exit(const std::string &json_text, const std::strin
   }
 }
 
-// JSON objects are merged by replacing/adding fields from the override config.
-// If a given field is an object in the base and override then instead of
-// replacing the field entirely the merging process recurses into it.
-// All other field types (including arrays) are simply replaced.
-void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override) {
-  for (const auto &entry : json_override.object_range()) {
-    const auto &key = entry.key();
-    const auto &value = entry.value();
-    if (base.contains(key) && base[key].is_object() && value.is_object()) {
-      deep_merge_json(base[key], value);
-    } else {
-      base[key] = value;
-    }
+std::string make_path_string(const std::vector<std::string> &path) {
+  // This uses '/' separators for the path elements to be consistent
+  // with the error messages from the jsoncons schema validator.
+  if (path.empty()) {
+    return "path '/'";
   }
+
+  std::ostringstream buf;
+  buf << "path '";
+  for (const auto &seg : path) {
+    buf << "/" << seg;
+  }
+  buf << "'";
+  return buf.str();
+}
+
+// Merge a JSON object `json_override` into an existing JSON object `base`. The
+// algorithm is as follows:
+//
+// 1. If both `json_override` and `base` are objects we merge them as
+//    follows:
+//   a) If both objects have a single field and that key has a
+//      different name, this must be a union whose variant is being
+//      changed (e.g. `None` to `Some`). In this case we replace the
+//      entire `base` with `json_override`.
+//      Note: the key might be different due to a typo in the override,
+//      but that will be caught by the schema validation check.
+//   b) Otherwise this is a struct, or a union with an unchanged
+//      variant. In this case we loop through the keys of
+//      `json_override` and recurse for each one, merging into the
+//      corresponding key of `base` which must exist or an error is
+//      thrown (you cannot create new keys with this function).
+//
+// 2. If either are not objects, then we replace `base` with
+//    `json_override`. Additionally we check for type errors,
+//    e.g. replacing an object with an array.
+
+void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override, std::vector<std::string> &path) {
+  if (base.type() == jsoncons::json_type::object && json_override.type() == jsoncons::json_type::object) {
+    // If both are objects with size 1 this must be a union that is
+    // changing its variant.  Replace the entire object.  See above
+    // for the effects of a typo.
+    if (base.size() == 1 && json_override.size() == 1 &&
+        base.object_range().begin()->key() != json_override.object_range().begin()->key()) {
+      base = json_override;
+      return;
+    }
+
+    // Otherwise this is a struct or a union with the same
+    // variant. Merge each key as long as it exists in the base.
+    for (const auto &entry : json_override.object_range()) {
+      const auto &key = entry.key();
+      const auto &value = entry.value();
+
+      path.emplace_back(key);
+
+      if (!base.contains(key)) {
+        std::ostringstream msg;
+        msg << "Cannot merge override: key at " << make_path_string(path)
+            << " does not exist in base object; config overrides cannot add new keys to the configuration.";
+        throw std::runtime_error(msg.str());
+      }
+
+      deep_merge_json(base[key], value, path);
+      path.pop_back();
+    }
+    return;
+  }
+
+  // At least one of the arguments is not an object. Replace the base
+  // with the override, but as long as the types are consistent.
+  auto base_type = base.type();
+  auto override_type = json_override.type();
+
+  if (base_type != override_type) {
+    std::ostringstream msg;
+    msg << "Cannot override config at " + make_path_string(path) + " of type '" << base_type
+        << "' with incompatible type '" << override_type << "'.";
+    throw std::runtime_error(msg.str());
+  }
+
+  base = json_override;
 }
 
 void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
@@ -157,6 +225,26 @@ void write_memory_dumps(const std::vector<MemoryRegion> &regions, const std::str
   for (const auto &region : regions) {
     write_memory_dump(region, prefix);
   }
+}
+
+std::string describe_config(const CLIOptions &opts) {
+  std::ostringstream config_desc;
+
+  if (opts.config_file.empty()) {
+    config_desc << "default configuration";
+  } else {
+    config_desc << "configuration in " << opts.config_file;
+  }
+  if (!opts.config_overrides.empty()) {
+    config_desc << " merged with ";
+    bool is_first = true;
+    for (const auto &override_path : opts.config_overrides) {
+      config_desc << (is_first ? "" : ", ") << override_path;
+      is_first = false;
+    }
+  }
+
+  return config_desc.str();
 }
 
 } // namespace
@@ -466,7 +554,8 @@ InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
   for (const auto &override_path : opts.config_overrides) {
     std::string override_json_string = read_file_to_string(override_path);
     jsoncons::json override_item = parse_json_or_exit(override_json_string, "override file " + override_path);
-    deep_merge_json(config_json, override_item);
+    std::vector<std::string> path;
+    deep_merge_json(config_json, override_item, path);
   }
 
   std::ostringstream os;
@@ -474,13 +563,7 @@ InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
   config_json_string = os.str();
 
   // Always validate the schema conformance of the config.
-  std::string config_source_desc = opts.config_file.empty() ? "default configuration" : opts.config_file;
-  if (!opts.config_overrides.empty()) {
-    config_source_desc = "merged configuration from " + config_source_desc;
-    for (const auto &override_path : opts.config_overrides) {
-      config_source_desc = config_source_desc + ", " + override_path;
-    }
-  }
+  std::string config_source_desc = describe_config(opts);
   validate_config_schema(config_json, config_source_desc);
 
   return InitResult::Continue;
@@ -531,11 +614,8 @@ InitResult preinit_model(
     bool config_is_valid = model.config_is_valid();
     const char *s = config_is_valid ? "valid" : "invalid";
     if (!config_is_valid || opts.do_validate_config) {
-      if (opts.config_file.empty()) {
-        fprintf(stderr, "Default configuration is %s.\n", s);
-      } else {
-        fprintf(stderr, "Configuration in %s is %s.\n", opts.config_file.c_str(), s);
-      }
+      std::string config_source_desc = describe_config(opts);
+      fprintf(stderr, "The %s is %s.\n", config_source_desc.c_str(), s);
       return config_is_valid ? InitResult::ExitSuccess : InitResult::ExitFailure;
     }
   }
