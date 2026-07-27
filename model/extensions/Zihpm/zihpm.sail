@@ -171,7 +171,7 @@ bitfield HpmEvent : bits(64) = {
   VSINH : 59,
   VUINH : 58,
 
-  event : 31 .. 0,
+  event : 55 .. 0,
 }
 
 // HPM events selector. These control what the HPM counters measure. The lowest
@@ -193,6 +193,7 @@ function hpmidx_from_bits(b : bits(5)) -> hpmidx = {
 }
 
 function legalize_hpmevent(v : HpmEvent) -> HpmEvent = {
+  // TODO: we could use event_csr_write_callback as a legalizer for the event field.
   [ Mk_HpmEvent(zeros()) with
     OF = if currentlyEnabled(Ext_Sscofpmf) then v[OF] else 0b0,
     MINH  = if currentlyEnabled(Ext_Sscofpmf) then v[MINH] else 0b0,
@@ -208,20 +209,60 @@ function read_mhpmcounter(index : hpmidx) -> xlenbits = mhpmcounter[index][(xlen
 function read_mhpmcounterh(index : hpmidx) -> bits(32) = mhpmcounter[index][63 .. 32]
 function read_mhpmevent(index : hpmidx) -> xlenbits = mhpmevent[index].bits[(xlen - 1) .. 0]
 
-// Write the HPM CSRs. These return the new value of the CSR, for use in writeCSR.
+// Track any HPM event selector CSR and counter CSR written by the
+// current instruction. If the event for that counter fires during
+// that write, the counter should not be incremented, since according
+// to the spec:
+//
+//  "Any CSR write takes effect after the writing instruction has
+//   otherwise completed."
+//
+// As the model dispatches events after instruction execution, it
+// should not overwrite any CSR writes (similar to the handling of
+// minstret).
+//
+// For simplicity, the model also does not update a counter if its
+// event selector CSR was written, since the write could have changed
+// the Sscofpmf flags or the selector code.
+
+register written_event_index : option(hpmidx) = None()
+
+// Called at the end of the step, after any events have been
+// dispatched.
+function clear_written_event_index() -> unit =
+  written_event_index = None()
+
+// Write the HPM CSRs.
 function write_mhpmcounter(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then mhpmcounter[index][(xlen - 1) .. 0] = value
+  if sys_writable_hpm_counters[index] == 0b1 then {
+    mhpmcounter[index][(xlen - 1) .. 0] = value;
+    written_event_index = Some(index)
+  }
 
 function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then mhpmcounter[index][63 .. 32] = value
+  if sys_writable_hpm_counters[index] == 0b1 then {
+    mhpmcounter[index][63 .. 32] = value;
+    written_event_index = Some(index)
+  }
+
+val event_csr_write_callback = pure {cpp: "event_csr_write_callback"} : (hpmidx, bits(64), bits(64)) -> unit
 
 function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then
-  mhpmevent[index] = legalize_hpmevent(Mk_HpmEvent(match xlen {
-    32 => mhpmevent[index].bits[63 .. 32] @ value,
-    64 => value,
-    _ => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
-  }))
+  if sys_writable_hpm_counters[index] == 0b1 then {
+    let old_value = mhpmevent[index];
+    let value = legalize_hpmevent(Mk_HpmEvent(match xlen {
+      32 => mhpmevent[index].bits[63 .. 32] @ value,
+      64 => value,
+      _  => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
+    }));
+    mhpmevent[index] = value;
+
+    written_event_index = Some(index);
+
+    // C++ callback to update the [selector -> counter register(s)] map.
+    // TODO: in the absence of Sscofpmf, the whole CSR is the event code, not just bits 55..0.
+    event_csr_write_callback(index, zero_extend(old_value[event]), zero_extend(value[event]))
+  }
 
 // Hardware Performance Monitoring event selection
 function clause is_CSR_accessible((0b0011001 /* 0x320 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Zihpm) // mhpmevent3..31
@@ -256,3 +297,54 @@ function clause is_CSR_accessible((0b1100100 /* 0xC80 */ @ index : bits(5), priv
 
 function clause read_CSR(0b1100000 /* 0xC00 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmcounter(hpmidx_from_bits(index))
 function clause read_CSR(0b1100100 /* 0xC80 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmcounterh(hpmidx_from_bits(index))
+
+// Dispatch an event.  The privilege at which the event occurred is
+// tracked in case the privilege changed after the event occurred.
+function increment_hpmcounter(index : hpmidx, (event_priv,_) : (Privilege, unit)) -> unit = {
+  // Ensure that an event does not increment a counter that was
+  // written by the current instruction.  This also does not increment
+  // the counter if its hpmevent CSR was written (see above).
+  match written_event_index {
+    Some(idx) => { if idx == index then return () },
+    None()    => (),
+  };
+
+  // Filter the privilege mode according to Sscofpmf.
+  if currentlyEnabled(Ext_Sscofpmf) then {
+    let event_cfg = mhpmevent[index];
+    let is_inhibited_bit : bits(1) = match event_priv {
+      Machine           => event_cfg[MINH],
+      Supervisor        => event_cfg[SINH],
+      User              => event_cfg[UINH],
+      VirtualSupervisor => event_cfg[VSINH],
+      VirtualUser       => event_cfg[VUINH],
+    };
+    if is_inhibited_bit == 0b1 then return ()
+  };
+
+  let index_bits  : bits(5) = to_bits(index);
+  let counter_csr : csreg   = 0b1011000 /* 0xB00 */ @ index_bits;
+  let event_csr   : csreg   = 0b0011001 /* 0x320 */ @ index_bits;
+
+  // Increment and check overflow.
+  let count : xlenbits = mhpmcounter[index][(xlen - 1) .. 0];
+  let overflowed : bool = count == ones();
+  let new_count = if overflowed then zeros() else count + 1;
+  mhpmcounter[index][(xlen - 1) .. 0] = new_count;
+  csr_write_callback(counter_csr, new_count);
+
+  // Set OF and LCOFI if needed.
+  if currentlyEnabled(Ext_Sscofpmf) & overflowed then {
+    let event_cfg = mhpmevent[index];
+    let previously_overflowed = event_cfg[OF] == 0b1;
+    if not(previously_overflowed) then {
+      let new_event_cfg = [event_cfg with OF = 0b1];
+      mhpmevent[index] = new_event_cfg;
+      mip = [mip with LCOFI = 0b1];
+
+      let event_csr_name = csr_name_map(event_csr);
+      long_csr_write_callback(event_csr_name, event_csr_name ^ "h", new_event_cfg.bits);
+      csr_write_callback(mip_csreg, mip.bits);
+    }
+  }
+}

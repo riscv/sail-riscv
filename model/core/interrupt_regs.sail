@@ -128,6 +128,8 @@ register mip     : Minterrupts // Pending
 register medeleg : Medeleg     // Exception delegation to S-mode
 register mideleg : Minterrupts // Interrupt delegation to S-mode
 
+let mip_csreg : csreg = 0x344
+
 mapping clause csr_name_map = 0x304  <-> "mie"
 mapping clause csr_name_map = 0x344  <-> "mip"
 mapping clause csr_name_map = 0x302  <-> "medeleg"

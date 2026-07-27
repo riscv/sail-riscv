@@ -166,6 +166,9 @@ private function wait_is_nop(wr : WaitReason) -> bool =
     WAIT_WRS_NTO => config extensions.Zawrs.nto.is_nop,
   }
 
+// The event dispatch function.
+val dispatch_events = impure {cpp : "dispatch_events"} : unit -> unit
+
 // The `try_step` function is the main internal driver of the Sail
 // model. It performs the fetch-decode-execute for an instruction. It
 // is also the primary interface to the non-Sail execution harness.
@@ -263,6 +266,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       // update wasn't suppressed by writing to it explicitly or
       // mcountinhibit[IR] or minstretcfg.
       if retired & minstret_increment then minstret = minstret + 1;
+
+      dispatch_events();
+      clear_written_event_index();
 
       // Record the next PC for RVFI.
       // TODO: Remove this and implement it in C.
