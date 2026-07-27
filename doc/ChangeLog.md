@@ -5,6 +5,7 @@
     for PMP checks.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1836 : machine mode interrupts in mip and mie were not delegated correctly to sip and sie
   - https://github.com/riscv/sail-riscv/issues/1832 : Zama16b validation check should require at least 16 bytes, not exactly 16 bytes
   - https://github.com/riscv/sail-riscv/issues/1829 : seed CSR OPST field contained random values
 
