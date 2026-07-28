@@ -170,11 +170,15 @@ function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, 
 
 bitfield Sinterrupts : xlenbits = {
   LCOFI : 13, // local-counter-overflow interrupts
-  SEI   : 9,  // external interrupts
 
-  STI   : 5,  // timers interrupts
+  MEI   : 11, // external interrupts
+  SEI   : 9,
 
-  SSI   : 1,  // software interrupts
+  MTI   : 7,  // timers interrupts
+  STI   : 5,
+
+  MSI   : 3,  // software interrupts
+  SSI   : 1,
 }
 
 // sip
@@ -184,8 +188,11 @@ private function lower_mip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 
   [s with
     LCOFI = m[LCOFI] & d[LCOFI],
+    MEI = m[MEI] & d[MEI],
     SEI = m[SEI] & d[SEI],
+    MTI = m[MTI] & d[MTI],
     STI = m[STI] & d[STI],
+    MSI = m[MSI] & d[MSI],
     SSI = m[SSI] & d[SSI],
   ]
 }
@@ -196,8 +203,11 @@ private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 
   [s with
     LCOFI = m[LCOFI] & d[LCOFI],
+    MEI = m[MEI] & d[MEI],
     SEI = m[SEI] & d[SEI],
+    MTI = m[MTI] & d[MTI],
     STI = m[STI] & d[STI],
+    MSI = m[MSI] & d[MSI],
     SSI = m[SSI] & d[SSI],
   ]
 }
@@ -230,8 +240,11 @@ function clause write_CSR(0x144, value) = { write_sip(value); Ok(read_sip(Includ
 // Returns the new value of mie from the previous mie (o) and the written sie (s) as delegated by mideleg (d).
 private function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterrupts = {
   [o with
+    MEI   = if d[MEI] == 0b1 then s[MEI] else o[MEI],
     SEI   = if d[SEI] == 0b1 then s[SEI] else o[SEI],
+    MTI   = if d[MTI] == 0b1 then s[MTI] else o[MTI],
     STI   = if d[STI] == 0b1 then s[STI] else o[STI],
+    MSI   = if d[MSI] == 0b1 then s[MSI] else o[MSI],
     SSI   = if d[SSI] == 0b1 then s[SSI] else o[SSI],
     LCOFI = if d[LCOFI] == 0b1 then s[LCOFI] else o[LCOFI],
   ]
