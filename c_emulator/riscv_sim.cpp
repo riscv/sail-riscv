@@ -51,15 +51,13 @@ std::string make_path_string(const std::vector<std::string> &path) {
   // This uses '/' separators for the path elements to be consistent
   // with the error messages from the jsoncons schema validator.
   if (path.empty()) {
-    return "path '/'";
+    return "/";
   }
 
   std::ostringstream buf;
-  buf << "path '";
   for (const auto &seg : path) {
     buf << "/" << seg;
   }
-  buf << "'";
   return buf.str();
 }
 
@@ -105,8 +103,8 @@ void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override, 
 
       if (!base.contains(key)) {
         std::ostringstream msg;
-        msg << "Cannot merge override: key at " << make_path_string(path)
-            << " does not exist in base object; config overrides cannot add new keys to the configuration.";
+        msg << "Cannot merge override: key at path '" << make_path_string(path)
+            << "' does not exist in base object; config overrides cannot add new keys to the configuration.";
         throw std::runtime_error(msg.str());
       }
 
@@ -123,7 +121,7 @@ void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override, 
 
   if (base_type != override_type) {
     std::ostringstream msg;
-    msg << "Cannot override config at " + make_path_string(path) + " of type '" << base_type
+    msg << "Cannot override config at path '" + make_path_string(path) + "' of type '" << base_type
         << "' with incompatible type '" << override_type << "'.";
     throw std::runtime_error(msg.str());
   }
