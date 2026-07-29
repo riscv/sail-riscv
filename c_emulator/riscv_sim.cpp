@@ -265,13 +265,45 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
     break;
   }
 
+  auto memory_regions = model.memory_regions();
+
   // Load into memory.
-  elf.load([](uint64_t address, const uint8_t *data, uint64_t length) {
+  elf.load([&filename, &elf_info, &memory_regions](uint64_t address, const uint8_t *data, uint64_t length) {
+    // Ensure these ELFs are loaded into defined memory regions. Each
+    // ELF segment is required to fit into a single memory
+    // region. This is a conservative check: the memory regions could
+    // technically be contiguous and compatible for the ELF segment,
+    // but this is unlikely.
+    const auto &memory_region_ptr =
+      std::find_if(memory_regions.begin(), memory_regions.end(), [address, length](const auto &ent) {
+        return address >= ent.base && address + length <= ent.base + ent.size;
+      });
+    if (memory_region_ptr == memory_regions.end()) {
+      std::ostringstream msg;
+      msg << "Cannot load segment from " << filename << " of size 0x" << std::hex << length << " @0x" << address
+          << " since it does not lie within any defined main memory region." << std::endl;
+      throw std::runtime_error(msg.str());
+    }
+
+    // Check for conflicts with already loaded regions.
+    const auto &loaded_region_ptr =
+      std::find_if(elf_info.loaded_regions.begin(), elf_info.loaded_regions.end(), [address, length](const auto &ent) {
+        return address + length > ent.offset && ent.offset + ent.length > address;
+      });
+    if (loaded_region_ptr != elf_info.loaded_regions.end()) {
+      std::ostringstream msg;
+      msg << "Load of segment from " << filename << " of size 0x" << std::hex << length << " @0x" << address
+          << " conflicts with already loaded segment from file " << loaded_region_ptr->filename << " of size 0x"
+          << loaded_region_ptr->length << " @0x" << loaded_region_ptr->offset << std::endl;
+      throw std::runtime_error(msg.str());
+    }
+
     // TODO: We could definitely improve on rts.c's memory implementation
     // (which is O(N^2)) and writing one byte at a time here.
     for (uint64_t i = 0; i < length; ++i) {
       write_mem(address + i, data[i]);
     }
+    elf_info.loaded_regions.emplace_back(filename, address, length);
   });
 
   // Load the entire symbol table.
