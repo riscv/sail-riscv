@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- Support for booting Linux with an `initramfs` has been added, see
+  `os-boot/README.md`. This allows a boot upto a terminal shell
+  prompt.
+
 # Release notes for version 0.14
 
 The highlight of this release is the addition of the `H` hypervisor

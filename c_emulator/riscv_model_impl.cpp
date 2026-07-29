@@ -315,6 +315,20 @@ bool ModelImpl::get_config_use_abi_names(unit) {
   return m_config_use_abi_names;
 }
 
+mach_bits ModelImpl::get_initramfs_base(unit) {
+  if (m_initramfs_region.has_value()) {
+    return m_initramfs_region.value().base;
+  }
+  return 0;
+}
+
+mach_bits ModelImpl::get_initramfs_size(unit) {
+  if (m_initramfs_region.has_value()) {
+    return m_initramfs_region.value().size;
+  }
+  return 0;
+}
+
 void ModelImpl::set_config_print_instr(bool on) {
   m_config_print_instr = on;
 }
@@ -353,6 +367,10 @@ void ModelImpl::set_config_use_abi_names(bool on) {
 
 void ModelImpl::set_config_print_step(bool on) {
   m_config_print_step = on;
+}
+
+void ModelImpl::set_initramfs_location(uint64_t ramfs_start, uint64_t ramfs_size) {
+  m_initramfs_region = {ramfs_start, ramfs_size};
 }
 
 void ModelImpl::set_elf_symbols(std::map<uint64_t, std::string> symbols) {

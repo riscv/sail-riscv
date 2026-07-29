@@ -94,4 +94,7 @@ public:
   virtual bool get_config_print_pmp(unit);
   virtual bool get_config_rvfi(unit);
   virtual bool get_config_use_abi_names(unit);
+
+  virtual mach_bits get_initramfs_base(unit);
+  virtual mach_bits get_initramfs_size(unit);
 };
