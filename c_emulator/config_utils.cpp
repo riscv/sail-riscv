@@ -115,6 +115,6 @@ void validate_config_schema(const jsoncons::json &json_config, const std::string
   };
   compiled.validate(json_config, report);
   if (!is_valid) {
-    throw std::runtime_error("Schema conformance check failed for " + source_desc + ":\n" + error_stream.str());
+    throw std::runtime_error("Schema conformance check failed for the " + source_desc + ":\n" + error_stream.str());
   }
 }
