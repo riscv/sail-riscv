@@ -292,7 +292,7 @@ function clause execute LOAD_FP(imm, rs1, rd, width) = {
 
 mapping clause assembly = LOAD_FP(imm, rs1, rd, width)
                       <-> "fl" ^ width_mnemonic(width)
-                          ^ spc() ^ freg_or_reg_name(rd)
+                          ^ spc() ^ freg_name(rd)
                           ^ sep() ^ hex_bits_signed_12(imm)
                           ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
