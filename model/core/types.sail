@@ -330,7 +330,7 @@ function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
 
 type ext_exception = unit
 
-struct Exception_Context = {
+struct ExceptionContext = {
   trap           : ExceptionType,
   excinfo_is_gva : bool,
   excinfo        : xlenbits,
@@ -343,7 +343,7 @@ struct Exception_Context = {
 
 union TrapCause = {
   Interrupt : InterruptType,
-  Exception : Exception_Context,
+  Exception : ExceptionContext,
 }
 
 function trapCause_bits(c : TrapCause) -> exc_code = {

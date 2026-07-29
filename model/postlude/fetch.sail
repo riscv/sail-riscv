@@ -23,7 +23,7 @@ private function isRVC(h : half) -> bool = not(h[1 .. 0] == 0b11)
 
 private union FetchBytes_Result('width : Int), 'width >= 0 = {
   FetchBytes_Ext_Error : ext_fetch_addr_error,
-  FetchBytes_Exception : Exception_Context,
+  FetchBytes_Exception : ExceptionContext,
   FetchBytes_Success   : bits('width * 8),
 }
 

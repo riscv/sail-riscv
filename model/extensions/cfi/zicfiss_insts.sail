@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function make_shadow_stack_exception() -> Exception_Context = exception_context(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)))
+function make_shadow_stack_exception() -> ExceptionContext = exception_context(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)))
 
 // *****************************************************************
 

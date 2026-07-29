@@ -34,8 +34,8 @@ union ExecutionResult = {
   // Did not retire for a standard reason.
   Illegal_Instruction            : unit,
   Virtual_Instruction            : unit,
-  Trap                           : (Privilege, Exception_Context, xlenbits),
-  Memory_Exception               : Exception_Context,
+  Trap                           : (Privilege, ExceptionContext, xlenbits),
+  Memory_Exception               : ExceptionContext,
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,

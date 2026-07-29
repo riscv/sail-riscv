@@ -13,7 +13,7 @@ register hart_state : HartState = HART_ACTIVE()
 private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
-  Step_Fetch_Failure      : Exception_Context,
+  Step_Fetch_Failure      : ExceptionContext,
   Step_Execute            : (ExecutionResult, instbits),
   Step_Waiting            : WaitReason,
 }

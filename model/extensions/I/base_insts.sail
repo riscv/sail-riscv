@@ -546,7 +546,7 @@ function clause execute ECALL() = {
     VirtualUser       => E_U_EnvCall(),
     VirtualSupervisor => E_VS_EnvCall(),
   };
-  let c : Exception_Context = struct {
+  let c : ExceptionContext = struct {
     trap           = trap,
     excinfo_is_gva = false,
     excinfo        = zeros(), // TODO should be option...

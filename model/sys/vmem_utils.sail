@@ -84,7 +84,7 @@ function transform_hlsv_address(vaddr : virtaddr, access : MemoryAccessType(mem_
 function access_is_gva(access : MemoryAccessType(mem_payload)) -> bool =
   privLevel_is_virtual(effectivePrivilege(access, mstatus, cur_privilege))
 
-function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> Exception_Context =
+function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> ExceptionContext =
   make_exception_context(e, excinfo, access_is_gva(access), None())
 
 // Helper for translated read access.

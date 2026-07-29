@@ -14,7 +14,7 @@ mapping maybe_hlvx : hlvop <-> string = {
 // The spec says that "GVA is redundant with field SPV ... except when the
 // explicit memory access of an HLV, HLVX, or HSV instruction causes a fault.
 // In that case, SPV=0 but GVA=1."
-private function hlsv_exception_context(e : ExceptionType, va : xlenbits) -> Exception_Context =
+private function hlsv_exception_context(e : ExceptionType, va : xlenbits) -> ExceptionContext =
   make_exception_context(e, va, true, None())
 
 union clause instruction = HLVTYPE : (word_width, hlvop, bool, regidx, regidx)

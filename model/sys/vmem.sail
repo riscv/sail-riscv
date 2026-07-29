@@ -610,7 +610,7 @@ termination_measure translate_g_stage(_, _, _) = 1000
 // Explicit  VS-Stage fail Regular page fault GVA   0          Virtual Supervisor
 // Explicit  G-Stage  fail Guest-page fault   GVA   GPA        Hypervisor
 //
-// We save all the information in Exception_Context in order to set the appropriate
+// We save all the information in ExceptionContext in order to set the appropriate
 // CSR's according to the effective privilege mode and given faulting stage.
 function build_exception_context(
   gva       : virtaddr,
@@ -618,7 +618,7 @@ function build_exception_context(
   access    : MemoryAccessType(mem_payload),
   ptw_error : PTW_Error,
   stage     : TranslationStage
-) -> Exception_Context = {
+) -> ExceptionContext = {
   match stage {
     S_Stage => {
     // S-Stage failure
@@ -696,7 +696,7 @@ function translateAddr_eff_priv(
   gva    : virtaddr,
   access : MemoryAccessType(mem_payload),
   p      : Privilege
-) -> TR_Result(physaddr, Exception_Context) = {
+) -> TR_Result(physaddr, ExceptionContext) = {
 
 
   // True if the effective privilege is virtual (VS/VU), as opposed to
@@ -748,7 +748,7 @@ function translateAddr_eff_priv(
 function translateAddr(
   vAddr : virtaddr,
   access : MemoryAccessType(mem_payload),
-) -> TR_Result(physaddr, Exception_Context) = {
+) -> TR_Result(physaddr, ExceptionContext) = {
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
   // See sys_control.sail for effectivePrivilege() and sys_regs.sail for cur_privilege.
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);

@@ -8,7 +8,7 @@
 
 // model context for synchronous exceptions, parameterized for extensions
 
-function exception_context(e : ExceptionType, excinfo : xlenbits) -> Exception_Context = {
+function exception_context(e : ExceptionType, excinfo : xlenbits) -> ExceptionContext = {
   struct {
     trap           = e,
     // NOTE/TODO: "Field GVA (Guest Virtual Address) is written by the implementation
@@ -30,7 +30,7 @@ function make_exception_context(
   excinfo        : xlenbits,
   excinfo_is_gva : bool,
   excinfo2       : option(xlenbits),
-) -> Exception_Context = {
+) -> ExceptionContext = {
   struct {
     trap           = trap,
     excinfo_is_gva = excinfo_is_gva,
@@ -45,7 +45,7 @@ function make_exception_context(
 function make_instr_exception_context(
   trap    : ExceptionType,
   excinfo : xlenbits,  // instruction bits or zeros
-) -> Exception_Context = {
+) -> ExceptionContext = {
   struct {
     trap           = trap,
     excinfo_is_gva = false,

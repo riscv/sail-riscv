@@ -324,7 +324,7 @@ function trap_handler(
   };
 }
 
-function exception_handler(cur_priv : Privilege, exc_context : Exception_Context, pc: xlenbits) -> xlenbits = {
+function exception_handler(cur_priv : Privilege, exc_context : ExceptionContext, pc: xlenbits) -> xlenbits = {
   let del_priv = exception_delegatee(exc_context.trap, cur_priv);
   if   get_config_print_exception()
   then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
@@ -365,7 +365,7 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
-function handle_exception(c : Exception_Context) -> unit = {
+function handle_exception(c : ExceptionContext) -> unit = {
   set_next_pc(exception_handler(cur_privilege, c, PC))
 }
 
