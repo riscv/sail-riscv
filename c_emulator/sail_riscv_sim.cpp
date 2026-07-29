@@ -60,7 +60,15 @@ int inner_main(int argc, char **argv) {
   }
 
   elf_info elf_info;
-  uint64_t entry = init_model(opts, model, elf_info, run_info);
+  uint64_t entry = 0;
+  switch (init_model(opts, model, elf_info, run_info, entry)) {
+  case InitResult::ExitSuccess:
+    return EXIT_SUCCESS;
+  case InitResult::ExitFailure:
+    return EXIT_FAILURE;
+  case InitResult::Continue:
+    break;
+  }
 
   auto log_cbs = std::make_shared<log_callbacks>(
     opts.config_print_gpr,

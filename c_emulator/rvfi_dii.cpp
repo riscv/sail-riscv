@@ -25,7 +25,7 @@ uint64_t rvfi_handler::get_entry() {
   return 0x80000000;
 }
 
-// returns zero on success
+// returns true on success
 bool rvfi_handler::setup_socket(bool config_print) {
   int listen_sock = socket(AF_INET, SOCK_STREAM, 0);
   if (listen_sock == -1) {
