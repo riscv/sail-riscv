@@ -1,5 +1,10 @@
 # Release notes for the next version
 
+# Release notes for version 0.13.1
+
+This is primarily a bug-fix release with fixes for the issues listed
+below.
+
 - The command line interface has been updated:
   - A new `--trace-pmp` option has been added to enable trace output
     for PMP checks.
