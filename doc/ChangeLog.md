@@ -3,7 +3,8 @@
 # Release notes for version 0.13.1
 
 This is primarily a bug-fix release with fixes for the issues listed
-below.
+below. There are no changes to the configuration file, so the model
+configuration is fully compatible with that of version 0.13.
 
 - The command line interface has been updated:
   - A new `--trace-pmp` option has been added to enable trace output
