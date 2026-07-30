@@ -48,13 +48,13 @@ function clause execute ZICBOZ(rs1) = {
         // was encoded in the instruction. We subtract the negative offset
         // (add the positive offset) to get it. Normally this will be
         // equal to rs1, but pointer masking can change that.
-        Err(e, _) => Memory_Exception({ e with excinfo = bits_of(vaddr - negative_offset) }),
+        Err(e, _) => trap({ e with excinfo = bits_of(vaddr - negative_offset) }),
         Ok(paddr, pbmt, _) => {
           match mem_write_ea(paddr, cache_block_size, access, pbmt, false, false, false) {
             Err(exc_addr, e) => {
               // Cache accesses should not get split.
               assert(exc_addr == paddr);
-              Memory_Exception(mem_exception_context(e, bits_of(vaddr - negative_offset), access))
+              memory_exception(e, bits_of(vaddr - negative_offset), access)
             },
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {
@@ -63,7 +63,7 @@ function clause execute ZICBOZ(rs1) = {
                 Err(exc_addr, e) => {
                   // Cache accesses should not get split.
                   assert(exc_addr == paddr);
-                  Memory_Exception(mem_exception_context(e, bits_of(vaddr - negative_offset), access))
+                  memory_exception(e, bits_of(vaddr - negative_offset), access)
                 },
               }
             }

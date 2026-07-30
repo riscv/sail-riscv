@@ -60,7 +60,7 @@ function jump_to(target : xlenbits) -> ExecutionResult = {
   // If it is not 4-byte aligned and compressed instructions are
   // not enabled then raise an alignment exception.
   if bit_to_bool(target[1]) & not(currentlyEnabled(Ext_Zca))
-  then return Memory_Exception(exception_context(E_Fetch_Addr_Align(), target));
+  then return trap(exception_context(E_Fetch_Addr_Align(), target));
 
   set_next_pc(target);
   RETIRE_SUCCESS
@@ -539,7 +539,7 @@ mapping clause encdec = ECALL()
   <-> 0b000000000000 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute ECALL() = {
-  let trap : ExceptionType = match cur_privilege {
+  let exc_type : ExceptionType = match cur_privilege {
     User              => E_U_EnvCall(),
     Supervisor        => E_S_EnvCall(),
     Machine           => E_M_EnvCall(),
@@ -547,14 +547,14 @@ function clause execute ECALL() = {
     VirtualSupervisor => E_VS_EnvCall(),
   };
   let c : ExceptionContext = struct {
-    trap           = trap,
+    trap           = exc_type,
     excinfo_is_gva = false,
     excinfo        = zeros(), // TODO should be option...
     excinfo2       = None(),
     excinst        = None(),
     ext            = None(),
   };
-  Trap(cur_privilege, c, PC)
+  trap(c)
 }
 
 mapping clause assembly = ECALL() <-> "ecall"
@@ -674,12 +674,12 @@ mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute EBREAK() = {
-  let trap = E_Breakpoint(Brk_Software);
-  let excinfo : xlenbits = match xtval_exception_value(trap, PC) {
+  let exc_type = E_Breakpoint(Brk_Software);
+  let excinfo : xlenbits = match xtval_exception_value(exc_type, PC) {
     Some(excinfo) => excinfo,
     None()        => zeros(),
   };
-  Trap(cur_privilege, exception_context(trap, excinfo), PC)
+  trap(exception_context(exc_type, excinfo))
 }
 
 mapping clause assembly = EBREAK() <-> "ebreak"

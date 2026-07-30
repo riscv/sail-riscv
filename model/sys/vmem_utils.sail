@@ -87,17 +87,20 @@ function access_is_gva(access : MemoryAccessType(mem_payload)) -> bool =
 function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> ExceptionContext =
   make_exception_context(e, excinfo, access_is_gva(access), None())
 
+function memory_exception(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> ExecutionResult =
+  trap(mem_exception_context(e, excinfo, access))
+
 // Helper for translated read access.
 private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_access.
   (vaddr : virtaddr, width : int('width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
   -> result((physaddr, bits(8 * 'width)), ExecutionResult) =
   match translateAddr(vaddr, access) {
-    Err(e, _) => Err(Memory_Exception(e)),
+    Err(e, _) => Err(trap(e)),
 
     Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, width, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
+        Err(memory_exception(e, bits_of(exc_vaddr), access))
       },
 
       Ok(v) => Ok(paddr, v),
@@ -113,8 +116,8 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(Memory_Exception(mem_exception_context(E_Load_Access_Fault(), bits_of(vaddr), access))),
-      Some(AlignmentException) => return Err(Memory_Exception(mem_exception_context(E_Load_Addr_Align(), bits_of(vaddr), access))),
+      Some(AccessFault)        => return Err(memory_exception(E_Load_Access_Fault(), bits_of(vaddr), access)),
+      Some(AlignmentException) => return Err(memory_exception(E_Load_Addr_Align(), bits_of(vaddr), access)),
       // Even if the CPU does support misaligned accesses, it might be
       // that the PMA doesn't support misaligned accesses so you can
       // still get a fault later, but this will be after address
@@ -185,18 +188,18 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
   (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
   -> result(bool, ExecutionResult) =
   match translateAddr(vaddr, access) {
-    Err(e, _) => Err(Memory_Exception(e)),
+    Err(e, _) => Err(trap(e)),
 
     Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, access, pbmt, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
+        Err(memory_exception(e, bits_of(exc_vaddr), access))
       },
 
       Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
+          Err(memory_exception(e, bits_of(exc_vaddr), access))
         },
 
         Ok(s) => Ok(s),
@@ -212,8 +215,8 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(Memory_Exception(mem_exception_context(E_SAMO_Access_Fault(), bits_of(vaddr), access))),
-      Some(AlignmentException) => return Err(Memory_Exception(mem_exception_context(E_SAMO_Addr_Align(), bits_of(vaddr), access))),
+      Some(AccessFault)        => return Err(memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access)),
+      Some(AlignmentException) => return Err(memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access)),
       None()                   => (),
     };
   };
@@ -252,7 +255,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
   let access_width = if do_split_access then in_page_bytes else width;
   match translateAddr(vaddr, access) {
-    Err(e, _) => return Err(Memory_Exception(e)),
+    Err(e, _) => return Err(trap(e)),
 
     Ok(paddr, pbmt, _) => {
       // If res is true, the store should be aligned.
@@ -266,13 +269,13 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
         // access-fault exception."
         let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
         match phys_access_check(access, pbmt, effPriv, paddr, access_width, true) {
-          Err(e) => return Err(Memory_Exception(mem_exception_context(e, bits_of(vaddr), access))),
+          Err(e) => return Err(memory_exception(e, bits_of(vaddr), access)),
           Ok(_)  => write_success = false,
         }
       } else match mem_write_ea(paddr, access_width, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          return Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
+          return Err(memory_exception(e, bits_of(exc_vaddr), access))
         },
 
         Ok(()) => {
@@ -280,7 +283,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           match mem_write_value(paddr, access_width, write_value, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-              return Err(Memory_Exception(mem_exception_context(e, bits_of(exc_vaddr), access)))
+              return Err(memory_exception(e, bits_of(exc_vaddr), access))
             },
             Ok(s)  => write_success = write_success & s,
           }

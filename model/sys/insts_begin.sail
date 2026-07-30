@@ -35,7 +35,6 @@ union ExecutionResult = {
   Illegal_Instruction            : unit,
   Virtual_Instruction            : unit,
   Trap                           : (Privilege, ExceptionContext, xlenbits),
-  Memory_Exception               : ExceptionContext,
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,
@@ -50,6 +49,11 @@ union ExecutionResult = {
 // update all the places RETIRE_SUCCESS was used.
 
 let RETIRE_SUCCESS : ExecutionResult = Retire_Success()
+
+// Trap helpers
+
+function trap(exc : ExceptionContext) -> ExecutionResult =
+  Trap(cur_privilege, exc, PC)
 
 // returns whether an instruction was retired, used for computing minstret
 val execute : instruction -> ExecutionResult

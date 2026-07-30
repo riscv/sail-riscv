@@ -17,6 +17,9 @@ mapping maybe_hlvx : hlvop <-> string = {
 private function hlsv_exception_context(e : ExceptionType, va : xlenbits) -> ExceptionContext =
   make_exception_context(e, va, true, None())
 
+private function hlsv_memory_exception(e : ExceptionType, va : xlenbits) -> ExecutionResult =
+  trap(hlsv_exception_context(e, va))
+
 union clause instruction = HLVTYPE : (word_width, hlvop, bool, regidx, regidx)
 
 mapping clause encdec = HLVTYPE(width, HLV, is_unsigned, rs1, rd)
@@ -56,8 +59,8 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
       Ext_DataAddr_OK(vaddr) => {
         let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
         match plat_misaligned_exception(access, false) {
-          Some(AccessFault)        => return Memory_Exception(hlsv_exception_context(E_Load_Access_Fault(), bits_of(vaddr))),
-          Some(AlignmentException) => return Memory_Exception(hlsv_exception_context(E_Load_Addr_Align(), bits_of(vaddr))),
+          Some(AccessFault)        => return hlsv_memory_exception(E_Load_Access_Fault(), bits_of(vaddr)),
+          Some(AlignmentException) => return hlsv_memory_exception(E_Load_Addr_Align(), bits_of(vaddr)),
           None()                   => (),
         };
         match translateAddr_eff_priv(vaddr, access, eff_priv) {
@@ -65,12 +68,12 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
           // (not fetch) exceptions on translation failure (see model/sys/vmem_ptw.sail),
           // matching the spec's "[HLVX] still raise the same exceptions as other load
           // instructions, rather than raising fetch exceptions instead."
-          Err(e, _) => Memory_Exception(e),
+          Err(e, _) => trap(e),
           Ok(paddr, pbmt,_) => match mem_read_priv(access, pbmt, eff_priv, paddr, width, false, false, false) {
             Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
             Err(exc_addr, e) => {
               assert(exc_addr == paddr);
-              return Memory_Exception(hlsv_exception_context(e, bits_of(vaddr)))
+              return hlsv_memory_exception(e, bits_of(vaddr))
             }
           },
         };
@@ -103,17 +106,17 @@ function clause execute(HSV(width, rs1, rs2)) = {
       Ext_DataAddr_OK(vaddr) => {
         let vaddr = transform_hlsv_address(vaddr, Store(Data), eff_priv);
         match plat_misaligned_exception(Store(Data), false) {
-          Some(AccessFault)        => return Memory_Exception(hlsv_exception_context(E_SAMO_Access_Fault(), bits_of(vaddr))),
-          Some(AlignmentException) => return Memory_Exception(hlsv_exception_context(E_SAMO_Addr_Align(), bits_of(vaddr))),
+          Some(AccessFault)        => return hlsv_memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr)),
+          Some(AlignmentException) => return hlsv_memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr)),
           None()                   => (),
         };
         match translateAddr_eff_priv(vaddr, Store(Data), eff_priv) {
-          Err(e, _) => Memory_Exception(e),
+          Err(e, _) => trap(e),
           Ok(paddr, pbmt, _) => {
             match mem_write_ea_priv(paddr, width, eff_priv, Store(Data), pbmt, false, false, false) {
               Err(exc_paddr, e) => {
                 let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-                return Memory_Exception(hlsv_exception_context(e, bits_of(exc_vaddr)))
+                return hlsv_memory_exception(e, bits_of(exc_vaddr))
               },
               Ok(_) => {
                 match mem_write_value_priv(paddr, width, X(rs2)[8 * width - 1 .. 0], eff_priv, Store(Data), pbmt, false, false, false) {
@@ -121,7 +124,7 @@ function clause execute(HSV(width, rs1, rs2)) = {
                   Ok(false) => internal_error(__FILE__, __LINE__, "HSV got false from mem_write_value"),
                   Err(exc_paddr, e) => {
                     let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-                    return Memory_Exception(hlsv_exception_context(e, bits_of(exc_vaddr)))
+                    return hlsv_memory_exception(e, bits_of(exc_vaddr))
                   }
                 }
               }
