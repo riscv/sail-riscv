@@ -212,6 +212,39 @@ function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> uni
   trap_callback(is_interrupt, cause);
 }
 
+// Compute the value to write to mtval on a trap.
+function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
+  if match e {
+    E_Illegal_Instr() => illegal_instruction_writes_xtval,
+    E_Virtual_Instr() => virtual_instruction_writes_xtval,
+    E_Breakpoint(Brk_Software) => software_breakpoint_writes_xtval,
+    E_Breakpoint(Brk_Hardware) => hardware_breakpoint_writes_xtval,
+    E_Load_Addr_Align() => misaligned_load_writes_xtval,
+    E_Load_Access_Fault() => load_access_fault_writes_xtval,
+    E_Load_Page_Fault() => load_page_fault_writes_xtval,
+    E_Load_GPage_Fault() => load_guest_page_fault_writes_xtval,
+    E_SAMO_Addr_Align() => misaligned_samo_writes_xtval,
+    E_SAMO_Access_Fault() => samo_access_fault_writes_xtval,
+    E_SAMO_Page_Fault() => samo_page_fault_writes_xtval,
+    E_SAMO_GPage_Fault() => samo_guest_page_fault_writes_xtval,
+    E_Fetch_Addr_Align() => misaligned_fetch_writes_xtval,
+    E_Fetch_Access_Fault() => fetch_access_fault_writes_xtval,
+    E_Fetch_Page_Fault() => fetch_page_fault_writes_xtval,
+    E_Fetch_GPage_Fault() => fetch_guest_page_fault_writes_xtval,
+    E_Software_Check() => software_check_fault_writes_xtval,
+    E_U_EnvCall()  => false,
+    E_S_EnvCall()  => false,
+    E_VS_EnvCall() => false,
+    E_M_EnvCall()  => false,
+    E_Extension(_) => true,
+    // the rest are all reserved exceptions
+    E_Reserved_14() => reserved_exceptions_write_xtval,
+    E_Reserved_16() => reserved_exceptions_write_xtval,
+    E_Reserved_17() => reserved_exceptions_write_xtval,
+    E_Reserved_19() => reserved_exceptions_write_xtval,
+  } then Some(excinfo) else None()
+}
+
 // handle exceptional ctl flow by updating nextPC and operating privilege
 function trap_handler(
   del_priv       : Privilege,
@@ -224,7 +257,7 @@ function trap_handler(
   // TODO: Improve this
   let (excinfo_is_gva, excinfo, excinfo2, excinst, ext) : (bool, option(xlenbits), option(xlenbits), option(xlenbits), option(ext_exception)) = match c {
     Interrupt(_) => (false, Some(zeros()), None(), None(), None()),
-    Exception(ctx) => (ctx.excinfo_is_gva, Some(ctx.excinfo), ctx.excinfo2, ctx.excinst, ctx.ext),
+    Exception(ctx) => (ctx.excinfo_is_gva, xtval_exception_value(ctx.trap, ctx.excinfo), ctx.excinfo2, ctx.excinst, ctx.ext),
   };
 
   if   get_config_print_exception() | get_config_print_interrupt()
@@ -330,39 +363,6 @@ function exception_handler(cur_priv : Privilege, exc_context : ExceptionContext,
   then print_log("trapping from " ^ to_str(cur_priv) ^ " to " ^ to_str(del_priv)
                           ^ " to handle " ^ to_str(exc_context.trap));
   trap_handler(del_priv, Exception(exc_context), pc);
-}
-
-// Compute the value to write to mtval on a trap.
-function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
-  if match e {
-    E_Illegal_Instr() => illegal_instruction_writes_xtval,
-    E_Virtual_Instr() => virtual_instruction_writes_xtval,
-    E_Breakpoint(Brk_Software) => software_breakpoint_writes_xtval,
-    E_Breakpoint(Brk_Hardware) => hardware_breakpoint_writes_xtval,
-    E_Load_Addr_Align() => misaligned_load_writes_xtval,
-    E_Load_Access_Fault() => load_access_fault_writes_xtval,
-    E_Load_Page_Fault() => load_page_fault_writes_xtval,
-    E_Load_GPage_Fault() => load_guest_page_fault_writes_xtval,
-    E_SAMO_Addr_Align() => misaligned_samo_writes_xtval,
-    E_SAMO_Access_Fault() => samo_access_fault_writes_xtval,
-    E_SAMO_Page_Fault() => samo_page_fault_writes_xtval,
-    E_SAMO_GPage_Fault() => samo_guest_page_fault_writes_xtval,
-    E_Fetch_Addr_Align() => misaligned_fetch_writes_xtval,
-    E_Fetch_Access_Fault() => fetch_access_fault_writes_xtval,
-    E_Fetch_Page_Fault() => fetch_page_fault_writes_xtval,
-    E_Fetch_GPage_Fault() => fetch_guest_page_fault_writes_xtval,
-    E_Software_Check() => software_check_fault_writes_xtval,
-    E_U_EnvCall()  => false,
-    E_S_EnvCall()  => false,
-    E_VS_EnvCall() => false,
-    E_M_EnvCall()  => false,
-    E_Extension(_) => true,
-    // the rest are all reserved exceptions
-    E_Reserved_14() => reserved_exceptions_write_xtval,
-    E_Reserved_16() => reserved_exceptions_write_xtval,
-    E_Reserved_17() => reserved_exceptions_write_xtval,
-    E_Reserved_19() => reserved_exceptions_write_xtval,
-  } then Some(excinfo) else None()
 }
 
 function handle_exception(c : ExceptionContext) -> unit = {

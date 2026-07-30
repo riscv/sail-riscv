@@ -673,14 +673,8 @@ union clause instruction = EBREAK : unit
 mapping clause encdec = EBREAK()
   <-> 0b000000000001 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
-function clause execute EBREAK() = {
-  let exc_type = E_Breakpoint(Brk_Software);
-  let excinfo : xlenbits = match xtval_exception_value(exc_type, PC) {
-    Some(excinfo) => excinfo,
-    None()        => zeros(),
-  };
-  trap(exception_context(exc_type, excinfo))
-}
+function clause execute EBREAK() =
+  trap(exception_context(E_Breakpoint(Brk_Software), PC))
 
 mapping clause assembly = EBREAK() <-> "ebreak"
 
