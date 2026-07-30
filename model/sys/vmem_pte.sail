@@ -138,6 +138,7 @@ union PTE_Check = {
 private function check_PTE_permission(
   access    : MemoryAccessType(mem_payload),
   priv      : Privilege,
+  stage     : TranslationStage,
   // Make eXecutable Readable
   mxr       : bool,
   // permit Supervisor User Memory access
@@ -170,8 +171,15 @@ private function check_PTE_permission(
 
   // Step 7 of VATP (see vmem.sail).
 
-  // Enforce Shadow Stack (SS) protection rules for a shadow stack page.
-  if not(pte_R) & pte_W & not(pte_X) then {
+  // Enforce Shadow Stack (SS) protection rules. These apply to single-stage
+  // and VS-stage translation only. The G-stage is unaffected by Zicfiss, so
+  // the xwr=010 encoding stays reserved there, but a shadow stack instruction
+  // still requires the G-stage page to be read-write, otherwise a store/AMO
+  // guest-page-fault is raised.
+  if stage == G_Stage then {
+    if is_shadow_stack_access(access) & not(pte_R & pte_W)
+    then return PTE_Check_Failure((), PTE_No_Permission());
+  } else if not(pte_R) & pte_W & not(pte_X) then {
     // Since we assume a valid PTE: this encoding is only valid when menvcfg[SSE] is 1.
     assert(bool_bit(menvcfg[SSE]));
 

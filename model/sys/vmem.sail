@@ -233,7 +233,7 @@ function pt_walk(
             };
           };
           // Steps 6, 7 and 8 of VATP.
-          match check_PTE_permission(access, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
+          match check_PTE_permission(access, priv, stage, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, pte_failure) => {
               ptw_fail_callback(ext_get_ptw_error(pte_failure), level, bits_of(pte_addr));
               Err(ext_get_ptw_error(pte_failure), ext_ptw)
@@ -416,7 +416,7 @@ private function translate_TLB_hit forall 'v, is_sv_or_svx4_mode('v) . (
   let pte       = tlb_get_pte(pte_size, ent);  // Step 2 of VATP.
   let ext_pte   = ext_bits_of_PTE(pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
-  let pte_check = check_PTE_permission(access, priv, mxr, do_sum, pte_flags,
+  let pte_check = check_PTE_permission(access, priv, stage, mxr, do_sum, pte_flags,
                                        ext_pte, ext_ptw);
   match pte_check {
     PTE_Check_Failure(ext_ptw, pte_failure) =>
