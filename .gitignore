@@ -16,4 +16,4 @@ z3_problems
 # z3 cache
 sail_smt_cache
 # Rocq packaging
-coq-sail-riscv.opam
+rocq-sail-riscv.opam

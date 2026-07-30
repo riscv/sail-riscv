@@ -1,5 +1,5 @@
 opam-version: "2.0"
-name: "coq-sail-riscv"
+name: "rocq-sail-riscv"
 version: "@sail_riscv_release_version@"
 maintainer: "Sail Devs <cl-sail-dev@lists.cam.ac.uk>"
 authors: "Sail RISC-V contributors"
@@ -13,8 +13,8 @@ build: [
   ["cmake" "--build" "build" "--target" "build_rocq_rv64d" "build_rocq_rv32d"]
 ]
 install: [
-  ["sh" "-c" "install -d `coqc -where`/user-contrib/Riscv"]
-  ["sh" "-c" "install build/rocq/* `coqc -where`/user-contrib/Riscv"]
+  ["sh" "-c" "install -d `rocq c -where`/user-contrib/Riscv"]
+  ["sh" "-c" "install build/rocq/* `rocq c -where`/user-contrib/Riscv"]
 ]
 depends: [
   "sail" {>= "@sail_required_version_rocq@"}
@@ -28,7 +28,7 @@ depends: [
   "sail_sv_backend" {>= "@sail_required_version_rocq@"}
   "sail_ocaml_backend" {>= "@sail_required_version_rocq@"}
   "sail_output" {>= "@sail_required_version_rocq@"}
-  "coq-sail-stdpp" {>= "@sail_required_version_rocq@"}
+  "rocq-sail-stdpp" {>= "@sail_required_version_rocq@"}
   "conf-cmake"
 ]
 synopsis:
