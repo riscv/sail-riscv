@@ -143,9 +143,10 @@ private function check_PTE_permission(
   let pte_W = bit_to_bool(pte_flags[W]);
   let pte_X = bit_to_bool(pte_flags[X]);
 
-  // Since we assume a valid PTE: Writable pages must be readable. Write-only
-  // pages are reserved.
-  assert(pte_W ==> pte_R);
+  // We assume a valid PTE, so a writable page is either also readable or it is
+  // the write only shadow stack encoding (R=0, W=1, X=0). Any other write only
+  // page is reserved and would already have been rejected as invalid.
+  assert(pte_W ==> (pte_R | not(pte_X)));
 
   // Step 6 of VATP (see vmem.sail).
   let priv_ok : bool = match priv {
