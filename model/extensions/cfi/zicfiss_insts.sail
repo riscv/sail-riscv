@@ -6,7 +6,10 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function make_shadow_stack_exception() -> ExceptionContext = exception_context(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)))
+// Same reasoning as make_landing_pad_exception. A software-check fault is not
+// translation related, so GVA must stay 0 and we build the context with
+// make_instr_exception_context which sets excinfo_is_gva to false.
+function make_shadow_stack_exception() -> ExceptionContext = make_instr_exception_context(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)))
 
 // *****************************************************************
 

@@ -6,7 +6,11 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function make_landing_pad_exception() -> ExceptionContext = exception_context(E_Software_Check(), zero_extend(software_check_cause(SWC_LANDING_PAD_FAULT)))
+// A software-check fault writes the fault code to xtval rather than a guest
+// virtual address, so GVA must stay 0 even when the fault is raised in a
+// virtual privilege. We use make_instr_exception_context because it sets
+// excinfo_is_gva to false.
+function make_landing_pad_exception() -> ExceptionContext = make_instr_exception_context(E_Software_Check(), zero_extend(software_check_cause(SWC_LANDING_PAD_FAULT)))
 
 union clause instruction = LPAD : (landing_pad_label)
 
