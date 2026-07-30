@@ -26,5 +26,8 @@ function clause is_CSR_accessible(0x15D, priv, _) = is_stimecmp_accessible(priv)
 function clause read_CSR(0x14D) = stimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x15D if xlen == 32) = stimecmp[63 .. 32]
 
-function clause write_CSR(0x14D, value) = { stimecmp[(xlen - 1) .. 0] = value; Ok(stimecmp[xlen - 1 .. 0]) }
-function clause write_CSR((0x15D, value) if xlen == 32) = { stimecmp[63 .. 32] = value; Ok(stimecmp[63 .. 32]) }
+// Writing stimecmp changes the timer interrupt condition, so refresh the
+// pending bits right away the same way an mtimecmp write does. Without this
+// mip[STI] stays stale until the next clock tick.
+function clause write_CSR(0x14D, value) = { stimecmp[(xlen - 1) .. 0] = value; clint_dispatch(false); Ok(stimecmp[xlen - 1 .. 0]) }
+function clause write_CSR((0x15D, value) if xlen == 32) = { stimecmp[63 .. 32] = value; clint_dispatch(false); Ok(stimecmp[63 .. 32]) }
