@@ -544,11 +544,16 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
   };
-  if (config extensions.H.supported : bool) & (not(config extensions.Zicsr.supported : bool) |
-    not(config extensions.S.supported: bool) | not(if xlen == 64 then (config extensions.Sv39.supported : bool) else (config extensions.Sv32.supported : bool))) then {
-    valid = false;
-    print_endline("The H extension is enabled but one or more of Zicsr, S, and " ^ (if xlen == 64 then "Sv39" else "Sv32") ^
-                  " are disabled: supporting H requires Zicsr, S, and " ^ (if xlen == 64 then "Sv39" else "Sv32") ^ " on RV" ^ dec_str(xlen) ^ ".");
+  if (config extensions.H.supported : bool) then {
+    if not(config extensions.Zicsr.supported : bool) then {
+      valid = false;
+      print_endline("The H extension is enabled but Zicsr is disabled: supporting H requires Zicsr.");
+    };
+    if not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("The H extension is enabled but supervisor mode (S) is disabled: supporting H requires S.");
+    };
+    valid = valid & require_virtual_memory("H");
   };
   valid
 }

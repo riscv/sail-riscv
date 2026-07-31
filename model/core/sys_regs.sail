@@ -968,8 +968,8 @@ function clause write_CSR(0x142, value) = if inVirtualPrivilege() then { vscause
 function clause write_CSR(0x143, value) = if inVirtualPrivilege() then { vstval = value; Ok(vstval) } else { stval = value; Ok(stval) }
 
 //
-// HS-mode address translation and protection (hgatp) layout.
-// The actual hgatp register is defined in an architecture-specific file.
+// Hypervisor guest address translation and protection (hgatp) layout.
+// The actual hgatp register is defined in `vmem.sail`.
 bitfield Hgatp64 : bits(64) = {
   Mode : 63 .. 60,
   VMID : 57 .. 44,
