@@ -210,6 +210,12 @@ private function check_mmu_config() -> bool = {
   if (config extensions.Svvptc.supported : bool)
   then valid = valid & require_virtual_memory("Svvptc");
 
+  let asidlen_nat : nat = asidlen;
+  if (config extensions.S.supported : bool) & asidlen_nat > asidmax then {
+    valid = false;
+    print_endline("`memory.asidlen` is " ^ dec_str(asidlen) ^ " but cannot be greater than " ^ dec_str(asidmax) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
+  };
+
   valid
 }
 

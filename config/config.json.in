@@ -221,6 +221,12 @@
     // bitvectors in the model and since it is unlikely real implementations
     // will have lower values.
     "physaddr_bits": @CONFIG__PHYSADDR__BITS@,
+    // This specifies the number of implemented ASID bits (ASIDLEN) in
+    // the `satp` register.  If ASIDLEN > 0, ASID[ASIDLEN-1:0] is writable and bits above that are
+    // read-only zero. The maximal value (ASIDMAX) is 9 for Sv32 or 16 for
+    // Sv39, Sv48, and Sv57. A value of 0 means no ASID bits are
+    // implemented (all ASID bits read as zero).
+    "asidlen": @CONFIG__ASID__LEN@,
     "pmp": {
       "grain": 0,
       // This specifies the number of PMP entries present.

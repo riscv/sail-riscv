@@ -165,7 +165,7 @@ function clause execute HFENCE_VVMA(rs1, rs2) = {
   then return Illegal_Instruction();
 
   let addr = if rs1 != zreg then Some(X(rs1)) else None();
-  let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
+  let asid : option(asidbits) = if rs2 != zreg then Some(if asidlen == 0 then zeros() else zero_extend(X(rs2)[asidlen - 1 .. 0])) else None();
   let vmid = Some(get_vmid(VS_Stage));
 
   flush_TLB(asid, vmid, addr, VS_Stage);
