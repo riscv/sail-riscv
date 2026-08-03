@@ -138,7 +138,7 @@ function clint_load(access, paddr, width) = {
   }
 }
 
-private function clint_dispatch(mip_was_written : bool) -> unit = {
+function clint_dispatch(mip_was_written : bool) -> unit = {
   let old_mip = mip.bits;
   mip[MTI] = bool_to_bit(mtimecmp <=_u mtime);
   if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
