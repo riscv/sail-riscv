@@ -143,9 +143,10 @@ private function check_PTE_permission(
   let pte_W = bit_to_bool(pte_flags[W]);
   let pte_X = bit_to_bool(pte_flags[X]);
 
-  // Since we assume a valid PTE: Writable pages must be readable. Write-only
-  // pages are reserved.
-  assert(pte_W ==> pte_R);
+  // We assume a valid PTE, so a writable page is either also readable or it is
+  // the write only shadow stack encoding (R=0, W=1, X=0). Any other write only
+  // page is reserved and would already have been rejected as invalid.
+  assert(pte_W ==> (pte_R | not(pte_X)));
 
   // Step 6 of VATP (see vmem.sail).
   let priv_ok : bool = match priv {
@@ -199,6 +200,11 @@ private function check_PTE_permission(
 
     };
     if not(shadow_stack_ok) then return PTE_Check_Failure((), PTE_No_Access());
+    // On a shadow stack page the rules above fully decide the access. The R, W
+    // and X bits do not apply because the encoding is R=0 W=1 X=0, so grant the
+    // access here rather than falling through to the normal permission check,
+    // which would reject any load or atomic because the page is not readable.
+    return PTE_Check_Success(());
   } else if is_shadow_stack_access(access) then {
     // "Should a shadow stack instruction access a page that is not designated
     // as a shadow stack page and is not marked as read-only (pte.xwr=001), a
