@@ -476,7 +476,8 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
     // In this implementation, menvcfg[SSE] does not control the writes to senvcfg[SSE],
     // but does control the reads.  This way, senvcfg[SSE] does not have to be modified
     // when menvcfg[SSE] is cleared.  The "CSR Field Modulation" section of the
-    // privileged specification has relevant discussion.
+    // privileged specification has relevant discussion. The virtual mode read only
+    // zero rule for henvcfg[SSE] is instead handled in write_CSR for senvcfg.
     SSE = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
@@ -522,7 +523,7 @@ function read_henvcfg() -> HEnvcfg =
 
 function read_senvcfg() -> SEnvcfg = {
   let SSE : bool = match cur_privilege {
-    Machine           => menvcfg[SSE] == 0b1,
+    Machine           => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
     Supervisor        => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
     User              => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
     VirtualSupervisor => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1,
@@ -557,7 +558,16 @@ function clause read_CSR(0x61A if xlen == 32) = read_henvcfg().bits[63 .. 32]
 function clause write_CSR((0x30A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, menvcfg.bits[63 .. 32] @ value); Ok(menvcfg.bits[31 .. 0]) }
 function clause write_CSR((0x30A, value) if xlen == 64) = { menvcfg = legalize_menvcfg(menvcfg, value); Ok(menvcfg.bits) }
 function clause write_CSR((0x31A, value) if xlen == 32) = { menvcfg = legalize_menvcfg(menvcfg, value @ menvcfg.bits[31 .. 0]); Ok(menvcfg.bits[63 .. 32]) }
-function clause write_CSR(0x10A, value) = { senvcfg = legalize_senvcfg(senvcfg, zero_extend(value)); Ok(read_senvcfg().bits[xlen - 1 .. 0]) }
+function clause write_CSR(0x10A, value) = {
+  let new = legalize_senvcfg(senvcfg, zero_extend(value));
+  // When V is 1 and henvcfg[SSE] is 0 the senvcfg[SSE] field is read only zero.
+  // senvcfg has no VS copy, so a write from a virtual mode
+  // must not change the bit that HS mode later reads back.
+  senvcfg = if inVirtualPrivilege() & read_henvcfg()[SSE] == 0b0
+            then [new with SSE = senvcfg[SSE]]
+            else new;
+  Ok(read_senvcfg().bits[xlen - 1 .. 0])
+}
 function clause write_CSR((0x60A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, henvcfg.bits[63 .. 32] @ value); Ok(read_henvcfg().bits[xlen - 1 .. 0]) }
 function clause write_CSR((0x60A, value) if xlen == 64) = { henvcfg = legalize_henvcfg(henvcfg, value); Ok(read_henvcfg().bits[xlen - 1 .. 0]) }
 function clause write_CSR((0x61A, value) if xlen == 32) = { henvcfg = legalize_henvcfg(henvcfg, value @ henvcfg.bits[31 .. 0]); Ok(read_henvcfg().bits[63 .. 32]) }
