@@ -295,15 +295,18 @@ function clause read_CSR(0x644) = lower_mip_to_hip(mip).bits
 function clause write_CSR(0x645, value) = {
   hvip = legalize_hvip(hvip, value);
   mip[VSSI] = hvip[VSSI];
-  // mip.VSTI and mip.VSEI have a more complex mechanism and depend on hvip.
-  // Ideally, they should be handled in legalizer_mip and updated whenever
-  // hvip.VSTI/VSEI changes. However, because mip is read directly internally
-  // and changes to hvip don't propagate through the system we do it manually,
-  //
-  // As a workaround, mip.VSTI and mip.VSEI are updated explicitly whenever
-  // their corresponding hvip bits change. We need to change this and remove
-  // the following two lines at some point.
-  mip[VSTI] = hvip[VSTI];
+  // mip.VSTI and mip.VSEI are derived from hvip plus other sources, but mip is
+  // read directly internally and hvip changes don't propagate, so we refresh
+  // them here by hand. TODO: compute them on read instead and drop this.
+
+  // clint_dispatch() recomputes VSTI, but only every plat_insns_per_tick
+  // instructions, so keep its comparator term or we drop a pending VS timer.
+  mip[VSTI] = hvip[VSTI] | (if currentlyEnabled(Ext_Sstc) & read_henvcfg()[STCE] == 0b1
+                            then mip[VSTI] else 0b0);
+
+  // hvip is the only VSEI source while hgeip is hardwired to zero. Once it is
+  // drivable this also needs the hgeip bit selected by hstatus.VGEIN, refreshed
+  // whenever hgeip or VGEIN changes.
   mip[VSEI] = hvip[VSEI];
   Ok(hvip.bits)
 }
