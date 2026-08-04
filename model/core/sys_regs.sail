@@ -310,6 +310,8 @@ private function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
     VTSR  = v[VTSR],
     VTW   = v[VTW],
     VTVM  = v[VTVM],
+    // VGEIN is WLRL and GEILEN is XLEN-1, so every value is accepted.
+    // TODO: Legalize against a GEILEN config once one exists.
     VGEIN = v[VGEIN],
     HU    = v[HU],
     SPVP  = v[SPVP],

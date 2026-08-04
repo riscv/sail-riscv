@@ -13,17 +13,18 @@
 
 // Guest External Interrupt Registers
 
+// GEILEN is XLEN-1, so hgeie bits 1..XLEN-1 are writable.
+// TODO: Legalize against a GEILEN config once one exists.
 private function legalize_hgeie(v : xlenbits) -> xlenbits = {
   [v with 0 = bitzero]
 }
 
 register hgeie : xlenbits
+
+// hgeip stays zero because no interrupt controller in the model asserts
+// guest external interrupts, which also makes mip.SGEIP permanently zero.
 register hgeip : xlenbits
 
-// GEILEN is XLEN-1, so hgeie bits 1..XLEN-1 are writable. hgeip stays
-// zero because no interrupt controller in the model asserts guest
-// external interrupts, which also makes mip.SGEIP permanently zero.
-// TODO: Add GEILEN config once one does.
 mapping clause csr_name_map = 0x607 <-> "hgeie"
 mapping clause csr_name_map = 0xE12 <-> "hgeip"
 
