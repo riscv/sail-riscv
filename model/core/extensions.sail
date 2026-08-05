@@ -126,6 +126,10 @@ function clause hartSupports(Ext_Zihintpause) = config extensions.Zihintpause.su
 enum clause extension = Ext_Zihpm
 mapping clause extensionName = Ext_Zihpm <-> "zihpm"
 function clause hartSupports(Ext_Zihpm) = config extensions.Zihpm.supported
+// Indexed Integer Loads
+enum clause extension = Ext_Zilx
+mapping clause extensionName = Ext_Zilx <-> "zilx"
+function clause hartSupports(Ext_Zilx) = sys_enable_experimental_extensions() & config extensions.Zilx.supported
 // May-Be-Operations
 enum clause extension = Ext_Zimop
 mapping clause extensionName = Ext_Zimop <-> "zimop"
@@ -715,6 +719,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zihintntl,
   Ext_Zihintpause,
   Ext_Zihpm,
+  Ext_Zilx,
   Ext_Zimop,
 
   // Zm
