@@ -125,7 +125,7 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   let pending_s  = pending &   mideleg_bits  & ~(hideleg.bits);
   let pending_vs = pending &   mideleg_bits  &   hideleg.bits;
 
-  let mIE  = (priv == Machine           & mstatus[MIE] == 0b1)  | priv == Supervisor | priv == User | priv == VirtualSupervisor | priv == VirtualUser;
+  let mIE  = (priv == Machine           & mstatus[MIE] == 0b1)  | priv != Machine;
   let sIE  = (priv == Supervisor        & mstatus[SIE] == 0b1)  | priv == User | priv == VirtualSupervisor | priv == VirtualUser;
   let vsIE = (priv == VirtualSupervisor & vsstatus[SIE] == 0b1) | priv == VirtualUser;
 
