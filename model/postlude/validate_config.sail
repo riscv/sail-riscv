@@ -128,6 +128,15 @@ private function check_mmu_config() -> bool = {
     }
   };
 
+  if (config extensions.Svukte.supported : bool) then {
+    if xlen == 32 then {
+      valid = false;
+      print_endline("The Svukte extension is enabled: Svukte is not supported on RV32");
+    } else {
+      valid = valid & require_Sv39("Svukte");
+    }
+  };
+
   if (config extensions.Svvptc.supported : bool)
   then valid = valid & require_virtual_memory("Svvptc");
 

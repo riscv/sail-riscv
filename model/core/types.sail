@@ -390,6 +390,11 @@ function legalize_extStatus(policy : ExtContextPolicy, status : ext_status) -> e
 type satp_mode = bits(4)
 enum SATPMode = {Bare, Sv32, Sv39, Sv48, Sv57}
 
+// Compute address translation mode from SATP register.
+// Defined in sys/vmem.sail, but declared here so extensions that need it
+// (e.g. Svukte) can call it without creating a module cycle if required by sys.
+val translationMode : Privilege -> SATPMode
+
 function satpMode_of_bits(a : Architecture, m : satp_mode) -> option(SATPMode) =
   match (a, m) {
     (_,    0x0) => Some(Bare),

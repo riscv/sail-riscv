@@ -535,6 +535,10 @@ function clause hartSupports(Ext_Svpbmt) = config extensions.Svpbmt.supported : 
 enum clause extension = Ext_Svrsw60t59b
 mapping clause extensionName = Ext_Svrsw60t59b <-> "svrsw60t59b"
 function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.supported
+// Address-Independent Latency of User-Mode Faults to Supervisor Addresses
+enum clause extension = Ext_Svukte
+mapping clause extensionName = Ext_Svukte <-> "svukte"
+function clause hartSupports(Ext_Svukte) = config extensions.Svukte.supported : bool & (xlen == 64)
 // Obviating Memory-management Instructions after Marking PTEs valid
 enum clause extension = Ext_Svvptc
 mapping clause extensionName = Ext_Svvptc <-> "svvptc"
@@ -649,6 +653,8 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Supm => 3, // > U
     Ext_Svnapot => 3, // > Sv39
     Ext_Svpbmt => 3, // > Sv39
+    Ext_Svukte => 3, // > Sv39
+
     Ext_Svvptc => 3, // > Sv39
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zfhmin => 3, // > Zfh
@@ -830,6 +836,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Svnapot,
   Ext_Svpbmt,
   Ext_Svrsw60t59b,
+  Ext_Svukte,
   Ext_Svvptc,
 
   // Hypervisor extensions, ordered alphabetically.

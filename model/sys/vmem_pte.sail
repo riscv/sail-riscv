@@ -79,6 +79,8 @@ function clause currentlyEnabled(Ext_Svpbmt) = hartSupports(Ext_Svpbmt) & curren
 function clause currentlyEnabled(Ext_Svrsw60t59b) = hartSupports(Ext_Svrsw60t59b) & currentlyEnabled(Ext_Sv39)
 // Obviating Memory-management Instructions after Marking PTEs valid
 function clause currentlyEnabled(Ext_Svvptc) = hartSupports(Ext_Svvptc) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
+// Address-Independent Latency of User-Mode Faults to Supervisor Addresses
+function clause currentlyEnabled(Ext_Svukte) = hartSupports(Ext_Svukte) & currentlyEnabled(Ext_Sv39)
 
 // Updates to A/D bits in PTE.
 // Dynamic values of {m,h}envcfg[ADUE] are handled during address translation.

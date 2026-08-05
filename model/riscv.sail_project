@@ -61,7 +61,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils, Svukte
 
   files
     sys/sys_reservation.sail,
@@ -339,6 +339,12 @@ extensions {
   Svinval {
     requires core, sys, I
     files extensions/Svinval/svinval_insts.sail
+  }
+
+  Svukte {
+    requires core
+    before sys
+    files extensions/Svukte/svukte.sail
   }
 
   Zihpm {

@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - Svukte
+
 # Release notes for version 0.13.1
 
 This is primarily a bug-fix release with fixes for the issues listed

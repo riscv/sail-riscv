@@ -435,6 +435,13 @@ function translateAddr(
   if bits_of(vAddr) != sign_extend(svAddr) then {
     Err(translationException(access, PTW_Invalid_Addr()), init_ext_ptw)
   } else {
+    // Svukte-qualified accesses are invalid if their virtual address is >= 2^(SXLEN-1).
+    // This check uses this model's assumption that SXLEN == XLEN, and would need reworking if that
+    // assumption were to change in the future.
+    if is_svukte_qualified(effPriv) & (bits_of(vAddr)[xlen - 1] == bitone) then {
+      return Err(translationException(access, PTW_Invalid_Addr()), init_ext_ptw);
+    };
+
     let mxr    = mstatus[MXR] == 0b1;
     let do_sum = mstatus[SUM] == 0b1;
     let asid   = satp_to_asid(satp_sxlen);
