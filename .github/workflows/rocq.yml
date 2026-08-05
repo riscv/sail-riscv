@@ -2,6 +2,12 @@ name: Rocq
 
 on: [push, pull_request, workflow_dispatch]
 
+env:
+  ocaml_version: 5.2.1
+  rocq_core_version: 9.1.1
+  rocq_stdlib_version: 9.0.0
+  rocq_stdpp_version: 1.13.0
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -35,16 +41,16 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ~/.opam
-          key: ${{ runner.os }}-${{ runner.arch }}-rocq-opam-sail-${{ env.SAIL_VERSION }}
+          key: rocq-opam-${{ runner.os }}-${{ runner.arch }}-ocaml-${{ env.ocaml_version }}-sail-${{ env.SAIL_VERSION }}-rocq-${{ env.rocq_core_version}}-stdlib-${{ env.rocq_stdlib_version }}-stdpp-${{ env.rocq_stdpp_version }}
 
       - name: Install Rocq-specific opam packages
         if: steps.cache-rocq-opam-restore.outputs.cache-hit != 'true'
         run: |
-          opam init --yes --no-setup --shell=sh --compiler=5.2.1
+          opam init --yes --no-setup --shell=sh --compiler=${{ env.ocaml_version }}
           eval `opam env --safe`
           opam repo add --yes rocq-released https://rocq-prover.org/opam/released
           opam update -y
-          opam install -y rocq-core=9.1.1 rocq-stdlib=9.0.0 rocq-stdpp-bitvector=1.13.0 rocq-sail-stdpp=$SAIL_VERSION
+          opam install -y rocq-core=${{ env.rocq_core_version }} rocq-stdlib=${{ env.rocq_stdlib_version }} rocq-stdpp-bitvector=${{ env.rocq_stdpp_version }} rocq-sail-stdpp=$SAIL_VERSION
           # We're using the Sail binary release, so fake sail opam packages
           # This will also install fake dependencies, so it has to be the last install before the build
           opam install --fake --yes \
