@@ -915,7 +915,9 @@ private function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
   legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
 }
 
-// vsstatus
+// Unlike sstatus, which is only a view of mstatus, vsstatus is a real register
+// holding a full Mstatus. Reading individual sstatus fields off it is fine, but
+// anything reporting the whole value must lower it first, as read_CSR does.
 register vsstatus : Mstatus = [Mk_Mstatus(zeros()) with
   UXL = architecture_bits(if xlen == 32 then RV32 else RV64)
 ]
