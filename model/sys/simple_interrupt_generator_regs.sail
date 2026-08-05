@@ -17,6 +17,11 @@ function sig_external_interrupts_pending() -> Minterrupts =
     MEI = sig_meip,
     // SEIP is read-only zero if the hart does not support supervisor mode.
     SEI = if currentlyEnabled(Ext_S) then sig_seip else 0b0,
+    // Guest external interrupts are driven by hgeip, which the generator writes
+    // directly. Both of these are read-only functions of it, so they are
+    // supplied here instead of being stored in mip.
+    SGEI = if currentlyEnabled(Ext_H) then bool_to_bit((hgeip & hgeie) != zeros()) else 0b0,
+    VSEI = if currentlyEnabled(Ext_H) then selected_hgeip() else 0b0,
   ]
 
 function sig_machine_software_interrupt_pending() -> bits(1) =
