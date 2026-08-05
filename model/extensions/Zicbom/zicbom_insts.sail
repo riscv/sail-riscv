@@ -43,7 +43,6 @@ private mapping encdec_cbie : cbie <-> bits(2) = {
   backwards 0b10   => internal_error(__FILE__, __LINE__, "reserved CBIE"),
 }
 
-// Illegal-Virtual will be needed by the hypervisor mode, but is currently unused.
 private enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_INVAL_INVAL}
 
 // Select the cbop to perform based on the privilege.
@@ -55,15 +54,17 @@ private function cbop_priv_check(p: Privilege) -> checked_cbop = {
   let hCBIE : cbie = if currentlyEnabled(Ext_H)
                      then encdec_cbie(read_henvcfg()[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
+  // A CBIE of 00 at any level that applies to p disables the instruction, so
+  // every disabling clause has to come before the ones that enable a flush.
   match (p, mCBIE, sCBIE, hCBIE) {
     (Machine, _, _ , _                       ) => CBOP_INVAL_INVAL,
     (_   , CBIE_ILLEGAL, _, _                ) => CBOP_ILLEGAL,         // (priv_mode != M) && mCBIE == 00
     (User, _, CBIE_ILLEGAL, _                ) => CBOP_ILLEGAL,         // (priv_mode == U) && sCBIE == 00
-    (_   , CBIE_EXEC_FLUSH, _, _             ) => CBOP_INVAL_FLUSH,     // (priv_mode != M) && mCBIE == 01
-    (User, _, CBIE_EXEC_FLUSH, _             ) => CBOP_INVAL_FLUSH,     // (priv_mode == U) && sCBIE == 01
     (VirtualSupervisor, _, _, CBIE_ILLEGAL   ) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VS) && hCBIE == 00
     (VirtualUser      , _, _, CBIE_ILLEGAL   ) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VU) && hCBIE == 00
     (VirtualUser      , _, CBIE_ILLEGAL, _   ) => CBOP_ILLEGAL_VIRTUAL, // (priv_mode == VU) && sCBIE == 00
+    (_   , CBIE_EXEC_FLUSH, _, _             ) => CBOP_INVAL_FLUSH,     // (priv_mode != M) && mCBIE == 01
+    (User, _, CBIE_EXEC_FLUSH, _             ) => CBOP_INVAL_FLUSH,     // (priv_mode == U) && sCBIE == 01
     (VirtualSupervisor, _, _, CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH,     // (priv_mode == VS) && hCBIE == 01
     (VirtualUser      , _, _, CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH,     // (priv_mode == VU) && hCBIE == 01
     (VirtualUser      , _, CBIE_EXEC_FLUSH, _) => CBOP_INVAL_FLUSH,     // (priv_mode == VU) && sCBIE == 01
