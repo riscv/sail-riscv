@@ -389,16 +389,16 @@ jobs:
         shell: bash
         run: |
           git clone https://github.com/XUANTIE-RV/damo-rv-priv-ats.git
-          git -C damo-rv-priv-ats checkout 7b445048
+          git -C damo-rv-priv-ats checkout f5c1d911
 
       - name: Run XUANTIE-RV/damo-rv-priv-ats hypervisor tests
         shell: bash
         run: |
-          EXTS="Hypervisor
-                Sv39x4 Sv48x4 Sv57x4
+          EXTS="Sv39x4 Sv48x4 Sv57x4
                 Sv39x4_Sv39 Sv39x4_Sv48 Sv39x4_Sv57
                 Sv48x4_Sv39 Sv48x4_Sv48 Sv48x4_Sv57
                 Sv57x4_Sv39 Sv57x4_Sv48 Sv57x4_Sv57
+                Hypervisor_CSR Hypervisor_Interrupts Hypervisor_Exceptions
                 Hypervisor_Smstateen Hypervisor_Ssccptr Hypervisor_Ssstateen
                 Hypervisor_Sstc Hypervisor_Sstvala Hypervisor_Svadu
                 Hypervisor_Svinval Hypervisor_Svnapot Hypervisor_Svpbmt
