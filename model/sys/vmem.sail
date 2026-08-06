@@ -115,9 +115,9 @@ private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . 
                   | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)))
                  then {
                    // Translate PTE address if performing a VS-stage access
-                   let write_paddr : physaddr = match translate_PTE_addr(bits_of(pteAddr), Store(Data), stage, ext_ptw) {
+                   let write_paddr : physaddr = match translate_PTE_addr(bits_of(pteAddr), Store(PageTableEntry), stage, ext_ptw) {
                      Ok(pa, _, _) => pa,
-                     Err(e, _)    => return Err(PTW_Implicit_Error(translationException(access, e), bits_of(pteAddr), Store(Data))),
+                     Err(e, _)    => return Err(PTW_Implicit_Error(translationException(access, e), bits_of(pteAddr), Store(PageTableEntry))),
                    };
                    match write_pte(write_paddr, pteWidth, pte) {
                      Ok(_)  => Ok(Some(pte)),
@@ -185,9 +185,9 @@ function pt_walk(
   let pte_addr_original = Physaddr(zero_extend(pte_addr));
 
   // Translate PTE address if performing a VS-stage access
-  let pte_addr : physaddr = match translate_PTE_addr(zero_extend(pte_addr), Load(Data), stage, ext_ptw) {
+  let pte_addr : physaddr = match translate_PTE_addr(zero_extend(pte_addr), Load(PageTableEntry), stage, ext_ptw) {
     Ok(pa, _, _) => pa,
-    Err((e, _))  => return Err(PTW_Implicit_Error(translationException(access, e), zero_extend(pte_addr), Load(Data)), ext_ptw),
+    Err((e, _))  => return Err(PTW_Implicit_Error(translationException(access, e), zero_extend(pte_addr), Load(PageTableEntry)), ext_ptw),
   };
 
   // Read this-level PTE from mem (Step 2 of VATP)
