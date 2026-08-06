@@ -17,8 +17,7 @@ mapping encdec_zilx_mode : zilx_mode <-> bits(5) = {
 }
 
 private function zilx_encoding_valid(mode : zilx_mode, width : word_width, is_unsigned : bool) -> bool =
-  currentlyEnabled(Ext_Zilx)
-  & valid_load_encdec(width, is_unsigned)
+  valid_load_encdec(width, is_unsigned)
   & (mode != ZILX_UNSCALED | width != 1)
   & (mode != ZILX_SCALED_UW | xlen == 64)
 
@@ -27,7 +26,7 @@ union clause instruction = ZILX_LOAD : (zilx_mode, regidx, regidx, bool, word_wi
 $[wavedrom "mode 0 0 base index width/sign dest AMO"]
 mapping clause encdec = ZILX_LOAD(mode, rs2, rs1, is_unsigned, width, rd)
   <-> encdec_zilx_mode(mode) @ 0b00 @ encdec_reg(rs2) @ encdec_reg(rs1) @ bool_bit(is_unsigned) @ width_enc(width) @ encdec_reg(rd) @ 0b0101111
-  when zilx_encoding_valid(mode, width, is_unsigned)
+  when currentlyEnabled(Ext_Zilx) & zilx_encoding_valid(mode, width, is_unsigned)
 
 function clause execute ZILX_LOAD(mode, rs2, rs1, is_unsigned, width, rd) = {
   // This is checked during decoding.
@@ -55,4 +54,4 @@ private mapping zilx_mode_mnemonic : zilx_mode <-> string = {
 
 mapping clause assembly = ZILX_LOAD(mode, rs2, rs1, is_unsigned, width, rd)
   <-> zilx_mode_mnemonic(mode) ^ width_mnemonic(width) ^ maybe_u(is_unsigned) ^ spc() ^ reg_name(rd) ^ sep() ^ "(" ^ reg_name(rs2) ^ ")" ^ sep() ^ reg_name(rs1)
-  when mode != ZILX_UNSCALED | width != 1
+  when zilx_encoding_valid(mode, width, is_unsigned)
