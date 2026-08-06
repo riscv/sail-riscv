@@ -58,10 +58,12 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
       Ext_DataAddr_Error(e)  => { Ext_DataAddr_Check_Failure(e) },
       Ext_DataAddr_OK(vaddr) => {
         let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
-        match plat_misaligned_exception(access, false) {
-          Some(AccessFault)        => return hlsv_memory_exception(E_Load_Access_Fault(), bits_of(vaddr)),
-          Some(AlignmentException) => return hlsv_memory_exception(E_Load_Addr_Align(), bits_of(vaddr)),
-          None()                   => (),
+        if not(is_aligned_addr(vaddr, width)) then {
+          match plat_misaligned_exception(access, false) {
+            Some(AccessFault)        => return hlsv_memory_exception(E_Load_Access_Fault(), bits_of(vaddr)),
+            Some(AlignmentException) => return hlsv_memory_exception(E_Load_Addr_Align(), bits_of(vaddr)),
+            None()                   => (),
+          };
         };
         match translateAddr_eff_priv(vaddr, access, eff_priv) {
           // No fetch->load exception conversion is needed: LoadExecute already raises load
@@ -105,10 +107,12 @@ function clause execute(HSV(width, rs1, rs2)) = {
       Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
       Ext_DataAddr_OK(vaddr) => {
         let vaddr = transform_hlsv_address(vaddr, Store(Data), eff_priv);
-        match plat_misaligned_exception(Store(Data), false) {
-          Some(AccessFault)        => return hlsv_memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr)),
-          Some(AlignmentException) => return hlsv_memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr)),
-          None()                   => (),
+        if not(is_aligned_addr(vaddr, width)) then {
+          match plat_misaligned_exception(Store(Data), false) {
+            Some(AccessFault)        => return hlsv_memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr)),
+            Some(AlignmentException) => return hlsv_memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr)),
+            None()                   => (),
+          };
         };
         match translateAddr_eff_priv(vaddr, Store(Data), eff_priv) {
           Err(e, _) => trap(e),

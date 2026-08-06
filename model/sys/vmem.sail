@@ -44,7 +44,7 @@ type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, page_based_mem_
 
 // TODO: Remove this forward declaration if possible.
 // G-Stage Translation
-val translate_g_stage : (
+private val translate_g_stage : (
   gpabits,
   MemoryAccessType(mem_payload),
   Privilege,
@@ -574,7 +574,7 @@ private function translate_stage forall 'n 'v, is_sv_or_svx4_mode('v) & 'n >= 'v
 termination_measure translate_stage(_, _, _, _, _) = 1000
 
 // Wrapper for VS/S-stage translation (takes virtaddr)
-function translate_vs_stage(
+private function translate_vs_stage(
   vaddr  : virtaddr,
   access : MemoryAccessType(mem_payload),
   p      : Privilege
@@ -612,7 +612,7 @@ termination_measure translate_g_stage(_, _, _) = 1000
 //
 // We save all the information in ExceptionContext in order to set the appropriate
 // CSR's according to the effective privilege mode and given faulting stage.
-function build_exception_context(
+private function build_exception_context(
   gva       : virtaddr,
   gpa       : gpabits,
   access    : MemoryAccessType(mem_payload),
@@ -621,7 +621,6 @@ function build_exception_context(
 ) -> ExceptionContext = {
   match stage {
     S_Stage => {
-    // S-Stage failure
       struct {
         trap  = translationException(access, ptw_error),
         excinfo_is_gva = false,
@@ -634,17 +633,17 @@ function build_exception_context(
     VS_Stage => {
       match ptw_error {
         PTW_Implicit_Error(e, pte_addr, access) => {
-          // Implicit VS-Stage failure
           let is_write : bool = match access {
             Store(_) => true,
             Load(_)  => false,
             _        => internal_error(__FILE__, __LINE__, "invalid memory access type"),
           };
+          let tval2 = truncate(pte_addr >> 2, xlen);
           struct {
             trap  = convertToGuestException(e),
             excinfo_is_gva = true,
             excinfo  = zero_extend(bits_of(gva)),
-            excinfo2 = Some(truncate(pte_addr >> 2, xlen)),
+            excinfo2 = Some(tval2),
             // NOTE: "when a guest-page fault is caused by an implicit
             // memory access during VS-stage address translation and htval/mtval2 is nonzero,
             // a pseudoinstruction MUST be written to htinst/mtinst (zero is not allowed).
@@ -655,10 +654,10 @@ function build_exception_context(
             // 0x00002020 = 32-bit write (hardware was updating A/D bits)
             // 0x00003000 = 64-bit read
             // 0x00003020 = 64-bit write
-            excinst = if truncate(pte_addr >> 2, xlen) != zeros()
+            excinst = if tval2 != zeros()
                       then Some(if xlen == 32
-                           then if is_write then zero_extend(0x00002020) else zero_extend(0x00002000)
-                           else if is_write then zero_extend(0x00003020) else zero_extend(0x00003000))
+                                then if is_write then zero_extend(0x00002020) else zero_extend(0x00002000)
+                                else if is_write then zero_extend(0x00003020) else zero_extend(0x00003000))
                       else None(),
             ext = None(),
           }
@@ -677,7 +676,6 @@ function build_exception_context(
       }
     },
     G_Stage => {
-      // G-Stage failure
       struct {
         trap  = convertToGuestException(translationException(access, ptw_error)),
         excinfo_is_gva = true,

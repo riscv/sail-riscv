@@ -166,9 +166,6 @@ void log_callbacks::ptw_fail_callback(
 
 namespace {
 
-// TODO: make this a class member and avoid a global.
-std::vector<uint64_t> pending_flush_indices;
-
 const char *stage_str(hart::zTranslationStage stage) {
   switch (stage) {
   case hart::zS_Stage:
