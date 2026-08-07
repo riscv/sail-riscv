@@ -158,16 +158,17 @@ mapping clause encdec = HFENCE_VVMA(rs1, rs2)
   when currentlyEnabled(Ext_H)
 
 function clause execute HFENCE_VVMA(rs1, rs2) = {
+  if inVirtualPrivilege()
+  then return Virtual_Instruction()
+  else if cur_privilege == User
+  then return Illegal_Instruction();
+
   let addr = if rs1 != zreg then Some(X(rs1)) else None();
   let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
   let vmid = Some(get_vmid(VS_Stage));
-  match cur_privilege {
-    VirtualUser       => { Virtual_Instruction() },
-    User              => { Illegal_Instruction() },
-    VirtualSupervisor => { Virtual_Instruction() },
-    Supervisor        => { flush_TLB(asid, vmid, addr, VS_Stage); RETIRE_SUCCESS },
-    Machine           => { flush_TLB(asid, vmid, addr, VS_Stage); RETIRE_SUCCESS }
-  }
+
+  flush_TLB(asid, vmid, addr, VS_Stage);
+  RETIRE_SUCCESS
 }
 
 mapping clause assembly = HFENCE_VVMA(rs1, rs2)
@@ -180,22 +181,22 @@ mapping clause encdec = HFENCE_GVMA(rs1, rs2)
   when currentlyEnabled(Ext_H)
 
 function clause execute HFENCE_GVMA(rs1, rs2) = {
+  if inVirtualPrivilege()
+  then return Virtual_Instruction()
+  else if cur_privilege == User
+  then return Illegal_Instruction()
+  else if cur_privilege == Supervisor & mstatus[TVM] == 0b1
+  then return Illegal_Instruction();
+
   // Software provides the guest physical address in rs1 right-shifted by 2 bits,
   // following the htval/tval2 convention for G-stage traps. Pass it unshifted.
   // flush_TLB_Entry recovers the full GPA in a wide type, which can exceed XLEN on RV32.
   let addr = if rs1 != zreg then Some(X(rs1)) else None();
   let vmid = if rs2 != zreg then Some(X(rs2)[vmidlen - 1 .. 0]) else None();
   let asid : option(asidbits) = None();
-  match cur_privilege {
-    VirtualUser       => { Virtual_Instruction() },
-    User              => { Illegal_Instruction() },
-    VirtualSupervisor => { Virtual_Instruction() },
-    Supervisor        => match mstatus[TVM] {
-                            0b1 => { Illegal_Instruction() },
-                            0b0 => { flush_TLB(asid, vmid, addr, G_Stage); RETIRE_SUCCESS }
-                        },
-    Machine           => { flush_TLB(asid, vmid, addr, G_Stage); RETIRE_SUCCESS }
-  }
+
+  flush_TLB(asid, vmid, addr, G_Stage);
+  RETIRE_SUCCESS
 }
 
 mapping clause assembly = HFENCE_GVMA(rs1, rs2)
