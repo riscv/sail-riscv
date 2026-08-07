@@ -722,13 +722,18 @@ function translateAddr_eff_priv(
 
   // First stage: GVA -> GPA (or VA -> PA for single-stage)
   match translate_vs_stage(gva, access, p) {
-    Ok(gpa, pbmt, ext_ptw) => {
+    Ok(gpa, vs_pbmt, ext_ptw) => {
       if not(is_virtual_access) then {
-        return Ok(Physaddr(gpa), pbmt, ext_ptw)
+        return Ok(Physaddr(gpa), vs_pbmt, ext_ptw)
       };
       // Second stage: GPA -> SPA
       match translate_g_stage(gpa, access) {
-        Ok(spa, pbmt, ext_ptw)  => Ok(Physaddr(spa), pbmt, ext_ptw),
+        Ok(spa, g_pbmt, ext_ptw)  => {
+          // A non-zero G-stage PBMT overrides the PMAs to give the intermediate
+          // attributes, then a non-zero VS-stage PBMT overrides those in turn.
+          let pbmt = if vs_pbmt != PBMT_PMA then vs_pbmt else g_pbmt;
+          Ok(Physaddr(spa), pbmt, ext_ptw)
+        },
         // G-Stage failure
         Err(ptw_error, ext_ptw) => Err(build_exception_context(gva, gpa, access, ptw_error, G_Stage), ext_ptw)
       }
