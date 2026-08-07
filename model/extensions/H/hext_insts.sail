@@ -58,6 +58,11 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
     Ext_DataAddr_Error(e)  => { Ext_DataAddr_Check_Failure(e) },
     Ext_DataAddr_OK(vaddr) => {
       let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
+      // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
+      // one that crosses a page boundary should be split and translated per
+      // page, the way vmem_read_addr and vmem_write_addr do. That needs
+      // privilege aware versions of those helpers, see the refactor TODO in
+      // model/sys/mem.sail.
       if not(is_aligned_addr(vaddr, width)) then {
         match plat_misaligned_exception(access, false) {
           Some(AccessFault)        => return hlsv_memory_exception(E_Load_Access_Fault(), bits_of(vaddr)),
@@ -106,6 +111,11 @@ function clause execute(HSV(width, rs1, rs2)) = {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       let vaddr = transform_hlsv_address(vaddr, Store(Data), eff_priv);
+      // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
+      // one that crosses a page boundary should be split and translated per
+      // page, the way vmem_read_addr and vmem_write_addr do. That needs
+      // privilege aware versions of those helpers, see the refactor TODO in
+      // model/sys/mem.sail.
       if not(is_aligned_addr(vaddr, width)) then {
         match plat_misaligned_exception(Store(Data), false) {
           Some(AccessFault)        => return hlsv_memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr)),
