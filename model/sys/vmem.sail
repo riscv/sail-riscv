@@ -514,7 +514,7 @@ private function translate forall 'v, is_sv_or_svx4_mode('v) . (
   ext_ptw  : ext_ptw,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
   // On first reading, assume lookup_TLB returns None(), since TLBs
-  // are not part of RISC-V archticture spec (see TLB NOTE above)
+  // are not part of RISC-V architecture spec (see TLB NOTE above)
   match lookup_TLB(sv_width, asid, vmid, vpn, stage) {
     Some(index, ent) => translate_TLB_hit(sv_width, asid, vmid, vpn, access, priv,
                                           mxr, do_sum, index, ent, stage, ext_ptw),
@@ -557,6 +557,8 @@ private function translate_stage forall 'n 'v, is_sv_or_svx4_mode('v) & 'n >= 'v
       let mxr      = get_mxr(stage);
       let do_sum   = get_sum(stage);
       let vpn      = valid_addr[sv_width - 1 .. pagesize_bits];
+
+      // Step 1 of VATP.
       let base_ppn = xatp_to_ppn(stage);
       let eff_priv = if stage == G_Stage then User else priv;
       let res = translate(sv_width, asid, vmid,
