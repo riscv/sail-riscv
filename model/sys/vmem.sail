@@ -208,7 +208,8 @@ function pt_walk(
       else {
         // Step 4 of VATP.
         let ppn = PPN_of_PTE(pte); // 22 or 44.
-        let global = global | (pte_flags[G] == 0b1);
+        // The G bit is not used in G-stage PTEs and must be ignored by hardware.
+        let global = global | (stage != G_Stage & pte_flags[G] == 0b1);
         if pte_is_non_leaf(pte_flags) then {
           // Non-Leaf PTE
           if level > 0 then
