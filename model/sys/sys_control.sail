@@ -330,7 +330,6 @@ function trap_handler(
     VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
     VirtualSupervisor => {
       assert(currentlyEnabled(Ext_H), "no hypervisor-extended supervisor mode present for delegation");
-      assert(inVirtualPrivilege(), "trap to VS-mode but not in virtual privilege");
 
       vscause[IsInterrupt] = bool_to_bit(is_interrupt);
       vscause[Cause]       = zero_extend(cause);
