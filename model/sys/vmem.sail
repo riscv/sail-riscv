@@ -602,9 +602,13 @@ function translate_g_stage(
 
 termination_measure translate_g_stage(_, _) = 1000
 
-// There are three cases in which an access can fail during two-stage address translation.
+// There are three cases in which an access can fail during two-stage address
+// translation, shown here with the single-stage case for comparison. Without
+// H there is no htval register at all. With H it is zero here because the
+// fault is not a guest-page fault.
 //
 // Case      Exception                        stval htval      Who Handles
+// Single    S-Stage  fail Regular page fault VA    0 (if H)   Supervisor
 // Implicit  VS-Stage fail Guest-page fault   GVA   PTE's GPA  Hypervisor
 // Explicit  VS-Stage fail Regular page fault GVA   0          Virtual Supervisor
 // Explicit  G-Stage  fail Guest-page fault   GVA   GPA        Hypervisor
