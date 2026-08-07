@@ -47,7 +47,6 @@ type TR_Result('paddr : Type, 'failure : Type) = result(('paddr, page_based_mem_
 private val translate_g_stage : (
   gpabits,
   MemoryAccessType(mem_payload),
-  Privilege,
 ) -> TR_Result(gpabits, PTW_Error)
 
 // ****************************************************************
@@ -79,8 +78,7 @@ private function translate_PTE_addr(
   ext_ptw  : ext_ptw
 ) -> TR_Result(physaddr, PTW_Error) = {
   if stage == VS_Stage then {
-    // Supervisor ensures G-stage is enabled; permission checking always uses User.
-    match translate_g_stage(pte_addr, access, Supervisor) {
+    match translate_g_stage(pte_addr, access) {
       Ok(pa, pbmt, ext_ptw) => Ok(Physaddr(pa), pbmt, ext_ptw),
       Err(f, ext_ptw) => Err(f, ext_ptw),
     }
@@ -356,38 +354,36 @@ private function satp_mode(priv : Privilege) -> SATPMode = {
 }
 
 // Return the active address translation mode for VS-Stage translation.
-private function vsatp_mode(priv : Privilege) -> SATPMode = {
-  if priv == Machine then Bare
-  else {
-    let arch = architecture(VirtualSupervisor);
-    let mbits : satp_mode = match arch {
-      RV64 => { assert(xlen >= 64); Mk_Satp64(vsatp)[Mode] },
-      RV32 => 0b000 @ Mk_Satp32(vsatp[31..0])[Mode],
-      RV128 => internal_error(__FILE__, __LINE__, "RV128 not supported"),
-    };
-    match satpMode_of_bits(arch, mbits) {
-      Some(m) => m,
-      // The model does not support modifying VSXL currently so this cannot happen.
-      None()  => internal_error(__FILE__, __LINE__, "invalid translation mode in vsatp")
-    }
+// vsatp only applies when V=1, so every caller guards on a virtual privilege
+// and there is no Machine case to handle here.
+private function vsatp_mode() -> SATPMode = {
+  let arch = architecture(VirtualSupervisor);
+  let mbits : satp_mode = match arch {
+    RV64 => { assert(xlen >= 64); Mk_Satp64(vsatp)[Mode] },
+    RV32 => 0b000 @ Mk_Satp32(vsatp[31..0])[Mode],
+    RV128 => internal_error(__FILE__, __LINE__, "RV128 not supported"),
+  };
+  match satpMode_of_bits(arch, mbits) {
+    Some(m) => m,
+    // The model does not support modifying VSXL currently so this cannot happen.
+    None()  => internal_error(__FILE__, __LINE__, "invalid translation mode in vsatp")
   }
 }
 
 // Return the active address translation mode for G-Stage translation.
-private function hgatp_mode(priv : Privilege) -> HGATPMode = {
-  if priv == Machine then HBare
-  else {
-    let arch = architecture(Supervisor);
-    let mbits : hgatp_mode = match arch {
-      RV64 => { assert(xlen >= 64); Mk_Hgatp64(hgatp)[Mode] },
-      RV32 => 0b000 @ Mk_Hgatp32(hgatp[31..0])[Mode],
-      RV128 => internal_error(__FILE__, __LINE__, "RV128 not supported"),
-    };
-    match hgatpMode_of_bits(arch, mbits) {
-      Some(m) => m,
-      // The model does not support modifying SXL currently so this cannot happen.
-      None()  => internal_error(__FILE__, __LINE__, "invalid translation mode in hgatp")
-    }
+// G-stage translation only happens when V=1, so as for vsatp_mode() there is
+// no Machine case.
+private function hgatp_mode() -> HGATPMode = {
+  let arch = architecture(Supervisor);
+  let mbits : hgatp_mode = match arch {
+    RV64 => { assert(xlen >= 64); Mk_Hgatp64(hgatp)[Mode] },
+    RV32 => 0b000 @ Mk_Hgatp32(hgatp[31..0])[Mode],
+    RV128 => internal_error(__FILE__, __LINE__, "RV128 not supported"),
+  };
+  match hgatpMode_of_bits(arch, mbits) {
+    Some(m) => m,
+    // The model does not support modifying SXL currently so this cannot happen.
+    None()  => internal_error(__FILE__, __LINE__, "invalid translation mode in hgatp")
   }
 }
 
@@ -582,7 +578,7 @@ private function translate_vs_stage(
   p      : Privilege
 ) -> TR_Result(gpabits, PTW_Error) = {
   let (stage, mode) = if p == VirtualSupervisor | p == VirtualUser
-                      then (VS_Stage, vsatp_mode(p))
+                      then (VS_Stage, vsatp_mode())
                       else (S_Stage, satp_mode(p));
   if mode == Bare then return Ok(zero_extend(bits_of(vaddr)), PBMT_PMA, init_ext_ptw);
   let sv_width = satp_mode_width(mode);
@@ -590,20 +586,20 @@ private function translate_vs_stage(
   translate_stage(sv_width, bits_of(vaddr), access, p, stage)
 }
 
-// Wrapper for G-stage translation (takes physaddr)
+// Wrapper for G-stage translation (takes physaddr).
+// G-stage permission checking always uses User, so no privilege is taken.
 function translate_g_stage(
   gpa    : gpabits,
   access : MemoryAccessType(mem_payload),
-  p      : Privilege
 ) -> TR_Result(gpabits, PTW_Error) = {
-  let mode = hgatp_mode(p);
+  let mode = hgatp_mode();
   if mode == HBare then return Ok(gpa, PBMT_PMA, init_ext_ptw);
   let sv_width = hgatp_mode_width(mode);
   assert(sv_width <= gpalen);
-  translate_stage(sv_width, gpa, access, p, G_Stage)
+  translate_stage(sv_width, gpa, access, User, G_Stage)
 }
 
-termination_measure translate_g_stage(_, _, _) = 1000
+termination_measure translate_g_stage(_, _) = 1000
 
 // There are three cases in which an access can fail during two-stage address translation.
 //
@@ -704,7 +700,7 @@ function translateAddr_eff_priv(
   // HS or M mode but emulate a virtual-mode memory access.
   let is_virtual_access = p == VirtualSupervisor | p == VirtualUser;
 
-  let mode = if is_virtual_access then vsatp_mode(p) else satp_mode(p);
+  let mode = if is_virtual_access then vsatp_mode() else satp_mode(p);
 
   // "If satp.MODE (or vsatp.MODE when V=1) is set to Bare and the
   // effective privilege mode is less than M, shadow stack
@@ -731,7 +727,7 @@ function translateAddr_eff_priv(
         return Ok(Physaddr(gpa), pbmt, ext_ptw)
       };
       // Second stage: GPA -> SPA
-      match translate_g_stage(gpa, access, p) {
+      match translate_g_stage(gpa, access) {
         Ok(spa, pbmt, ext_ptw)  => Ok(Physaddr(spa), pbmt, ext_ptw),
         // G-Stage failure
         Err(ptw_error, ext_ptw) => Err(build_exception_context(gva, gpa, access, ptw_error, G_Stage), ext_ptw)

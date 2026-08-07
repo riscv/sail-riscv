@@ -63,7 +63,7 @@ function offset_virtaddr_by(
 // satp. A guest-physical address (vsatp.MODE == Bare) is treated as physical.
 function pm_transform_for_priv(vaddr : virtaddr, eff_privilege : Privilege, pmlen : {0, 7, 16}) -> virtaddr = {
   let mode = if eff_privilege == VirtualSupervisor | eff_privilege == VirtualUser
-             then vsatp_mode(eff_privilege)
+             then vsatp_mode()
              else satp_mode(eff_privilege);
   if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }
@@ -137,7 +137,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // If we do split, perform the split access in the configured order.
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
   let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
-  then vsatp_mode(cur_privilege) != Bare | hgatp_mode(cur_privilege) != HBare
+  then vsatp_mode() != Bare | hgatp_mode() != HBare
   else satp_mode(cur_privilege) != Bare;
   let do_split_access = vmem_active & next_page_bytes > 0;
 
@@ -237,7 +237,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
   let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
-  then vsatp_mode(cur_privilege) != Bare | hgatp_mode(cur_privilege) != HBare
+  then vsatp_mode() != Bare | hgatp_mode() != HBare
   else satp_mode(cur_privilege) != Bare;
   let do_split_access = vmem_active & next_page_bytes > 0;
 
