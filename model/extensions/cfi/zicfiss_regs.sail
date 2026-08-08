@@ -19,15 +19,14 @@ function clause currentlyEnabled(Ext_Zicfiss) =
 // `xSSE` in the specification.
 
 function zicfiss_xSSE(priv : Privilege) -> bool =
-  currentlyEnabled(Ext_S) & (match priv {
-    Machine           => // "Use of Zicfiss in M-mode is not supported."
-                         false,
-    Supervisor        => bool_bit(menvcfg[SSE]),
+  match priv {
+    Machine           => currentlyEnabled(Ext_Smcfiss) & bool_bit(mseccfg[MSSE]),
     // TODO: needs currentlyEnabled(Ext_H) & read_henvcfg()[SSE]
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    User              => bool_bit(read_senvcfg()[SSE]),
-    VirtualUser       => bool_bit(read_senvcfg()[SSE]),
-  })
+    Supervisor        => currentlyEnabled(Ext_S) & bool_bit(menvcfg[SSE]),
+    User              => currentlyEnabled(Ext_S) & bool_bit(read_senvcfg()[SSE]),
+    VirtualUser       => currentlyEnabled(Ext_S) & bool_bit(read_senvcfg()[SSE]),
+  }
 
 // See "Shadow Stack Pointer (ssp) CSR access control".
 private function is_ssp_accessible(priv : Privilege) -> bool =

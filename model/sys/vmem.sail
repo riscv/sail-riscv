@@ -411,14 +411,14 @@ function translateAddr(
 
   let mode = translationMode(effPriv);
 
-  // "If satp.MODE (or vsatp.MODE when V=1) is set to Bare and the
-  // effective privilege mode is less than M, shadow stack
-  // instructions raise a store/AMO access-fault exception."
-  // "Use of Zicfiss in M-mode is not supported."
-  if is_shadow_stack_access(access) then {
-    if (mode == Bare & effPriv != Machine) | effPriv == Machine
-    then return Err(E_SAMO_Access_Fault(), init_ext_ptw);
+  // A shadow-stack access faults unless this privilege has a shadow-stack
+  // protection mechanism in effect.
+  let ss_permitted : bool = match effPriv {
+    Machine => currentlyEnabled(Ext_Smcfiss) & mseccfg[MSSE] == 0b1,
+    _       => mode != Bare,
   };
+  if is_shadow_stack_access(access) & not(ss_permitted)
+  then return Err(E_SAMO_Access_Fault(), init_ext_ptw);
 
   if mode == Bare then return Ok(Physaddr(zero_extend(bits_of(vAddr))), PBMT_PMA, init_ext_ptw);
 

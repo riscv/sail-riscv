@@ -361,6 +361,11 @@ extensions {
     files extensions/Smpmpind/smpmpind.sail
   }
 
+  Smcfiss {
+    requires core, pmp, Zicfiss, Smpmpind
+    files extensions/Smcfiss/smcfiss.sail
+  }
+
   Sscofpmf {
     requires core, Zihpm
     files extensions/Sscofpmf/sscofpmf.sail

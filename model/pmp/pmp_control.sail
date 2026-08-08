@@ -8,6 +8,9 @@
 
 function clause currentlyEnabled(Ext_Smepmp) = hartSupports(Ext_Smepmp)
 
+val pmp_is_m_ss_region    : (Pmpcfg_ent, bits(1)) -> bool
+val pmp_check_m_ss_access : (MemoryAccessType(mem_payload), Privilege) -> bool
+
 // permission checks
 
 private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_payload)) -> bool =
@@ -150,7 +153,10 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   priv : Privilege,
 ) -> option(ExceptionType) = {
 
-  if sys_pmp_count == 0 then return None();
+  let ss_pmp_required = is_shadow_stack_access(access) & priv == Machine;
+
+  if sys_pmp_count == 0 then
+    return (if ss_pmp_required then Some(accessFaultFromAccessType(access)) else None());
 
   let width : xlenbits = to_bits(width);
 
@@ -175,6 +181,14 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       },
       PMP_Match        =>
         if currentlyEnabled(Ext_Smpmpind) & pmp_E[i] == 0b1
+        then {
+          let ss_access_allowed =
+            if pmp_is_m_ss_region(cfg, pmp_E[i])
+            then pmp_check_m_ss_access(access, priv)
+            else false;
+          return (if ss_access_allowed then None() else Some(accessFaultFromAccessType(access)))
+        }
+        else if ss_pmp_required
         then return Some(accessFaultFromAccessType(access))
         else if (currentlyEnabled(Ext_Smepmp) & pmpCheckPerms(cfg, access, priv)) |
             pmpCheckRWX(cfg, access) |
@@ -190,6 +204,7 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   // Make Read, Write and execute denied by default, if mseccfg[MMWP] == 0b1 for M mode.
   // Make execute denied, if mseccfg[MML] == 0b1 for M mode.
   if priv == Machine & mseccfg[MMWP] == 0b0 & (mseccfg[MML] == 0b0 | access != InstructionFetch())
+     & not(ss_pmp_required)
   then None()
   else {
     if get_config_print_pmp()

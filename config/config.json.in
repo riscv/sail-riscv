@@ -786,6 +786,9 @@
     "Smpmpind": {
       "supported": true
     },
+    "Smcfiss": {
+      "supported": true
+    },
     "Smepmp": {
       "supported": true
     },

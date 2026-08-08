@@ -566,6 +566,10 @@ function clause hartSupports(Ext_Smcsrind) = config extensions.Smcsrind.supporte
 enum clause extension = Ext_Smpmpind
 mapping clause extensionName = Ext_Smpmpind <-> "smpmpind"
 function clause hartSupports(Ext_Smpmpind) = sys_enable_experimental_extensions() & config extensions.Smpmpind.supported
+// Machine-mode Shadow Stack
+enum clause extension = Ext_Smcfiss
+mapping clause extensionName = Ext_Smcfiss <-> "smcfiss"
+function clause hartSupports(Ext_Smcfiss) = sys_enable_experimental_extensions() & config extensions.Smcfiss.supported
 // Pmp enhancements for memory access and execution prevention on Machine mode
 enum clause extension = Ext_Smepmp
 mapping clause extensionName = Ext_Smepmp <-> "smepmp"
@@ -678,6 +682,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvknhb => 3, // > Zve64x
 
     Ext_H => 4, // > virtual_mem_supported
+    Ext_Smcfiss => 4, // > Smpmpind, Zicfiss
     Ext_Zve64d => 4, // > Zve64f
     Ext_Zvfbfwma => 4, // > Zvfbfmin
     Ext_Zvfh => 4, // > Zfhmin
@@ -854,6 +859,7 @@ let extensions_ordered_for_isa_string = [
   // Hypervisor extensions, ordered alphabetically.
 
   // Machine mode extensions, ordered alphabetically.
+  Ext_Smcfiss,
   Ext_Smcntrpmf,
   Ext_Smcsrind,
   Ext_Smepmp,
