@@ -570,6 +570,10 @@ function clause hartSupports(Ext_Smpmpind) = sys_enable_experimental_extensions(
 enum clause extension = Ext_Smcfiss
 mapping clause extensionName = Ext_Smcfiss <-> "smcfiss"
 function clause hartSupports(Ext_Smcfiss) = sys_enable_experimental_extensions() & config extensions.Smcfiss.supported
+// User-mode Shadow Stack (M+U systems)
+enum clause extension = Ext_Smucfiss
+mapping clause extensionName = Ext_Smucfiss <-> "smucfiss"
+function clause hartSupports(Ext_Smucfiss) = sys_enable_experimental_extensions() & (config extensions.Smucfiss.supported : bool) & hartSupports(Ext_U) & not(hartSupports(Ext_S))
 // Pmp enhancements for memory access and execution prevention on Machine mode
 enum clause extension = Ext_Smepmp
 mapping clause extensionName = Ext_Smepmp <-> "smepmp"
@@ -688,6 +692,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvfh => 4, // > Zfhmin
 
     Ext_V => 5, // > Zve64d
+    Ext_Smucfiss => 5, // > Smcfiss
     Ext_Zvfhmin => 5, // > Zvfh
 
     Ext_Zfinx => 9, // > is_zfinx_enabled_by_stateen
@@ -867,4 +872,5 @@ let extensions_ordered_for_isa_string = [
   Ext_Smnpm,
   Ext_Smpmpind,
   Ext_Smstateen,
+  Ext_Smucfiss,
 ]

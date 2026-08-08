@@ -416,6 +416,7 @@ function translateAddr(
   // protection mechanism in effect.
   let ss_permitted : bool = match effPriv {
     Machine => currentlyEnabled(Ext_Smcfiss) & mseccfg[MSSE] == 0b1,
+    User    => mode != Bare | (currentlyEnabled(Ext_Smucfiss) & menvcfg[SSE] == 0b1),
     _       => mode != Bare,
   };
   if is_shadow_stack_access(access) & not(ss_permitted)

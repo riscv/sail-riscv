@@ -24,8 +24,11 @@ function zicfiss_xSSE(priv : Privilege) -> bool =
     // TODO: needs currentlyEnabled(Ext_H) & read_henvcfg()[SSE]
     VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
     Supervisor        => currentlyEnabled(Ext_S) & bool_bit(menvcfg[SSE]),
-    User              => currentlyEnabled(Ext_S) & bool_bit(read_senvcfg()[SSE]),
-    VirtualUser       => currentlyEnabled(Ext_S) & bool_bit(read_senvcfg()[SSE]),
+    // Without S-mode, Smucfiss uses menvcfg.SSE.
+    User              => if currentlyEnabled(Ext_S)
+                         then bool_bit(read_senvcfg()[SSE])
+                         else currentlyEnabled(Ext_Smucfiss) & bool_bit(menvcfg[SSE]),
+    VirtualUser       => bool_bit(read_senvcfg()[SSE]),
   }
 
 // See "Shadow Stack Pointer (ssp) CSR access control".

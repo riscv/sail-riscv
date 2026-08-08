@@ -8,8 +8,11 @@
 
 function clause currentlyEnabled(Ext_Smepmp) = hartSupports(Ext_Smepmp)
 
+// Shadow-stack region and access-policy predicates, defined by Smcfiss and Smucfiss.
 val pmp_is_m_ss_region    : (Pmpcfg_ent, bits(1)) -> bool
+val pmp_is_u_ss_region    : (Pmpcfg_ent, bits(1)) -> bool
 val pmp_check_m_ss_access : (MemoryAccessType(mem_payload), Privilege) -> bool
+val pmp_check_u_ss_access : (MemoryAccessType(mem_payload), Privilege) -> bool
 
 // permission checks
 
@@ -153,7 +156,10 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
   priv : Privilege,
 ) -> option(ExceptionType) = {
 
-  let ss_pmp_required = is_shadow_stack_access(access) & priv == Machine;
+  // PMP-backed shadow-stack accesses require a matching shadow-stack region.
+  let ss_pmp_required =
+    is_shadow_stack_access(access)
+    & (priv == Machine | (priv == User & currentlyEnabled(Ext_Smucfiss)));
 
   if sys_pmp_count == 0 then
     return (if ss_pmp_required then Some(accessFaultFromAccessType(access)) else None());
@@ -182,9 +188,12 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
       PMP_Match        =>
         if currentlyEnabled(Ext_Smpmpind) & pmp_E[i] == 0b1
         then {
+          // With E=1, only enabled shadow-stack region encodings are valid.
           let ss_access_allowed =
             if pmp_is_m_ss_region(cfg, pmp_E[i])
             then pmp_check_m_ss_access(access, priv)
+            else if pmp_is_u_ss_region(cfg, pmp_E[i])
+            then pmp_check_u_ss_access(access, priv)
             else false;
           return (if ss_access_allowed then None() else Some(accessFaultFromAccessType(access)))
         }
