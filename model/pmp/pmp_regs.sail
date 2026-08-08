@@ -44,6 +44,9 @@ bitfield Pmpcfg_ent : bits(8) = {
 register pmpcfg_n : vector(64, Pmpcfg_ent) = vector_init(Mk_Pmpcfg_ent(zeros()))
 register pmpaddr_n : vector(64, xlenbits) = vector_init(zeros())
 
+// Smpmpind E bit per PMP entry: bit MXLEN-1 of the indirect pmpcfg view.
+register pmp_E : vector(64, bits(1)) = vector_init(0b0)
+
 // Packing and unpacking pmpcfg regs for xlen-width accesses
 
 private function pmpReadCfgReg(n : range(0, 15)) -> xlenbits = {
@@ -107,7 +110,7 @@ private function pmpIgnoreWrite(cfg : Pmpcfg_ent) -> bool =
   // temporarily lifted by setting mseccfg.RLB e.g. during the boot process."
   currentlyEnabled(Ext_Smepmp) & (mseccfg[MML] == 0b1 & mseccfg[RLB] == 0b0 & cfg[L] == 0b1 & cfg[X] == 0b1)
 
-function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
+function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8), e_bit: bits(1)) -> Pmpcfg_ent =
   if pmpIgnoreWrite(cfg) then cfg
   else {
     // Bits 5 and 6 are zero.
@@ -119,7 +122,10 @@ function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
     // 2. R, W and X are all set to 0.
     //
     // This combination is NOT reserved with Smepmp if mseccfg[MML] is set.
-    let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 & not(currentlyEnabled(Ext_Smepmp) & mseccfg[MML] == 0b1) then (
+    // Smpmpind permits it when E=1. MSSE and SSE are checked on access.
+    let mml_active   = currentlyEnabled(Ext_Smepmp) & mseccfg[MML] == 0b1;
+    let e_bit_active = currentlyEnabled(Ext_Smpmpind) & e_bit == 0b1;
+    let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 & not(mml_active | e_bit_active) then (
       match pmp_write_only_reserved_behavior {
         PMP_Fatal => reserved_behavior("pmpcfg with R=0,W=1"),
         PMP_ClearPermissions => [cfg with X = 0b0, W = 0b0, R = 0b0],
@@ -151,7 +157,7 @@ private function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
     foreach (i from 0 to 3) {
       let idx = n*4 + i;
       if idx < sys_pmp_usable_count then
-        pmpcfg_n[idx]  = pmpWriteCfg(pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
+        pmpcfg_n[idx]  = pmpWriteCfg(pmpcfg_n[idx],  v[8*i+7 .. 8*i], pmp_E[idx]);
     }
   }
   else {
@@ -159,7 +165,7 @@ private function pmpWriteCfgReg(n : range(0, 15), v : xlenbits) -> unit = {
     foreach (i from 0 to 7) {
       let idx = n*4 + i;
       if idx < sys_pmp_usable_count then
-        pmpcfg_n[idx]  = pmpWriteCfg(pmpcfg_n[idx],  v[8*i+7 .. 8*i]);
+        pmpcfg_n[idx]  = pmpWriteCfg(pmpcfg_n[idx],  v[8*i+7 .. 8*i], pmp_E[idx]);
     }
   }
 }

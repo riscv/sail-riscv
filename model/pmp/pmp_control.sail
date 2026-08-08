@@ -174,7 +174,9 @@ function pmpCheck forall 'n, 0 < 'n <= max_mem_access . (
         return Some(accessFaultFromAccessType(access))
       },
       PMP_Match        =>
-        if (currentlyEnabled(Ext_Smepmp) & pmpCheckPerms(cfg, access, priv)) |
+        if currentlyEnabled(Ext_Smpmpind) & pmp_E[i] == 0b1
+        then return Some(accessFaultFromAccessType(access))
+        else if (currentlyEnabled(Ext_Smepmp) & pmpCheckPerms(cfg, access, priv)) |
             pmpCheckRWX(cfg, access) |
            (priv == Machine & not(pmpLocked(cfg)))
         then return None()
@@ -203,6 +205,7 @@ function reset_pmp() -> unit = {
     // On reset the PMP register's A and L bits are set to 0 unless the platform
     // mandates a different value.
     pmpcfg_n[i] = [pmpcfg_n[i] with A = pmpAddrMatchType_encdec(OFF), L = 0b0];
+    pmp_E[i] = 0b0;
   };
 }
 

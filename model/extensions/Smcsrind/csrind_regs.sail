@@ -20,18 +20,23 @@ enum IregType = { Mireg, Sireg }
 
 function legalize_iselect(v : xlenbits) -> Iselect = Mk_Iselect(zero_extend(v[11 .. 0]))
 
+/* Hooks implemented by the consumer extensions (Smpmpind). */
+val smpmpind_ireg_accessible : (Iselect, IregType) -> bool
+val smpmpind_ireg_read       : (IregType, range(0, 6)) -> xlenbits
+val smpmpind_ireg_write      : (IregType, range(0, 6), xlenbits) -> xlenbits
 function is_ireg_accessible(i: Iselect, ireg : IregType) -> bool =
     match ireg {
-        Mireg => match i[csr] {
-            _ => false
-        },
+        Mireg => if currentlyEnabled(Ext_Smpmpind) then smpmpind_ireg_accessible(i, Mireg)
+                 else match i[csr] {
+                     _ => false
+                 },
         Sireg => match i[csr] {
             _ => false
         },
     }
 
-function get_ireg(ireg : IregType, i : range(0, 6)) -> xlenbits = zeros()
-function set_ireg(ireg : IregType, i : range(0, 6), value : xlenbits) -> xlenbits = zeros()
+function get_ireg(ireg : IregType, i : range(0, 6)) -> xlenbits = if currentlyEnabled(Ext_Smpmpind) then smpmpind_ireg_read(ireg, i) else zeros()
+function set_ireg(ireg : IregType, i : range(0, 6), value : xlenbits) -> xlenbits = if currentlyEnabled(Ext_Smpmpind) then smpmpind_ireg_write(ireg, i, value) else zeros()
 
 /* Machine indirect register select and alias CSRs */
 mapping clause csr_name_map = 0x350  <-> "miselect"
