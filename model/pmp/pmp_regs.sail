@@ -67,7 +67,7 @@ private function pmpReadCfgReg(n : range(0, 15)) -> xlenbits = {
   }
 }
 
-private function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
+function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
   let G = sys_pmp_grain;
   let match_type = pmpcfg_n[n][A];
   let addr = pmpaddr_n[n];
@@ -90,7 +90,7 @@ private function pmpReadAddrReg(n : range(0, 63)) -> xlenbits = {
 }
 
 // Helpers to handle locked entries
-private function pmpLocked(cfg: Pmpcfg_ent) -> bool =
+function pmpLocked(cfg: Pmpcfg_ent) -> bool =
   (cfg[L] == 0b1) & (not(currentlyEnabled(Ext_Smepmp)) | mseccfg[RLB] == 0b0)
 
 private function pmpTORLocked(cfg: Pmpcfg_ent) -> bool =
@@ -107,7 +107,7 @@ private function pmpIgnoreWrite(cfg : Pmpcfg_ent) -> bool =
   // temporarily lifted by setting mseccfg.RLB e.g. during the boot process."
   currentlyEnabled(Ext_Smepmp) & (mseccfg[MML] == 0b1 & mseccfg[RLB] == 0b0 & cfg[L] == 0b1 & cfg[X] == 0b1)
 
-private function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
+function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
   if pmpIgnoreWrite(cfg) then cfg
   else {
     // Bits 5 and 6 are zero.
@@ -173,7 +173,7 @@ private function pmpWriteAddr(locked: bool, tor_locked: bool, reg: xlenbits, v: 
   else zero_extend(v[min(physaddr_bits - 3, 53) .. 0]);
 }
 
-private function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
+function pmpWriteAddrReg(n : range(0, 63), v : xlenbits) -> unit = {
   if n < sys_pmp_usable_count then
     pmpaddr_n[n] = pmpWriteAddr(
       pmpLocked(pmpcfg_n[n]),
