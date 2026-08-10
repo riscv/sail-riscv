@@ -166,20 +166,13 @@ void log_callbacks::ptw_fail_callback(
 
 namespace {
 
-const char *stage_str(hart::zTranslationStage stage) {
-  switch (stage) {
-  case hart::zS_Stage:
-    return "S_Stage ";
-  case hart::zVS_Stage:
-    return "VS_Stage";
-  case hart::zG_Stage:
-    return "G_Stage ";
-  default:
-    return "Unknown";
-  }
-}
-
-void print_tlb(FILE *trace_log, ModelImpl &, ModelImpl::TLB tlb, const std::vector<uint64_t> &indices, bool is_flush) {
+void print_tlb(
+  FILE *trace_log,
+  ModelImpl &model,
+  ModelImpl::TLB tlb,
+  const std::vector<uint64_t> &indices,
+  bool is_flush
+) {
   fprintf(
     trace_log,
     "TLB %s [ len=%zu ]\n"
@@ -200,13 +193,13 @@ void print_tlb(FILE *trace_log, ModelImpl &, ModelImpl::TLB tlb, const std::vect
       const auto &e = entry.variants.zSomezIRTLB_EntryzK;
       fprintf(
         trace_log,
-        "║ %3zu ║  %c ║ 0x%06" PRIX64 " ║ 0x%06" PRIX64 " ║ %s ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64
+        "║ %3zu ║  %c ║ 0x%06" PRIX64 " ║ 0x%06" PRIX64 " ║ %-8s ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64
         " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║%s\n",
         i,
         e.zglobal ? 'Y' : 'N',
         e.zasid.bits,
         e.zvmid.bits,
-        stage_str(e.zstage),
+        model.translation_stage_to_string(e.zstage).c_str(),
         e.zvpn,
         e.zpte,
         e.zlevelMask,

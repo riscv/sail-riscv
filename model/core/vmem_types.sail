@@ -145,3 +145,12 @@ mapping page_based_mem_type : bits(2) <-> page_based_mem_type = {
 
 // Stage of Address Translation
 enum TranslationStage = {S_Stage, VS_Stage, G_Stage}
+
+function translationStage_to_str(stage : TranslationStage) -> string =
+  match stage {
+    S_Stage  => "S_Stage",
+    VS_Stage => "VS_Stage",
+    G_Stage  => "G_Stage",
+  }
+
+overload to_str = {translationStage_to_str}
