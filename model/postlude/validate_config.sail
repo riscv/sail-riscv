@@ -544,9 +544,9 @@ private function check_misc_extension_dependencies() -> bool = {
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
   };
   if (config extensions.H.supported : bool) then {
-    if not(config extensions.Zicsr.supported : bool) then {
+    if base_E_enabled then {
       valid = false;
-      print_endline("The H extension is enabled but Zicsr is disabled: supporting H requires Zicsr.");
+      print_endline("The H extension is enabled but the base integer ISA is E: supporting H requires I.");
     };
     if not(config extensions.S.supported : bool) then {
       valid = false;
