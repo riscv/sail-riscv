@@ -16,11 +16,9 @@ constraint xlen in {32, 64}
 type log2_xlen  : Int = if xlen == 32 then 5 else 6
 type xlen_bytes : Int = if xlen == 32 then 4 else 8
 
-// TODO: Allow configuring a lower number of physical address bits.
-// For example it is unlikely that serious RV64 implementations really
-// have 64 physical address bits.
 type physaddrbits_len : Int = if xlen == 32 then 34 else 64
-// Guest Physical Address length
+// Maximum guest physical address width. The usable width comes from the
+// hgatp mode, e.g. 41 bits for Sv39x4.
 type gpalen : Int = if xlen == 32 then 34 else 64
 // This is the maximum; designs can implement shorter ASIDLENs.
 // TODO: Allow configuring shorter ASIDLENs.
