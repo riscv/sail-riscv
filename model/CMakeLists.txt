@@ -380,10 +380,10 @@ foreach (xlen IN ITEMS 32 64)
         COMMAND
             ${SAIL_BIN}
             ${sail_common}
-            --dcoq-undef-axioms
-            --coq
-            --coq-lib riscv_extras
-            --coq-output-dir "${CMAKE_BINARY_DIR}/rocq"
+            --drocq-undef-axioms
+            --rocq
+            --rocq-lib riscv_extras
+            --rocq-output-dir "${CMAKE_BINARY_DIR}/rocq"
             # The prefix of the output files.
             -o "${arch}"
             --config ${config_file}
@@ -398,11 +398,11 @@ foreach (xlen IN ITEMS 32 64)
         COMMENT "Building Rocq definitions from Sail model (${arch})"
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/rocq"
         COMMAND
-            coqc
+            rocq c
             -R . Riscv
             "${arch}_types.v"
         COMMAND
-            coqc
+            rocq c
             -R . Riscv
             "${arch}.v"
     )

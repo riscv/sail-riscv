@@ -40,11 +40,11 @@ val sub_vec_int = pure {c: "sub_bits_int", cpp: "sub_bits_int", lean: "BitVec.su
 
 overload operator - = {sub_vec, sub_vec_int}
 
-val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", lean: "Int.tdiv", c: "tdiv_int", cpp: "tdiv_int", coq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
-val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", cpp: "tdiv_int", coq: "Z.quot", lean: "Int.tdiv"} : forall 'm, 'm != 0 . (int, int('m)) -> int
+val quot_positive_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", lean: "Int.tdiv", c: "tdiv_int", cpp: "tdiv_int", rocq: "Z.quot"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(div('n, 'm))
+val quot_round_zero = pure {interpreter: "quot_round_zero", lem: "hardware_quot", c: "tdiv_int", cpp: "tdiv_int", rocq: "Z.quot", lean: "Int.tdiv"} : forall 'm, 'm != 0 . (int, int('m)) -> int
 
-val rem_positive_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", cpp: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(mod('n, 'm))
-val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", cpp: "tmod_int", coq: "Z.rem", lean: "Int.tmod"} : forall 'm, 'm != 0 . (int, int('m)) -> int
+val rem_positive_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", cpp: "tmod_int", rocq: "Z.rem", lean: "Int.tmod"} : forall 'n 'm, 'n >= 0 & 'm > 0. (int('n), int('m)) -> int(mod('n, 'm))
+val rem_round_zero = pure {interpreter: "rem_round_zero", lem: "hardware_mod", c: "tmod_int", cpp: "tmod_int", rocq: "Z.rem", lean: "Int.tmod"} : forall 'm, 'm != 0 . (int, int('m)) -> int
 
 // For working with division / modulus we require the divisor to be >= 1.
 // This type describes that.
