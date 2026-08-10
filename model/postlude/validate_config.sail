@@ -515,7 +515,6 @@ private function check_misc_extension_dependencies() -> bool = {
     // access-fault, and misaligned exceptions, and for breakpoint exceptions other than those caused by execution of
     // the EBREAK or C.EBREAK instructions. For virtual-instruction and illegal-instruction exceptions, `stval` must be
     // written with the faulting instruction.
-    // TODO: add validation for virtual-instruction exceptions.
     valid = valid & check_required_sstvala_option("load page-faults", load_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("load guest page-faults", load_guest_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("load access-faults", load_access_fault_writes_xtval);

@@ -110,7 +110,7 @@ private function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
     C = if hartSupports(Ext_C) then v[C] else 0b0,
     D = if hartSupports(Ext_D) & v[F] == 0b1 then v[D] else 0b0,
     F = if hartSupports(Ext_F) then v[F] else 0b0,
-    H = if hartSupports(Ext_H) then v[H] else 0b0, // TODO: Not fully supported yet
+    H = if hartSupports(Ext_H) then v[H] else 0b0,
     // Writable I is not currently supported.
     I = bool_to_bit(not(base_E_enabled)),
     E = bool_to_bit(base_E_enabled),
@@ -327,7 +327,7 @@ register hstatus : Hstatus = [Mk_Hstatus(zeros()) with
 ]
 
 mapping clause csr_name_map = 0x600 <-> "hstatus"
-function clause is_CSR_accessible(0x600, _, _) = currentlyEnabled(Ext_H) //hstatus
+function clause is_CSR_accessible(0x600, _, _) = currentlyEnabled(Ext_H) // hstatus
 function clause read_CSR(0x600) = hstatus.bits[xlen - 1 .. 0]
 function clause write_CSR(0x600, value) = { hstatus = legalize_hstatus(hstatus, zero_extend(value)); Ok(hstatus.bits[xlen - 1 .. 0]) }
 
@@ -935,7 +935,7 @@ function clause write_CSR(0x100, value) =
   then { vsstatus = legalize_sstatus(vsstatus, value); Ok(lower_mstatus(vsstatus).bits[xlen - 1 .. 0]) }
   else { mstatus  = legalize_sstatus(mstatus, value);  Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0])  }
 
-// Virtual Supervisor related state register
+// Virtual Supervisor related state registers
 register vstvec    : Mtvec
 register vsscratch : xlenbits
 register vsepc     : xlenbits
