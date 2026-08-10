@@ -48,8 +48,8 @@ function clause write_CSR((0x15D, value) if xlen == 32) =
 mapping clause csr_name_map = 0x24D  <-> "vstimecmp"
 mapping clause csr_name_map = 0x25D  <-> "vstimecmph"
 
-function clause is_CSR_accessible(0x24D, _, _) = currentlyEnabled(Ext_H) // "vstimecmp"
-function clause is_CSR_accessible(0x25D, _, _) = currentlyEnabled(Ext_H) & xlen == 32 // "vstimecmph"
+function clause is_CSR_accessible(0x24D, _, _) = currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) // vstimecmp
+function clause is_CSR_accessible(0x25D, _, _) = currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) & xlen == 32 // vstimecmph
 
 function clause read_CSR(0x24D) = vstimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x25D if xlen == 32) = vstimecmp[63 .. 32]
