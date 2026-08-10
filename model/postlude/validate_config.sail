@@ -516,20 +516,23 @@ private function check_misc_extension_dependencies() -> bool = {
     // the EBREAK or C.EBREAK instructions. For virtual-instruction and illegal-instruction exceptions, `stval` must be
     // written with the faulting instruction.
     valid = valid & check_required_sstvala_option("load page-faults", load_page_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("load guest page-faults", load_guest_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("load access-faults", load_access_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("misaligned load exceptions", misaligned_load_writes_xtval);
     valid = valid & check_required_sstvala_option("store/AMO page-faults", samo_page_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("store/AMO guest page-faults", samo_guest_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("store/AMO access-faults", samo_access_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("misaligned store/AMO exceptions", misaligned_samo_writes_xtval);
     valid = valid & check_required_sstvala_option("fetch page-faults", fetch_page_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("fetch guest page-faults", fetch_guest_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("fetch access-faults", fetch_access_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("misaligned fetch exceptions", misaligned_fetch_writes_xtval);
     valid = valid & check_required_sstvala_option("hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
     valid = valid & check_required_sstvala_option("illegal instruction exceptions", illegal_instruction_writes_xtval);
-    valid = valid & check_required_sstvala_option("virtual instruction exceptions", virtual_instruction_writes_xtval);
+    // Guest-page faults and virtual-instruction exceptions can only be raised when H is supported.
+    if (config extensions.H.supported : bool) then {
+      valid = valid & check_required_sstvala_option("load guest page-faults", load_guest_page_fault_writes_xtval);
+      valid = valid & check_required_sstvala_option("store/AMO guest page-faults", samo_guest_page_fault_writes_xtval);
+      valid = valid & check_required_sstvala_option("fetch guest page-faults", fetch_guest_page_fault_writes_xtval);
+      valid = valid & check_required_sstvala_option("virtual instruction exceptions", virtual_instruction_writes_xtval);
+    };
   };
   if (config extensions.Ssqosid.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
