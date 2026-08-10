@@ -996,13 +996,6 @@ bitfield Hgatp32 : bits(32) = {
   PPN  : 21 .. 0
 }
 
-// TODO: Add these options to config file once Hypervisor supported is added
-let HBare_supported  : bool = true
-let Sv32x4_supported : bool = HBare_supported  & xlen == 32
-let Sv39x4_supported : bool = HBare_supported  & xlen == 64
-let Sv48x4_supported : bool = Sv39x4_supported & xlen == 64
-let Sv57x4_supported : bool = Sv48x4_supported & xlen == 64
-
 // TODO: Add VMIDLEN config option and mask VMID field to implemented width
 function legalize_hgatp(
   arch : Architecture,
@@ -1012,6 +1005,8 @@ function legalize_hgatp(
   // Unlike satp, a write to hgatp with an unsupported MODE value is not ignored.
   // Instead, the fields are WARL in the normal way: an unsupported MODE falls
   // back to HBare while preserving the other fields (VMID, PPN).
+  // Shgatpa requires an SvNNx4 mode for every satp SvNN mode, plus Bare.
+  // TODO: Add hgatp mode config options.
   if xlen == 32 then {
     let v = Mk_Hgatp32(written_value);
     // Force 16 KiB alignment with PPN[1:0] = 0b00
@@ -1025,8 +1020,8 @@ function legalize_hgatp(
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
-        HBare  if HBare_supported  => h.bits,
-        Sv32x4 if Sv32x4_supported => h.bits,
+        HBare => h.bits,
+        Sv32x4 if currentlyEnabled(Ext_Sv32) => h.bits,
         _ => [h with Mode = zeros()].bits,
       }
     }
@@ -1043,10 +1038,10 @@ function legalize_hgatp(
     match hgatpMode_of_bits(arch, h[Mode]) {
       None() => prev_value,
       Some(mode) => match mode {
-        HBare  if HBare_supported  => h.bits,
-        Sv39x4 if Sv39x4_supported => h.bits,
-        Sv48x4 if Sv48x4_supported => h.bits,
-        Sv57x4 if Sv57x4_supported => h.bits,
+        HBare => h.bits,
+        Sv39x4 if currentlyEnabled(Ext_Sv39) => h.bits,
+        Sv48x4 if currentlyEnabled(Ext_Sv48) => h.bits,
+        Sv57x4 if currentlyEnabled(Ext_Sv57) => h.bits,
         _ => [h with Mode = zeros()].bits,
       }
     }
