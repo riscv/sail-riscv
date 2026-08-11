@@ -36,7 +36,7 @@ _Reserved_ bits must be written with 0 otherwise an access fault is raised. In f
 
 Bit 31 controls whether the relevant interrupts are set or cleared.
 
-MEI and MSI control the platform interrupt inputs to the hart, which directly control the corresponding bits in `mip` (there is no way for software running on the hart to set these bits directly). SEI and SSI are slightly more subtle because software on the hart can also write to these bits.
+MEI and MSI control the platform interrupt inputs to the hart (there is no way for software running on the hart to set these bits directly). MSI updates `mip[MSI]` directly. MEI is a separate input that is ORed into `mip[MEI]` on read, like SEI below. SEI and SSI are slightly more subtle because software on the hart can also write to these bits.
 
 SEI controls the supervisor external platform interrupt input, which is distinct from the software-writable `mip[SEI]` bit. These two values are ORed together when reading `mip` (or `sip`) for CSR reads and to dispatch interrupts, but NOT when reading `mip`/`sip` for the CSR read-modify-write process.
 
