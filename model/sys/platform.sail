@@ -160,6 +160,9 @@ function clint_dispatch(mip_was_written : bool) -> unit = {
     // than (time + htimedelta), typically as a result of writing vstimecmp. The interrupt will be
     // taken based on the standard interrupt enable and delegation rules while V=1.
    mip[VSTI] = hvip[VSTI] | bool_to_bit(vstimecmp <=_u (mtime + htimedelta));
+  } else if currentlyEnabled(Ext_H) then {
+    // Sstc is off for VS, so VSTIP is hvip[VSTI] alone.
+    mip[VSTI] = hvip[VSTI];
   };
   if get_config_print_clint()
   then print_log("clint mtime " ^ bits_str(mtime));
