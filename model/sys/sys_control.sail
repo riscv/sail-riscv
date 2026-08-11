@@ -147,7 +147,7 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
 // (i.e., implementations should avoid resuming the hart if the
 // interrupt is pending but not individually enabled)."
 function shouldWakeForInterrupt() -> bool = {
-  (mip.bits & mie.bits) != zeros()
+  (read_mip(IncludePlatformInterrupts).bits & mie.bits) != zeros()
 }
 
 // Examine the current interrupt state and return an interrupt to be *
