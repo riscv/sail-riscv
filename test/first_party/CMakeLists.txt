@@ -100,18 +100,23 @@ set(common_deps
 )
 
 set(tests)
-macro(add_first_party_test_with_config name march xlen override_json_file)
-    list(APPEND tests "${name}" "${march}" "${xlen}" "${override_json_file}")
+macro(add_first_party_test_with_config name march xlen override_json_file experimental)
+    list(APPEND tests "${name}" "${march}" "${xlen}" "${override_json_file}" "${experimental}")
 endmacro()
 macro(add_first_party_test name)
     set(isa_extension gcv_zfbfmin)
-    add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "no_override.json")
-    add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "no_override.json")
+    add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "no_override.json" FALSE)
+    add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "no_override.json" FALSE)
 endmacro()
 macro(add_first_party_override_test name override)
     set(isa_extension gcv_zfbfmin)
-    add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "${override}")
-    add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "${override}")
+    add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "${override}" FALSE)
+    add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "${override}" FALSE)
+endmacro()
+macro(add_first_party_experimental_test name)
+    set(isa_extension gcv_zfbfmin)
+    add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "no_override.json" TRUE)
+    add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "no_override.json" TRUE)
 endmacro()
 
 add_first_party_test("test_bf16_nan_boxing.S")
@@ -128,14 +133,17 @@ add_first_party_test("test_tlb_stale_pte_access_fault.S")
 add_first_party_override_test("test_sew_elen_bound.S" "elen_32.json")
 add_first_party_override_test("test_satp_physaddr_bits.S" "satp_physaddr_bits.json")
 
+add_first_party_experimental_test("test_sscpuutil.S")
+
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
-foreach(idx RANGE 0 ${test_last} 4)
-    list(SUBLIST tests ${idx} 4 entry)
+foreach(idx RANGE 0 ${test_last} 5)
+    list(SUBLIST tests ${idx} 5 entry)
     list(GET entry 0 test_source)
     list(GET entry 1 march)
     list(GET entry 2 xlen)
     list(GET entry 3 override_config)
+    list(GET entry 4 experimental)
 
     set(arch "rv${xlen}d")
     if (xlen EQUAL 32)
@@ -195,8 +203,13 @@ foreach(idx RANGE 0 ${test_last} 4)
 
     add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config} ${override_config})
 
+    set(extra_args)
+    if (experimental)
+        set(extra_args --enable-experimental-extensions)
+    endif()
+
     add_test(
         NAME "first_party_${arch}_${test_source}"
-        COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} --config-override ${override_config} ${elf}
+        COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} --config-override ${override_config} ${extra_args} ${elf}
     )
 endforeach()

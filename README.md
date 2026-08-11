@@ -225,6 +225,7 @@ An experimental emulator in the Lean language is available, see its
 
 The following unratified extensions are supported and can be enabled using the `--enable-experimental-extensions` flag:
 
+- Sscpuutil extension for CPU utilization counters, fast-track draft
 - Zibi extension for conditional branches with immediate operands, v0.6
 - Zvabd extension for vector absolute difference, v0.7
 

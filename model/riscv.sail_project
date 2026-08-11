@@ -61,7 +61,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Sscpuutil, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
 
   files
     sys/sys_reservation.sail,
@@ -474,6 +474,11 @@ extensions {
     files extensions/Ssqosid/ssqosid.sail
   }
 
+  Sscpuutil {
+    requires core
+    files extensions/Sscpuutil/sscpuutil.sail
+  }
+
   CFI {
     requires core
 
@@ -567,7 +572,7 @@ mops {
 postlude {
   after extensions, mops, core
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts
+  requires prelude, core, sys, exceptions, Smcntrpmf, Sscpuutil, pmp, Zicfilp_regs, Zicfilp_insts
 
   files
     postlude/insts_end.sail,

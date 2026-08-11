@@ -281,6 +281,11 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   }
 }
 
+// Wrapper for tick_clock_with_wfi_idle which is also used by the C side.
+function tick_clock() -> unit = {
+  tick_clock_with_wfi_idle(hart_is_waiting_for_wfi(hart_state))
+}
+
 function loop () : unit -> nat = {
   var i : nat = 0;
   var step_no : nat = 0;

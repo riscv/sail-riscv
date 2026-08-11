@@ -16,12 +16,15 @@ function is_sstateen_accessible() -> bool = currentlyEnabled(Ext_S) & (currently
 termination_measure is_hstateen_accessible() = 5 // > Ext_H
 termination_measure is_sstateen_accessible() = 2 // > Ext_S
 
-enum stateen_bit = {STATEEN_FCSR, STATEEN_SRMCFG, STATEEN_ENVCFG, STATEEN_SE}
+// FIXME: Waiting for CSR address allocation
+enum stateen_bit = {STATEEN_FCSR, STATEEN_ACTTIME, STATEEN_SRMCFG, STATEEN_ENVCFG, STATEEN_SE}
 
 mapping stateen_bit_index : stateen_bit <-> range(0, 63) = {
   STATEEN_SE     <-> 63,
   STATEEN_ENVCFG <-> 62,
   STATEEN_SRMCFG <-> 55,
+  // Temporary model assignment while the Sscpuutil stateen bit is TBD in ARC.
+  STATEEN_ACTTIME <-> 53,
   STATEEN_FCSR   <-> 1,
 }
 
@@ -36,6 +39,7 @@ bitfield Mstateen0 : bits(64) = {
   P1P13   : 56,
   SRMCFG  : 55,
   CTR     : 54,
+  ACTTIME : 53,
 
   JVT     : 2,
   FCSR    : 1,
@@ -67,6 +71,7 @@ function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
     SE0    = if config extensions.Stateen.SE0_readonly_zero then 0b0 else v[SE0],
     ENVCFG = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
     SRMCFG = if currentlyEnabled(Ext_Ssqosid) then v[SRMCFG] else 0b0,
+    ACTTIME = if currentlyEnabled(Ext_Sscpuutil) then v[ACTTIME] else 0b0,
     FCSR   = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
     C      = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
   ];
@@ -85,6 +90,7 @@ bitfield Hstateen0 : bits(64) = {
   IMSIC   : 58,
   CONTEXT : 57,
   CTR     : 54,
+  ACTTIME : 53,
 
   JVT     : 2,
   FCSR    : 1,
@@ -119,6 +125,7 @@ function legalize_hstateen0(h : Hstateen0, v : bits(64)) -> Hstateen0 = {
   [h with
     SE0    = if config extensions.Stateen.SE0_readonly_zero then 0b0 else v[SE0],
     ENVCFG = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
+    ACTTIME = if currentlyEnabled(Ext_Sscpuutil) then v[ACTTIME] else 0b0,
     FCSR   = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
     C      = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
   ];
@@ -184,9 +191,13 @@ function check_stateen_bit(priv : Privilege, bit_idx : stateen_bit, stateen_reg 
   let mask : bits(64) = match priv {
     Machine           => ones(),
     Supervisor        => get_mstateen(stateen_reg),
-    User              => get_mstateen(stateen_reg) & get_sstateen(stateen_reg),
+    User              => if bit_idx == STATEEN_ACTTIME
+                         then get_mstateen(stateen_reg)
+                         else get_mstateen(stateen_reg) & get_sstateen(stateen_reg),
     VirtualSupervisor => get_mstateen(stateen_reg) & get_hstateen(stateen_reg),
-    VirtualUser       => get_mstateen(stateen_reg) & get_hstateen(stateen_reg) & get_sstateen(stateen_reg),
+    VirtualUser       => if bit_idx == STATEEN_ACTTIME
+                         then get_mstateen(stateen_reg) & get_hstateen(stateen_reg)
+                         else get_mstateen(stateen_reg) & get_hstateen(stateen_reg) & get_sstateen(stateen_reg),
   };
   mask[stateen_bit_index(bit_idx)] == bitone
 }
