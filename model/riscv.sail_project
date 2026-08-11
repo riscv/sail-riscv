@@ -475,7 +475,7 @@ extensions {
   }
 
   Sscpuutil {
-    requires core
+    requires core, Zicntr
     files extensions/Sscpuutil/sscpuutil.sail
   }
 
