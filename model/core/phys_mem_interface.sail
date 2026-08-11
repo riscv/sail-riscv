@@ -13,6 +13,7 @@
 // to physical memory.  For models that do not require this metadata,
 // a unit type can be used.
 
+$define CONCURRENCY_INTERFACE_V2
 $include <concurrency_interface.sail>
 
 enum write_kind = {
@@ -40,6 +41,62 @@ enum read_kind = {
   Read_RISCV_reserved_strong_acquire,
 }
 
+union access_kind = {
+  AK_Write : write_kind,
+  AK_Read : read_kind,
+}
+
+// TODO: We currently do not get enough information here to distinguish explicit accesses,
+// translation accesses, and atomic accesses.
+function ak_is_explicit(_acc : access_kind) -> bool = true
+function ak_is_ifetch(acc : access_kind) -> bool = acc == AK_Read(Read_ifetch)
+function ak_is_ttw(_acc : access_kind) -> bool = false
+function ak_is_relaxed(acc : access_kind) -> bool =
+  match acc {
+    AK_Write(Write_plain) => true,
+    AK_Write(Write_RISCV_conditional) => true,
+    AK_Read(Read_plain) => true,
+    AK_Read(Read_RISCV_reserved) => true,
+    _ => false,
+  }
+function ak_is_rel_acq_rcsc(acc : access_kind) -> bool =
+  match acc {
+    AK_Write(Write_RISCV_strong_release) => true,
+    AK_Write(Write_RISCV_conditional_strong_release) => true,
+    AK_Read(Read_RISCV_strong_acquire) => true,
+    AK_Read(Read_RISCV_reserved_strong_acquire) => true,
+    _ => false,
+  }
+function ak_is_rel_acq_rcpc(acc : access_kind) -> bool =
+  match acc {
+    AK_Write(Write_RISCV_release) => true,
+    AK_Write(Write_RISCV_conditional_release) => true,
+    AK_Read(Read_RISCV_acquire) => true,
+    AK_Read(Read_RISCV_reserved_acquire) => true,
+    _ => false,
+  }
+function ak_is_standalone(acc : access_kind) -> bool =
+  match acc {
+    AK_Write(Write_plain) => true,
+    AK_Write(Write_RISCV_release) => true,
+    AK_Write(Write_RISCV_strong_release) => true,
+    AK_Read(Read_plain) => true,
+    AK_Read(Read_RISCV_acquire) => true,
+    AK_Read(Read_RISCV_strong_acquire) => true,
+    _ => false,
+  }
+function ak_is_exclusive(acc : access_kind) -> bool =
+  match acc {
+    AK_Write(Write_RISCV_conditional) => true,
+    AK_Write(Write_RISCV_conditional_release) => true,
+    AK_Write(Write_RISCV_conditional_strong_release) => true,
+    AK_Read(Read_RISCV_reserved) => true,
+    AK_Read(Read_RISCV_reserved_acquire) => true,
+    AK_Read(Read_RISCV_reserved_strong_acquire) => true,
+    _ => false,
+  }
+function ak_is_atomic_rmw(_acc : access_kind) -> bool = false
+
 enum barrier_kind = {
   Barrier_RISCV_rw_rw,
   Barrier_RISCV_r_rw,
@@ -54,51 +111,37 @@ enum barrier_kind = {
   Barrier_RISCV_i,
 }
 
-// Most of the above read/write_kinds are understood natively by the
-// Sail concurrency interface, except for the strong acquire release
-// variants which require an architecture specific access kind.
-struct RISCV_strong_access = {
-  variety : Access_variety,
-}
-
-// The Sail concurrency interface lets us have a physical address type
-// with additional information, provided we can supply a function that
-// converts it into a bitvector. When in RV32 mode, physaddrbits is
-// bits(34), which needs to be zero-extended to bits(64) for
-// sail_mem_write/read interface. This conversion is necessary because
-// the memory interface only supports 32-bit or 64-bit physical
-// addresses regardless of the actual physical address width.
-function physaddrbits_zero_extend(xs : physaddrbits) -> bits(64) = zero_extend(xs)
-
 instantiation sail_mem_write with
-  'pa = physaddrbits,
-  pa_bits = physaddrbits_zero_extend,
-  // We don't have a relaxed-memory translation model for RISC-V, so
-  // we just use unit as a dummy type.
-  'translation_summary = unit,
-  'arch_ak = RISCV_strong_access,
-  // Similarly to translation_summary, we don't have a defined type for external
-  // aborts, so just use unit here too
-  'abort = unit
+  'addr_size = physaddrbits_len,
+  'addr_space = unit,
+  'mem_acc = access_kind,
+  'CHERI = false,    // TODO: Provide a way to override this.
+  'cap_size_log = 0, // TODO: Provide a way to override this.
+  // We don't have a defined type for external aborts, so just use unit here.
+  'abort = unit,
+  mem_acc_is_explicit = ak_is_explicit,
+  mem_acc_is_ifetch = ak_is_ifetch,
+  mem_acc_is_ttw = ak_is_ttw,
+  mem_acc_is_relaxed = ak_is_relaxed,
+  mem_acc_is_rel_acq_rcpc = ak_is_rel_acq_rcpc,
+  mem_acc_is_rel_acq_rcsc = ak_is_rel_acq_rcsc,
+  mem_acc_is_standalone = ak_is_standalone,
+  mem_acc_is_exclusive = ak_is_exclusive,
+  mem_acc_is_atomic_rmw = ak_is_atomic_rmw
 
 val write_ram : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n), bits(8 * 'n), mem_meta) -> bool
 
 function write_ram(wk, Physaddr(addr), width, data, meta) = {
-  let request : Mem_write_request('n, 64, physaddrbits, unit, RISCV_strong_access) = struct {
+  let request : Mem_request('n, 0, physaddrbits_len, unit, access_kind) = struct {
     access_kind = match wk {
-      Write_plain => AK_explicit(struct { variety = AV_plain, strength = AS_normal }),
       Write_RISCV_release => internal_error(__FILE__, __LINE__, "Write_RISCV_release is unused"),
       Write_RISCV_strong_release => internal_error(__FILE__, __LINE__, "Write_RISCV_strong_release is unused"),
-      Write_RISCV_conditional => AK_explicit(struct { variety = AV_exclusive, strength = AS_normal }),
-      Write_RISCV_conditional_release => AK_explicit(struct { variety = AV_exclusive, strength = AS_rel_or_acq }),
-      Write_RISCV_conditional_strong_release => AK_arch(struct { variety = AV_exclusive }),
+      _ => AK_Write(wk),
     },
-    va = None(),
-    pa = addr,
-    translation = (),
+    address = addr,
+    address_space = (),
     size = width,
-    value = Some(data),
-    tag = None(),
+    num_tag = 0,
   };
   // Write out metadata only if the value write succeeds.
   // It is assumed for now that this write always succeeds;
@@ -106,7 +149,7 @@ function write_ram(wk, Physaddr(addr), width, data, meta) = {
   // FIXME: We should convert the external API for all backends
   // (not just for Lem) to consume the value along with the
   // metadata to ensure atomicity.
-  match sail_mem_write(request) {
+  match sail_mem_write(request, to_bytes_le(data), []) {
     Ok(_) => {
       __WriteRAM_Meta(addr, width, meta);
       true
@@ -119,29 +162,39 @@ val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, i
 function write_ram_ea(_wk, Physaddr(_addr), _width) = ()
 
 instantiation sail_mem_read with
-  pa_bits = physaddrbits_zero_extend
+  'addr_size = physaddrbits_len,
+  'addr_space = unit,
+  'mem_acc = access_kind,
+  'CHERI = false,    // TODO: Provide a way to override this.
+  'cap_size_log = 0, // TODO: Provide a way to override this.
+  // We don't have a defined type for external aborts, so just use unit here.
+  'abort = unit,
+  mem_acc_is_explicit = ak_is_explicit,
+  mem_acc_is_ifetch = ak_is_ifetch,
+  mem_acc_is_ttw = ak_is_ttw,
+  mem_acc_is_relaxed = ak_is_relaxed,
+  mem_acc_is_rel_acq_rcpc = ak_is_rel_acq_rcpc,
+  mem_acc_is_rel_acq_rcsc = ak_is_rel_acq_rcsc,
+  mem_acc_is_standalone = ak_is_standalone,
+  mem_acc_is_exclusive = ak_is_exclusive,
+  mem_acc_is_atomic_rmw = ak_is_atomic_rmw
 
 val read_ram : forall 'n, 0 < 'n <= max_mem_access.  (read_kind, physaddr, int('n), bool) -> (bits(8 * 'n), mem_meta)
 function read_ram(rk, Physaddr(addr), width, read_meta) = {
   let meta = if read_meta then __ReadRAM_Meta(addr, width) else default_meta;
-  let request : Mem_read_request('n, 64, physaddrbits, unit, RISCV_strong_access) = struct {
+  let request : Mem_request('n, 0, physaddrbits_len, unit, access_kind) = struct {
     access_kind = match rk {
-      Read_plain => AK_explicit(struct { variety = AV_plain, strength = AS_normal }),
-      Read_ifetch => AK_ifetch(),
       Read_RISCV_acquire => internal_error(__FILE__, __LINE__, "Read_RISCV_acquire is unused"),
       Read_RISCV_strong_acquire => internal_error(__FILE__, __LINE__, "Read_RISCV_strong_acquire is unused"),
-      Read_RISCV_reserved => AK_explicit(struct { variety = AV_exclusive, strength = AS_normal }),
-      Read_RISCV_reserved_acquire => AK_explicit(struct { variety = AV_exclusive, strength = AS_rel_or_acq }),
-      Read_RISCV_reserved_strong_acquire => AK_arch(struct { variety = AV_exclusive }),
+      _ => AK_Read(rk),
     },
-    va = None(),
-    pa = addr,
-    translation = (),
+    address = addr,
+    address_space = (),
     size = width,
-    tag = false,
+    num_tag = 0,
   };
   match sail_mem_read(request) {
-    Ok((value, _)) => (value, meta),
+    Ok((value, _)) => (from_bytes_le(value), meta),
     Err() => exit(),
   }
 }
