@@ -10,7 +10,7 @@ import Sail.Sail
 import THE_MODULE_NAME.Defs
 
 open Sail
-open ConcurrencyInterfaceV1
+open Sail.ArchSem
 open THE_MODULE_NAME
 
 def print_bits (_ : String) (_ : BitVec n) : Unit := ()
@@ -32,8 +32,8 @@ def plat_term_write {α} : α → SailM Unit := λ _ => panic "TODO: plat_term_w
 def plat_term_read : Unit → SailM String := λ _ => panic "TODO: plat_term_read"
 
 -- Reservations
-def load_reservation : Arch.pa → Nat → SailM Unit := λ _ => panic "TODO: load_reservation"
-def match_reservation : Arch.pa → Bool := λ _ => panic "TODO: match_reservation"
+def load_reservation : BitVec Arch.addr_size → Nat → SailM Unit := λ _ => panic "TODO: load_reservation"
+def match_reservation : BitVec Arch.addr_size → Bool := λ _ => panic "TODO: match_reservation"
 def cancel_reservation : Unit → SailM Unit := λ _ => dbg_trace "TODO: cancel_reservation"; return ()
 def valid_reservation : Unit → Bool := λ _ => false
 
