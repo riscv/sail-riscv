@@ -292,22 +292,29 @@ function clause read_CSR(0x645) = lower_mip_to_hvip(mip, hvip).bits
 function clause read_CSR(0x604) = lower_mie_to_hie(mie).bits
 function clause read_CSR(0x644) = lower_mip_to_hip(mip).bits
 
+// Defined in sys/platform.sail, which comes after this file in the compile order.
+val clint_dispatch : bool -> unit
+
 function clause write_CSR(0x645, value) = {
   hvip = legalize_hvip(hvip, value);
   mip[VSSI] = hvip[VSSI];
-  // mip.VSTI and mip.VSEI are derived from hvip plus other sources, but mip is
-  // read directly internally and hvip changes don't propagate, so we refresh
-  // them here by hand. TODO: compute them on read instead and drop this.
-
-  // clint_dispatch() recomputes VSTI, but only every plat_insns_per_tick
-  // instructions, so keep its comparator term or we drop a pending VS timer.
-  mip[VSTI] = hvip[VSTI] | (if currentlyEnabled(Ext_Sstc) & read_henvcfg()[STCE] == 0b1
-                            then mip[VSTI] else 0b0);
+  // mip.VSEI is derived from hvip but mip is read directly internally and hvip
+  // changes don't propagate, so refresh it here by hand.
+  // TODO: compute it on read instead and drop this.
 
   // hvip is the only VSEI source while hgeip is hardwired to zero. Once it is
   // drivable this also needs the hgeip bit selected by hstatus.VGEIN, refreshed
   // whenever hgeip or VGEIN changes.
   mip[VSEI] = hvip[VSEI];
+
+  // TODO: In the future, remove all the calls to clint_dispatch() and move all
+  // timer comperators to read_mip() so that all timing-related pending interrupt
+  // (mtimecmp, stimecmp, vstimecmp, htimedelta, etc.) bits are updated on read.
+  // See the following conversation:
+  // https://github.com/riscv/sail-riscv/pull/1869#discussion_r3766656868
+
+  // VSTI is hvip[VSTI] ORed with the timer comparator, so recompute it.
+  clint_dispatch(false);
   Ok(hvip.bits)
 }
 function clause write_CSR(0x604, value) = { mie = legalize_hie(mie, value); Ok(lower_mie_to_hie(mie).bits) }
