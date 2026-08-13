@@ -524,16 +524,12 @@ function read_henvcfg() -> HEnvcfg =
     SSE   = menvcfg[SSE]   & henvcfg[SSE],
   ]
 
-function read_senvcfg() -> SEnvcfg = {
-  let SSE : bool = match cur_privilege {
-    Machine           => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
-    Supervisor        => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
-    User              => menvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
-    VirtualSupervisor => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1,
-    VirtualUser       => menvcfg[SSE] == 0b1 & henvcfg[SSE] == 0b1 & senvcfg[SSE] == 0b1,
-  };
-  [senvcfg with SSE = bool_bit(SSE)];
-}
+// "When menvcfg.SSE is 0, the henvcfg.SSE and senvcfg.SSE fields are read-only zero."
+// When henvcfg.SSE is 0 and V=1 the senvcfg.SSE field is also read-only zero.
+// This function should be used for any read of the `senvcfg` CSR that includes the SSE bit.
+function read_senvcfg() -> SEnvcfg =
+  [senvcfg with SSE = menvcfg[SSE] & senvcfg[SSE] &
+                      (if inVirtualPrivilege() then henvcfg[SSE] else 0b1)]
 
 mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
