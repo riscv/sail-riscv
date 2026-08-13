@@ -52,6 +52,11 @@ function stateen_allows_CSR_access(csr : csreg, priv : Privilege, _access_type :
     // srmcfg
     (0x181, priv) => check_stateen_bit(priv, STATEEN_SRMCFG, 0),
 
+    // Supervisor-level indirect CSR access (Sscsrind): siselect / sireg
+    // are gated by mstateen0.CSRIND (bit 60).
+    (0x150, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+    (0x151, priv) => check_stateen_bit(priv, STATEEN_CSRIND, 0),
+
     // fflags
     (0x001, priv) => if hartSupports(Ext_Zfinx) then check_stateen_bit(priv, STATEEN_FCSR, 0) else true,
     // frm

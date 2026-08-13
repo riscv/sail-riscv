@@ -16,11 +16,12 @@ function is_sstateen_accessible() -> bool = currentlyEnabled(Ext_S) & (currently
 termination_measure is_hstateen_accessible() = 5 // > Ext_H
 termination_measure is_sstateen_accessible() = 2 // > Ext_S
 
-enum stateen_bit = {STATEEN_FCSR, STATEEN_SRMCFG, STATEEN_ENVCFG, STATEEN_SE}
+enum stateen_bit = {STATEEN_FCSR, STATEEN_SRMCFG, STATEEN_ENVCFG, STATEEN_SE, STATEEN_CSRIND}
 
 mapping stateen_bit_index : stateen_bit <-> range(0, 63) = {
   STATEEN_SE     <-> 63,
   STATEEN_ENVCFG <-> 62,
+  STATEEN_CSRIND <-> 60,
   STATEEN_SRMCFG <-> 55,
   STATEEN_FCSR   <-> 1,
 }

@@ -38,6 +38,7 @@ core {
     core/sys_regs.sail,
     core/ext_regs.sail,
     core/interrupt_regs.sail,
+    core/indirect_csr.sail,
     core/addr_checks_common.sail,
     core/addr_checks.sail,
     core/misa_ext.sail,

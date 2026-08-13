@@ -564,7 +564,20 @@ enum clause extension = Ext_Ssqosid
 mapping clause extensionName = Ext_Ssqosid <-> "ssqosid"
 function clause hartSupports(Ext_Ssqosid) = config extensions.Ssqosid.supported
 
+// Machine-level indirect CSR access (miselect/mireg).
+enum clause extension = Ext_Smcsrind
+mapping clause extensionName = Ext_Smcsrind <-> "smcsrind"
+function clause hartSupports(Ext_Smcsrind) = config extensions.Smcsrind.supported
+function clause currentlyEnabled(Ext_Smcsrind) = hartSupports(Ext_Smcsrind) & currentlyEnabled(Ext_Zicsr)
+
+// Supervisor-level indirect CSR access (siselect/sireg).
+enum clause extension = Ext_Sscsrind
+mapping clause extensionName = Ext_Sscsrind <-> "sscsrind"
+function clause hartSupports(Ext_Sscsrind) = (config extensions.Sscsrind.supported : bool) & hartSupports(Ext_S)
+function clause currentlyEnabled(Ext_Sscsrind) = hartSupports(Ext_Sscsrind) & currentlyEnabled(Ext_S)
+
 // Environment extensions
+
 // These extensions are not configurable via the config file
 // To avoid ordering issues, they are placed at the bottom
 
@@ -592,6 +605,7 @@ function hartSupports_measure(ext : extension) -> int =
     Ext_Zvks => 1, // > Zvksed
     Ext_Sspm => 1, // > S
     Ext_Supm => 1, // > S
+    Ext_Sscsrind => 1, // > S
 
     Ext_C => 2, // > D
     Ext_Zvknc => 2, // > Zvkn
@@ -813,6 +827,7 @@ let extensions_ordered_for_isa_string = [
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Ssccptr,
+  Ext_Sscsrind,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
   Ext_Ssnpm,
@@ -836,7 +851,9 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smcsrind,
   Ext_Smmpm,
   Ext_Smnpm,
   Ext_Smstateen,
 ]
+

@@ -857,6 +857,14 @@
     },
     "Svvptc": {
       "supported": true
+    },
+    // Machine-level indirect CSR access (miselect/mireg). Required by Smaia.
+    "Smcsrind": {
+      "supported": true
+    },
+    // Supervisor-level indirect CSR access (siselect/sireg). Required by Ssaia.
+    "Sscsrind": {
+      "supported": true
     }
   }
 }
