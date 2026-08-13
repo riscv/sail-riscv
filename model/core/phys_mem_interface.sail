@@ -42,60 +42,73 @@ enum read_kind = {
 }
 
 union access_kind = {
-  AK_Write : write_kind,
-  AK_Read : read_kind,
+  AK_Write : (write_kind, MemoryAccessType(mem_payload)),
+  AK_Read : (read_kind, MemoryAccessType(mem_payload)),
 }
 
-// TODO: We currently do not get enough information here to distinguish explicit accesses,
-// translation accesses, and atomic accesses.
-function ak_is_explicit(_acc : access_kind) -> bool = true
-function ak_is_ifetch(acc : access_kind) -> bool = acc == AK_Read(Read_ifetch)
-function ak_is_ttw(_acc : access_kind) -> bool = false
+function ak_memory_access(acc : access_kind) -> MemoryAccessType(mem_payload) =
+  match acc {
+    AK_Write(_, access) => access,
+    AK_Read(_, access) => access,
+  }
+
+function ak_is_explicit(acc : access_kind) -> bool =
+  match ak_memory_access(acc) {
+    InstructionFetch() => false,
+    Load(PageTableEntry) => false,
+    Store(PageTableEntry) => false,
+    _ => true,
+  }
+function ak_is_ifetch(acc : access_kind) -> bool =
+  ak_memory_access(acc) == InstructionFetch()
+function ak_is_ttw(acc : access_kind) -> bool =
+  match ak_memory_access(acc) {
+    Load(PageTableEntry) => true,
+    Store(PageTableEntry) => true,
+    _ => false,
+  }
 function ak_is_relaxed(acc : access_kind) -> bool =
-  match acc {
-    AK_Write(Write_plain) => true,
-    AK_Write(Write_RISCV_conditional) => true,
-    AK_Read(Read_plain) => true,
-    AK_Read(Read_RISCV_reserved) => true,
+  ak_is_explicit(acc) & (match acc {
+    AK_Write(Write_plain, _) => true,
+    AK_Write(Write_RISCV_conditional, _) => true,
+    AK_Read(Read_plain, _) => true,
+    AK_Read(Read_RISCV_reserved, _) => true,
     _ => false,
-  }
+  })
 function ak_is_rel_acq_rcsc(acc : access_kind) -> bool =
-  match acc {
-    AK_Write(Write_RISCV_strong_release) => true,
-    AK_Write(Write_RISCV_conditional_strong_release) => true,
-    AK_Read(Read_RISCV_strong_acquire) => true,
-    AK_Read(Read_RISCV_reserved_strong_acquire) => true,
+  ak_is_explicit(acc) & (match acc {
+    AK_Write(Write_RISCV_strong_release, _) => true,
+    AK_Write(Write_RISCV_conditional_strong_release, _) => true,
+    AK_Read(Read_RISCV_strong_acquire, _) => true,
+    AK_Read(Read_RISCV_reserved_strong_acquire, _) => true,
     _ => false,
-  }
+  })
 function ak_is_rel_acq_rcpc(acc : access_kind) -> bool =
-  match acc {
-    AK_Write(Write_RISCV_release) => true,
-    AK_Write(Write_RISCV_conditional_release) => true,
-    AK_Read(Read_RISCV_acquire) => true,
-    AK_Read(Read_RISCV_reserved_acquire) => true,
+  ak_is_explicit(acc) & (match acc {
+    AK_Write(Write_RISCV_release, _) => true,
+    AK_Write(Write_RISCV_conditional_release, _) => true,
+    AK_Read(Read_RISCV_acquire, _) => true,
+    AK_Read(Read_RISCV_reserved_acquire, _) => true,
     _ => false,
-  }
+  })
 function ak_is_standalone(acc : access_kind) -> bool =
-  match acc {
-    AK_Write(Write_plain) => true,
-    AK_Write(Write_RISCV_release) => true,
-    AK_Write(Write_RISCV_strong_release) => true,
-    AK_Read(Read_plain) => true,
-    AK_Read(Read_RISCV_acquire) => true,
-    AK_Read(Read_RISCV_strong_acquire) => true,
-    _ => false,
-  }
+  ak_is_explicit(acc) & (match ak_memory_access(acc) {
+    LoadReserved(_) => false,
+    StoreConditional(_) => false,
+    Atomic(_) => false,
+    _ => true,
+  })
 function ak_is_exclusive(acc : access_kind) -> bool =
-  match acc {
-    AK_Write(Write_RISCV_conditional) => true,
-    AK_Write(Write_RISCV_conditional_release) => true,
-    AK_Write(Write_RISCV_conditional_strong_release) => true,
-    AK_Read(Read_RISCV_reserved) => true,
-    AK_Read(Read_RISCV_reserved_acquire) => true,
-    AK_Read(Read_RISCV_reserved_strong_acquire) => true,
+  match ak_memory_access(acc) {
+    LoadReserved(_) => true,
+    StoreConditional(_) => true,
     _ => false,
   }
-function ak_is_atomic_rmw(_acc : access_kind) -> bool = false
+function ak_is_atomic_rmw(acc : access_kind) -> bool =
+  match ak_memory_access(acc) {
+    Atomic(_) => true,
+    _ => false,
+  }
 
 enum barrier_kind = {
   Barrier_RISCV_rw_rw,
@@ -129,14 +142,15 @@ instantiation sail_mem_write with
   mem_acc_is_exclusive = ak_is_exclusive,
   mem_acc_is_atomic_rmw = ak_is_atomic_rmw
 
-val write_ram : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n), bits(8 * 'n), mem_meta) -> bool
+val write_ram : forall 'n, 0 < 'n <= max_mem_access.
+  (write_kind, MemoryAccessType(mem_payload), physaddr, int('n), bits(8 * 'n), mem_meta) -> bool
 
-function write_ram(wk, Physaddr(addr), width, data, meta) = {
+function write_ram(wk, access, Physaddr(addr), width, data, meta) = {
   let request : Mem_request('n, 0, physaddrbits_len, unit, access_kind) = struct {
     access_kind = match wk {
       Write_RISCV_release => internal_error(__FILE__, __LINE__, "Write_RISCV_release is unused"),
       Write_RISCV_strong_release => internal_error(__FILE__, __LINE__, "Write_RISCV_strong_release is unused"),
-      _ => AK_Write(wk),
+      _ => AK_Write(wk, access),
     },
     address = addr,
     address_space = (),
@@ -179,14 +193,15 @@ instantiation sail_mem_read with
   mem_acc_is_exclusive = ak_is_exclusive,
   mem_acc_is_atomic_rmw = ak_is_atomic_rmw
 
-val read_ram : forall 'n, 0 < 'n <= max_mem_access.  (read_kind, physaddr, int('n), bool) -> (bits(8 * 'n), mem_meta)
-function read_ram(rk, Physaddr(addr), width, read_meta) = {
+val read_ram : forall 'n, 0 < 'n <= max_mem_access.
+  (read_kind, MemoryAccessType(mem_payload), physaddr, int('n), bool) -> (bits(8 * 'n), mem_meta)
+function read_ram(rk, access, Physaddr(addr), width, read_meta) = {
   let meta = if read_meta then __ReadRAM_Meta(addr, width) else default_meta;
   let request : Mem_request('n, 0, physaddrbits_len, unit, access_kind) = struct {
     access_kind = match rk {
       Read_RISCV_acquire => internal_error(__FILE__, __LINE__, "Read_RISCV_acquire is unused"),
       Read_RISCV_strong_acquire => internal_error(__FILE__, __LINE__, "Read_RISCV_strong_acquire is unused"),
-      _ => AK_Read(rk),
+      _ => AK_Read(rk, access),
     },
     address = addr,
     address_space = (),
