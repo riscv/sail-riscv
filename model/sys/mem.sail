@@ -403,7 +403,11 @@ function mem_write_ea_priv(paddr, width, priv, access, pbmt, aq, rl, con) = {
 
     match pmpCheck(paddr, split_width, access, priv) {
       Some(e) => return Err(paddr, e),
-      None()  => write_ram_ea(wk, paddr, split_width),
+      None()  => {
+        // Do not announce MMIO writes.
+        if not(within_mmio_writable(paddr, split_width)) then
+          write_ram_ea(wk, access, paddr, split_width)
+      },
     };
 
     if offset == last then {
