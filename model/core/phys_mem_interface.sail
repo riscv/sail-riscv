@@ -172,8 +172,30 @@ function write_ram(wk, access, Physaddr(addr), width, data, meta) = {
   }
 }
 
-val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access. (write_kind, physaddr, int('n)) -> unit
-function write_ram_ea(_wk, Physaddr(_addr), _width) = ()
+instantiation sail_mem_address_announce with
+  'addr_size = physaddrbits_len,
+  'addr_space = unit,
+  'mem_acc = access_kind,
+  'CHERI = false,
+  'cap_size_log = 0,
+  'abort = unit
+
+val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access.
+  (write_kind, MemoryAccessType(mem_payload), physaddr, int('n)) -> unit
+function write_ram_ea(wk, access, Physaddr(addr), width) = {
+  let request : Mem_request('n, 0, physaddrbits_len, unit, access_kind) = struct {
+    access_kind = match wk {
+      Write_RISCV_release => internal_error(__FILE__, __LINE__, "Write_RISCV_release is unused"),
+      Write_RISCV_strong_release => internal_error(__FILE__, __LINE__, "Write_RISCV_strong_release is unused"),
+      _ => AK_Write(wk, access),
+    },
+    address = addr,
+    address_space = (),
+    size = width,
+    num_tag = 0,
+  };
+  sail_mem_address_announce(request)
+}
 
 instantiation sail_mem_read with
   'addr_size = physaddrbits_len,
