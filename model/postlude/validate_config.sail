@@ -595,7 +595,7 @@ private function check_extension_param_constraints() -> bool = {
     };
     let reserved_exception_mask : bits(64) =
       if config extensions.H.supported : bool
-      // Hypervisos codes 10,20-23 are valid, not reserved
+      // Hypervisor codes 10,20-23 are valid, not reserved
       then zero_extend(0x0_FFFF_0002_4000)
       else zero_extend(0x0_FFFF_00F2_4400);
     if (medelegation.bits & reserved_exception_mask) != zeros() then {

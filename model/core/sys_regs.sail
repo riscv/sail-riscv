@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// Machine-mode, hypervisor-mode, supervisor-mode state definitions.
+// Machine-mode, hypervisor-mode and supervisor-mode state definitions.
 
 // privilege level
 
@@ -478,8 +478,9 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
     // In this implementation, menvcfg[SSE] does not control the writes to senvcfg[SSE],
     // but does control the reads.  This way, senvcfg[SSE] does not have to be modified
     // when menvcfg[SSE] is cleared.  The "CSR Field Modulation" section of the
-    // privileged specification has relevant discussion. The virtual mode read only
-    // zero rule for henvcfg[SSE] is instead handled in write_CSR for senvcfg.
+    // privileged specification has relevant discussion.  However, henvcfg[SSE] does
+    // control these writes (to conditionally ensure senvcfg[SSE] is read-only zero),
+    // see `write_CSR` for senvcfg.
     SSE = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
