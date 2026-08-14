@@ -6,7 +6,6 @@ import LeanRV64DExecutable.Step
 import Sail.Sail
 
 open LeanRV64DExecutable
-open Defs
 
 open Register
 
