@@ -365,6 +365,9 @@ function reset_sys() -> unit = {
   // "The misa register is reset to enable the maximal set of supported extensions"
   reset_misa();
 
+  // "Initializes to 0 on reset."
+  macttime = zeros();
+
   // "For implementations with the "A" standard extension, there is no valid load reservation."
   cancel_reservation();
 

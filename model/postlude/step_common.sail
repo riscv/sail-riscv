@@ -41,6 +41,12 @@ function hart_is_waiting(s : HartState) -> bool =
     HART_WAITING(_) => true,
   }
 
+function hart_is_waiting_for_wfi(s : HartState) -> bool =
+  match s {
+    HART_WAITING(WAIT_WFI, _) => true,
+    _                         => false,
+  }
+
 // The result of a fetch, which includes any possible error
 // from an extension that interposes on the fetch operation.
 

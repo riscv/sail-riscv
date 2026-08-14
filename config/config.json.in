@@ -777,6 +777,9 @@
     "Sscounterenw": {
       "supported": true
     },
+    "Sscpuutil": {
+      "supported": true
+    },
     "Sstc": {
       "supported": true
     },

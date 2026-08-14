@@ -212,9 +212,17 @@ function should_inc_mcycle(priv : Privilege) -> bool =
 function should_inc_minstret(priv : Privilege) -> bool =
   mcountinhibit[IR] == 0b0 & counter_priv_filter_bit(minstretcfg, priv) == 0b0
 
-function tick_clock() -> unit = {
-  if   should_inc_mcycle(cur_privilege)
+function tick_clock_with_wfi_idle(wfi_idle : bool) -> unit = {
+  // Cycle pauses when the hart enters an idle state (i.e., the hart has
+  // executed WFI and the associated clock domain is gated)
+  let pause_active_counters = currentlyEnabled(Ext_Sscpuutil) & wfi_idle;
+
+  if   not(pause_active_counters) & should_inc_mcycle(cur_privilege)
   then mcycle = mcycle + 1;
+
+  // macttime is not affected by mcountinhibit (unlike cycle).
+  if   not(pause_active_counters) & currentlyEnabled(Ext_Sscpuutil)
+  then macttime = macttime + 1;
 
   mtime  = mtime  + 1;
   clint_dispatch(false)

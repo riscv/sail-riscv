@@ -466,6 +466,10 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 enum clause extension = Ext_Sscounterenw
 mapping clause extensionName = Ext_Sscounterenw <-> "sscounterenw"
 function clause hartSupports(Ext_Sscounterenw) = config extensions.Sscounterenw.supported
+// CPU Utilization counters
+enum clause extension = Ext_Sscpuutil
+mapping clause extensionName = Ext_Sscpuutil <-> "sscpuutil"
+function clause hartSupports(Ext_Sscpuutil) = sys_enable_experimental_extensions() & config extensions.Sscpuutil.supported
 // Supervisor-Level pointer masking for next lower privilege mode
 enum clause extension = Ext_Ssnpm
 mapping clause extensionName = Ext_Ssnpm <-> "ssnpm"
@@ -815,6 +819,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
+  Ext_Sscpuutil,
   Ext_Ssnpm,
   Ext_Sspm,
   Ext_Ssqosid,
