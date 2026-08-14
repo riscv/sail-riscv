@@ -46,15 +46,26 @@ enum class InitResult {
 // Processes options that don't need an initialized model and gets the
 // json configuration string; returns whether to continue with model
 // initialization.
-InitResult preinit_args(CLIOptions &opts, std::string &config_json_string);
+InitResult preinit_args(const CLIOptions &opts, std::string &config_json_string);
 
 // Configures the model, validates the configuration, processes
 // options requiring a configured model and returns whether to continue with
 // model simulation.
-InitResult preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &config_json_string, run_info &run_info);
+InitResult preinit_model(
+  const CLIOptions &opts,
+  ModelImpl &model,
+  const std::string &config_json_string,
+  run_info &run_info
+);
 
-// Returns the entry address.
-uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_info &run_info);
+// Initializes the start address in `entry`.
+InitResult init_model(
+  const CLIOptions &opts,
+  ModelImpl &model,
+  elf_info &elf_info,
+  run_info &run_info,
+  uint64_t &entry
+);
 
 uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file, elf_info &elf_info);
 

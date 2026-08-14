@@ -502,7 +502,7 @@ void init_logs(const CLIOptions &opts, run_info &run_info) {
 // Processes options that don't need an initialized model and gets the
 // json configuration string; returns whether to continue with model
 // initialization.
-InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
+InitResult preinit_args(const CLIOptions &opts, std::string &config_json_string) {
   if (opts.do_print_version) {
     std::cout << version_info::release_version() << std::endl;
     return InitResult::ExitSuccess;
@@ -571,7 +571,7 @@ InitResult preinit_args(CLIOptions &opts, std::string &config_json_string) {
 // options requiring a configured model and returns whether to continue with
 // model simulation.
 InitResult preinit_model(
-  CLIOptions &opts,
+  const CLIOptions &opts,
   ModelImpl &model,
   const std::string &config_json_string,
   run_info &run_info
@@ -646,12 +646,18 @@ InitResult preinit_model(
   return InitResult::Continue;
 }
 
-uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_info &run_info) {
+InitResult init_model(
+  const CLIOptions &opts,
+  ModelImpl &model,
+  elf_info &elf_info,
+  run_info &run_info,
+  uint64_t &entry
+) {
   run_info.init_start = steady_clock::now();
 
   if (run_info.rvfi.has_value()) {
     if (!run_info.rvfi->setup_socket(opts.config_print_rvfi)) {
-      return 1;
+      return InitResult::ExitFailure;
     }
     model.register_callback(std::make_shared<rvfi_callbacks>());
   }
@@ -661,8 +667,8 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
     write_dtb_to_rom(model, read_file(opts.dtb_file));
   }
 
-  uint64_t entry = run_info.rvfi.has_value() ? rvfi_handler::get_entry()
-                                             : load_sail(model, opts.elfs[0], /*main_file=*/true, elf_info);
+  entry = run_info.rvfi.has_value() ? rvfi_handler::get_entry()
+                                    : load_sail(model, opts.elfs[0], /*main_file=*/true, elf_info);
 
   fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
 
@@ -678,5 +684,5 @@ uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_
 
   run_info.init_end = steady_clock::now();
 
-  return entry;
+  return InitResult::Continue;
 }
