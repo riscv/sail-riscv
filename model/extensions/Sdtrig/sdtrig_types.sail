@@ -88,14 +88,18 @@ enum Trig_Action = {
   TA_Trace_Notify, TA_Ext_Trigger_0, TA_Ext_Trigger_1,
 }
 
-mapping trig_action : bits(4) <-> Trig_Action = {
-  0b0000 <-> TA_Breakpoint,
-  0b0001 <-> TA_Enter_Debug,
-  0b0010 <-> TA_Trace_On,
-  0b0011 <-> TA_Trace_Off,
-  0b0100 <-> TA_Trace_Notify,
-  0b1000 <-> TA_Ext_Trigger_0,
-  0b1001 <-> TA_Ext_Trigger_1,
+// The `action` fields are 4 bits in `mcontrol` (deprecated) and
+// `mcontrol6`, and 6 bits in `icount`, `itrigger`, `etrigger`, and
+// `tmexttrigger`.  The mapping uses the wider 6 bits to ensure that
+// reserved 6-bit values don't alias into defined 4-bit values.
+mapping trig_action : bits(6) <-> Trig_Action = {
+  0b000000 <-> TA_Breakpoint,
+  0b000001 <-> TA_Enter_Debug,
+  0b000010 <-> TA_Trace_On,
+  0b000011 <-> TA_Trace_Off,
+  0b000100 <-> TA_Trace_Notify,
+  0b001000 <-> TA_Ext_Trigger_0,
+  0b001001 <-> TA_Ext_Trigger_1,
 }
 
 mapping trigger_action_name : Trig_Action <-> string = {
@@ -108,7 +112,8 @@ mapping trigger_action_name : Trig_Action <-> string = {
   TA_Ext_Trigger_1 <-> "External Trigger Output 1",
 }
 
-function is_supported_action(a : bits(4)) -> bool = {
+function is_supported_action(a : bits(6)) -> bool = {
+  if not(trig_action_forwards_matches(a)) then return false;
   let act = trig_action(a) in
   act == TA_Breakpoint // | (currentlyEnabled(Ext_Sdext) & (act == TA_Enter_Debug))
 }
@@ -235,7 +240,7 @@ function MControl6_to_bits(t : MControl6) -> MControl6_bits =
     hit0       = [hit[0]],
     select     = bool_bit(t.select),
     size       = trig_match_size(t.size),
-    action     = trig_action(t.action),
+    action     = trig_action(t.action)[3..0],
     chain      = bool_bit(t.chain),
     t_match    = trig_match_val(t.t_match),
     m          = bool_bit(t.m),
@@ -486,7 +491,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
   match tt {
     TT_icount => {
       let v = Mk_ICount_bits(tdata1.bits);
-      let act = v[action][3..0];
+      let act = v[action];
       if is_supported_action(act) then {
         T_icount(struct {
           dmode = false,
@@ -508,7 +513,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
     },
     TT_itrigger => {
       let v = Mk_IETrigger_bits(tdata1.bits);
-      let act = v[action][3..0];
+      let act = v[action];
       if is_supported_action(act) then {
         T_itrigger(struct {
           dmode = false,
@@ -530,7 +535,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
     },
     TT_etrigger => {
       let v = Mk_IETrigger_bits(tdata1.bits);
-      let act = v[action][3..0];
+      let act = v[action];
       if is_supported_action(act) then {
         T_etrigger(struct {
           dmode = false,

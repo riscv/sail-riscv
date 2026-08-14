@@ -161,7 +161,7 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option((Trig
       T_disabled(_) => (),
       T_icount(t) =>
         // icount triggers fire in a mode where the trigger is enabled.
-        if t.pending & t.hit & priv_match_icount(t, priv, t.action) then return Some(t.action, i, zeros()),
+        if t.pending & priv_match_icount(t, priv, t.action) then return Some(t.action, i, zeros()),
       T_itrigger(t) =>
         if t.hit & is_some(t.match_val) & get_reentrancy_control(t.action, priv) then return Some(t.action, i, zeros()),
       T_etrigger(t) =>
@@ -179,7 +179,7 @@ function fire_trigger(idx : trigger_index) -> unit = {
       let t = if icount_count_is_hardwired_one
                then {t with m = false, s = false, u = false, vs = false, vu = false}
                else t;
-      (T_icount({t with pending = false}), t.action)
+      (T_icount({t with pending = false, hit = true}), t.action)
     },
     T_itrigger(t) => {
       (T_itrigger({t with match_val = None()}), t.action)
