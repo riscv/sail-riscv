@@ -37,7 +37,7 @@ jobs:
           sail-version: ${{ env.SAIL_VERSION }}
 
       - name: Restore cached opam
-        id: cache-opam-restore
+        id: cache-rocq-opam-restore
         uses: actions/cache/restore@v6
         with:
           path: ~/.opam
