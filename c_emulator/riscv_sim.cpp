@@ -169,11 +169,12 @@ void write_dtb_to_rom(ModelImpl &model, const std::string &filename, elf_info &e
     throw std::runtime_error(msg.str());
   }
 
+  auto dtb_addr = addr;
   for (uint8_t d : dtb) {
     write_mem(addr++, d);
   }
 
-  elf_info.loaded_regions.emplace_back(filename, addr, size);
+  elf_info.loaded_regions.emplace_back(filename, dtb_addr, size);
 }
 
 void write_signature(const std::string &file, unsigned signature_granularity, const elf_info &elf_info) {
