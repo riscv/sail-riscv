@@ -293,7 +293,11 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
     // but this is unlikely.
     const auto &memory_region_ptr =
       std::find_if(memory_regions.begin(), memory_regions.end(), [address, length](const auto &ent) {
-        return address >= ent.base && address + length <= ent.base + ent.size;
+        // Handle corner case where a memory region ends at 2^64 for
+        // RV64. `validate_config.sail:check_pma_regions()` ensures
+        // that the end of the memory region cannot exceed this bound.
+        // (There is no such overflow issue for RV32.)
+        return address >= ent.base && (address + length <= ent.base + ent.size || ent.base + ent.size == 0);
       });
     if (memory_region_ptr == memory_regions.end()) {
       std::ostringstream msg;
