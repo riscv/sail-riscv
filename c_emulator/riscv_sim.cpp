@@ -281,7 +281,7 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
     if (memory_region_ptr == memory_regions.end()) {
       std::ostringstream msg;
       msg << "Cannot load segment from " << filename << " of size 0x" << std::hex << length << " @0x" << address
-          << " since it does not lie within any defined main memory region." << std::endl;
+          << " since it does not lie within any defined memory region." << std::endl;
       throw std::runtime_error(msg.str());
     }
 
