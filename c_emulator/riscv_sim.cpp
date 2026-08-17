@@ -129,7 +129,8 @@ void deep_merge_json(jsoncons::json &base, const jsoncons::json &json_override, 
   base = json_override;
 }
 
-void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
+void write_dtb_to_rom(ModelImpl &model, const std::string &filename, elf_info &elf_info) {
+  std::vector<uint8_t> dtb = read_file(filename);
   uint64_t addr = get_config_uint64({"memory", "dtb_address"});
   uint64_t size = static_cast<uint64_t>(dtb.size());
 
@@ -144,9 +145,10 @@ void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
   if (!model.dtb_within_configured_pma_memory(addr, size)) {
     fprintf(
       stderr,
-      "DTB does not fit in any configured PMA memory region: "
+      "DTB in '%s' does not fit in any configured PMA memory region: "
       "addr=0x%0" PRIx64 ", size=0x%0" PRIx64 " (end=0x%0" PRIx64 ")\n"
       "Hint: adjust memory.dtb_address or memory.regions in the config.\n",
+      filename.c_str(),
       addr,
       size,
       end
@@ -154,9 +156,24 @@ void write_dtb_to_rom(ModelImpl &model, const std::vector<uint8_t> &dtb) {
     exit(EXIT_FAILURE);
   }
 
+  // Check for conflicts with already loaded regions.
+  const auto &loaded_region_ptr =
+    std::find_if(elf_info.loaded_regions.begin(), elf_info.loaded_regions.end(), [addr, size](const auto &ent) {
+      return addr + size > ent.offset && ent.offset + ent.length > addr;
+    });
+  if (loaded_region_ptr != elf_info.loaded_regions.end()) {
+    std::ostringstream msg;
+    msg << "DTB in " << filename << " of size 0x" << std::hex << size << " @0x" << addr
+        << " conflicts with already loaded segment from file " << loaded_region_ptr->filename << " of size 0x"
+        << loaded_region_ptr->length << " @0x" << loaded_region_ptr->offset << std::endl;
+    throw std::runtime_error(msg.str());
+  }
+
   for (uint8_t d : dtb) {
     write_mem(addr++, d);
   }
+
+  elf_info.loaded_regions.emplace_back(filename, addr, size);
 }
 
 void write_signature(const std::string &file, unsigned signature_granularity, const elf_info &elf_info) {
@@ -696,7 +713,7 @@ InitResult init_model(
 
   if (!opts.dtb_file.empty()) {
     fprintf(stderr, "using %s as DTB file.\n", opts.dtb_file.c_str());
-    write_dtb_to_rom(model, read_file(opts.dtb_file));
+    write_dtb_to_rom(model, opts.dtb_file, elf_info);
   }
 
   entry = run_info.rvfi.has_value() ? rvfi_handler::get_entry()
