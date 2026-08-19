@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
+
 # Release notes for version 0.13.1
 
 This is primarily a bug-fix release with fixes for the issues listed
