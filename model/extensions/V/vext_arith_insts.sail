@@ -1771,7 +1771,7 @@ union clause instruction = WMVVTYPE : (wmvvfunct6, bits(1), vregidx, vregidx, vr
 
 mapping encdec_wmvvfunct6 : wmvvfunct6 <-> bits(6) = {
   WMVV_VWMACCU   <-> 0b111100,
-  WMVV_VWMACC     <-> 0b111101,
+  WMVV_VWMACC    <-> 0b111101,
   WMVV_VWMACCSU  <-> 0b111111
 }
 
@@ -1792,6 +1792,9 @@ function clause execute WMVVTYPE(funct6, vm, vs2, vs1, vd) = {
      illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen)) |
      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     // vd is also a source register
+     not(valid_src_overlap(vs1, SEW, LMUL_pow, vd, SEW_widen, LMUL_pow_widen)) |
+     not(valid_src_overlap(vs2, SEW, LMUL_pow, vd, SEW_widen, LMUL_pow_widen)) |
      not(valid_vm_src_overlap(vm, vs1, SEW)) |
      not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
@@ -2405,6 +2408,8 @@ function clause execute WMVXTYPE(funct6, vm, vs2, rs1, vd) = {
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_variable_width(vd, vm, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     // vd is also a source register
+     not(valid_src_overlap(vs2, SEW, LMUL_pow, vd, SEW_widen, LMUL_pow_widen)) |
      not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
@@ -2426,10 +2431,10 @@ function clause execute WMVXTYPE(funct6, vm, vs2, rs1, vd) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then {
       result[i] = match funct6 {
-        WMVX_VWMACCU  => (to_bits_unsafe(SEW_widen, unsigned(rs1_val) * unsigned(vs2_val[i]) )) + vd_val[i],
-        WMVX_VWMACC   => (to_bits_unsafe(SEW_widen, signed(rs1_val) * signed(vs2_val[i]) )) + vd_val[i],
-        WMVX_VWMACCUS => (to_bits_unsafe(SEW_widen, unsigned(rs1_val) * signed(vs2_val[i]) ))+ vd_val[i],
-        WMVX_VWMACCSU => (to_bits_unsafe(SEW_widen, signed(rs1_val) * unsigned(vs2_val[i]) ))+ vd_val[i]
+        WMVX_VWMACCU  => (to_bits_unsafe(SEW_widen, unsigned(rs1_val) * unsigned(vs2_val[i]))) + vd_val[i],
+        WMVX_VWMACC   => (to_bits_unsafe(SEW_widen, signed(rs1_val) * signed(vs2_val[i]))) + vd_val[i],
+        WMVX_VWMACCUS => (to_bits_unsafe(SEW_widen, unsigned(rs1_val) * signed(vs2_val[i]))) + vd_val[i],
+        WMVX_VWMACCSU => (to_bits_unsafe(SEW_widen, signed(rs1_val) * unsigned(vs2_val[i]))) + vd_val[i]
       }
     }
   };
