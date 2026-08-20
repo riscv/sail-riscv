@@ -125,6 +125,7 @@ add_first_party_test("test_wfi_wait.S")
 add_first_party_test("test_wfi_external_simple_interrupt_generator.S")
 add_first_party_test("test_vrgatherei16_reg_group.S")
 add_first_party_test("test_tlb_stale_pte_access_fault.S")
+add_first_party_test("test_indirect_csr.S")
 
 add_first_party_override_test("test_sew_elen_bound.S" "elen_32.json")
 add_first_party_override_test("test_satp_physaddr_bits.S" "satp_physaddr_bits.json")

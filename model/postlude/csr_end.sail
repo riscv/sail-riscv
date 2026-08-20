@@ -24,6 +24,15 @@ function clause write_CSR(csr, _) = {
 }
 end write_CSR
 
+// Indirect CSR access (Smcsrind/Sscsrind) default fallbacks. These must
+// be the last clauses of the scattered dispatch functions so that any
+// extension-specific clauses (e.g. AIA iprio) take precedence. When no
+// handler claims a (privilege, select) pair the register is unimplemented,
+// which makes mireg/sireg raise an illegal instruction.
+function clause indirect_csr_implemented(_, _) = false
+function clause indirect_read(_, _) = zeros()
+function clause indirect_write(_, _) = ()
+
 // Implements the general HS-qualified rule from the H extension spec.
 // If an access fails in VS/VU mode but would succeed in HS mode, raise a
 // virtual instruction exception instead of an illegal instruction exception.
