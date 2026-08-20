@@ -557,6 +557,36 @@ function clause execute ECALL() = {
 mapping clause assembly = ECALL() <-> "ecall"
 
 // *****************************************************************
+
+/// Called on MRET or SRET to update the mstatus MDT and SDT double trap bits.
+// prev_priv, new_priv are the privilege modes before and after the xRET respectively.
+function xret_update_mstatus_dbltrap(prev_priv : Privilege, new_priv : Privilege) -> unit = {
+  // MRET or SRET clear mstatus[MDT] when executed in machine mode.
+  if currentlyEnabled(Ext_Smdbltrp) & prev_priv == Machine
+  then mstatus[MDT] = 0b0;
+
+  if currentlyEnabled(Ext_Ssdbltrp) & (match prev_priv {
+    // "If the Ssdbltrp extension is also implemented, and the new privilege mode
+    // is U, VS, or VU, then sstatus.⁠SDT is also set to 0."
+    Machine           => new_priv == User | new_priv == VirtualSupervisor | new_priv == VirtualUser,
+    // "An SRET instruction sets the SDT bit to 0."
+    //
+    // Note, because it says that in the "Supervisor-Level ISA" section
+    // it only applies when in supervisor mode. This isn't stated in the ISA
+    // manual as far as I can see but see this Github comment:
+    // https://github.com/riscv/riscv-isa-manual/issues/2870#issuecomment-4238414283
+    //
+    // We don't need to consider MRET from supervisor mode because that is illegal.
+    Supervisor        => true,
+    User              => internal_error(__FILE__, __LINE__, "xRET cannot be executed in user mode"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+  })
+  then mstatus[SDT] = 0b0;
+
+  // TODO: Set vsstatus[SDT] = 0 when hypervisor is supported.
+}
+
 union clause instruction = MRET : unit
 
 mapping clause encdec = MRET()
@@ -575,6 +605,8 @@ function clause execute MRET() = {
     mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
     if   cur_privilege != Machine
     then mstatus[MPRV] = 0b0;
+
+    xret_update_mstatus_dbltrap(prev_priv, cur_privilege);
 
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(mRET, cur_privilege);
@@ -619,6 +651,8 @@ function clause execute SRET() = {
     mstatus[SPP]  = 0b0;
     if   cur_privilege != Machine
     then mstatus[MPRV] = 0b0;
+
+    xret_update_mstatus_dbltrap(prev_priv, cur_privilege);
 
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(sRET, cur_privilege);
