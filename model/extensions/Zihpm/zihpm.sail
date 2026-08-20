@@ -198,8 +198,8 @@ function legalize_hpmevent(v : HpmEvent) -> HpmEvent = {
     MINH  = if currentlyEnabled(Ext_Sscofpmf) then v[MINH] else 0b0,
     SINH  = if currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_S) then v[SINH] else 0b0,
     UINH  = if currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_U) then v[UINH] else 0b0,
-    VSINH = 0b0, // Hypervisor not supported
-    VUINH = 0b0, // Hypervisor not supported
+    VSINH = if currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_H) then v[VSINH] else 0b0,
+    VUINH = if currentlyEnabled(Ext_Sscofpmf) & currentlyEnabled(Ext_H) then v[VUINH] else 0b0,
     event = v[event],
   ]
 }
