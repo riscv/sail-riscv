@@ -70,7 +70,7 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
           None()                   => (),
         };
       };
-      match translateAddr_eff_priv(vaddr, access, eff_priv) {
+      match translateAddr_eff_priv(vaddr, access, eff_priv, true) {
         // No fetch->load exception conversion is needed: LoadExecute already raises load
         // (not fetch) exceptions on translation failure (see model/sys/vmem_ptw.sail),
         // matching the spec's "[HLVX] still raise the same exceptions as other load
@@ -123,7 +123,7 @@ function clause execute(HSV(width, rs1, rs2)) = {
           None()                   => (),
         };
       };
-      match translateAddr_eff_priv(vaddr, Store(Data), eff_priv) {
+      match translateAddr_eff_priv(vaddr, Store(Data), eff_priv, true) {
         Err(e, _) => trap(e),
         Ok(paddr, pbmt, _) => {
           match mem_write_ea_priv(paddr, width, eff_priv, Store(Data), pbmt, false, false, false) {

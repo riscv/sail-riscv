@@ -289,6 +289,7 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 bitfield Hstatus : bits(64) = {
   HUPMM : 49 .. 48,
   VSXL  : 33 .. 32,
+  HUKTE : 24,
   VTSR  : 22,
   VTW   : 21,
   VTVM  : 20,
@@ -307,6 +308,7 @@ private function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
     HUPMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[HUPMM])) then v[HUPMM] else h[HUPMM],
     // We don't currently support changing VSXL
     // VSXL = v[VSXL]
+    HUKTE = if currentlyEnabled(Ext_Svukte) then v[HUKTE] else 0b0,
     VTSR  = v[VTSR],
     VTW   = v[VTW],
     VTVM  = v[VTVM],
