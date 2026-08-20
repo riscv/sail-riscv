@@ -27,9 +27,8 @@ function get_xLPE(p : Privilege) -> bool =
     User              => if   currentlyEnabled(Ext_S)
                          then bool_bit(read_senvcfg()[LPE])
                          else bool_bit(menvcfg[LPE]),
-    // TODO: check henvcfg for VS mode
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualSupervisor => bool_bit(read_henvcfg()[LPE]),
+    VirtualUser       => bool_bit(read_senvcfg()[LPE]),
   }
 
 // This measure needs to be > currentlyEnabled_measure(Ext_S), currently equal
@@ -72,17 +71,18 @@ function zicfilp_preserve_elp_on_trap(x : Privilege) -> unit = {
   match x {
     Machine           => { mstatus[MPELP] = elp; },
     Supervisor        => { mstatus[SPELP] = elp; },
+    VirtualSupervisor => { vsstatus[SPELP] = elp; },
+    // Traps are never taken into U/VU-mode.
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    VirtualUser       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
 };
   reset_elp();
 }
 
-// When executing an xRET instruction, if the new privilege mode is y,
-// then ELP is set to the value of xPELP if yLPE is 1; otherwise, it
-// is set to NO_LP_EXPECTED; xPELP is set to NO_LP_EXPECTED.
-function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = {
+// When executing an xRET instruction in privilege mode x, if the new
+// privilege mode is y, then ELP is set to the value of xPELP if yLPE is 1;
+// otherwise, it is set to NO_LP_EXPECTED; xPELP is set to NO_LP_EXPECTED.
+function zicfilp_restore_elp_on_xret(xret : xRET_type, x : Privilege, y : Privilege) -> unit = {
   let pelp : bits(1) = match xret {
     mRET => {
       let pelp = mstatus[MPELP];
@@ -90,9 +90,17 @@ function zicfilp_restore_elp_on_xret(xret : xRET_type, y : Privilege) -> unit = 
       pelp
     },
     sRET => {
-      let pelp = mstatus[SPELP];
-      mstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
-      pelp
+      // sPELP is vsstatus.SPELP only when the SRET executed with V=1,
+      // not when it merely returns to a virtual mode.
+      if privLevel_is_virtual(x) then {
+        let pelp = vsstatus[SPELP];
+        vsstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
+        pelp
+      } else {
+        let pelp = mstatus[SPELP];
+        mstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
+        pelp
+      }
     },
   };
   elp = if get_xLPE(y) then pelp else landing_pad_bits(NO_LP_EXPECTED);

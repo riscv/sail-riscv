@@ -43,26 +43,30 @@ private mapping encdec_cbie : cbie <-> bits(2) = {
   backwards 0b10   => internal_error(__FILE__, __LINE__, "reserved CBIE"),
 }
 
-// Illegal-Virtual will be needed by the hypervisor mode, but is currently unused.
 private enum checked_cbop = {CBOP_ILLEGAL, CBOP_ILLEGAL_VIRTUAL, CBOP_INVAL_FLUSH, CBOP_INVAL_INVAL}
 
 // Select the cbop to perform based on the privilege.
 private function cbop_priv_check(p: Privilege) -> checked_cbop = {
   let mCBIE : cbie = encdec_cbie(menvcfg[CBIE]);
-  // TODO: check henvcfg after hypervisor is implemented
   let sCBIE : cbie = if   currentlyEnabled(Ext_S)
                      then encdec_cbie(read_senvcfg()[CBIE])
                      else encdec_cbie(menvcfg[CBIE]);
-  match (p, mCBIE, sCBIE) {
-    (VirtualUser, _, _)       => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    (VirtualSupervisor, _, _) => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    (Machine, _,               _              ) => CBOP_INVAL_INVAL,
-    (_,       CBIE_ILLEGAL,    _              ) => CBOP_ILLEGAL,      // (priv_mode != M) && mCBIE == 00
-    (User,    _,               CBIE_ILLEGAL   ) => CBOP_ILLEGAL,      // (priv_mode == U) && sCBIE == 00
-    (_,       CBIE_EXEC_FLUSH, _              ) => CBOP_INVAL_FLUSH,  // (priv_mode != M) && mCBIE == 01
-    (User,    _,               CBIE_EXEC_FLUSH) => CBOP_INVAL_FLUSH,  // (priv_mode == U) && sCBIE == 01
-    _                                           => CBOP_INVAL_INVAL,
-  }
+  let hCBIE : cbie = if currentlyEnabled(Ext_H)
+                     then encdec_cbie(read_henvcfg()[CBIE])
+                     else encdec_cbie(menvcfg[CBIE]);
+  // Mirrors the cbo.inval pseudocode in the CMO chapter of the unpriv spec.
+  if      (p != Machine & mCBIE == CBIE_ILLEGAL)
+        | (p == User    & sCBIE == CBIE_ILLEGAL)
+  then CBOP_ILLEGAL
+  else if (p == VirtualSupervisor & hCBIE == CBIE_ILLEGAL)
+        | (p == VirtualUser       & (hCBIE == CBIE_ILLEGAL | sCBIE == CBIE_ILLEGAL))
+  then CBOP_ILLEGAL_VIRTUAL
+  else if (p != Machine           & mCBIE == CBIE_EXEC_FLUSH)
+        | (p == User              & sCBIE == CBIE_EXEC_FLUSH)
+        | (p == VirtualSupervisor & hCBIE == CBIE_EXEC_FLUSH)
+        | (p == VirtualUser       & (hCBIE == CBIE_EXEC_FLUSH | sCBIE == CBIE_EXEC_FLUSH))
+  then CBOP_INVAL_FLUSH
+  else CBOP_INVAL_INVAL
 }
 
 private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResult = {
@@ -85,34 +89,33 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
       // (add the positive offset) to get it. Normally this will be
       // equal to rs1, but pointer masking can change that.
       let vaddr_for_error = vaddr - negative_offset;
+      // TODO/NOTE: This is weird, we should not translateAddr a different address than specified and report it
       match translateAddr(vaddr, access) {
         Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
           let ep = effectivePrivilege(access, mstatus, cur_privilege);
           match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
-            Err(e)  => memory_exception(vaddr_for_error, e),
+            Err(e)  => memory_exception(e, bits_of(vaddr_for_error), access),
             // If there is no error, the model has no caches so there's no
             // more action required.
             Ok(_)   => RETIRE_SUCCESS
           }
         },
-        Err(e, _) => memory_exception(vaddr_for_error, e),
+        Err(e, _) =>  trap({ e with excinfo = bits_of(vaddr_for_error) }),
       }
     }
   }
 }
 
 function clause execute ZICBOM(CBO_CLEAN, rs1) =
-  // TODO: Pass read_henvcfg()[CBCFE] once henvcfg is implemented.
-  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], 0b0) {
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], read_henvcfg()[CBCFE]) {
     FEATURE_ENABLED => process_clean_inval(rs1, CBO_CLEAN),
     FEATURE_ILLEGAL => Illegal_Instruction(),
     FEATURE_VIRTUAL => Virtual_Instruction(),
   }
 
 function clause execute ZICBOM(CBO_FLUSH, rs1) =
-  // TODO: Pass read_henvcfg()[CBCFE] once henvcfg is implemented.
-  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], 0b0) {
+  match feature_enabled_for_priv(cur_privilege, menvcfg[CBCFE], read_senvcfg()[CBCFE], read_henvcfg()[CBCFE]) {
     FEATURE_ENABLED => process_clean_inval(rs1, CBO_FLUSH),
     FEATURE_ILLEGAL => Illegal_Instruction(),
     FEATURE_VIRTUAL => Virtual_Instruction(),
@@ -121,7 +124,7 @@ function clause execute ZICBOM(CBO_FLUSH, rs1) =
 function clause execute ZICBOM(CBO_INVAL, rs1) =
   match cbop_priv_check(cur_privilege) {
     CBOP_ILLEGAL         => Illegal_Instruction(),
-    CBOP_ILLEGAL_VIRTUAL => internal_error(__FILE__, __LINE__, "unimplemented"),
+    CBOP_ILLEGAL_VIRTUAL => Virtual_Instruction(),
     CBOP_INVAL_INVAL     => process_clean_inval(rs1, CBO_INVAL),
     CBOP_INVAL_FLUSH     => process_clean_inval(rs1, CBO_FLUSH),
   }

@@ -135,6 +135,7 @@ add_custom_command(
         --c-preserve rvfi_trap
         # Preserve to_str functions.
         --c-preserve ptw_error_to_str
+        --c-preserve translationStage_to_str
         # Input files.
         ${SAIL_MODULES}
         ${project_file}

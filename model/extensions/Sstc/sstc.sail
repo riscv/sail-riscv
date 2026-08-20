@@ -15,19 +15,47 @@ private function is_stimecmp_accessible(priv : Privilege) -> bool =
     Machine           => true,
     Supervisor        => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1,
     User              => false,
-    VirtualSupervisor => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1,
-                         /* TODO: & hcounteren[TM] == 0b1 & henvcfg[STCE] == 0b1 */
+    VirtualSupervisor => mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1 &
+                         hcounteren[TM] == 0b1 & read_henvcfg()[STCE] == 0b1,
     VirtualUser       => false,
   })
 
 function clause is_CSR_accessible(0x14D, priv, _) = is_stimecmp_accessible(priv)
 function clause is_CSR_accessible(0x15D, priv, _) = is_stimecmp_accessible(priv) & xlen == 32
 
-function clause read_CSR(0x14D) = stimecmp[xlen - 1 .. 0]
-function clause read_CSR(0x15D if xlen == 32) = stimecmp[63 .. 32]
+function clause read_CSR(0x14D) =  if inVirtualPrivilege() then vstimecmp[xlen - 1 .. 0] else stimecmp[xlen - 1 .. 0]
+function clause read_CSR(0x15D if xlen == 32) = if inVirtualPrivilege() then vstimecmp[63 .. 32] else stimecmp[63 .. 32]
 
-// Writing stimecmp changes the timer interrupt condition, so refresh the
-// pending bits right away the same way an mtimecmp write does. Without this
-// mip[STI] stays stale until the next clock tick.
-function clause write_CSR(0x14D, value) = { stimecmp[(xlen - 1) .. 0] = value; clint_dispatch(false); Ok(stimecmp[xlen - 1 .. 0]) }
-function clause write_CSR((0x15D, value) if xlen == 32) = { stimecmp[63 .. 32] = value; clint_dispatch(false); Ok(stimecmp[63 .. 32]) }
+// Writing a timer comparator changes the timer interrupt condition, so we
+// re-run clint_dispatch to refresh the pending bits (mip[STI]/mip[VSTI]) right
+// away, the same way an mtimecmp write does. Without this the pending bit stays
+// stale until the next clock tick.
+function clause write_CSR(0x14D, value) =
+  if inVirtualPrivilege()
+  then { vstimecmp[(xlen - 1) .. 0] = value; clint_dispatch(false); Ok(vstimecmp[xlen - 1 .. 0]) }
+  else { stimecmp[(xlen - 1) .. 0] = value; clint_dispatch(false); Ok(stimecmp[xlen - 1 .. 0]) }
+
+function clause write_CSR((0x15D, value) if xlen == 32) =
+  if inVirtualPrivilege()
+  then { vstimecmp[63 .. 32] = value; clint_dispatch(false); Ok(vstimecmp[63 .. 32]) }
+  else { stimecmp[63 .. 32] = value; clint_dispatch(false); Ok(stimecmp[63 .. 32]) }
+
+// virtual supervisor timer compare
+mapping clause csr_name_map = 0x24D  <-> "vstimecmp"
+mapping clause csr_name_map = 0x25D  <-> "vstimecmph"
+
+// "when the TM bit in the mcounteren register is clear, attempts to access the
+// stimecmp or vstimecmp register while executing in a mode less privileged than
+// M will cause an illegal-instruction exception."
+private function is_vstimecmp_accessible(priv : Privilege) -> bool =
+  currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) &
+  (priv == Machine | (mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1))
+
+function clause is_CSR_accessible(0x24D, priv, _) = is_vstimecmp_accessible(priv)
+function clause is_CSR_accessible(0x25D, priv, _) = is_vstimecmp_accessible(priv) & xlen == 32
+
+function clause read_CSR(0x24D) = vstimecmp[xlen - 1 .. 0]
+function clause read_CSR(0x25D if xlen == 32) = vstimecmp[63 .. 32]
+
+function clause write_CSR(0x24D, value) = { vstimecmp[(xlen - 1) .. 0] = value; clint_dispatch(false); Ok(vstimecmp[xlen - 1 ..0]) }
+function clause write_CSR((0x25D, value) if xlen == 32) = { vstimecmp[63 ..32] = value; clint_dispatch(false); Ok(vstimecmp[63 .. 32]) }

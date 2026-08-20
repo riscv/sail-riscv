@@ -491,6 +491,15 @@ std::string ModelImpl::ptw_error_to_string(PTW_Error error_type) {
   return str;
 }
 
+std::string ModelImpl::translation_stage_to_string(TranslationStage stage) {
+  sail_string sstr = nullptr;
+  CREATE(sail_string)(&sstr);
+  ztranslationStage_to_str(&sstr, stage);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
 void ModelImpl::tick_clock() {
   ztick_clock(UNIT);
 }
