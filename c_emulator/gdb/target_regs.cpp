@@ -1,6 +1,8 @@
 #include "target_regs.h"
 #include "config_utils.h"
+#include "protocol_handler.h"
 #include "riscv_model_impl.h"
+
 #include <sstream>
 
 register_map get_register_map() {
@@ -117,8 +119,9 @@ void append_reg(std::ostringstream &buf, uint64_t val, int64_t width) {
 
 } // namespace
 
-std::string get_general_regs(ModelImpl &model) {
-  const register_map map = get_register_map();
+std::string get_general_regs(protocol_handler &proto_handler) {
+  const register_map map = proto_handler.get_register_map();
+  ModelImpl &model = proto_handler.get_model();
   std::ostringstream buf;
   buf << std::hex << std::setfill('0');
   int64_t int_width_bytes = model.xlen() / 8;
@@ -142,9 +145,10 @@ std::string get_general_regs(ModelImpl &model) {
   return buf.str();
 }
 
-std::string get_register(ModelImpl &model, uint64_t regidx) {
+std::string get_register(protocol_handler &proto_handler, uint64_t regidx) {
   int64_t idx = static_cast<int64_t>(regidx);
-  const register_map map = get_register_map();
+  const register_map map = proto_handler.get_register_map();
+  ModelImpl &model = proto_handler.get_model();
 
   std::ostringstream buf;
   buf << std::hex << std::setfill('0');
@@ -173,9 +177,10 @@ std::string get_register(ModelImpl &model, uint64_t regidx) {
   return buf.str();
 }
 
-std::string set_register(ModelImpl &model, uint64_t regidx, uint64_t val) {
+std::string set_register(protocol_handler &proto_handler, uint64_t regidx, uint64_t val) {
   int64_t reg = static_cast<int64_t>(regidx);
-  const register_map map = get_register_map();
+  const register_map map = proto_handler.get_register_map();
+  ModelImpl &model = proto_handler.get_model();
 
   bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
