@@ -198,11 +198,19 @@ function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> uni
       csr_write_callback("mcause", mcause.bits);
       csr_write_callback("mtval", mtval);
       csr_write_callback("mepc", mepc);
+      if currentlyEnabled(Ext_H) then {
+        csr_write_callback("mtval2", mtval2);
+        csr_write_callback("mtinst", mtinst);
+      };
     },
     Supervisor => {
       csr_write_callback("scause", scause.bits);
       csr_write_callback("stval", stval);
       csr_write_callback("sepc", sepc);
+      if currentlyEnabled(Ext_H) then {
+        csr_write_callback("htval", htval);
+        csr_write_callback("htinst", htinst);
+      };
     },
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
     VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
