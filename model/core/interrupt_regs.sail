@@ -345,7 +345,7 @@ mapping clause csr_name_map = 0x603  <-> "hideleg"
 mapping clause csr_name_map = 0x612  <-> "hedelegh"
 
 function clause is_CSR_accessible(0x602, _, _) = currentlyEnabled(Ext_H) // hedeleg
-function clause is_CSR_accessible(0x612, _, _) = currentlyEnabled(Ext_H) & xlen == 32 // hedelegh
+function clause is_CSR_accessible(0x612, _, _) = delegh_csrs_are_defined & currentlyEnabled(Ext_H) & xlen == 32 // hedelegh
 function clause is_CSR_accessible(0x603, _, _) = currentlyEnabled(Ext_H) // hideleg
 
 function clause read_CSR(0x602) = hedeleg.bits[xlen - 1 .. 0]
