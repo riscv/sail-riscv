@@ -260,7 +260,7 @@ private function legalize_hip(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   [m with VSSI = v[VSSI]]
 }
 
-// NOTE: hvip.vssi is an alias of mip.vssi, so always read the
+// NOTE: hvip.VSSI is an alias of mip.VSSI, so always read the
 // actual value from mip. The remaining bits come from hvip.
 private function lower_mip_to_hvip(m : Minterrupts, h : Minterrupts) -> Minterrupts = {
   [h with VSSI = m[VSSI]]

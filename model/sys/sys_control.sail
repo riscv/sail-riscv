@@ -83,6 +83,10 @@ function exception_delegatee(e : ExceptionType, p : Privilege) -> Privilege = {
 // "Multiple simultaneous interrupts destined for M-mode are handled
 // in the following decreasing priority order: MEI, MSI, MTI, SEI,
 // SSI, STI, LCOFI."
+//
+// "Multiple simultaneous interrupts destined for HS-mode are handled
+// in the following decreasing priority order: SEI, SSI, STI, SGEI,
+// VSEI, VSSI, VSTI, LCOFI."
 function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   let ip = Mk_Minterrupts(ip);
   if      ip[MEI]   == 0b1 then Some(I_M_External)
@@ -212,7 +216,7 @@ function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> uni
   trap_callback(is_interrupt, cause);
 }
 
-// Compute the value to write to mtval on a trap.
+// Compute the value to write to xtval on a trap.
 function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(xlenbits) = {
   if match e {
     E_Illegal_Instr() => illegal_instruction_writes_xtval,
