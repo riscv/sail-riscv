@@ -241,7 +241,7 @@ foreach (xlen IN ITEMS 32 64)
     # generate a file to indicate that we have run this command.
     set(smt_stamp_file "${CMAKE_CURRENT_BINARY_DIR}/smt_${arch}.stamp")
     add_custom_command(
-        DEPENDS ${sail_srcs} ${project_file}
+        DEPENDS ${sail_srcs} ${project_file} ${config_file}
         VERBATIM
         OUTPUT ${smt_stamp_file}
         COMMENT "Building smtlib2 from Sail model (${arch})"
@@ -295,7 +295,7 @@ foreach (xlen IN ITEMS 32 64)
     # Generate riscv.lem, riscv_toFromInterp2.ml and riscv.defs
     # These are used for "rmem".
     add_custom_command(
-        DEPENDS ${sail_srcs} ${project_file}
+        DEPENDS ${sail_srcs} ${project_file} ${config_file}
         VERBATIM
         OUTPUT "rmem_${arch}.lem"
         COMMENT "Building rmem lem from Sail model (${arch})"
@@ -323,7 +323,7 @@ foreach (xlen IN ITEMS 32 64)
             ${project_file}
     )
     add_custom_command(
-        DEPENDS ${sail_srcs} ${project_file}
+        DEPENDS ${sail_srcs} ${project_file} ${config_file}
         VERBATIM
         OUTPUT "rmem_${arch}_toFromInterp2.ml"
         COMMENT "Building rmem toFromInterp2.ml from Sail model (${arch})"
@@ -344,7 +344,7 @@ foreach (xlen IN ITEMS 32 64)
             ${project_file}
     )
     add_custom_command(
-        DEPENDS ${sail_srcs} ${project_file}
+        DEPENDS ${sail_srcs} ${project_file} ${config_file}
         VERBATIM
         OUTPUT "rmem_${arch}.defs"
         COMMENT "Building rmem defs from Sail model (${arch})"
@@ -372,7 +372,7 @@ foreach (xlen IN ITEMS 32 64)
 
     # Build Rocq (formerly Coq) definitions.
     add_custom_command(
-        DEPENDS ${sail_srcs} ${project_file}
+        DEPENDS ${sail_srcs} ${project_file} ${config_file}
         VERBATIM
         OUTPUT "${CMAKE_BINARY_DIR}/rocq/${arch}.v" "${CMAKE_BINARY_DIR}/rocq/${arch}_types.v"
         COMMENT "Building Rocq definitions from Sail model (${arch})"
