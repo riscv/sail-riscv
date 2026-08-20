@@ -48,6 +48,15 @@ private function write_pte forall 'n, 'n in {4, 8} . (
 ) -> MemoryOpResult(bool) =
   mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), PBMT_PMA, false, false, false)
 
+// Write a Page Table Entry as the write half of an atomic read-modify-write
+// of that PTE.
+private function write_pte_conditional forall 'n, 'n in {4, 8} . (
+  paddr    : physaddr,
+  pte_size : int('n),
+  pte      : bits('n * 8),
+) -> MemoryOpResult(bool) =
+  mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), PBMT_PMA, false, false, true)
+
 // Sscptr: Main memory supports page table read
 function clause currentlyEnabled(Ext_Ssccptr) = hartSupports(Ext_Ssccptr) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
 
@@ -58,29 +67,169 @@ private function read_pte forall 'n, 'n in {4, 8} . (
 ) -> MemoryOpResult(bits(8 * 'n)) =
   mem_read_priv(Load(PageTableEntry), PBMT_PMA, Supervisor, paddr, pte_size, false, false, false)
 
+// Read a Page Table Entry as the read half of an atomic read-modify-write
+// of that PTE.
+private function read_pte_exclusive forall 'n, 'n in {4, 8} . (
+  paddr    : physaddr,
+  pte_size : int('n),
+) -> MemoryOpResult(bits(8 * 'n)) =
+  mem_read_priv(Load(PageTableEntry), PBMT_PMA, Supervisor, paddr, pte_size, false, false, true)
+
+// Check a leaf PTE and compute the translated PPN and the PBMT (Steps 3
+// and 5-8 of the VATP; Step 4, following valid non-leaf PTEs, is handled
+// in pt_walk()).  This is used by pt_walk() when it reaches a leaf PTE,
+// and again by update_and_write_pte() to atomically re-perform all
+// tablewalk checks on the freshly read PTE value as part of an A/D-bit
+// update, as required by the spec (see update_and_write_pte()).
+private function check_leaf_pte forall 'v, is_sv_mode('v) . (
+  sv_width : int('v),
+  vpn      : vpn_bits('v),
+  access   : MemoryAccessType(mem_payload),
+  priv     : Privilege,
+  mxr      : bool,
+  do_sum   : bool,
+  pte      : pte_bits('v),
+  pte_addr : physaddr,
+  level    : level_range('v),
+  ext_ptw  : ext_ptw,
+) -> result((ppn_bits('v), page_based_mem_type, ext_ptw), (PTW_Error, ext_ptw)) = {
+  let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
+  let pte_ext   = ext_bits_of_PTE(pte);
+
+  // Step 3 of VATP.
+  if pte_is_invalid(pte_flags, pte_ext) then {
+    ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
+    return Err(PTW_Invalid_PTE(), ext_ptw);
+  };
+
+  // A non-leaf PTE is not a valid leaf: either this is a level 0 PTE that
+  // contains a pointer, or (during an A/D-bit update) the PTE was
+  // concurrently replaced by a pointer after the walk read a leaf here.
+  if pte_is_non_leaf(pte_flags) then {
+    ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
+    return Err(PTW_Invalid_PTE(), ext_ptw);
+  };
+
+  // Leaf PTE (Step 5 of VATP).
+  let ppn = PPN_of_PTE(pte); // 22 or 44.
+  let ppn_size_bits = if 'v == 32 then 10 else 9;
+  if level > 0 then {
+    // Check for misaligned superpage.
+    let low_bits = ppn_size_bits * level;
+    if ppn[low_bits - 1 .. 0] != zeros() then {
+      ptw_fail_callback(PTW_Misaligned(), level, bits_of(pte_addr));
+      return Err(PTW_Misaligned(), ext_ptw);
+    };
+  };
+
+  // Steps 6, 7 and 8 of VATP.
+  match check_PTE_permission(access, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
+    PTE_Check_Failure(ext_ptw, pte_failure) => {
+      ptw_fail_callback(ext_get_ptw_error(pte_failure), level, bits_of(pte_addr));
+      Err(ext_get_ptw_error(pte_failure), ext_ptw)
+    },
+    PTE_Check_Success(ext_ptw) => {
+      let ppn : ppn_bits('v) = if level > 0 then {
+        // NAPOT PTEs are currently reserved for level > 0.
+        if pte_ext[N] == 0b1 & pte_reserved_bits_must_be_zero
+        then return Err(PTW_Invalid_PTE(), ext_ptw);
+
+        // Compose final PA in superpage:
+        // Superpage PPN @ lower VPNs @ page-offset
+        let low_bits = ppn_size_bits * level;
+        ppn[length(ppn) - 1 .. low_bits] @ vpn[low_bits - 1 .. 0]
+      } else if currentlyEnabled(Ext_Svnapot) & pte_ext[N] == 0b1 then {
+        // Only 64K NAPOT PTEs are valid.
+        let pte_napot_bits = 4;
+        if ppn[pte_napot_bits - 1 .. 0] != 0b1000
+        then return Err(PTW_Invalid_PTE(), ext_ptw);
+
+        [ppn with (pte_napot_bits - 1) .. 0 = vpn[pte_napot_bits - 1 .. 0]]
+      } else {
+        ppn
+      };
+
+      let pbmt = if menvcfg[PBMTE] == 0b0 then PBMT_PMA else page_based_mem_type(pte_ext[PBMT]);
+
+      Ok((ppn, pbmt, ext_ptw))
+    }
+  }
+}
+
 // Update a PTE's A/D bits and write it to memory if needed.  This returns
-// * Ok(Some(pte)) if a write was needed and was successful. pte is the new value.
-// * Ok(None()) if no write was needed.
-// * Err(PTW_PTE_Needs_Update()) if a write was needed but is forbidden by the current state
-// * Err(PTW_No_Access()) if a write was needed and attempted but there was an error.
-private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . (
-  pteAddr : physaddr,
-  pteWidth : int('pte_width),
-  pte : bits('pte_width * 8),
-  access : MemoryAccessType(mem_payload),
-) -> result(option(bits('pte_width * 8)), PTW_Error) =
+// * Ok(Some(pte), ext_ptw) if a write was needed and was successful. pte is the new value.
+// * Ok(None(), ext_ptw) if no write was needed.
+// * Err(PTW_PTE_Needs_Update(), ext_ptw) if a write was needed but is forbidden by the current state.
+// * Err(e, ext_ptw) if a write was needed but the atomic update failed,
+//   either because of a physical memory access error (PTW_No_Access()) or
+//   because the tablewalk checks failed on the freshly read PTE value.
+//
+// The privileged spec requires the A/D-bit update to be atomic:
+//
+//   "The PTE update must be atomic with respect to other accesses to the
+//    PTE, and must atomically perform all tablewalk checks for that leaf
+//    PTE as part of, and before, conditionally updating the PTE value."
+//
+// and Step 7 of the VATP specifies it as a compare-and-swap:
+//
+//   "Compare pte to the value of the PTE at address a+va.vpn[i]*PTESIZE.
+//    If the values match, set pte.a to 1 and, if the original memory
+//    access is a store, also set pte.d to 1.  If the comparison fails,
+//    return to step 2."
+//
+// This is modelled here as a single atomic read-check-write of the PTE:
+// re-read the PTE with an exclusive read, re-perform the tablewalk checks
+// on the freshly read value, and conditionally write back the fresh value
+// with updated A/D bits.
+private function update_and_write_pte forall 'v, is_sv_mode('v) . (
+  sv_width : int('v),
+  vpn      : vpn_bits('v),
+  pteAddr  : physaddr,
+  pte      : pte_bits('v),
+  level    : level_range('v),
+  access   : MemoryAccessType(mem_payload),
+  priv     : Privilege,
+  mxr      : bool,
+  do_sum   : bool,
+  ext_ptw  : ext_ptw,
+) -> result((option(pte_bits('v)), ext_ptw), (PTW_Error, ext_ptw)) =
   match update_PTE_Bits(pte, access) {
-    None()    => Ok(None()),
-    Some(pte) => // The PTE has new A/D bits.  If neither Svadu or Svade is supported,
-                 // the current default is to update the PTE.
-                 if (currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1)
-                   | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)))
-                 then match write_pte(pteAddr, pteWidth, pte) {
-                   Ok(_)  => Ok(Some(pte)),
-                   Err(_) => Err(PTW_No_Access()),
-                 } else {
-                   Err(PTW_PTE_Needs_Update())
-                 },
+    None()  => Ok(None(), ext_ptw),
+    Some(_) => // The PTE needs new A/D bits.  If neither Svadu nor Svade is
+               // supported, the current default is to update the PTE.
+      if (currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1)
+        | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)))
+      then {
+        let 'pte_width = if sv_width == 32 then 4 else 8;
+        // Atomically: re-read the PTE, redo the tablewalk checks on the
+        // fresh value, and write the fresh value with updated A/D bits.
+        match read_pte_exclusive(pteAddr, pte_width) {
+          Err(_) => Err(PTW_No_Access(), ext_ptw),
+          Ok(pte) =>
+            // A check failure means the PTE was concurrently modified
+            // since the walk read it; the resulting page fault is what
+            // the spec's "return to step 2" would produce.
+            match check_leaf_pte(sv_width, vpn, access, priv, mxr, do_sum, pte, pteAddr, level, ext_ptw) {
+              Err(e, ext_ptw)   => Err(e, ext_ptw),
+              Ok(_, _, ext_ptw) =>
+                match update_PTE_Bits(pte, access) {
+                  // The fresh PTE already has the required A/D bits (they
+                  // were set concurrently since the walk read the PTE).
+                  None()    => Ok(Some(pte), ext_ptw),
+                  Some(pte) =>
+                    match write_pte_conditional(pteAddr, pte_width, pte) {
+                      Ok(true)  => Ok(Some(pte), ext_ptw),
+                      // A failed conditional write corresponds to the
+                      // spec's "return to step 2" retry; as for the AMO
+                      // write in zaamo_insts.sail, it cannot occur in
+                      // the sequential emulator.
+                      Ok(false) => internal_error(__FILE__, __LINE__, "PTE conditional write failed"),
+                      Err(_)    => Err(PTW_No_Access(), ext_ptw),
+                    },
+                },
+            },
+        }
+      } else Err(PTW_PTE_Needs_Update(), ext_ptw),
   }
 
 // 'v is the virtual address size.
@@ -138,75 +287,26 @@ function pt_walk(
       ptw_step_callback(level, bits_of(pte_addr), zero_extend(pte));
 
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
-      let pte_ext   = ext_bits_of_PTE(pte);
+      let global = global | (pte_flags[G] == 0b1);
 
-      if pte_is_invalid(pte_flags, pte_ext) then {
-        // Step 3 of VATP.
-        ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
-        Err(PTW_Invalid_PTE(), ext_ptw)
+      // Follow a valid non-leaf PTE to the next level of the page table
+      // (Steps 3 and 4 of VATP; invalid PTEs and non-leaf PTEs at level 0
+      // are rejected by check_leaf_pte() below).
+      if not(pte_is_invalid(pte_flags, ext_bits_of_PTE(pte))) & pte_is_non_leaf(pte_flags) & level > 0 then {
+        // follow the pointer to walk next level (i.e., go to Step 2)
+        let ppn = PPN_of_PTE(pte);
+        pt_walk(sv_width, vpn, access, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
       }
-      else {
-        // Step 4 of VATP.
-        let ppn = PPN_of_PTE(pte); // 22 or 44.
-        let global = global | (pte_flags[G] == 0b1);
-        if pte_is_non_leaf(pte_flags) then {
-          // Non-Leaf PTE
-          if level > 0 then
-            // follow the pointer to walk next level (i.e., go to Step 2)
-            pt_walk(sv_width, vpn, access, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
-          else {
-            // level 0 PTE, but contains a pointer instead of a leaf
-            ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
-            Err(PTW_Invalid_PTE(), ext_ptw)
-          }
-        } else {
-          // Leaf PTE (Step 5 of VATP).
-          let ppn_size_bits = if 'v == 32 then 10 else 9;
-          if level > 0 then {
-            // Check for misaligned superpage.
-            let low_bits = ppn_size_bits * level;
-            if   ppn[low_bits - 1 .. 0] != zeros()
-            then {
-              ptw_fail_callback(PTW_Misaligned(), level, bits_of(pte_addr));
-              return Err(PTW_Misaligned(), ext_ptw);
-            };
-          };
-          // Steps 6, 7 and 8 of VATP.
-          match check_PTE_permission(access, priv, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
-            PTE_Check_Failure(ext_ptw, pte_failure) => {
-              ptw_fail_callback(ext_get_ptw_error(pte_failure), level, bits_of(pte_addr));
-              Err(ext_get_ptw_error(pte_failure), ext_ptw)
-            },
-            PTE_Check_Success(ext_ptw) => {
-              let ppn = if level > 0 then {
-                // NAPOT PTEs are currently reserved for level > 0.
-                if pte_ext[N] == 0b1 & pte_reserved_bits_must_be_zero
-                then return Err(PTW_Invalid_PTE(), ext_ptw);
+      else
+        // Steps 3 and 5-8 of VATP.
+        match check_leaf_pte(sv_width, vpn, access, priv, mxr, do_sum, pte, pte_addr, level, ext_ptw) {
+          Err(e, ext_ptw) => Err(e, ext_ptw),
+          Ok(ppn, pbmt, ext_ptw) => {
+            ptw_success_callback(zero_extend(ppn), level);
 
-                // Compose final PA in superpage:
-                // Superpage PPN @ lower VPNs @ page-offset
-                let low_bits = ppn_size_bits * level;
-                ppn[length(ppn) - 1 .. low_bits] @ vpn[low_bits - 1 .. 0]
-              } else if currentlyEnabled(Ext_Svnapot) & pte_ext[N] == 0b1 then {
-                // Only 64K NAPOT PTEs are valid.
-                let pte_napot_bits = 4;
-                if ppn[pte_napot_bits - 1 .. 0] != 0b1000
-                then return Err(PTW_Invalid_PTE(), ext_ptw);
-
-                [ppn with (pte_napot_bits - 1) .. 0 = vpn[pte_napot_bits - 1 .. 0]]
-              } else {
-                ppn
-              };
-
-              let pbmt = if menvcfg[PBMTE] == 0b0 then PBMT_PMA else page_based_mem_type(pte_ext[PBMT]);
-
-              ptw_success_callback(zero_extend(ppn), level);
-
-              Ok(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, pbmt=pbmt, global=global}, ext_ptw)
-            }
-          }
+            Ok(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, pbmt=pbmt, global=global}, ext_ptw)
+          },
         }
-      }
     }
   }
 }
@@ -289,7 +389,7 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
   ent       : TLB_Entry,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
 
-  let pte_size  = if sv_width == 32 then 4 else 8;
+  let 'pte_size = if sv_width == 32 then 4 else 8;
   let pte       = tlb_get_pte(pte_size, ent);  // Step 2 of VATP.
   let ext_pte   = ext_bits_of_PTE(pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
@@ -300,16 +400,20 @@ private function translate_TLB_hit forall 'v, is_sv_mode('v) . (
     PTE_Check_Failure(ext_ptw, pte_failure) =>
       Err(ext_get_ptw_error(pte_failure), ext_ptw),
     PTE_Check_Success(ext_ptw) =>
-      // Step 9 of VATP.
-      match update_and_write_pte(ent.pteAddr, pte_size, pte, access) {
-        Ok(Some(pte)) => {
+      // Step 9 of VATP.  The A/D-bit update is performed atomically on
+      // the PTE in memory (see update_and_write_pte()); if the in-memory
+      // PTE no longer passes the tablewalk checks (i.e. it was modified
+      // since this TLB entry was filled), the update raises a page fault
+      // instead of writing back a stale TLB copy of the PTE.
+      match update_and_write_pte(sv_width, vpn, ent.pteAddr, pte, tlb_get_level(sv_width, ent),
+                                 access, priv, mxr, do_sum, ext_ptw) {
+        Ok(Some(pte), ext_ptw) => {
           // Writeback the PTE (which has new A/D bits).
-          write_TLB(tlb_index, tlb_set_pte(ent, pte));
+          write_TLB(tlb_index, tlb_set_pte(ent, pte : bits('pte_size * 8)));
           Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw)
         },
-        Ok(None()) => Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw),
-        Err(PTW_PTE_Needs_Update()) => Err(PTW_PTE_Needs_Update(), ext_ptw),
-        Err(e) => Err(e, ext_ptw),
+        Ok(None(), ext_ptw) => Ok(tlb_get_ppn(sv_width, ent, vpn), tlb_get_pbmt(ent), ext_ptw),
+        Err(e, ext_ptw) => Err(e, ext_ptw),
       },
   }
 }
@@ -329,28 +433,29 @@ private function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   let initial_level = if 'v == 32 then 1 else (if 'v == 39 then 2 else (if 'v == 48 then 3 else 4));
 
   // Step 2 of VATP occurs in pt_walk().
-  let 'pte_size = if sv_width == 32 then 4 else 8;
   let ptw_result = pt_walk(sv_width, vpn, access, priv, mxr, do_sum,
                            base_ppn, initial_level, false, ext_ptw);
   match ptw_result {
     Err(f, ext_ptw) => Err(f, ext_ptw),
     Ok(struct {ppn, pte, pteAddr, level, pbmt, global}, ext_ptw) => {
-      let ext_pte = ext_bits_of_PTE(pte);
-
       // Step 9 of VATP.
-      match update_and_write_pte(pteAddr, pte_size, pte, access) {
-        Ok(Some(new_pte)) => {
-          // Writeback the PTE (which has new A/D bits).
+      match update_and_write_pte(sv_width, vpn, pteAddr, pte, level,
+                                 access, priv, mxr, do_sum, ext_ptw) {
+        Ok(Some(new_pte), ext_ptw) => {
+          // Writeback the PTE (which has new A/D bits).  In the absence
+          // of a concurrent update of the PTE, the fresh value read by
+          // update_and_write_pte() equals the value read by the walk, so
+          // the walk's ppn and pbmt describe new_pte as well.
           add_to_TLB(sv_width, asid, vpn, ppn, new_pte, pteAddr, level, global);
           Ok(ppn, pbmt, ext_ptw)
         },
-        Ok(None()) => {
+        Ok(None(), ext_ptw) => {
           // There was no change in the PTE, but it still needs to be added
           // to the TLB due to the TLB miss.
           add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
           Ok(ppn, pbmt, ext_ptw)
         },
-        Err(e) => Err(e, ext_ptw),
+        Err(e, ext_ptw) => Err(e, ext_ptw),
       }
     },
   }

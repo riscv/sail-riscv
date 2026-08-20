@@ -63,6 +63,21 @@ function tlb_get_ppn forall 'v, is_sv_mode('v) . (
   trunc(ppn | (vpn & levelMask))
 }
 
+// Recover the page-table level of a TLB entry from its levelMask (the
+// lowest level * bits-per-level bits of levelMask are ones).
+function tlb_get_level forall 'v, is_sv_mode('v) . (
+  sv_width : int('v),
+  ent      : TLB_Entry,
+) -> level_range('v) = {
+  let 'bits_per_level = if 'v == 32 then 10 else 9;
+  let 'max_level = if 'v == 32 then 1 else (if 'v == 39 then 2 else (if 'v == 48 then 3 else 4));
+  var level : level_range('v) = 0;
+  foreach (l from 1 to max_level) {
+    if ent.levelMask[l * bits_per_level - 1] == bitone then level = l;
+  };
+  level
+}
+
 function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type = {
   // For RV32, this relies on the RV32 PTE being zero-extended
   // and the default PBMT_PMA being encoded as zeros.  This is slower
