@@ -152,12 +152,18 @@ mapping clause encdec = SSAMOSWAP(aq, rl, rs2, rs1, width, rd)
 // This instruction is not predicated by `xSSE`.
 function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   match cur_privilege {
-    Machine           => if not(currentlyEnabled(Ext_S))
+    Machine           => if not(currentlyEnabled(Ext_S) | currentlyEnabled(Ext_Smcfiss))
                          then return Illegal_Instruction(),
     Supervisor        => if menvcfg[SSE] == 0b0
                          then return Illegal_Instruction(),
-    User              => if not(currentlyEnabled(Ext_S)) | read_senvcfg()[SSE] == 0b0
-                         then return Illegal_Instruction(),
+    User              => if currentlyEnabled(Ext_S) then {
+                           if read_senvcfg()[SSE] == 0b0
+                           then return Illegal_Instruction()
+                         } else {
+                           if not(currentlyEnabled(Ext_Smucfiss)) |
+                              menvcfg[SSE] == 0b0
+                           then return Illegal_Instruction()
+                         },
     VirtualSupervisor => { // TODO:
                            // if read_henvcfg()[SSE] == 0b0
                            // then return Virtual_Instruction();

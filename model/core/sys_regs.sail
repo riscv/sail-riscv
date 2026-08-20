@@ -302,13 +302,23 @@ function in32BitMode() -> bool = {
 bitfield Seccfg : bits(64) = {
   // Pointer Masking Extension
   PMM    : 33 .. 32,
+  // Machine Shadow Stack Enable (Smcfiss)
+  MSSE   : 11,
   // Enable Zicfilp in M-mode
   MLPE   : 10,
   // Enable access to SEED in S-mode
   SSEED  : 9,
   // Enable access to SEED in U-mode
   USEED  : 8,
+  // Rule Locking Bypass
+  RLB    : 2,
+  // Machine Mode Whitelist Policy
+  MMWP   : 1,
+  // Machine Mode Lockdown
+  MML    : 0,
 }
+
+val anyPmpLocked : unit -> bool
 
 private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
   let sseed_read_only_zero =
@@ -320,23 +330,40 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
     | not(currentlyEnabled(Ext_U))
     | not(currentlyEnabled(Ext_Zkr));
 
+  let rlb_read_only = o[RLB] == 0b0 & anyPmpLocked();
+  let mml_read_only = o[MML] == 0b1;
+  let mmwp_read_only = o[MMWP] == 0b1;
+
+  // With Smepmp, locked PMP entries make MSSE read-only while RLB is clear.
+  let msse_read_only =
+      not(hartSupports(Ext_Smcfiss))
+    | (currentlyEnabled(Ext_Smepmp) & o[RLB] == 0b0 & anyPmpLocked());
+
   let v = Mk_Seccfg(v);
   [o with
     PMM   = if currentlyEnabled(Ext_Smmpm) & is_supported_pmm(PM_SMMPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    MSSE  = if msse_read_only then o[MSSE] else v[MSSE],
     MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
     USEED = if useed_read_only_zero then 0b0 else v[USEED],
+    RLB   = if not(currentlyEnabled(Ext_Smepmp)) then 0b0 else if rlb_read_only  then o[RLB]  else v[RLB],
+    MMWP  = if not(currentlyEnabled(Ext_Smepmp)) then 0b0 else if mmwp_read_only then o[MMWP] else v[MMWP],
+    MML   = if not(currentlyEnabled(Ext_Smepmp)) then 0b0 else if mml_read_only  then o[MML]  else v[MML],
   ]
 }
 
-register mseccfg : Seccfg = legalize_mseccfg(Mk_Seccfg(zeros()), zeros())
+// TODO: Ideally this would use legalize_mseccfg however it can't due to a Sail
+// compiler bug. In this case that's fine since the result is actually all zeros anyway.
+// See https://github.com/rems-project/sail/issues/1653
+register mseccfg : Seccfg = Mk_Seccfg(zeros())
+// register mseccfg : Seccfg = legalize_mseccfg(Mk_Seccfg(zeros()), zeros())
 
 mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // For Sm1p12 and later, "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm)) // mseccfg
-function clause is_CSR_accessible(0x757, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32 // mseccfgh
+function clause is_CSR_accessible(0x747, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm) | currentlyEnabled(Ext_Smepmp) | hartSupports(Ext_Smcfiss)) // mseccfg
+function clause is_CSR_accessible(0x757, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smepmp) | hartSupports(Ext_Smcfiss)) & xlen == 32 // mseccfgh
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x757 if xlen == 32) = mseccfg.bits[63 .. 32]
