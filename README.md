@@ -218,7 +218,6 @@ An experimental emulator in the Lean language is available, see its
 - Svnapot extension for NAPOT Translation Contiguity, v1.0
 - Svpbmt extension for Page-Based Memory Types, v1.0
 - Svrsw60t59b extension for PTE reserved-for-software bits 60-59, v1.0
-- Svukte extension for Address-Independent Latency of User-Mode Faults to Supervisor Addresses, v1.0
 - Svvptc extension for Obviating Memory-management Instructions after Marking PTEs valid, v1.0
 - Smmpm, Smnpm, Ssnpm, Sspm and Supm extensions for pointer masking, v1.0
 - H extension for Hypervisor Support, v1.0
@@ -229,6 +228,7 @@ The following unratified extensions are supported and can be enabled using the `
 
 - Zibi extension for conditional branches with immediate operands, v0.6
 - Zvabd extension for vector absolute difference, v0.7
+- Svukte extension for Address-Independent Latency of User-Mode Faults to Supervisor Addresses, v0.4
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 

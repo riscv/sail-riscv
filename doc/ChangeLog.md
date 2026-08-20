@@ -2,6 +2,8 @@
 
 - The following extensions have been added:
   - H
+
+- The following unratified extensions have been added:
   - Svukte
 
 - Updates to the [configuration file](../config/config.json.in):

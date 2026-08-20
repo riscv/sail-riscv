@@ -538,7 +538,7 @@ function clause hartSupports(Ext_Svrsw60t59b) = config extensions.Svrsw60t59b.su
 // Address-Independent Latency of User-Mode Faults to Supervisor Addresses
 enum clause extension = Ext_Svukte
 mapping clause extensionName = Ext_Svukte <-> "svukte"
-function clause hartSupports(Ext_Svukte) = config extensions.Svukte.supported : bool & (xlen == 64)
+function clause hartSupports(Ext_Svukte) = sys_enable_experimental_extensions() & config extensions.Svukte.supported : bool & (xlen == 64)
 // Obviating Memory-management Instructions after Marking PTEs valid
 enum clause extension = Ext_Svvptc
 mapping clause extensionName = Ext_Svvptc <-> "svvptc"
