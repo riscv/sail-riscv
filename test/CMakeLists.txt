@@ -170,6 +170,17 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     list(FILTER test_elfs EXCLUDE REGEX ".*/ExceptionsZaamo-00\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/Zama16b-00\\.elf$")
 
+    # With H enabled, VS CSRs (vsstatus, etc.) and the extra mideleg bits are
+    # legal from M/HS-mode, so accesses these tests expect to trap no longer do.
+    # The reference signatures assume a non-H config (all pass with H disabled).
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-00\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-01\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-02\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-04\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-07\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictU-03\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv32-max/.*/SsstrictS-06\\.elf$")
+
     set(${elfs_to_use_varname} "${test_elfs}" PARENT_SCOPE)
 endfunction()
 

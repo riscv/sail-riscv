@@ -524,7 +524,6 @@ private function check_misc_extension_dependencies() -> bool = {
     // access-fault, and misaligned exceptions, and for breakpoint exceptions other than those caused by execution of
     // the EBREAK or C.EBREAK instructions. For virtual-instruction and illegal-instruction exceptions, `stval` must be
     // written with the faulting instruction.
-    // TODO: add validation for virtual-instruction exceptions.
     valid = valid & check_required_sstvala_option("load page-faults", load_page_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("load access-faults", load_access_fault_writes_xtval);
     valid = valid & check_required_sstvala_option("misaligned load exceptions", misaligned_load_writes_xtval);
@@ -536,6 +535,13 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_required_sstvala_option("misaligned fetch exceptions", misaligned_fetch_writes_xtval);
     valid = valid & check_required_sstvala_option("hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
     valid = valid & check_required_sstvala_option("illegal instruction exceptions", illegal_instruction_writes_xtval);
+    // Guest-page faults and virtual-instruction exceptions can only be raised when H is supported.
+    if (config extensions.H.supported : bool) then {
+      valid = valid & check_required_sstvala_option("load guest page-faults", load_guest_page_fault_writes_xtval);
+      valid = valid & check_required_sstvala_option("store/AMO guest page-faults", samo_guest_page_fault_writes_xtval);
+      valid = valid & check_required_sstvala_option("fetch guest page-faults", fetch_guest_page_fault_writes_xtval);
+      valid = valid & check_required_sstvala_option("virtual instruction exceptions", virtual_instruction_writes_xtval);
+    };
   };
   if (config extensions.Ssqosid.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
@@ -548,6 +554,17 @@ private function check_misc_extension_dependencies() -> bool = {
   if (xlen == 32 & ((config extensions.Ssnpm.supported : bool) | (config extensions.Smmpm.supported : bool) | (config extensions.Smnpm.supported : bool))) then {
     valid = false;
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
+  };
+  if (config extensions.H.supported : bool) then {
+    if base_E_enabled then {
+      valid = false;
+      print_endline("The H extension is enabled but the base integer ISA is E: supporting H requires I.");
+    };
+    if not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("The H extension is enabled but supervisor mode (S) is disabled: supporting H requires S.");
+    };
+    valid = valid & require_virtual_memory("H");
   };
   valid
 }
@@ -585,7 +602,11 @@ private function check_extension_param_constraints() -> bool = {
       valid = false;
       print_endline("Bit 11 (Environment call from M-mode) in `base.medeleg.delegatable_bits` is set; this environment call cannot be delegated.");
     };
-    let reserved_exception_mask : bits(64) = zero_extend(0x0_FFFF_00F2_4400);
+    let reserved_exception_mask : bits(64) =
+      if config extensions.H.supported : bool
+      // Hypervisor codes 10,20-23 are valid, not reserved
+      then zero_extend(0x0_FFFF_0002_4000)
+      else zero_extend(0x0_FFFF_00F2_4400);
     if (medelegation.bits & reserved_exception_mask) != zeros() then {
       valid = false;
       print_endline("Bits for reserved exceptions are set in `base.medeleg.delegatable_bits`.");

@@ -45,7 +45,7 @@ function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res :
 // Since `virtaddr` accesses that straddle page boundaries are already
 // split, the offset computation is quite simple.
 
-private function offset_virtaddr_by(
+function offset_virtaddr_by(
   Virtaddr(base_vaddr) : virtaddr,
   Physaddr(base_paddr) : physaddr,
   Physaddr(exc_paddr)  : physaddr,
@@ -57,25 +57,50 @@ private function offset_virtaddr_by(
 
 // External API
 
-// Transforms the effective address based on PMM settings and the current translation mode.
-function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload)) -> virtaddr = {
-  let eff_privilege = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_privilege);
-  let mode = translationMode(eff_privilege);
+// Apply pointer masking to an effective address given a precomputed PMLEN.
+// Whether the address is virtual (sign-extend) or physical (zero-extend) follows
+// the first-stage satp register feeding the address: vsatp for VS/VU, otherwise
+// satp. A guest-physical address (vsatp.MODE == Bare) is treated as physical.
+function pm_transform_for_priv(vaddr : virtaddr, eff_privilege : Privilege, pmlen : {0, 7, 16}) -> virtaddr = {
+  let mode = if eff_privilege == VirtualSupervisor | eff_privilege == VirtualUser
+             then vsatp_mode()
+             else satp_mode(eff_privilege);
   if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }
+
+// Transforms the effective address of a regular explicit access based on PMM
+// settings and the current translation mode.
+function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload)) -> virtaddr = {
+  let eff_privilege = effectivePrivilege(access, mstatus, cur_privilege);
+  pm_transform_for_priv(vaddr, eff_privilege, get_pmlen(access, eff_privilege))
+}
+
+// Transforms the effective address of an HLV/HSV explicit access, whose effective
+// privilege (VS/VU) is taken from hstatus.SPVP rather than effectivePrivilege.
+function transform_hlsv_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> virtaddr =
+  pm_transform_for_priv(vaddr, eff_privilege, get_hlsv_pmlen(access, eff_privilege))
+
+// Whether a data access is effectively to a guest VA (VS/VU mode, or M-mode MPRV+MPV).
+function access_is_gva(access : MemoryAccessType(mem_payload)) -> bool =
+  privLevel_is_virtual(effectivePrivilege(access, mstatus, cur_privilege))
+
+function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> ExceptionContext =
+  make_exception_context(e, excinfo, access_is_gva(access), None())
+
+function memory_exception(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> ExecutionResult =
+  trap(mem_exception_context(e, excinfo, access))
 
 // Helper for translated read access.
 private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_access.
   (vaddr : virtaddr, width : int('width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
   -> result((physaddr, bits(8 * 'width)), ExecutionResult) =
   match translateAddr(vaddr, access) {
-    Err(e, _) => Err(memory_exception(vaddr, e)),
+    Err(e, _) => Err(trap(e)),
 
     Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, width, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(exc_vaddr, e))
+        Err(memory_exception(e, bits_of(exc_vaddr), access))
       },
 
       Ok(v) => Ok(paddr, v),
@@ -91,8 +116,8 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(memory_exception(vaddr, E_Load_Access_Fault())),
-      Some(AlignmentException) => return Err(memory_exception(vaddr, E_Load_Addr_Align())),
+      Some(AccessFault)        => return Err(memory_exception(E_Load_Access_Fault(), bits_of(vaddr), access)),
+      Some(AlignmentException) => return Err(memory_exception(E_Load_Addr_Align(), bits_of(vaddr), access)),
       // Even if the CPU does support misaligned accesses, it might be
       // that the PMA doesn't support misaligned accesses so you can
       // still get a fault later, but this will be after address
@@ -111,7 +136,10 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // virtual memory is in effect, and (b) it crosses a page boundary.
   // If we do split, perform the split access in the configured order.
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-  let do_split_access = translationMode(effPriv) != Bare & next_page_bytes > 0;
+  let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
+  then vsatp_mode() != Bare | hgatp_mode() != HBare
+  else satp_mode(cur_privilege) != Bare;
+  let do_split_access = vmem_active & next_page_bytes > 0;
 
   if sys_misaligned_order_decreasing & do_split_access then {
     // Load-reserved cannot be misaligned.
@@ -160,18 +188,18 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
   (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
   -> result(bool, ExecutionResult) =
   match translateAddr(vaddr, access) {
-    Err(e, _) => Err(memory_exception(vaddr, e)),
+    Err(e, _) => Err(trap(e)),
 
     Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, access, pbmt, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(exc_vaddr, e))
+        Err(memory_exception(e, bits_of(exc_vaddr), access))
       },
 
       Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          Err(memory_exception(exc_vaddr, e))
+          Err(memory_exception(e, bits_of(exc_vaddr), access))
         },
 
         Ok(s) => Ok(s),
@@ -187,8 +215,8 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(memory_exception(vaddr, E_SAMO_Access_Fault())),
-      Some(AlignmentException) => return Err(memory_exception(vaddr, E_SAMO_Addr_Align())),
+      Some(AccessFault)        => return Err(memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access)),
+      Some(AlignmentException) => return Err(memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access)),
       None()                   => (),
     };
   };
@@ -208,7 +236,10 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
 
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-  let do_split_access = translationMode(effPriv) != Bare & next_page_bytes > 0;
+  let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
+  then vsatp_mode() != Bare | hgatp_mode() != HBare
+  else satp_mode(cur_privilege) != Bare;
+  let do_split_access = vmem_active & next_page_bytes > 0;
 
   if sys_misaligned_order_decreasing & do_split_access then {
     // Store-conditionals cannot be misaligned.
@@ -224,7 +255,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
   let access_width = if do_split_access then in_page_bytes else width;
   match translateAddr(vaddr, access) {
-    Err(e, _) => return Err(memory_exception(vaddr, e)),
+    Err(e, _) => return Err(trap(e)),
 
     Ok(paddr, pbmt, _) => {
       // If res is true, the store should be aligned.
@@ -238,13 +269,13 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
         // access-fault exception."
         let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
         match phys_access_check(access, pbmt, effPriv, paddr, access_width, true) {
-          Err(e) => return Err(memory_exception(vaddr, e)),
+          Err(e) => return Err(memory_exception(e, bits_of(vaddr), access)),
           Ok(_)  => write_success = false,
         }
       } else match mem_write_ea(paddr, access_width, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          return Err(memory_exception(exc_vaddr, e))
+          return Err(memory_exception(e, bits_of(exc_vaddr), access))
         },
 
         Ok(()) => {
@@ -252,7 +283,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
           match mem_write_value(paddr, access_width, write_value, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-              return Err(memory_exception(exc_vaddr, e))
+              return Err(memory_exception(e, bits_of(exc_vaddr), access))
             },
             Ok(s)  => write_success = write_success & s,
           }

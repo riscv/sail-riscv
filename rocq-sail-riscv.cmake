@@ -1,7 +1,7 @@
 # This small script fills in the version numbers in the opam package file.
 # It can be invoked using
 #
-#   cmake -P coq-sail-riscv.cmake
+#   cmake -P rocq-sail-riscv.cmake
 
 include(cmake/project_version.cmake)
 include(cmake/sail_required_version.cmake)
@@ -13,4 +13,4 @@ if(EXISTS "cmake/sail_required_version_rocq.txt")
 else()
   set(sail_required_version_rocq ${SAIL_REQUIRED_VER})
 endif()
-configure_file("coq-sail-riscv.opam.in" "coq-sail-riscv.opam" @ONLY)
+configure_file("rocq-sail-riscv.opam.in" "rocq-sail-riscv.opam" @ONLY)

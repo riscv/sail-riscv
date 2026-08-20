@@ -221,6 +221,7 @@ An experimental emulator in the Lean language is available, see its
 - Svukte extension for Address-Independent Latency of User-Mode Faults to Supervisor Addresses, v1.0
 - Svvptc extension for Obviating Memory-management Instructions after Marking PTEs valid, v1.0
 - Smmpm, Smnpm, Ssnpm, Sspm and Supm extensions for pointer masking, v1.0
+- H extension for Hypervisor Support, v1.0
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 

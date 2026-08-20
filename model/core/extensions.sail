@@ -68,7 +68,7 @@ function clause hartSupports(Ext_U) = config extensions.U.supported
 // Hypervisor
 enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
-function clause hartSupports(Ext_H) = false
+function clause hartSupports(Ext_H) = config extensions.H.supported
 
 enum clause extension = Ext_Zibi
 mapping clause extensionName = Ext_Zibi <-> "zibi"
@@ -626,7 +626,6 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvl64b => 0,
     Ext_Zimop => 0,
 
-    Ext_D => 1, // > Zicsr
     Ext_F => 1, // > Zicsr
     Ext_S => 1, // > Zicsr
     Ext_Zaamo => 1, // > A
@@ -640,6 +639,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     // Note: even though these match the default case, making them explicit to
     // annotate the chain of dependencies
+    Ext_D => 2, // > F
     Ext_Sscounterenw => 2, // > S
     Ext_Sv39 => 2, // > S
     Ext_Zfh => 2, // > F
@@ -657,6 +657,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_Svvptc => 3, // > Sv39
     Ext_Svrsw60t59b => 3, // > Sv39
+    Ext_Zcd => 3, // > D
     Ext_Zfhmin => 3, // > Zfh
     Ext_Zicfilp => 3, // > get_xLPE
     Ext_Zvbc => 3, // > Zve64x

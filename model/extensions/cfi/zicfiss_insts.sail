@@ -6,8 +6,10 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-function make_shadow_stack_exception() -> sync_exception =
-  make_sync_exception(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)))
+// Same reasoning as make_landing_pad_exception. A software-check fault is not
+// translation related, so GVA must stay 0 and we build the context with
+// make_instr_exception_context which sets excinfo_is_gva to false.
+function make_shadow_stack_exception() -> ExceptionContext = make_instr_exception_context(E_Software_Check(), zero_extend(software_check_cause(SWC_SHADOW_STACK_FAULT)))
 
 // *****************************************************************
 
@@ -37,7 +39,7 @@ function clause execute SSPUSH(rs2) = {
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(vaddr, width))
-  then return memory_exception(vaddr, E_SAMO_Access_Fault());
+  then return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access);
 
   match vmem_write_addr(vaddr, width, X(rs2), access, false, false, false) {
     Ok(_)  => { ssp = vaddr_bits;
@@ -85,7 +87,7 @@ function clause execute SSPOPCHK(rs1) = {
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(ssp_addr, width))
-  then return memory_exception(ssp_addr, E_SAMO_Access_Fault());
+  then return memory_exception(E_SAMO_Access_Fault(), bits_of(ssp_addr), access);
 
   match vmem_read_addr(ssp_addr, width, access, false, false, false) {
     Ok(data) => {
@@ -158,10 +160,10 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
                          then return Illegal_Instruction(),
     User              => if not(currentlyEnabled(Ext_S)) | read_senvcfg()[SSE] == 0b0
                          then return Illegal_Instruction(),
-    VirtualSupervisor => { // TODO:
-                           // if read_henvcfg()[SSE] == 0b0
-                           // then return Virtual_Instruction();
-                           internal_error(__FILE__, __LINE__, "Hypervisor extension not supported") },
+    VirtualSupervisor => if menvcfg[SSE] == 0b0
+                         then return Illegal_Instruction()
+                         else if read_henvcfg()[SSE] == 0b0
+                         then return Virtual_Instruction(),
     VirtualUser       => if menvcfg[SSE] == 0b0
                          then return Illegal_Instruction()
                          else if read_senvcfg()[SSE] == 0b0
@@ -181,8 +183,8 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     // Check if the model is configured to raise an exception based on
     // the misaligned virtual address.
     match plat_misaligned_exception(access, false) {
-      Some(AccessFault)        => return memory_exception(vaddr, E_SAMO_Access_Fault()),
-      Some(AlignmentException) => return memory_exception(vaddr, E_SAMO_Addr_Align()),
+      Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access),
+      Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access),
       // No exception yet, but we may still get one based on the
       // physical address after address translation and checking PMAs.
       None()                   => (),
@@ -191,7 +193,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Ok(addr, pbmt, _) => (addr, pbmt),
-    Err(e, _)   => return memory_exception(vaddr, e),
+    Err(e, _)   => return trap(e),
   };
 
   // The `aq` and `rl` flags follow the AMO model in Zaamo: "Just as
@@ -204,13 +206,13 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == paddr);
-      return memory_exception(vaddr, e)
+      return memory_exception(e, bits_of(vaddr), access)
     },
     Ok(_) => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
       Err(exc_addr, e) => {
         // AMOs should not get split.
         assert(exc_addr == paddr);
-        return memory_exception(vaddr, e)
+        return memory_exception(e, bits_of(vaddr), access)
       },
       Ok(v)  => v,
     },
@@ -228,7 +230,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == paddr);
-      return memory_exception(vaddr, e)
+      return memory_exception(e, bits_of(vaddr), access)
     },
   };
 
