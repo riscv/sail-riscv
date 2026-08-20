@@ -45,7 +45,8 @@ std::string get_target_xml(const ModelImpl &model) {
   int regnum = 0;
   for (int i = 0; i < 32; ++i) {
     std::string typ = (i == 1) ? "code_ptr" : ((i == 2 || i == 3 || i == 4 || i == 8) ? "data_ptr" : "int");
-    xml << "  <reg name=\"x" << i << "\" bitsize=\"" << model.xlen() << "\" type=\"" << typ << "\"";
+    xml << "  <reg name=\"x" << i << "\" bitsize=\"" << model.xlen() << "\" type=\"" << typ
+        << "\" save-restore=\"yes\" group=\"general\"";
     if (i == 0) {
       xml << R"( regnum="0" )";
     }
@@ -53,7 +54,8 @@ std::string get_target_xml(const ModelImpl &model) {
     ++regnum;
   }
   assert(regnum == map.pc_offset);
-  xml << "  <reg name=\"pc\" bitsize=\"" << model.xlen() << "\" type=\"code_ptr\"/>" << std::endl;
+  xml << "  <reg name=\"pc\" bitsize=\"" << model.xlen()
+      << "\" type=\"code_ptr\" save-restore=\"yes\" group=\"general\"/>" << std::endl;
   xml << "</feature>" << std::endl;
 
   ++regnum;
@@ -81,14 +83,16 @@ std::string get_target_xml(const ModelImpl &model) {
       fpu_type = "ieee_single";
     }
     for (int i = 0; i < 32; ++i) {
-      xml << "  <reg name=\"f" << i << "\" bitsize=\"" << model.flen() << "\" type=\"" << fpu_type << "\"";
+      xml << "  <reg name=\"f" << i << "\" bitsize=\"" << model.flen() << "\" type=\"" << fpu_type
+          << "\" save-restore=\"yes\" group=\"float\"";
       if (i == 0) {
-        xml << " regnum = \"" << regnum << "\"";
+        xml << " regnum=\"" << regnum << "\"";
       }
       xml << "/>" << std::endl;
       ++regnum;
     }
-    xml << "  <reg name=\"fcsr\" bitsize=\"32\" type=\"int\" regnum=\"" << regnum << "\"/>" << std::endl;
+    xml << "  <reg name=\"fcsr\" bitsize=\"32\" type=\"int\" save-restore=\"no\" group=\"float\" regnum=\"" << regnum
+        << "\"/>" << std::endl;
     xml << "</feature>" << std::endl;
   }
 
