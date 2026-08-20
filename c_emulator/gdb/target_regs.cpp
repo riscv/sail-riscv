@@ -63,7 +63,7 @@ std::string get_target_xml(const ModelImpl &model) {
 
   bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
-  if (have_double || have_single) {
+  if (have_single) {
     // The `org.gnu.gdb.riscv.fpu` feature is optional. If present, it
     // should contain registers `f0` through `f31`, `fflags`, `frm`,
     // and `fcsr`. As with the cpu feature, either the architectural
@@ -136,9 +136,8 @@ std::string get_general_regs(protocol_handler &proto_handler) {
   }
   append_reg(buf, model.pc(), int_width_bytes);
 
-  bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
-  if (have_double || have_single) {
+  if (have_single) {
     int64_t float_width_bytes = model.flen() / 8;
     for (int64_t i = 0; i < 32; ++i) {
       const uint64_t val = model.freg(i);
@@ -158,7 +157,6 @@ std::string get_register(protocol_handler &proto_handler, uint64_t regidx) {
   buf << std::hex << std::setfill('0');
   int64_t int_width_bytes = model.xlen() / 8;
 
-  bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
 
   if (0 <= idx && idx < map.pc_offset) {
@@ -166,7 +164,7 @@ std::string get_register(protocol_handler &proto_handler, uint64_t regidx) {
     append_reg(buf, val, int_width_bytes);
   } else if (idx == map.pc_offset) {
     append_reg(buf, model.pc(), int_width_bytes);
-  } else if ((have_single || have_double) && map.fpr_offset <= idx && idx <= map.fcsr_offset) {
+  } else if (have_single && map.fpr_offset <= idx && idx <= map.fcsr_offset) {
     if (idx == map.fcsr_offset) {
       append_reg(buf, model.fcsr(), 4);
     } else {
@@ -186,14 +184,13 @@ std::string set_register(protocol_handler &proto_handler, uint64_t regidx, uint6
   const register_map map = proto_handler.get_register_map();
   ModelImpl &model = proto_handler.get_model();
 
-  bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
 
   if (0 <= reg && reg < map.pc_offset) {
     model.set_xreg(reg, val);
   } else if (reg == map.pc_offset) {
     model.set_pc(val);
-  } else if ((have_single || have_double) && map.fpr_offset <= reg && reg <= map.fcsr_offset) {
+  } else if (have_single && map.fpr_offset <= reg && reg <= map.fcsr_offset) {
     if (reg == map.fcsr_offset) {
       model.set_fcsr(val);
     } else {
