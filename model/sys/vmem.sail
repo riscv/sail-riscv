@@ -6,12 +6,11 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// TODO: Rewrite this paragraph once Hypervisor extension is implemented and
-// we have a better sense of how to structure the code.
 // ****************************************************************
 // Virtual memory address translation and memory protection,
 // including PTWs (Page Table Walks) and TLBs (Translation Look-aside Buffers)
-// Supported VM modes: Sv32, Sv39, Sv48, Sv57
+// Supported VS/S-stage modes: Sv32, Sv39, Sv48, Sv57
+// Supported G-stage modes: Sv32x4, Sv39x4, Sv48x4, Sv57x4
 
 // The code below implements the steps in the "Virtual Address
 // Translation Process" (abbreviated here to VATP) section of the
@@ -21,7 +20,8 @@
 // TLB NOTE:
 // TLBs are not part of the RISC-V architecture specification.
 // However, we model a simple TLB so that
-// (1) we can meaningfully test SFENCE.VMA which is a no-op without TLBs;
+// (1) we can meaningfully test SFENCE.VMA and HFENCE.GVMA/VVMA, which are
+//     no-ops without TLBs;
 // (2) we can greatly speed up simulation speed
 //     (e.g., from 10s of minutes to few minutes for Linux boot)
 // The TLB implementation is in a separate file: vmem_tlb.sail
