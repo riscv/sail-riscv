@@ -14,7 +14,7 @@ union clause instruction = VSHA2MS_VV : (vregidx, vregidx, vregidx)
 $[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VSHA2MS_VV(vs2, vs1, vd)
   <-> 0b101101 @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when (currentlyEnabled(Ext_Zvknha) & get_sew() == 32) | (currentlyEnabled(Ext_Zvknhb) & (get_sew() == 32 | get_sew() == 64)) & zvknhab_check_encdec(vs2, vs1, vd)
+  when ((currentlyEnabled(Ext_Zvknha) & get_sew() == 32) | (currentlyEnabled(Ext_Zvknhb) & (get_sew() == 32 | get_sew() == 64))) & zvknhab_check_encdec(vs2, vs1, vd)
 
 mapping clause assembly = VSHA2MS_VV(vs2, vs1, vd)
   <-> "vsha2ms.vv" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1)
@@ -82,7 +82,7 @@ mapping encdec_vsha2 : zvk_vsha2_funct6 <-> bits(6) = {
 $[wavedrom "VSHA2C.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = ZVKSHA2TYPE(funct6, vs2, vs1, vd)
   <-> encdec_vsha2(funct6) @ 0b1 @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when (currentlyEnabled(Ext_Zvknha) & get_sew() == 32) | (currentlyEnabled(Ext_Zvknhb) & (get_sew() == 32 | get_sew() == 64)) & zvknhab_check_encdec(vs2, vs1, vd)
+  when ((currentlyEnabled(Ext_Zvknha) & get_sew() == 32) | (currentlyEnabled(Ext_Zvknhb) & (get_sew() == 32 | get_sew() == 64))) & zvknhab_check_encdec(vs2, vs1, vd)
 
 mapping vsha2_mnemonic : zvk_vsha2_funct6 <-> string = {
   ZVK_VSHA2CH_VV <-> "vsha2ch.vv",
