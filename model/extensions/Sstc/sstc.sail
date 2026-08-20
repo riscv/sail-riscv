@@ -44,8 +44,15 @@ function clause write_CSR((0x15D, value) if xlen == 32) =
 mapping clause csr_name_map = 0x24D  <-> "vstimecmp"
 mapping clause csr_name_map = 0x25D  <-> "vstimecmph"
 
-function clause is_CSR_accessible(0x24D, _, _) = currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) // vstimecmp
-function clause is_CSR_accessible(0x25D, _, _) = currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) & xlen == 32 // vstimecmph
+// "when the TM bit in the mcounteren register is clear, attempts to access the
+// stimecmp or vstimecmp register while executing in a mode less privileged than
+// M will cause an illegal-instruction exception."
+private function is_vstimecmp_accessible(priv : Privilege) -> bool =
+  currentlyEnabled(Ext_H) & currentlyEnabled(Ext_Sstc) &
+  (priv == Machine | (mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1))
+
+function clause is_CSR_accessible(0x24D, priv, _) = is_vstimecmp_accessible(priv)
+function clause is_CSR_accessible(0x25D, priv, _) = is_vstimecmp_accessible(priv) & xlen == 32
 
 function clause read_CSR(0x24D) = vstimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x25D if xlen == 32) = vstimecmp[63 .. 32]
