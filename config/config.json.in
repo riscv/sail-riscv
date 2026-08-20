@@ -421,6 +421,10 @@
       "base": 33554432,
       "size": 786432
     },
+    // Whether machine software interrupts are implemented (mip.MSIP / mie.MSIE).
+    // When false, those bits are read-only zero for CSR access and interrupt
+    // dispatch, and the Simple Interrupt Generator cannot set MSIP.
+    "msi_supported": true,
     // Very simple MMIO device to generate interrupts for testing
     // purposes. See docs/SimpleInterruptGenerator.md for details.
     "simple_interrupt_generator": {

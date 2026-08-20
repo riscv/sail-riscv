@@ -26,6 +26,9 @@ bitfield Minterrupts : xlenbits = {
   SSI  : 1,  // Supervisor software interrupt
 }
 
+private function apply_msi_policy(m : Minterrupts) -> Minterrupts =
+  if plat_msi_supported then m else [m with MSI = 0b0]
+
 private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
@@ -46,7 +49,7 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     MEI = v[MEI],
     MTI = v[MTI],
-    MSI = v[MSI],
+    MSI = if plat_msi_supported then v[MSI] else 0b0,
     SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     STI = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
     SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
@@ -146,16 +149,18 @@ enum XipReadType = {
 }
 
 function read_mip(read_type : XipReadType) -> Minterrupts =
-  match read_type {
-    IncludePlatformInterrupts => Mk_Minterrupts(mip.bits | external_interrupts_pending().bits),
-    ExcludePlatformInterrupts => mip,
-  }
+  apply_msi_policy(
+    match read_type {
+      IncludePlatformInterrupts => Mk_Minterrupts(mip.bits | external_interrupts_pending().bits),
+      ExcludePlatformInterrupts => mip,
+    }
+  )
 
 function write_mip(value : xlenbits) -> unit = {
   mip = legalize_mip(mip, value);
 }
 
-function clause read_CSR(0x304) = mie.bits
+function clause read_CSR(0x304) = apply_msi_policy(mie).bits
 function clause read_CSR(0x344) = read_mip(ExcludePlatformInterrupts).bits
 function clause read_CSR(0x302) = medeleg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x312 if xlen == 32) = medeleg.bits[63 .. 32]
@@ -244,7 +249,7 @@ private function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> 
     SEI   = if d[SEI] == 0b1 then s[SEI] else o[SEI],
     MTI   = if d[MTI] == 0b1 then s[MTI] else o[MTI],
     STI   = if d[STI] == 0b1 then s[STI] else o[STI],
-    MSI   = if d[MSI] == 0b1 then s[MSI] else o[MSI],
+    MSI   = if plat_msi_supported & d[MSI] == 0b1 then s[MSI] else o[MSI],
     SSI   = if d[SSI] == 0b1 then s[SSI] else o[SSI],
     LCOFI = if d[LCOFI] == 0b1 then s[LCOFI] else o[LCOFI],
   ]

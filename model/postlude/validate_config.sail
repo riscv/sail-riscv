@@ -426,6 +426,13 @@ private function check_mem_layout() -> bool =
     pmas_ok & clint_ok & sig_ok
   }
 
+private function check_msi_config() -> bool =
+  if plat_msi_supported then true
+  else if Mk_Minterrupts(plat_mideleg_delegatable_bits)[MSI] == 0b1 then {
+    print_endline("platform.msi_supported is false but base.mideleg.delegatable_bits includes MSI (bit 3).");
+    false
+  } else true
+
 private function check_pmp() -> bool = {
   var valid : bool = true;
   if (config memory.pmp.na4_supported : bool) & sys_pmp_grain != 0
@@ -691,6 +698,7 @@ function config_is_valid() -> bool = {
   & check_physaddr_bits()
   & check_mmu_config()
   & check_mem_layout()
+  & check_msi_config()
   & check_mmio_devices()
   & check_vlen_elen()
   & check_vext_config()

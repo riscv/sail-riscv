@@ -47,7 +47,7 @@ function sig_store(addr, width, data) = {
 
       if data[MEI] == 0b1 then sig_meip = value;
       if data[SEI] == 0b1 then sig_seip = value;
-      if data[MSI] == 0b1 then mip[MSI] = value;
+      if data[MSI] == 0b1 & plat_msi_supported then mip[MSI] = value;
       // SSI is read-only zero if the hart does not support supervisor mode.
       if data[SSI] == 0b1 & currentlyEnabled(Ext_S) then mip[SSI] = value;
 
