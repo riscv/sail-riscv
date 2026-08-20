@@ -475,6 +475,20 @@ function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm) & currentl
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
 function clause hartSupports(Ext_Ssstateen) = config extensions.Stateen.Ssstateen.supported
+// Supervisor-mode Physical Memory Protection
+enum clause extension = Ext_Sspmp
+mapping clause extensionName = Ext_Sspmp <-> "sspmp"
+function clause hartSupports(Ext_Sspmp) = config extensions.Sspmp.supported
+function clause currentlyEnabled(Ext_Sspmp) = hartSupports(Ext_Sspmp) & currentlyEnabled(Ext_S)
+// SPMP per-entry enable (context-switch optimization)
+enum clause extension = Ext_Sspmpen
+mapping clause extensionName = Ext_Sspmpen <-> "sspmpen"
+function clause hartSupports(Ext_Sspmpen) = hartSupports(Ext_Sspmp) & config extensions.Sspmpen.supported
+function clause currentlyEnabled(Ext_Sspmpen) = hartSupports(Ext_Sspmpen) & currentlyEnabled(Ext_Sspmp)
+// Supervisor-level PMP Shadow Stack
+enum clause extension = Ext_Sspmpss
+mapping clause extensionName = Ext_Sspmpss <-> "sspmpss"
+function clause hartSupports(Ext_Sspmpss) = sys_enable_experimental_extensions() & config extensions.Sspmpss.supported
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -554,6 +568,14 @@ enum clause extension = Ext_Smnpm
 mapping clause extensionName = Ext_Smnpm <-> "smnpm"
 function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported : bool & (xlen == 64)
 function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm)
+// Supervisor-mode view of the Indirect CSR Access
+enum clause extension = Ext_Sscsrind
+mapping clause extensionName = Ext_Sscsrind <-> "sscsrind"
+function clause hartSupports(Ext_Sscsrind) = config extensions.Sscsrind.supported
+// Machine-mode view of the Indirect CSR Access
+enum clause extension = Ext_Smcsrind
+mapping clause extensionName = Ext_Smcsrind <-> "smcsrind"
+function clause hartSupports(Ext_Smcsrind) = config extensions.Smcsrind.supported
 // Machine-mode view of the state-enable extension
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
@@ -646,6 +668,8 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zicfiss => 2, // > Zaamo
 
     Ext_Ssccptr => 3, // > Sv39
+    Ext_Sscsrind => 3, // > Smcsrind
+    Ext_Sspmpss => 3, // > Zicfiss, Sspmp
     Ext_Supm => 3, // > U
     Ext_Svnapot => 3, // > Sv39
     Ext_Svpbmt => 3, // > Sv39
@@ -815,8 +839,12 @@ let extensions_ordered_for_isa_string = [
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
+  Ext_Sscsrind,
   Ext_Ssnpm,
   Ext_Sspm,
+  Ext_Sspmp,
+  Ext_Sspmpen,
+  Ext_Sspmpss,
   Ext_Ssqosid,
   Ext_Ssstateen,
   Ext_Sstc,
@@ -836,6 +864,7 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smcsrind,
   Ext_Smmpm,
   Ext_Smnpm,
   Ext_Smstateen,

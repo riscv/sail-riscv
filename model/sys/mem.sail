@@ -200,9 +200,17 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   // implementation prioritizes PMP checks before PMA checks, as PMP
   // checks do not raise misaligned exceptions.
 
-  match pmpCheck(paddr, width, access, priv) {
-    Some(e) => Err(e),
-    None()  => pmaCheck(paddr, width, access, pbmt, res_or_con)
+  // SPMP and paging are mutually exclusive: SPMP applies only when satp.mode == Bare.
+  let spmpError : option(ExceptionType) =
+    if translationMode(priv) == Bare then spmpCheck(paddr, width, access, priv)
+    else None();
+  match spmpError {
+    Some(e) => Err(e),  // SPMP has priority
+    None() =>
+      match pmpCheck(paddr, width, access, priv) {
+        Some(e) => Err(e),
+        None()  => pmaCheck(paddr, width, access, pbmt, res_or_con)
+      }
   }
 }
 
@@ -234,7 +242,14 @@ private function check_pma_with_pmp_priority forall 'n, 0 < 'n <= max_mem_access
   paddr      : physaddr,
   width      : int('n),
   res_or_con : bool,
-) -> result(Phys_Mem_Access_Info, ExceptionType) =
+) -> result(Phys_Mem_Access_Info, ExceptionType) = {
+  // Check SPMP before PMA.
+  if translationMode(priv) == Bare then {
+    match spmpCheck(paddr, width, access, priv) {
+      Some(e) => return Err(e),
+      None()  => (),
+    }
+  };
   match pmaCheck(paddr, width, access, pbmt, res_or_con) {
     // PMP checks are done later per-split, and might still fail.
     Ok(access_info) => Ok(access_info),
@@ -245,6 +260,7 @@ private function check_pma_with_pmp_priority forall 'n, 0 < 'n <= max_mem_access
       None()       => Err(pmaExc),
     },
   }
+}
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (

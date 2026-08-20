@@ -60,8 +60,16 @@ pmp {
     pmp/pmp_control.sail,
 }
 
+spmp {
+  requires prelude, core, pmp, Zicbop_types
+
+  files
+    spmp/spmp_regs.sail,
+    spmp/spmp_control.sail,
+}
+
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
+  requires prelude, core, exceptions, pmp, spmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
 
   files
     sys/sys_reservation.sail,
@@ -351,6 +359,21 @@ extensions {
     files extensions/Smcntrpmf/smcntrpmf.sail
   }
 
+  Smcsrind {
+    requires core
+    files extensions/Smcsrind/csrind_regs.sail
+  }
+
+  Sspmp_indirect {
+    requires core, spmp, Smcsrind
+    files extensions/Sspmp_indirect/sspmp_indirect.sail
+  }
+
+  Sspmpss {
+    requires core, spmp, Zicfiss
+    files extensions/Sspmpss/sspmpss.sail
+  }
+
   Sscofpmf {
     requires core, Zihpm
     files extensions/Sscofpmf/sscofpmf.sail
@@ -585,10 +608,10 @@ postlude {
 
 unit_tests {
   after postlude
-  requires prelude, core, sys, exceptions, postlude
+  requires prelude, core, sys, exceptions, postlude, pmp, spmp
 
   files
-    unit_tests/test_mstatus.sail,
+    unit_tests/test_mstatus.sail
 }
 
 main {
