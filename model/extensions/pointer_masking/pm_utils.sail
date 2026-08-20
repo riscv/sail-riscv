@@ -43,12 +43,12 @@ private function is_pmm_applicable(access : MemoryAccessType(mem_payload), eff_p
   not(mxr_in_effect) & xlen == 64
 }
 
-// Map a pointer-masking mode to its PMLEN.
-private function pmlen_of_mode(pmm : PointerMaskingMode) -> pm_len = match pmm {
-  PMM_Disabled => 0,
-  PMM_PMLEN_7  => 7,
-  PMM_PMLEN_16 => 16,
-  PMM_Reserved => { internal_error(__FILE__, __LINE__, "Invalid pointer masking mode"); 0 },
+// Mapping a pointer-masking mode to its PMLEN. Note there is also PMM_Reserved
+// and it's an error to call this with PMM_Reserved.
+mapping pmlen_of_mode : PointerMaskingMode <-> pm_len = {
+  PMM_Disabled <-> 0,
+  PMM_PMLEN_7  <-> 7,
+  PMM_PMLEN_16 <-> 16,
 }
 
 // Get the effective PMLEN for a regular explicit access.
