@@ -1,6 +1,6 @@
 # CMake options for test downloads
 set(TEST_DOWNLOAD_URL "https://github.com/riscv-software-src/sail-riscv-tests/releases/download" CACHE STRING "Base URL to download precompiled riscv-tests and riscv-vector-tests from")
-set(TEST_DOWNLOAD_VERSION "2026-06-10" CACHE STRING "Version of precompiled tests to download")
+set(TEST_DOWNLOAD_VERSION "2026-08-20" CACHE STRING "Version of precompiled tests to download")
 
 # Function to download and extract test files
 function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME DOWNLOAD_URL)
@@ -126,6 +126,38 @@ if(ENABLE_RISCV_TESTS)
     endforeach()
 endif()
 
+# Download and add damo-rv-priv-ats hypervisor tests.
+option(ENABLE_DAMO_TESTS "Enable damo-rv-priv-ats tests" OFF)
+
+if(ENABLE_DAMO_TESTS)
+    set(TARBALL_NAME "damo-tests")
+    set(DOWNLOAD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${TEST_DOWNLOAD_VERSION}")
+    set(DOWNLOAD_URL "${TEST_DOWNLOAD_URL}/${TEST_DOWNLOAD_VERSION}/${TARBALL_NAME}.tar.gz")
+
+    download_riscv_tests(
+        "${DOWNLOAD_PATH}"
+        "${TARBALL_NAME}"
+        "${DOWNLOAD_URL}"
+    )
+
+    # Currently, damo-rv-priv-ats only supports RV64.
+    # Each ELF lives one directory deep, e.g. Sv39x4/sv39x4_test.elf.
+    file(GLOB elf_list CONFIGURE_DEPENDS LIST_DIRECTORIES false
+        "${DOWNLOAD_PATH}/${TARBALL_NAME}/*/*.elf"
+    )
+    foreach(elf IN LISTS elf_list)
+        file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
+        add_test(
+            NAME "${elf_name}"
+            COMMAND
+                $<TARGET_FILE:sail_riscv_sim>
+                # ELEN=XLEN. These tests don't use vector so it doesn't matter.
+                --config "${CMAKE_BINARY_DIR}/config/rv64d_v256_e64.json"
+                ${elf}
+        )
+    endforeach()
+endif()
+
 # Download and add RISC-V arch tests.
 option(ENABLE_RISCV_ARCH_TESTS "Enable riscv-arch-tests" OFF)
 
@@ -136,29 +168,10 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     # test-specific configurations in CI.
     list(FILTER test_elfs EXCLUDE REGEX ".*/InterruptsS-00\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/InterruptsSm-00\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/InterruptsSSm-00\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/InterruptsU-00\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/S-00\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS-01\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/UV-00\\.elf$")
-
-    # These tests fail because
-    # https://github.com/riscv/sail-riscv/pull/1690 strengthened illegal
-    # instruction checks for vector instructions (like vbrev8).
-    # Instructions that executed with the 0.11 release now raise illegal
-    # instruction exceptions with the current version.
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-14\\.elf$")
-
-    # These tests similarly fail because
-    # https://github.com/riscv/sail-riscv/pull/1698 strengthens checks
-    # for vector source register overlaps (like vwadd.vv).
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-13\\.elf$")
-
-    # These RV64 tests fail because
-    # https://github.com/riscv/sail-riscv/pull/1712 fixed an incorrect
-    # decoding of add.uw, and now correctly treats that encoding as
-    # reserved and traps with an illegal instruction exception.
-    list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/SsstrictS-06\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/SsstrictSm-06\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/SsstrictU-02\\.elf$")
 
     # These tests fail because
     # https://github.com/riscv/sail-riscv/pull/1734 does not raise
@@ -170,16 +183,26 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     list(FILTER test_elfs EXCLUDE REGEX ".*/ExceptionsZaamo-00\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/Zama16b-00\\.elf$")
 
-    # With H enabled, VS CSRs (vsstatus, etc.) and the extra mideleg bits are
-    # legal from M/HS-mode, so accesses these tests expect to trap no longer do.
-    # The reference signatures assume a non-H config (all pass with H disabled).
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-00\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-01\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-02\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-04\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm-07\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictU-03\\.elf$")
-    list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv32-max/.*/SsstrictS-06\\.elf$")
+    # ACT split the numbered Ssstrict tests into _CSR/_IllegalInstr/_VectorInstr.
+    # These expect vsstatus and hfence.vvma to raise an illegal instruction,
+    # but both are legal once H is enabled. The signatures assume a non-H config.
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS_CSR-0[01]\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm_CSR-0[012]\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS_IllegalInstr-03\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm_IllegalInstr-03\\.elf$")
+
+    # These tests fail because
+    # https://github.com/riscv/sail-riscv/pull/1690 strengthened illegal
+    # instruction checks for vector instructions, and
+    # https://github.com/riscv/sail-riscv/pull/1698 for source register
+    # overlaps. The signatures expect the reserved encodings to execute.
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS_VectorInstr-0[01]\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm_VectorInstr-0[01]\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictU_VectorInstr-0[01]\\.elf$")
+
+    # This checks bit 24 of mstateen0h (P1P13), which became writable
+    # when hedelegh was gated on it. The signature assumes a non-H config.
+    list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv32-max/.*/Smstateen-00\\.elf$")
 
     set(${elfs_to_use_varname} "${test_elfs}" PARENT_SCOPE)
 endfunction()
@@ -195,10 +218,23 @@ if(ENABLE_RISCV_ARCH_TESTS)
         "${DOWNLOAD_URL}"
     )
 
+    # ACT builds the arch-test signatures with VLEN=1024. Our generated
+    # configs only go up to VLEN=512, so override the default config.
+    # The default configs already match ACT on ELEN=64 and the Full vector
+    # support level for both XLENs.
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/arch_test_override.json"
+         "{\"extensions\": {\"V\": {\"vlen_exp\": 10}}}\n")
+
     foreach(xlen IN ITEMS 32 64)
         file(GLOB_RECURSE elf_list CONFIGURE_DEPENDS LIST_DIRECTORIES false
            "${DOWNLOAD_PATH}/${TARBALL_NAME}/sail-rv${xlen}-max/*.elf"
         )
+
+        if(xlen EQUAL 32)
+            set(xlen_flag --rv32)
+        else()
+            set(xlen_flag)
+        endif()
 
         # Filter out tests that fail for a good reason.
         filter_arch_tests("${elf_list}" elfs_to_use)
@@ -210,8 +246,8 @@ if(ENABLE_RISCV_ARCH_TESTS)
                 NAME "${elf_name}"
                 COMMAND
                     $<TARGET_FILE:sail_riscv_sim>
-                    # Use ELEN=XLEN. These tests don't yet use vector so it doesn't matter.
-                    --config "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v256_e${xlen}.json"
+                    ${xlen_flag}
+                    --config-override "${CMAKE_CURRENT_BINARY_DIR}/arch_test_override.json"
                     ${elf}
             )
         endforeach()
