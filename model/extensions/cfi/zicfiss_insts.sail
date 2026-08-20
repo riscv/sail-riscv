@@ -162,10 +162,8 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
                            // if read_henvcfg()[SSE] == 0b0
                            // then return Virtual_Instruction();
                            internal_error(__FILE__, __LINE__, "Hypervisor extension not supported") },
-    VirtualUser       => if menvcfg[SSE] == 0b0
-                         then return Illegal_Instruction()
-                         else if read_senvcfg()[SSE] == 0b0
-                         then return Virtual_Instruction(),
+    VirtualUser       => if read_senvcfg()[SSE] == 0b0
+                         then return (if bool_bit(menvcfg[SSE]) then Virtual_Instruction() else Illegal_Instruction()),
   };
 
   let access = Atomic(AMOSWAP, aq, rl, ShadowStack, ShadowStack);

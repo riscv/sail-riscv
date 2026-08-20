@@ -18,27 +18,25 @@ function clause currentlyEnabled(Ext_Zicfiss) =
 // of `currentlyEnabled(Ext_Zicfiss)` but is separate to match the use of
 // `xSSE` in the specification.
 
-function zicfiss_xSSE(priv : Privilege) -> bool =
-  currentlyEnabled(Ext_S) & (match priv {
-    Machine           => // "Use of Zicfiss in M-mode is not supported."
-                         false,
-    Supervisor        => bool_bit(menvcfg[SSE]),
-    // TODO: needs currentlyEnabled(Ext_H) & read_henvcfg()[SSE]
-    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
-    User              => bool_bit(read_senvcfg()[SSE]),
-    VirtualUser       => bool_bit(read_senvcfg()[SSE]),
-  })
-
 // See "Shadow Stack Pointer (ssp) CSR access control".
+// Returns true if the SSP CSR is accessible from the given privilege mode (rSSE in the spec).
 private function is_ssp_accessible(priv : Privilege) -> bool =
   currentlyEnabled(Ext_Zicfiss) &
   (match priv {
     Machine           => true,
-    Supervisor        => menvcfg[SSE] == 0b1,
-    User              => menvcfg[SSE] == 0b1 & (read_senvcfg()[SSE] == 0b1 | not(currentlyEnabled(Ext_S))),
-    VirtualSupervisor => menvcfg[SSE] == 0b1 /* TODO: & read_henvcfg()[SSE] == 0b1 */,
-    VirtualUser       => menvcfg[SSE] == 0b1 /* TODO: & read_henvcfg()[SSE] == 0b1 & */ & read_senvcfg()[SSE] == 0b1,
+    Supervisor        => bool_bit(menvcfg[SSE]),
+    // read_senvcfg() already masks senvcfg.SSE by menvcfg.SSE.
+    User              => if currentlyEnabled(Ext_S)
+                         then bool_bit(read_senvcfg()[SSE])
+                         else bool_bit(menvcfg[SSE]),
+    // TODO: needs currentlyEnabled(Ext_H) & read_henvcfg()[SSE]
+    VirtualSupervisor => internal_error(__FILE__, __LINE__, "Hypervisor extension not supported"),
+    VirtualUser       => bool_bit(read_senvcfg()[SSE]),
   })
+
+// xSSE from the ISA manual: 0 in machine mode or if S-mode is not implemented.
+function zicfiss_xSSE(priv : Privilege) -> bool =
+  priv != Machine & currentlyEnabled(Ext_S) & is_ssp_accessible(priv)
 
 register ssp : xlenbits = zeros()
 
