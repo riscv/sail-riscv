@@ -717,7 +717,7 @@ function translateAddr_eff_priv(
     // construct the exception context.
     return Err(struct {
       trap  = E_SAMO_Access_Fault(),
-      excinfo_is_gva = false,
+      excinfo_is_gva = is_virtual_access,
       excinfo  = zero_extend(bits_of(gva)),
       excinfo2 = None(),
       excinst  = None(),
