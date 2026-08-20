@@ -17,6 +17,7 @@
     environment calls, virtual instructions, and the guest-page faults.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
 
 # Release notes for version 0.13.1
