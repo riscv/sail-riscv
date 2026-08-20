@@ -655,6 +655,10 @@ function clause execute SRET() = {
     then zicfilp_restore_elp_on_xret(sRET, prev_priv, cur_privilege);
 
     long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+    if   privLevel_is_virtual(prev_priv)
+    then csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0])
+    else if currentlyEnabled(Ext_H)
+    then csr_write_callback("hstatus", hstatus.bits[xlen - 1 .. 0]);
 
     if   get_config_print_exception()
     then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
