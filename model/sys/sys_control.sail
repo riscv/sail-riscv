@@ -208,6 +208,7 @@ function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> uni
       csr_write_callback("stval", stval);
       csr_write_callback("sepc", sepc);
       if currentlyEnabled(Ext_H) then {
+        csr_write_callback("hstatus", hstatus.bits[xlen - 1 .. 0]);
         csr_write_callback("htval", htval);
         csr_write_callback("htinst", htinst);
       };
@@ -218,6 +219,7 @@ function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> uni
       csr_write_callback("vscause", vscause.bits);
       csr_write_callback("vstval", vstval);
       csr_write_callback("vsepc", vsepc);
+      csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0]);
     },
   };
 
