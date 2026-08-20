@@ -462,6 +462,10 @@ function clause hartSupports(Ext_Ssccptr) = config extensions.Ssccptr.supported
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
 function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supported
+// Indirect CSR Access (S-mode view)
+enum clause extension = Ext_Sscsrind
+mapping clause extensionName = Ext_Sscsrind <-> "sscsrind"
+function clause hartSupports(Ext_Sscsrind) = config extensions.Sscsrind.supported
 // Support writeable enables for any supported counter
 enum clause extension = Ext_Sscounterenw
 mapping clause extensionName = Ext_Sscounterenw <-> "sscounterenw"
@@ -554,6 +558,22 @@ enum clause extension = Ext_Smnpm
 mapping clause extensionName = Ext_Smnpm <-> "smnpm"
 function clause hartSupports(Ext_Smnpm) = config extensions.Smnpm.supported : bool & (xlen == 64)
 function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm)
+// Indirect CSR Access (M-mode view)
+enum clause extension = Ext_Smcsrind
+mapping clause extensionName = Ext_Smcsrind <-> "smcsrind"
+function clause hartSupports(Ext_Smcsrind) = config extensions.Smcsrind.supported
+// Indirect PMP CSR Access
+enum clause extension = Ext_Smpmpind
+mapping clause extensionName = Ext_Smpmpind <-> "smpmpind"
+function clause hartSupports(Ext_Smpmpind) = sys_enable_experimental_extensions() & config extensions.Smpmpind.supported
+// Machine-mode Shadow Stack
+enum clause extension = Ext_Smcfiss
+mapping clause extensionName = Ext_Smcfiss <-> "smcfiss"
+function clause hartSupports(Ext_Smcfiss) = sys_enable_experimental_extensions() & config extensions.Smcfiss.supported
+// Pmp enhancements for memory access and execution prevention on Machine mode
+enum clause extension = Ext_Smepmp
+mapping clause extensionName = Ext_Smepmp <-> "smepmp"
+function clause hartSupports(Ext_Smepmp) = config extensions.Smepmp.supported
 // Machine-mode view of the state-enable extension
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
@@ -645,7 +665,9 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zcmop => 2, // > Zca
     Ext_Zicfiss => 2, // > Zaamo
 
+    Ext_Smpmpind => 3, // > Smcsrind
     Ext_Ssccptr => 3, // > Sv39
+    Ext_Sscsrind => 3, // > Smcsrind
     Ext_Supm => 3, // > U
     Ext_Svnapot => 3, // > Sv39
     Ext_Svpbmt => 3, // > Sv39
@@ -660,6 +682,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvknhb => 3, // > Zve64x
 
     Ext_H => 4, // > virtual_mem_supported
+    Ext_Smcfiss => 4, // > Smpmpind, Zicfiss
     Ext_Zve64d => 4, // > Zve64f
     Ext_Zvfbfwma => 4, // > Zvfbfmin
     Ext_Zvfh => 4, // > Zfhmin
@@ -815,6 +838,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
+  Ext_Sscsrind,
   Ext_Ssnpm,
   Ext_Sspm,
   Ext_Ssqosid,
@@ -835,8 +859,12 @@ let extensions_ordered_for_isa_string = [
   // Hypervisor extensions, ordered alphabetically.
 
   // Machine mode extensions, ordered alphabetically.
+  Ext_Smcfiss,
   Ext_Smcntrpmf,
+  Ext_Smcsrind,
+  Ext_Smepmp,
   Ext_Smmpm,
   Ext_Smnpm,
+  Ext_Smpmpind,
   Ext_Smstateen,
 ]
