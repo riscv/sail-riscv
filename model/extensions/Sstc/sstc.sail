@@ -23,10 +23,6 @@ private function is_stimecmp_accessible(priv : Privilege) -> bool =
 function clause is_CSR_accessible(0x14D, priv, _) = is_stimecmp_accessible(priv)
 function clause is_CSR_accessible(0x15D, priv, _) = is_stimecmp_accessible(priv) & xlen == 32
 
-function clause is_CSR_exception_virtual(0x14D, VirtualSupervisor, _) =
-  (mcounteren[TM] == 0b1 & menvcfg[STCE] == 0b1) &
-  (hcounteren[TM] == 0b0 | read_henvcfg()[STCE] == 0b0)
-
 function clause read_CSR(0x14D) =  if inVirtualPrivilege() then vstimecmp[xlen - 1 .. 0] else stimecmp[xlen - 1 .. 0]
 function clause read_CSR(0x15D if xlen == 32) = if inVirtualPrivilege() then vstimecmp[63 .. 32] else stimecmp[63 .. 32]
 
