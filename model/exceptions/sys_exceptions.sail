@@ -89,6 +89,11 @@ function set_stvec(value : xlenbits) -> xlenbits = {
   stvec.bits
 }
 
+function set_vstvec(value : xlenbits) -> xlenbits = {
+  vstvec = legalize_tvec(vstvec, value, true, 2, true, 2);
+  vstvec.bits
+}
+
 // Ensure that xtvec[Mode] contains a supported value on reset.
 // This would matter if these fields are read-only for the DUT.
 function reset_tvecs() -> unit = {
@@ -104,11 +109,6 @@ function reset_tvecs() -> unit = {
   };
   // TODO: Define config options for vstvec
   vstvec[Mode] = trapVectorMode(TV_Direct)
-}
-
-function set_vstvec(value : xlenbits) -> xlenbits = {
-  vstvec = legalize_tvec(vstvec, value, true, 2, true, 2);
-  vstvec.bits
 }
 
 mapping clause csr_name_map = 0x205  <-> "vstvec"
