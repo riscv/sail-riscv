@@ -11,11 +11,10 @@
 function exception_context(e : ExceptionType, excinfo : xlenbits) -> ExceptionContext = {
   struct {
     trap           = e,
-    // NOTE/TODO: "Field GVA (Guest Virtual Address) is written by the implementation
+    // NOTE: "Field GVA (Guest Virtual Address) is written by the implementation
     // whenever a trap is taken into HS-mode. For any trap (breakpoint, address misaligned,
     // access fault, page fault, or guest-page fault) that writes a guest virtual address
     // to stval, GVA is set to 1. For any other trap into HS-mode, GVA is set to 0."
-    // TODO/NOTE: Check whether all cases are covered
     excinfo_is_gva = inVirtualPrivilege(),
     excinfo        = excinfo,
     excinfo2       = None(),
