@@ -552,7 +552,16 @@
       "supported": true
     },
     "H": {
-      "supported": true
+      "supported": true,
+      // Which G-stage translation modes `hgatp` supports. Bare is always
+      // supported. The Shgatpa extension requires an SvNNx4 mode for every
+      // SvNN mode supported in `satp`.
+      "hgatp_modes": {
+        "Sv32x4": @CONFIG_XLEN_IS_32@,
+        "Sv39x4": @CONFIG_XLEN_IS_64@,
+        "Sv48x4": @CONFIG_XLEN_IS_64@,
+        "Sv57x4": @CONFIG_XLEN_IS_64@
+      }
     },
     "Zibi": {
       "supported": true
@@ -795,6 +804,9 @@
       "supported": true
     },
     "Sstc": {
+      "supported": true
+    },
+    "Shgatpa": {
       "supported": true
     },
     // Enabling Sstvala requires that the exceptions specified in the extension

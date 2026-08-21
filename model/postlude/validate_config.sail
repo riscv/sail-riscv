@@ -47,6 +47,14 @@ private function require_Sv39(ext_name : string) -> bool = {
   true
 }
 
+private function check_shgatpa_mode(sv_name : string, satp_supported : bool, hgatp_supported : bool) -> bool = {
+  if satp_supported & not(hgatp_supported) then {
+    print_endline("The Shgatpa extension is enabled and " ^ sv_name ^ " is supported in `satp`, but the matching " ^ sv_name ^ "x4 mode is disabled (under `extensions.H.hgatp_modes`).");
+    return false;
+  };
+  true
+}
+
 private function require_virtual_memory(ext_name : string) -> bool = {
   if xlen == 32 then return require_Sv32(ext_name);
 
@@ -556,6 +564,31 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("The H extension is enabled but supervisor mode (S) is disabled: supporting H requires S.");
     };
     valid = valid & require_virtual_memory("H");
+  };
+
+  if xlen == 32 then {
+    if sys_hgatp_sv39x4_supported | sys_hgatp_sv48x4_supported | sys_hgatp_sv57x4_supported then {
+      valid = false;
+      print_endline("One or more of Sv39x4/Sv48x4/Sv57x4 is enabled: these are not supported on RV32.");
+    };
+  } else {
+    if sys_hgatp_sv32x4_supported then {
+      valid = false;
+      print_endline("Sv32x4 is enabled: Sv32x4 is not supported on RV64.");
+    };
+  };
+
+  // "For each supported virtual memory scheme SvNN supported in `satp`, the
+  //  corresponding hgatp SvNNx4 mode must be supported."
+  if (config extensions.Shgatpa.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shgatpa extension is enabled but the H extension is disabled: supporting Shgatpa requires H.");
+    };
+    valid = valid & check_shgatpa_mode("Sv32", (config extensions.Sv32.supported : bool), sys_hgatp_sv32x4_supported);
+    valid = valid & check_shgatpa_mode("Sv39", (config extensions.Sv39.supported : bool), sys_hgatp_sv39x4_supported);
+    valid = valid & check_shgatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_hgatp_sv48x4_supported);
+    valid = valid & check_shgatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_hgatp_sv57x4_supported);
   };
   valid
 }

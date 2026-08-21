@@ -202,6 +202,7 @@ An experimental emulator in the Lean language is available, see its
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
+- Shgatpa extension for `hgatp` mode support matching `satp`, v1.0
 - Ssccptr extension for Main memory supports hardware page table reads, v1.0
 - Sscounterenw extension for writable enables for any supported counter, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
