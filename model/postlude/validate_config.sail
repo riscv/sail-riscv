@@ -92,6 +92,17 @@ private function check_mmu_config() -> bool = {
     };
   };
 
+  // satp.MODE is WARL, so at least one mode has to be supported or no write
+  // to satp can ever take effect.
+  if (config extensions.S.supported : bool) &
+     not((config extensions.Svbare.supported : bool) | (config extensions.Sv32.supported : bool) |
+         (config extensions.Sv39.supported : bool) | (config extensions.Sv48.supported : bool) |
+         (config extensions.Sv57.supported : bool))
+  then {
+    valid = false;
+    print_endline("Supervisor mode (S) is enabled but no `satp` mode is supported: enable Svbare or one of Sv32/Sv39/Sv48/Sv57.");
+  };
+
   if (config extensions.Svrsw60t59b.supported : bool) then {
     if xlen == 32 then {
       valid = false;

@@ -17,6 +17,9 @@
     environment calls, virtual instructions, and the guest-page faults.
 
 - Important issues addressed and bugs fixed:
+  - `extensions.Svbare.supported` had no effect, `satp` accepted the Bare
+    mode whether or not Svbare was configured. `validate_config()` now also
+    rejects a configuration that supports supervisor mode but no `satp` mode.
   - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
 
