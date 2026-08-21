@@ -505,6 +505,24 @@ private function check_mem_layout() -> bool =
     pmas_ok & clint_ok & sig_ok
   }
 
+private function check_m_interrupts() -> bool = {
+  var valid : bool = true;
+  let mideleg_bits = Mk_Minterrupts(plat_mideleg_delegatable_bits);
+  if not(plat_msi_supported) & mideleg_bits[MSI] == 0b1 then {
+    print_endline("platform.msi_supported is false but base.mideleg.delegatable_bits includes MSI (bit 3).");
+    valid = false
+  };
+  if not(plat_mti_supported) & mideleg_bits[MTI] == 0b1 then {
+    print_endline("platform.mti_supported is false but base.mideleg.delegatable_bits includes MTI (bit 7).");
+    valid = false
+  };
+  if not(plat_mei_supported) & mideleg_bits[MEI] == 0b1 then {
+    print_endline("platform.mei_supported is false but base.mideleg.delegatable_bits includes MEI (bit 11).");
+    valid = false
+  };
+  valid
+}
+
 private function check_pmp() -> bool = {
   var valid : bool = true;
   if (config memory.pmp.na4_supported : bool) & sys_pmp_grain != 0
@@ -918,6 +936,7 @@ function config_is_valid() -> bool = {
   & check_physaddr_bits()
   & check_mmu_config()
   & check_mem_layout()
+  & check_m_interrupts()
   & check_mmio_devices()
   & check_vlen_elen()
   & check_vext_config()

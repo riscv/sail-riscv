@@ -54,6 +54,13 @@ bitfield Minterrupts : xlenbits = {
 
 register hvip : Minterrupts
 
+private function apply_mxi_policy(m : Minterrupts) -> Minterrupts =
+  [m with
+    MSI = if plat_msi_supported then m[MSI] else 0b0,
+    MTI = if plat_mti_supported then m[MTI] else 0b0,
+    MEI = if plat_mei_supported then m[MEI] else 0b0,
+  ]
+
 private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
@@ -89,9 +96,9 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [o with
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
-    MEI  = v[MEI],
-    MTI  = v[MTI],
-    MSI  = v[MSI],
+    MEI  = if plat_mei_supported then v[MEI] else 0b0,
+    MTI  = if plat_mti_supported then v[MTI] else 0b0,
+    MSI  = if plat_msi_supported then v[MSI] else 0b0,
     SEI  = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     STI  = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
     SSI  = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
@@ -214,16 +221,18 @@ enum XipReadType = {
 }
 
 function read_mip(read_type : XipReadType) -> Minterrupts =
-  match read_type {
-    IncludePlatformInterrupts => Mk_Minterrupts(mip.bits | external_interrupts_pending().bits),
-    ExcludePlatformInterrupts => mip,
-  }
+  apply_mxi_policy(
+    match read_type {
+      IncludePlatformInterrupts => Mk_Minterrupts(mip.bits | external_interrupts_pending().bits),
+      ExcludePlatformInterrupts => mip,
+    }
+  )
 
 function write_mip(value : xlenbits) -> unit = {
   mip = legalize_mip(mip, value);
 }
 
-function clause read_CSR(0x304) = mie.bits
+function clause read_CSR(0x304) = apply_mxi_policy(mie).bits
 function clause read_CSR(0x344) = read_mip(ExcludePlatformInterrupts).bits
 function clause read_CSR(0x302) = medeleg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x312 if xlen == 32) = medeleg.bits[63 .. 32]
