@@ -69,6 +69,12 @@ function clause hartSupports(Ext_U) = config extensions.U.supported
 enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
 function clause hartSupports(Ext_H) = config extensions.H.supported
+// For each SvNN supported in satp, the matching hgatp SvNNx4 mode is
+// supported, as is hgatp Bare.
+enum clause extension = Ext_Shgatpa
+mapping clause extensionName = Ext_Shgatpa <-> "shgatpa"
+function clause hartSupports(Ext_Shgatpa) = config extensions.Shgatpa.supported
+function clause currentlyEnabled(Ext_Shgatpa) = hartSupports(Ext_Shgatpa) & currentlyEnabled(Ext_H)
 
 enum clause extension = Ext_Zibi
 mapping clause extensionName = Ext_Zibi <-> "zibi"
@@ -454,12 +460,6 @@ mapping clause extensionName = Ext_Zvksg <-> "zvksg"
 function clause hartSupports(Ext_Zvksg) = hartSupports(Ext_Zvks) & hartSupports(Ext_Zvkg)
 function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 
-// For each SvNN supported in satp, the matching hgatp SvNNx4 mode is
-// supported, as is hgatp Bare.
-enum clause extension = Ext_Shgatpa
-mapping clause extensionName = Ext_Shgatpa <-> "shgatpa"
-function clause hartSupports(Ext_Shgatpa) = config extensions.Shgatpa.supported
-function clause currentlyEnabled(Ext_Shgatpa) = hartSupports(Ext_Shgatpa) & currentlyEnabled(Ext_H)
 // Main memory supports page table reads
 enum clause extension = Ext_Ssccptr
 mapping clause extensionName = Ext_Ssccptr <-> "ssccptr"
@@ -820,7 +820,6 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
-  Ext_Shgatpa,
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
@@ -842,6 +841,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Svvptc,
 
   // Hypervisor extensions, ordered alphabetically.
+  Ext_Shgatpa,
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,

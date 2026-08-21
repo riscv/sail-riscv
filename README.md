@@ -202,7 +202,6 @@ An experimental emulator in the Lean language is available, see its
 - Machine, Supervisor, and User modes
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
-- Shgatpa extension for `hgatp` mode support matching `satp`, v1.0
 - Ssccptr extension for Main memory supports hardware page table reads, v1.0
 - Sscounterenw extension for writable enables for any supported counter, v1.0
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
@@ -222,6 +221,7 @@ An experimental emulator in the Lean language is available, see its
 - Svvptc extension for Obviating Memory-management Instructions after Marking PTEs valid, v1.0
 - Smmpm, Smnpm, Ssnpm, Sspm and Supm extensions for pointer masking, v1.0
 - H extension for Hypervisor Support, v1.0
+- Shgatpa extension for `hgatp` mode support matching `satp`, v1.0
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 

@@ -554,8 +554,7 @@
     "H": {
       "supported": true,
       // Which G-stage translation modes `hgatp` supports. Bare is always
-      // supported. The Shgatpa extension requires an SvNNx4 mode for every
-      // SvNN mode supported in `satp`.
+      // supported.
       "hgatp_modes": {
         "Sv32x4": @CONFIG_XLEN_IS_32@,
         "Sv39x4": @CONFIG_XLEN_IS_64@,
@@ -806,6 +805,8 @@
     "Sstc": {
       "supported": true
     },
+    // Enabling Shgatpa requires an `hgatp` SvNNx4 mode (under
+    // `extensions.H.hgatp_modes`) for every SvNN mode supported in `satp`.
     "Shgatpa": {
       "supported": true
     },
