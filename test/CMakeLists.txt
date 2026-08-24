@@ -204,6 +204,11 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     # when hedelegh was gated on it. The signature assumes a non-H config.
     list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv32-max/.*/Smstateen-00\\.elf$")
 
+    # Misaligned LR/SC now behave like AMOs, and can throw address translation faults.
+    # These tests assume the earlier, pre-address-translation, misalignment handling for LR/SC.
+    list(FILTER test_elfs EXCLUDE REGEX ".*/ExceptionsSvZalrsc/sv32_exceptions_Zalrsc_.*\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/ExceptionsSvZalrsc/sv39_exceptions_Zalrsc_.*\\.elf$")
+
     set(${elfs_to_use_varname} "${test_elfs}" PARENT_SCOPE)
 endfunction()
 

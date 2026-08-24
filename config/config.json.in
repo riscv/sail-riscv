@@ -253,15 +253,14 @@
         "vector": {
           "None": null
         },
-        // Similarly, a misaligned AMO can be configured with the same
+        // Similarly, a misaligned AMO and LR/SC can be configured with the same
         // option values.
         "amo": {
           "None": null
         },
-        // A misaligned LR/SC currently always faults, and this field can specify
-        // whether it generates an access fault (use `"AccessFault"`)
-        // or a misaligned exception (use `"AlignmentException"`).
-        "lrsc": "AccessFault"
+        "lrsc": {
+          "None": null
+        }
       },
       // If multiple memory operations are needed (e.g. when an access
       // straddles a page boundary), this controls whether they are
@@ -330,7 +329,8 @@
             "vector": {
               "None" : null
             },
-            "amo": "AccessFault"
+            "amo": "AccessFault",
+            "lrsc": "AccessFault"
           },
           "atomic_support": "AMONone",
           "misaligned_atomicity_granule_size_exp": 0,
@@ -368,7 +368,8 @@
             "vector": {
               "None" : null
             },
-            "amo": "AccessFault"
+            "amo": "AccessFault",
+            "lrsc": "AccessFault"
           },
           "atomic_support": "AMONone",
           "misaligned_atomicity_granule_size_exp": 0,
@@ -406,7 +407,8 @@
             "vector": {
               "None" : null
             },
-            "amo": "AccessFault"
+            "amo": "AccessFault",
+            "lrsc": "AccessFault"
           },
           "atomic_support": "AMOCASQ",
           "misaligned_atomicity_granule_size_exp": 4,

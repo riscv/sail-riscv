@@ -26,6 +26,10 @@
   - The default value of `base.medeleg.delegatable_bits` now also
     includes the exception codes introduced by H, i.e. VS-mode
     environment calls, virtual instructions, and the guest-page faults.
+  - The configuration for exceptions from misaligned LR/SC has been
+    modified; they now have a configuration that is similar to, but
+    independent of, AMOs. See `memory.misaligned.exceptions.lrsc`
+    and the `misaligned_exceptions.lrsc` PMA attribute.
 
 - Xvisor boot is now tested in CI. The `os-boot` Makefile has been
   generalized to build both the Linux and Xvisor images.
@@ -36,6 +40,7 @@
     rejects a configuration that supports supervisor mode but no `satp` mode.
   - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
+  - https://github.com/riscv/sail-riscv/issues/1793 : misaligned LR/SC cannot be configured to throw address translation exceptions
 
 - Other notes:
   - The test suite has been updated to the latest release (2026-08-20)
