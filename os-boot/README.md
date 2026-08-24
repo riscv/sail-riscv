@@ -32,3 +32,16 @@ since console input is not supported and there is no way to type anything.
 
 The same naming works for the other simulators, `linux_spike`, `xvisor_qemu`,
 and so on.
+
+### Known issues
+
+`xvisor_spike` and `xvisor_qemu` do not currently work.
+
+Spike's default device tree does not match the Sail platform, and passing the
+model's one with `--dtb` instead fails because Spike reads the ISA from it and
+rejects the extensions it does not implement, starting with `zic64b`. Limiting
+the extensions in the device tree to what Spike actually supports makes it work.
+
+The QEMU failure has not been diagnosed.
+
+TODO: get both targets working.
