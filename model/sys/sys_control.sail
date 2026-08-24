@@ -104,7 +104,7 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
   else if ip[VSSI]  == 0b1 then Some(I_VS_Software)
   else if ip[VSTI]  == 0b1 then Some(I_VS_Timer)
   else if ip[LCOFI] == 0b1 then Some(I_COF)
-  else                        None()
+  else                          None()
 }
 
 // Given the current privilege level, return the pending set

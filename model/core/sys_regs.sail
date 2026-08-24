@@ -768,7 +768,6 @@ function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Ok(zero_extend(mcountinhibit.bits)) }
 
 register mcycle : bits(64)
-register mtime : bits(64)
 
 // minstret
 //

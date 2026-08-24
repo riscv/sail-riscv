@@ -47,9 +47,8 @@ function sig_store(addr, width, data) = {
 
       if data[MEI] == 0b1 then sig_meip = value;
       if data[SEI] == 0b1 then sig_seip = value;
-      if data[MSI] == 0b1 then mip[MSI] = value;
-      // SSI is read-only zero if the hart does not support supervisor mode.
-      if data[SSI] == 0b1 & currentlyEnabled(Ext_S) then mip[SSI] = value;
+      if data[MSI] == 0b1 then sig_msip = value;
+      if data[SSI] == 0b1 then sig_ssip = value;
 
       csr_write_callback("mip", read_mip(IncludePlatformInterrupts).bits);
 

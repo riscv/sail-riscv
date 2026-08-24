@@ -36,11 +36,13 @@ _Reserved_ bits must be written with 0 otherwise an access fault is raised. In f
 
 Bit 31 controls whether the relevant interrupts are set or cleared.
 
-MEI and MSI control the platform interrupt inputs to the hart (there is no way for software running on the hart to set these bits directly). MSI updates `mip[MSI]` directly. MEI is a separate input that is ORed into `mip[MEI]` on read, like SEI below. SEI and SSI are slightly more subtle because software on the hart can also write to these bits.
+A bit of internal state is kept for each interrupt that can be triggered, and these are ORed into the corresponding bits of the `mip` on read.
+
+MEI and MSI control the platform interrupt inputs to the hart (there is no way for software running on the hart to set these bits directly). MEI is a separate input that is ORed into `mip[MEI]` on read, like SEI below. SEI and SSI are slightly more subtle because software on the hart can also write to these bits.
 
 SEI controls the supervisor external platform interrupt input, which is distinct from the software-writable `mip[SEI]` bit. These two values are ORed together when reading `mip` (or `sip`) for CSR reads and to dispatch interrupts, but NOT when reading `mip`/`sip` for the CSR read-modify-write process.
 
-Setting or clearing SSI updates the value in `mip[SSI]`, but in this case there is only one bit of state.
+Setting or clearing SSI eventually updates the value in `mip[SSI]`, but in this case there is only one bit of state.
 
 Note that if the target hart does not support supervisor mode then `mip[SSI]` and `mip[SEI]` must be read-only zero. Attempts to set `mip[SSI]` will be ignored. Attempts to set `SEI` _will_ set the external platform interrupt input, but it will not be visible in `mip` while supervisor mode is not supported. If the hart supports mutable `misa[S]` so that supervisor mode can be dynamically enabled, then setting `SEI` to 1 here and _then_ enabling `misa[S]` will result in the interrupt becoming visible.
 

@@ -210,6 +210,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   // for step extensions
   ext_pre_step_hook();
 
+  // Update the `mip` for any pending interrupts.
+  update_mip();
+
   // This records whether or not minstret should be incremented when
   // the instruction is retired. Since retirement occurs before CSR
   // writes we initialise it based on mcountinhibit here, before it is
