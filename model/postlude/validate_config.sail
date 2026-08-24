@@ -559,9 +559,15 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssqosid extension is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
   };
-  if (config extensions.Sscounterenw.supported : bool) & ((sys_writable_hpm_counters[31 .. 3] & sys_scounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3]) then {
-    valid = false;
-    print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
+  if (config extensions.Sscounterenw.supported : bool) then {
+    if not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("The Sscounterenw extension is enabled but supervisor mode (S) is disabled: supporting Sscounterenw requires S.");
+    };
+    if (sys_writable_hpm_counters[31 .. 3] & sys_scounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3] then {
+      valid = false;
+      print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
+    };
   };
   if (config extensions.Shcounterenw.supported : bool) then {
     if not(config extensions.H.supported : bool) then {
