@@ -338,7 +338,8 @@ private function xatp_to_ppn(stage : TranslationStage) -> bits(if xlen == 32 the
 
 // Return the active address translation mode for S-Stage translation.
 private function satp_mode(priv : Privilege) -> SATPMode = {
-  if priv == Machine then Bare
+  // Without S-mode enabled, satp is inactive and translation is Bare at every privilege.
+  if priv == Machine | not(currentlyEnabled(Ext_S)) then Bare
   else {
     let arch = architecture(Supervisor);
     let mbits : satp_mode = match arch {
