@@ -259,7 +259,7 @@
           "None": null
         },
         "lrsc": {
-          "None": null
+          "Some": "AccessFault"
         }
       },
       // If multiple memory operations are needed (e.g. when an access

@@ -40,7 +40,6 @@
     rejects a configuration that supports supervisor mode but no `satp` mode.
   - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
-  - https://github.com/riscv/sail-riscv/issues/1793 : misaligned LR/SC cannot be configured to throw address translation exceptions
 
 - Other notes:
   - The test suite has been updated to the latest release (2026-08-20)
