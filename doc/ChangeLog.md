@@ -3,6 +3,7 @@
 - The following extensions have been added:
   - H
   - Shgatpa
+  - Shvstvecd
 
 - Updates to the [configuration file](../config/config.json.in):
   - Which trap vector modes `vstvec` supports can be specified, see

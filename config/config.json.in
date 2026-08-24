@@ -92,6 +92,8 @@
         "base_alignment": 2
       }
     },
+    // Similar to `stvec` above. If the `H` extension is not supported,
+    // these values need to be present and legal but are ignored.
     "vstvec": {
       // The spec requires `base_alignment` for `vstvec.direct` to be 2
       // (i.e. 4-byte alignment), hence there is no configuration
@@ -812,6 +814,9 @@
       "supported": true
     },
     "Sscounterenw": {
+      "supported": true
+    },
+    "Shvstvecd": {
       "supported": true
     },
     "Sstc": {
