@@ -2,6 +2,7 @@
 
 - The following extensions have been added:
   - H
+  - Shcounterenw
   - Shgatpa
 
 - Updates to the [configuration file](../config/config.json.in):

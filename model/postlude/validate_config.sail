@@ -563,6 +563,16 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
   };
+  if (config extensions.Shcounterenw.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shcounterenw extension is enabled but the H extension is disabled: supporting Shcounterenw requires H.");
+    };
+    if (sys_writable_hpm_counters[31 .. 3] & sys_hcounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3] then {
+      valid = false;
+      print_endline("The Shcounterenw extension is enabled but `hcounteren` is not writable (via `base.hcounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
+    };
+  };
   if (xlen == 32 & ((config extensions.Ssnpm.supported : bool) | (config extensions.Smmpm.supported : bool) | (config extensions.Smnpm.supported : bool))) then {
     valid = false;
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");

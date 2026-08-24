@@ -69,6 +69,11 @@ function clause hartSupports(Ext_U) = config extensions.U.supported
 enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
 function clause hartSupports(Ext_H) = config extensions.H.supported
+// Any hpmcounter that is not read-only zero has a writable hcounteren bit
+enum clause extension = Ext_Shcounterenw
+mapping clause extensionName = Ext_Shcounterenw <-> "shcounterenw"
+function clause hartSupports(Ext_Shcounterenw) = config extensions.Shcounterenw.supported
+function clause currentlyEnabled(Ext_Shcounterenw) = hartSupports(Ext_Shcounterenw) & currentlyEnabled(Ext_H)
 // For each SvNN supported in satp, the matching hgatp SvNNx4 mode is
 // supported, as is hgatp Bare.
 enum clause extension = Ext_Shgatpa
@@ -671,6 +676,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvfbfwma => 4, // > Zvfbfmin
     Ext_Zvfh => 4, // > Zfhmin
 
+    Ext_Shcounterenw => 5, // > H
     Ext_Shgatpa => 5, // > H
     Ext_V => 5, // > Zve64d
     Ext_Zvfhmin => 5, // > Zvfh
@@ -841,6 +847,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Svvptc,
 
   // Hypervisor extensions, ordered alphabetically.
+  Ext_Shcounterenw,
   Ext_Shgatpa,
 
   // Machine mode extensions, ordered alphabetically.

@@ -53,7 +53,9 @@
     // and `cycle`, `time` and `instret` registers from VS/VU-mode,
     // are read-only zero. A set bit specifies that the corresponding
     // bit of `hcounteren` is writable, otherwise the bit is read-only
-    // zero. Same layout as `mcounteren`.
+    // zero. Same layout as `mcounteren`. If Shcounterenw is supported the
+    // top 29 bits must be a superset of the top 29 bits of
+    // `writable_hpm_counters`.
     "hcounteren_writable_bits": {
       "len": 32,
       "value": "0xFFFF_FFFF"
@@ -797,6 +799,9 @@
       "supported": true
     },
     "Sscofpmf": {
+      "supported": true
+    },
+    "Shcounterenw": {
       "supported": true
     },
     "Sscounterenw": {
