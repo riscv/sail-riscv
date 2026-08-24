@@ -184,7 +184,7 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     list(FILTER test_elfs EXCLUDE REGEX ".*/Zama16b-00\\.elf$")
 
     # ACT split the numbered Ssstrict tests into _CSR/_IllegalInstr/_VectorInstr.
-    # These expect vsstatus and hfence.vvma to raise an illegal instruction,
+    # These expect accesses to vsstatus and hfence.vvma to raise an illegal instruction,
     # but both are legal once H is enabled. The signatures assume a non-H config.
     list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS_CSR-0[01]\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm_CSR-0[012]\\.elf$")
