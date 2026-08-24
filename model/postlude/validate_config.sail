@@ -584,6 +584,16 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_required_xtval_option("Shvstvala", "hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
     valid = valid & check_required_xtval_option("Shvstvala", "illegal instruction exceptions", illegal_instruction_writes_xtval);
   };
+  if (config extensions.Sstvecd.supported : bool) then {
+    if not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("The Sstvecd extension is enabled but supervisor mode (S) is disabled: supporting Sstvecd requires S.");
+    };
+    if not(config base.stvec.direct.supported : bool) then {
+      valid = false;
+      print_endline("The Sstvecd extension is enabled but `stvec` does not support the `direct` mode (see `base.stvec.direct.supported`).");
+    };
+  };
   if (config extensions.Ssqosid.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
     print_endline("The Ssqosid extension is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
