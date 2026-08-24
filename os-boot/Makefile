@@ -94,8 +94,8 @@ limit_linux  := 20000000
 limit_xvisor := 21000000
 
 # Run with the Sail emulator from this repo.
-%_sail: build/sail.dtb build/fw_payload_%.elf $(SAIL_SIM)
-	$(SAIL_SIM) --show-times --inst-limit $(limit_$*) --device-tree-blob build/sail.dtb build/fw_payload_$*.elf
+%_sail: build/fw_payload_%.elf build/sail.dtb $(SAIL_SIM)
+	$(SAIL_SIM) --show-times --inst-limit $(limit_$*) --device-tree-blob build/sail.dtb $<
 
 # Run the profiler. This requires gperftools and pprof:
 #
@@ -110,15 +110,15 @@ limit_xvisor := 21000000
 #
 #     go install github.com/google/pprof@latest
 #
-%_sail_profile: build/sail.dtb build/fw_payload_%.elf $(SAIL_SIM)
+%_sail_profile: build/fw_payload_%.elf build/sail.dtb $(SAIL_SIM)
 	rm -f build/prof_$*.out
-	CPUPROFILE=build/prof_$*.out LD_PRELOAD=/usr/local/lib/libtcmalloc_and_profiler.so $(SAIL_SIM) --show-times --inst-limit $(limit_$*) --device-tree-blob build/sail.dtb build/fw_payload_$*.elf
+	CPUPROFILE=build/prof_$*.out LD_PRELOAD=/usr/local/lib/libtcmalloc_and_profiler.so $(SAIL_SIM) --show-times --inst-limit $(limit_$*) --device-tree-blob build/sail.dtb $<
 	pprof -http : build/prof_$*.out
 
 # Run with Spike: https://github.com/riscv-software-src/riscv-isa-sim
 %_spike: build/fw_payload_%.elf
-	spike --instructions=$(limit_$*) build/fw_payload_$*.elf
+	spike --instructions=$(limit_$*) $<
 
 # Run with QEMU.
 %_qemu: build/fw_payload_%.elf
-	qemu-system-riscv64 -M virt -m 256M -nographic -bios build/fw_payload_$*.elf
+	qemu-system-riscv64 -M virt -m 256M -nographic -bios $<

@@ -129,7 +129,7 @@ jobs:
         id: linux-cache-restore
         with:
           path: os-boot/build/fw_payload_linux.elf
-          key: linux-image-${{ hashFiles('os-boot/*.url', 'os-boot/Makefile') }}
+          key: linux-image-${{ hashFiles('os-boot/linux.url', 'os-boot/opensbi.url', 'os-boot/gcc.url', 'os-boot/Makefile') }}
 
       - name: Build Linux image
         if: steps.linux-cache-restore.outputs.cache-hit != 'true'
@@ -174,7 +174,7 @@ jobs:
         id: xvisor-cache-restore
         with:
           path: os-boot/build/fw_payload_xvisor.elf
-          key: xvisor-image-${{ hashFiles('os-boot/*.url', 'os-boot/Makefile') }}
+          key: xvisor-image-${{ hashFiles('os-boot/xvisor.url', 'os-boot/opensbi.url', 'os-boot/gcc.url', 'os-boot/Makefile') }}
 
       - name: Build Xvisor image
         if: steps.xvisor-cache-restore.outputs.cache-hit != 'true'
