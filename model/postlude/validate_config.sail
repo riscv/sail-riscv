@@ -28,6 +28,11 @@ private function check_tvecs() -> bool = {
     print_endline("`stvec` specifies neither `direct` or `vectored` is supported; one of the modes must be supported.");
   };
 
+  if (config extensions.H.supported : bool) & not(config base.vstvec.direct.supported : bool) & not(config base.vstvec.vectored.supported : bool) then {
+    valid = false;
+    print_endline("`vstvec` specifies neither `direct` or `vectored` is supported; one of the modes must be supported.");
+  };
+
   valid
 }
 

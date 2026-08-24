@@ -5,6 +5,9 @@
   - Shgatpa
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Which trap vector modes `vstvec` supports can be specified, see
+    `base.vstvec.direct` and `base.vstvec.vectored`, mirroring the
+    existing `base.stvec` options.
   - Which G-stage translation modes `hgatp` supports can be specified,
     see `extensions.H.hgatp_modes`. Bare is always supported. With
     Shgatpa enabled, each mode supported in `satp` must have its
