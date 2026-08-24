@@ -511,6 +511,7 @@ function clause currentlyEnabled(Ext_Sstvala) = hartSupports(Ext_Sstvala) & curr
 enum clause extension = Ext_Sstvecd
 mapping clause extensionName = Ext_Sstvecd <-> "sstvecd"
 function clause hartSupports(Ext_Sstvecd) = hartSupports(Ext_S)
+function clause currentlyEnabled(Ext_Sstvecd) = hartSupports(Ext_Sstvecd) & currentlyEnabled(Ext_S)
 // sstatus.UXL must be capable of holding the value 2 (i.e., UXLEN=64 must be supported)
 enum clause extension = Ext_Ssu64xl
 mapping clause extensionName = Ext_Ssu64xl <-> "ssu64xl"
