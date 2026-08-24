@@ -63,6 +63,14 @@ private function check_mmu_config() -> bool = {
       valid = false;
       print_endline("Supervisor mode (S) disabled but one of (Sv57, Sv48, Sv39) is enabled: cannot support address translation without supervisor mode.");
     };
+    // satp.MODE is WARL, so at least one mode has to be supported or no write
+    // to satp can ever take effect.
+    if (config extensions.S.supported : bool) &
+      not((config extensions.Svbare.supported : bool) | (config extensions.Sv39.supported : bool) | (config extensions.Sv48.supported : bool) | (config extensions.Sv57.supported : bool))
+    then {
+      valid = false;
+      print_endline("Supervisor mode (S) is enabled but no `satp` mode is supported for RV64: enable Svbare or one of (Sv39, Sv48, Sv57).");
+    };
     if (config extensions.Sv57.supported : bool) & not(config extensions.Sv48.supported : bool)
     then {
       valid = false;
@@ -85,22 +93,16 @@ private function check_mmu_config() -> bool = {
       valid = false;
       print_endline("Supervisor mode (S) is disabled but Sv32 is enabled: cannot support address translation without supervisor mode.");
     };
+    if (config extensions.S.supported : bool) & not((config extensions.Svbare.supported : bool) | (config extensions.Sv32.supported : bool))
+    then {
+      valid = false;
+      print_endline("Supervisor mode (S) is enabled but no `satp` mode is supported for RV32: enable Svbare or Sv32.");
+    };
     if (config extensions.Sv39.supported : bool) | (config extensions.Sv48.supported : bool) |  (config extensions.Sv57.supported : bool)
     then {
       valid = false;
       print_endline("One or more of Sv39/Sv48/Sv57 is enabled: these are not supported on RV32.");
     };
-  };
-
-  // satp.MODE is WARL, so at least one mode has to be supported or no write
-  // to satp can ever take effect.
-  if (config extensions.S.supported : bool) &
-     not((config extensions.Svbare.supported : bool) | (config extensions.Sv32.supported : bool) |
-         (config extensions.Sv39.supported : bool) | (config extensions.Sv48.supported : bool) |
-         (config extensions.Sv57.supported : bool))
-  then {
-    valid = false;
-    print_endline("Supervisor mode (S) is enabled but no `satp` mode is supported: enable Svbare or one of Sv32/Sv39/Sv48/Sv57.");
   };
 
   if (config extensions.Svrsw60t59b.supported : bool) then {
