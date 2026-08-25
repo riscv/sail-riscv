@@ -80,6 +80,9 @@ public:
   std::vector<MemoryRegion> main_memory_regions() const;
   std::string generate_dts();
   std::string generate_isa_string();
+  bool supports_hypervisor() const {
+    return m_supports_hypervisor;
+  }
 
   // read access to model state
 
@@ -188,6 +191,8 @@ private:
   bool m_config_use_abi_names = false;
 
   bool m_config_print_step = false;
+
+  bool m_supports_hypervisor = false;
 
   // Initialization.
   uint64_t m_elf_entry = 0;
