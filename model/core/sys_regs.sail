@@ -88,6 +88,14 @@ let sys_enable_writable_misa : bool = config base.writable_misa
 // supervisor mode is implemented and non-bare addressing modes are supported.
 let sys_enable_writable_fiom : bool = config base.writable_fiom
 
+// Which G-stage translation modes hgatp supports. HBare is always supported.
+// Shgatpa requires an SvNNx4 mode for every SvNN mode supported in satp,
+// which validate_config() checks.
+let sys_hgatp_sv32x4_supported : bool = config extensions.H.hgatp_modes.Sv32x4
+let sys_hgatp_sv39x4_supported : bool = config extensions.H.hgatp_modes.Sv39x4
+let sys_hgatp_sv48x4_supported : bool = config extensions.H.hgatp_modes.Sv48x4
+let sys_hgatp_sv57x4_supported : bool = config extensions.H.hgatp_modes.Sv57x4
+
 // Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored.
 let sys_writable_hpm_counters : bits(32) = config base.writable_hpm_counters
 
@@ -1002,8 +1010,6 @@ function legalize_hgatp(
   // Unlike satp, a write to hgatp with an unsupported MODE value is not ignored.
   // Instead, the fields are WARL in the normal way: an unsupported MODE falls
   // back to HBare while preserving the other fields (VMID, PPN).
-  // Shgatpa requires an SvNNx4 mode for every satp SvNN mode, plus Bare.
-  // TODO: Add hgatp mode config options.
   if xlen == 32 then {
     let v = Mk_Hgatp32(written_value);
     // Force 16 KiB alignment with PPN[1:0] = 0b00
@@ -1018,7 +1024,7 @@ function legalize_hgatp(
       None() => prev_value,
       Some(mode) => match mode {
         HBare => h.bits,
-        Sv32x4 if currentlyEnabled(Ext_Sv32) => h.bits,
+        Sv32x4 if sys_hgatp_sv32x4_supported => h.bits,
         _ => [h with Mode = zeros()].bits,
       }
     }
@@ -1036,9 +1042,9 @@ function legalize_hgatp(
       None() => prev_value,
       Some(mode) => match mode {
         HBare => h.bits,
-        Sv39x4 if currentlyEnabled(Ext_Sv39) => h.bits,
-        Sv48x4 if currentlyEnabled(Ext_Sv48) => h.bits,
-        Sv57x4 if currentlyEnabled(Ext_Sv57) => h.bits,
+        Sv39x4 if sys_hgatp_sv39x4_supported => h.bits,
+        Sv48x4 if sys_hgatp_sv48x4_supported => h.bits,
+        Sv57x4 if sys_hgatp_sv57x4_supported => h.bits,
         _ => [h with Mode = zeros()].bits,
       }
     }

@@ -69,6 +69,12 @@ function clause hartSupports(Ext_U) = config extensions.U.supported
 enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
 function clause hartSupports(Ext_H) = config extensions.H.supported
+// For each SvNN supported in satp, the matching hgatp SvNNx4 mode is
+// supported, as is hgatp Bare.
+enum clause extension = Ext_Shgatpa
+mapping clause extensionName = Ext_Shgatpa <-> "shgatpa"
+function clause hartSupports(Ext_Shgatpa) = config extensions.Shgatpa.supported
+function clause currentlyEnabled(Ext_Shgatpa) = hartSupports(Ext_Shgatpa) & currentlyEnabled(Ext_H)
 
 enum clause extension = Ext_Zibi
 mapping clause extensionName = Ext_Zibi <-> "zibi"
@@ -665,6 +671,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvfbfwma => 4, // > Zvfbfmin
     Ext_Zvfh => 4, // > Zfhmin
 
+    Ext_Shgatpa => 5, // > H
     Ext_V => 5, // > Zve64d
     Ext_Zvfhmin => 5, // > Zvfh
 
@@ -834,6 +841,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Svvptc,
 
   // Hypervisor extensions, ordered alphabetically.
+  Ext_Shgatpa,
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,

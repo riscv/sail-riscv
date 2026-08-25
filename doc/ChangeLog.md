@@ -2,8 +2,13 @@
 
 - The following extensions have been added:
   - H
+  - Shgatpa
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Which G-stage translation modes `hgatp` supports can be specified,
+    see `extensions.H.hgatp_modes`. Bare is always supported. With
+    Shgatpa enabled, each mode supported in `satp` must have its
+    matching SvNNx4 mode enabled.
   - Whether each bit of `hcounteren` is writable or read-only zero can
     be specified, see `base.hcounteren_writable_bits`.
   - Whether the guest-page-fault exceptions write a non-zero `xtval`
