@@ -28,6 +28,11 @@
   - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
 
+- Other notes:
+  - The test suite has been updated to the latest release (2026-08-20)
+    from sail-riscv-tests. This adds the `XUANTIE-RV/damo-rv-priv-ats` hypervisor
+    tests, enabled with `-DENABLE_DAMO_TESTS=TRUE`.
+
 # Release notes for version 0.13.1
 
 This is primarily a bug-fix release with fixes for the issues listed
