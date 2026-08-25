@@ -148,7 +148,7 @@ function clause currentlyEnabled(Ext_H) =
 // This will need adjusting for dynamic XLEN.
 function clause currentlyEnabled(Ext_Ssu64xl) = hartSupports(Ext_Ssu64xl) & currentlyEnabled(Ext_S)
 
-function clause currentlyEnabled(Ext_Svbare) = currentlyEnabled(Ext_S)
+function clause currentlyEnabled(Ext_Svbare) = hartSupports(Ext_Svbare) & currentlyEnabled(Ext_S)
 function clause currentlyEnabled(Ext_Sv32) = hartSupports(Ext_Sv32) &  currentlyEnabled(Ext_S)
 function clause currentlyEnabled(Ext_Sv39) = hartSupports(Ext_Sv39) &  currentlyEnabled(Ext_S)
 function clause currentlyEnabled(Ext_Sv48) = hartSupports(Ext_Sv48) &  currentlyEnabled(Ext_S)
