@@ -356,6 +356,16 @@ extensions {
     files extensions/Smcntrpmf/smcntrpmf.sail
   }
 
+  Smcsrind {
+    requires core
+    files extensions/Smcsrind/csrind_regs.sail
+  }
+
+  Smpmpind {
+    requires core, pmp, Smcsrind
+    files extensions/Smpmpind/smpmpind.sail
+  }
+
   Sscofpmf {
     requires core, Zihpm
     files extensions/Sscofpmf/sscofpmf.sail

@@ -802,6 +802,18 @@
     "Sscounterenw": {
       "supported": true
     },
+    "Smcsrind": {
+      "supported": true
+    },
+    "Sscsrind": {
+      "supported": true
+    },
+    "Smpmpind": {
+      "supported": true
+    },
+    "Smepmp": {
+      "supported": true
+    },
     "Sstc": {
       "supported": true
     },
