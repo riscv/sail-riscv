@@ -77,6 +77,7 @@ public:
 
   bool config_is_valid();
   bool dtb_within_configured_pma_memory(uint64_t addr, uint64_t size);
+  std::vector<MemoryRegion> memory_regions() const;
   std::vector<MemoryRegion> main_memory_regions() const;
   std::string generate_dts();
   std::string generate_isa_string();
