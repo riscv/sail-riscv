@@ -223,6 +223,7 @@ An experimental emulator in the Lean language is available, see its
 - H extension for Hypervisor Support, v1.0
 - Shcounterenw extension for writable `hcounteren` enables for any supported counter, v1.0
 - Shgatpa extension for `hgatp` mode support matching `satp`, v1.0
+- Shvstvala extension for `vstval` providing all the values `stval` does, v1.0
 - Shvstvecd extension for Direct Trap Vectoring, v1.0
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)

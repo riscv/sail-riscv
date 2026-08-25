@@ -4,6 +4,7 @@
   - H
   - Shcounterenw
   - Shgatpa
+  - Shvstvala
   - Shvstvecd
 
 - Updates to the [configuration file](../config/config.json.in):
