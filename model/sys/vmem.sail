@@ -744,14 +744,7 @@ function translateAddr_eff_priv(
   // This check uses this model's assumption that SXLEN == XLEN, and would need reworking if that
   // assumption were to change in the future.
   if is_svukte_qualified(p, mode, forced_virt) & (bits_of(gva)[xlen - 1] == bitone) then {
-    return Err(struct {
-      trap = translationException(access, PTW_Invalid_Addr()),
-      excinfo_is_gva = is_virtual_access,
-      excinfo  = zero_extend(bits_of(gva)),
-      excinfo2 = None(),
-      excinst  = None(),
-      ext      = None(),
-    }, init_ext_ptw);
+    return Err(make_exception_context(translationException(access, PTW_Invalid_Addr()), zero_extend(bits_of(gva)), is_virtual_access, None()), init_ext_ptw);
   };
 
   // First stage: GVA -> GPA (or VA -> PA for single-stage)

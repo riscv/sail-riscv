@@ -654,7 +654,6 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Svnapot => 3, // > Sv39
     Ext_Svpbmt => 3, // > Sv39
     Ext_Svukte => 3, // > Sv39
-
     Ext_Svvptc => 3, // > Sv39
     Ext_Svrsw60t59b => 3, // > Sv39
     Ext_Zcd => 3, // > D

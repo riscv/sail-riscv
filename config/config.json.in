@@ -818,7 +818,7 @@
       "supported": @CONFIG_XLEN_IS_64@
     },
     "Svukte": {
-        "supported": @CONFIG_XLEN_IS_64@
+      "supported": @CONFIG_XLEN_IS_64@
     },
     "Ssnpm": {
       "supported": @CONFIG_XLEN_IS_64@,

@@ -228,7 +228,7 @@ The following unratified extensions are supported and can be enabled using the `
 
 - Zibi extension for conditional branches with immediate operands, v0.6
 - Zvabd extension for vector absolute difference, v0.7
-- Svukte extension for Address-Independent Latency of User-Mode Faults to Supervisor Addresses, v0.4
+- Svukte extension for Address-Independent Latency of User-Mode Faults to Supervisor Addresses, v0.8
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
