@@ -695,10 +695,11 @@ private function build_exception_context(
 // enabled, the UKTE bit of senvcfg is read-only-zero, so accesses will never be qualified.
 function is_svukte_qualified(
   eff_priv : Privilege,
-  mode: SATPMode,
-  forced_virt: bool
+  mode: SATPMode
 ) -> bool = {
-  let ukte_enable = if (forced_virt & cur_privilege == User) then hstatus[HUKTE] else read_senvcfg()[UKTE];
+  let ukte_enable = if eff_priv == VirtualUser & cur_privilege == User
+                                then hstatus[HUKTE]
+                                else read_senvcfg()[UKTE];
 
   mode != Bare &
     (eff_priv == User | eff_priv == VirtualUser) &
@@ -711,7 +712,6 @@ function translateAddr_eff_priv(
   gva         : virtaddr,
   access      : MemoryAccessType(mem_payload),
   p           : Privilege,
-  forced_virt : bool, // set if the access is a hypervisor virtual access
 ) -> TR_Result(physaddr, ExceptionContext) = {
 
 
@@ -743,7 +743,7 @@ function translateAddr_eff_priv(
   // Svukte-qualified accesses are invalid if their virtual address is >= 2^(SXLEN-1).
   // This check uses this model's assumption that SXLEN == XLEN, and would need reworking if that
   // assumption were to change in the future.
-  if is_svukte_qualified(p, mode, forced_virt) & (bits_of(gva)[xlen - 1] == bitone) then {
+  if is_svukte_qualified(p, mode) & (bits_of(gva)[xlen - 1] == bitone) then {
     return Err(make_exception_context(translationException(access, PTW_Invalid_Addr()), zero_extend(bits_of(gva)), is_virtual_access, None()), init_ext_ptw);
   };
 
@@ -780,7 +780,7 @@ function translateAddr(
   // Effective privilege takes into account mstatus.PRV, mstatus.MPP
   // See sys_control.sail for effectivePrivilege() and sys_regs.sail for cur_privilege.
   let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-  translateAddr_eff_priv(vAddr, access, effPriv, false)
+  translateAddr_eff_priv(vAddr, access, effPriv)
 }
 
 // ****************************************************************
