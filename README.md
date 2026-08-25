@@ -222,7 +222,7 @@ An experimental emulator in the Lean language is available, see its
 - Smmpm, Smnpm, Ssnpm, Sspm and Supm extensions for pointer masking, v1.0
 - H extension for Hypervisor Support, v1.0
 - Shgatpa extension for `hgatp` mode support matching `satp`, v1.0
-- Shvstvecd extension for Direct mode support in `vstvec.MODE`, v1.0
+- Shvstvecd extension for Direct Trap Vectoring, v1.0
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 
