@@ -223,7 +223,7 @@ void print_hypervisor_tlb(
     "══════════════════════╩══════════════════════╝\n"
   );
 }
-void print_tlb(FILE *trace_log, ModelImpl::TLB tlb, const std::vector<uint64_t> &indices, bool is_flush) {
+void print_supervisor_tlb(FILE *trace_log, ModelImpl::TLB tlb, const std::vector<uint64_t> &indices, bool is_flush) {
   fprintf(
     trace_log,
     "TLB %s [ len=%zu ]\n"
@@ -274,15 +274,25 @@ void print_tlb(FILE *trace_log, ModelImpl::TLB tlb, const std::vector<uint64_t> 
   );
 }
 
+void print_tlb(
+  FILE *trace_log,
+  ModelImpl &model,
+  ModelImpl::TLB tlb,
+  const std::vector<uint64_t> &indices,
+  bool is_flush
+) {
+  if (model.supports_hypervisor()) {
+    print_hypervisor_tlb(trace_log, model, tlb, indices, is_flush);
+  } else {
+    print_supervisor_tlb(trace_log, tlb, indices, is_flush);
+  }
+}
+
 } // namespace
 
 void log_callbacks::tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index) {
   if (trace_log != nullptr && config_print_tlb) {
-    if (model.supports_hypervisor()) {
-      print_hypervisor_tlb(trace_log, model, tlb, {index}, false);
-    } else {
-      print_tlb(trace_log, tlb, {index}, false);
-    }
+    print_tlb(trace_log, model, tlb, {index}, false);
   }
 }
 
@@ -298,10 +308,6 @@ void log_callbacks::tlb_flush_callback(ModelImpl &, uint64_t index) {
 
 void log_callbacks::tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB tlb) {
   if (trace_log != nullptr && config_print_tlb && !pending_flush_indices.empty()) {
-    if (model.supports_hypervisor()) {
-      print_hypervisor_tlb(trace_log, model, tlb, pending_flush_indices, true);
-    } else {
-      print_tlb(trace_log, tlb, pending_flush_indices, true);
-    }
+    print_tlb(trace_log, model, tlb, pending_flush_indices, true);
   }
 }
