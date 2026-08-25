@@ -5,10 +5,13 @@
   - Shcounterenw
   - Shgatpa
   - Shtvala
+  - Shvsatpa
   - Shvstvala
   - Shvstvecd
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Which VS-stage translation modes `vsatp` supports can be specified, see
+    `extensions.H.vsatp_modes`. Bare is always supported.
   - Whether the Sstvecd extension is supported can be specified, see
     `extensions.Sstvecd.supported`. It was previously implied by
     supervisor mode, so the model claimed `sstvecd` even when `stvec`
