@@ -90,7 +90,12 @@ function set_stvec(value : xlenbits) -> xlenbits = {
 }
 
 function set_vstvec(value : xlenbits) -> xlenbits = {
-  vstvec = legalize_tvec(vstvec, value, true, 2, true, 2);
+  vstvec = legalize_tvec(vstvec,
+                         value,
+                         plat_vstvec_direct_mode_supported,
+                         2,
+                         plat_vstvec_vectored_mode_supported,
+                         plat_vstvec_vectored_base_alignment_exp);
   vstvec.bits
 }
 
@@ -107,8 +112,11 @@ function reset_tvecs() -> unit = {
   } else if plat_stvec_vectored_mode_supported then {
     stvec[Mode] = trapVectorMode(TV_Vector)
   };
-  // TODO: Define config options for vstvec
-  vstvec[Mode] = trapVectorMode(TV_Direct)
+  if plat_vstvec_direct_mode_supported then {
+    vstvec[Mode] = trapVectorMode(TV_Direct)
+  } else if plat_vstvec_vectored_mode_supported then {
+    vstvec[Mode] = trapVectorMode(TV_Vector)
+  }
 }
 
 mapping clause csr_name_map = 0x205  <-> "vstvec"

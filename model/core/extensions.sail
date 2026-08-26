@@ -80,6 +80,12 @@ enum clause extension = Ext_Shgatpa
 mapping clause extensionName = Ext_Shgatpa <-> "shgatpa"
 function clause hartSupports(Ext_Shgatpa) = config extensions.Shgatpa.supported
 function clause currentlyEnabled(Ext_Shgatpa) = hartSupports(Ext_Shgatpa) & currentlyEnabled(Ext_H)
+// vstvec.MODE supports Direct, and in that mode vstvec.BASE must be
+// capable of holding any valid four-byte-aligned address.
+enum clause extension = Ext_Shvstvecd
+mapping clause extensionName = Ext_Shvstvecd <-> "shvstvecd"
+function clause hartSupports(Ext_Shvstvecd) = config extensions.Shvstvecd.supported
+function clause currentlyEnabled(Ext_Shvstvecd) = hartSupports(Ext_Shvstvecd) & currentlyEnabled(Ext_H)
 
 enum clause extension = Ext_Zibi
 mapping clause extensionName = Ext_Zibi <-> "zibi"
@@ -678,6 +684,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_Shcounterenw => 5, // > H
     Ext_Shgatpa => 5, // > H
+    Ext_Shvstvecd => 5, // > H
     Ext_V => 5, // > Zve64d
     Ext_Zvfhmin => 5, // > Zvfh
 
@@ -849,6 +856,7 @@ let extensions_ordered_for_isa_string = [
   // Hypervisor extensions, ordered alphabetically.
   Ext_Shcounterenw,
   Ext_Shgatpa,
+  Ext_Shvstvecd,
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,

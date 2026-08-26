@@ -28,6 +28,11 @@ private function check_tvecs() -> bool = {
     print_endline("`stvec` specifies neither `direct` or `vectored` is supported; one of the modes must be supported.");
   };
 
+  if (config extensions.H.supported : bool) & not(config base.vstvec.direct.supported : bool) & not(config base.vstvec.vectored.supported : bool) then {
+    valid = false;
+    print_endline("`vstvec` specifies neither `direct` or `vectored` is supported; one of the modes must be supported.");
+  };
+
   valid
 }
 
@@ -594,7 +599,6 @@ private function check_misc_extension_dependencies() -> bool = {
     };
     valid = valid & require_virtual_memory("H");
   };
-
   if xlen == 32 then {
     if sys_hgatp_sv39x4_supported | sys_hgatp_sv48x4_supported | sys_hgatp_sv57x4_supported then {
       valid = false;
@@ -606,7 +610,6 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("Sv32x4 is enabled: Sv32x4 is not supported on RV64.");
     };
   };
-
   // "For each supported virtual memory scheme SvNN supported in `satp`, the
   //  corresponding hgatp SvNNx4 mode must be supported."
   if (config extensions.Shgatpa.supported : bool) then {
@@ -618,6 +621,16 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_shgatpa_mode("Sv39", (config extensions.Sv39.supported : bool), sys_hgatp_sv39x4_supported);
     valid = valid & check_shgatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_hgatp_sv48x4_supported);
     valid = valid & check_shgatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_hgatp_sv57x4_supported);
+  };
+  if (config extensions.Shvstvecd.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shvstvecd extension is enabled but the H extension is disabled: supporting Shvstvecd requires H.");
+    };
+    if not(config base.vstvec.direct.supported : bool) then {
+      valid = false;
+      print_endline("The Shvstvecd extension is enabled but `vstvec` does not support the `direct` mode (see `base.vstvec.direct.supported`).");
+    };
   };
   valid
 }

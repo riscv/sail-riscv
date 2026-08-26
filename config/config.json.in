@@ -94,6 +94,20 @@
         "base_alignment": 2
       }
     },
+    // Similar to `stvec` above. If the `H` extension is not supported,
+    // these values need to be present and legal but are ignored.
+    "vstvec": {
+      // The spec requires `base_alignment` for `vstvec.direct` to be 2
+      // (i.e. 4-byte alignment), hence there is no configuration
+      // parameter for it.
+      "direct": {
+        "supported": true
+      },
+      "vectored": {
+        "supported": true,
+        "base_alignment": 2
+      }
+    },
     "medeleg": {
       // A bit set to 1 in this value specifies that the corresponding
       // bit of `medeleg` can be set to 1. It represents the subset of
@@ -805,6 +819,9 @@
       "supported": true
     },
     "Sscounterenw": {
+      "supported": true
+    },
+    "Shvstvecd": {
       "supported": true
     },
     "Sstc": {

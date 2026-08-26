@@ -208,7 +208,7 @@ An experimental emulator in the Lean language is available, see its
 - Ssqosid extension for Quality-of-Service (QoS) Identifiers, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Sstvala extension for `stval` provides all needed values, v1.0
-- Sstvecd extension for Direct mode support in `stvec.MODE`, v1.0
+- Sstvecd extension for Direct Trap Vectoring, v1.0
 - Ssu64xl extension to ensure `sstatus.UXL` is capable of supporting UXLEN=64, v1.0
 - Sv32, Sv39, Sv48 and Sv57 page-based virtual-memory systems
 - Svadu extension for Hardware Updating of A/D Bits, Version 1.0
@@ -223,6 +223,7 @@ An experimental emulator in the Lean language is available, see its
 - H extension for Hypervisor Support, v1.0
 - Shcounterenw extension for writable `hcounteren` enables for any supported counter, v1.0
 - Shgatpa extension for `hgatp` mode support matching `satp`, v1.0
+- Shvstvecd extension for Direct Trap Vectoring, v1.0
 - Physical Memory Protection (PMP)
 - Static memory regions with some static PMAs (Physical Memory Attributes)
 

@@ -15,11 +15,15 @@ let plat_mtvec_vectored_mode_supported : bool = config base.mtvec.vectored.suppo
 let plat_stvec_direct_mode_supported : bool = config base.stvec.direct.supported
 let plat_stvec_vectored_mode_supported : bool = config base.stvec.vectored.supported
 
+let plat_vstvec_direct_mode_supported : bool = config base.vstvec.direct.supported
+let plat_vstvec_vectored_mode_supported : bool = config base.vstvec.vectored.supported
+
 // Trap vector alignment.
 type tvec_alignment = range(2, 24)
 let plat_mtvec_direct_base_alignment_exp   : tvec_alignment = config base.mtvec.direct.base_alignment
 let plat_mtvec_vectored_base_alignment_exp : tvec_alignment = config base.mtvec.vectored.base_alignment
 let plat_stvec_vectored_base_alignment_exp : tvec_alignment = config base.stvec.vectored.base_alignment
+let plat_vstvec_vectored_base_alignment_exp : tvec_alignment = config base.vstvec.vectored.base_alignment
 
 // Delegatable bits of `medeleg` and `mideleg`.
 let plat_medeleg_delegatable_bits : bits(64) = config base.medeleg.delegatable_bits
