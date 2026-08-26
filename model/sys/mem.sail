@@ -284,7 +284,11 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   var i : range(0, 'N - 1) = first;
   var finished : bool = false;
 
-  let rk = read_kind_of_flags(aq, rl, res);
+  let rk : read_kind = match (access, res) {
+    (InstructionFetch(), false)   => Read_ifetch,
+    (Load(PageTableEntry), false) => Read_ttw,
+    (_, _)                        => read_kind_of_flags(aq, rl, res),
+  };
 
   repeat {
     let offset = i;

@@ -30,6 +30,7 @@ enum write_kind = {
 enum read_kind = {
   Read_plain,
   Read_ifetch,
+  Read_ttw,
   // Note: Read_RISCV_acquire and Read_RISCV_strong_acquire are currently
   // unused but removing them may break Isla, and they might be used in future
   // by Zalasr.
@@ -128,6 +129,7 @@ function read_ram(rk, Physaddr(addr), width, read_meta) = {
     access_kind = match rk {
       Read_plain => AK_explicit(struct { variety = AV_plain, strength = AS_normal }),
       Read_ifetch => AK_ifetch(),
+      Read_ttw => AK_ttw(),
       Read_RISCV_acquire => internal_error(__FILE__, __LINE__, "Read_RISCV_acquire is unused"),
       Read_RISCV_strong_acquire => internal_error(__FILE__, __LINE__, "Read_RISCV_strong_acquire is unused"),
       Read_RISCV_reserved => AK_explicit(struct { variety = AV_exclusive, strength = AS_normal }),
