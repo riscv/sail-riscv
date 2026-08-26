@@ -569,6 +569,10 @@
     },
     "H": {
       "supported": true,
+      // Whether a guest-page fault writes the faulting guest physical address
+      // to `htval`/`mtval2`. If false, `htval`/`mtval2` is written as zero.
+      // Enabling Shtvala requires this option to be enabled.
+      "guest_page_fault_writes_htval": true,
       // Which G-stage translation modes `hgatp` supports. Bare is always
       // supported.
       "hgatp_modes": {
@@ -835,6 +839,9 @@
     // Enabling Shgatpa requires an `hgatp` SvNNx4 mode (under
     // `extensions.H.hgatp_modes`) for every SvNN mode supported in `satp`.
     "Shgatpa": {
+      "supported": true
+    },
+    "Shtvala": {
       "supported": true
     },
     // Enabling Sstvala requires that the exceptions specified in the extension

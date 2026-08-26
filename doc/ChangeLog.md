@@ -4,6 +4,7 @@
   - H
   - Shcounterenw
   - Shgatpa
+  - Shtvala
   - Shvstvala
   - Shvstvecd
 
@@ -15,6 +16,10 @@
     see `extensions.H.hgatp_modes`. Bare is always supported. With
     Shgatpa enabled, each mode supported in `satp` must have its
     matching SvNNx4 mode enabled.
+  - Whether a guest-page fault writes the faulting guest physical
+    address to `htval`/`mtval2` can be specified, see
+    `extensions.H.guest_page_fault_writes_htval`. Enabling Shtvala
+    requires this option to be enabled.
   - Whether each bit of `hcounteren` is writable or read-only zero can
     be specified, see `base.hcounteren_writable_bits`.
   - Whether the guest-page-fault exceptions write a non-zero `xtval`

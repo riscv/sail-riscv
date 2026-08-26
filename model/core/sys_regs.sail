@@ -96,6 +96,11 @@ let sys_hgatp_sv39x4_supported : bool = config extensions.H.hgatp_modes.Sv39x4
 let sys_hgatp_sv48x4_supported : bool = config extensions.H.hgatp_modes.Sv48x4
 let sys_hgatp_sv57x4_supported : bool = config extensions.H.hgatp_modes.Sv57x4
 
+// Whether a guest-page fault writes the faulting guest physical address to
+// htval/mtval2, or writes zero instead. Shtvala requires the address to be
+// written, which validate_config() checks.
+let sys_guest_page_fault_writes_htval : bool = config extensions.H.guest_page_fault_writes_htval
+
 // Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored.
 let sys_writable_hpm_counters : bits(32) = config base.writable_hpm_counters
 
