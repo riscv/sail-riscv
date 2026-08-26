@@ -139,7 +139,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
   then vsatp_mode() != Bare | hgatp_mode() != HBare
   else satp_mode(cur_privilege) != Bare;
-  let do_split_access = vmem_active & next_page_bytes > 0;
+  let do_split_access = vmem_active & next_page_bytes > 0 & not(res);
 
   if sys_misaligned_order_decreasing & do_split_access then {
     // Do next page access first.
@@ -241,7 +241,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
   then vsatp_mode() != Bare | hgatp_mode() != HBare
   else satp_mode(cur_privilege) != Bare;
-  let do_split_access = vmem_active & next_page_bytes > 0;
+  let do_split_access = vmem_active & next_page_bytes > 0 & not(res);
 
   if sys_misaligned_order_decreasing & do_split_access then {
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
