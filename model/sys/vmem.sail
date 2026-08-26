@@ -58,7 +58,7 @@ private function write_pte forall 'n, 'n in {4, 8} . (
   pte_size : int('n),
   pte      : bits('n * 8),
 ) -> MemoryOpResult(bool) =
-  mem_write_value_priv(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), PBMT_PMA, false, false, false)
+  mem_write_value(paddr, pte_size, pte, Supervisor, Store(PageTableEntry), PBMT_PMA, false, false, false)
 
 // Sscptr: Main memory supports page table read
 function clause currentlyEnabled(Ext_Ssccptr) = hartSupports(Ext_Ssccptr) & (currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39))
@@ -68,7 +68,7 @@ private function read_pte forall 'n, 'n in {4, 8} . (
   paddr    : physaddr,
   pte_size : int('n),
 ) -> MemoryOpResult(bits(8 * 'n)) =
-  mem_read_priv(Load(PageTableEntry), PBMT_PMA, Supervisor, paddr, pte_size, false, false, false)
+  mem_read(Load(PageTableEntry), PBMT_PMA, Supervisor, paddr, pte_size, false, false, false)
 
 // Perform PTE address translation as part of VS-stage translation for implicit PTE accesses
 private function translate_PTE_addr(
@@ -697,14 +697,13 @@ private function build_exception_context(
   }
 }
 
-// NOTE: We must pass the effective privilege level, since hypervisor
-// instructions may execute with a different effective privilege.
-function translateAddr_eff_priv(
+// Top-level addr-translation function
+// PUBLIC: invoked from load-store utils, instr-fetch, atomics and CBOs, etc.
+function translateAddr(
   gva    : virtaddr,
   access : MemoryAccessType(mem_payload),
   p      : Privilege
 ) -> TR_Result(physaddr, ExceptionContext) = {
-
 
   // True if the effective privilege is virtual (VS/VU), as opposed to
   // the hart's current privilege. Used by hlv/hsv which execute in
@@ -752,19 +751,6 @@ function translateAddr_eff_priv(
     // S/VS-stage failure
     Err(ptw_error, ext_ptw) => Err(build_exception_context(gva, zeros(), access, ptw_error, if is_virtual_access then VS_Stage else S_Stage), ext_ptw)
   }
-}
-
-// Top-level addr-translation function
-// PUBLIC: invoked from instr-fetch, atomics and CBOs
-// [postlude/fetch.sail, A/zaamo_insts.sail, Zicbo{zm}/zicbo{zm}_insts.sail].
-function translateAddr(
-  vAddr : virtaddr,
-  access : MemoryAccessType(mem_payload),
-) -> TR_Result(physaddr, ExceptionContext) = {
-  // Effective privilege takes into account mstatus.PRV, mstatus.MPP
-  // See sys_control.sail for effectivePrivilege() and sys_regs.sail for cur_privilege.
-  let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-  translateAddr_eff_priv(vAddr, access, effPriv)
 }
 
 // ****************************************************************

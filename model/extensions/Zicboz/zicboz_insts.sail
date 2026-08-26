@@ -43,21 +43,22 @@ function clause execute ZICBOZ(rs1) = {
       //  and atomicity, including individual bytes."
       //
       // This implementation does a single atomic write.
-      match translateAddr(vaddr, access) {
+      let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+      match translateAddr(vaddr, access, eff_priv) {
         // vaddr is the aligned address, but errors report the address that
         // was encoded in the instruction. We subtract the negative offset
         // (add the positive offset) to get it. Normally this will be
         // equal to rs1, but pointer masking can change that.
         Err(e, _) => trap({ e with excinfo = bits_of(vaddr - negative_offset) }),
         Ok(paddr, pbmt, _) => {
-          match mem_write_ea(paddr, cache_block_size, access, pbmt, false, false, false) {
+          match mem_write_ea(paddr, cache_block_size, eff_priv, access, pbmt, false, false, false) {
             Err(exc_addr, e) => {
               // Cache accesses should not get split.
               assert(exc_addr == paddr);
               memory_exception(e, bits_of(vaddr - negative_offset), access)
             },
             Ok(_)  => {
-              match mem_write_value(paddr, cache_block_size, zeros(), access, pbmt, false, false, false) {
+              match mem_write_value(paddr, cache_block_size, zeros(), eff_priv, access, pbmt, false, false, false) {
                 Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                 Err(exc_addr, e) => {

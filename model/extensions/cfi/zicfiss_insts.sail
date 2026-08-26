@@ -191,7 +191,9 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     };
   };
 
-  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+
+  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, eff_priv) {
     Ok(addr, pbmt, _) => (addr, pbmt),
     Err(e, _)   => return trap(e),
   };
@@ -202,13 +204,13 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // implement multiprocessor synchronization."
 
   let 'width = width;
-  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, access, pbmt, aq & rl, rl, true) {
+  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq & rl, rl, true) {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == paddr);
       return memory_exception(e, bits_of(vaddr), access)
     },
-    Ok(_) => match mem_read(access, pbmt, paddr, width, aq, aq & rl, true) {
+    Ok(_) => match mem_read(access, pbmt, eff_priv, paddr, width, aq, aq & rl, true) {
       Err(exc_addr, e) => {
         // AMOs should not get split.
         assert(exc_addr == paddr);
@@ -224,7 +226,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // Sequence the read of `rs2` after the call to `mem_write_ea` with the effective address.
   // See https://github.com/riscv/sail-riscv/issues/1761.
   let write_val : bits('width * 8) = X(rs2)['width * 8 - 1 .. 0];
-  match mem_write_value(paddr, width, write_val, access, pbmt, aq & rl, rl, true) {
+  match mem_write_value(paddr, width, write_val, eff_priv, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => X(rd) = sign_extend(mem_val),
     Ok(false) => internal_error(__FILE__, __LINE__, "AMOSWAP_SS got false from mem_write_value"),
     Err(exc_addr, e) => {

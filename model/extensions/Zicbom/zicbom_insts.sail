@@ -84,17 +84,17 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
   match get_transformed_data_addr(rs1, negative_offset, access, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
+      let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
       // vaddr is the aligned address, but errors report the address that
       // was encoded in the instruction. We subtract the negative offset
       // (add the positive offset) to get it. Normally this will be
       // equal to rs1, but pointer masking can change that.
       let vaddr_for_error = vaddr - negative_offset;
       // TODO/NOTE: This is weird, we should not translateAddr a different address than specified and report it
-      match translateAddr(vaddr, access) {
+      match translateAddr(vaddr, access, eff_priv) {
         Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
-          let ep = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
+          match phys_access_check(access, pbmt, eff_priv, paddr, cache_block_size, false) {
             Err(e)  => memory_exception(e, bits_of(vaddr_for_error), access),
             // If there is no error, the model has no caches so there's no
             // more action required.
