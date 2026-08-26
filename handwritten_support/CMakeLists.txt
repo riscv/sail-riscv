@@ -6,7 +6,7 @@ add_custom_command(
     COMMENT "Building Rocq riscv_extras file"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND
-        coqc
+        rocq c
         -R "${CMAKE_BINARY_DIR}/rocq" Riscv
         -o "${CMAKE_BINARY_DIR}/rocq/riscv_extras.vo"
         "riscv_extras.v"

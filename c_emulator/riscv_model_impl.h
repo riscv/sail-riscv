@@ -24,6 +24,7 @@ public:
   using Privilege = hart::ztuple_z8z5enumz0zzPrivilegezCz0z5unitz9;
   using MemoryAccessType = hart::zMemoryAccessTypezIEmem_payloadz5zK;
   using PTW_Error = hart::zPTW_Error;
+  using TranslationStage = hart::zTranslationStage;
   using TLB = hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
 
   // callbacks
@@ -70,11 +71,13 @@ public:
   std::string memory_access_type_to_string(MemoryAccessType access_type);
   std::string privilege_to_string(Privilege privilege);
   std::string ptw_error_to_string(PTW_Error error_type);
+  std::string translation_stage_to_string(TranslationStage stage);
 
   // access to model configuration
 
   bool config_is_valid();
   bool dtb_within_configured_pma_memory(uint64_t addr, uint64_t size);
+  std::vector<MemoryRegion> memory_regions() const;
   std::vector<MemoryRegion> main_memory_regions() const;
   std::string generate_dts();
   std::string generate_isa_string();

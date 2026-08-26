@@ -59,4 +59,30 @@ mapping clause assembly = SFENCE_INVAL_IR() <-> "sfence.inval.ir"
 
 // ******************************************************************
 
-// TODO: Implement HINVAL.VVMA amd HINVAL.GVMA
+union clause instruction = HINVAL_VVMA : (regidx, regidx)
+
+mapping clause encdec = HINVAL_VVMA(rs1, rs2)
+  <-> 0b0010011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ 0b00000 @ 0b1110011
+  when currentlyEnabled(Ext_Svinval) & currentlyEnabled(Ext_H)
+
+function clause execute HINVAL_VVMA(rs1, rs2) = {
+  ExecuteAs(HFENCE_VVMA(rs1, rs2))
+}
+
+mapping clause assembly = HINVAL_VVMA(rs1, rs2)
+  <-> "hinval.vvma" ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
+
+// ******************************************************************
+
+union clause instruction = HINVAL_GVMA : (regidx, regidx)
+
+mapping clause encdec = HINVAL_GVMA(rs1, rs2)
+  <-> 0b0110011 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b000 @ 0b00000 @ 0b1110011
+  when currentlyEnabled(Ext_Svinval) & currentlyEnabled(Ext_H)
+
+function clause execute HINVAL_GVMA(rs1, rs2) = {
+  ExecuteAs(HFENCE_GVMA(rs1, rs2))
+}
+
+mapping clause assembly = HINVAL_GVMA(rs1, rs2)
+  <-> "hinval.gvma" ^ spc() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)

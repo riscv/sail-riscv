@@ -13,7 +13,7 @@ register hart_state : HartState = HART_ACTIVE()
 private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
-  Step_Fetch_Failure      : (virtaddr, ExceptionType),
+  Step_Fetch_Failure      : ExceptionContext,
   Step_Execute            : (ExecutionResult, instbits),
   Step_Waiting            : WaitReason,
 }
@@ -21,7 +21,7 @@ private union Step = {
 private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
   // successfully interrupted waits
   if shouldWakeForInterrupt() then {
-    if   get_config_print_instr()
+    if get_config_print_instr()
     then print_log("interrupt exit from " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
 
     // The waiting instruction retires successfully.  The
@@ -32,14 +32,14 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
 
   match (wr, valid_reservation(), exit_wait) {
     (WAIT_WRS_STO, false, _) => {
-      if   get_config_print_instr()
+      if get_config_print_instr()
       then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
       Step_Execute(Retire_Success(), instbits)
     },
     (WAIT_WRS_NTO, false, _) => {
-      if   get_config_print_instr()
+      if get_config_print_instr()
       then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
@@ -47,7 +47,7 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
     },
     // Transition out of waiting states as instructed.
     (WAIT_WFI, _, true) => {
-      if   get_config_print_instr()
+      if get_config_print_instr()
       then print_log("forced exit from " ^ wait_name(WAIT_WFI) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
@@ -55,39 +55,55 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       // less-privileged mode, and it does not complete within an
       // implementation-specific, bounded time limit, the WFI
       // instruction causes an illegal-instruction exception."
-
       // "When S-mode is implemented, then executing WFI in U-mode
       // causes an illegal-instruction exception, regardless of the
       // value of the TW bit, unless the instruction completes within
       // an implementation-specific, bounded time limit."
 
-      let is_illegal = (cur_privilege != Machine & mstatus[TW] == 0b1) |
-          (cur_privilege == User & currentlyEnabled(Ext_S));
-      if is_illegal
-      then Step_Execute(Illegal_Instruction(), instbits)
-      else Step_Execute(Retire_Success(), instbits);
+      // For VS-mode, VTW is checked instead since a set TW was already
+      // caught in execute as an immediate illegal instruction.
+      match cur_privilege {
+        Machine           => Step_Execute(Retire_Success(), instbits),
+        User              => if   mstatus[TW] == 0b1 | currentlyEnabled(Ext_S)
+                             then Step_Execute(Illegal_Instruction(), instbits)
+                             else Step_Execute(Retire_Success(), instbits),
+        VirtualSupervisor => if   hstatus[VTW] == 0b1
+                             then Step_Execute(Virtual_Instruction(), instbits)
+                             else Step_Execute(Retire_Success(), instbits),
+        _                 => if   mstatus[TW] == 0b1
+                             then Step_Execute(Illegal_Instruction(), instbits)
+                             else Step_Execute(Retire_Success(), instbits),
+      }
     },
     (WAIT_WRS_STO, _, true) => {
-      if   get_config_print_instr()
+      if get_config_print_instr()
       then print_log("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
       Step_Execute(Retire_Success(), instbits)
     },
     (WAIT_WRS_NTO, _, true) => {
-      if   get_config_print_instr()
+      if get_config_print_instr()
       then print_log("timed-out exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
-      // TODO: This is similar to WFI above for now, but will change to handle
-      // VS/VU modes and hstatus.VTW.
-      if   (cur_privilege == Machine | mstatus[TW] == 0b0)
-      then Step_Execute(Retire_Success(), instbits)
-      else Step_Execute(Illegal_Instruction(), instbits)
+      // "When the TW bit in mstatus is set and WRS.NTO is executed in any
+      // privilege mode other than M mode, and it does not complete within an
+      // implementation-specific bounded time limit, the WRS.NTO instruction
+      // will cause an illegal-instruction exception."
+      // "When executing in VS or VU mode, if the VTW bit is set in hstatus,
+      // the TW bit in mstatus is clear, and the WRS.NTO does not complete
+      // within an implementation-specific bounded time limit, the WRS.NTO
+      // instruction will cause a virtual-instruction exception."
+      if      cur_privilege == Machine then Step_Execute(Retire_Success(), instbits)
+      else if mstatus[TW] == 0b1       then Step_Execute(Illegal_Instruction(), instbits)
+      else if inVirtualPrivilege() & hstatus[VTW] == 0b1
+                                       then Step_Execute(Virtual_Instruction(), instbits)
+      else Step_Execute(Retire_Success(), instbits)
     },
     // remain waiting
     (_, _, false) => {
-      if   get_config_print_instr()
+      if get_config_print_instr()
       then print_log("remaining in " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
       Step_Waiting(wr)
     }
@@ -103,7 +119,7 @@ private function run_hart_active(step_no: nat) -> Step = {
     // extension error
     F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
     // standard error
-    F_Error(e, addr) => Step_Fetch_Failure(Virtaddr(addr), e),
+    F_Error(e) => Step_Fetch_Failure(e),
     // non-error cases:
     F_RVC(h) => {
       sail_instr_announce(h);
@@ -214,7 +230,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       handle_interrupt(intr, priv)
     },
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
-    Step_Fetch_Failure(vaddr, e) => handle_exception(bits_of(vaddr), e),
+    Step_Fetch_Failure(e) => handle_exception(e),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
     Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
     // We only support one level of ExecuteAs redirection, primarily intended
@@ -222,10 +238,11 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     // is more than one ExecuteAs indirection we'll get to here. This isn't supported.
     Step_Execute(ExecuteAs(_), _) => internal_error(__FILE__, __LINE__, "Multiple chained ExecuteAs (only one redirection is supported)."),
     // standard errors
-    Step_Execute(Trap(priv, exc, pc), _) => set_next_pc(exception_handler(priv, exc, pc)),
-    Step_Execute(Illegal_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Illegal_Instr()),
-    // NOTE: Virtual instructions exception cannot be triggered until Hypervisor integration is complete.
-    Step_Execute(Virtual_Instruction(), instbits) => handle_exception(zero_extend(instbits), E_Virtual_Instr()),
+    Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
+    Step_Execute(Illegal_Instruction(), instbits) =>
+      handle_exception(make_instr_exception_context(E_Illegal_Instr(), zero_extend(instbits))),
+    Step_Execute(Virtual_Instruction(), instbits) =>
+      handle_exception(make_instr_exception_context(E_Virtual_Instr(), zero_extend(instbits))),
     Step_Execute(Enter_Wait(wr), instbits) => {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
@@ -315,7 +332,7 @@ function loop () : unit -> nat = {
 
 // Termination measures for loops are not supported by the Lean backend, so they
 // should be guarded by this condition:
-$iftarget coq
+$iftarget rocq
 
 // The top-level loop isn't terminating, but we put a limit so that it can still
 // be included in the Coq output

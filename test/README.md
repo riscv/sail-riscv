@@ -8,6 +8,8 @@ The simulator supports multiple test suites that are downloaded on-demand during
 
 - **RISC-V Architectural Certification Tests** from the [`riscv-arch-test`](https://github.com/riscv/riscv-arch-test) repository: Tests designed to certify that a design faithfully implements the RISC-V specification (can be enabled with `-DENABLE_RISCV_ARCH_TESTS=TRUE`).
 
+- **Hypervisor Tests** from the [`damo-rv-priv-ats`](https://github.com/XUANTIE-RV/damo-rv-priv-ats) repository: RV64 tests for the H extension and the privileged extensions that interact with it (can be enabled with `-DENABLE_DAMO_TESTS=TRUE`).
+
 ## Local Test Directory
 
 - `first_party` - tests specifically designed for this Sail model. These tests are not designed to test all the features of RISC-V. Rather they are for testing new code that we add, and bug fixes.

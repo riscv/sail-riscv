@@ -23,6 +23,7 @@ jobs:
           [
             RISCV_TESTS,
             RISCV_ARCH_TESTS,
+            DAMO_TESTS,
             RISCV_VECTOR_TESTS_V64_E32,
             RISCV_VECTOR_TESTS_V64_E64,
             RISCV_VECTOR_TESTS_V128_E32,

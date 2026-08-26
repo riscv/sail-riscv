@@ -15,12 +15,26 @@ class traploop_detector;
 class stop_at_pc_callbacks;
 class ModelImpl;
 
+// Track the main memory regions initialized by loaded files.
+struct loaded_region {
+  loaded_region(const std::string &filename, uint64_t offset, uint64_t length) :
+      filename(filename),
+      offset(offset),
+      length(length) {
+  }
+  std::string filename;
+  uint64_t offset = 0;
+  uint64_t length = 0;
+};
+
 struct elf_info {
   // The address of the HTIF tohost port, if it is enabled.
   std::optional<uint64_t> htif_tohost_address = {};
   uint64_t mem_sig_start = 0;
   uint64_t mem_sig_end = 0;
   std::map<uint64_t, std::string> symbols = {};
+  // Main memory regions written during initialization.
+  std::vector<loaded_region> loaded_regions;
 };
 
 struct run_info {
@@ -46,15 +60,26 @@ enum class InitResult {
 // Processes options that don't need an initialized model and gets the
 // json configuration string; returns whether to continue with model
 // initialization.
-InitResult preinit_args(CLIOptions &opts, std::string &config_json_string);
+InitResult preinit_args(const CLIOptions &opts, std::string &config_json_string);
 
 // Configures the model, validates the configuration, processes
 // options requiring a configured model and returns whether to continue with
 // model simulation.
-InitResult preinit_model(CLIOptions &opts, ModelImpl &model, const std::string &config_json_string, run_info &run_info);
+InitResult preinit_model(
+  const CLIOptions &opts,
+  ModelImpl &model,
+  const std::string &config_json_string,
+  run_info &run_info
+);
 
-// Returns the entry address.
-uint64_t init_model(CLIOptions &opts, ModelImpl &model, elf_info &elf_info, run_info &run_info);
+// Initializes the start address in `entry`.
+InitResult init_model(
+  const CLIOptions &opts,
+  ModelImpl &model,
+  elf_info &elf_info,
+  run_info &run_info,
+  uint64_t &entry
+);
 
 uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file, elf_info &elf_info);
 

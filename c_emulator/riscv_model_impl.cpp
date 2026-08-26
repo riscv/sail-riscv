@@ -423,6 +423,14 @@ bool ModelImpl::dtb_within_configured_pma_memory(uint64_t addr, uint64_t size) {
   return zdtb_within_configured_pma_memory(addr, size);
 }
 
+std::vector<MemoryRegion> ModelImpl::memory_regions() const {
+  std::vector<MemoryRegion> regions;
+  for (const auto *region = zpma_regions; region != nullptr; region = region->tl) {
+    regions.push_back({region->hd.zbase, region->hd.zsizze});
+  }
+  return regions;
+}
+
 std::vector<MemoryRegion> ModelImpl::main_memory_regions() const {
   std::vector<MemoryRegion> regions;
   for (const auto *region = zpma_regions; region != nullptr; region = region->tl) {
@@ -486,6 +494,15 @@ std::string ModelImpl::ptw_error_to_string(PTW_Error error_type) {
   sail_string sstr = nullptr;
   CREATE(sail_string)(&sstr);
   zptw_error_to_str(&sstr, error_type);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
+std::string ModelImpl::translation_stage_to_string(TranslationStage stage) {
+  sail_string sstr = nullptr;
+  CREATE(sail_string)(&sstr);
+  ztranslationStage_to_str(&sstr, stage);
   std::string str(sstr);
   KILL(sail_string)(&sstr);
   return str;
