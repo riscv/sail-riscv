@@ -1116,6 +1116,8 @@ function legalize_satp(
     let s = if is_vsatp then s else [s with
       PPN = zero_extend(s[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
+    // NOTE: Sv32 is not listed because VSXLEN=XLEN here, hstatus.VSXL is
+    // read-only. It could be added if changing VSXL is supported.
     let sv39_supported = currentlyEnabled(Ext_Sv39) & (not(is_vsatp) | sys_vsatp_sv39_supported);
     let sv48_supported = currentlyEnabled(Ext_Sv48) & (not(is_vsatp) | sys_vsatp_sv48_supported);
     let sv57_supported = currentlyEnabled(Ext_Sv57) & (not(is_vsatp) | sys_vsatp_sv57_supported);

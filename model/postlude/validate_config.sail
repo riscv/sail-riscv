@@ -121,6 +121,8 @@ private function check_mmu_config() -> bool = {
         valid = false;
         print_endline("Sv48 is enabled for `vsatp` but Sv39 is disabled: supporting Sv48 requires supporting Sv39.");
       };
+      // NOTE: Sv32 for `vsatp` needs VSXLEN=32, which needs a writable
+      // `hstatus.VSXL`. Revisit this if RV32 guests on RV64 are supported.
       if sys_vsatp_sv32_supported
       then {
         valid = false;
