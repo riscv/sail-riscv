@@ -27,6 +27,9 @@
     includes the exception codes introduced by H, i.e. VS-mode
     environment calls, virtual instructions, and the guest-page faults.
 
+- Xvisor boot is now tested in CI. The `os-boot` Makefile has been
+  generalized to build both the Linux and Xvisor images.
+
 - Important issues addressed and bugs fixed:
   - `extensions.Svbare.supported` had no effect, `satp` accepted the Bare
     mode whether or not Svbare was configured. `validate_config()` now also
