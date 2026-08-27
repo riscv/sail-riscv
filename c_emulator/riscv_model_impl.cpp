@@ -376,6 +376,8 @@ void ModelImpl::init_platform_constants() {
   set_reservation_invalidate_on_same_hart_store(
     get_config_bool({"platform", "reservation", "invalidate_on_same_hart_store"})
   );
+
+  m_supports_hypervisor = get_config_bool({"extensions", "H", "supported"});
 }
 
 void ModelImpl::init_sail(
