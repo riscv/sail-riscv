@@ -3,6 +3,8 @@
 - The following extensions have been added:
   - H
   - Shgatpa
+
+- The following unratified extensions have been added:
   - Zilx
 
 - Updates to the [configuration file](../config/config.json.in):
