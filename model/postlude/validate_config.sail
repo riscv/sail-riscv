@@ -126,7 +126,7 @@ private function check_mmu_config() -> bool = {
       if sys_vsatp_sv32_supported
       then {
         valid = false;
-        print_endline("Sv32 is enabled for `vsatp`: Sv32 is not supported on RV64.");
+        print_endline("Sv32 is enabled for `vsatp`: Sv32 is not currently supported on RV64.");
       };
     };
   } else {
