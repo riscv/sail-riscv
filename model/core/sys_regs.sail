@@ -1008,8 +1008,9 @@ function legalize_hgatp(
   written_value : xlenbits,
 ) -> xlenbits = {
   // Unlike satp, a write to hgatp with an unsupported MODE value is not ignored.
-  // Instead, the fields are WARL in the normal way: an unsupported MODE falls
-  // back to HBare while preserving the other fields (VMID, PPN).
+  // Instead, the fields are WARL in the normal way: VMID and PPN take the written
+  // values and only MODE keeps its previous value. This applies to reserved MODE
+  // encodings too.
   if xlen == 32 then {
     let v = Mk_Hgatp32(written_value);
     // Force 16 KiB alignment with PPN[1:0] = 0b00
@@ -1021,11 +1022,11 @@ function legalize_hgatp(
       PPN = zero_extend(h[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
-      None() => prev_value,
+      None() => [h with Mode = Mk_Hgatp32(prev_value)[Mode]].bits,
       Some(mode) => match mode {
         HBare => h.bits,
         Sv32x4 if sys_hgatp_sv32x4_supported => h.bits,
-        _ => [h with Mode = zeros()].bits,
+        _ => [h with Mode = Mk_Hgatp32(prev_value)[Mode]].bits,
       }
     }
   } else if xlen == 64 then {
@@ -1039,13 +1040,13 @@ function legalize_hgatp(
       PPN = zero_extend(h[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, h[Mode]) {
-      None() => prev_value,
+      None() => [h with Mode = Mk_Hgatp64(prev_value)[Mode]].bits,
       Some(mode) => match mode {
         HBare => h.bits,
         Sv39x4 if sys_hgatp_sv39x4_supported => h.bits,
         Sv48x4 if sys_hgatp_sv48x4_supported => h.bits,
         Sv57x4 if sys_hgatp_sv57x4_supported => h.bits,
-        _ => [h with Mode = zeros()].bits,
+        _ => [h with Mode = Mk_Hgatp64(prev_value)[Mode]].bits,
       }
     }
   } else {
