@@ -821,6 +821,11 @@
     "Sscounterenw": {
       "supported": true
     },
+    // Enabling Shvstvala requires that the exceptions specified in the
+    // extension have their appropriate settings under `base.xtval_nonzero`.
+    "Shvstvala": {
+      "supported": true
+    },
     "Shvstvecd": {
       "supported": true
     },
