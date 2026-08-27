@@ -153,11 +153,13 @@ enum FcsrRmReservedBehavior = {
 enum PmpWriteOnlyReservedBehavior = {
   PMP_Fatal,
   PMP_ClearPermissions,
+  PMP_Ignore,
 }
 
 enum XenvcfgCbieReservedBehavior = {
   Xenvcfg_Fatal,
   Xenvcfg_ClearPermissions,
+  Xenvcfg_Ignore,
 }
 
 enum XtvecModeReservedBehavior = {

@@ -52,6 +52,9 @@
     modified; they now have a configuration that is similar to, but
     independent of, AMOs. See `memory.misaligned.exceptions.lrsc`
     and the `misaligned_exceptions.lrsc` PMA attribute.
+  - Writes of reserved values to `xenvcfg.CBIE` and `xtvec.MODE` can
+    now also be ignored; see `reserved_behavior.pmpcfg_write_only` and
+    `reserved_behavior.xenvcfg_cbie`.
 
 - Xvisor boot is now tested in CI. The `os-boot` Makefile has been
   generalized to build both the Linux and Xvisor images.

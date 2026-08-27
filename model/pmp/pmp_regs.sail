@@ -100,18 +100,19 @@ private function pmpWriteCfg(cfg: Pmpcfg_ent, v: bits(8)) -> Pmpcfg_ent =
   if pmpLocked(cfg) then cfg
   else {
     // Bits 5 and 6 are zero.
-    let cfg = Mk_Pmpcfg_ent(v & 0x9f);
+    let new_cfg = Mk_Pmpcfg_ent(v & 0x9f);
 
     // "The R, W, and X fields form a collective WARL field for which the combinations with R=0 and W=1 are reserved."
     // if R=0 and W=1, we allow two options currently:
     // 1. exit the simulation with a fatal error
     // 2. R, W and X are all set to 0.
-    let cfg = if cfg[W] == 0b1 & cfg[R] == 0b0 then (
+    let cfg = if new_cfg[W] == 0b1 & new_cfg[R] == 0b0 then (
       match pmp_write_only_reserved_behavior {
         PMP_Fatal => reserved_behavior("pmpcfg with R=0,W=1"),
-        PMP_ClearPermissions => [cfg with X = 0b0, W = 0b0, R = 0b0],
+        PMP_ClearPermissions => [new_cfg with X = 0b0, W = 0b0, R = 0b0],
+        PMP_Ignore => cfg,
       }
-    ) else cfg;
+    ) else new_cfg;
 
     // We support disabling all modes globally, which is allowed since this
     // is a WARL field.

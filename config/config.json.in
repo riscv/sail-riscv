@@ -159,11 +159,12 @@
       "reserved_exceptions": false
     },
     "reserved_behavior": {
-      // The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
+      // This option determines how to handle AMOCAS.{D,Q} instructions that specify
+      // a reserved register pair.
       // "AMOCAS_Fatal"  – raise a Sail exception, stopping execution.
       // "AMOCAS_Illegal" – treat it as an illegal instruction.
       "amocas_odd_register": "AMOCAS_Illegal",
-      // The configuration option determines how to handle execution of a floating-point
+      // This option determines how to handle execution of a floating-point
       // instruction with DYN (dynamic) rounding mode when `fcsr.FRM` contains a
       // reserved value (0b101, 0b110, 0b111).
       // This does not affect the execution of floating-point instructions that have a
@@ -171,19 +172,22 @@
       // "Fcsr_RM_Fatal"  – raise a Sail exception, stopping execution.
       // "Fcsr_RM_Illegal" – treat it as an illegal instruction.
       "fcsr_rm": "Fcsr_RM_Illegal",
-      // The configuration option determines how to handle the reserved behavior `pmpcfg_with_R0W1`.
+      // This option determines how to handle writes to a `pmpcfg` register of a reserved
+      // combination with `R=0` and `W=1`.
       // "PMP_Fatal"  – raise a Sail exception, stopping execution.
       // "PMP_ClearPermissions" – convert a PMP entry with R=0, W=1 to R=0, W=0, X=0.
+      // "PMP_Ignore" - preserve the previous value.
       "pmpcfg_write_only": "PMP_ClearPermissions",
-      // The configuration option determines how to handle the reserved behavior `xenvcfg.CBIE` with 0b10.
+      // This option determines how to handle writes of the reserved value of 0b10 to `xenvcfg.CBIE`.
       // "Xenvcfg_Fatal"  – raise a Sail exception, stopping execution.
-      // "Xenvcfg_ClearPermissions" – convert CBIE with 0b10 to 0b00.
+      // "Xenvcfg_ClearPermissions" – write 0b00 to CBIE instead.
+      // "Xenvcfg_Ignore" - preserve the previous value of the field.
       "xenvcfg_cbie": "Xenvcfg_ClearPermissions",
-      // The configuration option determines how to handle the reserved behavior `xtvec[Mode] >= 2`.
+      // This option determines how to handle writes of reserved values (>=2) to the `xtvec.Mode`.
       // "Xtvec_Fatal"  – raise a Sail exception, stopping execution.
       // "Xtvec_Ignore" – use old Mode of xtvec.
       "xtvec_mode": "Xtvec_Ignore",
-      // The configuration option determines how to handle the reserved behavior: Odd-numbered registers for RV32Zdinx.
+      // This option determines how to handle the reserved behavior: Odd-numbered registers for RV32Zdinx.
       // "Zdinx_Fatal"  – raise a Sail exception, stopping execution.
       // "Zdinx_Illegal" – treat it as an illegal instruction.
       "rv32zdinx_odd_register": "Zdinx_Illegal"
@@ -476,7 +480,7 @@
     // wait. It is not possible to wait indefinitely.
     //
     // If WFI or WRS.STO (Short TimeOut) exceed this limit in
-    // non-machine privilege with mstatus[TW] set, an illegal
+    // non-machine privilege with mstatus.TW set, an illegal
     // instruction is raised. Otherwise they retire successfully.
     //
     // Note: it is also legal for these instructions to spuriously
@@ -493,7 +497,7 @@
     },
     "F": {
       "supported": true,
-      // When to set mstatus[FS] and mstatus[SD] to 1, as a result of fflags
+      // When to set mstatus.FS and mstatus.SD to 1, as a result of fflags
       // being set. There are three options:
       //
       // - Fflags_Dirty_Precise: Only set FS/SD when absolutely required, because

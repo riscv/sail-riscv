@@ -470,12 +470,13 @@ bitfield HEnvcfg : bits(64) = {
   FIOM  : 0,
 }
 
-private function legalize_xenvcfg_cbie(cbie : bits(2)) -> bits(2) = {
-  if cbie != 0b10 then {
-    cbie
+private function legalize_xenvcfg_cbie(old_cbie : bits(2), new_cbie : bits(2)) -> bits(2) = {
+  if new_cbie != 0b10 then {
+    new_cbie
   } else match xenvcfg_cbie_reserved_behavior {
       Xenvcfg_Fatal => reserved_behavior("xenvcfg.CBIE = 0b10"),
       Xenvcfg_ClearPermissions => 0b00,
+      Xenvcfg_Ignore => old_cbie,
     }
 }
 
@@ -487,7 +488,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     SSE  = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
+    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(o[CBIE], v[CBIE]) else 0b00,
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
     PMM = if currentlyEnabled(Ext_Smnpm) & is_supported_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
@@ -510,7 +511,7 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
     SSE = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
+    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(o[CBIE], v[CBIE]) else 0b00,
     PMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     UKTE = if currentlyEnabled(Ext_Svukte) then v[UKTE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
@@ -530,7 +531,7 @@ private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
     PMM  = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else h[PMM],
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE  = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
+    CBIE  = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(h[CBIE], v[CBIE]) else 0b00,
     SSE   = if currentlyEnabled(Ext_Zicfiss) & menvcfg[SSE] == 0b1 then v[SSE] else 0b0,
     LPE   = if hartSupports(Ext_Zicfilp) then v[LPE]  else 0b0,
     FIOM  = if sys_enable_writable_fiom  then v[FIOM] else 0b0,
