@@ -216,6 +216,12 @@ private function check_mmu_config() -> bool = {
     print_endline("`memory.asidlen` is " ^ dec_str(asidlen) ^ " but cannot be greater than " ^ dec_str(asidmax) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
   };
 
+  let vmidlen_nat : nat = vmidlen;
+  if (config extensions.H.supported : bool) & vmidlen_nat > vmidmax then {
+    valid = false;
+    print_endline("`memory.vmidlen` is " ^ dec_str(vmidlen) ^ " but cannot be greater than " ^ dec_str(vmidmax) ^ " on " ^  (if xlen == 32 then "RV32." else "RV64."));
+  };
+
   valid
 }
 

@@ -36,9 +36,11 @@ foreach(CONFIG__BASE__XLEN IN ITEMS 32 64)
             if(CONFIG_XLEN_IS_32 STREQUAL true)
                 set(CONFIG__PHYSADDR__BITS 34)
                 set(CONFIG__ASID__LEN 9)
+                set(CONFIG__VMID__LEN 7)
             elseif(CONFIG_XLEN_IS_64 STREQUAL true)
                 set(CONFIG__PHYSADDR__BITS 56)
                 set(CONFIG__ASID__LEN 16)
+                set(CONFIG__VMID__LEN 14)
             endif()
 
             # GEILEN is at most XLEN-1.

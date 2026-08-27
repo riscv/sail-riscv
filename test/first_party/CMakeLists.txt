@@ -138,6 +138,8 @@ add_first_party_override_test("test_satp_physaddr_bits.S" "satp_physaddr_bits.js
 add_first_party_experimental_test("test_zilx.S")
 add_first_party_override_test("test_satp_asidlen.S" "satp_asidlen.json")
 add_first_party_override_test("test_satp_asidlen_partial.S" "satp_asidlen_partial.json")
+add_first_party_override_test("test_hgatp_vmidlen.S" "hgatp_vmidlen.json")
+add_first_party_override_test("test_hgatp_vmidlen_partial.S" "hgatp_vmidlen_partial.json")
 
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")

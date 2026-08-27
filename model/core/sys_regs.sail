@@ -1019,7 +1019,6 @@ bitfield Hgatp32 : bits(32) = {
   PPN  : 21 .. 0
 }
 
-// TODO: Add VMIDLEN config option and mask VMID field to implemented width
 function legalize_hgatp(
   arch : Architecture,
   prev_value : xlenbits,
@@ -1037,6 +1036,8 @@ function legalize_hgatp(
     // are read only zero, since the G-stage root page table lives
     // in real physical memory.
     let h = [h with
+      // VMID bits above the number of implemented VMID bits are read only zero.
+      VMID = if vmidlen == 0 then zeros() else zero_extend(h[VMID][vmidlen - 1 .. 0]),
       PPN = zero_extend(h[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
@@ -1055,6 +1056,8 @@ function legalize_hgatp(
     // implemented physical address bits are read only zero, since
     // the G-stage root page table lives in real physical memory.
     let h = [h with
+      // VMID bits above the number of implemented VMID bits are read only zero.
+      VMID = if vmidlen == 0 then zeros() else zero_extend(h[VMID][vmidlen - 1 .. 0]),
       PPN = zero_extend(h[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, h[Mode]) {

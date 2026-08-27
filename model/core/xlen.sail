@@ -23,8 +23,9 @@ type gpalen : Int = if xlen == 32 then 34 else 64
 // This is the maximum (ASIDMAX); designs can implement shorter ASIDLENs.
 // The number of implemented ASID bits is configurable via `memory.asidlen`.
 type asidmax    : Int = if xlen == 32 then 9 else 16
-// TODO: Allow configuring shorter VMIDLENs.
-type vmidlen    : Int = if xlen == 32 then 7 else 14
+// This is the maximum (VMIDMAX); designs can implement shorter VMIDLENs.
+// The number of implemented VMID bits is configurable via `memory.vmidlen`.
+type vmidmax    : Int = if xlen == 32 then 7 else 14
 // GEILEN, the number of guest external interrupts. Bits GEILEN:1 of hgeip and
 // hgeie are implemented, all other bit positions are read-only zero. The
 // maximum is 31 for RV32 and 63 for RV64.
@@ -38,6 +39,14 @@ constraint 0 <= geilen & geilen <= xlen - 1
 type asidlen : Int = config memory.asidlen
 constraint 0 <= asidlen & asidlen <= asidmax
 
+// The number of implemented VMID bits (VMIDLEN), which may be less than
+// `vmidmax` (VMIDMAX), including zero. VMID bits above this value are
+// read-only zero in the `VMID` field of `hgatp`. See the RISC-V privileged
+// specification: "The least-significant bits of VMID are implemented first:
+// that is, if VMIDLEN > 0, VMID[VMIDLEN-1:0] is writable."
+type vmidlen : Int = config memory.vmidlen
+constraint 0 <= vmidlen & vmidlen <= vmidmax
+
 // Variable versions of the above types. Variables and types
 // are disjoint in Sail so they are allowed to have the same name.
 // This saves typing `sizeof()` everywhere.
@@ -46,6 +55,7 @@ let xlen_bytes = sizeof(xlen_bytes)
 let xlen = sizeof(xlen)
 let gpalen = sizeof(gpalen)
 let asidmax = sizeof(asidmax)
+let vmidmax = sizeof(vmidmax)
 let asidlen = sizeof(asidlen)
 let vmidlen = sizeof(vmidlen)
 let geilen = sizeof(geilen)
@@ -53,4 +63,4 @@ let geilen = sizeof(geilen)
 type xlenbits = bits(xlen)
 type gpabits  = bits(gpalen)
 type asidbits = bits(asidmax)
-type vmidbits = bits(vmidlen)
+type vmidbits = bits(vmidmax)
