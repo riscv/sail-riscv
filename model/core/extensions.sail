@@ -515,7 +515,8 @@ function clause currentlyEnabled(Ext_Sstvala) = hartSupports(Ext_Sstvala) & curr
 // capable of holding any valid four-byte-aligned address.
 enum clause extension = Ext_Sstvecd
 mapping clause extensionName = Ext_Sstvecd <-> "sstvecd"
-function clause hartSupports(Ext_Sstvecd) = hartSupports(Ext_S)
+function clause hartSupports(Ext_Sstvecd) = config extensions.Sstvecd.supported
+function clause currentlyEnabled(Ext_Sstvecd) = hartSupports(Ext_Sstvecd) & currentlyEnabled(Ext_S)
 // sstatus.UXL must be capable of holding the value 2 (i.e., UXLEN=64 must be supported)
 enum clause extension = Ext_Ssu64xl
 mapping clause extensionName = Ext_Ssu64xl <-> "ssu64xl"
@@ -613,7 +614,6 @@ function clause currentlyEnabled(Ext_Supm) = hartSupports(Ext_Supm) & currentlyE
 function hartSupports_measure(ext : extension) -> int =
   match ext {
     Ext_D => 1, // > F
-    Ext_Sstvecd => 1, // > S
     Ext_Ssu64xl => 1, // > S
     Ext_Zvkn => 1, // > Zvkned
     Ext_Zvks => 1, // > Zvksed

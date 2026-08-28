@@ -849,6 +849,11 @@
     "Sstvala": {
       "supported": true
     },
+    // Enabling Sstvecd requires that `stvec` supports the `direct` mode,
+    // see `base.stvec.direct.supported`.
+    "Sstvecd": {
+      "supported": true
+    },
     "Svade": {
       "supported": true
     },

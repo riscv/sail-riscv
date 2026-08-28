@@ -9,6 +9,10 @@
   - Shvstvecd
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Whether the Sstvecd extension is supported can be specified, see
+    `extensions.Sstvecd.supported`. It was previously implied by
+    supervisor mode, so the model claimed `sstvecd` even when `stvec`
+    did not support the `direct` mode.
   - Which trap vector modes `vstvec` supports can be specified, see
     `base.vstvec.direct` and `base.vstvec.vectored`, mirroring the
     existing `base.stvec` options.
