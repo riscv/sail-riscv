@@ -60,6 +60,14 @@ private function check_shgatpa_mode(sv_name : string, satp_supported : bool, hga
   true
 }
 
+private function check_shvsatpa_mode(sv_name : string, satp_supported : bool, vsatp_supported : bool) -> bool = {
+  if satp_supported & not(vsatp_supported) then {
+    print_endline("The Shvsatpa extension is enabled and " ^ sv_name ^ " is supported in `satp`, but " ^ sv_name ^ " is disabled in `vsatp` (under `extensions.H.vsatp_modes`).");
+    return false;
+  };
+  true
+}
+
 private function require_virtual_memory(ext_name : string) -> bool = {
   if xlen == 32 then return require_Sv32(ext_name);
 
@@ -99,6 +107,28 @@ private function check_mmu_config() -> bool = {
       valid = false;
       print_endline("Sv32 is enabled: Sv32 is not supported on RV64.");
     };
+    // The spec states this ordering for the modes an implementation supports,
+    // but does not say explicitly whether it also applies to `vsatp`. Mirror
+    // the `satp` rule, so a guest cannot be left without the smaller modes.
+    if (config extensions.H.supported : bool) then {
+      if sys_vsatp_sv57_supported & not(sys_vsatp_sv48_supported)
+      then {
+        valid = false;
+        print_endline("Sv57 is enabled for `vsatp` but Sv48 is disabled: supporting Sv57 requires supporting Sv48.");
+      };
+      if sys_vsatp_sv48_supported & not(sys_vsatp_sv39_supported)
+      then {
+        valid = false;
+        print_endline("Sv48 is enabled for `vsatp` but Sv39 is disabled: supporting Sv48 requires supporting Sv39.");
+      };
+      // NOTE: Sv32 for `vsatp` needs VSXLEN=32, which needs a writable
+      // `hstatus.VSXL`. Revisit this if RV32 guests on RV64 are supported.
+      if sys_vsatp_sv32_supported
+      then {
+        valid = false;
+        print_endline("Sv32 is enabled for `vsatp`: Sv32 is not currently supported on RV64.");
+      };
+    };
   } else {
     assert(xlen == 32);
     if not(config extensions.S.supported : bool) & (config extensions.Sv32.supported : bool)
@@ -115,6 +145,12 @@ private function check_mmu_config() -> bool = {
     then {
       valid = false;
       print_endline("One or more of Sv39/Sv48/Sv57 is enabled: these are not supported on RV32.");
+    };
+    if (config extensions.H.supported : bool) &
+       (sys_vsatp_sv39_supported | sys_vsatp_sv48_supported | sys_vsatp_sv57_supported)
+    then {
+      valid = false;
+      print_endline("One or more of Sv39/Sv48/Sv57 is enabled for `vsatp`: these are not supported on RV32.");
     };
   };
 
@@ -677,6 +713,18 @@ private function check_misc_extension_dependencies() -> bool = {
       valid = false;
       print_endline("The Shvstvecd extension is enabled but `vstvec` does not support the `direct` mode (see `base.vstvec.direct.supported`).");
     };
+  };
+  // "If the Shvsatpa extension is implemented, all translation modes supported
+  //  in `satp` must be supported in `vsatp`."
+  if (config extensions.Shvsatpa.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shvsatpa extension is enabled but the H extension is disabled: supporting Shvsatpa requires H.");
+    };
+    valid = valid & check_shvsatpa_mode("Sv32", (config extensions.Sv32.supported : bool), sys_vsatp_sv32_supported);
+    valid = valid & check_shvsatpa_mode("Sv39", (config extensions.Sv39.supported : bool), sys_vsatp_sv39_supported);
+    valid = valid & check_shvsatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_vsatp_sv48_supported);
+    valid = valid & check_shvsatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_vsatp_sv57_supported);
   };
   valid
 }

@@ -580,6 +580,14 @@
         "Sv39x4": @CONFIG_XLEN_IS_64@,
         "Sv48x4": @CONFIG_XLEN_IS_64@,
         "Sv57x4": @CONFIG_XLEN_IS_64@
+      },
+      // Which VS-stage translation modes `vsatp` supports. Bare is always
+      // supported.
+      "vsatp_modes": {
+        "Sv32": @CONFIG_XLEN_IS_32@,
+        "Sv39": @CONFIG_XLEN_IS_64@,
+        "Sv48": @CONFIG_XLEN_IS_64@,
+        "Sv57": @CONFIG_XLEN_IS_64@
       }
     },
     "Zibi": {
@@ -826,6 +834,11 @@
       "supported": true
     },
     "Sscounterenw": {
+      "supported": true
+    },
+    // Enabling Shvsatpa requires that every mode supported in `satp` is also
+    // supported in `vsatp` (under `extensions.H.vsatp_modes`).
+    "Shvsatpa": {
       "supported": true
     },
     // Enabling Shvstvala requires that the exceptions specified in the

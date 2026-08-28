@@ -85,6 +85,11 @@ enum clause extension = Ext_Shtvala
 mapping clause extensionName = Ext_Shtvala <-> "shtvala"
 function clause hartSupports(Ext_Shtvala) = config extensions.Shtvala.supported
 function clause currentlyEnabled(Ext_Shtvala) = hartSupports(Ext_Shtvala) & currentlyEnabled(Ext_H)
+// Every translation mode supported in satp is also supported in vsatp.
+enum clause extension = Ext_Shvsatpa
+mapping clause extensionName = Ext_Shvsatpa <-> "shvsatpa"
+function clause hartSupports(Ext_Shvsatpa) = config extensions.Shvsatpa.supported
+function clause currentlyEnabled(Ext_Shvsatpa) = hartSupports(Ext_Shvsatpa) & currentlyEnabled(Ext_H)
 // `vstval` provides all the values `stval` does
 enum clause extension = Ext_Shvstvala
 mapping clause extensionName = Ext_Shvstvala <-> "shvstvala"
@@ -699,6 +704,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Shcounterenw => 5, // > H
     Ext_Shgatpa => 5, // > H
     Ext_Shtvala => 5, // > H
+    Ext_Shvsatpa => 5, // > H
     Ext_Shvstvala => 5, // > H
     Ext_Shvstvecd => 5, // > H
     Ext_V => 5, // > Zve64d
@@ -874,6 +880,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Shcounterenw,
   Ext_Shgatpa,
   Ext_Shtvala,
+  Ext_Shvsatpa,
   Ext_Shvstvala,
   Ext_Shvstvecd,
 
