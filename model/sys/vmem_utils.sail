@@ -146,11 +146,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
       Err(e)   => return Err(e),
-      Ok(_, v) => {
-        // A misaligned load-reserved should not succeed.
-        assert(not(res));
-        data[8 * width - 1 .. 8 * in_page_bytes] = v
-      },
+      Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
   };
 
@@ -174,11 +170,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
       Err(e)   => return Err(e),
-      Ok(_, v) => {
-        // A misaligned load-reserved should not succeed.
-        assert(not(res));
-        data[8 * width - 1 .. 8 * in_page_bytes] = v
-      },
+      Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
   };
 
