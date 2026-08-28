@@ -474,6 +474,17 @@ extensions {
     files extensions/Zihintpause/zihintpause_insts.sail
   }
 
+  Zilx {
+    Zilx_types {
+      before sys
+      files extensions/Zilx/zilx_types.sail
+    }
+    Zilx_insts {
+      requires core, sys, I_insts, Zilx_types
+      files extensions/Zilx/zilx_insts.sail
+    }
+  }
+
   Ssqosid {
     requires core
     files extensions/Ssqosid/ssqosid.sail

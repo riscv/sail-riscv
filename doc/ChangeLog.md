@@ -8,6 +8,9 @@
   - Shvstvala
   - Shvstvecd
 
+- The following unratified extensions have been added:
+  - Zilx
+
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the Sstvecd extension is supported can be specified, see
     `extensions.Sstvecd.supported`. It was previously implied by

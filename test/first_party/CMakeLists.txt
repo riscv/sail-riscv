@@ -113,6 +113,13 @@ macro(add_first_party_override_test name override)
     add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "${override}")
     add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "${override}")
 endmacro()
+set(experimental_tests)
+macro(add_first_party_experimental_test name)
+    set(isa_extension gcv_zfbfmin)
+    add_first_party_test_with_config("${name}" "rv32${isa_extension}" 32 "no_override.json")
+    add_first_party_test_with_config("${name}" "rv64${isa_extension}" 64 "no_override.json")
+    list(APPEND experimental_tests "${name}")
+endmacro()
 
 add_first_party_test("test_bf16_nan_boxing.S")
 add_first_party_test("test_hello_world.c")
@@ -128,6 +135,7 @@ add_first_party_test("test_tlb_stale_pte_access_fault.S")
 
 add_first_party_override_test("test_sew_elen_bound.S" "elen_32.json")
 add_first_party_override_test("test_satp_physaddr_bits.S" "satp_physaddr_bits.json")
+add_first_party_experimental_test("test_zilx.S")
 
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
@@ -196,8 +204,13 @@ foreach(idx RANGE 0 ${test_last} 4)
 
     add_custom_target(build_${arch}_${test_source} ALL DEPENDS ${elf} ${config} ${override_config})
 
+    set(simulator_options)
+    if(test_source IN_LIST experimental_tests)
+        list(APPEND simulator_options "--enable-experimental-extensions")
+    endif()
+
     add_test(
         NAME "first_party_${arch}_${test_source}"
-        COMMAND $<TARGET_FILE:sail_riscv_sim> --config ${config} --config-override ${override_config} ${elf}
+        COMMAND $<TARGET_FILE:sail_riscv_sim> ${simulator_options} --config ${config} --config-override ${override_config} ${elf}
     )
 endforeach()
