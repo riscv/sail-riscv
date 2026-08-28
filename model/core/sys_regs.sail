@@ -1099,7 +1099,7 @@ function legalize_satp(
     let s = if is_vsatp then s else [s with
       PPN = zero_extend(s[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
-    let sv32_supported = currentlyEnabled(Ext_Sv32) & (not(is_vsatp) | sys_vsatp_sv32_supported);
+    let sv32_supported = if is_vsatp then sys_vsatp_sv32_supported else currentlyEnabled(Ext_Sv32);
     match satpMode_of_bits(arch, 0b000 @ s[Mode]) {
       None()  => prev_value,
       Some(Sv_mode) => match Sv_mode {
@@ -1118,9 +1118,9 @@ function legalize_satp(
     ];
     // NOTE: Sv32 is not listed because VSXLEN=XLEN here, hstatus.VSXL is
     // read-only. It could be added if changing VSXL is supported.
-    let sv39_supported = currentlyEnabled(Ext_Sv39) & (not(is_vsatp) | sys_vsatp_sv39_supported);
-    let sv48_supported = currentlyEnabled(Ext_Sv48) & (not(is_vsatp) | sys_vsatp_sv48_supported);
-    let sv57_supported = currentlyEnabled(Ext_Sv57) & (not(is_vsatp) | sys_vsatp_sv57_supported);
+    let sv39_supported = if is_vsatp then sys_vsatp_sv39_supported else currentlyEnabled(Ext_Sv39);
+    let sv48_supported = if is_vsatp then sys_vsatp_sv48_supported else currentlyEnabled(Ext_Sv48);
+    let sv57_supported = if is_vsatp then sys_vsatp_sv57_supported else currentlyEnabled(Ext_Sv57);
     match satpMode_of_bits(arch, s[Mode]) {
       None()  => prev_value,
       Some(Sv_mode) =>  match Sv_mode {
