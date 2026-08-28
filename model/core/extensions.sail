@@ -80,6 +80,11 @@ enum clause extension = Ext_Shgatpa
 mapping clause extensionName = Ext_Shgatpa <-> "shgatpa"
 function clause hartSupports(Ext_Shgatpa) = config extensions.Shgatpa.supported
 function clause currentlyEnabled(Ext_Shgatpa) = hartSupports(Ext_Shgatpa) & currentlyEnabled(Ext_H)
+// `htval` must be written with the faulting guest physical address in all circumstances permitted by the ISA
+enum clause extension = Ext_Shtvala
+mapping clause extensionName = Ext_Shtvala <-> "shtvala"
+function clause hartSupports(Ext_Shtvala) = config extensions.Shtvala.supported
+function clause currentlyEnabled(Ext_Shtvala) = hartSupports(Ext_Shtvala) & currentlyEnabled(Ext_H)
 // `vstval` provides all the values `stval` does
 enum clause extension = Ext_Shvstvala
 mapping clause extensionName = Ext_Shvstvala <-> "shvstvala"
@@ -689,6 +694,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_Shcounterenw => 5, // > H
     Ext_Shgatpa => 5, // > H
+    Ext_Shtvala => 5, // > H
     Ext_Shvstvala => 5, // > H
     Ext_Shvstvecd => 5, // > H
     Ext_V => 5, // > Zve64d
@@ -862,6 +868,7 @@ let extensions_ordered_for_isa_string = [
   // Hypervisor extensions, ordered alphabetically.
   Ext_Shcounterenw,
   Ext_Shgatpa,
+  Ext_Shtvala,
   Ext_Shvstvala,
   Ext_Shvstvecd,
 

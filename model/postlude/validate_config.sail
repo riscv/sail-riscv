@@ -646,6 +646,18 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_shgatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_hgatp_sv48x4_supported);
     valid = valid & check_shgatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_hgatp_sv57x4_supported);
   };
+  // "`htval` must be written with the faulting guest physical address in all
+  //  circumstances permitted by the ISA."
+  if (config extensions.Shtvala.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shtvala extension is enabled but the H extension is disabled: supporting Shtvala requires H.");
+    };
+    if not(sys_guest_page_fault_writes_htval) then {
+      valid = false;
+      print_endline("The Shtvala extension is enabled but `extensions.H.guest_page_fault_writes_htval` is disabled: supporting Shtvala requires this option to be enabled.");
+    };
+  };
   if (config extensions.Shvstvecd.supported : bool) then {
     if not(config extensions.H.supported : bool) then {
       valid = false;
