@@ -69,6 +69,19 @@ function clause hartSupports(Ext_U) = config extensions.U.supported
 enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
 function clause hartSupports(Ext_H) = config extensions.H.supported
+// Augmented Hypervisor
+enum clause extension = Ext_Sha
+mapping clause extensionName = Ext_Sha <-> "sha"
+function clause hartSupports(Ext_Sha) = config extensions.Sha.supported
+function clause currentlyEnabled(Ext_Sha) = hartSupports(Ext_Sha)
+  & currentlyEnabled(Ext_H)
+  & currentlyEnabled(Ext_Ssstateen)
+  & currentlyEnabled(Ext_Shcounterenw)
+  & currentlyEnabled(Ext_Shgatpa)
+  & currentlyEnabled(Ext_Shtvala)
+  & currentlyEnabled(Ext_Shvsatpa)
+  & currentlyEnabled(Ext_Shvstvala)
+  & currentlyEnabled(Ext_Shvstvecd)
 // Any hpmcounter that is not read-only zero has a writable hcounteren bit
 enum clause extension = Ext_Shcounterenw
 mapping clause extensionName = Ext_Shcounterenw <-> "shcounterenw"
@@ -710,6 +723,8 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_V => 5, // > Zve64d
     Ext_Zvfhmin => 5, // > Zvfh
 
+    Ext_Sha => 6, // > its dependencies
+
     Ext_Zfinx => 9, // > is_zfinx_enabled_by_stateen
 
     Ext_Zdinx => 10, // > Zdinx
@@ -877,6 +892,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Svvptc,
 
   // Hypervisor extensions, ordered alphabetically.
+  Ext_Sha,
   Ext_Shcounterenw,
   Ext_Shgatpa,
   Ext_Shtvala,

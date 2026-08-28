@@ -832,6 +832,11 @@
     "Sscofpmf": {
       "supported": true
     },
+    // Enabling Sha requires H, Ssstateen, Shcounterenw, Shgatpa, Shtvala,
+    // Shvsatpa, Shvstvala and Shvstvecd.
+    "Sha": {
+      "supported": true
+    },
     "Shcounterenw": {
       "supported": true
     },
