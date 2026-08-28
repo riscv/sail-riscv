@@ -112,6 +112,9 @@ val vmem_read_addr : forall 'width, is_mem_width('width).
   -> result(bits(8 * 'width), ExecutionResult)
 
 function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
+  // Other AMOs currently don't go through `vmem_utils` functions.
+  assert(res == is_load_reserved(access));
+
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
@@ -206,6 +209,9 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
+  // Other AMOs currently don't go through `vmem_utils` functions.
+  assert(res == is_store_conditional(access));
+
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
@@ -240,11 +246,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
     match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
       Err(e) => return Err(e),
-      Ok(s)  => {
-        // A misaligned store-conditional should not succeed.
-        assert(not(is_store_conditional(access)));
-        write_success = write_success & s
-      },
+      Ok(s)  => write_success = write_success & s,
     }
   };
 
@@ -253,7 +255,6 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     Err(e, _) => return Err(trap(e)),
 
     Ok(paddr, pbmt, _) => {
-      assert(res == is_store_conditional(access));
       if res & not(match_reservation(bits_of(paddr))) then {
         // Check PMA and PMP access controls before reporting the
         // cancelled reservation.
@@ -291,11 +292,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
     match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
       Err(e) => return Err(e),
-      Ok(s)  => {
-        // A misaligned store-conditional should not succeed.
-        assert(not(is_store_conditional(access)));
-        write_success = write_success & s
-      },
+      Ok(s)  => write_success = write_success & s,
     }
   };
 
