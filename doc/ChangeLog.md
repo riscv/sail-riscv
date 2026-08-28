@@ -15,6 +15,13 @@
     see `extensions.H.hgatp_modes`. Bare is always supported. With
     Shgatpa enabled, each mode supported in `satp` must have its
     matching SvNNx4 mode enabled.
+  - The relative priority of a configured VA-misaligned exception and a
+    page/guest-page fault can be specified; see
+    `memory.misaligned.misaligned_has_priority`. The default `true`
+    preserves historical Sail behaviour (the VA-misaligned exception is
+    taken without translating). `false` translates first and reports a
+    page/guest-page fault if translation fails. Matches Whisper's
+    `misaligned_has_priority`.
   - Whether each bit of `hcounteren` is writable or read-only zero can
     be specified, see `base.hcounteren_writable_bits`.
   - Whether the guest-page-fault exceptions write a non-zero `xtval`

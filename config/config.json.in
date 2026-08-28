@@ -230,14 +230,21 @@
       "na4_supported": true,
       "napot_supported": true
     },
-    // These settings control global support for misaligned access so they are
-    // checked before address translation. `misaligned_fault` in
-    // `regions` is checked after address translation.
+    // These settings control global support for misaligned access.
+    // `misaligned_has_priority` chooses whether a configured VA-misaligned
+    // exception is taken before address translation, or whether
+    // translation is attempted first. PMA `misaligned_exceptions` in
+    // `regions` are always checked after address translation.
     "misaligned": {
       // `exceptions` specifies the treatment of misaligned accesses
-      // before address translation.  If a fault is specified for an access,
-      // it will have a higher priority than memory-protection faults arising from
-      // that access if it were allowed to proceed.
+      // at the virtual-address level.  If a fault is specified for an
+      // access, `misaligned_has_priority` below controls whether that
+      // fault is taken before address translation (`true`, the default)
+      // or only after translation succeeds (`false`).  When true, the
+      // VA-misaligned exception has higher priority than page/guest-page
+      // faults and PMA faults.  When false, a page/guest-page fault from
+      // translation is reported instead; the configured VA-misaligned
+      // exception is taken only if translation succeeds.
       "exceptions": {
         // A misaligned scalar or vector load/store, or an AMO, can either proceed
         // without a fault (use `{"None" : null}`), or raise an access fault
@@ -263,6 +270,12 @@
         // or a misaligned exception (use `"AlignmentException"`).
         "lrsc": "AccessFault"
       },
+      // When a misaligned access would also page-fault (or guest-page-fault):
+      //   true  - take the configured VA-misaligned exception without
+      //           translating (default; historical Sail behaviour)
+      //   false - translate first; report a page/guest-page fault if
+      //           translation fails, otherwise the VA-misaligned exception
+      "misaligned_has_priority": true,
       // If multiple memory operations are needed (e.g. when an access
       // straddles a page boundary), this controls whether they are
       // done in increasing or decreasing address order. This is

@@ -64,10 +64,9 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
       // privilege aware versions of those helpers, see the refactor TODO in
       // model/sys/mem.sail.
       if not(is_aligned_addr(vaddr, width)) then {
-        match plat_misaligned_exception(access, false) {
-          Some(AccessFault)        => return hlsv_memory_exception(E_Load_Access_Fault(), bits_of(vaddr)),
-          Some(AlignmentException) => return hlsv_memory_exception(E_Load_Addr_Align(), bits_of(vaddr)),
-          None()                   => (),
+        match check_va_misaligned(vaddr, width, access, false, false, false) {
+          Some(e) => return hlsv_memory_exception(e, bits_of(vaddr)),
+          None()  => (),
         };
       };
       match translateAddr_eff_priv(vaddr, access, eff_priv) {
@@ -76,11 +75,17 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
         // matching the spec's "[HLVX] still raise the same exceptions as other load
         // instructions, rather than raising fetch exceptions instead."
         Err(e, _) => trap(e),
-        Ok(paddr, pbmt,_) => match mem_read_priv(access, pbmt, eff_priv, paddr, width, false, false, false) {
-          Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
-          Err(exc_addr, e) => {
-            assert(exc_addr == paddr);
-            return hlsv_memory_exception(e, bits_of(vaddr))
+        Ok(paddr, pbmt,_) => {
+          match check_va_misaligned(vaddr, width, access, false, false, true) {
+            Some(e) => return hlsv_memory_exception(e, bits_of(vaddr)),
+            None()  => (),
+          };
+          match mem_read_priv(access, pbmt, eff_priv, paddr, width, false, false, false) {
+            Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
+            Err(exc_addr, e) => {
+              assert(exc_addr == paddr);
+              return hlsv_memory_exception(e, bits_of(vaddr))
+            }
           }
         },
       };
@@ -117,15 +122,18 @@ function clause execute(HSV(width, rs1, rs2)) = {
       // privilege aware versions of those helpers, see the refactor TODO in
       // model/sys/mem.sail.
       if not(is_aligned_addr(vaddr, width)) then {
-        match plat_misaligned_exception(Store(Data), false) {
-          Some(AccessFault)        => return hlsv_memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr)),
-          Some(AlignmentException) => return hlsv_memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr)),
-          None()                   => (),
+        match check_va_misaligned(vaddr, width, Store(Data), false, true, false) {
+          Some(e) => return hlsv_memory_exception(e, bits_of(vaddr)),
+          None()  => (),
         };
       };
       match translateAddr_eff_priv(vaddr, Store(Data), eff_priv) {
         Err(e, _) => trap(e),
         Ok(paddr, pbmt, _) => {
+          match check_va_misaligned(vaddr, width, Store(Data), false, true, true) {
+            Some(e) => return hlsv_memory_exception(e, bits_of(vaddr)),
+            None()  => (),
+          };
           match mem_write_ea_priv(paddr, width, eff_priv, Store(Data), pbmt, false, false, false) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);

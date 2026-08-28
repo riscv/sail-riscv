@@ -93,6 +93,12 @@ struct GlobalMisalignedExceptions = {
 // The handling of misaligned accesses before address translation.
 let plat_misaligned_access : GlobalMisalignedExceptions = config memory.misaligned.exceptions
 
+// When true (default), a configured VA-misaligned exception is taken
+// without translating. When false, translation is attempted first and a
+// page/guest-page fault is reported if it fails. Matches Whisper's
+// `misaligned_has_priority`.
+let plat_misaligned_has_priority : bool = config memory.misaligned.misaligned_has_priority
+
 // Legal values for FS and VS.  This is an enumeration to avoid lists.
 enum ExtContextPolicy = {
   ExtContext_Off,        // The extension is always off.

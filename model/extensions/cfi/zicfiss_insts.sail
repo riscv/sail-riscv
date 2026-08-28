@@ -179,21 +179,19 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   // "The same exception options [as AMOs in the A extension] apply if
   // the address is not naturally aligned."
-  if not(is_aligned_addr(vaddr, width)) then {
-    // Check if the model is configured to raise an exception based on
-    // the misaligned virtual address.
-    match plat_misaligned_exception(access, false) {
-      Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access),
-      Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access),
-      // No exception yet, but we may still get one based on the
-      // physical address after address translation and checking PMAs.
-      None()                   => (),
-    };
+  match check_va_misaligned(vaddr, width, access, false, true, false) {
+    Some(e) => return memory_exception(e, bits_of(vaddr), access),
+    None()  => (),
   };
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Ok(addr, pbmt, _) => (addr, pbmt),
     Err(e, _)   => return trap(e),
+  };
+
+  match check_va_misaligned(vaddr, width, access, false, true, true) {
+    Some(e) => return memory_exception(e, bits_of(vaddr), access),
+    None()  => (),
   };
 
   // The `aq` and `rl` flags follow the AMO model in Zaamo: "Just as

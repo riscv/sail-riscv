@@ -37,6 +37,26 @@ function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res :
   else plat_misaligned_access.load_store
 }
 
+function va_misaligned_exception_type(access : MemoryAccessType(mem_payload), res : bool, is_store : bool) -> option(ExceptionType) = {
+  match plat_misaligned_exception(access, res) {
+    Some(AccessFault)        => Some(if is_store then E_SAMO_Access_Fault() else E_Load_Access_Fault()),
+    Some(AlignmentException) => Some(if is_store then E_SAMO_Addr_Align() else E_Load_Addr_Align()),
+    None()                   => None(),
+  }
+}
+
+// Report the configured VA-misaligned exception according to
+// `memory.misaligned.misaligned_has_priority`.
+// `after_translation` is false for the pre-translation check and true
+// once translation has succeeded. At most one of the two calls returns Some.
+function check_va_misaligned(vaddr : virtaddr, width : nat1, access : MemoryAccessType(mem_payload), res : bool, is_store : bool, after_translation : bool) -> option(ExceptionType) = {
+  if is_aligned_addr(vaddr, width) then None()
+  else {
+    if after_translation == plat_misaligned_has_priority then None()
+    else va_misaligned_exception_type(access, res, is_store)
+  }
+}
+
 // Memory exceptions from `mem.sail` are reported in terms of
 // `physaddr`, while the utilities here need to report them in terms
 // of the corresponding `virtaddr`.  In particular, since the original
@@ -91,19 +111,26 @@ function memory_exception(e : ExceptionType, excinfo : xlenbits, access : Memory
   trap(mem_exception_context(e, excinfo, access))
 
 // Helper for translated read access.
+// `orig_vaddr` / `deferred_misal` are the original (possibly misaligned)
+// access address and the VA-misaligned exception deferred until after
+// translation when `misaligned_has_priority` is false.
 private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_access.
-  (vaddr : virtaddr, width : int('width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
+  (vaddr : virtaddr, width : int('width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool,
+   orig_vaddr : virtaddr, deferred_misal : option(ExceptionType))
   -> result((physaddr, bits(8 * 'width)), ExecutionResult) =
   match translateAddr(vaddr, access) {
     Err(e, _) => Err(trap(e)),
 
-    Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, width, aq, rl, res) {
-      Err(exc_paddr, e) => {
-        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(e, bits_of(exc_vaddr), access))
-      },
+    Ok(paddr, pbmt, _) => match deferred_misal {
+      Some(e) => Err(memory_exception(e, bits_of(orig_vaddr), access)),
+      None()  => match mem_read(access, pbmt, paddr, width, aq, rl, res) {
+        Err(exc_paddr, e) => {
+          let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+          Err(memory_exception(e, bits_of(exc_vaddr), access))
+        },
 
-      Ok(v) => Ok(paddr, v),
+        Ok(v) => Ok(paddr, v),
+      },
     }
   }
 
@@ -114,17 +141,13 @@ val vmem_read_addr : forall 'width, is_mem_width('width).
 function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
-  if not(is_aligned_addr(vaddr, width)) then {
-    match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(memory_exception(E_Load_Access_Fault(), bits_of(vaddr), access)),
-      Some(AlignmentException) => return Err(memory_exception(E_Load_Addr_Align(), bits_of(vaddr), access)),
-      // Even if the CPU does support misaligned accesses, it might be
-      // that the PMA doesn't support misaligned accesses so you can
-      // still get a fault later, but this will be after address
-      // translation below.
-      None()                   => (),
-    };
+  match check_va_misaligned(vaddr, width, access, res, false, false) {
+    Some(e) => return Err(memory_exception(e, bits_of(vaddr), access)),
+    None()  => (),
   };
+  // If `misaligned_has_priority` is false, take the VA-misaligned
+  // exception only after translation succeeds (see translate_and_read_value).
+  let deferred_misal = check_va_misaligned(vaddr, width, access, res, false, true);
 
   let vaddr_bits = bits_of(vaddr);
 
@@ -147,7 +170,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
 
     // Do next page access first.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
+    match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res, vaddr, deferred_misal) {
       Err(e)   => return Err(e),
       Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
@@ -156,7 +179,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // If the access was split, only the in-page bytes should be
   // accessed, otherwise all bytes should be accessed.
   let access_width = if do_split_access then in_page_bytes else width;
-  match translate_and_read_value(vaddr, access_width, access, aq, rl, res) {
+  match translate_and_read_value(vaddr, access_width, access, aq, rl, res, vaddr, deferred_misal) {
     Err(e)       => return Err(e),
     Ok(paddr, v) => {
       if res then {
@@ -174,7 +197,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
 
     // Do next page access next.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
+    match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res, vaddr, deferred_misal) {
       Err(e)   => return Err(e),
       Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
@@ -185,26 +208,30 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
 
 // Helper for translated write access.
 private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_access.
-  (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
+  (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool,
+   orig_vaddr : virtaddr, deferred_misal : option(ExceptionType))
   -> result(bool, ExecutionResult) =
   match translateAddr(vaddr, access) {
     Err(e, _) => Err(trap(e)),
 
-    Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, access, pbmt, aq, rl, res) {
-      Err(exc_paddr, e) => {
-        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(e, bits_of(exc_vaddr), access))
-      },
-
-      Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
+    Ok(paddr, pbmt, _) => match deferred_misal {
+      Some(e) => Err(memory_exception(e, bits_of(orig_vaddr), access)),
+      None()  => match mem_write_ea(paddr, width, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
           Err(memory_exception(e, bits_of(exc_vaddr), access))
         },
 
-        Ok(s) => Ok(s),
+        Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
+          Err(exc_paddr, e) => {
+            let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+            Err(memory_exception(e, bits_of(exc_vaddr), access))
+          },
+
+          Ok(s) => Ok(s),
+        },
       },
-    },
+    }
   }
 
 val vmem_write_addr : forall 'width, is_mem_width('width).
@@ -212,14 +239,11 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
-  // See comments in vmem_read_addr for an explanation of this check.
-  if not(is_aligned_addr(vaddr, width)) then {
-    match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access)),
-      Some(AlignmentException) => return Err(memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access)),
-      None()                   => (),
-    };
+  match check_va_misaligned(vaddr, width, access, res, true, false) {
+    Some(e) => return Err(memory_exception(e, bits_of(vaddr), access)),
+    None()  => (),
   };
+  let deferred_misal = check_va_misaligned(vaddr, width, access, res, true, true);
 
   // See vmem_read_addr above for additional comments.
 
@@ -247,7 +271,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
+    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res, vaddr, deferred_misal) {
       Err(e) => return Err(e),
       Ok(s)  => write_success = write_success & s,
     }
@@ -258,6 +282,10 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     Err(e, _) => return Err(trap(e)),
 
     Ok(paddr, pbmt, _) => {
+      match deferred_misal {
+        Some(e) => return Err(memory_exception(e, bits_of(vaddr), access)),
+        None()  => (),
+      };
       // If res is true, the store should be aligned.
       assert(res == is_store_conditional(access));
       if res & not(match_reservation(bits_of(paddr))) then {
@@ -298,7 +326,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
+    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res, vaddr, deferred_misal) {
       Err(e) => return Err(e),
       Ok(s)  => write_success = write_success & s,
     }

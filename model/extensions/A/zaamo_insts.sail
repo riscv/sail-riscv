@@ -82,20 +82,20 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   };
 
   if not(is_aligned_addr(vaddr, width)) then {
-    // Check if the model is configured to raise an exception based on
-    // the misaligned virtual address.
-    match plat_misaligned_exception(access, false) {
-      Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access),
-      Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access),
-      // No exception yet, but we may still get one based on the
-      // physical address after address translation and checking PMAs.
-      None()                   => (),
+    match check_va_misaligned(vaddr, width, access, false, true, false) {
+      Some(e) => return memory_exception(e, bits_of(vaddr), access),
+      None()  => (),
     };
   };
 
   let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
     Err(e, _) => return trap(e),
     Ok(addr, pbmt, _) => (addr, pbmt),
+  };
+
+  match check_va_misaligned(vaddr, width, access, false, true, true) {
+    Some(e) => return memory_exception(e, bits_of(vaddr), access),
+    None()  => (),
   };
 
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, access, pbmt, aq & rl, rl, true) {
