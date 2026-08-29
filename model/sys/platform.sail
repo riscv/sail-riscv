@@ -55,8 +55,9 @@ private function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (add
 // CLINT (Core Local Interruptor), based on Spike.
 
 // Each hart has a memory-mapped mtimecmp register. Typically these are
-// exposed as an array in CLINT. The CLINT implementation here is currently
-// hard-coded to use the mtimecmp for hart 0.
+// exposed as an array in CLINT. This model instance is a single hart, so the
+// register below is that hart's element of the array, and the memory-mapped
+// decode places it at the offset selected by this hart's mhartid.
 register mtimecmp : bits(64)
 
 // Unlike mtimecmp, stimecmp is a real CSR; not memory mapped.
@@ -67,68 +68,71 @@ register vstimecmp : bits(64)
 
 // CLINT memory-mapped IO
 
-// relative address map:
+// relative address map, with hid = unsigned(mhartid):
 //
-// 0000 msip hart 0         -- memory-mapped software interrupt
-// 0004 msip hart 1
-// 4000 mtimecmp hart 0 lo  -- memory-mapped timer thresholds
-// 4004 mtimecmp hart 0 hi
-// 4008 mtimecmp hart 1 lo
-// 400c mtimecmp hart 1 hi
-// bff8 mtime lo            -- memory-mapped clocktimer value
-// bffc mtime hi
+// 0000 + 4*hid  msip hart hid         -- memory-mapped software interrupt
+// 4000 + 8*hid  mtimecmp hart hid lo  -- memory-mapped timer thresholds
+// 4004 + 8*hid  mtimecmp hart hid hi
+// bff8          mtime lo              -- memory-mapped clocktimer value,
+// bffc          mtime hi                 shared by all harts (not indexed)
+//
+// Only the executing hart's msip and mtimecmp are backed by state in this
+// model, so an access to some other hart's registers is not mapped here and
+// raises an access fault rather than silently aliasing onto this hart.
 
-let MSIP_BASE        : physaddrbits = zero_extend(0x00000)
-let MTIMECMP_BASE    : physaddrbits = zero_extend(0x04000)
-let MTIMECMP_BASE_HI : physaddrbits = zero_extend(0x04004)
-let MTIME_BASE       : physaddrbits = zero_extend(0x0bff8)
-let MTIME_BASE_HI    : physaddrbits = zero_extend(0x0bffc)
+let MSIP_BASE        : int = unsigned(0x00000)
+let MTIMECMP_BASE    : int = unsigned(0x04000)
+let MTIMECMP_BASE_HI : int = unsigned(0x04004)
+let MTIME_BASE       : int = unsigned(0x0bff8)
+let MTIME_BASE_HI    : int = unsigned(0x0bffc)
 
 private val clint_load : forall 'n, 'n > 0. (MemoryAccessType(mem_payload), physaddr, int('n)) -> MemoryOpResult(bits(8 * 'n))
 function clint_load(access, paddr, width) = {
   let Physaddr(addr) = paddr;
   let addr = addr - plat_clint_base;
+  let offset = unsigned(addr);
+  let hid = unsigned(mhartid);
   // FIXME: For now, only allow exact aligned access.
-  if addr == MSIP_BASE & ('n == 8 | 'n == 4)
+  if offset == MSIP_BASE + 4 * hid & ('n == 8 | 'n == 4)
   then {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mip[MSI]));
     Ok(zero_extend(sizeof(8 * 'n), mip[MSI]))
   }
-  else if addr == MTIMECMP_BASE & ('n == 4)
+  else if offset == MTIMECMP_BASE + 8 * hid & ('n == 4)
   then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtimecmp[31..0]));
     // FIXME: Redundant zero_extend currently required by Lem backend
     Ok(zero_extend(32, mtimecmp[31..0]))
   }
-  else if addr == MTIMECMP_BASE & ('n == 8)
+  else if offset == MTIMECMP_BASE + 8 * hid & ('n == 8)
   then {
     if   get_config_print_clint()
     then print_log("clint<8>[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtimecmp));
     // FIXME: Redundant zero_extend currently required by Lem backend
     Ok(zero_extend(64, mtimecmp))
   }
-  else if addr == MTIMECMP_BASE_HI & ('n == 4)
+  else if offset == MTIMECMP_BASE_HI + 8 * hid & ('n == 4)
   then {
     if   get_config_print_clint()
     then print_log("clint-hi<4>[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtimecmp[63..32]));
     // FIXME: Redundant zero_extend currently required by Lem backend
     Ok(zero_extend(32, mtimecmp[63..32]))
   }
-  else if addr == MTIME_BASE & ('n == 4)
+  else if offset == MTIME_BASE & ('n == 4)
   then {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtime));
     Ok(zero_extend(32, mtime[31..0]))
   }
-  else if addr == MTIME_BASE & ('n == 8)
+  else if offset == MTIME_BASE & ('n == 8)
   then {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtime));
     Ok(zero_extend(64, mtime))
   }
-  else if addr == MTIME_BASE_HI & ('n == 4)
+  else if offset == MTIME_BASE_HI & ('n == 4)
   then {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] -> " ^ bits_str(mtime));
@@ -175,43 +179,45 @@ private val clint_store: forall 'n, 'n > 0. (physaddr, int('n), bits(8 * 'n)) ->
 function clint_store(paddr, width, data) = {
   let Physaddr(addr) = paddr;
   let addr = addr - plat_clint_base;
-  if addr == MSIP_BASE & ('n == 8 | 'n == 4) then {
+  let offset = unsigned(addr);
+  let hid = unsigned(mhartid);
+  if offset == MSIP_BASE + 4 * hid & ('n == 8 | 'n == 4) then {
     if   get_config_print_clint()
     then print_log("clint[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mip.MSI <- " ^ bits_str(data[0..0]) ^ ")");
     mip[MSI] = [data[0]];
     clint_dispatch(true);
     Ok(true)
-  } else if addr == MTIMECMP_BASE & 'n == 8 then {
+  } else if offset == MTIMECMP_BASE + 8 * hid & 'n == 8 then {
     if   get_config_print_clint()
     then print_log("clint<8>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = zero_extend(64, data); // FIXME: Redundant zero_extend currently required by Lem backend
     clint_dispatch(false);
     Ok(true)
-  } else if addr == MTIMECMP_BASE & 'n == 4 then {
+  } else if offset == MTIMECMP_BASE + 8 * hid & 'n == 4 then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = vector_update_subrange(mtimecmp, 31, 0, zero_extend(32, data));  // FIXME: Redundant zero_extend currently required by Lem backend
     clint_dispatch(false);
     Ok(true)
-  } else if addr == MTIMECMP_BASE_HI & 'n == 4 then {
+  } else if offset == MTIMECMP_BASE_HI + 8 * hid & 'n == 4 then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtimecmp)");
     mtimecmp = vector_update_subrange(mtimecmp, 63, 32, zero_extend(32, data)); // FIXME: Redundant zero_extend currently required by Lem backend
     clint_dispatch(false);
     Ok(true)
-  } else if addr == MTIME_BASE & 'n == 8 then {
+  } else if offset == MTIME_BASE & 'n == 8 then {
     if   get_config_print_clint()
     then print_log("clint<8>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime = data;
     clint_dispatch(false);
     Ok(true)
-  } else if addr == MTIME_BASE & 'n == 4 then {
+  } else if offset == MTIME_BASE & 'n == 4 then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime[31 .. 0] = data;
     clint_dispatch(false);
     Ok(true)
-  } else if addr == MTIME_BASE_HI & 'n == 4 then {
+  } else if offset == MTIME_BASE_HI & 'n == 4 then {
     if   get_config_print_clint()
     then print_log("clint<4>[" ^ bits_str(addr) ^ "] <- " ^ bits_str(data) ^ " (mtime)");
     mtime[63 .. 32] = data;
