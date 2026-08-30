@@ -124,20 +124,17 @@ void question::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
 }
 
 void read_general_registers::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
-  ModelImpl &model = proto_handler.get_model();
-  auto regs = get_general_regs(model);
+  auto regs = get_general_regs(proto_handler);
   proto_handler.send_response(regs);
 }
 
 void read_register::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
-  ModelImpl &model = proto_handler.get_model();
-  auto reg = get_register(model, m_regidx);
+  auto reg = get_register(proto_handler, m_regidx);
   proto_handler.send_response(reg);
 }
 
 void write_register::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
-  ModelImpl &model = proto_handler.get_model();
-  auto reg = set_register(model, m_regidx, m_regval);
+  auto reg = set_register(proto_handler, m_regidx, m_regval);
   proto_handler.send_response(reg);
 }
 
