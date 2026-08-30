@@ -160,6 +160,10 @@ page.
   - The default `platform.clint.size` is now 0xc000 rather than 0xc0000.
     The CLINT register map ends at offset 0xbfff, so everything beyond it
     was claimed by the model but never used.
+  - Which `CBIE` encodings `menvcfg`, `senvcfg` and `henvcfg` support can be
+    specified, see `base.envcfg.menvcfg_legal_cbie`,
+    `base.envcfg.senvcfg_legal_cbie` and `base.envcfg.henvcfg_legal_cbie`.
+    Writes of unsupported encodings now leave the field unchanged.
   - Which VS-stage translation modes `vsatp` supports can be specified, see
     `extensions.H.vsatp_modes`. Bare is always supported.
   - Whether the Sstvecd extension is supported can be specified, see
