@@ -41,6 +41,10 @@
   - The default value of `base.medeleg.delegatable_bits` now also
     includes the exception codes introduced by H, i.e. VS-mode
     environment calls, virtual instructions, and the guest-page faults.
+  - The configuration for exceptions from misaligned LR/SC has been
+    modified; they now have a configuration that is similar to, but
+    independent of, AMOs. See `memory.misaligned.exceptions.lrsc`
+    and the `misaligned_exceptions.lrsc` PMA attribute.
 
 - Xvisor boot is now tested in CI. The `os-boot` Makefile has been
   generalized to build both the Linux and Xvisor images.

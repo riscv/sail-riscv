@@ -85,6 +85,7 @@ struct PMAMisalignedExceptions = {
   load_store : option(misaligned_exception),
   vector     : option(misaligned_exception),
   amo        : misaligned_exception,
+  lrsc       : misaligned_exception,
 }
 
 // Physical Memory Attributes for a region.
@@ -149,6 +150,9 @@ function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_paylo
     Load(Vector)           => exceptions.vector,
     Store(Vector)          => exceptions.vector,
     Atomic(_)              => Some(exceptions.amo),
+
+    LoadReserved(_, _, Data)     => Some(exceptions.lrsc),
+    StoreConditional(_, _, Data) => Some(exceptions.lrsc),
 
     // These access types should not be misaligned at the PMA level.
     InstructionFetch()        => internal_error(__FILE__, __LINE__, "PMA: Invalid misaligned instruction fetch."),
