@@ -45,6 +45,10 @@
   - The PMAs of a memory region can be optionally overridden for Svpbmt
     using `nc_overrides` (for `PBMT=NC`) and
     `io_overrides` (for `PBMT=IO`); see `extensions.Svpbmt`.
+  - Which `CBIE` encodings `menvcfg`, `senvcfg` and `henvcfg` support can be
+    specified, see `base.envcfg.menvcfg_legal_cbie`,
+    `base.envcfg.senvcfg_legal_cbie` and `base.envcfg.henvcfg_legal_cbie`.
+    Writes of unsupported encodings now leave the field unchanged.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
