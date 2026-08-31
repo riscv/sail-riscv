@@ -51,8 +51,7 @@ function clause execute ZICBOP(cbop, rs1, offset) = {
     Ext_DataAddr_OK(vaddr) => match translateAddr(vaddr, access, eff_priv) {
       Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
-          let ep = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
+          match phys_access_check(access, pbmt, eff_priv, paddr, cache_block_size, false) {
             Err(_e)  => (), // No access to cache; no-op.
             Ok(_)    => (), // The model has no caches so there's no action required.
           }
