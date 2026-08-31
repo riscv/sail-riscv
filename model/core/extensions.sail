@@ -73,15 +73,6 @@ function clause hartSupports(Ext_H) = config extensions.H.supported
 enum clause extension = Ext_Sha
 mapping clause extensionName = Ext_Sha <-> "sha"
 function clause hartSupports(Ext_Sha) = config extensions.Sha.supported
-function clause currentlyEnabled(Ext_Sha) = hartSupports(Ext_Sha)
-  & currentlyEnabled(Ext_H)
-  & currentlyEnabled(Ext_Ssstateen)
-  & currentlyEnabled(Ext_Shcounterenw)
-  & currentlyEnabled(Ext_Shgatpa)
-  & currentlyEnabled(Ext_Shtvala)
-  & currentlyEnabled(Ext_Shvsatpa)
-  & currentlyEnabled(Ext_Shvstvala)
-  & currentlyEnabled(Ext_Shvstvecd)
 // Any hpmcounter that is not read-only zero has a writable hcounteren bit
 enum clause extension = Ext_Shcounterenw
 mapping clause extensionName = Ext_Shcounterenw <-> "shcounterenw"
@@ -524,6 +515,19 @@ function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm) & currentl
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
 function clause hartSupports(Ext_Ssstateen) = config extensions.Stateen.Ssstateen.supported
+
+// Sha is declared above with the other hypervisor extensions. This clause has to
+// live here because it needs every dependency to be declared first.
+function clause currentlyEnabled(Ext_Sha) = hartSupports(Ext_Sha)
+  & currentlyEnabled(Ext_H)
+  & currentlyEnabled(Ext_Ssstateen)
+  & currentlyEnabled(Ext_Shcounterenw)
+  & currentlyEnabled(Ext_Shgatpa)
+  & currentlyEnabled(Ext_Shtvala)
+  & currentlyEnabled(Ext_Shvsatpa)
+  & currentlyEnabled(Ext_Shvstvala)
+  & currentlyEnabled(Ext_Shvstvecd)
+
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
