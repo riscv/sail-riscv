@@ -37,6 +37,15 @@ unit PlatformInterface::mem_exception_callback(
   return UNIT;
 }
 
+unit PlatformInterface::vmem_access_callback(
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] sbits paddr,
+  [[maybe_unused]] bool is_fetch,
+  [[maybe_unused]] bool is_write
+) {
+  return UNIT;
+}
+
 unit PlatformInterface::xreg_full_write_callback(
   [[maybe_unused]] const_sail_string abi_name,
   [[maybe_unused]] sbits reg,

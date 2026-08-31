@@ -76,6 +76,13 @@ unit ModelImpl::mem_exception_callback(sbits paddr, uint64_t num_of_exception) {
   return UNIT;
 }
 
+unit ModelImpl::vmem_access_callback(sbits vaddr, sbits paddr, bool is_fetch, bool is_write) {
+  for (auto c : m_callbacks) {
+    c->vmem_access_callback(*this, vaddr, paddr, is_fetch, is_write);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) {
   for (auto c : m_callbacks) {
     c->xreg_full_write_callback(*this, abi_name, reg, value);
@@ -531,8 +538,36 @@ int64_t ModelImpl::flen() const {
   return zflen;
 }
 
+int64_t ModelImpl::vlen() const {
+  return zvlen;
+}
+
 int64_t ModelImpl::physaddrbits_len() const {
   return zphysaddrbits_len;
+}
+
+uint64_t ModelImpl::cur_privilege_mode() const {
+  // zprivLevel_to_bits() maps the Sail Privilege enum to RVVI-TEXT MODE
+  // (0/1/3). The generated accessor is non-const but only reads state.
+  auto *mut_this = const_cast<ModelImpl *>(this);
+  return mut_this->zprivLevel_to_bits(zcur_privilege);
+}
+
+bool ModelImpl::virt_enabled() const {
+  // Hypervisor is not yet supported; distinguish Virtual{User,Supervisor}.
+  return zcur_privilege == hart::zVirtualUser || zcur_privilege == hart::zVirtualSupervisor;
+}
+
+uint64_t ModelImpl::mcycle() const {
+  return zmcycle;
+}
+
+uint64_t ModelImpl::mtime() const {
+  return zmtime;
+}
+
+uint64_t ModelImpl::minstret() const {
+  return zminstret;
 }
 
 uint64_t ModelImpl::pc() const {

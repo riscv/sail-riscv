@@ -38,6 +38,15 @@ void callbacks_if::mem_exception_callback(
 ) {
 }
 
+void callbacks_if::vmem_access_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] sbits paddr,
+  [[maybe_unused]] bool is_fetch,
+  [[maybe_unused]] bool is_write
+) {
+}
+
 void callbacks_if::xreg_full_write_callback(
   [[maybe_unused]] ModelImpl &model,
   [[maybe_unused]] const_sail_string abi_name,

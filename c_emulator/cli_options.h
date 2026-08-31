@@ -52,6 +52,7 @@ struct CLIOptions {
   bool config_print_pma = false;
   bool config_print_pmp = false;
   bool config_print_rvfi = false;
+  bool config_print_rvvi_text = false;
   bool config_print_step = false;
   bool config_print_ptw = false;
   bool config_print_tlb = false;
