@@ -709,9 +709,9 @@ function is_svukte_qualified(
 // NOTE: We must pass the effective privilege level, since hypervisor
 // instructions may execute with a different effective privilege.
 function translateAddr_eff_priv(
-  gva         : virtaddr,
-  access      : MemoryAccessType(mem_payload),
-  p           : Privilege,
+  gva    : virtaddr,
+  access : MemoryAccessType(mem_payload),
+  p      : Privilege
 ) -> TR_Result(physaddr, ExceptionContext) = {
 
 
