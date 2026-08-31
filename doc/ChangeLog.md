@@ -2,6 +2,7 @@
 
 - The following extensions have been added:
   - H
+  - Sha
   - Shcounterenw
   - Shgatpa
   - Shtvala

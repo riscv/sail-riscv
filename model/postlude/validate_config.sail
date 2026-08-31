@@ -52,6 +52,14 @@ private function require_Sv39(ext_name : string) -> bool = {
   true
 }
 
+private function check_sha_dependency(name : string, supported : bool) -> bool = {
+  if not(supported) then {
+    print_endline("The Sha extension is enabled but " ^ name ^ " is disabled: supporting Sha requires " ^ name ^ ".");
+    return false;
+  };
+  true
+}
+
 private function check_shgatpa_mode(sv_name : string, satp_supported : bool, hgatp_supported : bool) -> bool = {
   if satp_supported & not(hgatp_supported) then {
     print_endline("The Shgatpa extension is enabled and " ^ sv_name ^ " is supported in `satp`, but the matching " ^ sv_name ^ "x4 mode is disabled (under `extensions.H.hgatp_modes`).");
@@ -725,6 +733,19 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_shvsatpa_mode("Sv39", (config extensions.Sv39.supported : bool), sys_vsatp_sv39_supported);
     valid = valid & check_shvsatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_vsatp_sv48_supported);
     valid = valid & check_shvsatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_vsatp_sv57_supported);
+  };
+  // "The Augmented Hypervisor Extension, Sha, adds several minor features to
+  //  the hypervisor extension. It depends on the following extensions: H,
+  //  Ssstateen, Shcounterenw, Shvstvala, Shtvala, Shvstvecd, Shvsatpa, Shgatpa."
+  if (config extensions.Sha.supported : bool) then {
+    valid = valid & check_sha_dependency("H", (config extensions.H.supported : bool));
+    valid = valid & check_sha_dependency("Ssstateen", (config extensions.Stateen.Ssstateen.supported : bool));
+    valid = valid & check_sha_dependency("Shcounterenw", (config extensions.Shcounterenw.supported : bool));
+    valid = valid & check_sha_dependency("Shgatpa", (config extensions.Shgatpa.supported : bool));
+    valid = valid & check_sha_dependency("Shtvala", (config extensions.Shtvala.supported : bool));
+    valid = valid & check_sha_dependency("Shvsatpa", (config extensions.Shvsatpa.supported : bool));
+    valid = valid & check_sha_dependency("Shvstvala", (config extensions.Shvstvala.supported : bool));
+    valid = valid & check_sha_dependency("Shvstvecd", (config extensions.Shvstvecd.supported : bool));
   };
   valid
 }
