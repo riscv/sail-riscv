@@ -235,6 +235,8 @@ The following unratified extensions are supported and can be enabled using the `
 
 - Zibi extension for conditional branches with immediate operands, v0.6
 - Zilx extension for indexed integer load instructions, v0.1
+- Zimt extension for memory tagging with the Svatag/Smvatag tag table extensions, v0.2 draft
+  (partial; CSR addresses and several spec constants are placeholders pending TG allocation)
 - Zvabd extension for vector absolute difference, v0.7
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**

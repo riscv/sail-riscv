@@ -12,8 +12,15 @@
 
 - The following unratified extensions have been added:
   - Zilx
+  - Zimt (with Svatag/Smvatag), partial: instructions, CSRs and
+    no-paging implicit tag checks; CSR addresses are placeholders
+    pending allocation by the memory tagging TG
 
 - Updates to the [configuration file](../config/config.json.in):
+  - The supported Zimt pointer tag widths can be specified, see
+    `extensions.Zimt.supported_pointer_tag_width_4` and
+    `extensions.Zimt.supported_pointer_tag_width_7` (width 4 is
+    mandatory when Zimt is supported).
   - Which VS-stage translation modes `vsatp` supports can be specified, see
     `extensions.H.vsatp_modes`. Bare is always supported.
   - Whether the Sstvecd extension is supported can be specified, see
