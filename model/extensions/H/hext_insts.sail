@@ -70,13 +70,13 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
           None()                   => (),
         };
       };
-      match translateAddr_eff_priv(vaddr, access, eff_priv) {
+      match translateAddr(vaddr, access, eff_priv) {
         // No fetch->load exception conversion is needed: LoadExecute already raises load
         // (not fetch) exceptions on translation failure (see model/sys/vmem_ptw.sail),
         // matching the spec's "[HLVX] still raise the same exceptions as other load
         // instructions, rather than raising fetch exceptions instead."
         Err(e, _) => trap(e),
-        Ok(paddr, pbmt,_) => match mem_read_priv(access, pbmt, eff_priv, paddr, width, false, false, false) {
+        Ok(paddr, pbmt,_) => match mem_read(access, pbmt, eff_priv, paddr, width, false, false, false) {
           Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
           Err(exc_addr, e) => {
             assert(exc_addr == paddr);
@@ -107,32 +107,33 @@ function clause execute(HSV(width, rs1, rs2)) = {
 
   assert(width <= xlen_bytes);
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
-  match ext_data_get_addr(rs1, zeros(), Store(Data), width) {
+  let access = Store(Data);
+  match ext_data_get_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_hlsv_address(vaddr, Store(Data), eff_priv);
+      let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
       // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
       // one that crosses a page boundary should be split and translated per
       // page, the way vmem_read_addr and vmem_write_addr do. That needs
       // privilege aware versions of those helpers, see the refactor TODO in
       // model/sys/mem.sail.
       if not(is_aligned_addr(vaddr, width)) then {
-        match plat_misaligned_exception(Store(Data), false) {
+        match plat_misaligned_exception(access, false) {
           Some(AccessFault)        => return hlsv_memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr)),
           Some(AlignmentException) => return hlsv_memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr)),
           None()                   => (),
         };
       };
-      match translateAddr_eff_priv(vaddr, Store(Data), eff_priv) {
+      match translateAddr(vaddr, access, eff_priv) {
         Err(e, _) => trap(e),
         Ok(paddr, pbmt, _) => {
-          match mem_write_ea_priv(paddr, width, eff_priv, Store(Data), pbmt, false, false, false) {
+          match mem_write_ea(paddr, width, eff_priv, access, pbmt, false, false, false) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
               return hlsv_memory_exception(e, bits_of(exc_vaddr))
             },
             Ok(_) => {
-              match mem_write_value_priv(paddr, width, X(rs2)[8 * width - 1 .. 0], eff_priv, Store(Data), pbmt, false, false, false) {
+              match mem_write_value(paddr, width, X(rs2)[8 * width - 1 .. 0], eff_priv, access, pbmt, false, false, false) {
                 Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => internal_error(__FILE__, __LINE__, "HSV got false from mem_write_value"),
                 Err(exc_paddr, e) => {

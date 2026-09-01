@@ -22,13 +22,11 @@
 //
 // and some special cases which partially apply these functions:
 //
-//   mem_read_priv - strips metadata from reads
-//   mem_read_meta - uses effectivePrivilege
-//   mem_read      - both of the above partial applications
+//   mem_read_meta - returns read value and metadata
+//   mem_read      - strips metadata from reads
 //
-//   mem_write_value_meta - uses effectivePrivilege
-//   mem_write_value_priv - uses a default value for metadata
-//   mem_write_value      - both of the above partial applications
+//   mem_write_value_meta - requires an explicit metadata value
+//   mem_write_value      - uses a default metadata
 //
 // The internal implementation first performs a PMP check (if PMP is
 // enabled) and a PMA check, and then dispatches to MMIO regions or physical
@@ -327,16 +325,8 @@ termination_measure checked_mem_read repeat N
 
 // Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers.
 
-// TODO: mem_read, mem_read_meta, mem_write_ea, mem_write_value and
-// mem_write_value_meta derive the privilege internally via
-// effectivePrivilege(). translateAddr and access_is_gva recompute it again
-// for the same access. Refactor so callers compute the privilege once and
-// pass it down explicitly, i.e. use only the explicit-privilege variants
-// (mem_read_priv, mem_write_ea_priv, mem_write_value_priv, ...) and delete
-// the implicit wrappers.
-val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
-val mem_read_priv : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, Privilege, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
-val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
+val mem_read      : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, Privilege, physaddr, int('n), bool, bool, bool)       -> MemoryOpResult(bits(8 * 'n))
+val mem_read_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, Privilege, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
 val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (MemoryAccessType(mem_payload), page_based_mem_type, Privilege, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
 
 // The most generic memory read operation
@@ -353,21 +343,16 @@ function mem_read_priv_meta (access, pbmt, priv, paddr, width, aq, rl, res, meta
   result
 }
 
-function mem_read_meta (access, pbmt, paddr, width, aq, rl, res, meta) =
-  mem_read_priv_meta(access, pbmt, effectivePrivilege(access, mstatus, cur_privilege), paddr, width, aq, rl, res, meta)
+function mem_read_meta (access, pbmt, eff_priv, paddr, width, aq, rl, res, meta) =
+  mem_read_priv_meta(access, pbmt, eff_priv, paddr, width, aq, rl, res, meta)
 
-// Specialized mem_read_meta that drops the metadata
-function mem_read_priv (access, pbmt, priv, paddr, width, aq, rl, res) =
-  MemoryOpResult_drop_meta(mem_read_priv_meta(access, pbmt, priv, paddr, width, aq, rl, res, false))
+// Specialized mem_read_meta that drops the metadata; this is called with the effective privilege.
+function mem_read(access, pbmt, eff_priv, paddr, width, aq, rl, res) =
+  MemoryOpResult_drop_meta(mem_read_priv_meta(access, pbmt, eff_priv, paddr, width, aq, rl, res, false))
 
-// Specialized mem_read_priv that operates at the default effective privilege
-function mem_read (access, pbmt, paddr, width, aq, rel, res) =
-  mem_read_priv(access, pbmt, effectivePrivilege(access, mstatus, cur_privilege), paddr, width, aq, rel, res)
-
-// Explicit-privilege variant, called before `mem_write_value_priv`. Used by
-// HLV/HSV whose effective privilege comes from hstatus.SPVP rather than MPRV.
-val mem_write_ea_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), Privilege, MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(unit)
-function mem_write_ea_priv(paddr, width, priv, access, pbmt, aq, rl, con) = {
+// This function is always called before `mem_write_value`.
+val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), Privilege, MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(unit)
+function mem_write_ea(paddr, width, priv, access, pbmt, aq, rl, con) = {
   // This function should only succeed when `mem_write_value` would
   // succeed, and fail when `mem_write_value` would fail. This means
   // it should at least perform the same PMP/PMA checks, and includes
@@ -418,13 +403,7 @@ function mem_write_ea_priv(paddr, width, priv, access, pbmt, aq, rl, con) = {
 }
 
 // This lets the Rocq extraction know why the repeat loop above terminates
-termination_measure mem_write_ea_priv repeat N
-
-// This function is always called before `mem_write_value`.
-// It hence operates at effective privilege.
-val mem_write_ea : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(unit)
-function mem_write_ea(paddr, width, access, pbmt, aq, rl, con) =
-  mem_write_ea_priv(paddr, width, effectivePrivilege(access, mstatus, cur_privilege), access, pbmt, aq, rl, con)
+termination_measure mem_write_ea repeat N
 
 // dispatches to MMIO regions or physical memory regions depending on physical memory map
 function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
@@ -514,19 +493,11 @@ function mem_write_value_priv_meta (paddr, width, value, access, pbmt, priv, met
 }
 
 // Memory write with explicit Privilege and MemoryAccessType, and implicit metadata
-val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_priv (paddr, width, value, priv, access, pbmt, aq, rl, con) =
+val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value(paddr, width, value, priv, access, pbmt, aq, rl, con) =
   mem_write_value_priv_meta(paddr, width, value, access, pbmt, priv, default_meta, aq, rl, con)
 
 // Memory write with explicit metadata and MemoryAccessType, and implicit Privilege
-val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), page_based_mem_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_meta (paddr, width, value, access, pbmt, meta, aq, rl, con) = {
-  let ep = effectivePrivilege(access, mstatus, cur_privilege);
-  mem_write_value_priv_meta(paddr, width, value, access, pbmt, ep, meta, aq, rl, con)
-}
-
-// Memory write with explicit MemoryAccessType, default metadata and implicit Privilege
-val mem_write_value : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), MemoryAccessType(mem_payload), page_based_mem_type, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value (paddr, width, value, access, pbmt, aq, rl, con) = {
-  mem_write_value_meta(paddr, width, value, access, pbmt, default_meta, aq, rl, con)
-}
+val mem_write_value_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), Privilege, MemoryAccessType(mem_payload), page_based_mem_type, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
+function mem_write_value_meta (paddr, width, value, eff_priv, access, pbmt, meta, aq, rl, con) =
+  mem_write_value_priv_meta(paddr, width, value, access, pbmt, eff_priv, meta, aq, rl, con)

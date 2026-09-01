@@ -92,12 +92,12 @@ function memory_exception(e : ExceptionType, excinfo : xlenbits, access : Memory
 
 // Helper for translated read access.
 private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_access.
-  (vaddr : virtaddr, width : int('width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
+  (vaddr : virtaddr, width : int('width), eff_priv : Privilege, access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
   -> result((physaddr, bits(8 * 'width)), ExecutionResult) =
-  match translateAddr(vaddr, access) {
+  match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => Err(trap(e)),
 
-    Ok(paddr, pbmt, _) => match mem_read(access, pbmt, paddr, width, aq, rl, res) {
+    Ok(paddr, pbmt, _) => match mem_read(access, pbmt, eff_priv, paddr, width, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
         Err(memory_exception(e, bits_of(exc_vaddr), access))
@@ -138,16 +138,16 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // We should only split the access before address translation if (a)
   // virtual memory is in effect, and (b) it crosses a page boundary.
   // If we do split, perform the split access in the configured order.
-  let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-  let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
-  then vsatp_mode() != Bare | hgatp_mode() != HBare
-  else satp_mode(cur_privilege) != Bare;
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let vmem_active : bool = if privLevel_is_virtual(eff_priv)
+                           then vsatp_mode() != Bare | hgatp_mode() != HBare
+                           else satp_mode(eff_priv) != Bare;
   let do_split_access = vmem_active & next_page_bytes > 0 & not(res);
 
   if sys_misaligned_order_decreasing & do_split_access then {
     // Do next page access first.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
+    match translate_and_read_value(access_addr, next_page_bytes, eff_priv, access, aq, rl, res) {
       Err(e)   => return Err(e),
       Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
@@ -156,7 +156,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // If the access was split, only the in-page bytes should be
   // accessed, otherwise all bytes should be accessed.
   let access_width = if do_split_access then in_page_bytes else width;
-  match translate_and_read_value(vaddr, access_width, access, aq, rl, res) {
+  match translate_and_read_value(vaddr, access_width, eff_priv, access, aq, rl, res) {
     Err(e)       => return Err(e),
     Ok(paddr, v) => {
       if res then {
@@ -171,7 +171,7 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   if not(sys_misaligned_order_decreasing) & do_split_access then {
     // Do next page access next.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
+    match translate_and_read_value(access_addr, next_page_bytes, eff_priv, access, aq, rl, res) {
       Err(e)   => return Err(e),
       Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
@@ -182,18 +182,19 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
 
 // Helper for translated write access.
 private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_access.
-  (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
+  (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), eff_priv : Privilege, access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
   -> result(bool, ExecutionResult) =
-  match translateAddr(vaddr, access) {
+
+  match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => Err(trap(e)),
 
-    Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, access, pbmt, aq, rl, res) {
+    Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
         Err(memory_exception(e, bits_of(exc_vaddr), access))
       },
 
-      Ok(()) => match mem_write_value(paddr, width, value, access, pbmt, aq, rl, res) {
+      Ok(()) => match mem_write_value(paddr, width, value, eff_priv, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
           Err(memory_exception(e, bits_of(exc_vaddr), access))
@@ -235,23 +236,24 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
 
-  let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-  let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
-  then vsatp_mode() != Bare | hgatp_mode() != HBare
-  else satp_mode(cur_privilege) != Bare;
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+
+  let vmem_active : bool = if privLevel_is_virtual(eff_priv)
+                           then vsatp_mode() != Bare | hgatp_mode() != HBare
+                           else satp_mode(eff_priv) != Bare;
   let do_split_access = vmem_active & next_page_bytes > 0 & not(res);
 
   if sys_misaligned_order_decreasing & do_split_access then {
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
+    match translate_and_write_value(access_addr, next_page_bytes, write_value, eff_priv, access, aq, rl, res) {
       Err(e) => return Err(e),
       Ok(s)  => write_success = write_success & s,
     }
   };
 
   let access_width = if do_split_access then in_page_bytes else width;
-  match translateAddr(vaddr, access) {
+  match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => return Err(trap(e)),
 
     Ok(paddr, pbmt, _) => {
@@ -262,12 +264,11 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
         // instruction which accesses a physical address within a
         // PMP region without write permissions raises a store
         // access-fault exception."
-        let effPriv = effectivePrivilege(access, mstatus, cur_privilege);
-        match phys_access_check(access, pbmt, effPriv, paddr, access_width, true) {
+        match phys_access_check(access, pbmt, eff_priv, paddr, access_width, true) {
           Err(e) => return Err(memory_exception(e, bits_of(vaddr), access)),
           Ok(_)  => write_success = false,
         }
-      } else match mem_write_ea(paddr, access_width, access, pbmt, aq, rl, res) {
+      } else match mem_write_ea(paddr, access_width, eff_priv, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
           return Err(memory_exception(e, bits_of(exc_vaddr), access))
@@ -275,7 +276,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 
         Ok(()) => {
           let write_value = data[8 * access_width - 1 .. 0];
-          match mem_write_value(paddr, access_width, write_value, access, pbmt, aq, rl, res) {
+          match mem_write_value(paddr, access_width, write_value, eff_priv, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
               return Err(memory_exception(e, bits_of(exc_vaddr), access))
@@ -290,7 +291,7 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   if not(sys_misaligned_order_decreasing) & do_split_access then {
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
+    match translate_and_write_value(access_addr, next_page_bytes, write_value, eff_priv, access, aq, rl, res) {
       Err(e) => return Err(e),
       Ok(s)  => write_success = write_success & s,
     }

@@ -22,7 +22,10 @@ private function rvfi_fetch() -> FetchResult = {
   if   (PC[0] != 0b0 | (PC[1] != 0b0 & not(currentlyEnabled(Ext_Zca))))
   then return F_Error(exception_context(E_Fetch_Addr_Align(), PC));
 
-  match translateAddr(Virtaddr(PC), InstructionFetch()) {
+  let access : MemoryAccessType(mem_payload) = InstructionFetch();
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+
+  match translateAddr(Virtaddr(PC), access, eff_priv) {
     Err(e, _)   => return F_Error(e),
     Ok(_, _, _) => (),
   };
@@ -39,7 +42,7 @@ private function rvfi_fetch() -> FetchResult = {
     None()  => (),
   };
 
-  match translateAddr(Virtaddr(PC_hi), InstructionFetch()) {
+  match translateAddr(Virtaddr(PC_hi), access, eff_priv) {
     Err(e, _)   => F_Error({ e with excinfo = PC }),
     Ok(_, _, _) => F_Base(i)
   }
