@@ -700,15 +700,20 @@ private function build_exception_context(
 // Checks if an access is Svukte-qualified under the Svukte extension. If the extension is not
 // enabled, the UKTE bit of senvcfg is read-only-zero, so accesses will never be qualified.
 function is_svukte_qualified(
+  access   : MemoryAccessType(mem_payload),
   eff_priv : Privilege,
-  mode: SATPMode
+  mode     : SATPMode
 ) -> bool = {
+  // Only instruction fetches and explicit accesses can be Svukte-qualified.
+  let qualified_access_type = access == InstructionFetch() | not(is_implicit_access(access));
+
   let ukte_enable = if eff_priv == VirtualUser & cur_privilege == User
                     then hstatus[HUKTE]
                     else read_senvcfg()[UKTE];
 
   mode != Bare &
     (eff_priv == User | eff_priv == VirtualUser) &
+    qualified_access_type &
     ukte_enable == 0b1
 }
 
@@ -748,7 +753,7 @@ function translateAddr(
   // Svukte-qualified accesses are invalid if their virtual address is >= 2^(SXLEN-1).
   // This check uses this model's assumption that SXLEN == XLEN, and would need reworking if that
   // assumption were to change in the future.
-  if is_svukte_qualified(p, mode) & (bits_of(gva)[xlen - 1] == bitone) then {
+  if is_svukte_qualified(access, p, mode) & (bits_of(gva)[xlen - 1] == bitone) then {
     return Err(make_exception_context(translationException(access, PTW_Invalid_Addr()), zero_extend(bits_of(gva)), is_virtual_access, None()), init_ext_ptw);
   };
 
