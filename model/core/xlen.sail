@@ -25,6 +25,11 @@ type gpalen : Int = if xlen == 32 then 34 else 64
 type asidlen    : Int = if xlen == 32 then 9 else 16
 // TODO: Allow configuring shorter VMIDLENs.
 type vmidlen    : Int = if xlen == 32 then 7 else 14
+// GEILEN, the number of guest external interrupts. Bits GEILEN:1 of hgeip and
+// hgeie are implemented, all other bit positions are read-only zero. The
+// maximum is 31 for RV32 and 63 for RV64.
+type geilen : Int = config extensions.H.geilen
+constraint 0 <= geilen & geilen <= xlen - 1
 
 // Variable versions of the above types. Variables and types
 // are disjoint in Sail so they are allowed to have the same name.
@@ -35,6 +40,7 @@ let xlen = sizeof(xlen)
 let gpalen = sizeof(gpalen)
 let asidlen = sizeof(asidlen)
 let vmidlen = sizeof(vmidlen)
+let geilen = sizeof(geilen)
 
 type xlenbits = bits(xlen)
 type gpabits  = bits(gpalen)

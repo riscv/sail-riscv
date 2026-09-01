@@ -331,9 +331,10 @@ private function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
     VTSR  = v[VTSR],
     VTW   = v[VTW],
     VTVM  = v[VTVM],
-    // VGEIN is WLRL and GEILEN is XLEN-1, so every value is accepted.
-    // TODO: Legalize against a GEILEN config once one exists.
-    VGEIN = v[VGEIN],
+    // "VGEIN is a WLRL field that must be able to hold values between zero and
+    //  the maximum guest external interrupt number (known as GEILEN), inclusive."
+    //  Being WLRL, an out-of-range value keeps the previous one.
+    VGEIN = if unsigned(v[VGEIN]) <= geilen then v[VGEIN] else h[VGEIN],
     HU    = v[HU],
     SPVP  = v[SPVP],
     SPV   = v[SPV],

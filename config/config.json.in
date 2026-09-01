@@ -571,6 +571,12 @@
     },
     "H": {
       "supported": true,
+      // GEILEN, the number of guest external interrupts. Bits GEILEN:1 of
+      // `hgeip` and `hgeie` are implemented, all other bit positions are
+      // read-only zero. Zero means no guest external interrupts, in which case
+      // `hstatus.VGEIN` is read-only zero and the `mideleg` SGEI bit is
+      // read-only zero instead of read-only one. The maximum is XLEN-1.
+      "geilen": @CONFIG__H__GEILEN@,
       // Whether a guest-page fault writes the faulting guest physical address
       // to `htval`/`mtval2`. If false, `htval`/`mtval2` is written as zero.
       // Enabling Shtvala requires this option to be enabled.
