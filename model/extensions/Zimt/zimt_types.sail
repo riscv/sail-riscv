@@ -56,3 +56,12 @@ function mc_tag_width(mode : MemTaggingMode) -> mc_tag_width_t = match mode {
   MT_MODE_Tag4     => 4,
   MT_MODE_Tag7     => 8,
 }
+
+// pointer_tag width of an enabled (non-disabled, non-reserved) mode.
+type zimt_tag_width = {4, 7}
+
+function enabled_pointer_tag_width(mode : MemTaggingMode) -> zimt_tag_width =
+  match mode {
+    MT_MODE_Tag7 => 7,
+    _            => 4,
+  }

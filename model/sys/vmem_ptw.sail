@@ -104,6 +104,13 @@ function translationException(access : MemoryAccessType(mem_payload),
     (Store(ShadowStack), PTW_No_Access())        => E_SAMO_Access_Fault(),
     (Store(ShadowStack), _)                      => E_SAMO_Page_Fault(),
 
+    // Zimt tag table accesses fault like regular loads/stores; the
+    // tag virtual address is reported in xtval.
+    (Load(Tag), PTW_No_Access())                 => E_Load_Access_Fault(),
+    (Load(Tag), _)                               => E_Load_Page_Fault(),
+    (Store(Tag), PTW_No_Access())                => E_SAMO_Access_Fault(),
+    (Store(Tag), _)                              => E_SAMO_Page_Fault(),
+
     (InstructionFetch(), PTW_No_Access())        => E_Fetch_Access_Fault(),
     (InstructionFetch(), _)                      => E_Fetch_Page_Fault(),
 

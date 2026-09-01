@@ -120,6 +120,10 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
     // to be idempotent."
     Load(ShadowStack)      => {assert(not(res_or_con)); attributes.readable & attributes.read_idempotent},
     Store(ShadowStack)     => {assert(not(res_or_con)); attributes.writable & attributes.write_idempotent},
+
+    // Zimt tag table accesses are checked like regular loads/stores.
+    Load(Tag)              => {assert(not(res_or_con)); attributes.readable},
+    Store(Tag)             => {assert(not(res_or_con)); attributes.writable},
     Atomic(AMOSWAP, _, _, ShadowStack, ShadowStack) => {assert(res_or_con); attributes.readable & attributes.writable & attributes.read_idempotent & attributes.write_idempotent & pma_allows_atomic_op(attributes.atomic_support, AMOSWAP, width)},
 
     // TODO for the CMO extensions: "The PMAs shall be the
