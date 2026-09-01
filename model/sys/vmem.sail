@@ -698,8 +698,8 @@ function is_svukte_qualified(
   mode: SATPMode
 ) -> bool = {
   let ukte_enable = if eff_priv == VirtualUser & cur_privilege == User
-                                then hstatus[HUKTE]
-                                else read_senvcfg()[UKTE];
+                    then hstatus[HUKTE]
+                    else read_senvcfg()[UKTE];
 
   mode != Bare &
     (eff_priv == User | eff_priv == VirtualUser) &
