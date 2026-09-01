@@ -7,7 +7,7 @@ prelude {
 }
 
 core {
-  requires prelude, A_types, Zicbop_types, Zicbom_types, PM_types
+  requires prelude, A_types, Zicbop_types, Zicbom_types, PM_types, Zimt_types
 
   files
     core/isa_version.sail,
