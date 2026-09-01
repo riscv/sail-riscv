@@ -245,7 +245,8 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
     E_Fetch_Access_Fault() => fetch_access_fault_writes_xtval,
     E_Fetch_Page_Fault() => fetch_page_fault_writes_xtval,
     E_Fetch_GPage_Fault() => fetch_guest_page_fault_writes_xtval,
-    E_Software_Check() => software_check_fault_writes_xtval,
+    E_Software_Check() => software_check_exception_writes_xtval,
+    E_Hardware_Error() => hardware_error_exception_writes_xtval,
     E_U_EnvCall()  => false,
     E_S_EnvCall()  => false,
     E_VS_EnvCall() => false,
@@ -255,7 +256,6 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
     E_Reserved_14() => reserved_exceptions_write_xtval,
     E_Reserved_16() => reserved_exceptions_write_xtval,
     E_Reserved_17() => reserved_exceptions_write_xtval,
-    E_Reserved_19() => reserved_exceptions_write_xtval,
   } then Some(excinfo) else None()
 }
 
