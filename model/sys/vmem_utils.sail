@@ -32,7 +32,7 @@
 
 function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res : bool) -> option(misaligned_exception) = {
   if is_amo_access(access) then plat_misaligned_access.amo
-  else if res then Some(plat_misaligned_access.lrsc)
+  else if res then plat_misaligned_access.lrsc
   else if is_vector_access(access) then plat_misaligned_access.vector
   else plat_misaligned_access.load_store
 }
@@ -112,6 +112,9 @@ val vmem_read_addr : forall 'width, is_mem_width('width).
   -> result(bits(8 * 'width), ExecutionResult)
 
 function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
+  // Other AMOs currently don't go through `vmem_utils` functions.
+  assert(res == is_load_reserved(access));
+
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
@@ -139,12 +142,9 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
   then vsatp_mode() != Bare | hgatp_mode() != HBare
   else satp_mode(cur_privilege) != Bare;
-  let do_split_access = vmem_active & next_page_bytes > 0;
+  let do_split_access = vmem_active & next_page_bytes > 0 & not(res);
 
   if sys_misaligned_order_decreasing & do_split_access then {
-    // Load-reserved cannot be misaligned.
-    assert(not(res));
-
     // Do next page access first.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
@@ -169,9 +169,6 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   };
 
   if not(sys_misaligned_order_decreasing) & do_split_access then {
-    // Load-reserved cannot be misaligned.
-    assert(not(res));
-
     // Do next page access next.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     match translate_and_read_value(access_addr, next_page_bytes, access, aq, rl, res) {
@@ -212,6 +209,9 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
+  // Other AMOs currently don't go through `vmem_utils` functions.
+  assert(res == is_store_conditional(access));
+
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
@@ -239,12 +239,9 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   let vmem_active : bool = if privLevel_is_virtual(cur_privilege)
   then vsatp_mode() != Bare | hgatp_mode() != HBare
   else satp_mode(cur_privilege) != Bare;
-  let do_split_access = vmem_active & next_page_bytes > 0;
+  let do_split_access = vmem_active & next_page_bytes > 0 & not(res);
 
   if sys_misaligned_order_decreasing & do_split_access then {
-    // Store-conditionals cannot be misaligned.
-    assert(not(is_store_conditional(access)));
-
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
     match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {
@@ -258,8 +255,6 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
     Err(e, _) => return Err(trap(e)),
 
     Ok(paddr, pbmt, _) => {
-      // If res is true, the store should be aligned.
-      assert(res == is_store_conditional(access));
       if res & not(match_reservation(bits_of(paddr))) then {
         // Check PMA and PMP access controls before reporting the
         // cancelled reservation.
@@ -293,9 +288,6 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   };
 
   if not(sys_misaligned_order_decreasing) & do_split_access then {
-    // Store-conditionals cannot be misaligned.
-    assert(not(is_store_conditional(access)));
-
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
     match translate_and_write_value(access_addr, next_page_bytes, write_value, access, aq, rl, res) {

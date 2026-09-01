@@ -338,7 +338,8 @@ private function xatp_to_ppn(stage : TranslationStage) -> bits(if xlen == 32 the
 
 // Return the active address translation mode for S-Stage translation.
 private function satp_mode(priv : Privilege) -> SATPMode = {
-  if priv == Machine then Bare
+  // Without S-mode enabled, satp is inactive and translation is Bare at every privilege.
+  if priv == Machine | not(currentlyEnabled(Ext_S)) then Bare
   else {
     let arch = architecture(Supervisor);
     let mbits : satp_mode = match arch {
@@ -641,7 +642,9 @@ private function build_exception_context(
             Load(_)  => false,
             _        => internal_error(__FILE__, __LINE__, "invalid memory access type"),
           };
-          let tval2 = truncate(pte_addr >> 2, xlen);
+          let tval2 = if sys_guest_page_fault_writes_htval
+                      then truncate(pte_addr >> 2, xlen)
+                      else zeros();
           struct {
             trap  = convertToGuestException(e),
             excinfo_is_gva = true,
@@ -679,11 +682,14 @@ private function build_exception_context(
       }
     },
     G_Stage => {
+      let tval2 = if sys_guest_page_fault_writes_htval
+                  then truncate(gpa >> 2, xlen)
+                  else zeros();
       struct {
         trap  = convertToGuestException(translationException(access, ptw_error)),
         excinfo_is_gva = true,
         excinfo  = zero_extend(bits_of(gva)),
-        excinfo2 = Some(truncate(gpa >> 2, xlen)),
+        excinfo2 = Some(tval2),
         excinst  = None(),
         ext      = None(),
       }

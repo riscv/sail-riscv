@@ -136,6 +136,12 @@ function is_prefetch_access forall ('a : Type) . (access : MemoryAccessType('a))
     _ => false,
   }
 
+function is_load_reserved forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
+  match access {
+    LoadReserved(_) => true,
+    _ => false,
+  }
+
 function is_store_conditional forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
   match access {
     StoreConditional(_) => true,

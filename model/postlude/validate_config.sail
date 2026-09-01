@@ -28,6 +28,11 @@ private function check_tvecs() -> bool = {
     print_endline("`stvec` specifies neither `direct` or `vectored` is supported; one of the modes must be supported.");
   };
 
+  if (config extensions.H.supported : bool) & not(config base.vstvec.direct.supported : bool) & not(config base.vstvec.vectored.supported : bool) then {
+    valid = false;
+    print_endline("`vstvec` specifies neither `direct` or `vectored` is supported; one of the modes must be supported.");
+  };
+
   valid
 }
 
@@ -42,6 +47,30 @@ private function require_Sv32(ext_name : string) -> bool = {
 private function require_Sv39(ext_name : string) -> bool = {
   if not(config extensions.Sv39.supported : bool) then {
     print_endline("The " ^ ext_name ^ " extension is enabled but Sv39 is disabled: " ^ ext_name ^ " depends on Sv39 on RV64.");
+    return false;
+  };
+  true
+}
+
+private function check_sha_dependency(name : string, supported : bool) -> bool = {
+  if not(supported) then {
+    print_endline("The Sha extension is enabled but " ^ name ^ " is disabled: supporting Sha requires " ^ name ^ ".");
+    return false;
+  };
+  true
+}
+
+private function check_shgatpa_mode(sv_name : string, satp_supported : bool, hgatp_supported : bool) -> bool = {
+  if satp_supported & not(hgatp_supported) then {
+    print_endline("The Shgatpa extension is enabled and " ^ sv_name ^ " is supported in `satp`, but the matching " ^ sv_name ^ "x4 mode is disabled (under `extensions.H.hgatp_modes`).");
+    return false;
+  };
+  true
+}
+
+private function check_shvsatpa_mode(sv_name : string, satp_supported : bool, vsatp_supported : bool) -> bool = {
+  if satp_supported & not(vsatp_supported) then {
+    print_endline("The Shvsatpa extension is enabled and " ^ sv_name ^ " is supported in `satp`, but " ^ sv_name ^ " is disabled in `vsatp` (under `extensions.H.vsatp_modes`).");
     return false;
   };
   true
@@ -63,6 +92,14 @@ private function check_mmu_config() -> bool = {
       valid = false;
       print_endline("Supervisor mode (S) disabled but one of (Sv57, Sv48, Sv39) is enabled: cannot support address translation without supervisor mode.");
     };
+    // satp.MODE is WARL, so at least one mode has to be supported or no write
+    // to satp can ever take effect.
+    if (config extensions.S.supported : bool) &
+      not((config extensions.Svbare.supported : bool) | (config extensions.Sv39.supported : bool) | (config extensions.Sv48.supported : bool) | (config extensions.Sv57.supported : bool))
+    then {
+      valid = false;
+      print_endline("Supervisor mode (S) is enabled but no `satp` mode is supported for RV64: enable Svbare or one of (Sv39, Sv48, Sv57).");
+    };
     if (config extensions.Sv57.supported : bool) & not(config extensions.Sv48.supported : bool)
     then {
       valid = false;
@@ -78,6 +115,28 @@ private function check_mmu_config() -> bool = {
       valid = false;
       print_endline("Sv32 is enabled: Sv32 is not supported on RV64.");
     };
+    // The spec states this ordering for the modes an implementation supports,
+    // but does not say explicitly whether it also applies to `vsatp`. Mirror
+    // the `satp` rule, so a guest cannot be left without the smaller modes.
+    if (config extensions.H.supported : bool) then {
+      if sys_vsatp_sv57_supported & not(sys_vsatp_sv48_supported)
+      then {
+        valid = false;
+        print_endline("Sv57 is enabled for `vsatp` but Sv48 is disabled: supporting Sv57 requires supporting Sv48.");
+      };
+      if sys_vsatp_sv48_supported & not(sys_vsatp_sv39_supported)
+      then {
+        valid = false;
+        print_endline("Sv48 is enabled for `vsatp` but Sv39 is disabled: supporting Sv48 requires supporting Sv39.");
+      };
+      // NOTE: Sv32 for `vsatp` needs VSXLEN=32, which needs a writable
+      // `hstatus.VSXL`. Revisit this if RV32 guests on RV64 are supported.
+      if sys_vsatp_sv32_supported
+      then {
+        valid = false;
+        print_endline("Sv32 is enabled for `vsatp`: Sv32 is not currently supported on RV64.");
+      };
+    };
   } else {
     assert(xlen == 32);
     if not(config extensions.S.supported : bool) & (config extensions.Sv32.supported : bool)
@@ -85,10 +144,21 @@ private function check_mmu_config() -> bool = {
       valid = false;
       print_endline("Supervisor mode (S) is disabled but Sv32 is enabled: cannot support address translation without supervisor mode.");
     };
+    if (config extensions.S.supported : bool) & not((config extensions.Svbare.supported : bool) | (config extensions.Sv32.supported : bool))
+    then {
+      valid = false;
+      print_endline("Supervisor mode (S) is enabled but no `satp` mode is supported for RV32: enable Svbare or Sv32.");
+    };
     if (config extensions.Sv39.supported : bool) | (config extensions.Sv48.supported : bool) |  (config extensions.Sv57.supported : bool)
     then {
       valid = false;
       print_endline("One or more of Sv39/Sv48/Sv57 is enabled: these are not supported on RV32.");
+    };
+    if (config extensions.H.supported : bool) &
+       (sys_vsatp_sv39_supported | sys_vsatp_sv48_supported | sys_vsatp_sv57_supported)
+    then {
+      valid = false;
+      print_endline("One or more of Sv39/Sv48/Sv57 is enabled for `vsatp`: these are not supported on RV32.");
     };
   };
 
@@ -450,9 +520,9 @@ private function check_pmp() -> bool = {
   valid
 }
 
-private function check_required_sstvala_option(name : string, value : bool) -> bool = {
+private function check_required_xtval_option(ext_name : string, name : string, value : bool) -> bool = {
   if not(value) then {
-    print_endline("The Sstvala extension is enabled but " ^ name ^ " have not been configured (under `base.xtval_nonzero`) to write xtval.");
+    print_endline("The " ^ ext_name ^ " extension is enabled but " ^ name ^ " have not been configured (under `base.xtval_nonzero`) to write xtval.");
     false
   } else {
     true
@@ -524,32 +594,82 @@ private function check_misc_extension_dependencies() -> bool = {
     // access-fault, and misaligned exceptions, and for breakpoint exceptions other than those caused by execution of
     // the EBREAK or C.EBREAK instructions. For virtual-instruction and illegal-instruction exceptions, `stval` must be
     // written with the faulting instruction.
-    valid = valid & check_required_sstvala_option("load page-faults", load_page_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("load access-faults", load_access_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("misaligned load exceptions", misaligned_load_writes_xtval);
-    valid = valid & check_required_sstvala_option("store/AMO page-faults", samo_page_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("store/AMO access-faults", samo_access_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("misaligned store/AMO exceptions", misaligned_samo_writes_xtval);
-    valid = valid & check_required_sstvala_option("fetch page-faults", fetch_page_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("fetch access-faults", fetch_access_fault_writes_xtval);
-    valid = valid & check_required_sstvala_option("misaligned fetch exceptions", misaligned_fetch_writes_xtval);
-    valid = valid & check_required_sstvala_option("hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
-    valid = valid & check_required_sstvala_option("illegal instruction exceptions", illegal_instruction_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "load page-faults", load_page_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "load access-faults", load_access_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "misaligned load exceptions", misaligned_load_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "store/AMO page-faults", samo_page_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "store/AMO access-faults", samo_access_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "misaligned store/AMO exceptions", misaligned_samo_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "fetch page-faults", fetch_page_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "fetch access-faults", fetch_access_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "misaligned fetch exceptions", misaligned_fetch_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
+    valid = valid & check_required_xtval_option("Sstvala", "illegal instruction exceptions", illegal_instruction_writes_xtval);
     // Guest-page faults and virtual-instruction exceptions can only be raised when H is supported.
     if (config extensions.H.supported : bool) then {
-      valid = valid & check_required_sstvala_option("load guest page-faults", load_guest_page_fault_writes_xtval);
-      valid = valid & check_required_sstvala_option("store/AMO guest page-faults", samo_guest_page_fault_writes_xtval);
-      valid = valid & check_required_sstvala_option("fetch guest page-faults", fetch_guest_page_fault_writes_xtval);
-      valid = valid & check_required_sstvala_option("virtual instruction exceptions", virtual_instruction_writes_xtval);
+      valid = valid & check_required_xtval_option("Sstvala", "load guest page-faults", load_guest_page_fault_writes_xtval);
+      valid = valid & check_required_xtval_option("Sstvala", "store/AMO guest page-faults", samo_guest_page_fault_writes_xtval);
+      valid = valid & check_required_xtval_option("Sstvala", "fetch guest page-faults", fetch_guest_page_fault_writes_xtval);
+      valid = valid & check_required_xtval_option("Sstvala", "virtual instruction exceptions", virtual_instruction_writes_xtval);
+    };
+  };
+  // "`vstval` must be written in all cases described in Sstvala for `stval`."
+  // Guest-page faults and virtual-instruction exceptions cannot be delegated to
+  // VS-mode, their `hedeleg` bits are read-only zero, so they do not apply here.
+  // NOTE: The model has one global set of `base.xtval_nonzero` options covering
+  // `mtval`, `stval` and `vstval`, so these checks read the same options as
+  // Sstvala above. If those options are ever split per register, update these
+  // to read the `vstval` ones.
+  if (config extensions.Shvstvala.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shvstvala extension writes `vstval` which requires the H extension but H is not enabled.");
+    };
+    valid = valid & check_required_xtval_option("Shvstvala", "load page-faults", load_page_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "load access-faults", load_access_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "misaligned load exceptions", misaligned_load_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "store/AMO page-faults", samo_page_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "store/AMO access-faults", samo_access_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "misaligned store/AMO exceptions", misaligned_samo_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "fetch page-faults", fetch_page_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "fetch access-faults", fetch_access_fault_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "misaligned fetch exceptions", misaligned_fetch_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "hardware breakpoint exceptions", hardware_breakpoint_writes_xtval);
+    valid = valid & check_required_xtval_option("Shvstvala", "illegal instruction exceptions", illegal_instruction_writes_xtval);
+  };
+  if (config extensions.Sstvecd.supported : bool) then {
+    if not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("The Sstvecd extension is enabled but supervisor mode (S) is disabled: supporting Sstvecd requires S.");
+    };
+    if not(config base.stvec.direct.supported : bool) then {
+      valid = false;
+      print_endline("The Sstvecd extension is enabled but `stvec` does not support the `direct` mode (see `base.stvec.direct.supported`).");
     };
   };
   if (config extensions.Ssqosid.supported : bool) & not(config extensions.Zicsr.supported : bool) then {
     valid = false;
     print_endline("The Ssqosid extension is enabled but Zicsr is disabled: supporting Ssqosid requires Zicsr.");
   };
-  if (config extensions.Sscounterenw.supported : bool) & ((sys_writable_hpm_counters[31 .. 3] & sys_scounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3]) then {
-    valid = false;
-    print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
+  if (config extensions.Sscounterenw.supported : bool) then {
+    if not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("The Sscounterenw extension is enabled but supervisor mode (S) is disabled: supporting Sscounterenw requires S.");
+    };
+    if (sys_writable_hpm_counters[31 .. 3] & sys_scounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3] then {
+      valid = false;
+      print_endline("The Sscounterenw extension is enabled but `scounteren` is not writable (via `base.scounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
+    };
+  };
+  if (config extensions.Shcounterenw.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shcounterenw extension is enabled but the H extension is disabled: supporting Shcounterenw requires H.");
+    };
+    if (sys_writable_hpm_counters[31 .. 3] & sys_hcounteren_writable_bits[31 .. 3]) != sys_writable_hpm_counters[31 .. 3] then {
+      valid = false;
+      print_endline("The Shcounterenw extension is enabled but `hcounteren` is not writable (via `base.hcounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
+    };
   };
   if (xlen == 32 & ((config extensions.Ssnpm.supported : bool) | (config extensions.Smmpm.supported : bool) | (config extensions.Smnpm.supported : bool))) then {
     valid = false;
@@ -565,6 +685,76 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("The H extension is enabled but supervisor mode (S) is disabled: supporting H requires S.");
     };
     valid = valid & require_virtual_memory("H");
+  };
+  if xlen == 32 then {
+    if sys_hgatp_sv39x4_supported | sys_hgatp_sv48x4_supported | sys_hgatp_sv57x4_supported then {
+      valid = false;
+      print_endline("One or more of Sv39x4/Sv48x4/Sv57x4 is enabled: these are not supported on RV32.");
+    };
+  } else {
+    if sys_hgatp_sv32x4_supported then {
+      valid = false;
+      print_endline("Sv32x4 is enabled: Sv32x4 is not supported on RV64.");
+    };
+  };
+  // "For each supported virtual memory scheme SvNN supported in `satp`, the
+  //  corresponding hgatp SvNNx4 mode must be supported."
+  if (config extensions.Shgatpa.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shgatpa extension is enabled but the H extension is disabled: supporting Shgatpa requires H.");
+    };
+    valid = valid & check_shgatpa_mode("Sv32", (config extensions.Sv32.supported : bool), sys_hgatp_sv32x4_supported);
+    valid = valid & check_shgatpa_mode("Sv39", (config extensions.Sv39.supported : bool), sys_hgatp_sv39x4_supported);
+    valid = valid & check_shgatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_hgatp_sv48x4_supported);
+    valid = valid & check_shgatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_hgatp_sv57x4_supported);
+  };
+  // "`htval` must be written with the faulting guest physical address in all
+  //  circumstances permitted by the ISA."
+  if (config extensions.Shtvala.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shtvala extension is enabled but the H extension is disabled: supporting Shtvala requires H.");
+    };
+    if not(sys_guest_page_fault_writes_htval) then {
+      valid = false;
+      print_endline("The Shtvala extension is enabled but `extensions.H.guest_page_fault_writes_htval` is disabled: supporting Shtvala requires this option to be enabled.");
+    };
+  };
+  if (config extensions.Shvstvecd.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shvstvecd extension is enabled but the H extension is disabled: supporting Shvstvecd requires H.");
+    };
+    if not(config base.vstvec.direct.supported : bool) then {
+      valid = false;
+      print_endline("The Shvstvecd extension is enabled but `vstvec` does not support the `direct` mode (see `base.vstvec.direct.supported`).");
+    };
+  };
+  // "If the Shvsatpa extension is implemented, all translation modes supported
+  //  in `satp` must be supported in `vsatp`."
+  if (config extensions.Shvsatpa.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shvsatpa extension is enabled but the H extension is disabled: supporting Shvsatpa requires H.");
+    };
+    valid = valid & check_shvsatpa_mode("Sv32", (config extensions.Sv32.supported : bool), sys_vsatp_sv32_supported);
+    valid = valid & check_shvsatpa_mode("Sv39", (config extensions.Sv39.supported : bool), sys_vsatp_sv39_supported);
+    valid = valid & check_shvsatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_vsatp_sv48_supported);
+    valid = valid & check_shvsatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_vsatp_sv57_supported);
+  };
+  // "The Augmented Hypervisor Extension, Sha, adds several minor features to
+  //  the hypervisor extension. It depends on the following extensions: H,
+  //  Ssstateen, Shcounterenw, Shvstvala, Shtvala, Shvstvecd, Shvsatpa, Shgatpa."
+  if (config extensions.Sha.supported : bool) then {
+    valid = valid & check_sha_dependency("H", (config extensions.H.supported : bool));
+    valid = valid & check_sha_dependency("Ssstateen", (config extensions.Stateen.Ssstateen.supported : bool));
+    valid = valid & check_sha_dependency("Shcounterenw", (config extensions.Shcounterenw.supported : bool));
+    valid = valid & check_sha_dependency("Shgatpa", (config extensions.Shgatpa.supported : bool));
+    valid = valid & check_sha_dependency("Shtvala", (config extensions.Shtvala.supported : bool));
+    valid = valid & check_sha_dependency("Shvsatpa", (config extensions.Shvsatpa.supported : bool));
+    valid = valid & check_sha_dependency("Shvstvala", (config extensions.Shvstvala.supported : bool));
+    valid = valid & check_sha_dependency("Shvstvecd", (config extensions.Shvstvecd.supported : bool));
   };
   valid
 }

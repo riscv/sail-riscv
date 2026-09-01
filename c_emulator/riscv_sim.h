@@ -15,12 +15,26 @@ class traploop_detector;
 class stop_at_pc_callbacks;
 class ModelImpl;
 
+// Track the main memory regions initialized by loaded files.
+struct loaded_region {
+  loaded_region(const std::string &filename, uint64_t offset, uint64_t length) :
+      filename(filename),
+      offset(offset),
+      length(length) {
+  }
+  std::string filename;
+  uint64_t offset = 0;
+  uint64_t length = 0;
+};
+
 struct elf_info {
   // The address of the HTIF tohost port, if it is enabled.
   std::optional<uint64_t> htif_tohost_address = {};
   uint64_t mem_sig_start = 0;
   uint64_t mem_sig_end = 0;
   std::map<uint64_t, std::string> symbols = {};
+  // Main memory regions written during initialization.
+  std::vector<loaded_region> loaded_regions;
 };
 
 struct run_info {

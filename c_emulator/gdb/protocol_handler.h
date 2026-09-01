@@ -4,6 +4,7 @@
 #include "requests.h"
 #include "riscv_callbacks_if.h"
 #include "riscv_model_impl.h"
+#include "target_regs.h"
 #include "triggers.h"
 #include <asio.hpp>
 #include <deque>
@@ -30,6 +31,7 @@ public:
       m_run_info{info},
       m_triggers{info} {
 
+    m_reg_map = ::get_register_map();
     m_insns_per_tick = get_config_uint64({"platform", "instructions_per_tick"});
   }
 
@@ -80,6 +82,11 @@ public:
     return m_model;
   }
 
+  // Access to the register map
+  const register_map &get_register_map() const {
+    return m_reg_map;
+  }
+
   // Execution helpers
   void do_step();
   void start_continue();
@@ -115,12 +122,15 @@ private:
   std::deque<response_handler_ptr> m_pending_responses;
   bool m_in_noack_mode = false;
 
+  // configuration
+  register_map m_reg_map;
+
   // execution state
   ModelImpl &m_model;
   gdb_run_info &m_run_info;
   int64_t m_step_no = 0;
   int64_t m_insn_cnt = 0;
-  int64_t m_insns_per_tick = 0;
+  uint64_t m_insns_per_tick = 0;
   int64_t m_interrupt_count = 0;
   bool m_has_trapped = false;
   bool m_triggered = false;

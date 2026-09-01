@@ -166,7 +166,7 @@ void log_callbacks::ptw_fail_callback(
 
 namespace {
 
-void print_tlb(
+void print_hypervisor_tlb(
   FILE *trace_log,
   ModelImpl &model,
   ModelImpl::TLB tlb,
@@ -222,6 +222,70 @@ void print_tlb(
     "╚═════╩════╩══════════╩══════════╩══════════╩══════════════════════╩══════════════════════╩══════════════════════╩"
     "══════════════════════╩══════════════════════╝\n"
   );
+}
+void print_supervisor_tlb(FILE *trace_log, ModelImpl::TLB tlb, const std::vector<uint64_t> &indices, bool is_flush) {
+  fprintf(
+    trace_log,
+    "TLB %s [ len=%zu ]\n"
+    "╔═════╦════╦══════════╦══════════════════════╦══════════════════════╦══════════════════════╦══════════════════════"
+    "╦══════════════════════╗\n"
+    "║ IDX ║ GL ║   ASID   ║         VPN          ║         PTE          ║     LEVEL_MASK       ║         PPN          "
+    "║       PTE_ADDR       ║\n"
+    "╠═════╬════╬══════════╬══════════════════════╬══════════════════════╬══════════════════════╬══════════════════════"
+    "╬══════════════════════╣\n",
+    is_flush ? "flush" : "add",
+    tlb.len
+  );
+  for (size_t i = 0; i < tlb.len; i++) {
+    bool is_entry_selected = std::find(indices.begin(), indices.end(), i) != indices.end();
+    const char *annotation = is_entry_selected ? (is_flush ? "  <- flushed" : "  <- added") : "";
+
+    const auto &entry = tlb.data[i];
+    if (entry.kind == hart::Kind_zSomezIRTLB_EntryzK) {
+      const auto &e = entry.variants.zSomezIRTLB_EntryzK;
+      fprintf(
+        trace_log,
+        "║ %3zu ║  %c ║ 0x%06" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64 " ║ 0x%018" PRIX64
+        " ║ 0x%018" PRIX64 " ║%s\n",
+        i,
+        e.zglobal ? 'Y' : 'N',
+        e.zasid.bits,
+        e.zvpn,
+        e.zpte,
+        e.zlevelMask,
+        e.zppn,
+        e.zpteAddr.bits,
+        annotation
+      );
+    } else {
+      fprintf(
+        trace_log,
+        "║ %3zu ║  - ║   ----   ║         ----         ║         ----         ║         ----         ║         ----    "
+        "     ║         ----         ║%s\n",
+        i,
+        annotation
+      );
+    }
+  }
+  fprintf(
+    trace_log,
+    "╚═════╩════╩══════════╩══════════════════════╩══════════════════════╩══════════════════════╩══════════════════════"
+    "╩══════════════════════╝\n"
+  );
+}
+
+void print_tlb(
+  FILE *trace_log,
+  ModelImpl &model,
+  ModelImpl::TLB tlb,
+  const std::vector<uint64_t> &indices,
+  bool is_flush
+) {
+  if (model.supports_hypervisor()) {
+    print_hypervisor_tlb(trace_log, model, tlb, indices, is_flush);
+  } else {
+    print_supervisor_tlb(trace_log, tlb, indices, is_flush);
+  }
 }
 
 } // namespace

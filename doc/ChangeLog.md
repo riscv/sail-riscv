@@ -2,11 +2,36 @@
 
 - The following extensions have been added:
   - H
+  - Sha
+  - Shcounterenw
+  - Shgatpa
+  - Shtvala
+  - Shvsatpa
+  - Shvstvala
+  - Shvstvecd
 
 - The following unratified extensions have been added:
   - Svukte
+  - Zilx
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Which VS-stage translation modes `vsatp` supports can be specified, see
+    `extensions.H.vsatp_modes`. Bare is always supported.
+  - Whether the Sstvecd extension is supported can be specified, see
+    `extensions.Sstvecd.supported`. It was previously implied by
+    supervisor mode, so the model claimed `sstvecd` even when `stvec`
+    did not support the `direct` mode.
+  - Which trap vector modes `vstvec` supports can be specified, see
+    `base.vstvec.direct` and `base.vstvec.vectored`, mirroring the
+    existing `base.stvec` options.
+  - Which G-stage translation modes `hgatp` supports can be specified,
+    see `extensions.H.hgatp_modes`. Bare is always supported. With
+    Shgatpa enabled, each mode supported in `satp` must have its
+    matching SvNNx4 mode enabled.
+  - Whether a guest-page fault writes the faulting guest physical
+    address to `htval`/`mtval2` can be specified, see
+    `extensions.H.guest_page_fault_writes_htval`. Enabling Shtvala
+    requires this option to be enabled.
   - Whether each bit of `hcounteren` is writable or read-only zero can
     be specified, see `base.hcounteren_writable_bits`.
   - Whether the guest-page-fault exceptions write a non-zero `xtval`
@@ -18,9 +43,25 @@
   - The default value of `base.medeleg.delegatable_bits` now also
     includes the exception codes introduced by H, i.e. VS-mode
     environment calls, virtual instructions, and the guest-page faults.
+  - The configuration for exceptions from misaligned LR/SC has been
+    modified; they now have a configuration that is similar to, but
+    independent of, AMOs. See `memory.misaligned.exceptions.lrsc`
+    and the `misaligned_exceptions.lrsc` PMA attribute.
+
+- Xvisor boot is now tested in CI. The `os-boot` Makefile has been
+  generalized to build both the Linux and Xvisor images.
 
 - Important issues addressed and bugs fixed:
+  - `extensions.Svbare.supported` had no effect, `satp` accepted the Bare
+    mode whether or not Svbare was configured. `validate_config()` now also
+    rejects a configuration that supports supervisor mode but no `satp` mode.
+  - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
+
+- Other notes:
+  - The test suite has been updated to the latest release (2026-08-20)
+    from sail-riscv-tests. This adds the `XUANTIE-RV/damo-rv-priv-ats` hypervisor
+    tests, enabled with `-DENABLE_DAMO_TESTS=TRUE`.
 
 # Release notes for version 0.13.1
 

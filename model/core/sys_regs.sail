@@ -88,6 +88,27 @@ let sys_enable_writable_misa : bool = config base.writable_misa
 // supervisor mode is implemented and non-bare addressing modes are supported.
 let sys_enable_writable_fiom : bool = config base.writable_fiom
 
+// Which G-stage translation modes hgatp supports. HBare is always supported.
+// Shgatpa requires an SvNNx4 mode for every SvNN mode supported in satp,
+// which validate_config() checks.
+let sys_hgatp_sv32x4_supported : bool = config extensions.H.hgatp_modes.Sv32x4
+let sys_hgatp_sv39x4_supported : bool = config extensions.H.hgatp_modes.Sv39x4
+let sys_hgatp_sv48x4_supported : bool = config extensions.H.hgatp_modes.Sv48x4
+let sys_hgatp_sv57x4_supported : bool = config extensions.H.hgatp_modes.Sv57x4
+
+// Which VS-stage translation modes vsatp supports. Bare is always supported.
+// Shvsatpa requires vsatp to support every mode supported in satp, which
+// validate_config() checks.
+let sys_vsatp_sv32_supported : bool = config extensions.H.vsatp_modes.Sv32
+let sys_vsatp_sv39_supported : bool = config extensions.H.vsatp_modes.Sv39
+let sys_vsatp_sv48_supported : bool = config extensions.H.vsatp_modes.Sv48
+let sys_vsatp_sv57_supported : bool = config extensions.H.vsatp_modes.Sv57
+
+// Whether a guest-page fault writes the faulting guest physical address to
+// htval/mtval2, or writes zero instead. Shtvala requires the address to be
+// written, which validate_config() checks.
+let sys_guest_page_fault_writes_htval : bool = config extensions.H.guest_page_fault_writes_htval
+
 // Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored.
 let sys_writable_hpm_counters : bits(32) = config base.writable_hpm_counters
 
@@ -140,7 +161,7 @@ function clause currentlyEnabled(Ext_H) =
 // This will need adjusting for dynamic XLEN.
 function clause currentlyEnabled(Ext_Ssu64xl) = hartSupports(Ext_Ssu64xl) & currentlyEnabled(Ext_S)
 
-function clause currentlyEnabled(Ext_Svbare) = currentlyEnabled(Ext_S)
+function clause currentlyEnabled(Ext_Svbare) = hartSupports(Ext_Svbare) & currentlyEnabled(Ext_S)
 function clause currentlyEnabled(Ext_Sv32) = hartSupports(Ext_Sv32) &  currentlyEnabled(Ext_S)
 function clause currentlyEnabled(Ext_Sv39) = hartSupports(Ext_Sv39) &  currentlyEnabled(Ext_S)
 function clause currentlyEnabled(Ext_Sv48) = hartSupports(Ext_Sv48) &  currentlyEnabled(Ext_S)
@@ -651,8 +672,6 @@ function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
   }
 }
 
-function clause currentlyEnabled(Ext_Sstvecd) = hartSupports(Ext_Sstvecd) & currentlyEnabled(Ext_S)
-
 // Exception PC
 
 register mepc : xlenbits
@@ -1005,10 +1024,9 @@ function legalize_hgatp(
   written_value : xlenbits,
 ) -> xlenbits = {
   // Unlike satp, a write to hgatp with an unsupported MODE value is not ignored.
-  // Instead, the fields are WARL in the normal way: an unsupported MODE falls
-  // back to HBare while preserving the other fields (VMID, PPN).
-  // Shgatpa requires an SvNNx4 mode for every satp SvNN mode, plus Bare.
-  // TODO: Add hgatp mode config options.
+  // Instead, the fields are WARL in the normal way: VMID and PPN take the written
+  // values and only MODE keeps its previous value. This applies to reserved MODE
+  // encodings too.
   if xlen == 32 then {
     let v = Mk_Hgatp32(written_value);
     // Force 16 KiB alignment with PPN[1:0] = 0b00
@@ -1020,11 +1038,11 @@ function legalize_hgatp(
       PPN = zero_extend(h[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
-      None() => prev_value,
+      None() => [h with Mode = Mk_Hgatp32(prev_value)[Mode]].bits,
       Some(mode) => match mode {
         HBare => h.bits,
-        Sv32x4 if currentlyEnabled(Ext_Sv32) => h.bits,
-        _ => [h with Mode = zeros()].bits,
+        Sv32x4 if sys_hgatp_sv32x4_supported => h.bits,
+        _ => [h with Mode = Mk_Hgatp32(prev_value)[Mode]].bits,
       }
     }
   } else if xlen == 64 then {
@@ -1038,13 +1056,13 @@ function legalize_hgatp(
       PPN = zero_extend(h[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, h[Mode]) {
-      None() => prev_value,
+      None() => [h with Mode = Mk_Hgatp64(prev_value)[Mode]].bits,
       Some(mode) => match mode {
         HBare => h.bits,
-        Sv39x4 if currentlyEnabled(Ext_Sv39) => h.bits,
-        Sv48x4 if currentlyEnabled(Ext_Sv48) => h.bits,
-        Sv57x4 if currentlyEnabled(Ext_Sv57) => h.bits,
-        _ => [h with Mode = zeros()].bits,
+        Sv39x4 if sys_hgatp_sv39x4_supported => h.bits,
+        Sv48x4 if sys_hgatp_sv48x4_supported => h.bits,
+        Sv57x4 if sys_hgatp_sv57x4_supported => h.bits,
+        _ => [h with Mode = Mk_Hgatp64(prev_value)[Mode]].bits,
       }
     }
   } else {
@@ -1087,11 +1105,13 @@ function legalize_satp(
     let s = if is_vsatp then s else [s with
       PPN = zero_extend(s[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
+    let sv32_supported = if is_vsatp then sys_vsatp_sv32_supported else currentlyEnabled(Ext_Sv32);
     match satpMode_of_bits(arch, 0b000 @ s[Mode]) {
       None()  => prev_value,
       Some(Sv_mode) => match Sv_mode {
-        Bare if currentlyEnabled(Ext_Svbare) => s.bits,
-        Sv32 if currentlyEnabled(Ext_Sv32) => s.bits,
+        // vsatp.MODE resets to 0, so Bare is always supported there.
+        Bare if is_vsatp | currentlyEnabled(Ext_Svbare) => s.bits,
+        Sv32 if sv32_supported => s.bits,
         _ => prev_value,
       }
     }
@@ -1102,13 +1122,19 @@ function legalize_satp(
     let s = if is_vsatp then s else [s with
       PPN = zero_extend(s[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
+    // NOTE: Sv32 is not listed because VSXLEN=XLEN here, hstatus.VSXL is
+    // read-only. It could be added if changing VSXL is supported.
+    let sv39_supported = if is_vsatp then sys_vsatp_sv39_supported else currentlyEnabled(Ext_Sv39);
+    let sv48_supported = if is_vsatp then sys_vsatp_sv48_supported else currentlyEnabled(Ext_Sv48);
+    let sv57_supported = if is_vsatp then sys_vsatp_sv57_supported else currentlyEnabled(Ext_Sv57);
     match satpMode_of_bits(arch, s[Mode]) {
       None()  => prev_value,
       Some(Sv_mode) =>  match Sv_mode {
-        Bare if currentlyEnabled(Ext_Svbare) => s.bits,
-        Sv39 if currentlyEnabled(Ext_Sv39) => s.bits,
-        Sv48 if currentlyEnabled(Ext_Sv48) => s.bits,
-        Sv57 if currentlyEnabled(Ext_Sv57) => s.bits,
+        // vsatp.MODE resets to 0, so Bare is always supported there.
+        Bare if is_vsatp | currentlyEnabled(Ext_Svbare) => s.bits,
+        Sv39 if sv39_supported => s.bits,
+        Sv48 if sv48_supported => s.bits,
+        Sv57 if sv57_supported => s.bits,
         _ => prev_value,
       }
     }

@@ -4,6 +4,7 @@
 #include <string>
 
 class ModelImpl;
+class protocol_handler;
 
 // The indices of the registers in the register map.
 struct register_map {
@@ -25,8 +26,8 @@ std::string get_target_xml(const ModelImpl &model);
 // TODO: make these take `const ModelImpl &`.
 
 // Generates the response for `g` (read general registers).
-std::string get_general_regs(ModelImpl &model);
+std::string get_general_regs(protocol_handler &proto_handler);
 // Generates the response for `p` (read register).
-std::string get_register(ModelImpl &model, uint64_t regidx);
+std::string get_register(protocol_handler &proto_handler, uint64_t regidx);
 // Generates the response for `P` (write register).
-std::string set_register(ModelImpl &model, uint64_t regidx, uint64_t val);
+std::string set_register(protocol_handler &proto_handler, uint64_t regidx, uint64_t val);

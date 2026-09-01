@@ -94,6 +94,7 @@ jobs:
         with:
           subject-path: |
             build/sail-riscv-*
+            build/sail_riscv_config_schema.json
             build/model/sail_riscv_model.json
             build/model/sail_riscv_html.tgz
 
@@ -110,6 +111,7 @@ jobs:
           name: release-${{ matrix.name }}
           path: |
             build/sail-riscv-*
+            build/sail_riscv_config_schema.json
             build/model/sail_riscv_model.json
             build/model/sail_riscv_html.tgz
           if-no-files-found: error
@@ -163,6 +165,7 @@ jobs:
             release-Linux-x86_64/sail-riscv-Linux-x86_64.tar.gz
             release-Linux-aarch64/sail-riscv-Linux-aarch64.tar.gz
             release-Mac-arm64/sail-riscv-Mac-arm64.tar.gz
+            release-Linux-x86_64/sail_riscv_config_schema.json
             release-Linux-x86_64/model/sail_riscv_model.json
             release-Linux-x86_64/model/sail_riscv_html.tgz
           fail_on_unmatched_files: true

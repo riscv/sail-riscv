@@ -1,6 +1,8 @@
 #include "target_regs.h"
 #include "config_utils.h"
+#include "protocol_handler.h"
 #include "riscv_model_impl.h"
+
 #include <sstream>
 
 register_map get_register_map() {
@@ -43,7 +45,8 @@ std::string get_target_xml(const ModelImpl &model) {
   int regnum = 0;
   for (int i = 0; i < 32; ++i) {
     std::string typ = (i == 1) ? "code_ptr" : ((i == 2 || i == 3 || i == 4 || i == 8) ? "data_ptr" : "int");
-    xml << "  <reg name=\"x" << i << "\" bitsize=\"" << model.xlen() << "\" type=\"" << typ << "\"";
+    xml << "  <reg name=\"x" << i << "\" bitsize=\"" << model.xlen() << "\" type=\"" << typ
+        << "\" save-restore=\"yes\" group=\"general\"";
     if (i == 0) {
       xml << R"( regnum="0" )";
     }
@@ -51,7 +54,8 @@ std::string get_target_xml(const ModelImpl &model) {
     ++regnum;
   }
   assert(regnum == map.pc_offset);
-  xml << "  <reg name=\"pc\" bitsize=\"" << model.xlen() << "\" type=\"code_ptr\"/>" << std::endl;
+  xml << "  <reg name=\"pc\" bitsize=\"" << model.xlen()
+      << "\" type=\"code_ptr\" save-restore=\"yes\" group=\"general\"/>" << std::endl;
   xml << "</feature>" << std::endl;
 
   ++regnum;
@@ -59,7 +63,7 @@ std::string get_target_xml(const ModelImpl &model) {
 
   bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
-  if (have_double || have_single) {
+  if (have_single) {
     // The `org.gnu.gdb.riscv.fpu` feature is optional. If present, it
     // should contain registers `f0` through `f31`, `fflags`, `frm`,
     // and `fcsr`. As with the cpu feature, either the architectural
@@ -79,14 +83,16 @@ std::string get_target_xml(const ModelImpl &model) {
       fpu_type = "ieee_single";
     }
     for (int i = 0; i < 32; ++i) {
-      xml << "  <reg name=\"f" << i << "\" bitsize=\"" << model.flen() << "\" type=\"" << fpu_type << "\"";
+      xml << "  <reg name=\"f" << i << "\" bitsize=\"" << model.flen() << "\" type=\"" << fpu_type
+          << "\" save-restore=\"yes\" group=\"float\"";
       if (i == 0) {
-        xml << " regnum = \"" << regnum << "\"";
+        xml << " regnum=\"" << regnum << "\"";
       }
       xml << "/>" << std::endl;
       ++regnum;
     }
-    xml << "  <reg name=\"fcsr\" bitsize=\"32\" type=\"int\" regnum=\"" << regnum << "\"/>" << std::endl;
+    xml << "  <reg name=\"fcsr\" bitsize=\"32\" type=\"int\" save-restore=\"no\" group=\"float\" regnum=\"" << regnum
+        << "\"/>" << std::endl;
     xml << "</feature>" << std::endl;
   }
 
@@ -117,8 +123,9 @@ void append_reg(std::ostringstream &buf, uint64_t val, int64_t width) {
 
 } // namespace
 
-std::string get_general_regs(ModelImpl &model) {
-  const register_map map = get_register_map();
+std::string get_general_regs(protocol_handler &proto_handler) {
+  const register_map map = proto_handler.get_register_map();
+  ModelImpl &model = proto_handler.get_model();
   std::ostringstream buf;
   buf << std::hex << std::setfill('0');
   int64_t int_width_bytes = model.xlen() / 8;
@@ -129,9 +136,8 @@ std::string get_general_regs(ModelImpl &model) {
   }
   append_reg(buf, model.pc(), int_width_bytes);
 
-  bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
-  if (have_double || have_single) {
+  if (have_single) {
     int64_t float_width_bytes = model.flen() / 8;
     for (int64_t i = 0; i < 32; ++i) {
       const uint64_t val = model.freg(i);
@@ -142,15 +148,15 @@ std::string get_general_regs(ModelImpl &model) {
   return buf.str();
 }
 
-std::string get_register(ModelImpl &model, uint64_t regidx) {
+std::string get_register(protocol_handler &proto_handler, uint64_t regidx) {
   int64_t idx = static_cast<int64_t>(regidx);
-  const register_map map = get_register_map();
+  const register_map map = proto_handler.get_register_map();
+  ModelImpl &model = proto_handler.get_model();
 
   std::ostringstream buf;
   buf << std::hex << std::setfill('0');
   int64_t int_width_bytes = model.xlen() / 8;
 
-  bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
 
   if (0 <= idx && idx < map.pc_offset) {
@@ -158,7 +164,7 @@ std::string get_register(ModelImpl &model, uint64_t regidx) {
     append_reg(buf, val, int_width_bytes);
   } else if (idx == map.pc_offset) {
     append_reg(buf, model.pc(), int_width_bytes);
-  } else if ((have_single || have_double) && map.fpr_offset <= idx && idx <= map.fcsr_offset) {
+  } else if (have_single && map.fpr_offset <= idx && idx <= map.fcsr_offset) {
     if (idx == map.fcsr_offset) {
       append_reg(buf, model.fcsr(), 4);
     } else {
@@ -173,18 +179,18 @@ std::string get_register(ModelImpl &model, uint64_t regidx) {
   return buf.str();
 }
 
-std::string set_register(ModelImpl &model, uint64_t regidx, uint64_t val) {
+std::string set_register(protocol_handler &proto_handler, uint64_t regidx, uint64_t val) {
   int64_t reg = static_cast<int64_t>(regidx);
-  const register_map map = get_register_map();
+  const register_map map = proto_handler.get_register_map();
+  ModelImpl &model = proto_handler.get_model();
 
-  bool have_double = get_config_bool({"extensions", "D", "supported"});
   bool have_single = get_config_bool({"extensions", "F", "supported"});
 
   if (0 <= reg && reg < map.pc_offset) {
     model.set_xreg(reg, val);
   } else if (reg == map.pc_offset) {
     model.set_pc(val);
-  } else if ((have_single || have_double) && map.fpr_offset <= reg && reg <= map.fcsr_offset) {
+  } else if (have_single && map.fpr_offset <= reg && reg <= map.fcsr_offset) {
     if (reg == map.fcsr_offset) {
       model.set_fcsr(val);
     } else {

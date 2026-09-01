@@ -69,6 +69,42 @@ function clause hartSupports(Ext_U) = config extensions.U.supported
 enum clause extension = Ext_H
 mapping clause extensionName = Ext_H <-> "h"
 function clause hartSupports(Ext_H) = config extensions.H.supported
+// Augmented Hypervisor
+enum clause extension = Ext_Sha
+mapping clause extensionName = Ext_Sha <-> "sha"
+function clause hartSupports(Ext_Sha) = config extensions.Sha.supported
+// Any hpmcounter that is not read-only zero has a writable hcounteren bit
+enum clause extension = Ext_Shcounterenw
+mapping clause extensionName = Ext_Shcounterenw <-> "shcounterenw"
+function clause hartSupports(Ext_Shcounterenw) = config extensions.Shcounterenw.supported
+function clause currentlyEnabled(Ext_Shcounterenw) = hartSupports(Ext_Shcounterenw) & currentlyEnabled(Ext_H)
+// For each SvNN supported in satp, the matching hgatp SvNNx4 mode is
+// supported, as is hgatp Bare.
+enum clause extension = Ext_Shgatpa
+mapping clause extensionName = Ext_Shgatpa <-> "shgatpa"
+function clause hartSupports(Ext_Shgatpa) = config extensions.Shgatpa.supported
+function clause currentlyEnabled(Ext_Shgatpa) = hartSupports(Ext_Shgatpa) & currentlyEnabled(Ext_H)
+// `htval` must be written with the faulting guest physical address in all circumstances permitted by the ISA
+enum clause extension = Ext_Shtvala
+mapping clause extensionName = Ext_Shtvala <-> "shtvala"
+function clause hartSupports(Ext_Shtvala) = config extensions.Shtvala.supported
+function clause currentlyEnabled(Ext_Shtvala) = hartSupports(Ext_Shtvala) & currentlyEnabled(Ext_H)
+// Every translation mode supported in satp is also supported in vsatp.
+enum clause extension = Ext_Shvsatpa
+mapping clause extensionName = Ext_Shvsatpa <-> "shvsatpa"
+function clause hartSupports(Ext_Shvsatpa) = config extensions.Shvsatpa.supported
+function clause currentlyEnabled(Ext_Shvsatpa) = hartSupports(Ext_Shvsatpa) & currentlyEnabled(Ext_H)
+// `vstval` provides all the values `stval` does
+enum clause extension = Ext_Shvstvala
+mapping clause extensionName = Ext_Shvstvala <-> "shvstvala"
+function clause hartSupports(Ext_Shvstvala) = config extensions.Shvstvala.supported
+function clause currentlyEnabled(Ext_Shvstvala) = hartSupports(Ext_Shvstvala) & currentlyEnabled(Ext_H)
+// vstvec.MODE supports Direct, and in that mode vstvec.BASE must be
+// capable of holding any valid four-byte-aligned address.
+enum clause extension = Ext_Shvstvecd
+mapping clause extensionName = Ext_Shvstvecd <-> "shvstvecd"
+function clause hartSupports(Ext_Shvstvecd) = config extensions.Shvstvecd.supported
+function clause currentlyEnabled(Ext_Shvstvecd) = hartSupports(Ext_Shvstvecd) & currentlyEnabled(Ext_H)
 
 enum clause extension = Ext_Zibi
 mapping clause extensionName = Ext_Zibi <-> "zibi"
@@ -126,6 +162,10 @@ function clause hartSupports(Ext_Zihintpause) = config extensions.Zihintpause.su
 enum clause extension = Ext_Zihpm
 mapping clause extensionName = Ext_Zihpm <-> "zihpm"
 function clause hartSupports(Ext_Zihpm) = config extensions.Zihpm.supported
+// Indexed Integer Loads
+enum clause extension = Ext_Zilx
+mapping clause extensionName = Ext_Zilx <-> "zilx"
+function clause hartSupports(Ext_Zilx) = sys_enable_experimental_extensions() & config extensions.Zilx.supported
 // May-Be-Operations
 enum clause extension = Ext_Zimop
 mapping clause extensionName = Ext_Zimop <-> "zimop"
@@ -475,6 +515,19 @@ function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm) & currentl
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
 function clause hartSupports(Ext_Ssstateen) = config extensions.Stateen.Ssstateen.supported
+
+// Sha is declared above with the other hypervisor extensions. This clause has to
+// live here because it needs every dependency to be declared first.
+function clause currentlyEnabled(Ext_Sha) = hartSupports(Ext_Sha)
+  & currentlyEnabled(Ext_H)
+  & currentlyEnabled(Ext_Ssstateen)
+  & currentlyEnabled(Ext_Shcounterenw)
+  & currentlyEnabled(Ext_Shgatpa)
+  & currentlyEnabled(Ext_Shtvala)
+  & currentlyEnabled(Ext_Shvsatpa)
+  & currentlyEnabled(Ext_Shvstvala)
+  & currentlyEnabled(Ext_Shvstvecd)
+
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -488,7 +541,8 @@ function clause currentlyEnabled(Ext_Sstvala) = hartSupports(Ext_Sstvala) & curr
 // capable of holding any valid four-byte-aligned address.
 enum clause extension = Ext_Sstvecd
 mapping clause extensionName = Ext_Sstvecd <-> "sstvecd"
-function clause hartSupports(Ext_Sstvecd) = hartSupports(Ext_S)
+function clause hartSupports(Ext_Sstvecd) = config extensions.Sstvecd.supported
+function clause currentlyEnabled(Ext_Sstvecd) = hartSupports(Ext_Sstvecd) & currentlyEnabled(Ext_S)
 // sstatus.UXL must be capable of holding the value 2 (i.e., UXLEN=64 must be supported)
 enum clause extension = Ext_Ssu64xl
 mapping clause extensionName = Ext_Ssu64xl <-> "ssu64xl"
@@ -590,7 +644,6 @@ function clause currentlyEnabled(Ext_Supm) = hartSupports(Ext_Supm) & currentlyE
 function hartSupports_measure(ext : extension) -> int =
   match ext {
     Ext_D => 1, // > F
-    Ext_Sstvecd => 1, // > S
     Ext_Ssu64xl => 1, // > S
     Ext_Zvkn => 1, // > Zvkned
     Ext_Zvks => 1, // > Zvksed
@@ -670,8 +723,16 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvfbfwma => 4, // > Zvfbfmin
     Ext_Zvfh => 4, // > Zfhmin
 
+    Ext_Shcounterenw => 5, // > H
+    Ext_Shgatpa => 5, // > H
+    Ext_Shtvala => 5, // > H
+    Ext_Shvsatpa => 5, // > H
+    Ext_Shvstvala => 5, // > H
+    Ext_Shvstvecd => 5, // > H
     Ext_V => 5, // > Zve64d
     Ext_Zvfhmin => 5, // > Zvfh
+
+    Ext_Sha => 6, // > its dependencies
 
     Ext_Zfinx => 9, // > is_zfinx_enabled_by_stateen
 
@@ -721,6 +782,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zihintntl,
   Ext_Zihintpause,
   Ext_Zihpm,
+  Ext_Zilx,
   Ext_Zimop,
 
   // Zm
@@ -840,6 +902,13 @@ let extensions_ordered_for_isa_string = [
   Ext_Svvptc,
 
   // Hypervisor extensions, ordered alphabetically.
+  Ext_Sha,
+  Ext_Shcounterenw,
+  Ext_Shgatpa,
+  Ext_Shtvala,
+  Ext_Shvsatpa,
+  Ext_Shvstvala,
+  Ext_Shvstvecd,
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
