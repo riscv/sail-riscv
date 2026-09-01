@@ -564,6 +564,18 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zicfiss extension is enabled but one or more of Zicsr, Zimop and (Zaamo or A) are disabled: supporting Zicfiss requires Zicsr, Zimop and (Zaamo or A).");
   };
+  if (config extensions.Zimt.supported : bool) & not((config extensions.Zicsr.supported : bool) & (config extensions.Zimop.supported : bool) & ((config extensions.Ssnpm.supported : bool) | (config extensions.Smnpm.supported : bool) | (config extensions.Smmpm.supported : bool))) then {
+    valid = false;
+    print_endline("The Zimt extension is enabled but one or more of Zicsr, Zimop and (Ssnpm or Smnpm or Smmpm) are disabled: supporting Zimt requires Zicsr, Zimop and pointer masking.");
+  };
+  if (config extensions.Zimt.supported : bool) & not((config extensions.Zimt.supported_pointer_tag_width_4 : bool)) then {
+    valid = false;
+    print_endline("The Zimt extension is enabled but supported_pointer_tag_width_4 is false: implementations of Zimt must support pointer_tag_width = 4.");
+  };
+  if ((config extensions.Svatag.supported : bool) | (config extensions.Smvatag.supported : bool)) & not(config extensions.Zimt.supported : bool) then {
+    valid = false;
+    print_endline("The Svatag/Smvatag extensions are enabled but Zimt is disabled: the tag table extensions require Zimt.");
+  };
   if (config extensions.Zfbfmin.supported : bool) & not(config extensions.F.supported : bool) then {
     valid = false;
     print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");

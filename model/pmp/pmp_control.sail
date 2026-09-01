@@ -33,6 +33,11 @@ private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_pay
 
     Atomic(_, _, _, ShadowStack, ShadowStack) => ent[R] == 0b1 & ent[W] == 0b1,
 
+    // Memory tagging (Zimt) tag table accesses are checked like
+    // regular loads and stores.
+    Load(Tag)                     => ent[R] == 0b1,
+    Store(Tag)                    => ent[W] == 0b1,
+
     LoadExecute(p)                => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
     LoadReserved(_, _, p)         => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
     StoreConditional(_, _, p)     => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),

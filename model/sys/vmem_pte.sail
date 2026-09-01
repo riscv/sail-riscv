@@ -205,6 +205,10 @@ private function check_PTE_permission(
       Store(ShadowStack)                        => true,
       Atomic(_, _, _, ShadowStack, ShadowStack) => true,
 
+      // Zimt tag table accesses behave like regular loads/stores.
+      Load(Tag)                                 => true,
+      Store(Tag)                                => false,
+
       // "Access to a SS page using cache-block operation (CBO.*) instructions
       // is not permitted. Such accesses will raise a store/AMO access-fault
       // exception."

@@ -12,10 +12,13 @@ enum Software_Check_Code = {
   SWC_NO_INFO,
   SWC_LANDING_PAD_FAULT,
   SWC_SHADOW_STACK_FAULT,
+  SWC_MEM_TAG_FAULT,
 }
 
-mapping software_check_cause : Software_Check_Code <-> bits(2) = {
-  SWC_NO_INFO            <-> 0b00,
-  SWC_LANDING_PAD_FAULT  <-> 0b10,
-  SWC_SHADOW_STACK_FAULT <-> 0b11,
+mapping software_check_cause : Software_Check_Code <-> bits(3) = {
+  SWC_NO_INFO            <-> 0b000,
+  SWC_LANDING_PAD_FAULT  <-> 0b010,
+  SWC_SHADOW_STACK_FAULT <-> 0b011,
+  // Memory tagging (Zimt, v0.2 DRAFT) tag mismatch
+  SWC_MEM_TAG_FAULT      <-> 0b100,
 }

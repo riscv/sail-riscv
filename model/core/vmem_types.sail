@@ -57,13 +57,15 @@ type vpn_bits('v), is_sv_or_svx4_mode('v) = bits('v - pagesize_bits)
 // handled by adding ShadowStack{Load,Store,Atomic} variants to
 // MemoryAccessType and removing the ShadowStack variant here.
 
-enum mem_payload = { Data, Vector, PageTableEntry, ShadowStack }
+enum mem_payload = { Data, Vector, PageTableEntry, ShadowStack, Tag }
 
 mapping mem_payload_name : mem_payload <-> string = {
   Data           <-> "Data",
   Vector         <-> "Vector",
   PageTableEntry <-> "PageTableEntry",
   ShadowStack    <-> "ShadowStack",
+  // Memory tagging (Zimt, v0.2 DRAFT) tag table access
+  Tag            <-> "Tag",
 }
 
 mapping mem_payload_str : mem_payload <-> string = {
@@ -71,6 +73,7 @@ mapping mem_payload_str : mem_payload <-> string = {
   Vector          <-> "",
   PageTableEntry  <-> "",
   ShadowStack     <-> ".ss",
+  Tag             <-> ".tag",
 }
 
 function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
@@ -98,11 +101,13 @@ function is_shadow_stack_access(access : MemoryAccessType(mem_payload)) -> bool 
     Load(Data)                          => false,
     Load(Vector)                        => false,
     Load(PageTableEntry)                => false,
+    Load(Tag)                           => false,
     LoadExecute(Data)                   => false,
     LoadReserved(_, _, Data)            => false,
     Store(Data)                         => false,
     Store(Vector)                       => false,
     Store(PageTableEntry)               => false,
+    Store(Tag)                          => false,
     StoreConditional(_, _, Data)        => false,
     Atomic(_, _, _, Data, Data)         => false,
     CacheAccess(_)                      => false,

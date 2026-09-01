@@ -29,6 +29,11 @@ function accessFaultFromAccessType(access : MemoryAccessType(mem_payload)) -> Ex
 
     Atomic(_, _, _, ShadowStack, ShadowStack) => E_SAMO_Access_Fault(),
 
+    // Memory tagging (Zimt) tag table accesses fault like regular
+    // loads and stores.
+    Load(Tag)                           => E_Load_Access_Fault(),
+    Store(Tag)                          => E_SAMO_Access_Fault(),
+
     LoadExecute(p)                      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
     LoadReserved(_, _, p)               => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),
     StoreConditional(_, _, p)           => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for StoreConditional."),
@@ -71,6 +76,11 @@ function alignmentFaultFromAccessType(access : MemoryAccessType(mem_payload)) ->
     Store(ShadowStack)                  => E_SAMO_Addr_Align(),
 
     Atomic(_, _, _, ShadowStack, ShadowStack) => E_SAMO_Addr_Align(),
+
+    // Memory tagging (Zimt) tag table accesses fault like regular
+    // loads and stores.
+    Load(Tag)                           => E_Load_Addr_Align(),
+    Store(Tag)                          => E_SAMO_Addr_Align(),
 
     LoadExecute(p)                      => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadExecute."),
     LoadReserved(_, _, p)               => internal_error(__FILE__, __LINE__, "Invalid payload (" ^ mem_payload_name(p) ^ ") for LoadReserved."),

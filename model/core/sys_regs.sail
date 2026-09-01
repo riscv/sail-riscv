@@ -308,6 +308,9 @@ function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_m
 function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); Ok(mstatus.bits[63 .. 32]) }
 
 bitfield Hstatus : bits(64) = {
+  // MT_MODE for HLV*/HSV* executed from HU with effective privilege VU
+  // (Zimt, v0.2 DRAFT)
+  VUMT_MODE : 51 .. 50,
   HUPMM : 49 .. 48,
   VSXL  : 33 .. 32,
   VTSR  : 22,
@@ -324,6 +327,7 @@ bitfield Hstatus : bits(64) = {
 private function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
   let v = Mk_Hstatus(v);
   [h with
+    VUMT_MODE = if hartSupports(Ext_Zimt) & is_supported_mt_mode(mt_mode(v[VUMT_MODE])) then v[VUMT_MODE] else h[VUMT_MODE],
     // HUPMM controls pointer masking for HLV.*/HSV in U-mode (effective VU)
     HUPMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[HUPMM])) then v[HUPMM] else h[HUPMM],
     // We don't currently support changing VSXL
@@ -353,6 +357,8 @@ function clause read_CSR(0x600) = hstatus.bits[xlen - 1 .. 0]
 function clause write_CSR(0x600, value) = { hstatus = legalize_hstatus(hstatus, zero_extend(value)); Ok(hstatus.bits[xlen - 1 .. 0]) }
 
 bitfield Seccfg : bits(64) = {
+  // Memory Tagging Extension (Zimt, v0.2 DRAFT)
+  MT_MODE : 35 .. 34,
   // Pointer Masking Extension
   PMM    : 33 .. 32,
   // Enable Zicfilp in M-mode
@@ -375,6 +381,7 @@ private function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
 
   let v = Mk_Seccfg(v);
   [o with
+    MT_MODE = if hartSupports(Ext_Zimt) & is_supported_mt_mode(mt_mode(v[MT_MODE])) then v[MT_MODE] else o[MT_MODE],
     PMM   = if currentlyEnabled(Ext_Smmpm) & is_supported_pmm(PM_SMMPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     MLPE  = if hartSupports(Ext_Zicfilp) then v[MLPE] else 0b0,
     SSEED = if sseed_read_only_zero then 0b0 else v[SSEED],
@@ -388,7 +395,7 @@ mapping clause csr_name_map = 0x747  <-> "mseccfg"
 mapping clause csr_name_map = 0x757  <-> "mseccfgh"
 
 // For Sm1p12 and later, "mseccfg exists if Zkr is implemented, or if it is required by other processor features."
-function clause is_CSR_accessible(0x747, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm)) // mseccfg
+function clause is_CSR_accessible(0x747, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp) | currentlyEnabled(Ext_Smmpm) | hartSupports(Ext_Zimt)) // mseccfg
 function clause is_CSR_accessible(0x757, _, _) = mseccfg_csrs_are_defined & (currentlyEnabled(Ext_Zkr) | hartSupports(Ext_Zicfilp)) & xlen == 32 // mseccfgh
 
 function clause read_CSR(0x747) = mseccfg.bits[xlen - 1 .. 0]
@@ -416,6 +423,8 @@ bitfield MEnvcfg : bits(64) = {
   PBMTE  : 62,
   // Svadu
   ADUE   : 61,
+  // Memory Tagging Extension (Zimt, v0.2 DRAFT)
+  MT_MODE : 35 .. 34,
   // Pointer Masking Extension
   PMM    : 33 .. 32,
   // Cache Block Zero instruction Enable
@@ -435,6 +444,8 @@ bitfield MEnvcfg : bits(64) = {
 // NOTE: senvcfg's actual width is SXLEN, but this cannot currently be expressed in Sail,
 // as PMM occupies bits above 31 and conditional enable/disable of bits is not supported.
 bitfield SEnvcfg : bits(64) = {
+  // Memory Tagging Extension (Zimt, v0.2 DRAFT)
+  MT_MODE : 35 .. 34,
   // Pointer Masking Extension
   PMM    : 33 .. 32,
   // Cache Block Zero instruction Enable
@@ -456,6 +467,8 @@ bitfield HEnvcfg : bits(64) = {
   PBMTE : 62,
   ADUE  : 61,
   DTE   : 59,
+  // Memory Tagging Extension (Zimt, v0.2 DRAFT)
+  MT_MODE : 35 .. 34,
   PMM   : 33 .. 32,
   CBZE  : 7,
   CBCFE : 6,
@@ -484,6 +497,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
+    MT_MODE = if hartSupports(Ext_Zimt) & is_supported_mt_mode(mt_mode(v[MT_MODE])) then v[MT_MODE] else o[MT_MODE],
     PMM = if currentlyEnabled(Ext_Smnpm) & is_supported_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
     PBMTE = if currentlyEnabled(Ext_Svpbmt) then v[PBMTE] else 0b0,
@@ -506,6 +520,7 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
+    MT_MODE = if hartSupports(Ext_Zimt) & is_supported_mt_mode(mt_mode(v[MT_MODE])) then v[MT_MODE] else o[MT_MODE],
     PMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
@@ -521,6 +536,7 @@ private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
     PBMTE = if currentlyEnabled(Ext_Svpbmt) & menvcfg[PBMTE] == 0b1 then v[PBMTE] else 0b0,
     ADUE  = if currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1 then v[ADUE] else 0b0,
     // DTE  = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
+    MT_MODE = if hartSupports(Ext_Zimt) & is_supported_mt_mode(mt_mode(v[MT_MODE])) then v[MT_MODE] else h[MT_MODE],
     PMM  = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else h[PMM],
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
