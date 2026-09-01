@@ -7,7 +7,7 @@ MEMORY
 {
   /* Match the default configuration in config.json.in, which is roughly based on Spike. */
   /* MMIO peripherals. */
-  if_clint (wa) : org = 0x2000000, len = 768k
+  if_clint (wa) : org = 0x2000000, len = 48k
   if_htif (wa)  : org = 0x20c0000, len = 512k
 
   /* Main RAM. */
