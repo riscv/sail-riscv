@@ -170,6 +170,10 @@ function clause hartSupports(Ext_Zilx) = sys_enable_experimental_extensions() & 
 enum clause extension = Ext_Zimop
 mapping clause extensionName = Ext_Zimop <-> "zimop"
 function clause hartSupports(Ext_Zimop) = config extensions.Zimop.supported
+// Memory Tagging (v0.2, DRAFT)
+enum clause extension = Ext_Zimt
+mapping clause extensionName = Ext_Zimt <-> "zimt"
+function clause hartSupports(Ext_Zimt) = sys_enable_experimental_extensions() & config extensions.Zimt.supported : bool & (xlen == 64)
 
 // Multiplication and Division: Multiplication only
 enum clause extension = Ext_Zmmul
@@ -573,6 +577,10 @@ function clause hartSupports(Ext_Svade) = config extensions.Svade.supported
 enum clause extension = Ext_Svadu
 mapping clause extensionName = Ext_Svadu <-> "svadu"
 function clause hartSupports(Ext_Svadu) = config extensions.Svadu.supported
+// Virtually indexed tag table for memory tagging (v0.2, DRAFT)
+enum clause extension = Ext_Svatag
+mapping clause extensionName = Ext_Svatag <-> "svatag"
+function clause hartSupports(Ext_Svatag) = sys_enable_experimental_extensions() & config extensions.Svatag.supported : bool & (xlen == 64)
 // Fine-Grained Address-Translation Cache Invalidation
 enum clause extension = Ext_Svinval
 mapping clause extensionName = Ext_Svinval <-> "svinval"
@@ -612,6 +620,10 @@ function clause currentlyEnabled(Ext_Smnpm) = hartSupports(Ext_Smnpm)
 enum clause extension = Ext_Smstateen
 mapping clause extensionName = Ext_Smstateen <-> "smstateen"
 function clause hartSupports(Ext_Smstateen) = config extensions.Stateen.Smstateen.supported
+// Machine-mode virtually indexed tag table for memory tagging (v0.2, DRAFT)
+enum clause extension = Ext_Smvatag
+mapping clause extensionName = Ext_Smvatag <-> "smvatag"
+function clause hartSupports(Ext_Smvatag) = sys_enable_experimental_extensions() & config extensions.Smvatag.supported : bool & (xlen == 64)
 
 // QoS identifiers
 enum clause extension = Ext_Ssqosid
@@ -713,7 +725,11 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvkb => 3, // > Zvbb
     Ext_Zvknhb => 3, // > Zve64x
 
+    Ext_Zimt => 3, // > Ssnpm, Smnpm, Smmpm
+
     Ext_H => 4, // > virtual_mem_supported
+    Ext_Svatag => 4, // > Zimt
+    Ext_Smvatag => 4, // > Zimt
     Ext_Zve64d => 4, // > Zve64f
     Ext_Zvfbfwma => 4, // > Zvfbfmin
     Ext_Zvfh => 4, // > Zfhmin
@@ -779,6 +795,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zihpm,
   Ext_Zilx,
   Ext_Zimop,
+  Ext_Zimt,
 
   // Zm
   Ext_Zmmul,
@@ -889,6 +906,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Supm,
   Ext_Svade,
   Ext_Svadu,
+  Ext_Svatag,
   Ext_Svinval,
   Ext_Svnapot,
   Ext_Svpbmt,

@@ -555,6 +555,16 @@ extensions {
     }
   }
 
+  Zimt {
+    Zimt_types {
+      files extensions/Zimt/zimt_types.sail
+    }
+    Zimt_regs {
+      requires core, Zimt_types, Stateen
+      files extensions/Zimt/zimt_regs.sail
+    }
+  }
+
   rmem {
     requires core, sys
     files
