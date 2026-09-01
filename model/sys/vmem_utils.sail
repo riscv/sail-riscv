@@ -43,7 +43,9 @@ function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res :
 // `virtaddr` access may be split into smaller `physaddr` accesses,
 // the correct offset from the base `virtaddr` needs to be reported.
 // Since `virtaddr` accesses that straddle page boundaries are already
-// split, the offset computation is quite simple.
+// split, the offset computation is quite simple. The result is also
+// masked to physaddr_bits, since bits above it aren't part of any
+// physical address this configuration implements.
 
 function offset_virtaddr_by(
   Virtaddr(base_vaddr) : virtaddr,
@@ -52,7 +54,9 @@ function offset_virtaddr_by(
 ) -> virtaddr = {
   // Physical addresses may have a different size.
   let offset = (exc_paddr - base_paddr)[xlen - 1 .. 0];
-  Virtaddr(base_vaddr + offset)
+  let reconstructed = base_vaddr + offset;
+  let masked = if physaddr_bits < xlen then reconstructed & zero_extend(ones(physaddr_bits)) else reconstructed;
+  Virtaddr(masked)
 }
 
 // External API
