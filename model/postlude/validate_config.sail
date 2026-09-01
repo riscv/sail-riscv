@@ -801,6 +801,13 @@ private function check_extension_param_constraints() -> bool = {
       print_endline("Bits for reserved interrupts are set in `base.mideleg.delegatable_bits`.");
     }
   };
+  if (config extensions.H.supported : bool) then {
+    let geilen_nat : nat = geilen;
+    if geilen_nat > xlen - 1 then {
+      valid = false;
+      print_endline("`extensions.H.geilen` is " ^ dec_str(geilen) ^ " but cannot be greater than " ^ dec_str(xlen - 1) ^ " for RV" ^ dec_str(xlen) ^ ".");
+    };
+  };
   valid
 }
 
@@ -882,14 +889,6 @@ private function check_physaddr_bits() -> bool = {
   } else { true }
 }
 
-private function check_geilen() -> bool = {
-  let geilen_nat : nat = geilen;
-  if geilen_nat > xlen - 1 then {
-    print_endline("`extensions.H.geilen` is " ^ dec_str(geilen) ^ " but cannot be greater than " ^ dec_str(xlen - 1) ^ " for RV" ^ dec_str(xlen) ^ ".");
-    false
-  } else { true }
-}
-
 private function check_version_constraints() -> bool = {
   var valid : bool = true;
 
@@ -908,7 +907,6 @@ function config_is_valid() -> bool = {
   & check_tvecs()
   & check_mstatus_fields()
   & check_physaddr_bits()
-  & check_geilen()
   & check_mmu_config()
   & check_mem_layout()
   & check_mmio_devices()
