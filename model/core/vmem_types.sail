@@ -133,6 +133,14 @@ function is_vector_access(access : MemoryAccessType(mem_payload)) -> bool =
     _             => false,
   }
 
+function is_implicit_access(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    InstructionFetch()    => true,
+    Load(PageTableEntry)  => true,
+    Store(PageTableEntry) => true,
+    _                     => false,
+  }
+
 // Memory attributes for Page-based Memory Types
 
 enum page_based_mem_type = { PBMT_PMA, PBMT_NC, PBMT_IO }

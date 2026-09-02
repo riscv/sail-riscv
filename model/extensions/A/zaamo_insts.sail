@@ -93,18 +93,20 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     };
   };
 
-  let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access) {
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+
+  let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => return trap(e),
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
-  let loaded : bits('width * 8) = match mem_write_ea(addr, width, access, pbmt, aq & rl, rl, true) {
+  let loaded : bits('width * 8) = match mem_write_ea(addr, width, eff_priv, access, pbmt, aq & rl, rl, true) {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
       return memory_exception(e, bits_of(vaddr), access)
     },
-    Ok(_)  => match mem_read(access, pbmt, addr, width, aq, aq & rl, true) {
+    Ok(_)  => match mem_read(access, pbmt, eff_priv, addr, width, aq, aq & rl, true) {
       Err(exc_addr, e) => {
         // AMOs should not get split.
         assert(exc_addr == addr);
@@ -143,7 +145,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     then X(rd) = sign_extend(loaded)
     else X_pair(rd) = sign_extend(loaded);
     RETIRE_SUCCESS
-  } else match mem_write_value(addr, width, sign_extend(result), access, pbmt, aq & rl, rl, true) {
+  } else match mem_write_value(addr, width, sign_extend(result), eff_priv, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => {
       if width <= xlen_bytes
       then X(rd) = sign_extend(loaded)

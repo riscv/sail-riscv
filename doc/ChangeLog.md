@@ -15,6 +15,9 @@
   - Zilx
 
 - Updates to the [configuration file](../config/config.json.in):
+  - The default `platform.clint.size` is now 0xc000 rather than 0xc0000.
+    The CLINT register map ends at offset 0xbfff, so everything beyond it
+    was claimed by the model but never used.
   - Which VS-stage translation modes `vsatp` supports can be specified, see
     `extensions.H.vsatp_modes`. Bare is always supported.
   - Whether the Sstvecd extension is supported can be specified, see

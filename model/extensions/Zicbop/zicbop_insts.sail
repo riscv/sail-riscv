@@ -40,6 +40,7 @@ function clause execute ZICBOP(cbop, rs1, offset) = {
   let cache_block_addr = addr & ~(zero_extend(ones(plat_cache_block_size_exp)));
   let offset = cache_block_addr - rs1_val;
   let access : MemoryAccessType(mem_payload) = CacheAccess(CB_prefetch(cbop));
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
 
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `get_transformed_data_addr()` checks that all bytes
@@ -47,11 +48,10 @@ function clause execute ZICBOP(cbop, rs1, offset) = {
   match get_transformed_data_addr(rs1, offset, access, cache_block_size) {
     Ext_DataAddr_Error(_) => (), // No access to cache; no-op.
 
-    Ext_DataAddr_OK(vaddr) => match translateAddr(vaddr, access) {
+    Ext_DataAddr_OK(vaddr) => match translateAddr(vaddr, access, eff_priv) {
       Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
-          let ep = effectivePrivilege(access, mstatus, cur_privilege);
-          match phys_access_check(access, pbmt, ep, paddr, cache_block_size, false) {
+          match phys_access_check(access, pbmt, eff_priv, paddr, cache_block_size, false) {
             Err(_e)  => (), // No access to cache; no-op.
             Ok(_)    => (), // The model has no caches so there's no action required.
           }
