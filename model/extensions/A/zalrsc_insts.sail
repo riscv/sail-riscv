@@ -9,15 +9,18 @@
 function clause currentlyEnabled(Ext_Zalrsc) = hartSupports(Ext_Zalrsc) | currentlyEnabled(Ext_A)
 function clause currentlyEnabled(Ext_Za64rs) = hartSupports(Ext_Za64rs) & currentlyEnabled(Ext_Zalrsc)
 function clause currentlyEnabled(Ext_Za128rs) = hartSupports(Ext_Za128rs) & currentlyEnabled(Ext_Zalrsc)
+function clause currentlyEnabled(Ext_Zabhlrsc) = hartSupports(Ext_Zabhlrsc) & currentlyEnabled(Ext_Zalrsc)
 
 function clause currentlyEnabled(Ext_Ziccrse) = hartSupports(Ext_Ziccrse)
 
-// Zalrsc defines LR/SC for word and double
+// Zalrsc defines LR/SC for word and double.
+// Zabhlrsc defines LR/SC for byte and halfword.
 function lrsc_width_valid(width : word_width) -> bool = {
   match width {
     4 => true,
     8 => xlen >= 64,
-    _ => false,
+    1 => currentlyEnabled(Ext_Zabhlrsc),
+    2 => currentlyEnabled(Ext_Zabhlrsc),
   }
 }
 

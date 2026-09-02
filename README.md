@@ -236,6 +236,7 @@ The following unratified extensions are supported and can be enabled using the `
 - Zibi extension for conditional branches with immediate operands, v0.6
 - Zilx extension for indexed integer load instructions, v0.1
 - Zvabd extension for vector absolute difference, v0.7
+- Zabhlrsc extension for byte and halfword load reserved/store conditional instructions
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 
