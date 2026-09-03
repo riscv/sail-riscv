@@ -310,6 +310,7 @@ function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_m
 bitfield Hstatus : bits(64) = {
   HUPMM : 49 .. 48,
   VSXL  : 33 .. 32,
+  HUKTE : 24,
   VTSR  : 22,
   VTW   : 21,
   VTVM  : 20,
@@ -328,6 +329,7 @@ private function legalize_hstatus(h : Hstatus, v : bits(64)) -> Hstatus = {
     HUPMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[HUPMM])) then v[HUPMM] else h[HUPMM],
     // We don't currently support changing VSXL
     // VSXL = v[VSXL]
+    HUKTE = if currentlyEnabled(Ext_Svukte) then v[HUKTE] else 0b0,
     VTSR  = v[VTSR],
     VTW   = v[VTW],
     VTVM  = v[VTVM],
@@ -438,6 +440,8 @@ bitfield MEnvcfg : bits(64) = {
 bitfield SEnvcfg : bits(64) = {
   // Pointer Masking Extension
   PMM    : 33 .. 32,
+  // Supervisor Memory Constant Timing Enable
+  UKTE   : 8,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
@@ -508,6 +512,7 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
     PMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    UKTE = if currentlyEnabled(Ext_Svukte) then v[UKTE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
 }

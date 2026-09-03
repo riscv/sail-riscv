@@ -11,6 +11,7 @@
   - Shvstvecd
 
 - The following unratified extensions have been added:
+  - Svukte
   - Zilx
 
 - Updates to the [configuration file](../config/config.json.in):
