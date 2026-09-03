@@ -70,11 +70,11 @@ function sig_store(addr, width, data) = {
       if guest == 0 | guest > geilen
       then return Err(addr, E_SAMO_Access_Fault());
 
-      hgeip[guest] = value;
+      sig_hgeip[guest] = value;
 
       // mip.SGEIP and hip.VSEIP both follow from hgeip, but they are derived on
       // read (see external_interrupts_pending()) so there is nothing to update.
-      csr_write_callback("hgeip", hgeip);
+      csr_write_callback("hgeip", read_hgeip());
       csr_write_callback("mip", read_mip(IncludePlatformInterrupts).bits);
 
       Ok(true)

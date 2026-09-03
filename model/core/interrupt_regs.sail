@@ -26,13 +26,21 @@ private function legalize_hgeie(v : xlenbits) -> xlenbits = v & hgei_mask
 
 register hgeie : xlenbits = zeros()
 
-// hgeip is read-only to software. Its bits are driven by the interrupt
-// controller, which in this model is the simple interrupt generator.
-register hgeip : xlenbits = zeros()
+// hgeip is read-only to software and has no state of its own. Its bits are
+// driven by the interrupt controller, so like the other platform interrupts
+// they are pulled in on read.
+// Defined in sys/simple_interrupt_generator_regs.sail, which comes after this
+// file in the compile order.
+val guest_external_interrupts_pending : unit -> xlenbits
+
+function read_hgeip() -> xlenbits = guest_external_interrupts_pending() & hgei_mask
 
 function selected_hgeip() -> bits(1) = {
   let vgein = unsigned(hstatus[VGEIN]);
-  if vgein > 0 & vgein <= geilen then [hgeip[vgein]] else 0b0
+  if vgein > 0 & vgein <= geilen then {
+    let hgeip = read_hgeip();
+    [hgeip[vgein]]
+  } else 0b0
 }
 
 mapping clause csr_name_map = 0x607 <-> "hgeie"
@@ -42,7 +50,7 @@ function clause is_CSR_accessible(0x607, _, _) = currentlyEnabled(Ext_H) // hgei
 function clause is_CSR_accessible(0xE12, _, _) = currentlyEnabled(Ext_H) // hgeip
 
 function clause read_CSR(0x607) = hgeie
-function clause read_CSR(0xE12) = hgeip & hgei_mask
+function clause read_CSR(0xE12) = read_hgeip()
 
 function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hgeie) }
 
