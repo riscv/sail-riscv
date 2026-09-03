@@ -33,7 +33,7 @@ bitfield Minterrupts : xlenbits = {
 // dispatching interrupts.  But it is NOT the case for reading
 // `mip`/`sip` during a CSR read-modify-write update, therefore we
 // can't just store them directly in the `mip` register.
-val external_interrupts_pending : unit -> Minterrupts
+val external_interrupts_pending : xlenbits -> Minterrupts
 
 // Called to get whether a machine-level (i.e. M-mode) software
 // interrupt is pending.  For systems with IMSICs, this interrupt

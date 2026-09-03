@@ -216,7 +216,7 @@ function read_mip(read_type : XipReadType) -> Minterrupts =
   match read_type {
     IncludePlatformInterrupts => {
       let platform_interrupts =
-        [external_interrupts_pending()
+        [external_interrupts_pending(hgeie)
            with SSI = if currentlyEnabled(Ext_S) then supervisor_software_interrupt_pending() else 0b0];
       Mk_Minterrupts(mip.bits | platform_interrupts.bits)
     },
