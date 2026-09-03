@@ -16,7 +16,6 @@
     // x16-31 is reserved and in this implementation will
     // raise an illegal instruction exception.
     "E": false,
-    "writable_misa": true,
     "writable_fiom": true,
     // The top 29 bits in this value control whether the corresponding
     // HPM counters (hpmcounter31 .. hpmcounter3) are supported
@@ -486,13 +485,16 @@
   },
   "extensions": {
     "M": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "A": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "F": {
       "supported": true,
+      "mutable_misa": true,
       // When to set mstatus[FS] and mstatus[SD] to 1, as a result of fflags
       // being set. There are three options:
       //
@@ -505,7 +507,13 @@
       "fflags_dirty_policy": "Fflags_Dirty_Precise"
     },
     "D": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
+    },
+    "C": {
+      // There is no supported option for C. It is automatically
+      // marked as supported based on Zca, Zcf, and Zcd
+      "mutable_misa": true
     },
     "V": {
       // `support_level` must be one of the below strings:
@@ -520,6 +528,8 @@
       // Zve64x, Zve64f, and Zve64d require `elen_exp` >= 6,
       // and V requires `elen_exp` >= 6 and `vlen_exp` >= 7.
       "support_level": "@CONFIG__V__SUPPORT@",
+      // mutable_misa only applies if support_level is set to Full
+      "mutable_misa": true,
       // `vlen_exp` and `elen_exp` should be between 3 and 16,
       // inclusive.  If `support_level` is `"Disabled"`, then these
       // should be left as 3 (or any other legal value).
@@ -561,16 +571,20 @@
       }
     },
     "B": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "S": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "U": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "H": {
       "supported": true,
+      "mutable_misa": true,
       // GEILEN, the number of guest external interrupts. The maximum is XLEN-1.
       "geilen": @CONFIG__H__GEILEN@,
       // Whether a guest-page fault writes the faulting guest physical address
