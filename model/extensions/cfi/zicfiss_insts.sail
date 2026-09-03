@@ -27,7 +27,10 @@ function clause execute SSPUSH(rs2) = {
 
   let vaddr_bits = ssp - xlen_bytes;
   let access = Store(ShadowStack);
-  let vaddr = transform_effective_address(Virtaddr(vaddr_bits), access);
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let pmlen = get_pmlen(access, eff_priv);
+
+  let vaddr = transform_effective_address(Virtaddr(vaddr_bits), eff_priv, pmlen);
   // "If the virtual address in ssp is not XLEN aligned, then the
   // SSPUSH/C.SSPUSH/SSPOPCHK/C.SSPOPCHK instructions cause a
   // store/AMO access-fault exception."
@@ -41,7 +44,7 @@ function clause execute SSPUSH(rs2) = {
   if not(is_aligned_addr(vaddr, width))
   then return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access);
 
-  match vmem_write_addr(vaddr, width, X(rs2), access, false, false, false) {
+  match vmem_write_addr(vaddr, width, X(rs2), access, eff_priv, false, false, false) {
     Ok(_)  => { ssp = vaddr_bits;
                 csr_write_callback("ssp", ssp);
                 RETIRE_SUCCESS },
@@ -82,14 +85,17 @@ function clause execute SSPOPCHK(rs1) = {
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
   let access = Load(ShadowStack);
-  let ssp_addr = transform_effective_address(Virtaddr(ssp), access);
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let pmlen = get_pmlen(access, eff_priv);
+  let ssp_addr = transform_effective_address(Virtaddr(ssp), eff_priv, pmlen);
+
   // See above on checking alignment.
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(ssp_addr, width))
   then return memory_exception(E_SAMO_Access_Fault(), bits_of(ssp_addr), access);
 
-  match vmem_read_addr(ssp_addr, width, access, false, false, false) {
+  match vmem_read_addr(ssp_addr, width, access, eff_priv, false, false, false) {
     Ok(data) => {
       if X(rs1) != data then {
         trap(make_shadow_stack_exception())
@@ -171,8 +177,10 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   };
 
   let access = Atomic(AMOSWAP, aq, rl, ShadowStack, ShadowStack);
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let pmlen = get_pmlen(access, eff_priv);
 
-  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, eff_priv, pmlen, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
@@ -190,8 +198,6 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
       None()                   => (),
     };
   };
-
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, eff_priv) {
     Ok(addr, pbmt, _) => (addr, pbmt),
