@@ -8,6 +8,10 @@
 
 // Platform-specific configuration parameters.
 
+// Configuration for `mcountinhibit`.
+let plat_have_mcountinhibit : bool = config base.mcountinhibit.supported
+let plat_mcountinhibit_writable_bits : bits(32) = config base.mcountinhibit.writable_bits
+
 // Trap vector mode.
 let plat_mtvec_direct_mode_supported : bool = config base.mtvec.direct.supported
 let plat_mtvec_vectored_mode_supported : bool = config base.mtvec.vectored.supported
