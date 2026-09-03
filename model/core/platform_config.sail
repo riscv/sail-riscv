@@ -118,6 +118,14 @@ let plat_wfi_available_to_usermode : bool = config platform.wfi_available_to_use
 // used within the model but instead configures the external C++ harness.
 let max_wait_time : nat = config platform.max_time_to_wait
 
+// Supported interrupts
+let plat_has_msi : bool = config platform.interrupts.machine.software.supported
+let plat_has_mti : bool = config platform.interrupts.machine.timer.supported
+let plat_has_mei : bool = config platform.interrupts.machine.external.supported
+let plat_has_ssi : bool = config extensions.S.interrupts.software.supported
+let plat_has_sti : bool = config extensions.S.interrupts.timer.supported
+let plat_has_sei : bool = config extensions.S.interrupts.external.supported
+
 // which exceptions write information into `xtval`
 let illegal_instruction_writes_xtval : bool = config base.xtval_nonzero.illegal_instruction
 let virtual_instruction_writes_xtval : bool = config base.xtval_nonzero.virtual_instruction

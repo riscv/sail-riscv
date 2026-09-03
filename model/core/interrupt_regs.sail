@@ -55,10 +55,22 @@ function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hg
 
 register hvip : Minterrupts
 
+private function supported_interrupts_mask(i : Minterrupts) -> Minterrupts =
+  Mk_Minterrupts(
+    [Mk_Minterrupts(ones()) with
+      MEI = bool_to_bit(plat_has_mei),
+      MSI = bool_to_bit(plat_has_msi),
+      MTI = bool_to_bit(plat_has_mti),
+      SEI = bool_to_bit(plat_has_sei),
+      SSI = bool_to_bit(plat_has_ssi),
+      STI = bool_to_bit(plat_has_sti),
+    ].bits & i.bits
+  )
+
 private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // The only writable bits are the S-mode bits.
   let v = Mk_Minterrupts(v);
-  [o with
+  supported_interrupts_mask([o with
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
     SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
@@ -85,12 +97,12 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
       else hvip[VSTI] // software-only, use hvip
     ) else 0b0,
     VSSI = if currentlyEnabled(Ext_H) then v[VSSI] else 0b0,
-  ]
+  ])
 }
 
 private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  [o with
+  supported_interrupts_mask([o with
     LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
     MEI  = v[MEI],
     MTI  = v[MTI],
@@ -102,7 +114,7 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     VSEI = if currentlyEnabled(Ext_H) then v[VSEI] else 0b0,
     VSTI = if currentlyEnabled(Ext_H) then v[VSTI] else 0b0,
     VSSI = if currentlyEnabled(Ext_H) then v[VSSI] else 0b0,
-  ]
+  ])
 }
 
 private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
@@ -215,8 +227,9 @@ function read_mip(read_type : XipReadType) -> Minterrupts =
   match read_type {
     IncludePlatformInterrupts => {
       let platform_interrupts =
-        [external_interrupts_pending(hgeie)
-           with SSI = if currentlyEnabled(Ext_S) then supervisor_software_interrupt_pending() else 0b0];
+        supported_interrupts_mask([external_interrupts_pending(hgeie) with
+          SSI = if currentlyEnabled(Ext_S) then supervisor_software_interrupt_pending() else 0b0,
+        ]);
       Mk_Minterrupts(mip.bits | platform_interrupts.bits)
     },
     ExcludePlatformInterrupts => mip,

@@ -44,6 +44,10 @@
     `xtval` CSRs; these are the guest-page-fault exceptions, and the
     virtual-instruction and hardware-error exceptions. See
     `base.xtval_nonzero`.
+  - Whether machine-mode and supervisor-mode interrupts are supported
+    by a platform can be individually configured, see
+    `platform.interrupts` for machine-mode and
+    `extensions.S.interrupts` for supervisor-mode interrupts respectively.
   - The default value of `base.medeleg.delegatable_bits` now also
     includes the exception codes introduced by H, i.e. VS-mode
     environment calls, virtual instructions, and the guest-page faults.
