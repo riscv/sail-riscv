@@ -571,6 +571,8 @@
     },
     "H": {
       "supported": true,
+      // GEILEN, the number of guest external interrupts. The maximum is XLEN-1.
+      "geilen": @CONFIG__H__GEILEN@,
       // Whether a guest-page fault writes the faulting guest physical address
       // to `htval`/`mtval2`. If false, `htval`/`mtval2` is written as zero.
       // Enabling Shtvala requires this option to be enabled.

@@ -13,17 +13,17 @@
 
 // Guest External Interrupt Registers
 
-// GEILEN is XLEN-1, so hgeie bits 1..XLEN-1 are writable.
-// TODO: Legalize against a GEILEN config once one exists.
-private function legalize_hgeie(v : xlenbits) -> xlenbits = {
-  [v with 0 = bitzero]
-}
+// Bits GEILEN:1 of hgeip and hgeie are implemented, all other bit positions
+// are read-only zero.
+let hgei_mask : xlenbits = zero_extend(ones(geilen) @ 0b0)
 
-register hgeie : xlenbits
+private function legalize_hgeie(v : xlenbits) -> xlenbits = v & hgei_mask
+
+register hgeie : xlenbits = zeros()
 
 // hgeip stays zero because no interrupt controller in the model asserts
 // guest external interrupts, which also makes mip.SGEIP permanently zero.
-register hgeip : xlenbits
+register hgeip : xlenbits = zeros()
 
 mapping clause csr_name_map = 0x607 <-> "hgeie"
 mapping clause csr_name_map = 0xE12 <-> "hgeip"
@@ -32,7 +32,7 @@ function clause is_CSR_accessible(0x607, _, _) = currentlyEnabled(Ext_H) // hgei
 function clause is_CSR_accessible(0xE12, _, _) = currentlyEnabled(Ext_H) // hgeip
 
 function clause read_CSR(0x607) = hgeie
-function clause read_CSR(0xE12) = hgeip
+function clause read_CSR(0xE12) = hgeip & hgei_mask
 
 function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hgeie) }
 
@@ -70,8 +70,8 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     // * bit VSEIP of hvip;
     // * the bit of hgeip selected by hstatus.VGEIN; and
     // * any other platform-specific external interrupt signal directed to VS-Level"
-    // The hgeip term is always zero (see GEILEN above) and there are no
-    // platform-specific VS-level signals, so only hvip is left.
+    // The hgeip term is always zero because nothing drives hgeip yet,
+    // and there are no platform-specific VS-level signals, so only hvip is left.
     VSEI = if currentlyEnabled(Ext_H) then hvip[VSEI] else 0b0,
     // " VSTIP is read-only in hip, and is the logical-OR of
     // * hvip.VSTIP; and
@@ -123,8 +123,9 @@ private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts
     VSEI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
     VSTI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
     VSSI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
-    // SGEI is always delegated when GEILEN > 0, assumed whenever H is present
-    SGEI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
+    // "if any guest external interrupts are implemented (GEILEN is nonzero),
+    //  bit 12 of mideleg ... is also read-only one."
+    SGEI = if currentlyEnabled(Ext_H) & geilen > 0 then 0b1 else 0b0,
   ]
 }
 

@@ -14,6 +14,8 @@
   - Zilx
 
 - Updates to the [configuration file](../config/config.json.in):
+  - The number of guest external interrupts (GEILEN) can be specified, see
+    `extensions.H.geilen`. The default is XLEN-1.
   - The default `platform.clint.size` is now 0xc000 rather than 0xc0000.
     The CLINT register map ends at offset 0xbfff, so everything beyond it
     was claimed by the model but never used.

@@ -801,6 +801,13 @@ private function check_extension_param_constraints() -> bool = {
       print_endline("Bits for reserved interrupts are set in `base.mideleg.delegatable_bits`.");
     }
   };
+  if (config extensions.H.supported : bool) then {
+    let geilen_nat : nat = geilen;
+    if geilen_nat > xlen - 1 then {
+      valid = false;
+      print_endline("`extensions.H.geilen` is " ^ dec_str(geilen) ^ " but cannot be greater than " ^ dec_str(xlen - 1) ^ " for RV" ^ dec_str(xlen) ^ ".");
+    };
+  };
   valid
 }
 

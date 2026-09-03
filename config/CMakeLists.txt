@@ -39,6 +39,9 @@ foreach(CONFIG__BASE__XLEN IN ITEMS 32 64)
                 set(CONFIG__PHYSADDR__BITS 56)
             endif()
 
+            # GEILEN is at most XLEN-1.
+            math(EXPR CONFIG__H__GEILEN "${CONFIG__BASE__XLEN} - 1")
+
             configure_file(config.json.in ${CMAKE_CURRENT_BINARY_DIR}/${config_filename})
 
             install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${config_filename}
