@@ -6,5 +6,5 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-enum zvabd_vabd_func6 = {VV_VABD, VV_VABDU}
-enum zvabd_vwabda_func6 = {VV_VWABDA, VV_VWABDAU}
+enum zvabd_vabd_func6 = {VABD, VABDU}
+enum zvabd_vwabda_func6 = {VWABDA, VWABDAU}

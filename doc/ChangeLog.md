@@ -62,6 +62,7 @@
     rejects a configuration that supports supervisor mode but no `satp` mode.
   - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
+  - https://github.com/riscv/sail-riscv/issues/1883 : `Zvabd` was bumped from 0.7 to 0.9. The encoding changed incompatibly during ARC review
 
 - Other notes:
   - The test suite has been updated to the latest release (2026-08-20)
