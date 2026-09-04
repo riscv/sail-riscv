@@ -718,9 +718,9 @@ mapping clause encdec = SFENCE_VMA(rs1, rs2)
 function clause execute SFENCE_VMA(rs1, rs2) = {
   let addr = if rs1 != zreg then Some(X(rs1)) else None();
   // Note, the Sail model does not currently support Sv32 & SXLEN=32 on RV64.
-  // In that case this asidlen would be incorrect because the maximum asidlen
-  // is 9 but we always set it to 16 for RV64.
-  let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
+  // In that case this `asidlen` may be incorrect because ASIDMAX for Sv32 is 9,
+  // but `asidlen` would have been validated against the ASIDMAX for RV64.
+  let asid : option(asidbits) = if rs2 != zreg then Some(if asidlen == 0 then zeros() else zero_extend(X(rs2)[asidlen - 1 .. 0])) else None();
   let vmid = if cur_privilege == VirtualSupervisor then Some(get_vmid(VS_Stage)) else None();
   match cur_privilege {
     User              => Illegal_Instruction(),

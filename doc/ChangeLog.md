@@ -55,6 +55,14 @@
   - Writes of reserved values to `xenvcfg.CBIE` and `xtvec.MODE` can
     now also be ignored; see `reserved_behavior.pmpcfg_write_only` and
     `reserved_behavior.xenvcfg_cbie`.
+  - The number of implemented ASID bits (`satp.ASID` / `vsatp.ASID`)
+    can be specified, see `memory.asidlen`. The default is ASIDMAX
+    (9 for RV32, 16 for RV64). Values from 0 through ASIDMAX are
+    allowed; bits above ASIDLEN are read-only zero.
+  - The number of implemented VMID bits (`hgatp.VMID`) can be
+    specified, see `memory.vmidlen`. The default is VMIDMAX (7 for
+    RV32, 14 for RV64). Values from 0 through VMIDMAX are allowed;
+    bits above VMIDLEN are read-only zero.
 
 - Xvisor boot is now tested in CI. The `os-boot` Makefile has been
   generalized to build both the Linux and Xvisor images.

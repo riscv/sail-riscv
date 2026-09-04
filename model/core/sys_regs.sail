@@ -1019,7 +1019,6 @@ bitfield Hgatp32 : bits(32) = {
   PPN  : 21 .. 0
 }
 
-// TODO: Add VMIDLEN config option and mask VMID field to implemented width
 function legalize_hgatp(
   arch : Architecture,
   prev_value : xlenbits,
@@ -1037,6 +1036,8 @@ function legalize_hgatp(
     // are read only zero, since the G-stage root page table lives
     // in real physical memory.
     let h = [h with
+      // VMID bits above the number of implemented VMID bits are read only zero.
+      VMID = if vmidlen == 0 then zeros() else zero_extend(h[VMID][vmidlen - 1 .. 0]),
       PPN = zero_extend(h[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
@@ -1055,6 +1056,8 @@ function legalize_hgatp(
     // implemented physical address bits are read only zero, since
     // the G-stage root page table lives in real physical memory.
     let h = [h with
+      // VMID bits above the number of implemented VMID bits are read only zero.
+      VMID = if vmidlen == 0 then zeros() else zero_extend(h[VMID][vmidlen - 1 .. 0]),
       PPN = zero_extend(h[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, h[Mode]) {
@@ -1088,8 +1091,6 @@ bitfield Satp32 : bits(32) = {
   PPN  : 21 .. 0
 }
 
-// TODO: This currently assumes all ASID bits are implemented
-// and does not legalize the asid field if asidlen is not the maximum.
 function legalize_satp(
   arch : Architecture,
   is_vsatp : bool,
@@ -1102,6 +1103,10 @@ function legalize_satp(
   // masked to physaddr_bits, which only bounds real physical memory.
   if xlen == 32 then {
     let s = Mk_Satp32(written_value);
+    // ASID bits above the number of implemented ASID bits are read only zero.
+    let s = [s with
+      Asid = if asidlen == 0 then zeros() else zero_extend(s[Asid][asidlen - 1 .. 0]),
+    ];
     // vsatp's PPN addresses guest-physical memory, bounded only by
     // the field's own width, not the host's physaddr_bits.
     let s = if is_vsatp then s else [s with
@@ -1119,6 +1124,10 @@ function legalize_satp(
     }
   } else if xlen == 64 then {
     let s = Mk_Satp64(written_value);
+    // ASID bits above the number of implemented ASID bits are read only zero.
+    let s = [s with
+      Asid = if asidlen == 0 then zeros() else zero_extend(s[Asid][asidlen - 1 .. 0]),
+    ];
     // vsatp's PPN addresses guest-physical memory, bounded only by
     // the field's own width, not the host's physaddr_bits.
     let s = if is_vsatp then s else [s with
