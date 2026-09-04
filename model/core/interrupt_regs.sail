@@ -223,7 +223,7 @@ function update_mip() -> unit = {
   mip[MSI] = machine_software_interrupt_pending();
 
   if currentlyEnabled(Ext_S) then {
-    mip[SSI] = supervisor_software_interrupt_pending();
+    mip[SSI] = mip[SSI] | supervisor_software_interrupt_pending();
   };
 
   if platform_has_timer then {
