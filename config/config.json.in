@@ -156,6 +156,7 @@
       "fetch_page_fault": true,
       "fetch_guest_page_fault": true,
       "software_check": true,
+      "hardware_error": true,
       "reserved_exceptions": false
     },
     "reserved_behavior": {

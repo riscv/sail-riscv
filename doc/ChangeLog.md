@@ -39,12 +39,11 @@
     requires this option to be enabled.
   - Whether each bit of `hcounteren` is writable or read-only zero can
     be specified, see `base.hcounteren_writable_bits`.
-  - Whether the guest-page-fault exceptions write a non-zero `xtval`
-    can be specified, see `base.xtval_nonzero.load_guest_page_fault`,
-    `base.xtval_nonzero.samo_guest_page_fault` and
-    `base.xtval_nonzero.fetch_guest_page_fault`.
-  - Whether virtual-instruction exceptions write a non-zero `xtval`
-    can be specified, see `base.xtval_nonzero.virtual_instruction`.
+  - Additional exceptions are now supported by `base.xtval_nonzero`,
+    which specifies which exceptions write non-zero values to the
+    `xtval` CSRs; these are the guest-page-fault exceptions, and the
+    virtual-instruction and hardware-error exceptions. See
+    `base.xtval_nonzero`.
   - The default value of `base.medeleg.delegatable_bits` now also
     includes the exception codes introduced by H, i.e. VS-mode
     environment calls, virtual instructions, and the guest-page faults.
