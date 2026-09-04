@@ -9,9 +9,9 @@
 // This aggregates the information from the interrupts controllers in
 // the system, which currently are the CLINT and the SIG.
 
-function external_interrupts_pending() -> Minterrupts =
+function external_interrupts_pending(hgeie_val : xlenbits) -> Minterrupts =
   // The CLINT doesn't deal with external interrupts.
-  if plat_have_sig then sig_external_interrupts_pending() else Mk_Minterrupts(zeros())
+  if plat_have_sig then sig_external_interrupts_pending(hgeie_val) else Mk_Minterrupts(zeros())
 
 function machine_software_interrupt_pending() -> bits(1) =
   (if plat_have_clint then clint_machine_software_interrupt_pending() else 0b0)

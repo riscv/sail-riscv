@@ -26,9 +26,21 @@ private function legalize_hgeie(v : xlenbits) -> xlenbits = v & hgei_mask
 
 register hgeie : xlenbits = zeros()
 
-// hgeip stays zero because no interrupt controller in the model asserts
-// guest external interrupts, which also makes mip.SGEIP permanently zero.
-register hgeip : xlenbits = zeros()
+// hgeip is read-only to software and has no state of its own. Its bits are
+// driven by the interrupt controller, so like the other platform interrupts
+// they are pulled in on read.
+// Defined in sys/simple_interrupt_generator_regs.sail.
+val guest_external_interrupts_pending : unit -> xlenbits
+
+function read_hgeip() -> xlenbits = guest_external_interrupts_pending() & hgei_mask
+
+function selected_vgein_in_hgeip() -> bits(1) = {
+  let vgein = unsigned(hstatus[VGEIN]);
+  if vgein > 0 & vgein <= geilen then {
+    let hgeip = read_hgeip();
+    [hgeip[vgein]]
+  } else 0b0
+}
 
 mapping clause csr_name_map = 0x607 <-> "hgeie"
 mapping clause csr_name_map = 0xE12 <-> "hgeip"
@@ -37,7 +49,7 @@ function clause is_CSR_accessible(0x607, _, _) = currentlyEnabled(Ext_H) // hgei
 function clause is_CSR_accessible(0xE12, _, _) = currentlyEnabled(Ext_H) // hgeip
 
 function clause read_CSR(0x607) = hgeie
-function clause read_CSR(0xE12) = hgeip & hgei_mask
+function clause read_CSR(0xE12) = read_hgeip()
 
 function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hgeie) }
 
@@ -54,13 +66,15 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
       // STI is read only if Sstc is enabled and STCE is set (it is equal to stimecmp <= mtime).
       if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
     ) else 0b0,
-    SGEI = if currentlyEnabled(Ext_H) then bool_to_bit((hgeip & hgeie) != zeros()) else 0b0,
+    // SGEIP is purely a function of hgeip and hgeie, so it is not stored here.
+    // external_interrupts_pending() supplies it when mip is read.
+    SGEI = 0b0,
     // "VSEIP is read-only in hip, and is the logical-OR of these interrupt sources:
     // * bit VSEIP of hvip;
     // * the bit of hgeip selected by hstatus.VGEIN; and
     // * any other platform-specific external interrupt signal directed to VS-Level"
-    // The hgeip term is always zero because nothing drives hgeip yet,
-    // and there are no platform-specific VS-level signals, so only hvip is left.
+    // The hgeip term is OR-ed in by external_interrupts_pending() and there are
+    // no platform-specific VS-level signals, so only hvip is stored.
     VSEI = if currentlyEnabled(Ext_H) then hvip[VSEI] else 0b0,
     // " VSTIP is read-only in hip, and is the logical-OR of
     // * hvip.VSTIP; and
@@ -201,7 +215,7 @@ function read_mip(read_type : XipReadType) -> Minterrupts =
   match read_type {
     IncludePlatformInterrupts => {
       let platform_interrupts =
-        [external_interrupts_pending()
+        [external_interrupts_pending(hgeie)
            with SSI = if currentlyEnabled(Ext_S) then supervisor_software_interrupt_pending() else 0b0];
       Mk_Minterrupts(mip.bits | platform_interrupts.bits)
     },
@@ -335,7 +349,7 @@ function clause is_CSR_accessible(0x644, _, _) = currentlyEnabled(Ext_H) // hip
 
 function clause read_CSR(0x645) = lower_mip_to_hvip(mip, hvip).bits
 function clause read_CSR(0x604) = lower_mie_to_hie(mie).bits
-function clause read_CSR(0x644) = lower_mip_to_hip(mip).bits
+function clause read_CSR(0x644) = lower_mip_to_hip(read_mip(IncludePlatformInterrupts)).bits
 
 function clause write_CSR(0x645, value) = {
   hvip = legalize_hvip(hvip, value);
@@ -346,7 +360,7 @@ function clause write_CSR(0x645, value) = {
   Ok(hvip.bits)
 }
 function clause write_CSR(0x604, value) = { mie = legalize_hie(mie, value); Ok(lower_mie_to_hie(mie).bits) }
-function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(mip).bits) }
+function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(read_mip(IncludePlatformInterrupts)).bits) }
 
 // hedeleg is writable only for the synchronous exceptions that may be
 // delegated to VS-mode. Codes 0-8, 12, 13, 15, 18, 19, everything else is
@@ -539,7 +553,7 @@ function clause is_CSR_accessible(0x204, _, _) = currentlyEnabled(Ext_H) // vsie
 function clause is_CSR_accessible(0x244, _, _) = currentlyEnabled(Ext_H) // vsip
 
 function clause read_CSR(0x204) = lower_mie_to_vsie(mie, hideleg).bits
-function clause read_CSR(0x244) = lower_mip_to_vsip(mip, hideleg).bits
+function clause read_CSR(0x244) = lower_mip_to_vsip(read_mip(IncludePlatformInterrupts), hideleg).bits
 
 function clause write_CSR(0x204, value) = { mie = legalize_vsie(mie, hideleg, value); Ok(lower_mie_to_vsie(mie, hideleg).bits) }
-function clause write_CSR(0x244, value) = { mip = legalize_vsip(mip, hideleg, value); Ok(lower_mip_to_vsip(mip, hideleg).bits) }
+function clause write_CSR(0x244, value) = { mip = legalize_vsip(mip, hideleg, value); Ok(lower_mip_to_vsip(read_mip(IncludePlatformInterrupts), hideleg).bits) }

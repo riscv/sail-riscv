@@ -70,6 +70,11 @@
 - Xvisor boot is now tested in CI. The `os-boot` Makefile has been
   generalized to build both the Linux and Xvisor images.
 
+- The simple interrupt generator can now drive guest external interrupts.
+  A new `guest` register at offset 8 sets or clears one `hgeip` bit, which
+  allows triggering `mip.SGEIP` and `hip.VSEIP`. The device version is bumped
+  to 1.1, see [the documentation](SimpleInterruptGenerator.md).
+
 - Important issues addressed and bugs fixed:
   - `extensions.Svbare.supported` had no effect, `satp` accepted the Bare
     mode whether or not Svbare was configured. `validate_config()` now also
