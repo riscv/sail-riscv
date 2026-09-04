@@ -221,7 +221,10 @@ function update_mip() -> unit = {
   let hart_mtimecmp = get_hart_mtimecmp();
 
   mip[MSI] = machine_software_interrupt_pending();
-  mip[SSI] = supervisor_software_interrupt_pending();
+
+  if currentlyEnabled(Ext_S) then {
+    mip[SSI] = supervisor_software_interrupt_pending();
+  };
 
   if platform_has_timer then {
     mip[MTI] = bool_to_bit(hart_mtimecmp <=_u cur_mtime);

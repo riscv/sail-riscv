@@ -23,4 +23,4 @@ function sig_machine_software_interrupt_pending() -> bits(1) =
   sig_msip
 
 function sig_supervisor_software_interrupt_pending() -> bits(1) =
-  if currentlyEnabled(Ext_S) then sig_ssip else 0b0
+  sig_ssip
