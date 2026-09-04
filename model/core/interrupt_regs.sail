@@ -250,12 +250,10 @@ function update_mip() -> unit = {
     // but not necessarily immediately. The interrupt remains posted until vstimecmp becomes greater
     // than (time + htimedelta), typically as a result of writing vstimecmp. The interrupt will be
     // taken based on the standard interrupt enable and delegation rules while V=1.
-    var VSTI : bits(1) = hvip[VSTI];
-
-    if currentlyEnabled(Ext_Sstc) & read_henvcfg()[STCE] == 0b1 then {
-      VSTI = VSTI | bool_to_bit(platform_has_timer & (vstimecmp <=_u (cur_mtime + htimedelta)));
-    };
-    mip[VSTI] = VSTI;
+    mip[VSTI] = hvip[VSTI]
+                | (if currentlyEnabled(Ext_Sstc) & read_henvcfg()[STCE] == 0b1 & platform_has_timer
+                   then bool_to_bit(vstimecmp <=_u (cur_mtime + htimedelta))
+                   else 0b0);
   };
 
   if old_mip != mip.bits then {
