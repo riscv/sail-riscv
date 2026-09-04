@@ -198,7 +198,12 @@ enum XipReadType = {
 
 function read_mip(read_type : XipReadType) -> Minterrupts =
   match read_type {
-    IncludePlatformInterrupts => Mk_Minterrupts(mip.bits | external_interrupts_pending().bits),
+    IncludePlatformInterrupts => {
+      let platform_interrupts =
+        [external_interrupts_pending()
+           with SSI = if currentlyEnabled(Ext_S) then supervisor_software_interrupt_pending() else 0b0];
+      Mk_Minterrupts(mip.bits | platform_interrupts.bits)
+    },
     ExcludePlatformInterrupts => mip,
   }
 
@@ -221,10 +226,6 @@ function update_mip() -> unit = {
   let hart_mtimecmp = get_hart_mtimecmp();
 
   mip[MSI] = machine_software_interrupt_pending();
-
-  if currentlyEnabled(Ext_S) then {
-    mip[SSI] = mip[SSI] | supervisor_software_interrupt_pending();
-  };
 
   if platform_has_timer then {
     mip[MTI] = bool_to_bit(hart_mtimecmp <=_u cur_mtime);
