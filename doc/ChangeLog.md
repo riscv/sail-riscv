@@ -63,6 +63,10 @@
     RV32, 14 for RV64). Values from 0 through VMIDMAX are allowed;
     bits above VMIDLEN are read-only zero.
 
+- The Zicntr extension now requires a source of time. Currently, the
+  only source of time is the CLINT, hence enabling support for Zicntr
+  now also requires that the CLINT be enabled.
+
 - Xvisor boot is now tested in CI. The `os-boot` Makefile has been
   generalized to build both the Linux and Xvisor images.
 

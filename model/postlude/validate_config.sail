@@ -860,9 +860,24 @@ private function check_stateen_config() -> bool = {
 
 private function check_mmio_devices() -> bool = {
   var valid : bool = true;
-  if plat_sig_base[1 .. 0] != zeros() then {
+  if (config platform.simple_interrupt_generator.supported : bool) & plat_sig_base[1 .. 0] != zeros() then {
     valid = false;
     print_endline("platform.simple_interrupt_generator.base is not 4-byte aligned.");
+  };
+  if (config extensions.Zicntr.supported : bool) then {
+    // Require a source of time for the RDTIME instruction; currently, this is the CLINT.
+    if not(config platform.clint.supported : bool) then {
+      valid = false;
+      print_endline("Zicntr is enabled but there is no source of time: a source of time (currently only `platform.clint.supported`) must be enabled.");
+    };
+  };
+  if (config platform.clint.supported : bool) then {
+    let hartid : int = config platform.hartid;
+    if hartid >= 4095 then {
+      // This is a borderline case: the hart will not receive interrupts, but otherwise the configuration is valid,
+      // so print a warning.
+      print_endline("Warning: platform.hartid is " ^ dec_str(hartid) ^ ", which is out-of-range for the CLINT, which serves harts 0 through 4094; the hart will not receive interrupts from the CLINT.");
+    };
   };
   valid
 }
