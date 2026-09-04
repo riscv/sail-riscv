@@ -756,6 +756,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_sha_dependency("Shvstvala", (config extensions.Shvstvala.supported : bool));
     valid = valid & check_sha_dependency("Shvstvecd", (config extensions.Shvstvecd.supported : bool));
   };
+  if (config extensions.Zcmp.supported : bool) & (config extensions.Zcd.supported : bool) then {
+    valid = false;
+    print_endline("The Zcmp and Zcd extensions are mutually exclusive and cannot be supported simultaneously.");
+  };
   valid
 }
 
