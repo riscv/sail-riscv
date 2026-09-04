@@ -893,6 +893,44 @@ private function check_mstatus_fields() -> bool = {
   valid
 }
 
+// True if every `CBIE` encoding legal for `sub` is also legal for `sup`.
+// Note the legal sets form a partial order: flush (0b01) and inval (0b11)
+// can be supported independently of each other.
+private function cbie_legal_subset(sub : AllowedCBIE, sup : AllowedCBIE) -> bool = match (sub, sup) {
+  (CBIE_None, _) => true,
+  (_, CBIE_AllowFlushAndInval) => true,
+  (CBIE_AllowFlush, CBIE_AllowFlush) => true,
+  (CBIE_AllowInval, CBIE_AllowInval) => true,
+  _ => false
+}
+
+private function check_envcfg_cbie() -> bool = {
+  var valid : bool = true;
+
+  let menvcfg_cbie : AllowedCBIE = config base.envcfg.menvcfg_cbie_legal;
+  let senvcfg_cbie : AllowedCBIE = config base.envcfg.senvcfg_cbie_legal;
+  let henvcfg_cbie : AllowedCBIE = config base.envcfg.henvcfg_cbie_legal;
+
+  if not(cbie_legal_subset(senvcfg_cbie, menvcfg_cbie)) then {
+    valid = false;
+    print_endline("`base.envcfg.senvcfg_cbie_legal` must be a subset of `base.envcfg.menvcfg_cbie_legal`: `senvcfg.CBIE` cannot support more encodings than `menvcfg.CBIE`.");
+  };
+
+  if (config extensions.H.supported : bool) then {
+    if not(cbie_legal_subset(henvcfg_cbie, menvcfg_cbie)) then {
+      valid = false;
+      print_endline("`base.envcfg.henvcfg_cbie_legal` must be a subset of `base.envcfg.menvcfg_cbie_legal`: `henvcfg.CBIE` cannot support more encodings than `menvcfg.CBIE`.");
+    };
+
+    if not(cbie_legal_subset(senvcfg_cbie, henvcfg_cbie)) then {
+      valid = false;
+      print_endline("`base.envcfg.senvcfg_cbie_legal` must be a subset of `base.envcfg.henvcfg_cbie_legal` since the H extension is supported: `senvcfg.CBIE` cannot support more encodings than `henvcfg.CBIE`.");
+    };
+  };
+
+  valid
+}
+
 private function check_physaddr_bits() -> bool = {
   let physaddr_bits_nat : nat = physaddr_bits;
   if physaddr_bits_nat > 64 then {
@@ -927,6 +965,7 @@ function config_is_valid() -> bool = {
     check_privs()
   & check_tvecs()
   & check_mstatus_fields()
+  & check_envcfg_cbie()
   & check_physaddr_bits()
   & check_mmu_config()
   & check_mem_layout()
