@@ -829,6 +829,17 @@ private function check_extension_param_constraints() -> bool = {
       print_endline("`extensions.H.geilen` is " ^ dec_str(geilen) ^ " but cannot be greater than " ^ dec_str(xlen - 1) ^ " for RV" ^ dec_str(xlen) ^ ".");
     };
   };
+  if not(sys_enable_writable_fiom) then {
+    if xlen == 64 & (config extensions.Sv39.supported : bool) then {
+      valid = false;
+      print_endline("`base.writable_fiom` is false but Sv39 is supported: FIOM may only be read-only zero when satp.MODE is always Bare.");
+    }
+    else if xlen == 32 & (config extensions.Sv32.supported : bool) then {
+      valid = false;
+      print_endline("`base.writable_fiom` is false but Sv32 is supported: FIOM may only be read-only zero when satp.MODE is always Bare.");
+    }
+  };
+
   valid
 }
 
