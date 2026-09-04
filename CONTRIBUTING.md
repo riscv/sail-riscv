@@ -48,3 +48,9 @@ be deferred until Ratification-Ready or later.
 
 We _require_ any and all use of generative AI tools, e.g. for writing
 code, comments, documentation, or PR text, to be disclosed.
+
+The repository now enforces a Developer Certificate of Origin (DCO)
+check that requires commits to be signed. See
+[here](https://developercertificate.org) for what the DCO states. The
+[DCO check](https://github.com/apps/dco) requires adding the `-s` flag
+to your `git commit` command.

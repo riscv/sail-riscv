@@ -1,5 +1,19 @@
 # Release notes for the next version
 
+# Release notes for version 0.14
+
+The highlight of this release is the addition of the `H` hypervisor
+extension and several of the `Sh` family of extensions. This is
+accompanied by hypervisor tests that have been added to the CI; see
+below. There is a known limitation in the implementation: the
+hypervisor `HLV*`/`HSV*` load/store instructions do not handle
+page-straddling accesses correctly. This will be fixed in the next
+release.
+
+The JSON schema for the configuration file has been added as an
+individual release artifact and can be downloaded from the releases
+page.
+
 - The following extensions have been added:
   - H
   - Sha
@@ -79,9 +93,9 @@
   - `extensions.Svbare.supported` had no effect, `satp` accepted the Bare
     mode whether or not Svbare was configured. `validate_config()` now also
     rejects a configuration that supports supervisor mode but no `satp` mode.
+  - https://github.com/riscv/sail-riscv/issues/1883 : `Zvabd` was bumped from 0.7 to 0.9. The encoding changed incompatibly during ARC review
   - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
-  - https://github.com/riscv/sail-riscv/issues/1883 : `Zvabd` was bumped from 0.7 to 0.9. The encoding changed incompatibly during ARC review
 
 - Other notes:
   - The test suite has been updated to the latest release (2026-08-20)
