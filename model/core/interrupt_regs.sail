@@ -29,13 +29,12 @@ register hgeie : xlenbits = zeros()
 // hgeip is read-only to software and has no state of its own. Its bits are
 // driven by the interrupt controller, so like the other platform interrupts
 // they are pulled in on read.
-// Defined in sys/simple_interrupt_generator_regs.sail, which comes after this
-// file in the compile order.
+// Defined in sys/simple_interrupt_generator_regs.sail.
 val guest_external_interrupts_pending : unit -> xlenbits
 
 function read_hgeip() -> xlenbits = guest_external_interrupts_pending() & hgei_mask
 
-function selected_hgeip() -> bits(1) = {
+function selected_vgein_in_hgeip() -> bits(1) = {
   let vgein = unsigned(hstatus[VGEIN]);
   if vgein > 0 & vgein <= geilen then {
     let hgeip = read_hgeip();

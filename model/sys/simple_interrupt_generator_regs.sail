@@ -19,7 +19,7 @@ function sig_external_interrupts_pending(hgeie_val : xlenbits) -> Minterrupts =
     // SEIP is read-only zero if the hart does not support supervisor mode.
     SEI = if currentlyEnabled(Ext_S) then sig_seip else 0b0,
     SGEI = if currentlyEnabled(Ext_H) then bool_to_bit((sig_hgeip & hgeie_val) != zeros()) else 0b0,
-    VSEI = if currentlyEnabled(Ext_H) then selected_hgeip() else 0b0,
+    VSEI = if currentlyEnabled(Ext_H) then selected_vgein_in_hgeip() else 0b0,
   ]
 
 function sig_machine_software_interrupt_pending() -> bits(1) =

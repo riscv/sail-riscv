@@ -72,7 +72,7 @@
 
 - The simple interrupt generator can now drive guest external interrupts.
   A new `guest` register at offset 8 sets or clears one `hgeip` bit, which
-  makes `mip.SGEIP` and `hip.VSEIP` reachable. The device version is bumped
+  allows triggering `mip.SGEIP` and `hip.VSEIP`. The device version is bumped
   to 1.1, see [the documentation](SimpleInterruptGenerator.md).
 
 - Important issues addressed and bugs fixed:
