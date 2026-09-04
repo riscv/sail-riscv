@@ -104,6 +104,18 @@ let plat_have_clint : bool = config platform.clint.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
 let plat_clint_size : physaddrbits = to_bits_checked(config platform.clint.size : int)
 
+// When false, mip.MSIP and mie.MSIE are read-only zero for CSR access and
+// interrupt dispatch, and the Simple Interrupt Generator cannot set MSIP.
+let plat_msi_supported : bool = config platform.msi_supported
+
+// When false, mip.MTIP and mie.MTIE are read-only zero for CSR access and
+// interrupt dispatch.
+let plat_mti_supported : bool = config platform.mti_supported
+
+// When false, mip.MEIP and mie.MEIE are read-only zero for CSR access and
+// interrupt dispatch.
+let plat_mei_supported : bool = config platform.mei_supported
+
 // Simple Interrupt Generator. See docs/SimpleInterruptGenerator.md for details.
 let plat_have_sig : bool = config platform.simple_interrupt_generator.supported
 let plat_sig_base : physaddrbits = to_bits_checked(config platform.simple_interrupt_generator.base : int)
