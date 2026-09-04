@@ -34,9 +34,13 @@ Virtual Address Translation Process (VATP) algorithm specified in the
 manual, and calls `translate()`, which in turn calls
 `translate_TLB_miss()` and `translate_TLB_hit()` to handle the TLB.
 The latter two functions contain the remaining steps of the VATP.
-`pt_walk()` implements the page-table walk, and invokes `mem_read()`
-and `mem_write_value()` (from [mem.sail](../model/sys/mem.sail)) to
-read and write PTEs (Page Table Entries) from physical memory.
+
+`pt_walk()` implements the page-table walk and reads PTEs via
+`read_pte()`. When an access sets a PTE's A or D bits,
+`translate_TLB_hit()` and `translate_TLB_miss()` write it back using
+`update_and_write_pte()`, which in turn calls `write_pte()`.
+`read_pte()` and `write_pte()` use `mem_read()` and
+`mem_write_value()` from [mem.sail](../model/sys/mem.sail).
 
 The `satp`, `hgatp` and `vsatp` registers live in
 [vmem.sail](../model/sys/vmem.sail) and are accessed by the general
