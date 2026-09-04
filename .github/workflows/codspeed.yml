@@ -1,0 +1,35 @@
+name: CodSpeed
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  benchmarks:
+    name: "RISC-V tests (benchmarked)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build benchmarks
+        run: |
+          CLANG_FLAG=""
+          if [ -n "$CLANG_VERSION" ]; then
+            CLANG_FLAG="-DCLANG_BIN=/usr/bin/clang-$CLANG_VERSION"
+          fi
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DBENCHMARKS=TRUE -DCODSPEED_MODE=simulation \
+            -DENABLE_RISCV_TESTS=TRUE -DENABLE_SMT_TESTS=FALSE $CLANG_FLAG
+          ninja -C build sail_riscv_bench
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: ./build/benchmarks/sail_riscv_bench
