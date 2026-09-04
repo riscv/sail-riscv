@@ -36,7 +36,7 @@ _Reserved_ bits must be written with 0 otherwise an access fault is raised. In f
 
 Bit 31 controls whether the relevant interrupts are set or cleared.
 
-A bit of internal state is kept for each interrupt that can be triggered, and these are ORed into the corresponding bits of the `mip` on read.
+A bit of internal state is kept for each interrupt that can be triggered, and these are used to update the corresponding bits of the `mip` on read.
 
 MEI and MSI control the platform interrupt inputs to the hart (there is no way for software running on the hart to set these bits directly). MEI is a separate input that is ORed into `mip[MEI]` on read, like SEI below. SEI and SSI are slightly more subtle because software on the hart can also write to these bits.
 
