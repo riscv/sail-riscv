@@ -226,16 +226,9 @@ add_dependencies(generated_sail_riscv_docs generated_html_tgz)
 
 ############# Formal #############
 
-# Theorem prover backends require compile time configuration.
-foreach (xlen IN ITEMS 32 64)
-    # Use ELEN=XLEN.
-    set(config_file "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v256_e${xlen}.json")
-    # This name is used in a lot of places so it excludes the `_v256_e{xlen}`
-    # for backwards compatibility.
-    set(arch "rv${xlen}d")
+############# SMT #############
 
-    ############# SMT #############
-
+function(add_smt_targets arch config_file)
     # Generate smtlib2 code from the Sail code.
     # A separate .smt2 file is created for each $property or $counterexample.
     # Since the true output files are unknown we need to manually
@@ -290,9 +283,11 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_srcs}
         )
     endif()
+endfunction()
 
-    ############# RMEM #############
+############# RMEM #############
 
+function(add_rmem_targets arch config_file)
     # Generate riscv.lem, riscv_toFromInterp2.ml and riscv.defs
     # These are used for "rmem".
     add_custom_command(
@@ -368,9 +363,11 @@ foreach (xlen IN ITEMS 32 64)
         "rmem_${arch}_toFromInterp2.ml"
         "rmem_${arch}.defs"
     )
+endfunction()
 
-    ############# Rocq #############
+############# Rocq #############
 
+function(add_rocq_targets arch config_file)
     # Build Rocq (formerly Coq) definitions.
     add_custom_command(
         DEPENDS ${sail_srcs} ${project_file} ${config_file}
@@ -409,9 +406,11 @@ foreach (xlen IN ITEMS 32 64)
     )
     add_custom_target(generated_rocq_${arch} DEPENDS "${CMAKE_BINARY_DIR}/rocq/${arch}.v")
     add_custom_target(build_rocq_${arch} DEPENDS "${CMAKE_BINARY_DIR}/rocq/${arch}.vo")
+endfunction()
 
-    ############# Lean #############
+############# Lean #############
 
+function(add_lean_targets arch config_file)
     # Build Lean definitions
     string(TOUPPER ${arch} arch_uppercase)
     set(lean_sail_common
@@ -481,11 +480,14 @@ foreach (xlen IN ITEMS 32 64)
     add_custom_target(generated_lean_${arch} DEPENDS "Lean_${arch_uppercase}/Lean${arch_uppercase}.lean")
     add_custom_target(generated_lean_executable_${arch} DEPENDS "Lean_${arch_uppercase}_executable/Lean${arch_uppercase}Executable.lean")
 
-    # Make the directories with executable definitions known to the lean_emulator build.
-    set(lean_${arch}_executable_dir "${CMAKE_CURRENT_BINARY_DIR}/Lean_${arch_uppercase}_executable" PARENT_SCOPE)
+    # Make the directories with executable definitions known to the parent scope.
+    set(lean_${arch}_executable_dir "${CMAKE_CURRENT_BINARY_DIR}/Lean_${arch_uppercase}_executable")
+    return(PROPAGATE lean_${arch}_executable_dir)
+endfunction()
 
-    ############# Lem #############
+############# Lem #############
 
+function(add_lem_targets arch config_file)
     # Build Lem definitions, en route to Isabelle or HOL4.
     string_upper_initial("${arch}" arch_thy)
     add_custom_command(
@@ -517,9 +519,11 @@ foreach (xlen IN ITEMS 32 64)
 
     )
     add_custom_target(generated_lem_${arch} DEPENDS "${arch}.lem")
+endfunction()
 
-    ############# Isabelle #############
+############# Isabelle #############
 
+function(add_isabelle_targets arch config_file)
     # Build Isabelle definitions from Lem
     string_upper_initial("${arch}" arch_thy)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/isabelle/${arch}")
@@ -575,9 +579,11 @@ foreach (xlen IN ITEMS 32 64)
             "${CMAKE_BINARY_DIR}/isabelle/${arch}/ROOT"
     )
     add_custom_target(generated_isabelle_${arch} DEPENDS "${CMAKE_BINARY_DIR}/isabelle/${arch}/${arch_thy}.thy")
+endfunction()
 
-    ############# HOL4 #############
+############# HOL4 #############
 
+function(add_hol4_targets arch config_file)
     # Build HOL4 definitions from Lem
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/hol4/${arch}")
     configure_file("${CMAKE_SOURCE_DIR}/handwritten_support/Holmakefile.in" "${CMAKE_BINARY_DIR}/hol4/${arch}/Holmakefile" @ONLY)
@@ -607,4 +613,65 @@ foreach (xlen IN ITEMS 32 64)
             ${arch}.lem
     )
     add_custom_target(generated_hol4_${arch} DEPENDS "${CMAKE_BINARY_DIR}/hol4/${arch}/${arch}Script.thy")
+endfunction()
+
+# Theorem prover backends require compile time configuration.
+
+foreach (xlen IN ITEMS 32 64)
+    # Use ELEN=XLEN.
+    set(config_file "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v256_e${xlen}.json")
+    # This name is used in a lot of places so it excludes the `_v256_e{xlen}`
+    # for backwards compatibility.
+    set(arch "rv${xlen}d")
+
+    ############# SMT #############
+    add_smt_targets(${arch} ${config_file})
+
+    ############# RMEM #############
+    add_rmem_targets(${arch} ${config_file})
+
+    ############# Rocq #############
+    add_rocq_targets(${arch} ${config_file})
+
+    ############# Lean #############
+    add_lean_targets(${arch} ${config_file})
+    # Make the directories with executable definitions known to the lean_emulator build.
+    set(lean_${arch}_executable_dir ${lean_${arch}_executable_dir} PARENT_SCOPE)
+
+    ############# Lem #############
+    add_lem_targets(${arch} ${config_file})
+
+    ############# Isabelle #############
+    # These depend on the Lem generated files.
+    add_isabelle_targets(${arch} ${config_file})
+
+    ############# HOL4 #############
+    # These depend on the Lem generated files.
+    add_hol4_targets(${arch} ${config_file})
 endforeach()
+
+# Custom prover builds.
+
+# Lean
+set(CACHE{CUSTOM_LEAN_CONFIG}
+    TYPE FILEPATH
+    HELP "Custom config for the Lean target"
+    VALUE ""
+)
+set(CACHE{CUSTOM_LEAN_ARCH}
+    TYPE STRING
+    HELP "Custom arch name for the Lean target"
+    VALUE "custom"
+)
+if (CUSTOM_LEAN_CONFIG)
+    if ((${CUSTOM_LEAN_ARCH} STREQUAL "rv32d") OR (${CUSTOM_LEAN_ARCH} STREQUAL "rv64d"))
+        message(FATAL_ERROR "The value of CUSTOM_LEAN_ARCH (${CUSTOM_LEAN_ARCH}) cannot be 'rv32d' or 'rv64d'.")
+    endif()
+    cmake_path(IS_ABSOLUTE CUSTOM_LEAN_CONFIG config_is_absolute)
+    if (NOT config_is_absolute)
+        cmake_path(SET config_path ${CMAKE_SOURCE_DIR}/config/${CUSTOM_LEAN_CONFIG})
+    else()
+        cmake_path(SET config_path ${CUSTOM_LEAN_CONFIG})
+    endif()
+    add_lean_targets(${CUSTOM_LEAN_ARCH} ${config_path})
+endif()
