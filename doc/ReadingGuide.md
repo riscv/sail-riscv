@@ -188,6 +188,15 @@ platform-specific functionality for the model. It contains the CLINT
 local interrupt controller, and the MMIO interfaces to the clock,
 timer and terminal devices.
 
+[interrupt_implementation.sail](../model/sys/interrupt_implementation.sail)
+implements the interface defined in
+[interrupt_interface.sail](../model/core/interrupt_interface.sail)
+using the CLINT specified in [platform.sail](../model/sys/platform.sail) and the
+simple interrupt generator in
+[simple_interrupt_generator.sail](../model/sys/simple_interrupt_generator.sail)
+and
+[simple_interrupt_generator_regs.sail](../model/sys/simple_interrupt_generator_regs.sail).
+
 [split_access_utils.sail](../model/sys/split_access_utils.sail) has
 utilities for handling the splitting of misaligned accesses.
 
