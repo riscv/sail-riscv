@@ -37,6 +37,9 @@ errors and exceptions.
 This module provide the types and functions that the rest of the
 modules depend on.
 
+[isa_version.sail](../model/core/isa_version.sail) contains parameters
+to control behavior that depend on the ISA version.
+
 [xlen.sail](../model/core/xlen.sail),
 [flen.sail](../model/core/flen.sail) and
 [vlen.sail](../model/core/vlen.sail) define the types and
@@ -45,9 +48,6 @@ widths used in the model for the base ISA (e.g. `xlen`,
 vector extensions (`vlen`) respectively. These widths are specified
 as `config` values, which means their value is derived from the
 configuration file for the model.
-
-[isa_version.sail](../model/core/isa_version.sail) contains parameters
-to control behavior that depend on the ISA version.
 
 The lowest level memory access primitives are defined in
 [phys_mem_interface.sail](../model/core/phys_mem_interface.sail) and are
@@ -64,6 +64,13 @@ deal with address ranges are in
 [float_classify.sail](../model/core/float_classify.sail) contains a
 classifier for the floating-point format.
 
+`rvfi_dii*.sail` implement functionality for [RISC-V Formal
+Interface - Direct Instruction Injection
+(RVFI-DII)](https://github.com/CTSRD-CHERI/TestRIG/blob/master/RVFI-DII.md),
+allowing the model to be used with testing tools such as
+[TestRIG](https://github.com/CTSRD-CHERI/TestRIG). These files can be
+ignored on a first reading.
+
 [platform_config.sail](../model/core/platform_config.sail) contains
 various configuration parameters for the platform, some of which can
 affect which extensions can be supported on the platform.
@@ -75,30 +82,20 @@ extension is supported by the model configuration, while the
 `currentlyEnabled` function determines whether the extension is usable given
 the current dynamic state of the hart.
 
-`rvfi_dii*.sail` implement functionality for [RISC-V Formal
-Interface - Direct Instruction Injection
-(RVFI-DII)](https://github.com/CTSRD-CHERI/TestRIG/blob/master/RVFI-DII.md),
-allowing the model to be used with testing tools such as
-[TestRIG](https://github.com/CTSRD-CHERI/TestRIG). These files can be
-ignored on a first reading.
-
-`types_*.sail` and `*_types.sail` contain important types
-that are used in the rest of the specification.
-[types.sail](../model/core/types.sail) contains some basic
-RISC-V definitions. This file should be read early since these
-definitions are used throughout the specification for privilege
-levels, register indices, interrupt and exception definitions and
-enumerations, and types used to define memory accesses.
+`types_*.sail` and `*_types.sail` contain important types that are
+used in the rest of the specification.
+[types.sail](../model/core/types.sail) contains some basic RISC-V
+definitions. This file should be read early since these definitions
+are used throughout the specification for privilege levels, register
+indices, interrupt and exception definitions and enumerations, and
+types used to define memory accesses.
+[vmem_types.sail](../model/core/vmem_types.sail) contains essential
+types and definitions for virtual memory accesses and address
+translation stages.
 
 [mem_type_utils.sail](../model/core/mem_type_utils.sail) contains
 helper functions to map memory access types to the corresponding
 memory exceptions that can be generated from those accesses.
-
-[regs.sail](../model/core/regs.sail) contains the base
-register file, where each register is defined as having the `regtype`
-type defined in [reg_type.sail](../model/core/reg_type.sail)
-and indexed by the indices defined in
-[types.sail](../model/core/types.sail).
 
 [csr_begin.sail](../model/core/csr_begin.sail) sets up the
 infrastructure for the scattered definitions of CSRs and their access
@@ -107,6 +104,12 @@ for read and write operations.
 [callbacks.sail](../model/core/callbacks.sail) contains
 definitions for callbacks that inform an external harness (such as the
 C++ emulator) about state-changing events.
+
+[regs.sail](../model/core/regs.sail) contains the base
+register file, where each register is defined as having the `regtype`
+type defined in [reg_type.sail](../model/core/reg_type.sail)
+and indexed by the indices defined in
+[types.sail](../model/core/types.sail).
 
 [pc_access.sail](../model/core/pc_access.sail) defines
 functions to access and modify the program counter.
@@ -117,6 +120,16 @@ contains helpers to interpret their content, such as WLRL and WARL
 fields. CSRs dealing with interrupts are in
 [interrupt_regs.sail](../model/core/interrupt_regs.sail).
 
+[ext_regs.sail](../model/core/ext_regs.sail) contains some register
+handling definitions that can be overridden by out-of-tree extensions.
+
+[interrupt_interface.sail](../model/core/interrupt_interface.sail)
+defines an interface to interrupt controllers. This interface can be
+implemented by multiple interrupt controllers.
+
+[interrupt_regs.sail](../model/core/interrupt_regs.sail) contains the
+definitions and legalizers for interrupt-related CSRs.
+
 [addr_checks_common.sail](../model/core/addr_checks_common.sail)
 and [addr_checks.sail](../model/core/addr_checks.sail)
 contain extension hooks to support the checking and transformation of
@@ -125,6 +138,9 @@ transformed addresses are used for any address translation; however,
 any memory access exceptions are reported in terms of the original
 memory address (i.e. the one generated by the instruction, not the
 hook).
+
+[misa_ext.sail](../model/core/misa_ext.sail) contains hook functions
+to control updates to the `misa` CSR.
 
 The floating point arithmetic in the model is implemented by a wrapper
 around the Berkeley Softfloat library; this wrapper is implemented in
@@ -161,16 +177,16 @@ accessed through the functions in
 interrupt and exception delegation and dispatch, the handling of
 privilege transitions and access control for CSRs.
 
-[platform.sail](../model/sys/platform.sail) implements
-platform-specific functionality for the model. It contains the CLINT
-local interrupt controller, and the MMIO interfaces to the clock,
-timer and terminal devices.
-
 A simple model of an MMIO-based external interrupt controller is
 implemented in [simple_interrupt_generator.sail](../model/sys/simple_interrupt_generator.sail)
 and [simple_interrupt_generator_regs.sail](../model/sys/simple_interrupt_generator_regs.sail).
 This enables testing the model with external interrupts, as described in
 its [documentation](SimpleInterruptGenerator.md).
+
+[platform.sail](../model/sys/platform.sail) implements other
+platform-specific functionality for the model. It contains the CLINT
+local interrupt controller, and the MMIO interfaces to the clock,
+timer and terminal devices.
 
 [split_access_utils.sail](../model/sys/split_access_utils.sail) has
 utilities for handling the splitting of misaligned accesses.
@@ -185,21 +201,15 @@ memory, or MMIO accesses to the devices provided by the platform, or
 into the appropriate access fault. This file also contains definitions
 that are used in the weak memory concurrency model.
 
-The `vmem_{types,pte,ptw,tlb}.sail` and
-[vmem.sail](../model/sys/vmem.sail) files describe the
-S-mode address translation. More details are in
-[Virtual Memory Notes](./VirtualMemory.md).
+The `vmem_{pte,ptw,tlb}.sail` and [vmem.sail](../model/sys/vmem.sail)
+files implement the S-mode and VS-stage and G-stage address
+translations. More details are in [Virtual Memory
+Notes](./VirtualMemory.md).
 
 Callbacks to track page table walks are in
 [callbacks.sail](../model/sys/callbacks.sail), while callbacks to
 track operations on the TLB are in
 [vmem_tlb.sail](../model/sys/vmem_tlb.sail).
-
-[vmem_utils.sail](../model/sys/vmem_utils.sail) provides a
-higher level interface to virtual memory for load/store style
-instructions that handles address translation and accesses to
-misaligned addresses taking platform configuration options into
-account.
 
 [insts_begin.sail](../model/sys/insts_begin.sail) sets up
 the infrastructure for the definition of instructions in the rest of
@@ -213,6 +223,12 @@ instruction to and from their binary representations and assembly
 language formats. Though the assembly mappings are defined
 bidirectionally, only the disassembler direction (i.e., binary
 encoding to assembler) is used.
+
+[vmem_utils.sail](../model/sys/vmem_utils.sail) provides a
+higher level interface to virtual memory for load/store style
+instructions that handles address translation and accesses to
+misaligned addresses taking platform configuration options into
+account.
 
 ### Extensions
 
@@ -254,6 +270,10 @@ respectively. The instruction fetch is implemented in
 [fetch.sail](../model/postlude/fetch.sail), where the `fetch` is
 done in 16-bit granules to handle RVC instructions.
 
+[fetch_rvfi.sail](../model/postlude/fetch_rvfi.sail) provides the fetch function when the model
+is used for RVFI, and complements the `rvfi_dii*.sail` files mentioned
+above.
+
 The top-level fetch-decode-execute driver is in
 [step.sail](../model/postlude/step.sail) The `try_step` function
 performs the instruction fetch, handles any fetch errors, decodes the
@@ -275,10 +295,6 @@ functions in
 [device_tree.sail](../model/postlude/device_tree.sail).
 Model initialization and reset are implemented in
 [model.sail](../model/postlude/model.sail).
-
-[fetch_rvfi.sail](../model/postlude/fetch_rvfi.sail) provides the fetch function when the model
-is used for RVFI, and complements the `rvfi_dii*.sail` files mentioned
-above.
 
 ### Other modules
 
@@ -342,8 +358,10 @@ implementations to access `hart::Model`.
 
 All of these callbacks are declared in the Sail model in
 [platform.sail](../model/sys/platform.sail),
-[sys_reservation.sail](../model/sys/sys_reservation.sail) and
-[callbacks.sail](../model/core/callbacks.sail).
+[sys_reservation.sail](../model/sys/sys_reservation.sail),
+[core/callbacks.sail](../model/core/callbacks.sail),
+[sys/callbacks.sail](../model/sys/callbacks.sail) and
+[vmem_tlb.sail](../model/sys/vmem_tlb.sail).
 
 The Sail run-time system provides a C library for use with its C backend, which
 provides the low-level details of the implementation of raw memory and

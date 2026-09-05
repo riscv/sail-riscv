@@ -25,39 +25,23 @@ The main code in [vmem.sail](../model/sys/vmem.sail) is
 structured and commented to make it easy to ignore/skip TLB-related
 parts.
 
-## Simplified call graph
+The external execution code for instruction fetch, load, store and AMO
+invoke `translateAddr()` and receive a result of `TR_Result` type.
+`translateAddr()`, in turn, invokes `translate_vs_stage()` and
+`translate_g_stage()` for 2-stage address translation, which in turn
+call `translate_stage()`. `translate_stage()` contains Step 1 of the
+Virtual Address Translation Process (VATP) algorithm specified in the
+manual, and calls `translate()`, which in turn calls
+`translate_TLB_miss()` and `translate_TLB_hit()` to handle the TLB.
+The latter two functions contain the remaining steps of the VATP.
 
-The following figure shows a rough call graph, and this can serve as a
-guide for understanding the code.
+`pt_walk()` implements the page-table walk and reads PTEs via
+`read_pte()`. When an access sets a PTE's A or D bits,
+`translate_TLB_hit()` and `translate_TLB_miss()` write it back using
+`update_and_write_pte()`, which in turn calls `write_pte()`.
+`read_pte()` and `write_pte()` use `mem_read()` and
+`mem_write_value()` from [mem.sail](../model/sys/mem.sail).
 
-![](./figs/Virtual_Memory_API.svg)
-
-The yellow rectangle(s) represent the code in
-[vmem.sail](../model/sys/vmem.sail), and the grey rectangle(s)
-represent the code in
-[vmem_tlb.sail](../model/sys/vmem_tlb.sail). In each case,
-the lighter outer rectangle shows the publicly visible API, and the
-darker inner rectangle shows internal (private) resources.
-
-On the left are shown the external places from which the virtual
-memory code is invoked, using its public API. On the right are shown
-the external resources used by the vmem code.
-
-The main flow (ignoring TLBs) is at the top: The external execution
-code for instruction fetch, load, store and AMO invoke
-`translateAddr()` and receive a result of `TR_Result` type.
-`translateAddr()`, in turn, invokes `translate()`,
-`translate_TLB_miss()` and `pt_walk()`; the latter invokes the
-`mem_read_priv()` (from [mem.sail](../model/sys/mem.sail)) to
-read PTEs (Page Table Entries) from memory. The `SATP` register lives
-in [vmem.sail](../model/sys/vmem.sail) and is accessed by the
-general `readCSR()` and `writeCSR()` functions.
-
-`translate()` invokes `lookup_TLB()` and, if a hit, invokes
-`translate_TLB_hit()`, avoiding a page-table walk (and therefore no
-reads from memory).
-
-`mem_write_value_priv()` (from
-[mem.sail](../model/sys/mem.sail)) is called for writing back,
-to memory, PTEs (Page Table Entries) whose A and/or D bits have been
-modified as part of the access.
+The `satp`, `hgatp` and `vsatp` registers live in
+[vmem.sail](../model/sys/vmem.sail) and are accessed by the general
+`readCSR()` and `writeCSR()` functions.
