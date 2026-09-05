@@ -210,6 +210,18 @@ private function check_mmu_config() -> bool = {
   if (config extensions.Svvptc.supported : bool)
   then valid = valid & require_virtual_memory("Svvptc");
 
+  let asidlen_nat : nat = asidlen;
+  if (config extensions.S.supported : bool) & asidlen_nat > asidmax then {
+    valid = false;
+    print_endline("`memory.asidlen` is " ^ dec_str(asidlen) ^ " but cannot be greater than " ^ dec_str(asidmax) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
+  };
+
+  let vmidlen_nat : nat = vmidlen;
+  if (config extensions.H.supported : bool) & vmidlen_nat > vmidmax then {
+    valid = false;
+    print_endline("`memory.vmidlen` is " ^ dec_str(vmidlen) ^ " but cannot be greater than " ^ dec_str(vmidmax) ^ " on " ^  (if xlen == 32 then "RV32." else "RV64."));
+  };
+
   valid
 }
 
@@ -817,6 +829,17 @@ private function check_extension_param_constraints() -> bool = {
       print_endline("`extensions.H.geilen` is " ^ dec_str(geilen) ^ " but cannot be greater than " ^ dec_str(xlen - 1) ^ " for RV" ^ dec_str(xlen) ^ ".");
     };
   };
+  if not(sys_enable_writable_fiom) then {
+    if xlen == 64 & (config extensions.Sv39.supported : bool) then {
+      valid = false;
+      print_endline("`base.writable_fiom` is false but Sv39 is supported: FIOM may only be read-only zero when satp.MODE is always Bare.");
+    }
+    else if xlen == 32 & (config extensions.Sv32.supported : bool) then {
+      valid = false;
+      print_endline("`base.writable_fiom` is false but Sv32 is supported: FIOM may only be read-only zero when satp.MODE is always Bare.");
+    }
+  };
+
   valid
 }
 
@@ -837,9 +860,24 @@ private function check_stateen_config() -> bool = {
 
 private function check_mmio_devices() -> bool = {
   var valid : bool = true;
-  if plat_sig_base[1 .. 0] != zeros() then {
+  if (config platform.simple_interrupt_generator.supported : bool) & plat_sig_base[1 .. 0] != zeros() then {
     valid = false;
     print_endline("platform.simple_interrupt_generator.base is not 4-byte aligned.");
+  };
+  if (config extensions.Zicntr.supported : bool) then {
+    // Require a source of time for the RDTIME instruction; currently, this is the CLINT.
+    if not(config platform.clint.supported : bool) then {
+      valid = false;
+      print_endline("Zicntr is enabled but there is no source of time: a source of time (currently only `platform.clint.supported`) must be enabled.");
+    };
+  };
+  if (config platform.clint.supported : bool) then {
+    let hartid : int = config platform.hartid;
+    if hartid >= 4095 then {
+      // This is a borderline case: the hart will not receive interrupts, but otherwise the configuration is valid,
+      // so print a warning.
+      print_endline("Warning: platform.hartid is " ^ dec_str(hartid) ^ ", which is out-of-range for the CLINT, which serves harts 0 through 4094; the hart will not receive interrupts from the CLINT.");
+    };
   };
   valid
 }

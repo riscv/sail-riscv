@@ -39,12 +39,11 @@
     requires this option to be enabled.
   - Whether each bit of `hcounteren` is writable or read-only zero can
     be specified, see `base.hcounteren_writable_bits`.
-  - Whether the guest-page-fault exceptions write a non-zero `xtval`
-    can be specified, see `base.xtval_nonzero.load_guest_page_fault`,
-    `base.xtval_nonzero.samo_guest_page_fault` and
-    `base.xtval_nonzero.fetch_guest_page_fault`.
-  - Whether virtual-instruction exceptions write a non-zero `xtval`
-    can be specified, see `base.xtval_nonzero.virtual_instruction`.
+  - Additional exceptions are now supported by `base.xtval_nonzero`,
+    which specifies which exceptions write non-zero values to the
+    `xtval` CSRs; these are the guest-page-fault exceptions, and the
+    virtual-instruction and hardware-error exceptions. See
+    `base.xtval_nonzero`.
   - The default value of `base.medeleg.delegatable_bits` now also
     includes the exception codes introduced by H, i.e. VS-mode
     environment calls, virtual instructions, and the guest-page faults.
@@ -52,9 +51,29 @@
     modified; they now have a configuration that is similar to, but
     independent of, AMOs. See `memory.misaligned.exceptions.lrsc`
     and the `misaligned_exceptions.lrsc` PMA attribute.
+  - Writes of reserved values to `xenvcfg.CBIE` and `xtvec.MODE` can
+    now also be ignored; see `reserved_behavior.pmpcfg_write_only` and
+    `reserved_behavior.xenvcfg_cbie`.
+  - The number of implemented ASID bits (`satp.ASID` / `vsatp.ASID`)
+    can be specified, see `memory.asidlen`. The default is ASIDMAX
+    (9 for RV32, 16 for RV64). Values from 0 through ASIDMAX are
+    allowed; bits above ASIDLEN are read-only zero.
+  - The number of implemented VMID bits (`hgatp.VMID`) can be
+    specified, see `memory.vmidlen`. The default is VMIDMAX (7 for
+    RV32, 14 for RV64). Values from 0 through VMIDMAX are allowed;
+    bits above VMIDLEN are read-only zero.
+
+- The Zicntr extension now requires a source of time. Currently, the
+  only source of time is the CLINT, hence enabling support for Zicntr
+  now also requires that the CLINT be enabled.
 
 - Xvisor boot is now tested in CI. The `os-boot` Makefile has been
   generalized to build both the Linux and Xvisor images.
+
+- The simple interrupt generator can now drive guest external interrupts.
+  A new `guest` register at offset 8 sets or clears one `hgeip` bit, which
+  allows triggering `mip.SGEIP` and `hip.VSEIP`. The device version is bumped
+  to 1.1, see [the documentation](SimpleInterruptGenerator.md).
 
 - Important issues addressed and bugs fixed:
   - `extensions.Svbare.supported` had no effect, `satp` accepted the Bare
@@ -62,6 +81,7 @@
     rejects a configuration that supports supervisor mode but no `satp` mode.
   - https://github.com/riscv/sail-riscv/issues/1882 : missed overlap checks for widening vector multiply accumulates
   - https://github.com/riscv/sail-riscv/issues/1880 : some cases of Zvknh instructions did not check for valid `vl`
+  - https://github.com/riscv/sail-riscv/issues/1883 : `Zvabd` was bumped from 0.7 to 0.9. The encoding changed incompatibly during ARC review
 
 - Other notes:
   - The test suite has been updated to the latest release (2026-08-20)

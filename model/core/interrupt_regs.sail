@@ -6,6 +6,11 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
+// Registers for S-level and VS-level timer interrupts introduced by
+// the Sstc extension.  See `extensions/Sstc/sstc.sail`.
+register stimecmp  : bits(64)
+register vstimecmp : bits(64)
+
 // State and access functions for hgeie, hgeip, hvip, mip, hip, sip, mie,
 // hie, sie, medeleg, mideleg, hedeleg, hideleg, vsip and vsie.
 // These are surprisingly complex, especially SEIP which also breaks the
@@ -21,9 +26,21 @@ private function legalize_hgeie(v : xlenbits) -> xlenbits = v & hgei_mask
 
 register hgeie : xlenbits = zeros()
 
-// hgeip stays zero because no interrupt controller in the model asserts
-// guest external interrupts, which also makes mip.SGEIP permanently zero.
-register hgeip : xlenbits = zeros()
+// hgeip is read-only to software and has no state of its own. Its bits are
+// driven by the interrupt controller, so like the other platform interrupts
+// they are pulled in on read.
+// Defined in sys/simple_interrupt_generator_regs.sail.
+val guest_external_interrupts_pending : unit -> xlenbits
+
+function read_hgeip() -> xlenbits = guest_external_interrupts_pending() & hgei_mask
+
+function selected_vgein_in_hgeip() -> bits(1) = {
+  let vgein = unsigned(hstatus[VGEIN]);
+  if vgein > 0 & vgein <= geilen then {
+    let hgeip = read_hgeip();
+    [hgeip[vgein]]
+  } else 0b0
+}
 
 mapping clause csr_name_map = 0x607 <-> "hgeie"
 mapping clause csr_name_map = 0xE12 <-> "hgeip"
@@ -32,25 +49,9 @@ function clause is_CSR_accessible(0x607, _, _) = currentlyEnabled(Ext_H) // hgei
 function clause is_CSR_accessible(0xE12, _, _) = currentlyEnabled(Ext_H) // hgeip
 
 function clause read_CSR(0x607) = hgeie
-function clause read_CSR(0xE12) = hgeip & hgei_mask
+function clause read_CSR(0xE12) = read_hgeip()
 
 function clause write_CSR(0x607, value) = { hgeie = legalize_hgeie(value); Ok(hgeie) }
-
-bitfield Minterrupts : xlenbits = {
-  LCOFI: 13, // Local counter-overflow interrupt
-  SGEI : 12, // Supervisor guest external interrupt
-  MEI  : 11, // Machine external interrupt
-  VSEI : 10, // Virtual Supervisor external interrupt
-  SEI  : 9,  // Supervisor external interrupt
-
-  MTI  : 7,  // Timer interrupt
-  VSTI : 6,  // Virtual supervisor timer interrupt
-  STI  : 5,  // Supervisor timer interrupt
-
-  MSI  : 3,  // Software interrupt
-  VSSI : 2,  // Virtual supervisor software interrupt
-  SSI  : 1,  // Supervisor software interrupt
-}
 
 register hvip : Minterrupts
 
@@ -65,20 +66,22 @@ private function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
       // STI is read only if Sstc is enabled and STCE is set (it is equal to stimecmp <= mtime).
       if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
     ) else 0b0,
-    SGEI = if currentlyEnabled(Ext_H) then bool_to_bit((hgeip & hgeie) != zeros()) else 0b0,
+    // SGEIP is purely a function of hgeip and hgeie, so it is not stored here.
+    // external_interrupts_pending() supplies it when mip is read.
+    SGEI = 0b0,
     // "VSEIP is read-only in hip, and is the logical-OR of these interrupt sources:
     // * bit VSEIP of hvip;
     // * the bit of hgeip selected by hstatus.VGEIN; and
     // * any other platform-specific external interrupt signal directed to VS-Level"
-    // The hgeip term is always zero because nothing drives hgeip yet,
-    // and there are no platform-specific VS-level signals, so only hvip is left.
+    // The hgeip term is OR-ed in by external_interrupts_pending() and there are
+    // no platform-specific VS-level signals, so only hvip is stored.
     VSEI = if currentlyEnabled(Ext_H) then hvip[VSEI] else 0b0,
     // " VSTIP is read-only in hip, and is the logical-OR of
     // * hvip.VSTIP; and
     // * any other platform-specific timer interrupt signal directed to VS-Level"
     VSTI = if currentlyEnabled(Ext_H) then (
       if currentlyEnabled(Ext_Sstc) & read_henvcfg()[STCE] == 0b1
-      then o[VSTI]    // clint_dispatch() updates it, preserve
+      then o[VSTI]    // update_mip() updates it, preserve
       else hvip[VSTI] // software-only, use hvip
     ) else 0b0,
     VSSI = if currentlyEnabled(Ext_H) then v[VSSI] else 0b0,
@@ -185,11 +188,6 @@ private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
 // We could store MEIP here directly since it is never software-writable, but
 // for consistency with SEIP we don't.
 
-// Called whenever we want mip/sip with the external interrupts ORed in.
-// This is the case for a) reading mip/sip, and b) dispatching interrupts.
-// But it is NOT the case for reading mip/sip during a CSR read-modify-write
-// update, therefore we can't just store them directly in the mip register.
-val external_interrupts_pending : unit -> Minterrupts
 
 register mie     : Minterrupts // Enabled
 register mip     : Minterrupts // Pending
@@ -215,9 +213,69 @@ enum XipReadType = {
 
 function read_mip(read_type : XipReadType) -> Minterrupts =
   match read_type {
-    IncludePlatformInterrupts => Mk_Minterrupts(mip.bits | external_interrupts_pending().bits),
+    IncludePlatformInterrupts => {
+      let platform_interrupts =
+        [external_interrupts_pending(hgeie)
+           with SSI = if currentlyEnabled(Ext_S) then supervisor_software_interrupt_pending() else 0b0];
+      Mk_Minterrupts(mip.bits | platform_interrupts.bits)
+    },
     ExcludePlatformInterrupts => mip,
   }
+
+// This should be called once at the start of instruction execution.
+// It updates the bits in `mip` that are written by platform-specific
+// interrupt controllers, except those for external interrupts.
+function update_mip() -> unit = {
+  let old_mip = mip.bits;
+
+  // This updates `mip` for any timer interrupts that may now have
+  // fired, and for any machine-level software interrupts arising from
+  // the CLINT.  Currently, the only timer support is from the CLINT;
+  // so without a CLINT, no non-virtual timer interrupts can fire.
+  // This may need to change when we support other or multiple
+  // interrupt controllers.
+
+  let platform_has_timer = plat_have_clint;
+
+  let cur_mtime = get_mtime();
+  let hart_mtimecmp = get_hart_mtimecmp();
+
+  mip[MSI] = machine_software_interrupt_pending();
+
+  if platform_has_timer then {
+    mip[MTI] = bool_to_bit(hart_mtimecmp <=_u cur_mtime);
+
+    if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then {
+      mip[STI] = bool_to_bit(stimecmp <=_u cur_mtime);
+    };
+  };
+
+  if currentlyEnabled(Ext_H) then {
+    // `hvip` is the only `VSEI` source while `hgeip` is hardwired to zero. Once it is
+    // drivable this also needs the `hgeip` bit selected by `hstatus.VGEIN`.
+    mip[VSEI] = hvip[VSEI];
+
+    // VSTI is the OR of hvip.VSTI and the hardware timer comparator.
+    // The comparator result changes when mtime ticks, htimedelta changes,
+    // vstimecmp changes, OR the enable bits become 1.
+    // Rather than tracking all these events individually, we rely on this function
+    // being called for interrupt dispatch at every instruction to re-evaluate and update mip[VSTI].
+    // This is sufficient per the spec's "eventually" requirement.
+    //
+    // NOTE: If the result of this comparison changes, it is guaranteed to be reflected in VSTIP eventually,
+    // but not necessarily immediately. The interrupt remains posted until vstimecmp becomes greater
+    // than (time + htimedelta), typically as a result of writing vstimecmp. The interrupt will be
+    // taken based on the standard interrupt enable and delegation rules while V=1.
+    mip[VSTI] = hvip[VSTI]
+                | (if currentlyEnabled(Ext_Sstc) & read_henvcfg()[STCE] == 0b1 & platform_has_timer
+                   then bool_to_bit(vstimecmp <=_u (cur_mtime + htimedelta))
+                   else 0b0);
+  };
+
+  if old_mip != mip.bits then {
+    csr_write_callback("mip", read_mip(IncludePlatformInterrupts).bits);
+  }
+}
 
 function write_mip(value : xlenbits) -> unit = {
   mip = legalize_mip(mip, value);
@@ -291,35 +349,18 @@ function clause is_CSR_accessible(0x644, _, _) = currentlyEnabled(Ext_H) // hip
 
 function clause read_CSR(0x645) = lower_mip_to_hvip(mip, hvip).bits
 function clause read_CSR(0x604) = lower_mie_to_hie(mie).bits
-function clause read_CSR(0x644) = lower_mip_to_hip(mip).bits
-
-// Defined in sys/platform.sail, which comes after this file in the compile order.
-val clint_dispatch : bool -> unit
+function clause read_CSR(0x644) = lower_mip_to_hip(read_mip(IncludePlatformInterrupts)).bits
 
 function clause write_CSR(0x645, value) = {
   hvip = legalize_hvip(hvip, value);
+  // NOTE: `hvip.VSSI` is an alias of `mip.VSSI`, so always write the
+  // actual value to `mip`.
   mip[VSSI] = hvip[VSSI];
-  // mip.VSEI is derived from hvip but mip is read directly internally and hvip
-  // changes don't propagate, so refresh it here by hand.
-  // TODO: compute it on read instead and drop this.
 
-  // hvip is the only VSEI source while hgeip is hardwired to zero. Once it is
-  // drivable this also needs the hgeip bit selected by hstatus.VGEIN, refreshed
-  // whenever hgeip or VGEIN changes.
-  mip[VSEI] = hvip[VSEI];
-
-  // TODO: In the future, remove all the calls to clint_dispatch() and move all
-  // timer comperators to read_mip() so that all timing-related pending interrupt
-  // (mtimecmp, stimecmp, vstimecmp, htimedelta, etc.) bits are updated on read.
-  // See the following conversation:
-  // https://github.com/riscv/sail-riscv/pull/1869#discussion_r3766656868
-
-  // VSTI is hvip[VSTI] ORed with the timer comparator, so recompute it.
-  clint_dispatch(false);
   Ok(hvip.bits)
 }
 function clause write_CSR(0x604, value) = { mie = legalize_hie(mie, value); Ok(lower_mie_to_hie(mie).bits) }
-function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(mip).bits) }
+function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(read_mip(IncludePlatformInterrupts)).bits) }
 
 // hedeleg is writable only for the synchronous exceptions that may be
 // delegated to VS-mode. Codes 0-8, 12, 13, 15, 18, 19, everything else is
@@ -512,7 +553,7 @@ function clause is_CSR_accessible(0x204, _, _) = currentlyEnabled(Ext_H) // vsie
 function clause is_CSR_accessible(0x244, _, _) = currentlyEnabled(Ext_H) // vsip
 
 function clause read_CSR(0x204) = lower_mie_to_vsie(mie, hideleg).bits
-function clause read_CSR(0x244) = lower_mip_to_vsip(mip, hideleg).bits
+function clause read_CSR(0x244) = lower_mip_to_vsip(read_mip(IncludePlatformInterrupts), hideleg).bits
 
 function clause write_CSR(0x204, value) = { mie = legalize_vsie(mie, hideleg, value); Ok(lower_mie_to_vsie(mie, hideleg).bits) }
-function clause write_CSR(0x244, value) = { mip = legalize_vsip(mip, hideleg, value); Ok(lower_mip_to_vsip(mip, hideleg).bits) }
+function clause write_CSR(0x244, value) = { mip = legalize_vsip(mip, hideleg, value); Ok(lower_mip_to_vsip(read_mip(IncludePlatformInterrupts), hideleg).bits) }

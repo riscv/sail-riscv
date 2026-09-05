@@ -2,20 +2,21 @@
 
 This model includes a very simple MMIO device that allows setting interrupts that are difficult to set via other means (through software or CLINT). This is intended for testing purposes.
 
-This describes version 1.0 of the device. Future versions may add additional features but will be backwards compatible.
+This describes version 1.1 of the device. Future versions may add additional features but will be backwards compatible.
 
 ## Memory Layout
 
 The device consists only of 4-byte registers, and it must be 4-byte aligned.
 Only naturally aligned 4-byte accesses succeed. Other accesses raise an access fault.
 
-| Offset (Bytes) | Size (Bytes) | Register   | Read    | Write                |
-| -------------- | ------------ | ---------- | ------- | -------------------- |
-| 0              | 4            | `version`  | Version | _ignored_            |
-| 4              | 4            | `platform` | _zeros_ | Set/clear interrupts |
-| 8              | 24           | _reserved_ | _fault_ | _fault_              |
+| Offset (Bytes) | Size (Bytes) | Register   | Read    | Write                       |
+| -------------- | ------------ | ---------- | ------- | --------------------------- |
+| 0              | 4            | `version`  | Version | _ignored_                   |
+| 4              | 4            | `platform` | _zeros_ | Set/clear interrupts        |
+| 8              | 4            | `guest`    | _zeros_ | Set/clear a guest interrupt |
+| 12             | 20           | _reserved_ | _fault_ | _fault_                     |
 
-`version`: reads as as the current version (0x00010000 currently). The version is split into major/minor 16-bit integers, so the current version is 1.0. Versioning follows semver, so minor version updates are backwards compatible with existing software, major version updates are not. Writes to `version` are ignored.
+`version`: reads as as the current version (0x00010001 currently). The version is split into major/minor 16-bit integers, so the current version is 1.1. Versioning follows semver, so minor version updates are backwards compatible with existing software, major version updates are not. Writes to `version` are ignored.
 
 `platform`: reads as 0. Writes can be used to set or clear platform-generated interrupts as follows:
 
@@ -36,15 +37,31 @@ _Reserved_ bits must be written with 0 otherwise an access fault is raised. In f
 
 Bit 31 controls whether the relevant interrupts are set or cleared.
 
-MEI and MSI control the platform interrupt inputs to the hart (there is no way for software running on the hart to set these bits directly). MSI updates `mip[MSI]` directly. MEI is a separate input that is ORed into `mip[MEI]` on read, like SEI below. SEI and SSI are slightly more subtle because software on the hart can also write to these bits.
+A bit of internal state is kept for each interrupt that can be triggered, and these are used to update the corresponding bits of the `mip` on read.
+
+MEI and MSI control the platform interrupt inputs to the hart (there is no way for software running on the hart to set these bits directly). MEI is a separate input that is ORed into `mip[MEI]` on read, like SEI below. SEI and SSI are slightly more subtle because software on the hart can also write to these bits.
 
 SEI controls the supervisor external platform interrupt input, which is distinct from the software-writable `mip[SEI]` bit. These two values are ORed together when reading `mip` (or `sip`) for CSR reads and to dispatch interrupts, but NOT when reading `mip`/`sip` for the CSR read-modify-write process.
 
-Setting or clearing SSI updates the value in `mip[SSI]`, but in this case there is only one bit of state.
+Setting or clearing SSI eventually updates the value in `mip[SSI]`, but in this case there is only one bit of state.
+
+`guest`: reads as 0. Writes set or clear a guest external interrupt, i.e. one bit of `hgeip`:
+
+| Offset (Bits) | Meaning                     |
+| ------------- | --------------------------- |
+| 0-5           | Guest interrupt file number |
+| 6-30          | _reserved_                  |
+| 31            | 1=set, 0=clear              |
+
+This register only exists if the hart supports the hypervisor extension, otherwise accessing it raises an access fault.
+
+The guest interrupt file number selects the `hgeip` bit to drive. `hgeip` bit 0 is always zero, so the valid range is 1 to GEILEN, configured by `extensions.H.geilen`. Any other number raises an access fault.
+
+Software running on the hart cannot write `hgeip` at all, which is why it needs the interrupt generator. Setting a bit here makes `mip[SGEIP]` pending if the corresponding `hgeie` bit is set, and makes `hip[VSEIP]` pending if `hstatus.VGEIN` selects that bit. Both are derived from `hgeip` on every read, so clearing the bit here removes them again.
 
 Note that if the target hart does not support supervisor mode then `mip[SSI]` and `mip[SEI]` must be read-only zero. Attempts to set `mip[SSI]` will be ignored. Attempts to set `SEI` _will_ set the external platform interrupt input, but it will not be visible in `mip` while supervisor mode is not supported. If the hart supports mutable `misa[S]` so that supervisor mode can be dynamically enabled, then setting `SEI` to 1 here and _then_ enabling `misa[S]` will result in the interrupt becoming visible.
 
-Space for other registers is reserved for future use. In version 1.0, accessing them raises an access fault.
+Space for other registers is reserved for future use. In version 1.1, accessing them raises an access fault.
 
 ## Example C++ Code
 
@@ -58,7 +75,8 @@ constexpr uint32_t SIG_SET = (1 << 31);
 struct SimpleInterruptGenerator {
     uint32_t version;
     uint32_t platform;
-    uint32_t reserved[6];
+    uint32_t guest;
+    uint32_t reserved[5];
 };
 
 void set_meip(volatile SimpleInterruptGenerator* sig) {
@@ -67,6 +85,16 @@ void set_meip(volatile SimpleInterruptGenerator* sig) {
     uint32_t major = version >> 16;
     assert(major == 1 && minor >= 0);
     sig->platform = SIG_SET | SIG_MEI;
+}
+
+// Assert the guest external interrupt for guest interrupt file `guest`,
+// i.e. set hgeip[guest]. Requires version 1.1.
+void set_hgeip(volatile SimpleInterruptGenerator* sig, uint32_t guest) {
+    uint32_t version = sig->version;
+    uint32_t minor = version & 0xFFFF;
+    uint32_t major = version >> 16;
+    assert(major == 1 && minor >= 1);
+    sig->guest = SIG_SET | guest;
 }
 
 // etc.
@@ -83,6 +111,7 @@ void set_meip(volatile SimpleInterruptGenerator* sig) {
 
 .set SIG_REG_OFFSET_VERSION, 0
 .set SIG_REG_OFFSET_PLATFORM, 4
+.set SIG_REG_OFFSET_GUEST, 8
 
 .set SIG_REQUIRED_MAJOR_VERSION, 1
 .set SIG_MINIMUM_MINOR_VERSION, 0

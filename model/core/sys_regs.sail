@@ -480,12 +480,13 @@ bitfield HEnvcfg : bits(64) = {
   FIOM  : 0,
 }
 
-private function legalize_xenvcfg_cbie(cbie : bits(2)) -> bits(2) = {
-  if cbie != 0b10 then {
-    cbie
+private function legalize_xenvcfg_cbie(old_cbie : bits(2), new_cbie : bits(2)) -> bits(2) = {
+  if new_cbie != 0b10 then {
+    new_cbie
   } else match xenvcfg_cbie_reserved_behavior {
       Xenvcfg_Fatal => reserved_behavior("xenvcfg.CBIE = 0b10"),
       Xenvcfg_ClearPermissions => 0b00,
+      Xenvcfg_Ignore => old_cbie,
     }
 }
 
@@ -497,7 +498,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     SSE  = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
+    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(o[CBIE], v[CBIE]) else 0b00,
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
     PMM = if currentlyEnabled(Ext_Smnpm) & is_supported_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
@@ -520,7 +521,7 @@ private function legalize_senvcfg(o : SEnvcfg, v : bits(64)) -> SEnvcfg = {
     SSE = if hartSupports(Ext_Zicfiss) then v[SSE] else 0b0,
     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
+    CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(o[CBIE], v[CBIE]) else 0b00,
     PMM = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     UKTE = if currentlyEnabled(Ext_Svukte) then v[UKTE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
@@ -540,7 +541,7 @@ private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
     PMM  = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else h[PMM],
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
-    CBIE  = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(v[CBIE]) else 0b00,
+    CBIE  = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(h[CBIE], v[CBIE]) else 0b00,
     SSE   = if currentlyEnabled(Ext_Zicfiss) & menvcfg[SSE] == 0b1 then v[SSE] else 0b0,
     LPE   = if hartSupports(Ext_Zicfilp) then v[LPE]  else 0b0,
     FIOM  = if sys_enable_writable_fiom  then v[FIOM] else 0b0,
@@ -665,11 +666,51 @@ bitfield Mcause : xlenbits = {
   IsInterrupt : xlen - 1,
   Cause       : xlen - 2 .. 0
 }
+
+// The Exception Code is a WLRL field of the `{ms}cause` CSRs.  The
+// read-legal is implemented by preserving the previous value.
+function legalize_cause(o : Mcause, v : xlenbits) -> Mcause = {
+  let v = Mk_Mcause(v);
+  let code = v[Cause];
+  if v[IsInterrupt] == 0b1 then {
+    // No platform interrupts are currently supported.
+    let is_platform_interrupt = (code & sign_extend(0xF0)) != zeros();
+    if is_platform_interrupt then return o;
+    // The code should now be in the domain of the `interruptType_bits` mapping.
+    let intr = interruptType_bits(code[5 .. 0]);
+    if is_reserved_interrupt(intr) then return o;
+    // The LCOFI interrupt 13 depends on Sscofpmf.
+    if intr == I_COF & not(hartSupports(Ext_Sscofpmf))
+    then return o;
+    if is_hypervisor_interrupt(intr) & not(hartSupports(Ext_H))
+    then return o;
+  } else {
+    // Reserved and custom exceptions with set bits above index 5 are not supported.
+    if (code & sign_extend(0xC0)) != zeros() then return o;
+    let code = code[5 .. 0];
+    if not(exceptionType_bits_backwards_matches(code))
+    then return o;
+    let exc = exceptionType_bits(code);
+    // This doesn't allow custom exceptions to be written.  Currently,
+    // a custom exception is only used for an old version of CHERI, but
+    // the current version should now have exception codes in the standard space.
+    if is_reserved_or_custom_exception(exc) then return o;
+    if exc == E_Software_Check() & not(hartSupports(Ext_Zicfilp) | hartSupports(Ext_Zicfiss))
+    then return o;
+    // The hardware-error exception code was introduced in version 1.13.
+    if exc == E_Hardware_Error() & (priv_isa_version < Privileged_ISA_1_13)
+    then return o;
+    if is_hypervisor_exception(exc) & not(hartSupports(Ext_H))
+    then return o;
+  };
+  v
+}
+
 register mcause : Mcause
 mapping clause csr_name_map = 0x342  <-> "mcause"
 function clause is_CSR_accessible(0x342, _, _) = true // mcause
 function clause read_CSR(0x342) = mcause.bits
-function clause write_CSR(0x342, value) = { mcause.bits = value; Ok(mcause.bits) }
+function clause write_CSR(0x342, value) = { mcause = legalize_cause(mcause, value); Ok(mcause.bits) }
 
 // Interpreting the trap-vector address
 function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
@@ -792,7 +833,6 @@ function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Ok(zero_extend(mcountinhibit.bits)) }
 
 register mcycle : bits(64)
-register mtime : bits(64)
 
 // minstret
 //
@@ -987,7 +1027,7 @@ function clause read_CSR(0x242) = vscause.bits
 function clause read_CSR(0x243) = vstval
 
 function clause write_CSR(0x240, value) = { vsscratch = value; Ok(vsscratch) }
-function clause write_CSR(0x242, value) = { vscause.bits = value; Ok(vscause.bits) }
+function clause write_CSR(0x242, value) = { vscause = legalize_cause(vscause, value); Ok(vscause.bits) }
 function clause write_CSR(0x243, value) = { vstval = value; Ok(vstval) }
 
 // other non-VM related supervisor state
@@ -1010,7 +1050,7 @@ function clause read_CSR(0x142) = if inVirtualPrivilege() then vscause.bits else
 function clause read_CSR(0x143) = if inVirtualPrivilege() then vstval else stval
 
 function clause write_CSR(0x140, value) = if inVirtualPrivilege() then { vsscratch = value; Ok(vsscratch) } else { sscratch = value; Ok(sscratch) }
-function clause write_CSR(0x142, value) = if inVirtualPrivilege() then { vscause.bits = value; Ok(vscause.bits) } else { scause.bits = value; Ok(scause.bits) }
+function clause write_CSR(0x142, value) = if inVirtualPrivilege() then { vscause = legalize_cause(vscause, value); Ok(vscause.bits) } else { scause = legalize_cause(scause, value); Ok(scause.bits) }
 function clause write_CSR(0x143, value) = if inVirtualPrivilege() then { vstval = value; Ok(vstval) } else { stval = value; Ok(stval) }
 
 //
@@ -1028,7 +1068,6 @@ bitfield Hgatp32 : bits(32) = {
   PPN  : 21 .. 0
 }
 
-// TODO: Add VMIDLEN config option and mask VMID field to implemented width
 function legalize_hgatp(
   arch : Architecture,
   prev_value : xlenbits,
@@ -1046,6 +1085,8 @@ function legalize_hgatp(
     // are read only zero, since the G-stage root page table lives
     // in real physical memory.
     let h = [h with
+      // VMID bits above the number of implemented VMID bits are read only zero.
+      VMID = if vmidlen == 0 then zeros() else zero_extend(h[VMID][vmidlen - 1 .. 0]),
       PPN = zero_extend(h[PPN][physaddr_bits - pagesize_bits - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, 0b000 @ h[Mode]) {
@@ -1064,6 +1105,8 @@ function legalize_hgatp(
     // implemented physical address bits are read only zero, since
     // the G-stage root page table lives in real physical memory.
     let h = [h with
+      // VMID bits above the number of implemented VMID bits are read only zero.
+      VMID = if vmidlen == 0 then zeros() else zero_extend(h[VMID][vmidlen - 1 .. 0]),
       PPN = zero_extend(h[PPN][min(physaddr_bits - pagesize_bits, 44) - 1 .. 0]),
     ];
     match hgatpMode_of_bits(arch, h[Mode]) {
@@ -1097,8 +1140,6 @@ bitfield Satp32 : bits(32) = {
   PPN  : 21 .. 0
 }
 
-// TODO: This currently assumes all ASID bits are implemented
-// and does not legalize the asid field if asidlen is not the maximum.
 function legalize_satp(
   arch : Architecture,
   is_vsatp : bool,
@@ -1111,6 +1152,10 @@ function legalize_satp(
   // masked to physaddr_bits, which only bounds real physical memory.
   if xlen == 32 then {
     let s = Mk_Satp32(written_value);
+    // ASID bits above the number of implemented ASID bits are read only zero.
+    let s = [s with
+      Asid = if asidlen == 0 then zeros() else zero_extend(s[Asid][asidlen - 1 .. 0]),
+    ];
     // vsatp's PPN addresses guest-physical memory, bounded only by
     // the field's own width, not the host's physaddr_bits.
     let s = if is_vsatp then s else [s with
@@ -1128,6 +1173,10 @@ function legalize_satp(
     }
   } else if xlen == 64 then {
     let s = Mk_Satp64(written_value);
+    // ASID bits above the number of implemented ASID bits are read only zero.
+    let s = [s with
+      Asid = if asidlen == 0 then zeros() else zero_extend(s[Asid][asidlen - 1 .. 0]),
+    ];
     // vsatp's PPN addresses guest-physical memory, bounded only by
     // the field's own width, not the host's physaddr_bits.
     let s = if is_vsatp then s else [s with

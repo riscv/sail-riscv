@@ -165,7 +165,7 @@ function clause execute HFENCE_VVMA(rs1, rs2) = {
   then return Illegal_Instruction();
 
   let addr = if rs1 != zreg then Some(X(rs1)) else None();
-  let asid = if rs2 != zreg then Some(X(rs2)[asidlen - 1 .. 0]) else None();
+  let asid : option(asidbits) = if rs2 != zreg then Some(if asidlen == 0 then zeros() else zero_extend(X(rs2)[asidlen - 1 .. 0])) else None();
   let vmid = Some(get_vmid(VS_Stage));
 
   flush_TLB(asid, vmid, addr, VS_Stage);
@@ -193,7 +193,7 @@ function clause execute HFENCE_GVMA(rs1, rs2) = {
   // following the htval/tval2 convention for G-stage traps. Pass it unshifted.
   // flush_TLB_Entry recovers the full GPA in a wide type, which can exceed XLEN on RV32.
   let addr = if rs1 != zreg then Some(X(rs1)) else None();
-  let vmid = if rs2 != zreg then Some(X(rs2)[vmidlen - 1 .. 0]) else None();
+  let vmid : option(vmidbits) = if rs2 != zreg then Some(if vmidlen == 0 then zeros() else zero_extend(X(rs2)[vmidlen - 1 .. 0])) else None();
   let asid : option(asidbits) = None();
 
   flush_TLB(asid, vmid, addr, G_Stage);

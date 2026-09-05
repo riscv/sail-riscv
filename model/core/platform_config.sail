@@ -135,7 +135,8 @@ let misaligned_fetch_writes_xtval : bool = config base.xtval_nonzero.fetch_addre
 let fetch_access_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_access_fault
 let fetch_page_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_page_fault
 let fetch_guest_page_fault_writes_xtval : bool = config base.xtval_nonzero.fetch_guest_page_fault
-let software_check_fault_writes_xtval : bool = config base.xtval_nonzero.software_check
+let software_check_exception_writes_xtval : bool = config base.xtval_nonzero.software_check
+let hardware_error_exception_writes_xtval : bool = config base.xtval_nonzero.hardware_error
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
 
 // Define the policy for handling reserved behaviors.
@@ -153,11 +154,13 @@ enum FcsrRmReservedBehavior = {
 enum PmpWriteOnlyReservedBehavior = {
   PMP_Fatal,
   PMP_ClearPermissions,
+  PMP_Ignore,
 }
 
 enum XenvcfgCbieReservedBehavior = {
   Xenvcfg_Fatal,
   Xenvcfg_ClearPermissions,
+  Xenvcfg_Ignore,
 }
 
 enum XtvecModeReservedBehavior = {
