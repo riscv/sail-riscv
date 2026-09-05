@@ -41,11 +41,12 @@ function clause execute ZICBOP(cbop, rs1, offset) = {
   let offset = cache_block_addr - rs1_val;
   let access : MemoryAccessType(mem_payload) = CacheAccess(CB_prefetch(cbop));
   let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let pmlen = get_pmlen(access, eff_priv);
 
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `get_transformed_data_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match get_transformed_data_addr(rs1, offset, access, cache_block_size) {
+  match get_transformed_data_addr(rs1, offset, access, eff_priv, pmlen, cache_block_size) {
     Ext_DataAddr_Error(_) => (), // No access to cache; no-op.
 
     Ext_DataAddr_OK(vaddr) => match translateAddr(vaddr, access, eff_priv) {

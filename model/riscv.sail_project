@@ -62,7 +62,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_utils
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_types, PM_utils
 
   files
     sys/sys_reservation.sail,
@@ -111,7 +111,7 @@ extensions {
       files extensions/A/aext_types.sail
     }
     Zaamo {
-      requires core, sys, exceptions, A_types
+      requires core, sys, exceptions, A_types, PM_utils
       files extensions/A/zaamo_insts.sail
     }
     Zalrsc {
@@ -182,7 +182,7 @@ extensions {
       files extensions/H/hext_types.sail
     }
     H_insts {
-      requires sys, exceptions, I_insts, H_types
+      requires sys, exceptions, I_insts, H_types, PM_utils
       files extensions/H/hext_insts.sail
     }
   }
@@ -388,7 +388,7 @@ extensions {
       files extensions/cfi/zicfiss_regs.sail
     }
     Zicfiss_insts {
-      requires sys, exceptions, CFI_types, Zicfiss_regs, A_types
+      requires sys, exceptions, CFI_types, Zicfiss_regs, A_types, PM_utils
       files extensions/cfi/zicfiss_insts.sail
     }
   }
@@ -416,7 +416,7 @@ extensions {
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
-      requires core, sys, exceptions, Zicbom_types
+      requires core, sys, exceptions, Zicbom_types, PM_utils
       files extensions/Zicbom/zicbom_insts.sail
     }
   }
@@ -429,7 +429,7 @@ extensions {
     Zicbop_insts {
       // PREFETCH.{I,R,W} instructions override ORI hints (rd=0)
       before I_insts
-      requires core, sys, exceptions, Zicbop_types
+      requires core, sys, exceptions, Zicbop_types, PM_utils
       files extensions/Zicbop/zicbop_insts.sail
     }
   }
@@ -447,7 +447,7 @@ extensions {
   }
 
   Zicboz {
-    requires core, sys, exceptions
+    requires core, sys, exceptions, PM_utils
     files extensions/Zicboz/zicboz_insts.sail
   }
 

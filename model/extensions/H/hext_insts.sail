@@ -54,10 +54,11 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   };
   assert(width <= xlen_bytes);
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
+  let pmlen = get_hlsv_pmlen(access, eff_priv);
   match ext_data_get_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => { Ext_DataAddr_Check_Failure(e) },
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
+      let vaddr = transform_effective_address(vaddr, eff_priv, pmlen);
       // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
       // one that crosses a page boundary should be split and translated per
       // page, the way vmem_read_addr and vmem_write_addr do. That needs
@@ -108,10 +109,12 @@ function clause execute(HSV(width, rs1, rs2)) = {
   assert(width <= xlen_bytes);
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
   let access = Store(Data);
+  let pmlen = get_hlsv_pmlen(access, eff_priv);
+
   match ext_data_get_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
+      let vaddr = transform_effective_address(vaddr, eff_priv, pmlen);
       // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
       // one that crosses a page boundary should be split and translated per
       // page, the way vmem_read_addr and vmem_write_addr do. That needs
