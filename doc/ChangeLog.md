@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - Whether the `mcountinhibit` CSR is supported, and if so, which
+    bits are writable, can now be specified; see `base.mcountinhibit`.
+
 # Release notes for version 0.14
 
 The highlight of this release is the addition of the `H` hypervisor

@@ -683,6 +683,14 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("The Shcounterenw extension is enabled but `hcounteren` is not writable (via `base.hcounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
     };
   };
+  // When Smcdeleg/Ssccfg are supported, `mcountinhibit` will be required.
+  if (config base.mcountinhibit.supported : bool) then {
+    let inhibitable_counters : bits(32) = config base.mcountinhibit.writable_bits;
+    if inhibitable_counters[1] == 0b1 then {
+      valid = false;
+      print_endline("Bit 1 of `base.mcountinhibit.writable_bits` is set; `mcountinhibit[1]` is read-only zero.");
+    }
+  };
   if (xlen == 32 & ((config extensions.Ssnpm.supported : bool) | (config extensions.Smmpm.supported : bool) | (config extensions.Smnpm.supported : bool))) then {
     valid = false;
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");

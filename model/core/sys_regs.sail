@@ -811,14 +811,13 @@ bitfield Counterin : bits(32) = {
 }
 
 private function legalize_mcountinhibit(_c : Counterin, v : xlenbits) -> Counterin = {
-  // Note the 0 in 0b101 is because the mtimer counter can't be paused.
-  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b101;
-  Mk_Counterin(v[31 .. 0] & supported_counters)
+  Mk_Counterin(v[31 .. 0] & plat_mcountinhibit_writable_bits)
 }
 
-register mcountinhibit : Counterin
+// "If mcountinhibit is not implemented, the model should behave as if the register was zero."
+register mcountinhibit : Counterin = Mk_Counterin(zeros())
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
-function clause is_CSR_accessible(0x320, _, _) = true // mcountinhibit
+function clause is_CSR_accessible(0x320, _, _) = plat_have_mcountinhibit // mcountinhibit
 function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Ok(zero_extend(mcountinhibit.bits)) }
 
