@@ -820,6 +820,14 @@ private function check_extension_param_constraints() -> bool = {
     if (midelegation.bits & reserved_interrupt_mask) != zeros() then {
       valid = false;
       print_endline("Bits for reserved interrupts are set in `base.mideleg.delegatable_bits`.");
+    };
+
+    // Sstc implies supervisor timer interrupts should be supported.
+    if (config extensions.Sstc.supported : bool) then {
+      if not(config extensions.S.interrupts.timer.supported : bool) then {
+        valid = false;
+        print_endline("Supervisor timer interrupts are disabled in `extensions.S.interrupts.timer` but the Sstc extension is enabled: Sstc requires supervisor-mode timer interrupts to be supported.");
+      }
     }
   };
   if (config extensions.H.supported : bool) then {

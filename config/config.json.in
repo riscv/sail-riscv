@@ -463,6 +463,19 @@
       // the reservation set.
       "invalidate_on_same_hart_store": false
     },
+    "interrupts": {
+      "machine": {
+        "software" : {
+          "supported" : true
+        },
+        "external" : {
+          "supported" : true
+        },
+        "timer" : {
+          "supported" : true
+        }
+      }
+    },
     "clint": {
       // Whether the platform contains a CLINT.
       "supported": true,
@@ -582,7 +595,19 @@
       "supported": true
     },
     "S": {
-      "supported": true
+      "supported": true,
+      "interrupts": {
+        "software" : {
+          "supported" : true
+        },
+        "external" : {
+          "supported" : true
+        },
+        // This should be set to true if the Sstc extension is supported.
+        "timer" : {
+          "supported" : true
+        }
+      }
     },
     "U": {
       "supported": true
