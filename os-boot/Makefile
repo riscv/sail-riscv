@@ -6,14 +6,27 @@ RISCV_COMPILER_PREFIX := riscv64-buildroot-linux-gnu-
 payload_linux  := build/linux/arch/riscv/boot/Image
 payload_xvisor := build/xvisor/build/vmm.bin
 
+# Built binaries.
+linux_elf  := build/fw_payload_linux.elf
+xvisor_elf := build/fw_payload_xvisor.elf
+
+# Initramfs filesystem image.
+ramfs := build/rootfs.cpio
+
 .PHONY: all linux xvisor
-all: linux xvisor
+all: linux xvisor ramfs
 
-linux: build/fw_payload_linux.elf
-xvisor: build/fw_payload_xvisor.elf
+linux: $(linux_elf)
+xvisor: $(xvisor_elf)
+ramfs: $(ramfs)
 
-# Generic rule to download tools.
+# Generic rules to download tools.
+
 downloads/%.tar.xz: %.url
+	mkdir -p downloads
+	curl --location '$(shell cat $<)' --output $@
+
+downloads/%.tar.bz2: %.url
 	mkdir -p downloads
 	curl --location '$(shell cat $<)' --output $@
 
@@ -33,6 +46,10 @@ build/xvisor/Makefile: downloads/xvisor.tar.xz
 build/opensbi/Makefile: downloads/opensbi.tar.xz
 	mkdir -p build/opensbi
 	tar --touch --directory build/opensbi --strip-components=1 --extract --file downloads/opensbi.tar.xz
+
+build/busybox/Makefile: downloads/busybox.tar.bz2
+	mkdir -p build/busybox
+	tar --touch --directory build/busybox --strip-components=1 --extract --file downloads/busybox.tar.bz2
 
 CROSS_COMPILE := $(shell pwd)/build/gcc/bin/$(RISCV_COMPILER_PREFIX)
 
@@ -62,14 +79,46 @@ build/fw_payload_%.elf: build/opensbi/Makefile
 	  PLATFORM=generic CROSS_COMPILE=$(CROSS_COMPILE)
 	cp build/opensbi_$*/platform/generic/firmware/fw_payload.elf $@
 
+# Build Busybox as a static binary.
+#
+# Traffic control (networking/tc.c) doesn't compile on some kernels.
+# Ensure the Busybox uses the cross compiler.
+build/busybox/.config: build/busybox/Makefile build/gcc/bin/$(RISCV_COMPILER_PREFIX)gcc
+	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C build/busybox defconfig
+	sed 's/^.*CONFIG_STATIC is not set.*/CONFIG_STATIC=y/' -i build/busybox/.config
+	sed 's/^CONFIG_TC=y/CONFIG_TC=n/' -i build/busybox/.config
+
+# Prepare busybox install
+build/busybox/_install/bin/busybox: build/busybox/.config
+	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C build/busybox
+	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C build/busybox install
+
+# Prepare rootfs cpio.
+$(ramfs): init-busybox build/busybox/_install/bin/busybox
+	cp init-busybox build/busybox/_install/init
+	cd build/busybox/_install && find . | cpio --create --format=newc --file ../rootfs.cpio
+	cp build/busybox/rootfs.cpio $(ramfs)
+
 # Path to Sail emulator.
 SAIL_SIM ?= ../build/c_emulator/sail_riscv_sim
+
+# Device tree without initramfs.
 
 build/sail.dts: $(SAIL_SIM)
 	mkdir -p build
 	$(SAIL_SIM) --print-device-tree >$@
 
 build/sail.dtb: build/sail.dts
+	mkdir -p build
+	dtc $< -o $@
+
+# Device tree with initramfs.
+
+build/sail_ramfs.dts: $(SAIL_SIM) $(linux_elf) $(ramfs)
+	mkdir -p build
+	$(SAIL_SIM) --initramfs $(ramfs) $(linux_elf) --print-device-tree >$@
+
+build/sail_ramfs.dtb: build/sail_ramfs.dts
 	mkdir -p build
 	dtc $< -o $@
 
@@ -96,6 +145,11 @@ limit_xvisor := 21000000
 # Run with the Sail emulator from this repo.
 %_sail: build/fw_payload_%.elf build/sail.dtb $(SAIL_SIM)
 	$(SAIL_SIM) --show-times --inst-limit $(limit_$*) --device-tree-blob build/sail.dtb $<
+
+# Boot with initramfs
+
+linux_ramfs_sail: build/sail_ramfs.dtb $(linux_elf) $(ramfs) $(SAIL_SIM)
+	$(SAIL_SIM) --initramfs $(ramfs) --device-tree-blob build/sail_ramfs.dtb $(linux_elf)
 
 # Run the profiler. This requires gperftools and pprof:
 #

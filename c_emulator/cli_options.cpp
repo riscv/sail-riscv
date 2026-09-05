@@ -37,6 +37,10 @@ CLIOptions parse_cli(int argc, char **argv) {
   );
 
   app.add_option("--device-tree-blob", opts.dtb_file, "Device tree blob file")
+    ->excludes("--print-device-tree")
+    ->check(CLI::ExistingFile)
+    ->option_text("<file>");
+  app.add_option("--initramfs", opts.initramfs_file, "File containing the initramfs (for Linux boot)")
     ->check(CLI::ExistingFile)
     ->option_text("<file>");
   app.add_option("--terminal-log", opts.term_log, "Terminal log output file")->option_text("<file>");

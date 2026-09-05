@@ -153,6 +153,33 @@ function generate_soc_clint() -> option(string) = {
   } else None()
 }
 
+val get_initramfs_base = pure {
+    cpp: "get_initramfs_base"
+} : unit -> bits(64)
+
+val get_initramfs_size = pure {
+    cpp: "get_initramfs_size"
+} : unit -> bits(64)
+
+private function have_initrd() -> bool =
+  get_initramfs_size() != zeros()
+
+private function generate_chosen_initrd() -> option((string, string)) = {
+  let size = get_initramfs_size();
+  if size == zeros() then return None();
+
+  let base = get_initramfs_base();
+  let end_ = base + size;
+
+  let base_hi = unsigned(base >> 32);
+  let base_lo = unsigned(base[31 .. 0]);
+
+  let end_hi  = unsigned(end_ >> 32);
+  let end_lo  = unsigned(end_[31 .. 0]);
+  Some("linux,initrd-start = <" ^ hex_str(base_hi) ^ " " ^ hex_str(base_lo) ^ ">",
+       "linux,initrd-end   = <" ^ hex_str(end_hi) ^ " " ^ hex_str(end_lo) ^ ">")
+}
+
 function generate_dts() -> string = {
   let clock_freq : nat = config platform.clock_frequency;
 
@@ -168,7 +195,13 @@ function generate_dts() -> string = {
 ^ "  compatible = \"ucbbar,spike-bare-dev\";\n"
 ^ "  model = \"ucbbar,spike-bare\";\n"
 ^ "  chosen {\n"
-^ "    bootargs = \"console=hvc0 earlycon=sbi\";\n"
+^ "    bootargs = \"" ^ (if have_initrd() then "root=/dev/ram " else "") ^ "console=hvc0 earlycon=sbi\";\n"
+^ (match generate_chosen_initrd() {
+     None()     => "",
+     Some(s, e) =>
+  "    " ^ s ^ ";\n"
+^ "    " ^ e ^ ";\n"
+   })
 ^ "  };\n"
 ^ "  cpus {\n"
 ^ "    #address-cells = <1>;\n"
