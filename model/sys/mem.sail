@@ -304,7 +304,7 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
         Err(e) => return Err(e),
         Ok(mmio_data) => mmio_data,
       } else {
-        let (ram_data, _meta) = read_ram(rk, paddr, split_width, meta);
+        let (ram_data, _meta) = read_ram(rk, access, paddr, split_width, meta);
         ram_data
       };
     data[(8 * (offset + 1) * split_width - 1) .. 8 * offset * split_width] = split_data;
@@ -388,7 +388,11 @@ function mem_write_ea(paddr, width, priv, access, pbmt, aq, rl, con) = {
 
     match pmpCheck(paddr, split_width, access, priv) {
       Some(e) => return Err(paddr, e),
-      None()  => write_ram_ea(wk, paddr, split_width),
+      None()  => {
+        // Do not announce MMIO writes.
+        if not(within_mmio_writable(paddr, split_width)) then
+          write_ram_ea(wk, access, paddr, split_width)
+      },
     };
 
     if offset == last then {
@@ -460,7 +464,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
       Err(e) => return Err(e),
     } else {
       // This assumes that the same metadata applies to every split.
-      let v = write_ram(wk, paddr, split_width, write_value, meta);
+      let v = write_ram(wk, access, paddr, split_width, write_value, meta);
       write_success = write_success & v
     };
 
