@@ -12,3 +12,7 @@ add_test(
     NAME "unit_tests"
     COMMAND $<TARGET_FILE:unit_tests>
 )
+
+set_property(TEST "unit_tests"
+    PROPERTY LABELS TestAtBuildTime
+)

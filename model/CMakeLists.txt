@@ -289,6 +289,9 @@ foreach (xlen IN ITEMS 32 64)
                 # Input files.
                 ${sail_srcs}
         )
+        set_property(TEST smt_properties_${arch}
+            PROPERTY LABELS TestAtBuildTime
+        )
     endif()
 
     ############# RMEM #############
