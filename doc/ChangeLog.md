@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1938 : `scause`/`vscause` rejected Exception Codes in 0-31 that the spec requires them to hold, such as hypervisor codes when `H` is not implemented
+
 # Release notes for version 0.14
 
 The highlight of this release is the addition of the `H` hypervisor

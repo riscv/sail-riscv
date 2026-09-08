@@ -659,9 +659,14 @@ bitfield Mcause : xlenbits = {
 
 // The Exception Code is a WLRL field of the `{ms}cause` CSRs.  The
 // read-legal is implemented by preserving the previous value.
-function legalize_cause(o : Mcause, v : xlenbits) -> Mcause = {
+//
+// scause/vscause must also hold any Exception Code in 0-31,
+// interrupt or exception alike, so a code that fits in 5 bits
+// is kept as written. mcause has no such requirement.
+function legalize_cause(o : Mcause, v : xlenbits, is_scause : bool) -> Mcause = {
   let v = Mk_Mcause(v);
   let code = v[Cause];
+  if is_scause & unsigned(code) <= 31 then return v;
   if v[IsInterrupt] == 0b1 then {
     // No platform interrupts are currently supported.
     let is_platform_interrupt = (code & sign_extend(0xF0)) != zeros();
@@ -700,7 +705,7 @@ register mcause : Mcause
 mapping clause csr_name_map = 0x342  <-> "mcause"
 function clause is_CSR_accessible(0x342, _, _) = true // mcause
 function clause read_CSR(0x342) = mcause.bits
-function clause write_CSR(0x342, value) = { mcause = legalize_cause(mcause, value); Ok(mcause.bits) }
+function clause write_CSR(0x342, value) = { mcause = legalize_cause(mcause, value, false); Ok(mcause.bits) }
 
 // Interpreting the trap-vector address
 function tvec_addr(m : Mtvec, c : Mcause) -> option(xlenbits) = {
@@ -1017,7 +1022,7 @@ function clause read_CSR(0x242) = vscause.bits
 function clause read_CSR(0x243) = vstval
 
 function clause write_CSR(0x240, value) = { vsscratch = value; Ok(vsscratch) }
-function clause write_CSR(0x242, value) = { vscause = legalize_cause(vscause, value); Ok(vscause.bits) }
+function clause write_CSR(0x242, value) = { vscause = legalize_cause(vscause, value, true); Ok(vscause.bits) }
 function clause write_CSR(0x243, value) = { vstval = value; Ok(vstval) }
 
 // other non-VM related supervisor state
@@ -1040,7 +1045,7 @@ function clause read_CSR(0x142) = if inVirtualPrivilege() then vscause.bits else
 function clause read_CSR(0x143) = if inVirtualPrivilege() then vstval else stval
 
 function clause write_CSR(0x140, value) = if inVirtualPrivilege() then { vsscratch = value; Ok(vsscratch) } else { sscratch = value; Ok(sscratch) }
-function clause write_CSR(0x142, value) = if inVirtualPrivilege() then { vscause = legalize_cause(vscause, value); Ok(vscause.bits) } else { scause = legalize_cause(scause, value); Ok(scause.bits) }
+function clause write_CSR(0x142, value) = if inVirtualPrivilege() then { vscause = legalize_cause(vscause, value, true); Ok(vscause.bits) } else { scause = legalize_cause(scause, value, true); Ok(scause.bits) }
 function clause write_CSR(0x143, value) = if inVirtualPrivilege() then { vstval = value; Ok(vstval) } else { stval = value; Ok(stval) }
 
 //
