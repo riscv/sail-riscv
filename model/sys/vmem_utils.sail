@@ -65,24 +65,12 @@ function offset_virtaddr_by(
 // Whether the address is virtual (sign-extend) or physical (zero-extend) follows
 // the first-stage satp register feeding the address: vsatp for VS/VU, otherwise
 // satp. A guest-physical address (vsatp.MODE == Bare) is treated as physical.
-function pm_transform_for_priv(vaddr : virtaddr, eff_privilege : Privilege, pmlen : {0, 7, 16}) -> virtaddr = {
+function transform_effective_address(vaddr : virtaddr, eff_privilege : Privilege, pmlen : pm_len) -> virtaddr = {
   let mode = if eff_privilege == VirtualSupervisor | eff_privilege == VirtualUser
              then vsatp_mode()
              else satp_mode(eff_privilege);
   if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }
-
-// Transforms the effective address of a regular explicit access based on PMM
-// settings and the current translation mode.
-function transform_effective_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload)) -> virtaddr = {
-  let eff_privilege = effectivePrivilege(access, mstatus, cur_privilege);
-  pm_transform_for_priv(vaddr, eff_privilege, get_pmlen(access, eff_privilege))
-}
-
-// Transforms the effective address of an HLV/HSV explicit access, whose effective
-// privilege (VS/VU) is taken from hstatus.SPVP rather than effectivePrivilege.
-function transform_hlsv_address(vaddr : virtaddr, access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> virtaddr =
-  pm_transform_for_priv(vaddr, eff_privilege, get_hlsv_pmlen(access, eff_privilege))
 
 // Whether a data access is effectively to a guest VA (VS/VU mode, or M-mode MPRV+MPV).
 function access_is_gva(access : MemoryAccessType(mem_payload)) -> bool =
@@ -112,10 +100,10 @@ private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_a
   }
 
 val vmem_read_addr : forall 'width, is_mem_width('width).
-  (virtaddr, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
+  (virtaddr, int('width), MemoryAccessType(mem_payload), Privilege, bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
-function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
+function vmem_read_addr(vaddr, width, access, eff_priv, aq, rl, res) = {
   // Other AMOs currently don't go through `vmem_utils` functions.
   assert(res == is_load_reserved(access));
 
@@ -142,7 +130,6 @@ function vmem_read_addr(vaddr, width, access, aq, rl, res) = {
   // We should only split the access before address translation if (a)
   // virtual memory is in effect, and (b) it crosses a page boundary.
   // If we do split, perform the split access in the configured order.
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
   let vmem_active : bool = if privLevel_is_virtual(eff_priv)
                            then vsatp_mode() != Bare | hgatp_mode() != HBare
                            else satp_mode(eff_priv) != Bare;
@@ -210,10 +197,10 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
   }
 
 val vmem_write_addr : forall 'width, is_mem_width('width).
-  (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
+  (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), Privilege, bool, bool, bool)
   -> result(bool, ExecutionResult)
 
-function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
+function vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res) = {
   // Other AMOs currently don't go through `vmem_utils` functions.
   assert(res == is_store_conditional(access));
 
@@ -239,8 +226,6 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
   var write_success : bool = true;
 
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
-
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
 
   let vmem_active : bool = if privLevel_is_virtual(eff_priv)
                            then vsatp_mode() != Bare | hgatp_mode() != HBare
@@ -305,12 +290,12 @@ function vmem_write_addr(vaddr, width, data, access, aq, rl, res) = {
 }
 
 // Compute effective address with extension checks and apply pointer masking.
-function get_transformed_data_addr(base : regidx, offset : xlenbits, acc : MemoryAccessType(mem_payload), width : mem_access_width)
+function get_transformed_data_addr(base : regidx, offset : xlenbits, access : MemoryAccessType(mem_payload), eff_priv : Privilege, pmlen: pm_len, width : mem_access_width)
          -> Ext_DataAddr_Check(ext_data_addr_error) = {
-  match ext_data_get_addr(base, offset, acc, width) {
+  match ext_data_get_addr(base, offset, access, width) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Error(e),
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_effective_address(vaddr, acc);
+      let vaddr = transform_effective_address(vaddr, eff_priv, pmlen);
       Ext_DataAddr_OK(vaddr)
     }
   }
@@ -321,14 +306,17 @@ val vmem_read : forall 'width, is_mem_width('width).
   -> result(bits(8 * 'width), ExecutionResult)
 
 function vmem_read(rs, offset, width, access, aq, rl, res) = {
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let pmlen = get_pmlen(access, eff_priv);
+
   // Get the address, X(rs1) + offset.
   // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match get_transformed_data_addr(rs, offset, access, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs, offset, access, eff_priv, pmlen, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_read_addr(vaddr, width, access, aq, rl, res)
+  vmem_read_addr(vaddr, width, access, eff_priv, aq, rl, res)
 }
 
 val vmem_write : forall 'width, is_mem_width('width).
@@ -336,12 +324,15 @@ val vmem_write : forall 'width, is_mem_width('width).
   -> result(bool, ExecutionResult)
 
 function vmem_write(rs_addr, offset, width, data, access, aq, rl, res) = {
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let pmlen = get_pmlen(access, eff_priv);
+
   // Get the address, X(rs_addr) + offset.
   // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match get_transformed_data_addr(rs_addr, offset, access, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs_addr, offset, access, eff_priv, pmlen, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_write_addr(vaddr, width, data, access, aq, rl, res)
+  vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res)
 }

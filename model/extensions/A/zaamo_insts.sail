@@ -73,10 +73,12 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   assert(width <= xlen_bytes * 2);
 
   let access = Atomic(op, aq, rl, Data, Data);
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let pmlen = get_pmlen(access, eff_priv);
 
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
-  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, eff_priv, pmlen, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
@@ -92,8 +94,6 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       None()                   => (),
     };
   };
-
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
 
   let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => return trap(e),

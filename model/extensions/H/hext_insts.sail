@@ -30,11 +30,11 @@ mapping clause encdec = HLVTYPE(width, HLVX, true, rs1, rd)
   <-> 0b0110 @ width_enc(width) @ 0b000011 @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b1110011
   when currentlyEnabled(Ext_H) & (width == 2 | width == 4)
 
-// HLV.*/HSV perform an explicit access with effective privilege VS (hstatus.SPVP=1)
-// or VU (SPVP=0), so their effective address is subject to pointer masking via
-// transform_hlsv_address. HLVX.* are exempt (HLVX emulates an implicit fetch,
-// and the PMM fields only cover HLV.*/HSV.*): is_pmm_applicable excludes their
-// LoadExecute access type.
+// HLV.*/HSV perform an explicit access with effective privilege VS
+// (`hstatus.SPVP=1`) or VU (`SPVP=0`).  HLVX.* are exempt (HLVX
+// emulates an implicit fetch, and the PMM fields only cover
+// HLV.*/HSV.*): `is_pmm_applicable` excludes their `LoadExecute`
+// access type.
 function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   if inVirtualPrivilege()
   then return Virtual_Instruction()
@@ -54,10 +54,11 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   };
   assert(width <= xlen_bytes);
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
+  let pmlen = get_hlsv_pmlen(access, eff_priv);
   match ext_data_get_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => { Ext_DataAddr_Check_Failure(e) },
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
+      let vaddr = transform_effective_address(vaddr, eff_priv, pmlen);
       // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
       // one that crosses a page boundary should be split and translated per
       // page, the way vmem_read_addr and vmem_write_addr do. That needs
@@ -108,10 +109,12 @@ function clause execute(HSV(width, rs1, rs2)) = {
   assert(width <= xlen_bytes);
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
   let access = Store(Data);
+  let pmlen = get_hlsv_pmlen(access, eff_priv);
+
   match ext_data_get_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_hlsv_address(vaddr, access, eff_priv);
+      let vaddr = transform_effective_address(vaddr, eff_priv, pmlen);
       // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
       // one that crosses a page boundary should be split and translated per
       // page, the way vmem_read_addr and vmem_write_addr do. That needs
