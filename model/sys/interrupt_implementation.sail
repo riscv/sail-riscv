@@ -14,8 +14,11 @@ function external_interrupts_pending(hgeie_val : xlenbits) -> Minterrupts =
   if plat_have_sig then sig_external_interrupts_pending(hgeie_val) else Mk_Minterrupts(zeros())
 
 function machine_software_interrupt_pending() -> bits(1) =
-  (if plat_have_clint then clint_machine_software_interrupt_pending() else 0b0)
-  | (if plat_have_sig then sig_machine_software_interrupt_pending() else 0b0)
+  if not(plat_has_msi) then 0b0
+  else (
+    (if plat_have_clint then clint_machine_software_interrupt_pending() else 0b0)
+    | (if plat_have_sig then sig_machine_software_interrupt_pending() else 0b0)
+  )
 
 function supervisor_software_interrupt_pending() -> bits(1) =
   if plat_have_sig then sig_supervisor_software_interrupt_pending() else 0b0
