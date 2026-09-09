@@ -13,7 +13,7 @@ xvisor_elf := build/fw_payload_xvisor.elf
 # Initramfs filesystem image.
 ramfs := build/rootfs.cpio
 
-.PHONY: all linux xvisor
+.PHONY: all linux xvisor ramfs
 all: linux xvisor ramfs
 
 linux: $(linux_elf)
@@ -22,11 +22,7 @@ ramfs: $(ramfs)
 
 # Generic rules to download tools.
 
-downloads/%.tar.xz: %.url
-	mkdir -p downloads
-	curl --location '$(shell cat $<)' --output $@
-
-downloads/%.tar.bz2: %.url
+downloads/%.tar.bz2 downloads/%.tar.xz: %.url
 	mkdir -p downloads
 	curl --location '$(shell cat $<)' --output $@
 
