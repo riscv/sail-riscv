@@ -247,7 +247,7 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
     // SDT = v[SDT],
-    SPELP = if hartSupports(Ext_Zicfilp) then v[SPELP] else 0b0,
+    SPELP = if hartSupports(Ext_Zicfilp) & currentlyEnabled(Ext_S) then v[SPELP] else 0b0,
     TSR = if currentlyEnabled(Ext_S) then v[TSR] else 0b0,
     TW = if currentlyEnabled(Ext_U) then v[TW] else 0b0,
     TVM = if currentlyEnabled(Ext_S) then v[TVM] else 0b0,
