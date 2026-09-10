@@ -31,14 +31,14 @@ function clause execute ZICBOZ(rs1) = {
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
   let access : MemoryAccessType(mem_payload) = CacheAccess(CB_zero());
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_priv);
+  let access_info = default_access_info(access);
+  let eff_priv = access_info.eff_privilege;
 
   // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
   // is aligned to the cache block, or negative if rs1 is misaligned.
   let negative_offset = (rs1_val & ~(zero_extend(ones(plat_cache_block_size_exp)))) - rs1_val;
 
-  match get_transformed_data_addr(rs1, negative_offset, access, eff_priv, pmlen, cache_block_size) {
+  match get_transformed_data_addr(rs1, negative_offset, access, access_info, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       // "An implementation may update the bytes in any order and with any granularity
@@ -56,7 +56,7 @@ function clause execute ZICBOZ(rs1) = {
             Err(exc_addr, e) => {
               // Cache accesses should not get split.
               assert(exc_addr == paddr);
-              memory_exception(e, bits_of(vaddr - negative_offset), access)
+              memory_exception(e, bits_of(vaddr - negative_offset), access_info)
             },
             Ok(_)  => {
               match mem_write_value(paddr, cache_block_size, zeros(), eff_priv, access, pbmt, false, false, false) {
@@ -65,7 +65,7 @@ function clause execute ZICBOZ(rs1) = {
                 Err(exc_addr, e) => {
                   // Cache accesses should not get split.
                   assert(exc_addr == paddr);
-                  memory_exception(e, bits_of(vaddr - negative_offset), access)
+                  memory_exception(e, bits_of(vaddr - negative_offset), access_info)
                 },
               }
             }

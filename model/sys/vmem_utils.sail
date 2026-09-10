@@ -59,60 +59,87 @@ function offset_virtaddr_by(
   Virtaddr(masked)
 }
 
+// The context for an access.
+
+struct AccessInfo = {
+  eff_privilege  : Privilege,
+  pmlen          : pm_len,
+  as_guest       : bool,
+}
+
+function default_access_info(access : MemoryAccessType(mem_payload)) -> AccessInfo = {
+  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+
+  struct {
+    eff_privilege = eff_priv,
+    pmlen = get_pmlen(access, eff_priv),
+    as_guest = false,
+  }
+}
+
 // External API
 
 // Apply pointer masking to an effective address given a precomputed PMLEN.
 // Whether the address is virtual (sign-extend) or physical (zero-extend) follows
 // the first-stage satp register feeding the address: vsatp for VS/VU, otherwise
 // satp. A guest-physical address (vsatp.MODE == Bare) is treated as physical.
-function transform_effective_address(vaddr : virtaddr, eff_privilege : Privilege, pmlen : pm_len) -> virtaddr = {
+function transform_effective_address(vaddr : virtaddr, access_info : AccessInfo) -> virtaddr = {
+  let eff_privilege = access_info.eff_privilege;
+  let pmlen = access_info.pmlen;
+
   let mode = if eff_privilege == VirtualSupervisor | eff_privilege == VirtualUser
              then vsatp_mode()
              else satp_mode(eff_privilege);
   if mode == Bare then pm_transform_PA(vaddr, pmlen) else pm_transform_VA(vaddr, pmlen)
 }
 
-// Whether a data access is effectively to a guest VA (VS/VU mode, or M-mode MPRV+MPV).
-function access_is_gva(access : MemoryAccessType(mem_payload)) -> bool =
-  privLevel_is_virtual(effectivePrivilege(access, mstatus, cur_privilege))
+// Whether a data access is effectively to a guest VA (VS/VU mode, or M-mode MPRV+MPV, or HS/U-mode doing HLV/HSV).
+private function access_is_gva(access_info : AccessInfo) -> bool =
+  privLevel_is_virtual(access_info.eff_privilege) | access_info.as_guest
 
-function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> ExceptionContext =
-  make_exception_context(e, excinfo, access_is_gva(access), None())
+private function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access_info : AccessInfo) -> ExceptionContext =
+  make_exception_context(e, excinfo, access_is_gva(access_info), None())
 
-function memory_exception(e : ExceptionType, excinfo : xlenbits, access : MemoryAccessType(mem_payload)) -> ExecutionResult =
-  trap(mem_exception_context(e, excinfo, access))
+function memory_exception(e : ExceptionType, excinfo : xlenbits, access_info : AccessInfo) -> ExecutionResult =
+  trap(mem_exception_context(e, excinfo, access_info))
 
 // Helper for translated read access.
 private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_access.
-  (vaddr : virtaddr, width : int('width), eff_priv : Privilege, access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
-  -> result((physaddr, bits(8 * 'width)), ExecutionResult) =
+  (vaddr : virtaddr, width : int('width), access : MemoryAccessType(mem_payload), access_info : AccessInfo, aq : bool, rl : bool, res : bool)
+  -> result((physaddr, bits(8 * 'width)), ExecutionResult) = {
+
+  let eff_priv = access_info.eff_privilege;
+
   match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => Err(trap(e)),
 
     Ok(paddr, pbmt, _) => match mem_read(access, pbmt, eff_priv, paddr, width, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(e, bits_of(exc_vaddr), access))
+        Err(memory_exception(e, bits_of(exc_vaddr), access_info))
       },
 
       Ok(v) => Ok(paddr, v),
     }
   }
+}
 
 val vmem_read_addr : forall 'width, is_mem_width('width).
-  (virtaddr, int('width), MemoryAccessType(mem_payload), Privilege, bool, bool, bool)
+  (virtaddr, int('width), MemoryAccessType(mem_payload), AccessInfo, bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
-function vmem_read_addr(vaddr, width, access, eff_priv, aq, rl, res) = {
+function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // Other AMOs currently don't go through `vmem_utils` functions.
   assert(res == is_load_reserved(access));
+
+  let eff_priv = access_info.eff_privilege;
 
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(memory_exception(E_Load_Access_Fault(), bits_of(vaddr), access)),
-      Some(AlignmentException) => return Err(memory_exception(E_Load_Addr_Align(), bits_of(vaddr), access)),
+      Some(AccessFault)        => return Err(memory_exception(E_Load_Access_Fault(), bits_of(vaddr), access_info)),
+      Some(AlignmentException) => return Err(memory_exception(E_Load_Addr_Align(), bits_of(vaddr), access_info)),
       // Even if the CPU does support misaligned accesses, it might be
       // that the PMA doesn't support misaligned accesses so you can
       // still get a fault later, but this will be after address
@@ -138,7 +165,7 @@ function vmem_read_addr(vaddr, width, access, eff_priv, aq, rl, res) = {
   if sys_misaligned_order_decreasing & do_split_access then {
     // Do next page access first.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translate_and_read_value(access_addr, next_page_bytes, eff_priv, access, aq, rl, res) {
+    match translate_and_read_value(access_addr, next_page_bytes, access, access_info, aq, rl, res) {
       Err(e)   => return Err(e),
       Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
@@ -147,7 +174,7 @@ function vmem_read_addr(vaddr, width, access, eff_priv, aq, rl, res) = {
   // If the access was split, only the in-page bytes should be
   // accessed, otherwise all bytes should be accessed.
   let access_width = if do_split_access then in_page_bytes else width;
-  match translate_and_read_value(vaddr, access_width, eff_priv, access, aq, rl, res) {
+  match translate_and_read_value(vaddr, access_width, access, access_info, aq, rl, res) {
     Err(e)       => return Err(e),
     Ok(paddr, v) => {
       if res then {
@@ -162,7 +189,7 @@ function vmem_read_addr(vaddr, width, access, eff_priv, aq, rl, res) = {
   if not(sys_misaligned_order_decreasing) & do_split_access then {
     // Do next page access next.
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translate_and_read_value(access_addr, next_page_bytes, eff_priv, access, aq, rl, res) {
+    match translate_and_read_value(access_addr, next_page_bytes, access, access_info, aq, rl, res) {
       Err(e)   => return Err(e),
       Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
     }
@@ -173,8 +200,10 @@ function vmem_read_addr(vaddr, width, access, eff_priv, aq, rl, res) = {
 
 // Helper for translated write access.
 private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_access.
-  (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), eff_priv : Privilege, access : MemoryAccessType(mem_payload), aq : bool, rl : bool, res : bool)
-  -> result(bool, ExecutionResult) =
+  (vaddr : virtaddr, width : int('width), value : bits(8 * 'width), access : MemoryAccessType(mem_payload), access_info : AccessInfo, aq : bool, rl : bool, res : bool)
+  -> result(bool, ExecutionResult) = {
+
+  let eff_priv = access_info.eff_privilege;
 
   match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => Err(trap(e)),
@@ -182,33 +211,36 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
     Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(e, bits_of(exc_vaddr), access))
+        Err(memory_exception(e, bits_of(exc_vaddr), access_info))
       },
 
       Ok(()) => match mem_write_value(paddr, width, value, eff_priv, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          Err(memory_exception(e, bits_of(exc_vaddr), access))
+          Err(memory_exception(e, bits_of(exc_vaddr), access_info))
         },
 
         Ok(s) => Ok(s),
       },
     },
   }
+}
 
 val vmem_write_addr : forall 'width, is_mem_width('width).
-  (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), Privilege, bool, bool, bool)
+  (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), AccessInfo, bool, bool, bool)
   -> result(bool, ExecutionResult)
 
-function vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res) = {
+function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) = {
   // Other AMOs currently don't go through `vmem_utils` functions.
   assert(res == is_store_conditional(access));
+
+  let eff_priv = access_info.eff_privilege;
 
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
     match plat_misaligned_exception(access, res) {
-      Some(AccessFault)        => return Err(memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access)),
-      Some(AlignmentException) => return Err(memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access)),
+      Some(AccessFault)        => return Err(memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access_info)),
+      Some(AlignmentException) => return Err(memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access_info)),
       None()                   => (),
     };
   };
@@ -235,7 +267,7 @@ function vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res) = {
   if sys_misaligned_order_decreasing & do_split_access then {
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(access_addr, next_page_bytes, write_value, eff_priv, access, aq, rl, res) {
+    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, access_info, aq, rl, res) {
       Err(e) => return Err(e),
       Ok(s)  => write_success = write_success & s,
     }
@@ -254,13 +286,13 @@ function vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res) = {
         // PMP region without write permissions raises a store
         // access-fault exception."
         match phys_access_check(access, pbmt, eff_priv, paddr, access_width, true) {
-          Err(e) => return Err(memory_exception(e, bits_of(vaddr), access)),
+          Err(e) => return Err(memory_exception(e, bits_of(vaddr), access_info)),
           Ok(_)  => write_success = false,
         }
       } else match mem_write_ea(paddr, access_width, eff_priv, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          return Err(memory_exception(e, bits_of(exc_vaddr), access))
+          return Err(memory_exception(e, bits_of(exc_vaddr), access_info))
         },
 
         Ok(()) => {
@@ -268,7 +300,7 @@ function vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res) = {
           match mem_write_value(paddr, access_width, write_value, eff_priv, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-              return Err(memory_exception(e, bits_of(exc_vaddr), access))
+              return Err(memory_exception(e, bits_of(exc_vaddr), access_info))
             },
             Ok(s)  => write_success = write_success & s,
           }
@@ -280,7 +312,7 @@ function vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res) = {
   if not(sys_misaligned_order_decreasing) & do_split_access then {
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(access_addr, next_page_bytes, write_value, eff_priv, access, aq, rl, res) {
+    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, access_info, aq, rl, res) {
       Err(e) => return Err(e),
       Ok(s)  => write_success = write_success & s,
     }
@@ -290,49 +322,59 @@ function vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res) = {
 }
 
 // Compute effective address with extension checks and apply pointer masking.
-function get_transformed_data_addr(base : regidx, offset : xlenbits, access : MemoryAccessType(mem_payload), eff_priv : Privilege, pmlen: pm_len, width : mem_access_width)
+function get_transformed_data_addr(base : regidx, offset : xlenbits, access : MemoryAccessType(mem_payload), access_info : AccessInfo, width : mem_access_width)
          -> Ext_DataAddr_Check(ext_data_addr_error) = {
+  let eff_priv = access_info.eff_privilege;
   match ext_data_get_addr(base, offset, access, width) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Error(e),
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_effective_address(vaddr, eff_priv, pmlen);
+      let vaddr = transform_effective_address(vaddr, access_info);
       Ext_DataAddr_OK(vaddr)
     }
   }
+}
+
+val vmem_read_explicit : forall 'width, is_mem_width('width).
+  (regidx, xlenbits, int('width), MemoryAccessType(mem_payload), AccessInfo, bool, bool, bool)
+  -> result(bits(8 * 'width), ExecutionResult)
+
+function vmem_read_explicit(rs, offset, width, access, access_info, aq, rl, res) = {
+  // Get the address, X(rs1) + offset.
+  // Extensions might perform additional checks on address validity.
+  let vaddr : virtaddr = match get_transformed_data_addr(rs, offset, access, access_info, width) {
+    Ext_DataAddr_OK(vaddr) => vaddr,
+    Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
+  };
+
+  vmem_read_addr(vaddr, width, access, access_info, aq, rl, res)
 }
 
 val vmem_read : forall 'width, is_mem_width('width).
   (regidx, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
-function vmem_read(rs, offset, width, access, aq, rl, res) = {
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_priv);
+function vmem_read(rs, offset, width, access, aq, rl, res) =
+  vmem_read_explicit(rs, offset, width, access, default_access_info(access), aq, rl, res)
 
-  // Get the address, X(rs1) + offset.
+
+val vmem_write_explicit : forall 'width, is_mem_width('width).
+  (regidx, xlenbits, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), AccessInfo, bool, bool, bool)
+  -> result(bool, ExecutionResult)
+
+function vmem_write_explicit(rs_addr, offset, width, data, access, access_info, aq, rl, res) = {
+  // Get the address, X(rs_addr) + offset.
   // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match get_transformed_data_addr(rs, offset, access, eff_priv, pmlen, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs_addr, offset, access, access_info, width) {
     Ext_DataAddr_OK(vaddr) => vaddr,
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_read_addr(vaddr, width, access, eff_priv, aq, rl, res)
+  vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res)
 }
 
 val vmem_write : forall 'width, is_mem_width('width).
   (regidx, xlenbits, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bool, ExecutionResult)
 
-function vmem_write(rs_addr, offset, width, data, access, aq, rl, res) = {
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_priv);
-
-  // Get the address, X(rs_addr) + offset.
-  // Extensions might perform additional checks on address validity.
-  let vaddr : virtaddr = match get_transformed_data_addr(rs_addr, offset, access, eff_priv, pmlen, width) {
-    Ext_DataAddr_OK(vaddr) => vaddr,
-    Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
-  };
-
-  vmem_write_addr(vaddr, width, data, access, eff_priv, aq, rl, res)
-}
+function vmem_write(rs_addr, offset, width, data, access, aq, rl, res) =
+  vmem_write_explicit(rs_addr, offset, width, data, access, default_access_info(access), aq, rl, res)
