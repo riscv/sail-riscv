@@ -23,7 +23,7 @@ jobs:
         run: .github/scripts/ci-matrix.py --test
 
   build:
-    name: "Build and test model (OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }})"
+    name: "Build model and run build-time tests (OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }})"
     needs: define-matrix
     strategy:
       matrix:
@@ -323,7 +323,7 @@ jobs:
   # always run and then checks the results of all of the jobs it depends on.
   ci_pass:
     runs-on: ubuntu-latest
-    needs: [build, run_tests, linux, xvisor]
+    needs: [define-matrix, build, run_tests, linux, xvisor]
     if: "${{ always() }}"
     steps:
       - name: exit failure
