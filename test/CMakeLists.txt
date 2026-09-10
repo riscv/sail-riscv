@@ -30,11 +30,13 @@ set(TEST_DOWNLOAD_URL "https://github.com/riscv-software-src/sail-riscv-tests/re
 set(TEST_DOWNLOAD_VERSION "${SAIL_RISCV_TESTS_VERSION}" CACHE STRING "Version of precompiled tests to download")
 
 # Simulator to use for tests
-set(CACHE{SAIL_RISCV_SIM}
-    TYPE FILEPATH
-    HELP "sail_riscv_sim binary to use for tests"
-    VALUE ""
-)
+# Use this syntax when 4.2 is the minimum version.
+#set(CACHE{SAIL_RISCV_SIM}
+#    TYPE FILEPATH
+#    HELP "sail_riscv_sim binary to use for tests"
+#    VALUE ""
+#)
+set(SAIL_RISCV_SIM "" CACHE FILEPATH "sail_riscv_sim binary to use for tests")
 
 if (SAIL_RISCV_SIM)
     cmake_path(IS_ABSOLUTE SAIL_RISCV_SIM sim_path_is_absolute)
