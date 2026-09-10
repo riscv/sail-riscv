@@ -128,7 +128,7 @@ def show_test_matrix(opts):
 
 def cli_parser():
     parser = argparse.ArgumentParser(description="Generate CI matrix entries")
-    group = parser.add_mutually_exclusive_group()
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "-b", "--build", action="store_const", const=True, help="generate build matrix"
     )
@@ -145,8 +145,6 @@ def main() -> int:
         show_build_matrix(opts)
     elif opts.test:
         show_test_matrix(opts)
-    else:
-        parser.print_help()
 
     return 0
 
