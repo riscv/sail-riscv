@@ -28,7 +28,6 @@ function clause execute SSPUSH(rs2) = {
   let vaddr_bits = ssp - xlen_bytes;
   let access = Store(ShadowStack);
   let access_info = default_access_info(access);
-  let eff_priv = access_info.eff_privilege;
 
   let vaddr = transform_effective_address(Virtaddr(vaddr_bits), access_info);
   // "If the virtual address in ssp is not XLEN aligned, then the
@@ -86,7 +85,6 @@ function clause execute SSPOPCHK(rs1) = {
 
   let access = Load(ShadowStack);
   let access_info = default_access_info(access);
-  let eff_priv = access_info.eff_privilege;
 
   let ssp_addr = transform_effective_address(Virtaddr(ssp), access_info);
 
