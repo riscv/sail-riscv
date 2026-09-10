@@ -109,15 +109,7 @@ jobs:
         # work).
         if: ${{ matrix.first_party_tests }}
         run: |
-          ctest --test-dir build -L TestAtBuildTime --output-junit tests.xml --output-on-failure
-
-      - name: Upload test results
-        if: ${{ matrix.run_all_steps }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: first-party-tests-results.xml
-          path: build/tests.xml
-          if-no-files-found: error
+          ctest --test-dir build -L TestAtBuildTime --output-on-failure
 
       - name: Name build artifact
         id: name_build
@@ -216,15 +208,7 @@ jobs:
 
       - name: Run ${{ matrix.label }} suite
         run: |
-          ctest --test-dir build -L ${{ matrix.label }} --output-junit tests.xml --output-on-failure
-
-      - name: Upload test results
-        if: ${{ matrix.run_all_steps }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.label }}-results.xml
-          path: build/tests.xml
-          if-no-files-found: error
+          ctest --test-dir build -L ${{ matrix.label }} --output-on-failure
 
   linux:
     name: "Linux boot"
