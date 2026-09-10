@@ -15,44 +15,44 @@ def define_build_matrix_entries() -> list[dict]:
         {
             "os": "ubuntu-22.04",
             "cmake_version": "3.20.0",
-            "first_party_tests": "true",
+            "first_party_tests": True,
         }
     )
     entries.append(
         {
             "os": "ubuntu-22.04",
             "cmake_version": "4.1.2",
-            "first_party_tests": "true",
-            "run_all_steps": "true",
+            "first_party_tests": True,
+            "run_all_steps": True,
         }
     )
     entries.append(
         {
             "os": "ubuntu-24.04-arm",
             "cmake_version": "3.20.0",
-            "first_party_tests": "true",
+            "first_party_tests": True,
         }
     )
     entries.append(
         {
             "os": "ubuntu-24.04-arm",
             "cmake_version": "4.1.2",
-            "first_party_tests": "true",
-            "clang_tidy": "true",
+            "first_party_tests": True,
+            "clang_tidy": True,
         }
     )
     entries.append(
         {
             "os": "macos-latest",
             "cmake_version": "3.20.0",
-            "first_party_tests": "true",
+            "first_party_tests": True,
         }
     )
     entries.append(
         {
             "os": "macos-latest",
             "cmake_version": "4.1.2",
-            "first_party_tests": "true",
+            "first_party_tests": True,
         }
     )
     entries.append(
@@ -60,7 +60,7 @@ def define_build_matrix_entries() -> list[dict]:
             "os": "ubuntu-latest",
             "container": "rockylinux:8.9.20231119",
             "cmake_version": "3.20.0",
-            "first_party_tests": "false",
+            "first_party_tests": False,
         }
     )
     entries.append(
@@ -68,7 +68,7 @@ def define_build_matrix_entries() -> list[dict]:
             "os": "ubuntu-24.04-arm",
             "container": "rockylinux:8.9.20231119",
             "cmake_version": "3.20.0",
-            "first_party_tests": "false",
+            "first_party_tests": False,
         }
     )
 
@@ -89,16 +89,14 @@ def define_build_matrix_entries() -> list[dict]:
 # and a test runner is used per label per build.
 
 
-def sail_riscv_test_labels() -> list[str]:
-    return ["GeneralTest", "VectorTest", "HypervisorTest"]
+sail_riscv_test_labels: list[str] = ["GeneralTest", "VectorTest", "HypervisorTest"]
 
 
 def define_test_matrix_entries(builds: list[dict]) -> list[dict]:
     entries: list[dict] = []
-    labels = sail_riscv_test_labels()
 
     for e in builds:
-        for l in labels:
+        for l in sail_riscv_test_labels:
             t_ent = copy.deepcopy(e)
             t_ent["label"] = l
             entries.append(t_ent)
@@ -130,10 +128,11 @@ def show_test_matrix(opts):
 
 def cli_parser():
     parser = argparse.ArgumentParser(description="Generate CI matrix entries")
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "-b", "--build", action="store_const", const=True, help="generate build matrix"
     )
-    parser.add_argument(
+    group.add_argument(
         "-t", "--test", action="store_const", const=True, help="generate test matrix"
     )
     return parser
@@ -141,16 +140,13 @@ def cli_parser():
 
 def main() -> int:
     parser = cli_parser()
-    cliopts = sys.argv[1:]
-    if len(cliopts) == 0:
-        parser.print_help()
-        sys.exit(0)
-
-    opts = parser.parse_args(cliopts)
+    opts = parser.parse_args()
     if opts.build:
         show_build_matrix(opts)
     elif opts.test:
         show_test_matrix(opts)
+    else:
+        parser.print_help()
 
     return 0
 
