@@ -27,10 +27,9 @@ function clause execute SSPUSH(rs2) = {
 
   let vaddr_bits = ssp - xlen_bytes;
   let access = Store(ShadowStack);
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_priv);
+  let access_info = default_access_info(access);
 
-  let vaddr = transform_effective_address(Virtaddr(vaddr_bits), eff_priv, pmlen);
+  let vaddr = transform_effective_address(Virtaddr(vaddr_bits), access_info);
   // "If the virtual address in ssp is not XLEN aligned, then the
   // SSPUSH/C.SSPUSH/SSPOPCHK/C.SSPOPCHK instructions cause a
   // store/AMO access-fault exception."
@@ -42,9 +41,9 @@ function clause execute SSPUSH(rs2) = {
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(vaddr, width))
-  then return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access);
+  then return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access_info);
 
-  match vmem_write_addr(vaddr, width, X(rs2), access, eff_priv, false, false, false) {
+  match vmem_write_addr(vaddr, width, X(rs2), access, access_info, false, false, false) {
     Ok(_)  => { ssp = vaddr_bits;
                 csr_write_callback("ssp", ssp);
                 RETIRE_SUCCESS },
@@ -85,17 +84,17 @@ function clause execute SSPOPCHK(rs1) = {
   if not(zicfiss_xSSE(cur_privilege)) then return RETIRE_SUCCESS;
 
   let access = Load(ShadowStack);
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_priv);
-  let ssp_addr = transform_effective_address(Virtaddr(ssp), eff_priv, pmlen);
+  let access_info = default_access_info(access);
+
+  let ssp_addr = transform_effective_address(Virtaddr(ssp), access_info);
 
   // See above on checking alignment.
   // TODO: get the dynamic xlen here.
   let width = xlen_bytes;
   if not(is_aligned_addr(ssp_addr, width))
-  then return memory_exception(E_SAMO_Access_Fault(), bits_of(ssp_addr), access);
+  then return memory_exception(E_SAMO_Access_Fault(), bits_of(ssp_addr), access_info);
 
-  match vmem_read_addr(ssp_addr, width, access, eff_priv, false, false, false) {
+  match vmem_read_addr(ssp_addr, width, access, access_info, false, false, false) {
     Ok(data) => {
       if X(rs1) != data then {
         trap(make_shadow_stack_exception())
@@ -177,10 +176,10 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   };
 
   let access = Atomic(AMOSWAP, aq, rl, ShadowStack, ShadowStack);
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_priv);
+  let access_info = default_access_info(access);
+  let eff_priv = access_info.eff_privilege;
 
-  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, eff_priv, pmlen, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, access_info, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
@@ -191,8 +190,8 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     // Check if the model is configured to raise an exception based on
     // the misaligned virtual address.
     match plat_misaligned_exception(access, false) {
-      Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access),
-      Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access),
+      Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access_info),
+      Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access_info),
       // No exception yet, but we may still get one based on the
       // physical address after address translation and checking PMAs.
       None()                   => (),
@@ -214,13 +213,13 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == paddr);
-      return memory_exception(e, bits_of(vaddr), access)
+      return memory_exception(e, bits_of(vaddr), access_info)
     },
     Ok(_) => match mem_read(access, pbmt, eff_priv, paddr, width, aq, aq & rl, true) {
       Err(exc_addr, e) => {
         // AMOs should not get split.
         assert(exc_addr == paddr);
-        return memory_exception(e, bits_of(vaddr), access)
+        return memory_exception(e, bits_of(vaddr), access_info)
       },
       Ok(v)  => v,
     },
@@ -238,7 +237,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == paddr);
-      return memory_exception(e, bits_of(vaddr), access)
+      return memory_exception(e, bits_of(vaddr), access_info)
     },
   };
 

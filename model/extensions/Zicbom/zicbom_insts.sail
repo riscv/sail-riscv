@@ -72,9 +72,10 @@ private function cbop_priv_check(p: Privilege) -> checked_cbop = {
 private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> ExecutionResult = {
   let rs1_val = X(rs1);
   let cache_block_size = 2 ^ plat_cache_block_size_exp;
+
   let access : MemoryAccessType(mem_payload) = CacheAccess(CB_manage(cbop));
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_priv);
+  let access_info = default_access_info(access);
+  let eff_priv = access_info.eff_privilege;
 
   // Offset from rs1 to the beginning of the cache block. This is 0 if rs1
   // is aligned to the cache block, or negative if rs1 is misaligned.
@@ -83,7 +84,7 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
   // TODO: This is incorrect since CHERI only requires at least one byte
   // to be in bounds here, whereas `get_transformed_data_addr()` checks that all bytes
   // are in bounds. We will need to add a new function, parameter or access type.
-  match get_transformed_data_addr(rs1, negative_offset, access, eff_priv, pmlen, cache_block_size) {
+  match get_transformed_data_addr(rs1, negative_offset, access, access_info, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       // vaddr is the aligned address, but errors report the address that
@@ -96,7 +97,7 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
         Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
           match phys_access_check(access, pbmt, eff_priv, paddr, cache_block_size, false) {
-            Err(e)  => memory_exception(e, bits_of(vaddr_for_error), access),
+            Err(e)  => memory_exception(e, bits_of(vaddr_for_error), access_info),
             // If there is no error, the model has no caches so there's no
             // more action required.
             Ok(_)   => RETIRE_SUCCESS

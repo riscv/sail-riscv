@@ -73,12 +73,12 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   assert(width <= xlen_bytes * 2);
 
   let access = Atomic(op, aq, rl, Data, Data);
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
-  let pmlen = get_pmlen(access, eff_priv);
+  let access_info = default_access_info(access);
+  let eff_priv = access_info.eff_privilege;
 
   // Get the address, X(rs1) (no offset).
   // Some extensions perform additional checks on address validity.
-  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, eff_priv, pmlen, width) {
+  let vaddr : virtaddr = match get_transformed_data_addr(rs1, zeros(), access, access_info, width) {
     Ext_DataAddr_Error(e)  => return Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
@@ -87,8 +87,8 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     // Check if the model is configured to raise an exception based on
     // the misaligned virtual address.
     match plat_misaligned_exception(access, false) {
-      Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access),
-      Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access),
+      Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access_info),
+      Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access_info),
       // No exception yet, but we may still get one based on the
       // physical address after address translation and checking PMAs.
       None()                   => (),
@@ -104,13 +104,13 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
-      return memory_exception(e, bits_of(vaddr), access)
+      return memory_exception(e, bits_of(vaddr), access_info)
     },
     Ok(_)  => match mem_read(access, pbmt, eff_priv, addr, width, aq, aq & rl, true) {
       Err(exc_addr, e) => {
         // AMOs should not get split.
         assert(exc_addr == addr);
-        return memory_exception(e, bits_of(vaddr), access)
+        return memory_exception(e, bits_of(vaddr), access_info)
       },
       Ok(loaded) => loaded,
     },
@@ -156,7 +156,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
-      memory_exception(e, bits_of(vaddr), access)
+      memory_exception(e, bits_of(vaddr), access_info)
     }
   }
 }

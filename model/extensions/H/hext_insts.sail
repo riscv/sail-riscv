@@ -11,15 +11,6 @@ mapping maybe_hlvx : hlvop <-> string = {
   HLVX <-> "x",
 }
 
-// The spec says that "GVA is redundant with field SPV ... except when the
-// explicit memory access of an HLV, HLVX, or HSV instruction causes a fault.
-// In that case, SPV=0 but GVA=1."
-private function hlsv_exception_context(e : ExceptionType, va : xlenbits) -> ExceptionContext =
-  make_exception_context(e, va, true, None())
-
-private function hlsv_memory_exception(e : ExceptionType, va : xlenbits) -> ExecutionResult =
-  trap(hlsv_exception_context(e, va))
-
 union clause instruction = HLVTYPE : (word_width, hlvop, bool, regidx, regidx)
 
 mapping clause encdec = HLVTYPE(width, HLV, is_unsigned, rs1, rd)
@@ -53,12 +44,18 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
     HLVX => LoadExecute(Data),
   };
   assert(width <= xlen_bytes);
+
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
-  let pmlen = get_hlsv_pmlen(access, eff_priv);
+  let access_info : AccessInfo = struct {
+    eff_privilege = eff_priv,
+    pmlen = get_hlsv_pmlen(access, eff_priv),
+    as_guest = true,
+  };
+
   match ext_data_get_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => { Ext_DataAddr_Check_Failure(e) },
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_effective_address(vaddr, eff_priv, pmlen);
+      let vaddr = transform_effective_address(vaddr, access_info);
       // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
       // one that crosses a page boundary should be split and translated per
       // page, the way vmem_read_addr and vmem_write_addr do. That needs
@@ -66,8 +63,8 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
       // model/sys/mem.sail.
       if not(is_aligned_addr(vaddr, width)) then {
         match plat_misaligned_exception(access, false) {
-          Some(AccessFault)        => return hlsv_memory_exception(E_Load_Access_Fault(), bits_of(vaddr)),
-          Some(AlignmentException) => return hlsv_memory_exception(E_Load_Addr_Align(), bits_of(vaddr)),
+          Some(AccessFault)        => return memory_exception(E_Load_Access_Fault(), bits_of(vaddr), access_info),
+          Some(AlignmentException) => return memory_exception(E_Load_Addr_Align(), bits_of(vaddr), access_info),
           None()                   => (),
         };
       };
@@ -81,7 +78,7 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
           Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
           Err(exc_addr, e) => {
             assert(exc_addr == paddr);
-            return hlsv_memory_exception(e, bits_of(vaddr))
+            return memory_exception(e, bits_of(vaddr), access_info)
           }
         },
       };
@@ -107,14 +104,19 @@ function clause execute(HSV(width, rs1, rs2)) = {
   then return Illegal_Instruction();
 
   assert(width <= xlen_bytes);
+
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
   let access = Store(Data);
-  let pmlen = get_hlsv_pmlen(access, eff_priv);
+  let access_info : AccessInfo = struct {
+    eff_privilege = eff_priv,
+    pmlen = get_hlsv_pmlen(access, eff_priv),
+    as_guest = true,
+  };
 
   match ext_data_get_addr(rs1, zeros(), access, width) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_effective_address(vaddr, eff_priv, pmlen);
+      let vaddr = transform_effective_address(vaddr, access_info);
       // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
       // one that crosses a page boundary should be split and translated per
       // page, the way vmem_read_addr and vmem_write_addr do. That needs
@@ -122,8 +124,8 @@ function clause execute(HSV(width, rs1, rs2)) = {
       // model/sys/mem.sail.
       if not(is_aligned_addr(vaddr, width)) then {
         match plat_misaligned_exception(access, false) {
-          Some(AccessFault)        => return hlsv_memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr)),
-          Some(AlignmentException) => return hlsv_memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr)),
+          Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access_info),
+          Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access_info),
           None()                   => (),
         };
       };
@@ -133,7 +135,7 @@ function clause execute(HSV(width, rs1, rs2)) = {
           match mem_write_ea(paddr, width, eff_priv, access, pbmt, false, false, false) {
             Err(exc_paddr, e) => {
               let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-              return hlsv_memory_exception(e, bits_of(exc_vaddr))
+              return memory_exception(e, bits_of(exc_vaddr), access_info)
             },
             Ok(_) => {
               match mem_write_value(paddr, width, X(rs2)[8 * width - 1 .. 0], eff_priv, access, pbmt, false, false, false) {
@@ -141,7 +143,7 @@ function clause execute(HSV(width, rs1, rs2)) = {
                 Ok(false) => internal_error(__FILE__, __LINE__, "HSV got false from mem_write_value"),
                 Err(exc_paddr, e) => {
                   let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-                  return hlsv_memory_exception(e, bits_of(exc_vaddr))
+                  return memory_exception(e, bits_of(exc_vaddr), access_info)
                 }
               }
             }
