@@ -95,7 +95,7 @@ jobs:
       - name: Cache downloaded tests
         uses: actions/cache/save@v6
         # Update cache only on the master branch, and from only one of the jobs in the matrix.
-        if: ${{ matrix.run_all_steps == 'true' && steps.sail-riscv-tests-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master' }}
+        if: ${{ matrix.run_all_steps && steps.sail-riscv-tests-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master' }}
         with:
           path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
           key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
