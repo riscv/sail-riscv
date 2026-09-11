@@ -218,4 +218,7 @@ foreach(idx RANGE 0 ${test_last} 4)
         NAME "first_party_${arch}_${test_source}"
         COMMAND $<TARGET_FILE:sail_riscv_sim> ${simulator_options} --config ${config} --config-override ${override_config} ${elf}
     )
+    set_property(TEST "first_party_${arch}_${test_source}"
+        PROPERTY LABELS TestAtBuildTime
+    )
 endforeach()

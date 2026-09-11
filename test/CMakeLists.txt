@@ -1,6 +1,61 @@
+# Adding a test suite:
+#
+# The tests in a test-suite should be given an existing label, or a
+# new label, to group tests into approximately equally long-running
+# test groups.
+#
+# The current approximate run times for each suite are:
+#  riscv-tests:                ~  2 -  3 minutes
+#  riscv-arch-tests:           ~ 26 - 36 minutes
+#  riscv-vector-tests-v64x64:  ~ 14 - 19 minutes
+#  riscv-vector-tests-v128x32: ~ 20 - 29 minutes
+#  damo-tests:                 ~ 25 - 40 minutes
+#
+# [The above numbers were from a personal github repo; they might
+#  differ from the official repo.]
+#
+# The current test labels are:
+#
+# GeneralTest     (for `riscv-tests` and `riscv-arch-tests`)
+# VectorTest      (for `riscv-vector-tests`)
+# HypervisorTest  (for `damo-tests`)
+#
+# When adding a new test label, also update
+# `.github/scripts/ci-matrix.py:sail_riscv_test_labels()`.
+
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/sail_riscv_tests_version.txt" SAIL_RISCV_TESTS_VERSION)
+string(STRIP "${SAIL_RISCV_TESTS_VERSION}" SAIL_RISCV_TESTS_VERSION)
 # CMake options for test downloads
 set(TEST_DOWNLOAD_URL "https://github.com/riscv-software-src/sail-riscv-tests/releases/download" CACHE STRING "Base URL to download precompiled riscv-tests and riscv-vector-tests from")
-set(TEST_DOWNLOAD_VERSION "2026-08-20" CACHE STRING "Version of precompiled tests to download")
+set(TEST_DOWNLOAD_VERSION "${SAIL_RISCV_TESTS_VERSION}" CACHE STRING "Version of precompiled tests to download")
+
+# Simulator to use for tests
+# Use this syntax when 4.2 is the minimum version.
+#set(CACHE{SAIL_RISCV_SIM}
+#    TYPE FILEPATH
+#    HELP "sail_riscv_sim binary to use for tests"
+#    VALUE ""
+#)
+set(SAIL_RISCV_SIM "" CACHE FILEPATH "sail_riscv_sim binary to use for tests")
+
+if (SAIL_RISCV_SIM)
+    cmake_path(IS_ABSOLUTE SAIL_RISCV_SIM sim_path_is_absolute)
+    if (NOT sim_path_is_absolute)
+        # The path should be relative to the top-level source directory.
+        cmake_path(ABSOLUTE_PATH SAIL_RISCV_SIM
+            BASE_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            OUTPUT_VARIABLE SAIL_RISCV_SIM_BINARY
+        )
+    else()
+        set(SAIL_RISCV_SIM_BINARY "${SAIL_RISCV_SIM}")
+    endif()
+    if (NOT EXISTS "${SAIL_RISCV_SIM_BINARY}")
+        message(FATAL_ERROR "Specified simulator binary '${SAIL_RISCV_SIM_BINARY}' not found.")
+    endif()
+    message(STATUS "Using specified simulator binary '${SAIL_RISCV_SIM_BINARY}'.")
+else()
+    set(SAIL_RISCV_SIM_BINARY $<TARGET_FILE:sail_riscv_sim>)
+endif()
 
 # Function to download and extract test files
 function(download_riscv_tests DOWNLOAD_PATH TARBALL_NAME DOWNLOAD_URL)
@@ -71,9 +126,12 @@ function(setup_vector_test vlen elen)
                 # `elf_name` includes xlen/vlen/elen so we don't need to add any details.
                 NAME "${elf_name}"
                 COMMAND
-                    $<TARGET_FILE:sail_riscv_sim>
+                    "${SAIL_RISCV_SIM_BINARY}"
                     --config "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v${vlen}_e${elen}.json"
                     ${elf}
+            )
+            set_property(TEST "${elf_name}"
+                PROPERTY LABELS VectorTest
             )
         endforeach()
     endif()
@@ -117,10 +175,13 @@ if(ENABLE_RISCV_TESTS)
                 # `elf_name` includes xlen so we don't need to add any details.
                 NAME "${elf_name}"
                 COMMAND
-                    $<TARGET_FILE:sail_riscv_sim>
+                    "${SAIL_RISCV_SIM_BINARY}"
                     # Use ELEN=XLEN. These tests don't use vector so it doesn't actually matter.
                     --config "${CMAKE_BINARY_DIR}/config/rv${xlen}d_v256_e${xlen}.json"
                     ${elf}
+            )
+            set_property(TEST "${elf_name}"
+                PROPERTY LABELS GeneralTest
             )
         endforeach()
     endforeach()
@@ -150,10 +211,13 @@ if(ENABLE_DAMO_TESTS)
         add_test(
             NAME "${elf_name}"
             COMMAND
-                $<TARGET_FILE:sail_riscv_sim>
+                "${SAIL_RISCV_SIM_BINARY}"
                 # ELEN=XLEN. These tests don't use vector so it doesn't matter.
                 --config "${CMAKE_BINARY_DIR}/config/rv64d_v256_e64.json"
                 ${elf}
+        )
+        set_property(TEST "${elf_name}"
+            PROPERTY LABELS HypervisorTest
         )
     endforeach()
 endif()
@@ -245,10 +309,13 @@ if(ENABLE_RISCV_ARCH_TESTS)
                 # `elf_name` includes xlen so we don't need to add any details.
                 NAME "${elf_name}"
                 COMMAND
-                    $<TARGET_FILE:sail_riscv_sim>
+                    "${SAIL_RISCV_SIM_BINARY}"
                     ${xlen_flag}
                     --config-override "${CMAKE_CURRENT_BINARY_DIR}/arch_test_override.json"
                     ${elf}
+            )
+            set_property(TEST "${elf_name}"
+                PROPERTY LABELS GeneralTest
             )
         endforeach()
     endforeach()

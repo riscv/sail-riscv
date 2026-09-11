@@ -3,39 +3,31 @@ name: CI
 on: [push, pull_request, workflow_dispatch, merge_group]
 
 jobs:
+  define-matrix:
+    name: Define CI matrix
+    runs-on: ubuntu-latest
+    outputs:
+      build_include: ${{ steps.define_build_matrix.outputs.build_include }}
+      test_include: ${{ steps.define_test_matrix.outputs.test_include }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+
+      - name: Define build matrix
+        id: define_build_matrix
+        run: .github/scripts/ci-matrix.py --build
+
+      - name: Define test matrix
+        id: define_test_matrix
+        run: .github/scripts/ci-matrix.py --test
+
   build:
-    name: "Build and test model (OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }})"
+    name: "Build model and run build-time tests (OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }})"
+    needs: define-matrix
     strategy:
       matrix:
-        include:
-          - os: ubuntu-22.04
-            cmake_version: "3.20.0"
-            first_party_tests: true
-          - os: ubuntu-22.04
-            cmake_version: "4.1.2"
-            first_party_tests: true
-            run_all_steps: true
-          - os: ubuntu-24.04-arm
-            cmake_version: "3.20.0"
-            first_party_tests: true
-          - os: ubuntu-24.04-arm
-            cmake_version: "4.1.2"
-            first_party_tests: true
-            clang_tidy: true
-          - os: macos-latest
-            cmake_version: "3.20.0"
-            first_party_tests: true
-          - os: macos-latest
-            cmake_version: "4.1.2"
-            first_party_tests: true
-          - os: ubuntu-latest
-            container: rockylinux:8.9.20231119
-            cmake_version: "3.20.0"
-            first_party_tests: false
-          - os: ubuntu-24.04-arm
-            container: rockylinux:8.9.20231119
-            cmake_version: "3.20.0"
-            first_party_tests: false
+        include: ${{ fromJson(needs.define-matrix.outputs.build_include) }}
 
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
@@ -61,8 +53,20 @@ jobs:
           install-clang: "true"
 
       - name: Ensure pre-commit checks pass
-        if: ${{ matrix.run_all_steps}}
+        if: ${{ matrix.run_all_steps }}
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
+
+      - name: Get tests version
+        run: |
+          SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)
+          echo "SAIL_RISCV_TESTS_VERSION=$SAIL_RISCV_TESTS_VERSION" >> $GITHUB_ENV
+
+      - name: Restore cached tests
+        uses: actions/cache/restore@v6
+        id: sail-riscv-tests-cache-restore
+        with:
+          path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
+          key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
 
       - name: Build simulator and first party tests
         run: |
@@ -88,24 +92,123 @@ jobs:
             $CLANG_FLAG
           ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
 
-      - name: Run tests
-        run: |
-          ctest --test-dir build --output-junit tests.xml --output-on-failure
+      - name: Cache downloaded tests
+        uses: actions/cache/save@v6
+        # Update cache only on the master branch, and from only one of the jobs in the matrix.
+        if: ${{ matrix.run_all_steps && steps.sail-riscv-tests-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master' }}
+        with:
+          path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
+          key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
 
-      - name: Upload test results
-        if: ${{ matrix.run_all_steps}}
+      - name: Run build-time tests
+        # This currently comprises first-party tests and tests that
+        # need the Sail compiler (e.g. the SMT property tests).  Both
+        # types are gated on `first_party_tests`, to workaround the
+        # `ctest` limitation that only one test grouping can be
+        # specified at a time (i.e. `-R smt -R first_party` does not
+        # work).
+        if: ${{ matrix.first_party_tests }}
+        run: |
+          ctest --test-dir build -L TestAtBuildTime --output-on-failure
+
+      - name: Name build artifact
+        id: name_build
+        # Github won't let us use the container name since it contains
+        # a ':', and that causes an issue with NTFS file systems
+        # (according to Github's error message).  For now, this should
+        # work since we have just one container.  Ideally, the
+        # container name needs to be escaped or hashed.
+        run: |
+          echo build_name="build-os-${{ matrix.os }}${{ matrix.container && '-container' || '' }}-cmake-${{ matrix.cmake_version }}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload built simulator
         uses: actions/upload-artifact@v7
         with:
-          name: tests.xml
-          path: build/tests.xml
-          if-no-files-found: error
+          name: ${{ steps.name_build.outputs.build_name }}
+          path: build/c_emulator
 
       - name: Upload event payload
-        if: ${{ matrix.run_all_steps}}
+        if: ${{ matrix.run_all_steps }}
         uses: actions/upload-artifact@v7
         with:
-          name: event.json
+          name: build-event.json
           path: ${{ github.event_path }}
+
+  run_tests:
+    name: "Run test-suite (Suite: ${{ matrix.label }}, OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }})"
+    needs: [define-matrix, build]
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.define-matrix.outputs.test_include) }}
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+        with:
+          cmake-version: "${{ matrix.cmake_version }}"
+          install-clang: "false"
+
+      - name: Name build artifact
+        id: name_build
+        # See comment for the same step above.
+        run: |
+          echo build_name="build-os-${{ matrix.os }}${{ matrix.container && '-container' || '' }}-cmake-${{ matrix.cmake_version }}" >> "$GITHUB_OUTPUT"
+
+      - name: Download build
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ steps.name_build.outputs.build_name }}
+          path: built_c_emulator
+
+      - name: Make downloaded simulator executable
+        # This is a workaround for a still-open Github bug from 2019
+        # https://github.com/actions/download-artifact/issues/14
+        # where permissions are lost by downloaded artifacts.
+        # Sanity check that the simulator can execute on this platform.
+        run: |
+          chmod +rx ./built_c_emulator/sail_riscv_sim
+          ./built_c_emulator/sail_riscv_sim --help
+
+      - name: Get tests version
+        run: |
+          SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)
+          echo "SAIL_RISCV_TESTS_VERSION=$SAIL_RISCV_TESTS_VERSION" >> $GITHUB_ENV
+
+      - name: Restore cached tests
+        uses: actions/cache/restore@v6
+        id: sail-riscv-tests-cache-restore
+        # On the master branch, we could set `fail-on-cache-miss:` to
+        # 'true', but while the PR with this workflow is not merged
+        # into master, the cache won't get created, so don't set it.
+        # Similarly, the same issue will arise for the PR that updates
+        # the version of the tests.
+        with:
+          path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
+          key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
+
+      - name: Configure ${{ matrix.label }} suite
+        # Specify the pre-built simulator for the tests.  This only
+        # sets up the tests; the simulator is not actually built, so
+        # only the minimal required flags are specified.
+        run: |
+          cmake -S . -B build -GNinja \
+            -DSAIL_RISCV_SIM=built_c_emulator/sail_riscv_sim \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DENABLE_RISCV_TESTS=TRUE \
+            -DENABLE_RISCV_ARCH_TESTS=TRUE \
+            -DENABLE_DAMO_TESTS=TRUE \
+            -DENABLE_RISCV_VECTOR_TESTS_V64_E64=TRUE \
+            -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
+
+      - name: Run ${{ matrix.label }} suite
+        run: |
+          ctest --test-dir build -L ${{ matrix.label }} --output-on-failure
 
   linux:
     name: "Linux boot"
@@ -204,7 +307,7 @@ jobs:
   # always run and then checks the results of all of the jobs it depends on.
   ci_pass:
     runs-on: ubuntu-latest
-    needs: [build, linux, xvisor]
+    needs: [define-matrix, build, run_tests, linux, xvisor]
     if: "${{ always() }}"
     steps:
       - name: exit failure
