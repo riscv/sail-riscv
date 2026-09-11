@@ -21,11 +21,6 @@ mapping clause encdec = HLVTYPE(width, HLVX, true, rs1, rd)
   <-> 0b0110 @ width_enc(width) @ 0b000011 @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b1110011
   when currentlyEnabled(Ext_H) & (width == 2 | width == 4)
 
-// HLV.*/HSV perform an explicit access with effective privilege VS
-// (`hstatus.SPVP=1`) or VU (`SPVP=0`).  HLVX.* are exempt (HLVX
-// emulates an implicit fetch, and the PMM fields only cover
-// HLV.*/HSV.*): `is_pmm_applicable` excludes their `LoadExecute`
-// access type.
 function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   if inVirtualPrivilege()
   then return Virtual_Instruction()
@@ -45,6 +40,11 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   };
   assert(width <= xlen_bytes);
 
+  // HLV.*/HSV perform an explicit access with effective privilege VS
+  // (`hstatus.SPVP=1`) or VU (`SPVP=0`).  HLVX.* are exempt (HLVX
+  // emulates an implicit fetch, and the PMM fields only cover
+  // HLV.*/HSV.*): `is_pmm_applicable` excludes their `LoadExecute`
+  // access type.
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
   let access_info : AccessInfo = struct {
     eff_privilege = eff_priv,
@@ -52,37 +52,12 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
     as_guest = true,
   };
 
-  match ext_data_get_addr(rs1, zeros(), access, width) {
-    Ext_DataAddr_Error(e)  => { Ext_DataAddr_Check_Failure(e) },
-    Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_effective_address(vaddr, access_info);
-      // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
-      // one that crosses a page boundary should be split and translated per
-      // page, the way vmem_read_addr and vmem_write_addr do. That needs
-      // privilege aware versions of those helpers, see the refactor TODO in
-      // model/sys/mem.sail.
-      if not(is_aligned_addr(vaddr, width)) then {
-        match plat_misaligned_exception(access, false) {
-          Some(AccessFault)        => return memory_exception(E_Load_Access_Fault(), bits_of(vaddr), access_info),
-          Some(AlignmentException) => return memory_exception(E_Load_Addr_Align(), bits_of(vaddr), access_info),
-          None()                   => (),
-        };
-      };
-      match translateAddr(vaddr, access, eff_priv) {
-        // No fetch->load exception conversion is needed: LoadExecute already raises load
-        // (not fetch) exceptions on translation failure (see model/sys/vmem_ptw.sail),
-        // matching the spec's "[HLVX] still raise the same exceptions as other load
-        // instructions, rather than raising fetch exceptions instead."
-        Err(e, _) => trap(e),
-        Ok(paddr, pbmt,_) => match mem_read(access, pbmt, eff_priv, paddr, width, false, false, false) {
-          Ok(result) => { X(rd) = extend_value(is_unsigned, result); RETIRE_SUCCESS },
-          Err(exc_addr, e) => {
-            assert(exc_addr == paddr);
-            return memory_exception(e, bits_of(vaddr), access_info)
-          }
-        },
-      };
-    }
+  match vmem_read_explicit(rs1, zeros(), width, access, access_info, false, false, false) {
+    Ok(data) => {
+      X(rd) = extend_value(is_unsigned, data);
+      RETIRE_SUCCESS
+    },
+    Err(e) => e,
   }
 }
 
@@ -95,8 +70,6 @@ mapping clause encdec = HSV(width, rs1, rs2)
   <-> 0b0110 @ width_enc(width) @ 0b1 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ 0b00000 @ 0b1110011
   when currentlyEnabled(Ext_H) & width <= xlen_bytes
 
-// HSV performs an explicit VS/VU access and is always subject to pointer masking
-// (see the HLV note above for the PMM-source rules).
 function clause execute(HSV(width, rs1, rs2)) = {
   if inVirtualPrivilege()
   then return Virtual_Instruction()
@@ -105,6 +78,8 @@ function clause execute(HSV(width, rs1, rs2)) = {
 
   assert(width <= xlen_bytes);
 
+  // HSV performs an explicit VS/VU access and is always subject to pointer masking
+  // (see the HLV note above for the PMM-source rules).
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
   let access = Store(Data);
   let access_info : AccessInfo = struct {
@@ -113,44 +88,11 @@ function clause execute(HSV(width, rs1, rs2)) = {
     as_guest = true,
   };
 
-  match ext_data_get_addr(rs1, zeros(), access, width) {
-    Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
-      let vaddr = transform_effective_address(vaddr, access_info);
-      // TODO: HLV and HSV emulate ordinary VS-mode accesses, so a misaligned
-      // one that crosses a page boundary should be split and translated per
-      // page, the way vmem_read_addr and vmem_write_addr do. That needs
-      // privilege aware versions of those helpers, see the refactor TODO in
-      // model/sys/mem.sail.
-      if not(is_aligned_addr(vaddr, width)) then {
-        match plat_misaligned_exception(access, false) {
-          Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access_info),
-          Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access_info),
-          None()                   => (),
-        };
-      };
-      match translateAddr(vaddr, access, eff_priv) {
-        Err(e, _) => trap(e),
-        Ok(paddr, pbmt, _) => {
-          match mem_write_ea(paddr, width, eff_priv, access, pbmt, false, false, false) {
-            Err(exc_paddr, e) => {
-              let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-              return memory_exception(e, bits_of(exc_vaddr), access_info)
-            },
-            Ok(_) => {
-              match mem_write_value(paddr, width, X(rs2)[8 * width - 1 .. 0], eff_priv, access, pbmt, false, false, false) {
-                Ok(true)  => RETIRE_SUCCESS,
-                Ok(false) => internal_error(__FILE__, __LINE__, "HSV got false from mem_write_value"),
-                Err(exc_paddr, e) => {
-                  let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-                  return memory_exception(e, bits_of(exc_vaddr), access_info)
-                }
-              }
-            }
-          }
-        },
-      }
-    }
+  let data = X(rs2)[8 * width - 1 .. 0];
+  match vmem_write_explicit(rs1, zeros(), width, data, access, access_info, false, false, false) {
+    Ok(true)  => RETIRE_SUCCESS,
+    Ok(false) => internal_error(__FILE__, __LINE__, "HSV got false from vmem_write_explicit"),
+    Err(e)    => e,
   }
 }
 
