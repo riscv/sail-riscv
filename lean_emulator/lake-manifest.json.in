@@ -28,10 +28,10 @@
       "type": "git",
       "subDir": null,
       "scope": "",
-      "rev": "79b4d08505af29d88b3918f32d29840fae1fa191",
+      "rev": "079463134b9c50450b8393e1566a09fc492a34d9",
       "name": "Sail",
       "manifestFile": "lake-manifest.json",
-      "inputRev": "v4",
+      "inputRev": "v5",
       "inherited": true,
       "configFile": "lakefile.toml"
     },
