@@ -203,6 +203,30 @@
       "fs_legal_states": "ExtContext_FourState",
       "vs_legal_states": "ExtContext_FourState"
     },
+    "envcfg": {
+      // The `CBIE` field of `menvcfg`, `senvcfg` and `henvcfg` is WARL, and
+      // an implementation does not have to support every legal encoding.
+      // Each option below specifies the encodings supported by the
+      // corresponding CSR; 0b00 is always supported.  The values can be
+      // one of:
+      // - "CBIE_AllowFlushAndInval" allows 0b00, 0b01 (exec.flush) and
+      //   0b11 (exec.inval).
+      // - "CBIE_AllowFlush" allows 0b00 and 0b01 (exec.flush).
+      // - "CBIE_AllowInval" allows 0b00 and 0b11 (exec.inval).
+      // - "CBIE_None" allows only 0b00, i.e. `CBO.INVAL` raises an
+      //   illegal-instruction exception.
+      // Writes of unsupported encodings leave the field unchanged.  The
+      // reserved encoding 0b10 is controlled by
+      // `base.reserved_behavior.xenvcfg_cbie`.
+      // `senvcfg_cbie_legal` must be a subset of `menvcfg_cbie_legal`, and,
+      // when the H extension is supported, so must `henvcfg_cbie_legal` and
+      // the subset relation between `senvcfg_cbie_legal` and
+      // `henvcfg_cbie_legal` must hold.  `validate_config()` reports a
+      // configuration that violates these constraints.
+      "menvcfg_cbie_legal": "CBIE_AllowFlushAndInval",
+      "senvcfg_cbie_legal": "CBIE_AllowFlushAndInval",
+      "henvcfg_cbie_legal": "CBIE_AllowFlushAndInval"
+    },
     // Set the version of the privileged ISA. `"Privileged_ISA_1_13"`
     // is the latest that the Sail model supports.  The other
     // supported value for this field is:

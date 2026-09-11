@@ -99,6 +99,20 @@ enum ExtContextPolicy = {
 let plat_mstatus_legal_fs : ExtContextPolicy = config base.mstatus.fs_legal_states
 let plat_mstatus_legal_vs : ExtContextPolicy = config base.mstatus.vs_legal_states
 
+// Legal values for the WARL `CBIE` field of `menvcfg`, `senvcfg` and
+// `henvcfg`.  This is an enumeration to avoid lists: 0b00 is always legal,
+// and each case states which of the other encodings are also supported.
+enum AllowedCBIE = {
+  CBIE_None,               // Only 0b00, i.e. `CBO.INVAL` raises an illegal-instruction exception.
+  CBIE_AllowFlush,         // 0b00 and 0b01, i.e. `CBO.INVAL` can perform exec.flush.
+  CBIE_AllowInval,         // 0b00 and 0b11, i.e. `CBO.INVAL` can perform exec.inval.
+  CBIE_AllowFlushAndInval, // 0b00, 0b01 and 0b11, i.e. `CBO.INVAL` can perform either.
+}
+
+let menvcfg_cbie_legal : AllowedCBIE = config base.envcfg.menvcfg_cbie_legal
+let senvcfg_cbie_legal : AllowedCBIE = config base.envcfg.senvcfg_cbie_legal
+let henvcfg_cbie_legal : AllowedCBIE = config base.envcfg.henvcfg_cbie_legal
+
 // Location of clock-interface, which should match with the spec in the DTB
 let plat_have_clint : bool = config platform.clint.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)
