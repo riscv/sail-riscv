@@ -81,7 +81,13 @@ InitResult init_model(
   uint64_t &entry
 );
 
-uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file, elf_info &elf_info);
+uint64_t load_sail(
+  const CLIOptions &opts,
+  ModelImpl &model,
+  const std::string &filename,
+  bool main_file,
+  elf_info &elf_info
+);
 
 void run_sail(
   ModelImpl &model,

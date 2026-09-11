@@ -26,6 +26,7 @@ struct CLIOptions {
   std::string term_log = {};
   std::string trace_log_path = {};
   std::string dtb_file;
+  std::string initramfs_file;
   unsigned rvfi_dii_port = 0;
   unsigned gdb_server_port = 0;
   std::vector<std::string> elfs;
