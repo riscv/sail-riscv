@@ -27,7 +27,7 @@ private function rvfi_fetch() -> FetchResult = {
 
   match translateAddr(Virtaddr(PC), access, eff_priv) {
     Err(e, _)   => return F_Error(e),
-    Ok(_, _, _) => (),
+    Ok(paddr, _, _) => vmem_access_callback(zero_extend(PC), bits_of(paddr), true, false, 2),
   };
 
   let i = rvfi_instruction[rvfi_insn];
@@ -44,6 +44,9 @@ private function rvfi_fetch() -> FetchResult = {
 
   match translateAddr(Virtaddr(PC_hi), access, eff_priv) {
     Err(e, _)   => F_Error({ e with excinfo = PC }),
-    Ok(_, _, _) => F_Base(i)
+    Ok(paddr, _, _) => {
+      vmem_access_callback(zero_extend(PC_hi), bits_of(paddr), true, false, 2);
+      F_Base(i)
+    }
   }
 }

@@ -115,6 +115,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       Ok(loaded) => loaded,
     },
   };
+  vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(addr), false, false, width);
 
   // Sequence the read of `rs2` after the call to `mem_write_ea` with the effective address.
   // See https://github.com/riscv/sail-riscv/issues/1761.
@@ -145,18 +146,21 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     then X(rd) = sign_extend(loaded)
     else X_pair(rd) = sign_extend(loaded);
     RETIRE_SUCCESS
-  } else match mem_write_value(addr, width, sign_extend(result), eff_priv, access, pbmt, aq & rl, rl, true) {
-    Ok(true)  => {
-      if width <= xlen_bytes
-      then X(rd) = sign_extend(loaded)
-      else X_pair(rd) = sign_extend(loaded);
-      RETIRE_SUCCESS
-    },
-    Ok(false) => internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value"),
-    Err(exc_addr, e) => {
-      // AMOs should not get split.
-      assert(exc_addr == addr);
-      memory_exception(e, bits_of(vaddr), access_info)
+  } else {
+    vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(addr), false, true, width);
+    match mem_write_value(addr, width, sign_extend(result), eff_priv, access, pbmt, aq & rl, rl, true) {
+      Ok(true)  => {
+        if width <= xlen_bytes
+        then X(rd) = sign_extend(loaded)
+        else X_pair(rd) = sign_extend(loaded);
+        RETIRE_SUCCESS
+      },
+      Ok(false) => internal_error(__FILE__, __LINE__, "AMO got false from mem_write_value"),
+      Err(exc_addr, e) => {
+        // AMOs should not get split.
+        assert(exc_addr == addr);
+        memory_exception(e, bits_of(vaddr), access_info)
+      },
     }
   }
 }

@@ -7,6 +7,7 @@
 #include "jsoncons/config/version.hpp"
 #include "jsoncons/json.hpp"
 #include "riscv_callbacks_rvfi.h"
+#include "riscv_callbacks_rvvi_text.h"
 #include "riscv_callbacks_stop_at_pc.h"
 #include "riscv_model_impl.h"
 #ifdef SAILCOV
@@ -714,6 +715,19 @@ InitResult init_model(
       return InitResult::ExitFailure;
     }
     model.register_callback(std::make_shared<rvfi_callbacks>());
+  }
+
+  if (opts.config_print_rvvi_text) {
+    // Fall back to stdout if no trace-output file was specified.
+    FILE *rvvi_log = run_info.trace_log != stdout ? run_info.trace_log : stdout;
+    model.register_callback(
+      std::make_shared<rvvi_text_callbacks>(
+        rvvi_log,
+        static_cast<uint64_t>(model.xlen()),
+        static_cast<uint64_t>(model.flen()),
+        static_cast<uint64_t>(model.vlen())
+      )
+    );
   }
 
   if (!opts.dtb_file.empty()) {
