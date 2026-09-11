@@ -83,3 +83,6 @@ $ sail_riscv_sim --print-device-tree --initramfs rootfs.cpio fw_payload.elf | dt
 ```bash
 $ sail_riscv_sim --initramfs rootfs.cpio --device-tree-blob sail_boot.dtb fw_payload.elf
 ```
+
+Booting with device tree blobs and `initramfs` images that do not
+follow this two-step process is not supported.
