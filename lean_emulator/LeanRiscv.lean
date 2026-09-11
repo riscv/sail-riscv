@@ -8,6 +8,7 @@ import Sail.Sail
 open LeanRV64DExecutable
 
 open Register
+open Sail.ArchSem
 
 def readElf (elfFilepath : System.FilePath) : IO (Except String RawELFFile) := do
   let bytes <- IO.FS.readBinFile elfFilepath
@@ -276,12 +277,13 @@ def runElf64 (elf : ELF64File) : IO UInt32 :=
   do
     let mem := initializeMemory MachineBits.B64 elf
     let regs := Std.ExtDHashMap.emptyWithCapacity
-    let initialState := ⟨regs, (), mem, default, default, default⟩
+    let initialState : SequentialState _ := ⟨regs, mem, (), 0, #[]⟩
     let main := do
       sail_model_init ()
       initializeRegisters elf
       my_main elf
-    match main.run initialState with
+    let result := (interpretSailEffects main).run initialState
+    match result with
     | .ok res s => do
       for m in s.sailOutput do
         IO.print m

@@ -11,9 +11,9 @@ open import Pervasives_extra
 open import Sail2_instr_kinds
 open import Sail2_values
 open import Sail2_operators_bitlists
-open import Sail2_concurrency_interface
-open import Sail2_monadic_combinators
-open import Sail2_undefined_concurrency_interface
+open import Sail2_concurrency_interface_v2
+open import Sail2_monadic_combinators_v2
+open import Sail2_undefined_concurrency_interface_v2
 
 type bitvector = list Sail2_values.bitU
 

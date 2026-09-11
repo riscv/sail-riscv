@@ -10,7 +10,7 @@ import Sail.Sail
 import THE_MODULE_NAME.Defs
 
 open Sail
-open ConcurrencyInterfaceV1
+open Sail.ArchSem
 open THE_MODULE_NAME
 
 def print_bits (_ : String) (_ : BitVec n) : Unit := ()
@@ -32,8 +32,8 @@ axiom plat_term_write {α} : α → SailM Unit
 axiom plat_term_read : Unit → SailM String
 
 -- Reservations
-axiom load_reservation : Arch.pa → Nat → SailM Unit
-axiom match_reservation : Arch.pa → Bool
+axiom load_reservation : BitVec Arch.addr_size → Nat → SailM Unit
+axiom match_reservation : BitVec Arch.addr_size → Bool
 axiom cancel_reservation : Unit → SailM Unit
 axiom valid_reservation : Unit → Bool
 
