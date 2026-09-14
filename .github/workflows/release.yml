@@ -51,7 +51,6 @@ jobs:
     container: ${{ matrix.container }}
 
     env:
-      SAIL_VERSION: "0.20.2"
       # This helps with reproducible builds by not embedding variable timestamps in files.
       # This is needed in particular for the Debian package's compressed changelog.
       # See the comments in `cmake/packaging.cmake`.
@@ -68,10 +67,15 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v7
 
+      - name: Get Sail version
+        run: |
+          echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
         with:
           cmake-version: "3.20.0"
+          sail-version: "${{ env.SAIL_VERSION }}"
 
       - name: Build simulator
         run: |

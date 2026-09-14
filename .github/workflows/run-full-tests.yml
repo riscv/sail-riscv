@@ -38,14 +38,22 @@ jobs:
         with:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
+
+      - name: Get Sail version
+        run: |
+          echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
         with:
           install-clang: "true"
+          sail-version: "${{ env.SAIL_VERSION }}"
+
       - name: Build simulator
         run: |
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_${{ matrix.TEST_SUITE }}=TRUE -DENABLE_LTO=TRUE
           ninja -C build all
+
       - name: Run tests
         run: |
           ctest --test-dir build --output-on-failure

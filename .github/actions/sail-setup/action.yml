@@ -7,13 +7,13 @@ inputs:
     default: "4.1.2"
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
-    required: false
-    default: "0.20.2"
+    required: true
   install-clang:
     description: "Install latest Clang"
     required: false
     default: "false"
 
+# The 'default' Sail version below is the one specified in `cmake/sail_required_version.txt`.
 # This is the current CI Platform/Target support matrix:
 #
 #                          | RISC-V Model                 |sail-riscv-tests|first-party-tests|   Rocq    |    Lean        | Linux boot

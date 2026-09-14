@@ -46,20 +46,21 @@ jobs:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
 
+      - name: Get versions
+        run: |
+          echo "SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)" >> $GITHUB_ENV
+          echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
         with:
           cmake-version: "${{ matrix.cmake_version }}"
           install-clang: "true"
+          sail-version: "${{ env.SAIL_VERSION }}"
 
       - name: Ensure pre-commit checks pass
         if: ${{ matrix.run_all_steps }}
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
-
-      - name: Get tests version
-        run: |
-          SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)
-          echo "SAIL_RISCV_TESTS_VERSION=$SAIL_RISCV_TESTS_VERSION" >> $GITHUB_ENV
 
       - name: Restore cached tests
         uses: actions/cache/restore@v6
@@ -148,11 +149,16 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v7
 
+      - name: Get Sail version
+        run: |
+          echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
         with:
           cmake-version: "${{ matrix.cmake_version }}"
           install-clang: "false"
+          sail-version: "${{ env.SAIL_VERSION }}"
 
       - name: Name build artifact
         id: name_build
@@ -220,8 +226,14 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v7
 
+      - name: Get Sail version
+        run: |
+          echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
+        with:
+          sail-version: "${{ env.SAIL_VERSION }}"
 
       - name: Build simulator
         run: |
@@ -265,8 +277,14 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v7
 
+      - name: Get Sail version
+        run: |
+          echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
+        with:
+          sail-version: "${{ env.SAIL_VERSION }}"
 
       - name: Build simulator
         run: |

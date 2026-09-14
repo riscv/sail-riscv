@@ -4,6 +4,9 @@
   - Whether the `mcountinhibit` CSR is supported, and if so, which
     bits are writable, can now be specified; see `base.mcountinhibit`.
 
+- Other notes:
+  - The model now requires the Sail 0.20.3 compiler version.
+
 # Release notes for version 0.14.1
 
 This is primarily a bug-fix release with fixes for the issues listed
