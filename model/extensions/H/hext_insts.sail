@@ -41,10 +41,11 @@ function clause execute HLVTYPE(width, op, is_unsigned, rs1, rd) = {
   assert(width <= xlen_bytes);
 
   // HLV.*/HSV perform an explicit access with effective privilege VS
-  // (`hstatus.SPVP=1`) or VU (`SPVP=0`).  HLVX.* are exempt (HLVX
-  // emulates an implicit fetch, and the PMM fields only cover
-  // HLV.*/HSV.*): `is_pmm_applicable` excludes their `LoadExecute`
-  // access type.
+  // (`hstatus.SPVP=1`) or VU (`SPVP=0`) so their effective address is
+  // subject to pointer masking via `transform_effective_address()`.
+  // HLVX.* are exempt from pointer masking (HLVX emulates an implicit
+  // fetch, and the PMM fields only cover HLV.*/HSV.*):
+  // `is_pmm_applicable` excludes their `LoadExecute` access type.
   let eff_priv : Privilege = privLevel_bits(zero_extend(hstatus[SPVP]), 0b1);
   let access_info : AccessInfo = struct {
     eff_privilege = eff_priv,
