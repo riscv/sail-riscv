@@ -177,6 +177,75 @@ void write_dtb_to_rom(ModelImpl &model, const std::string &filename, elf_info &e
   elf_info.loaded_regions.emplace_back(filename, dtb_addr, size);
 }
 
+// Returns the starting address in the region.
+uint64_t locate_initramfs_in_region(const MemoryRegion &reg, uint64_t ramfs_size) {
+  assert(reg.size >= ramfs_size);
+  // Compute a placement at the top of the range, leaving a page of
+  // space after. It seems most loaders (e.g. u-boot) using the
+  // initramfs keep some space after.  Spike keeps one 4K page
+  // after, so do the same.
+  uint64_t ramfs_end = reg.base + reg.size - 0x1000U;
+  return ramfs_end - ramfs_size;
+}
+
+bool load_initramfs(
+  ModelImpl &model,
+  const elf_info &elf_info,
+  std::string initramfs_file,
+  const std::vector<uint8_t> initramfs,
+  bool log_locations
+) {
+  uint64_t ramfs_size = static_cast<uint64_t>(initramfs.size());
+
+  // This just finds the first main memory region where it can fit,
+  // locates it at the top of the range, and checks for conflicts with
+  // other loaded files.
+  auto regions = model.main_memory_regions();
+  const auto &reg_ptr = std::find_if(regions.begin(), regions.end(), [ramfs_size, &elf_info](const auto &reg) {
+    // The region should accommodate the initramfs with padding.
+    if (reg.size < ramfs_size + 0x1000U) {
+      return false;
+    }
+
+    auto ramfs_start = locate_initramfs_in_region(reg, ramfs_size);
+
+    // Check for conflicts with already loaded files.
+    const auto &conflict_reg = std::find_if(
+      elf_info.loaded_regions.begin(),
+      elf_info.loaded_regions.end(),
+      [ramfs_start, ramfs_size](const auto &ent) {
+        return ramfs_start + ramfs_size > ent.offset && ent.offset + ent.length > ramfs_start;
+      }
+    );
+
+    // This region is okay if there is no conflict.
+    return conflict_reg == elf_info.loaded_regions.end();
+  });
+
+  if (reg_ptr == regions.end()) {
+    fprintf(stderr, "Could not find a suitable location in memory for initramfs from %s.\n", initramfs_file.c_str());
+    return false;
+  }
+
+  auto ramfs_start = locate_initramfs_in_region(*reg_ptr, ramfs_size);
+  auto addr = ramfs_start;
+  for (uint8_t d : initramfs) {
+    write_mem(addr++, d);
+  }
+
+  model.set_initramfs_location(ramfs_start, ramfs_size);
+  if (log_locations) {
+    fprintf(
+      stdout,
+      "Placed initramfs of size 0x%0" PRIx64 " at 0x%0" PRIx64 " (extending to 0x%0" PRIx64 ")\n",
+      ramfs_size,
+      ramfs_start,
+      ramfs_start + ramfs_size
+    );
+  }
+  return true;
+}
+
 void write_signature(const std::string &file, unsigned signature_granularity, const elf_info &elf_info) {
   if (elf_info.mem_sig_start >= elf_info.mem_sig_end) {
     fprintf(
@@ -265,7 +334,13 @@ std::string describe_config(const CLIOptions &opts) {
 
 } // namespace
 
-uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file, elf_info &elf_info) {
+uint64_t load_sail(
+  const CLIOptions &opts,
+  ModelImpl &model,
+  const std::string &filename,
+  bool main_file,
+  elf_info &elf_info
+) {
   ELF elf = ELF::open(filename);
 
   switch (elf.architecture()) {
@@ -339,24 +414,33 @@ uint64_t load_sail(ModelImpl &model, const std::string &filename, bool main_file
 
   if (main_file) {
     // Only scan for test-signature/htif symbols in the main ELF file.
+    // This code might be called when generating device-tree, so do not log in that case.
 
     const auto &tohost = symbols.find("tohost");
     if (tohost == symbols.end()) {
-      fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
+      if (!opts.do_print_dts) {
+        fprintf(stderr, "Unable to locate tohost symbol; disabling HTIF.\n");
+      }
       elf_info.htif_tohost_address = std::nullopt;
     } else {
       elf_info.htif_tohost_address = tohost->second;
-      fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", *elf_info.htif_tohost_address);
+      if (!opts.do_print_dts) {
+        fprintf(stdout, "HTIF located at 0x%0" PRIx64 "\n", *elf_info.htif_tohost_address);
+      }
     }
     // Locate test-signature locations if any.
     const auto &begin_sig = symbols.find("begin_signature");
     if (begin_sig != symbols.end()) {
-      fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig->second);
+      if (!opts.do_print_dts) {
+        fprintf(stdout, "begin_signature: 0x%0" PRIx64 "\n", begin_sig->second);
+      }
       elf_info.mem_sig_start = begin_sig->second;
     }
     const auto &end_sig = symbols.find("end_signature");
     if (end_sig != symbols.end()) {
-      fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig->second);
+      if (!opts.do_print_dts) {
+        fprintf(stdout, "end_signature: 0x%0" PRIx64 "\n", end_sig->second);
+      }
       elf_info.mem_sig_end = end_sig->second;
     }
   }
@@ -673,8 +757,9 @@ InitResult preinit_model(
   }
 
   // Print a device tree or an ISA string only after the configuration
-  // is validated above.
-  if (opts.do_print_dts) {
+  // is validated above.  If there is an initramfs present, do it later
+  // once it has a memory location.
+  if (opts.do_print_dts && opts.initramfs_file.empty()) {
     fprintf(stdout, "%s", model.generate_dts().c_str());
     return InitResult::ExitSuccess;
   }
@@ -687,7 +772,8 @@ InitResult preinit_model(
     return InitResult::ExitSuccess;
   }
 
-  // If we get here, we need to have ELF files to run (except in RVFI mode).
+  // If we get here, we need to have ELF files to run (except in RVFI mode),
+  // or to place in memory for generating a device-tree with an initramfs.
   if (opts.elfs.empty() && !run_info.rvfi.has_value()) {
     fprintf(stderr, "No elf file provided.\n");
     return InitResult::ExitFailure;
@@ -722,15 +808,33 @@ InitResult init_model(
   }
 
   entry = run_info.rvfi.has_value() ? rvfi_handler::get_entry()
-                                    : load_sail(model, opts.elfs[0], /*main_file=*/true, elf_info);
+                                    : load_sail(opts, model, opts.elfs[0], /*main_file=*/true, elf_info);
 
-  fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
+  // Do not log if we are generating a device tree.
+  if (!opts.do_print_dts) {
+    fprintf(stdout, "Entry point: 0x%" PRIx64 "\n", entry);
+  }
 
   // Load any additional ELF files into memory. If RVFI was NOT used skip
   // the first one because it was loaded above.
   for (auto it = opts.elfs.cbegin() + (run_info.rvfi.has_value() ? 0 : 1); it != opts.elfs.cend(); it++) {
-    fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
-    (void)load_sail(model, *it, /*main_file=*/false, elf_info);
+    if (!opts.do_print_dts) {
+      fprintf(stdout, "Loading additional ELF file %s.\n", it->c_str());
+    }
+    (void)load_sail(opts, model, *it, /*main_file=*/false, elf_info);
+  }
+
+  // Load the initramfs if specified after all the ELFs are loaded.
+  if (!opts.initramfs_file.empty()) {
+    if (!load_initramfs(model, elf_info, opts.initramfs_file, read_file(opts.initramfs_file), !opts.do_print_dts)) {
+      return InitResult::ExitFailure;
+    }
+
+    // We can now print out a device-tree with the initramfs if requested.
+    if (opts.do_print_dts) {
+      fprintf(stdout, "%s", model.generate_dts().c_str());
+      return InitResult::ExitSuccess;
+    }
   }
 
   model.set_elf_symbols(std::move(elf_info.symbols));

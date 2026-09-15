@@ -54,6 +54,7 @@ public:
   void set_config_rvfi(bool on);
   void set_config_use_abi_names(bool on);
 
+  void set_initramfs_location(uint64_t ramfs_start, uint64_t ramfs_size);
   void set_elf_symbols(std::map<uint64_t, std::string> symbols);
   void set_term_fd(int fd);
   void set_trace_log(FILE *log);
@@ -181,6 +182,9 @@ private:
   bool get_config_rvfi(unit) override;
   bool get_config_use_abi_names(unit) override;
 
+  mach_bits get_initramfs_base(unit) override;
+  mach_bits get_initramfs_size(unit) override;
+
   bool m_config_print_instr = false;
   bool m_config_print_clint = false;
   bool m_config_print_exception = false;
@@ -197,8 +201,9 @@ private:
 
   // Initialization.
   uint64_t m_elf_entry = 0;
-  std::string m_config_file = {};
-  std::optional<uint64_t> m_htif_tohost_address = {};
+  std::string m_config_file;
+  std::optional<uint64_t> m_htif_tohost_address;
+  std::optional<MemoryRegion> m_initramfs_region;
 
   std::map<uint64_t, std::string> m_symbols;
   int m_term_fd = 1;
