@@ -1,6 +1,86 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:best-practices"],
+  "timezone": "America/Los_Angeles",
+  "labels": ["dependencies"],
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 10,
+  "rebaseWhen": "conflicted",
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": ["dependencies", "security"],
+    "minimumReleaseAge": "4 hours"
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "customManagers": [
+    {
+      "description": "Default CMake version in CI setup action",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github\\/actions\\/sail-setup\\/action\\.yml$/"
+      ],
+      "matchStrings": [
+        "CMAKE_DEFAULT_VERSION: \\\"(?<currentValue>[\\d.]+)\\\""
+      ],
+      "depNameTemplate": "Kitware/CMake",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "description": "CLI11 version in CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^dependencies\\/CLI11\\/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "releases/download/v(?<currentValue>[\\d.]+)/CLI11\\.hpp"
+      ],
+      "depNameTemplate": "CLIUtils/CLI11",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "description": "Asio version in CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^dependencies\\/asio\\/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "downloads\\.sourceforge\\.net/project/asio/asio/(?<currentValue>[\\d.]+)%20%28Stable%29/asio-[\\d.]+\\.tar\\.bz2"
+      ],
+      "depNameTemplate": "chriskohlhoff/asio",
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^asio-(?<version>.*)$",
+      "versioningTemplate": "semver-coerced",
+      "autoReplaceStringTemplate": "downloads.sourceforge.net/project/asio/asio/{{{replace '-' '.' newValue}}}%20%28Stable%29/asio-{{{replace '-' '.' newValue}}}.tar.bz2"
+    },
+    {
+      "description": "jsoncons version in CMake FetchContent",
+      "customType": "regex",
+      "managerFilePatterns": ["/^dependencies\\/jsoncons\\/CMakeLists\\.txt$/"],
+      "matchStrings": [
+        "archive/refs/tags/v(?<currentValue>[\\d.]+)\\.tar\\.gz"
+      ],
+      "depNameTemplate": "danielaparker/jsoncons",
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Group all GitHub Actions updates into one PR",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions"
+    },
+    {
+      "description": "Group pre-commit hook updates into one PR",
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit hooks",
+      "schedule": ["before 6am on monday"]
+    }
   ]
 }
