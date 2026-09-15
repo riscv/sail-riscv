@@ -3,6 +3,7 @@
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1943 : `mstatus.SPELP` should be read-only zero when Supervisor mode is not implemented
   - https://github.com/riscv/sail-riscv/issues/1938 : `scause`/`vscause` rejected Exception Codes in 0-31 that the spec requires them to hold, such as hypervisor codes when `H` is not implemented
+  - https://github.com/riscv/sail-riscv/issues/1913 : `hlv*` and `hsv*` did not correctly handle page-straddling misaligned accesses
 
 # Release notes for version 0.14
 
