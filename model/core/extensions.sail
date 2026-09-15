@@ -105,6 +105,12 @@ enum clause extension = Ext_Shvstvecd
 mapping clause extensionName = Ext_Shvstvecd <-> "shvstvecd"
 function clause hartSupports(Ext_Shvstvecd) = config extensions.Shvstvecd.supported
 function clause currentlyEnabled(Ext_Shvstvecd) = hartSupports(Ext_Shvstvecd) & currentlyEnabled(Ext_H)
+// Packed-SIMD / DSP (P). Experimental: gated by the experimental-extensions
+// flag as well as its config knob, matching the other unratified extensions.
+enum clause extension = Ext_P
+mapping clause extensionName = Ext_P <-> "p"
+function clause hartSupports(Ext_P) = sys_enable_experimental_extensions() & config extensions.P.supported
+// currentlyEnabled(Ext_P) is defined in extensions/P/pext_regs.sail (it depends on misa).
 
 enum clause extension = Ext_Zibi
 mapping clause extensionName = Ext_Zibi <-> "zibi"
@@ -756,7 +762,7 @@ let extensions_ordered_for_isa_string = [
   // Ext_Q,
   Ext_C,
   Ext_B,
-  // Ext_P,
+  Ext_P,
   Ext_V,
   Ext_H,
   // S and U are not valid extensions in the device-tree, whereas H is.
