@@ -1,5 +1,15 @@
 # Release notes for the next version
 
+# Release notes for version 0.14.1
+
+This is primarily a bug-fix release with fixes for the issues listed
+below. There are no changes to the configuration file, so the model
+configuration is fully compatible with that of version 0.14.
+
+This release fixes the page-straddling access limitation for
+hypervisor `HLV*`/`HSV*` load/store instructions mentioned in release
+0.14.
+
 - Support for booting Linux with an `initramfs` has been added, see
   `os-boot/README.md`. This allows a boot upto a terminal shell
   prompt.
