@@ -92,10 +92,7 @@ public:
     return m_has_float_registers;
   }
   bool has_vector_registers() const {
-    return m_has_vector_registers;
-  }
-  uint64_t vlen() const {
-    return m_vlen;
+    return zvector_support_level != hart::zDisabled;
   }
 
   // read access to model state
@@ -105,6 +102,7 @@ public:
 
   int64_t xlen() const;
   int64_t flen() const;
+  int64_t vlen() const;
   int64_t physaddrbits_len() const;
   uint64_t mepc() const;
   uint64_t sepc() const;
@@ -212,8 +210,6 @@ private:
   bool m_supports_hypervisor = false;
   bool m_supports_D_extension = false;
   bool m_has_float_registers = false;
-  bool m_has_vector_registers = false;
-  uint64_t m_vlen = 0;
 
   // Initialization.
   uint64_t m_elf_entry = 0;

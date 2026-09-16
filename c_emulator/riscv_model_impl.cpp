@@ -398,13 +398,6 @@ void ModelImpl::init_platform_constants() {
   m_supports_hypervisor = get_config_bool({"extensions", "H", "supported"});
   m_supports_D_extension = get_config_bool({"extensions", "D", "supported"});
   m_has_float_registers = get_config_bool({"extensions", "F", "supported"});
-
-  std::string vector_support = get_config_string({"extensions", "V", "support_level"});
-  m_has_vector_registers = vector_support != "Disabled";
-  if (m_has_vector_registers) {
-    uint64_t vlen_exp = get_config_uint64({"extensions", "V", "vlen_exp"});
-    m_vlen = 0x1U << vlen_exp;
-  }
 }
 
 void ModelImpl::init_sail(
@@ -558,6 +551,12 @@ int64_t ModelImpl::flen() const {
   assert(m_has_float_registers);
 
   return zflen;
+}
+
+int64_t ModelImpl::vlen() const {
+  assert(has_vector_registers());
+
+  return zvlen;
 }
 
 int64_t ModelImpl::physaddrbits_len() const {
