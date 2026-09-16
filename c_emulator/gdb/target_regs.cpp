@@ -61,16 +61,14 @@ std::string get_target_xml(const ModelImpl &model) {
   ++regnum;
   assert(regnum == map.fpr_offset);
 
-  bool have_double = get_config_bool({"extensions", "D", "supported"});
-  bool have_single = get_config_bool({"extensions", "F", "supported"});
-  if (have_single) {
+  if (model.has_float_registers()) {
     // The `org.gnu.gdb.riscv.fpu` feature is optional. If present, it
     // should contain registers `f0` through `f31`, `fflags`, `frm`,
     // and `fcsr`. As with the cpu feature, either the architectural
     // register names, or the ABI names can be used.
     std::string fpu_type;
     xml << R"(<feature name="org.gnu.gdb.riscv.fpu">)" << std::endl;
-    if (have_double) {
+    if (model.supports_D_extension()) {
       assert(model.flen() == 64);
       // The registers can hold both ieee_single and ieee_double.
       xml << R"(  <union id="riscv_double">
@@ -136,8 +134,7 @@ std::string get_general_regs(protocol_handler &proto_handler) {
   }
   append_reg(buf, model.pc(), int_width_bytes);
 
-  bool have_single = get_config_bool({"extensions", "F", "supported"});
-  if (have_single) {
+  if (model.has_float_registers()) {
     int64_t float_width_bytes = model.flen() / 8;
     for (int64_t i = 0; i < 32; ++i) {
       const uint64_t val = model.freg(i);
@@ -157,14 +154,12 @@ std::string get_register(protocol_handler &proto_handler, uint64_t regidx) {
   buf << std::hex << std::setfill('0');
   int64_t int_width_bytes = model.xlen() / 8;
 
-  bool have_single = get_config_bool({"extensions", "F", "supported"});
-
   if (0 <= idx && idx < map.pc_offset) {
     uint64_t val = model.xreg(idx);
     append_reg(buf, val, int_width_bytes);
   } else if (idx == map.pc_offset) {
     append_reg(buf, model.pc(), int_width_bytes);
-  } else if (have_single && map.fpr_offset <= idx && idx <= map.fcsr_offset) {
+  } else if (model.has_float_registers() && map.fpr_offset <= idx && idx <= map.fcsr_offset) {
     if (idx == map.fcsr_offset) {
       append_reg(buf, model.fcsr(), 4);
     } else {
@@ -184,13 +179,11 @@ std::string set_register(protocol_handler &proto_handler, uint64_t regidx, uint6
   const register_map map = proto_handler.get_register_map();
   ModelImpl &model = proto_handler.get_model();
 
-  bool have_single = get_config_bool({"extensions", "F", "supported"});
-
   if (0 <= reg && reg < map.pc_offset) {
     model.set_xreg(reg, val);
   } else if (reg == map.pc_offset) {
     model.set_pc(val);
-  } else if (have_single && map.fpr_offset <= reg && reg <= map.fcsr_offset) {
+  } else if (model.has_float_registers() && map.fpr_offset <= reg && reg <= map.fcsr_offset) {
     if (reg == map.fcsr_offset) {
       model.set_fcsr(val);
     } else {

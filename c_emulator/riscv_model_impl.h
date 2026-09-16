@@ -85,6 +85,18 @@ public:
   bool supports_hypervisor() const {
     return m_supports_hypervisor;
   }
+  bool supports_D_extension() const {
+    return m_supports_D_extension;
+  }
+  bool has_float_registers() const {
+    return m_has_float_registers;
+  }
+  bool has_vector_registers() const {
+    return m_has_vector_registers;
+  }
+  uint64_t vlen() const {
+    return m_vlen;
+  }
 
   // read access to model state
 
@@ -198,6 +210,10 @@ private:
   bool m_config_print_step = false;
 
   bool m_supports_hypervisor = false;
+  bool m_supports_D_extension = false;
+  bool m_has_float_registers = false;
+  bool m_has_vector_registers = false;
+  uint64_t m_vlen = 0;
 
   // Initialization.
   uint64_t m_elf_entry = 0;
