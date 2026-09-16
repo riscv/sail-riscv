@@ -555,6 +555,32 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The F and Zfinx extensions are mutually exclusive and cannot be supported simultaneously.");
   };
+  if not(config extensions.F.supported : bool) then {
+    if (config extensions.Zfa.supported : bool) then {
+      valid = false;
+      print_endline("The Zfa extension is enabled but F is disabled: supporting Zfa requires F.");
+    };
+    if (config extensions.Zfh.supported : bool) then {
+      valid = false;
+      print_endline("The Zfh extension is enabled but F is disabled: supporting Zfh requires F.");
+    };
+    if (config extensions.Zfhmin.supported : bool) then {
+      valid = false;
+      print_endline("The Zfhmin extension is enabled but F is disabled: supporting Zfhmin requires F.");
+    };
+    if (config extensions.Zfbfmin.supported : bool) then {
+      valid = false;
+      print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
+    };
+    if (config extensions.Zcf.supported : bool) then {
+      valid = false;
+      print_endline("The Zcf extension is enabled but F is disabled: supporting Zcf requires F.");
+    };
+    if (config extensions.Zcd.supported : bool) & not(constraint(ext_d_supported)) then {
+      valid = false;
+      print_endline("The Zcd extension is enabled but D is disabled: supporting Zcd requires D.");
+    };
+  };
   // See https://github.com/riscv/sail-riscv/issues/1508 for the next two checks.
   if (config extensions.Zabha.supported : bool) & not((config extensions.Zaamo.supported : bool) | (config extensions.A.supported : bool)) then {
     valid = false;
@@ -588,10 +614,6 @@ private function check_misc_extension_dependencies() -> bool = {
   if (config extensions.Zicfiss.supported : bool) & not((config extensions.Zicsr.supported : bool) & (config extensions.Zimop.supported : bool) & ((config extensions.Zaamo.supported : bool) | (config extensions.A.supported : bool))) then {
     valid = false;
     print_endline("The Zicfiss extension is enabled but one or more of Zicsr, Zimop and (Zaamo or A) are disabled: supporting Zicfiss requires Zicsr, Zimop and (Zaamo or A).");
-  };
-  if (config extensions.Zfbfmin.supported : bool) & not(config extensions.F.supported : bool) then {
-    valid = false;
-    print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
   };
   if (config extensions.Zvfbfmin.supported : bool) & not(hartSupports(Ext_Zve32f)) then {
     valid = false;
