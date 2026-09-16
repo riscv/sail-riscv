@@ -589,6 +589,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zicfiss extension is enabled but one or more of Zicsr, Zimop and (Zaamo or A) are disabled: supporting Zicfiss requires Zicsr, Zimop and (Zaamo or A).");
   };
+  if (config extensions.Ziccid.supported : bool) & not(config extensions.Ziccif.supported : bool) then {
+    valid = false;
+    print_endline("The Ziccid extension is enabled but Ziccif is disabled: supporting Ziccid requires Ziccif.");
+  };
   if (config extensions.Zfbfmin.supported : bool) & not(config extensions.F.supported : bool) then {
     valid = false;
     print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
