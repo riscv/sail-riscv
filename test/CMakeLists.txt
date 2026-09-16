@@ -23,6 +23,43 @@
 # When adding a new test label, also update
 # `.github/scripts/ci-matrix.py:sail_riscv_test_labels()`.
 
+set(default_rv64_config "${CMAKE_BINARY_DIR}/config/rv64d_v256_e64.json")
+
+add_test(
+    NAME ziccid_isa_string
+    COMMAND $<TARGET_FILE:sail_riscv_sim>
+            --config ${default_rv64_config}
+            --print-isa-string
+)
+set_tests_properties(ziccid_isa_string PROPERTIES
+    PASS_REGULAR_EXPRESSION "ziccid"
+    LABELS TestAtBuildTime
+)
+
+add_test(
+    NAME ziccid_disabled_isa_string
+    COMMAND $<TARGET_FILE:sail_riscv_sim>
+            --config ${default_rv64_config}
+            --config-override ${CMAKE_CURRENT_SOURCE_DIR}/ziccid_disabled.json
+            --print-isa-string
+)
+set_tests_properties(ziccid_disabled_isa_string PROPERTIES
+    FAIL_REGULAR_EXPRESSION "ziccid"
+    LABELS TestAtBuildTime
+)
+
+add_test(
+    NAME ziccid_requires_ziccif
+    COMMAND $<TARGET_FILE:sail_riscv_sim>
+            --config ${default_rv64_config}
+            --config-override ${CMAKE_CURRENT_SOURCE_DIR}/ziccid_without_ziccif.json
+            --validate-config
+)
+set_tests_properties(ziccid_requires_ziccif PROPERTIES
+    WILL_FAIL TRUE
+    LABELS TestAtBuildTime
+)
+
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/sail_riscv_tests_version.txt" SAIL_RISCV_TESTS_VERSION)
 string(STRIP "${SAIL_RISCV_TESTS_VERSION}" SAIL_RISCV_TESTS_VERSION)
 # CMake options for test downloads

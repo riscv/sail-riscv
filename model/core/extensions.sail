@@ -301,11 +301,15 @@ function clause hartSupports(Ext_Ziccamoa) = config extensions.Ziccamoa.supporte
 enum clause extension = Ext_Ziccamoc
 mapping clause extensionName= Ext_Ziccamoc <-> "ziccamoc"
 function clause hartSupports(Ext_Ziccamoc) = config extensions.Ziccamoc.supported
+enum clause extension = Ext_Ziccid
+mapping clause extensionName = Ext_Ziccid <-> "ziccid"
+function clause hartSupports(Ext_Ziccid) = config extensions.Ziccid.supported
 // Instruction-Fetch Atomicity
 enum clause extension = Ext_Ziccif
 mapping clause extensionName = Ext_Ziccif <-> "ziccif"
 function clause hartSupports(Ext_Ziccif) = config extensions.Ziccif.supported
 function clause currentlyEnabled(Ext_Ziccif) = hartSupports(Ext_Ziccif)
+function clause currentlyEnabled(Ext_Ziccid) = hartSupports(Ext_Ziccid) & currentlyEnabled(Ext_Ziccif)
 // Main memory misaligned accesses
 enum clause extension = Ext_Zicclsm
 mapping clause extensionName = Ext_Zicclsm <-> "zicclsm"
@@ -702,6 +706,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zcmop => 2, // > Zca
     Ext_Zicfiss => 2, // > Zaamo
 
+    Ext_Ziccid => 3, // > Ziccif
     Ext_Ssccptr => 3, // > Sv39
     Ext_Supm => 3, // > U
     Ext_Svnapot => 3, // > Sv39
@@ -770,6 +775,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zicboz,
   Ext_Ziccamoa,
   Ext_Ziccamoc,
+  Ext_Ziccid,
   Ext_Ziccif,
   Ext_Zicclsm,
   Ext_Ziccrse,
