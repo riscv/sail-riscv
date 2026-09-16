@@ -576,11 +576,12 @@ private function check_misc_extension_dependencies() -> bool = {
       valid = false;
       print_endline("The Zcf extension is enabled but F is disabled: supporting Zcf requires F.");
     };
-    if (config extensions.Zcd.supported : bool) & not(constraint(ext_d_supported)) then {
-      valid = false;
-      print_endline("The Zcd extension is enabled but D is disabled: supporting Zcd requires D.");
-    };
   };
+  if (config extensions.Zcd.supported : bool) & not(constraint(ext_d_supported)) then {
+    valid = false;
+    print_endline("The Zcd extension is enabled but D is disabled: supporting Zcd requires D.");
+  };
+
   // See https://github.com/riscv/sail-riscv/issues/1508 for the next two checks.
   if (config extensions.Zabha.supported : bool) & not((config extensions.Zaamo.supported : bool) | (config extensions.A.supported : bool)) then {
     valid = false;
