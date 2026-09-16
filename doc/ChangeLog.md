@@ -11,8 +11,8 @@ hypervisor `HLV*`/`HSV*` load/store instructions mentioned in release
 0.14.
 
 - Support for booting Linux with an `initramfs` has been added, see
-  `os-boot/README.md`. This allows a boot upto a terminal shell
-  prompt.
+  [os-boot/README.md](../os-boot/README.md). This allows a boot upto a
+  terminal shell prompt.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1943 : `mstatus.SPELP` should be read-only zero when Supervisor mode is not implemented
