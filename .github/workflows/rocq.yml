@@ -80,13 +80,10 @@ jobs:
       - name: Build Rocq model
         run: |
           eval `opam env --safe`
-          # The cmake fragment that computes the version uses git, which needs to be
-          # reassured about github action's use of root.
-          git config --global --add safe.directory /__w/sail-riscv/sail-riscv
           cmake -P rocq-sail-riscv.cmake
           # Ignore dune constraints because they come from the fake sail packages
           # Assume depexts because we've already installed cmake, but opam doesn't realise
-          opam install --yes --ignore-constraints-on=dune --assume-depexts ./rocq-sail-riscv.opam
+          opam install --yes --verbose --ignore-constraints-on=dune --assume-depexts ./rocq-sail-riscv.opam
 
       - name: Locate Rocq sources
         run: |
