@@ -146,6 +146,7 @@ An experimental emulator in the Lean language is available, see its
 - Zicbom, Zicbop and Zicboz extensions for cache-block management, v1.0
 - Ziccamoa extension for Main memory supports all atomics in Zaamo, v1.0
 - Ziccamoc extension for Main memory supports atomics in Zacas, v1.0
+- Ziccid extension for instruction/data coherence and consistency, v1.0
 - Ziccif extension for Main memory supports instruction fetch with atomicity requirement, v1.0
 - Zicclsm extension for Main memory misaligned accesses, v1.0
 - Ziccrse extension for Main memory regions with both the cacheability and coherence PMAs must support RsrvEventual, v1.0
