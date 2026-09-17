@@ -1,8 +1,15 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - Sdtrig (partial: only icount, itrigger, and etrigger triggers; tdata3 and {m,h,s}context are not yet supported)
+
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `mcountinhibit` CSR is supported, and if so, which
     bits are writable, can now be specified; see `base.mcountinhibit`.
+
+- The command line interface has been updated:
+  - A `--trace-trigger` command-line option has been added to track
+    triggers in the execution trace.
 
 # Release notes for version 0.14.1
 
@@ -288,6 +295,7 @@ extension.
 - Other notes:
   - The HTIF failure exit code is now printed in hex as well as decimal.
   - The test suite has been updated to the latest release (2026-05-29) from sail-riscv-tests.
+
 
 # Release notes for version 0.11
 

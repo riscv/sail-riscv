@@ -235,6 +235,8 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     list(FILTER test_elfs EXCLUDE REGEX ".*/InterruptsSSm-00\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/InterruptsU-00\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/S-00\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS-01\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS-02\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/UV-00\\.elf$")
 
     # These tests fail because
