@@ -248,6 +248,29 @@ extensions {
      }
   }
 
+  // RISC-V P extension
+  P {
+    requires core
+
+    P_types {
+      before sys
+      // The saturating helpers report overflow in vxsat, which lives in V_core.
+      requires V_core
+      files
+        extensions/P/pext_types.sail,
+        extensions/P/pext_regs.sail,
+        extensions/P/pext_utils.sail,
+    }
+
+    P_instructions {
+      requires sys, P_types, V_core
+      files
+        extensions/P/pext_common.sail,
+        extensions/P/pext_32_only.sail,
+        extensions/P/pext_64_only.sail,
+    }
+  }
+
   // RISC-V Cryptography Extension
   K {
     requires core

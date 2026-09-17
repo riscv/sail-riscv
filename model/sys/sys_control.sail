@@ -395,6 +395,7 @@ function reset_misa() -> unit = {
   misa[U]   = bool_to_bit(hartSupports(Ext_U));   // user-mode
   misa[S]   = bool_to_bit(hartSupports(Ext_S));   // supervisor-mode
   misa[V]   = bool_to_bit(hartSupports(Ext_V));   // vector extension
+  misa[P]   = bool_to_bit(hartSupports(Ext_P));   // packed-SIMD (tentatively reserved bit)
 
   // Base integer ISA (disabled if we only support the 16-register E base).
   misa[E] = bool_to_bit(base_E_enabled);
