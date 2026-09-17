@@ -84,6 +84,25 @@ bool get_config_bool(const std::vector<const char *> &keypath) {
   );
 }
 
+std::string get_config_string(const std::vector<const char *> &keypath) {
+  sail_config_json json = sail_config_get(keypath.size(), keypath.data());
+
+  if (json == nullptr) {
+    throw std::runtime_error("Failed to find configuration option '" + keypath_to_str(keypath) + "'.");
+  }
+
+  if (sail_config_is_string(json)) {
+    sail_string str = nullptr;
+    CREATE(sail_string)(&str);
+    sail_config_unwrap_string(&str, json);
+    std::string val(str);
+    KILL(sail_string)(&str);
+    return val;
+  }
+
+  throw std::runtime_error("Configuration option '" + keypath_to_str(keypath) + "' could not be parsed as a string.\n");
+}
+
 const char *get_default_config() {
   return DEFAULT_JSON;
 }

@@ -396,6 +396,8 @@ void ModelImpl::init_platform_constants() {
   );
 
   m_supports_hypervisor = get_config_bool({"extensions", "H", "supported"});
+  m_supports_D_extension = get_config_bool({"extensions", "D", "supported"});
+  m_has_float_registers = get_config_bool({"extensions", "F", "supported"});
 }
 
 void ModelImpl::init_sail(
@@ -546,7 +548,15 @@ int64_t ModelImpl::xlen() const {
 }
 
 int64_t ModelImpl::flen() const {
+  assert(m_has_float_registers);
+
   return zflen;
+}
+
+int64_t ModelImpl::vlen() const {
+  assert(has_vector_registers());
+
+  return zvlen;
 }
 
 int64_t ModelImpl::physaddrbits_len() const {
@@ -566,6 +576,8 @@ uint64_t ModelImpl::sepc() const {
 }
 
 uint64_t ModelImpl::fcsr() const {
+  assert(m_has_float_registers);
+
   return zfcsr.zbits;
 }
 
@@ -583,21 +595,25 @@ bool ModelImpl::had_exception() const {
 
 uint64_t ModelImpl::xreg(int64_t reg) {
   // For the E base ISA, this assert should use 16.
-  assert(reg < 32);
+  assert(0 <= reg && reg < 32);
+
   const sbits val = zrX(reg);
   return val.bits;
 }
 
 uint64_t ModelImpl::freg(int64_t reg) {
   // For the E base ISA, this assert should use 16.
-  assert(reg < 32);
+  assert(0 <= reg && reg < 32);
+  assert(m_has_float_registers);
+
   const sbits val = zrF(reg);
   return val.bits;
 }
 
 void ModelImpl::set_xreg(int64_t reg, uint64_t val) {
   // For the E base ISA, this assert should use 16.
-  assert(reg < 32);
+  assert(0 <= reg && reg < 32);
+
   sbits sail_val;
   sail_val.len = zxlen;
   sail_val.bits = val;
@@ -605,7 +621,9 @@ void ModelImpl::set_xreg(int64_t reg, uint64_t val) {
 }
 
 void ModelImpl::set_freg(int64_t reg, uint64_t val) {
-  assert(reg < 32);
+  assert(0 <= reg && reg < 32);
+  assert(m_has_float_registers);
+
   sbits sail_val;
   sail_val.len = zflen;
   sail_val.bits = val;
@@ -620,6 +638,8 @@ void ModelImpl::set_pc(uint64_t val) {
 }
 
 void ModelImpl::set_fcsr(uint64_t val) {
+  assert(m_has_float_registers);
+
   // Split this into the FRM (val[7..5]) and FFLAGS (val[4..0]) fields.
   uint64_t frm = (val >> 5) & UINT64_C(0x7);
   uint64_t fflags = val & UINT64_C(0x1F);
