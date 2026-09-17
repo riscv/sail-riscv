@@ -22,6 +22,12 @@ function mem_read_callback(_) = ()
 val mem_exception_callback = pure {cpp: "mem_exception_callback"} : (/* addr */ physaddrbits, /* exception code */ exc_code) -> unit
 function mem_exception_callback(_) = ()
 
+/// Fires after a successful v2p translation for a load/store/fetch and
+/// before the corresponding mem_read_callback / mem_write_callback.
+/// `width` is the access size in bytes.
+val vmem_access_callback = pure {cpp: "vmem_access_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* vaddr */ xlenbits, /* paddr */ physaddrbits, /* access */ MemoryAccessType(mem_payload), /* width */ int('n)) -> unit
+function vmem_access_callback(_) = ()
+
 /// Called at the end of every step when PC is advanced to the next
 /// instruction. This includes taken branches. It is not called when
 /// the hart is waiting in WFI/WRS. The parameter is the new PC.

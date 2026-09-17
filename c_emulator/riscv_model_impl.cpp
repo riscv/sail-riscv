@@ -76,6 +76,13 @@ unit ModelImpl::mem_exception_callback(sbits paddr, uint64_t num_of_exception) {
   return UNIT;
 }
 
+unit ModelImpl::vmem_access_callback(sbits vaddr, sbits paddr, MemoryAccessType access, int64_t width) {
+  for (auto c : m_callbacks) {
+    c->vmem_access_callback(*this, vaddr, paddr, access, width);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) {
   for (auto c : m_callbacks) {
     c->xreg_full_write_callback(*this, abi_name, reg, value);
@@ -398,6 +405,11 @@ void ModelImpl::init_platform_constants() {
   m_supports_hypervisor = get_config_bool({"extensions", "H", "supported"});
   m_supports_D_extension = get_config_bool({"extensions", "D", "supported"});
   m_has_float_registers = get_config_bool({"extensions", "F", "supported"});
+  std::string vector_support = get_config_string({"extensions", "V", "support_level"});
+  if (vector_support != "Disabled") {
+    uint64_t vlen_exp = get_config_uint64({"extensions", "V", "vlen_exp"});
+    m_vlen = 0x1U << vlen_exp;
+  }
 }
 
 void ModelImpl::init_sail(
@@ -561,6 +573,16 @@ int64_t ModelImpl::vlen() const {
 
 int64_t ModelImpl::physaddrbits_len() const {
   return zphysaddrbits_len;
+}
+
+uint64_t ModelImpl::cur_privilege_mode() const {
+  // Generated accessor is non-const but only reads state.
+  auto *mut_this = const_cast<ModelImpl *>(this);
+  return mut_this->zprivLevel_to_bits(zcur_privilege);
+}
+
+bool ModelImpl::virt_enabled() const {
+  return zcur_privilege == hart::zVirtualUser || zcur_privilege == hart::zVirtualSupervisor;
 }
 
 uint64_t ModelImpl::pc() const {
