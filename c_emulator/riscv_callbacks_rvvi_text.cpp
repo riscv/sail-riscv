@@ -6,16 +6,7 @@
 #include <gmp.h>
 #include <inttypes.h>
 
-rvvi_text_callbacks::rvvi_text_callbacks(
-  FILE *trace_log,
-  uint64_t xlen,
-  bool has_float_registers,
-  bool has_vector_registers
-) :
-    m_trace_log(trace_log),
-    m_xlen(xlen),
-    m_has_float_registers(has_float_registers),
-    m_has_vector_registers(has_vector_registers) {
+rvvi_text_callbacks::rvvi_text_callbacks(FILE *trace_log) : m_trace_log(trace_log) {
 }
 
 std::string rvvi_text_callbacks::hex_value(const sbits &value) {
@@ -61,9 +52,9 @@ void rvvi_text_callbacks::emit_header(ModelImpl &model) {
   fprintf(
     m_trace_log,
     "PARAMS 6 ILEN 32 XLEN %llu FLEN %llu VLEN %llu NHART 1 RETIRE 1\n",
-    static_cast<unsigned long long>(m_xlen),
-    static_cast<unsigned long long>(m_has_float_registers ? model.flen() : 0),
-    static_cast<unsigned long long>(m_has_vector_registers ? model.vlen() : 0)
+    static_cast<unsigned long long>(model.xlen()),
+    static_cast<unsigned long long>(model.has_float_registers() ? model.flen() : 0),
+    static_cast<unsigned long long>(model.has_vector_registers() ? model.vlen() : 0)
   );
 }
 
@@ -121,47 +112,27 @@ void rvvi_text_callbacks::vmem_access_callback(
   m_mem_accesses.push_back(mem);
 }
 
-void rvvi_text_callbacks::xreg_full_write_callback(
-  ModelImpl &model,
-  const_sail_string abi_name,
-  sbits reg,
-  sbits value
-) {
-  (void)model;
-  (void)abi_name;
+void rvvi_text_callbacks::xreg_full_write_callback(ModelImpl &, const_sail_string, sbits reg, sbits value) {
   record_reg('X', reg.bits, hex_value(value));
 }
 
 void rvvi_text_callbacks::freg_write_callback(ModelImpl &model, unsigned reg, sbits value) {
-  (void)model;
-  if (!m_has_float_registers) {
-    return;
+  if (model.has_float_registers()) {
+    record_reg('F', reg, hex_value(value));
   }
-  record_reg('F', reg, hex_value(value));
 }
 
-void rvvi_text_callbacks::csr_full_write_callback(
-  ModelImpl &model,
-  const_sail_string csr_name,
-  unsigned reg,
-  sbits value
-) {
-  (void)model;
-  (void)csr_name;
+void rvvi_text_callbacks::csr_full_write_callback(ModelImpl &, const_sail_string, unsigned reg, sbits value) {
   record_reg('C', reg, hex_value(value));
 }
 
 void rvvi_text_callbacks::vreg_write_callback(ModelImpl &model, unsigned reg, lbits value) {
-  (void)model;
-  if (!m_has_vector_registers) {
-    return;
+  if (model.has_vector_registers()) {
+    record_reg('V', reg, hex_value_lbits(value));
   }
-  record_reg('V', reg, hex_value_lbits(value));
 }
 
-void rvvi_text_callbacks::trap_callback(ModelImpl &model, bool is_interrupt, fbits cause) {
-  (void)is_interrupt;
-  (void)cause;
+void rvvi_text_callbacks::trap_callback(ModelImpl &model, bool, fbits) {
   // Fetch faults never call fetch_callback; capture the faulting PC here.
   emit_header(model);
   if (!m_have_inst) {
@@ -172,42 +143,34 @@ void rvvi_text_callbacks::trap_callback(ModelImpl &model, bool is_interrupt, fbi
   m_pending_trap = true;
 }
 
-void rvvi_text_callbacks::post_step_callback(ModelImpl &model, bool is_waiting) {
-  (void)model;
-  (void)is_waiting;
+void rvvi_text_callbacks::post_step_callback(ModelImpl &model, bool) {
   // Retired insns are emitted from instret_callback. Traps skip instret.
   if (m_have_inst && m_pending_trap) {
-    emit_instruction();
+    emit_instruction(model);
     reset_instruction_buffer();
   }
 }
 
-void rvvi_text_callbacks::ptw_step_callback(ModelImpl &model, int64_t level, sbits pte_addr, uint64_t pte) {
-  (void)model;
-  (void)pte_addr;
-  (void)level;
+void rvvi_text_callbacks::ptw_step_callback(ModelImpl &, int64_t, sbits, uint64_t pte) {
   m_last_pte = pte;
 }
 
-void rvvi_text_callbacks::ptw_success_callback(ModelImpl &model, uint64_t final_ppn, int64_t level) {
-  (void)model;
-  (void)final_ppn;
+void rvvi_text_callbacks::ptw_success_callback(ModelImpl &, uint64_t, int64_t level) {
   m_ptw_success = true;
   m_ptw_success_level = level;
 }
 
 void rvvi_text_callbacks::instret_callback(ModelImpl &model) {
-  (void)model;
-  emit_instruction();
+  emit_instruction(model);
   reset_instruction_buffer();
 }
 
-void rvvi_text_callbacks::emit_instruction() {
+void rvvi_text_callbacks::emit_instruction(ModelImpl &model) {
   if (m_trace_log == nullptr) {
     return;
   }
 
-  const int xlen_nibbles = static_cast<int>((m_xlen + 3) / 4);
+  const int xlen_nibbles = static_cast<int>((model.xlen() + 3) / 4);
   const char *event = m_pending_trap ? "TRAP" : "RET";
   fprintf(
     m_trace_log,
