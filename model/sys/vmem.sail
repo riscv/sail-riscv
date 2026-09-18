@@ -87,7 +87,7 @@ private function translate_PTE_addr(
   }
 }
 
-termination_measure translate_PTE_addr(_, _, _, _) = 1000
+termination_measure translate_PTE_addr(_, _, stage, _) = if stage == VS_Stage then 10 else 0
 
 // Update a PTE's A/D bits and write it to memory if needed.  This returns
 // * Ok(Some(pte)) if a write was needed and was successful. pte is the new value.
@@ -126,7 +126,7 @@ private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . 
                  },
   }
 
-termination_measure update_and_write_pte(_, _, _, _, _, _) = 1000
+termination_measure update_and_write_pte(_, _, _, _, stage, _) = if stage == VS_Stage then 11 else 1
 
 // 'v is the virtual address size.
 private val pt_walk : forall 'v, is_sv_or_svx4_mode('v) . (
@@ -273,7 +273,7 @@ function pt_walk(
   }
 }
 
-termination_measure pt_walk(_,_,_,_,_,_,_,level,_,_, _) = level
+termination_measure pt_walk(_,_,_,_,_,_,_,level,_, stage, _) = if stage == VS_Stage then 11 + level else 1 + level
 
 // ****************************************************************
 // Architectural HGATP CSR
@@ -435,7 +435,7 @@ private function translate_TLB_hit forall 'v, is_sv_or_svx4_mode('v) . (
   }
 }
 
-termination_measure translate_TLB_hit(_, _, _, _, _, _, _, _, _, _, _, _) = 1000
+termination_measure translate_TLB_hit(_, _, _, _, _, _, _, _, _, _, stage, _) = if stage == VS_Stage then 12 else 3
 
 // Translate on TLB miss (do a page-table walk)
 private function translate_TLB_miss forall 'v, is_sv_or_svx4_mode('v) . (
@@ -480,7 +480,7 @@ private function translate_TLB_miss forall 'v, is_sv_or_svx4_mode('v) . (
   }
 }
 
-termination_measure translate_TLB_miss(_, _, _, _, _, _, _, _, _, _, _) = 1000
+termination_measure translate_TLB_miss(_, _, _, _, _, _, _, _, _, stage, _) = if stage == VS_Stage then 16 else 6
 
 // Mapping the SATPMode to the width integer. Note there is also SvBare
 // and it's an error to call this with SvBare.
@@ -521,7 +521,7 @@ private function translate forall 'v, is_sv_or_svx4_mode('v) . (
   }
 }
 
-termination_measure translate(_, _, _, _, _, _, _, _, _, _, _) = 1000
+termination_measure translate(_, _, _, _, _, _, _, _, _, stage, _) = if stage == VS_Stage then 17 else 7
 
 private function get_mxr(stage : TranslationStage) -> bool =
   if stage == VS_Stage then mstatus[MXR] == 0b1 | vsstatus[MXR] == 0b1 else mstatus[MXR] == 0b1
@@ -571,7 +571,7 @@ private function translate_stage forall 'n 'v, is_sv_or_svx4_mode('v) & 'n >= 'v
   }
 }
 
-termination_measure translate_stage(_, _, _, _, _) = 1000
+termination_measure translate_stage(_, _, _, _, stage) = if stage == VS_Stage then 18 else 8
 
 // Wrapper for VS/S-stage translation (takes virtaddr)
 private function translate_vs_stage(
@@ -601,7 +601,7 @@ function translate_g_stage(
   translate_stage(sv_width, gpa, access, User, G_Stage)
 }
 
-termination_measure translate_g_stage(_, _) = 1000
+termination_measure translate_g_stage(_, _) = 9
 
 // There are three cases in which an access can fail during two-stage address
 // translation, shown here with the single-stage case for comparison. Without
