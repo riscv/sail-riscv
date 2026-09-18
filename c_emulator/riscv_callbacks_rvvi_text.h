@@ -10,7 +10,7 @@
 
 class rvvi_text_callbacks : public callbacks_if {
 public:
-  rvvi_text_callbacks(FILE *trace_log, uint64_t xlen, bool has_float_registers, bool has_vector_registers);
+  rvvi_text_callbacks(FILE *trace_log);
 
   void post_step_callback(ModelImpl &model, bool is_waiting) override;
   void fetch_callback(ModelImpl &model, sbits opcode) override;
@@ -48,7 +48,7 @@ private:
   };
 
   void emit_header(ModelImpl &model);
-  void emit_instruction();
+  void emit_instruction(ModelImpl &model);
   void reset_instruction_buffer();
   void record_reg(char kind, uint64_t index, std::string value);
 
@@ -60,9 +60,6 @@ private:
   static bool access_is_fetch(ModelImpl &model, ModelImpl::MemoryAccessType access);
 
   FILE *m_trace_log;
-  uint64_t m_xlen;
-  bool m_has_float_registers;
-  bool m_has_vector_registers;
   bool m_header_emitted = false;
   // Writes before the first fetch are reset/init, not instruction side-effects.
   bool m_first_fetch_seen = false;

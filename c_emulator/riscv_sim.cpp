@@ -819,14 +819,7 @@ InitResult init_model(
       fprintf(stderr, "using %s for RVVI-TEXT output.\n", opts.rvvi_text_log_path.c_str());
       rvvi_log = run_info.rvvi_text_log;
     }
-    model.register_callback(
-      std::make_shared<rvvi_text_callbacks>(
-        rvvi_log,
-        static_cast<uint64_t>(model.xlen()),
-        model.has_float_registers(),
-        model.has_vector_registers()
-      )
-    );
+    model.register_callback(std::make_shared<rvvi_text_callbacks>(rvvi_log));
   }
 
   if (!opts.dtb_file.empty()) {
