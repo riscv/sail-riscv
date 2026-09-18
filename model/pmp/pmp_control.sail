@@ -73,6 +73,22 @@ private function pmpRangeMatch(
   then    PMP_Match
   else    PMP_PartialMatch
 
+// Bits pmpaddr[G-1..0] do not affect TOR address matching, regardless of
+// whether the register supplies the lower or upper bound.
+private function pmpTORBound(addr : xlenbits, grain : range(0, 63)) -> xlenbits =
+  if grain == 0 then addr
+  else {
+    let mask : xlenbits = zero_extend(ones(min(grain, xlen)));
+    addr & ~(mask)
+  }
+
+$[test]
+private function test_pmpTORBound() -> unit = {
+  assert(pmpTORBound(zero_extend(0x5), 0) == zero_extend(0x5));
+  assert(pmpTORBound(zero_extend(0x5), 1) == zero_extend(0x4));
+  assert(pmpTORBound(zero_extend(0x7), 2) == zero_extend(0x4));
+}
+
 private function pmpMatchAddr(
   Physaddr(addr) : physaddr,
   width : xlenbits,
@@ -88,6 +104,8 @@ private function pmpMatchAddr(
       // "If PMP entry [i]'s A field is set to TOR, the entry matches
       //  any address y such that pmpaddr[i-1] <= y < pmpaddr[i]"
       // "If pmpaddr[i-1] >= pmpaddr[i] and pmpcfg[i].A=TOR, then PMP entry i matches no addresses."
+      let pmpaddr = pmpTORBound(pmpaddr, sys_pmp_grain);
+      let prev_pmpaddr = pmpTORBound(prev_pmpaddr, sys_pmp_grain);
       if prev_pmpaddr >=_u pmpaddr
       then PMP_NoMatch
       else pmpRangeMatch(unsigned(prev_pmpaddr) * 4, unsigned(pmpaddr) * 4, addr, width)
