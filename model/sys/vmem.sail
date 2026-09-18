@@ -516,8 +516,11 @@ private function translate forall 'v, is_sv_or_svx4_mode('v) . (
   match lookup_TLB(sv_width, asid, vmid, vpn, stage) {
     Some(index, ent) => translate_TLB_hit(sv_width, asid, vmid, vpn, access, priv,
                                           mxr, do_sum, index, ent, stage, ext_ptw),
-    None()           => translate_TLB_miss(sv_width, asid, vmid, base_ppn, vpn, access, priv,
-                                           mxr, do_sum, stage, ext_ptw),
+    None()           => {
+      generate_event(EV_TLB_MISS);
+      translate_TLB_miss(sv_width, asid, vmid, base_ppn, vpn, access, priv,
+                                           mxr, do_sum, stage, ext_ptw)
+    },
   }
 }
 
