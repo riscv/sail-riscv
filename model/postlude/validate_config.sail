@@ -803,6 +803,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_sha_dependency("Shvstvala", (config extensions.Shvstvala.supported : bool));
     valid = valid & check_sha_dependency("Shvstvecd", (config extensions.Shvstvecd.supported : bool));
   };
+  if (config extensions.Ssdbltrp.supported : bool) & not(config extensions.S.supported : bool) then {
+    valid = false;
+    print_endline("The Ssdbltrp extension is enabled but S is disabled: supporting Ssdbltrp requires S.");
+  };
   valid
 }
 
