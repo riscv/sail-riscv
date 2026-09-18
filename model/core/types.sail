@@ -265,7 +265,7 @@ union ExceptionType = {
   E_Load_Page_Fault    : unit,
   E_Reserved_14        : unit,
   E_SAMO_Page_Fault    : unit,
-  E_Reserved_16        : unit,
+  E_Double_Trap        : unit,
   E_Reserved_17        : unit,
   E_Software_Check     : unit,
   E_Hardware_Error     : unit,
@@ -294,7 +294,7 @@ mapping exceptionType_bits : ExceptionType <-> exc_code = {
   E_Load_Page_Fault()    <-> 0b001101, // 13
   E_Reserved_14()        <-> 0b001110, // 14
   E_SAMO_Page_Fault()    <-> 0b001111, // 15
-  E_Reserved_16()        <-> 0b010000, // 16
+  E_Double_Trap()        <-> 0b010000, // 16
   E_Reserved_17()        <-> 0b010001, // 17
   E_Software_Check()     <-> 0b010010, // 18
   E_Hardware_Error()     <-> 0b010011, // 19
@@ -328,7 +328,7 @@ function exceptionType_to_str(e : ExceptionType) -> string =
     E_Load_Page_Fault()    => "load-page-fault",
     E_Reserved_14()        => "reserved-1",
     E_SAMO_Page_Fault()    => "store/amo-page-fault",
-    E_Reserved_16()        => "reserved-2",
+    E_Double_Trap()        => "double-trap",
     E_Reserved_17()        => "reserved-3",
     E_Software_Check()     => "software-check-exception",
     E_Hardware_Error()     => "hardware-error-exception",
@@ -350,7 +350,6 @@ overload to_str = {exceptionType_to_str}
 function is_reserved_or_custom_exception(e : ExceptionType) -> bool =
   match e {
     E_Reserved_14() => true,
-    E_Reserved_16() => true,
     E_Reserved_17() => true,
     E_Extension(_)  => true,  // this is a custom extension
     _               => false,

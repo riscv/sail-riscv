@@ -560,6 +560,34 @@ function clause execute ECALL() = {
 mapping clause assembly = ECALL() <-> "ecall"
 
 // *****************************************************************
+
+/// Clear the double trap bits on MRET or SRET.
+function xret_clear_dbltrp(prev_priv : Privilege, new_priv : Privilege) -> unit = {
+  // "executing an mret instruction, or executing an sret instruction while the
+  // current privilege mode is M, has the following additional effects. The MDT
+  // bit is set to 0."
+  if currentlyEnabled(Ext_Smdbltrp) & prev_priv == Machine
+  then mstatus[MDT] = 0b0;
+
+  // "If the Ssdbltrp extension is also implemented, and the new privilege mode
+  // is U, VS, or VU, then sstatus.SDT is also set to 0."
+  // "An SRET instruction sets the SDT bit to 0."
+  // The second only applies in supervisor mode, see
+  // https://github.com/riscv/riscv-isa-manual/issues/2870#issuecomment-4238414283
+  if currentlyEnabled(Ext_Ssdbltrp) & (match prev_priv {
+    Machine    => new_priv == User | new_priv == VirtualSupervisor | new_priv == VirtualUser,
+    Supervisor => true,
+    _          => false,
+  }) then mstatus[SDT] = 0b0;
+
+  // "when SRET is executed in HS-mode, if the new privilege mode is VU, the
+  // SRET instruction sets vsstatus.SDT to 0. When executed in VS-mode,
+  // vsstatus.SDT is set to 0."
+  if currentlyEnabled(Ext_H) & read_henvcfg()[DTE] == 0b1
+     & (new_priv == VirtualUser | prev_priv == VirtualSupervisor)
+  then vsstatus[SDT] = 0b0;
+}
+
 union clause instruction = MRET : unit
 
 mapping clause encdec = MRET()
@@ -584,10 +612,12 @@ function clause execute MRET() = {
     if   cur_privilege != Machine
     then mstatus[MPRV] = 0b0;
 
+    xret_clear_dbltrp(prev_priv, cur_privilege);
+
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(mRET, prev_priv, cur_privilege);
 
-    long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+    long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
 
     if   get_config_print_exception()
     then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
@@ -644,17 +674,18 @@ function clause execute SRET() = {
         mstatus[SPP]  = 0b0;
         mstatus[SIE]  = mstatus[SPIE];
         mstatus[SPIE] = 0b1;
-        // TODO: Add Ssdbltrp part once supported
         if new_priv != Machine
         then mstatus[MPRV] = 0b0;
         cur_privilege = new_priv;
         Supervisor
       };
 
+    xret_clear_dbltrp(prev_priv, cur_privilege);
+
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(sRET, prev_priv, cur_privilege);
 
-    long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+    long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
     if   privLevel_is_virtual(prev_priv)
     then csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0])
     else if currentlyEnabled(Ext_H)
