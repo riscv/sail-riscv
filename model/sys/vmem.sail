@@ -437,6 +437,8 @@ private function translate_TLB_hit forall 'v, is_sv_or_svx4_mode('v) . (
 
 termination_measure translate_TLB_hit(_, _, _, _, _, _, _, _, _, _, stage, _) = if stage == VS_Stage then 12 else 3
 
+private function hack() -> bool = false
+
 // Translate on TLB miss (do a page-table walk)
 private function translate_TLB_miss forall 'v, is_sv_or_svx4_mode('v) . (
   sv_width : int('v),
@@ -452,6 +454,7 @@ private function translate_TLB_miss forall 'v, is_sv_or_svx4_mode('v) . (
   ext_ptw  : ext_ptw,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
   let initial_level = get_root_level(sv_width);
+if hack() | initial_level <= 0 | initial_level > 4 then internal_error(__FILE__, __LINE__, "Bad root level") else {
 
   // Step 2 of VATP occurs in pt_walk().
   let 'pte_size = if 'v == 32 | 'v == 34 then 4 else 8;
@@ -477,7 +480,7 @@ private function translate_TLB_miss forall 'v, is_sv_or_svx4_mode('v) . (
         Err(e) => Err(e, ext_ptw),
       }
     },
-  }
+  }}
 }
 
 termination_measure translate_TLB_miss(_, _, _, _, _, _, _, _, _, stage, _) = if stage == VS_Stage then 16 else 6
