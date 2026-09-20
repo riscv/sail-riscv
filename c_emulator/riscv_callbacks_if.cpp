@@ -10,12 +10,17 @@ void callbacks_if::pre_step_callback([[maybe_unused]] ModelImpl &model, [[maybe_
 void callbacks_if::post_step_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] bool is_waiting) {
 }
 
-void callbacks_if::fetch_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] sbits opcode) {
+void callbacks_if::fetch_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] sbits pc,
+  [[maybe_unused]] sbits opcode
+) {
 }
 
 void callbacks_if::mem_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -24,7 +29,8 @@ void callbacks_if::mem_write_callback(
 
 void callbacks_if::mem_read_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -48,7 +54,7 @@ void callbacks_if::xreg_full_write_callback(
 
 void callbacks_if::freg_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] sbits value
 ) {
 }
@@ -56,7 +62,7 @@ void callbacks_if::freg_write_callback(
 void callbacks_if::csr_full_write_callback(
   [[maybe_unused]] ModelImpl &model,
   [[maybe_unused]] const_sail_string csr_name,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] sbits value
 ) {
 }
@@ -64,14 +70,14 @@ void callbacks_if::csr_full_write_callback(
 void callbacks_if::csr_full_read_callback(
   [[maybe_unused]] ModelImpl &model,
   [[maybe_unused]] const_sail_string csr_name,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] sbits value
 ) {
 }
 
 void callbacks_if::vreg_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] lbits value
 ) {
 }
@@ -79,13 +85,24 @@ void callbacks_if::vreg_write_callback(
 void callbacks_if::pc_write_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] sbits new_pc) {
 }
 
+void callbacks_if::trigger_tdata_write_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] sbits tselect,
+  [[maybe_unused]] int64_t tdata_num,
+  [[maybe_unused]] sbits data
+) {
+}
+
 void callbacks_if::redirect_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] sbits new_pc) {
 }
 
-void callbacks_if::trap_callback(
+void callbacks_if::interrupt_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] fbits cause) {
+}
+
+void callbacks_if::exception_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] bool is_interrupt,
-  [[maybe_unused]] fbits cause
+  [[maybe_unused]] fbits cause,
+  [[maybe_unused]] const ModelImpl::ExceptionContext &ctx
 ) {
 }
 
@@ -138,6 +155,24 @@ void callbacks_if::ptw_fail_callback(
 ) {
 }
 
+void callbacks_if::address_translation_start_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access
+) {
+}
+
+void callbacks_if::address_translated_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] sbits paddr,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access
+) {
+}
+
 void callbacks_if::tlb_add_callback(
   [[maybe_unused]] ModelImpl &model,
   [[maybe_unused]] ModelImpl::TLB tlb,
@@ -152,4 +187,14 @@ void callbacks_if::tlb_flush_callback([[maybe_unused]] ModelImpl &model, [[maybe
 }
 
 void callbacks_if::tlb_flush_end_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] ModelImpl::TLB tlb) {
+}
+
+void callbacks_if::tlb_hit_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
+  [[maybe_unused]] int64_t level,
+  [[maybe_unused]] sbits pte_addr,
+  [[maybe_unused]] uint64_t pte,
+  [[maybe_unused]] int64_t index
+) {
 }

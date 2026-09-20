@@ -1,0 +1,8 @@
+{
+  "window": "main",
+  "events": [
+    { "match": "mret" },
+    { "match": "ld", "when": "xlen==64", "event": "TRAP", "mem_d": [] },
+    { "match": "lw", "when": "xlen==32", "event": "TRAP", "mem_d": [] }
+  ]
+}

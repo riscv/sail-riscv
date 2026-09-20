@@ -29,6 +29,7 @@ CLIOptions parse_cli(int argc, char **argv) {
     "Enable experimental extensions"
   );
   app.add_flag("--use-abi-names", opts.config_use_abi_names, "Use ABI register names in trace log");
+  app.add_flag("--use-no-tlb", opts.config_use_no_tlb, "Do not use an internal TLB");
   app.add_flag("--rv32", opts.use_rv32_default, "Use the default RV32 configuration");
   app.add_flag(
     "--disable-trap-loop-detection",
@@ -110,6 +111,18 @@ CLIOptions parse_cli(int argc, char **argv) {
   );
   app.add_flag("--trace-mem", opts.config_print_mem_access, "Enable trace output for memory accesses");
   app.add_flag("--trace-rvfi", opts.config_print_rvfi, "Enable trace output for RVFI");
+  app
+    .add_option(
+      "--rvvi-text-output",
+      opts.rvvi_text_log_path,
+      "RVVI-TEXT output file (defaults to the trace-output file)"
+    )
+    ->option_text("<file>");
+  app.add_flag(
+    "--trace-rvvi-text",
+    opts.config_print_rvvi_text,
+    "Enable trace output in RVVI-TEXT format (written to the RVVI-TEXT output file)"
+  );
   app.add_flag("--trace-clint", opts.config_print_clint, "Enable trace output for CLINT memory accesses and status");
   app.add_flag("--trace-exception", opts.config_print_exception, "Enable trace output for exceptions");
   app.add_flag("--trace-interrupt", opts.config_print_interrupt, "Enable trace output for interrupts");

@@ -153,7 +153,7 @@ private function run_hart_active(step_no: nat) -> Step = {
     // non-error cases:
     F_RVC(h) => {
       sail_instr_announce(h);
-      fetch_callback(h);
+      fetch_callback(PC, h);
 
       match match_memory_trigger_before(cur_privilege, TriggerFetchInstr(PC, h, 2)) {
         Some(pti) => return Step_Fetch_Trigger(pti),
@@ -191,7 +191,7 @@ private function run_hart_active(step_no: nat) -> Step = {
     },
     F_Base(w) => {
       sail_instr_announce(w);
-      fetch_callback(w);
+      fetch_callback(PC, w);
 
       match match_memory_trigger_before(cur_privilege, TriggerFetchInstr(PC, w, 4)) {
         Some(pti) => return Step_Fetch_Trigger(pti),
