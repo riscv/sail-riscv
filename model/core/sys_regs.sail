@@ -1000,8 +1000,10 @@ private function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   ]
 }
 
-private function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
-  legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
+private function legalize_sstatus(m : Mstatus, v : xlenbits, virt : bool) -> Mstatus = {
+  let s = Mk_Sstatus(zero_extend(v));
+  let s = [s with SDT = if virt & read_henvcfg()[DTE] == 0b0 then 0b0 else s[SDT]];
+  legalize_mstatus(m, lift_sstatus(m, s).bits)
 }
 
 // Unlike sstatus, which is only a view of mstatus, vsstatus is a real register
@@ -1014,7 +1016,7 @@ register vsstatus : Mstatus = [Mk_Mstatus(zeros()) with
 mapping clause csr_name_map = 0x200  <-> "vsstatus"
 function clause is_CSR_accessible(0x200, _, _) = currentlyEnabled(Ext_H) // vsstatus
 function clause read_CSR(0x200) = lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]
-function clause write_CSR(0x200, value) = { vsstatus = legalize_sstatus(vsstatus, value); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
+function clause write_CSR(0x200, value) = { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
 
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
@@ -1024,8 +1026,8 @@ function clause read_CSR(0x100) =
   else lower_mstatus(mstatus, false).bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) =
   if inVirtualPrivilege()
-  then { vsstatus = legalize_sstatus(vsstatus, value); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
-  else { mstatus  = legalize_sstatus(mstatus, value);  Ok(lower_mstatus(mstatus, false).bits[xlen - 1 .. 0]) }
+  then { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
+  else { mstatus  = legalize_sstatus(mstatus, value, false); Ok(lower_mstatus(mstatus, false).bits[xlen - 1 .. 0]) }
 
 // Virtual Supervisor related state registers
 register vstvec    : Mtvec
