@@ -29,14 +29,21 @@ log_callbacks::log_callbacks(
 // Implementations of default callbacks for trace printing.
 // The model assumes that these functions do not change the state of the model.
 
-void log_callbacks::mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) {
+void log_callbacks::mem_write_callback(
+  ModelImpl &model,
+  ModelImpl::Privilege,
+  ModelImpl::MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   // This is just passed due to Sail type system requirements.
   (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
     fprintf(
       trace_log,
       "mem[%s,0x%0*" PRIX64 "] <- ",
-      type,
+      model.memory_access_type_to_string(access).c_str(),
       static_cast<int>((model.physaddrbits_len() + 3) / 4),
       paddr.bits
     );
@@ -44,14 +51,21 @@ void log_callbacks::mem_write_callback(ModelImpl &model, const char *type, sbits
   }
 }
 
-void log_callbacks::mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) {
+void log_callbacks::mem_read_callback(
+  ModelImpl &model,
+  ModelImpl::Privilege,
+  ModelImpl::MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   // This is just passed due to Sail type system requirements.
   (void)width;
   if (trace_log != nullptr && config_print_mem_access) {
     fprintf(
       trace_log,
       "mem[%s,0x%0*" PRIX64 "] -> ",
-      type,
+      model.memory_access_type_to_string(access).c_str(),
       static_cast<int>((model.physaddrbits_len() + 3) / 4),
       paddr.bits
     );
@@ -69,20 +83,20 @@ void log_callbacks::xreg_full_write_callback(ModelImpl &, const_sail_string abi_
   }
 }
 
-void log_callbacks::freg_write_callback(ModelImpl &, unsigned reg, sbits value) {
+void log_callbacks::freg_write_callback(ModelImpl &, uint64_t reg, sbits value) {
   // TODO: will only print bits; should we print in floating point format?
   if (trace_log != nullptr && config_print_fpr) {
     // TODO: Might need to change from PRIX64 to PRIX128 once the "Q"
     // extension is supported
-    fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg, static_cast<int>(value.len / 4), value.bits);
+    fprintf(trace_log, "f%" PRId64 " <- 0x%0*" PRIX64 "\n", reg, static_cast<int>(value.len / 4), value.bits);
   }
 }
 
-void log_callbacks::csr_full_write_callback(ModelImpl &, const_sail_string csr_name, unsigned reg, sbits value) {
+void log_callbacks::csr_full_write_callback(ModelImpl &, const_sail_string csr_name, uint64_t reg, sbits value) {
   if (trace_log != nullptr && config_print_csr) {
     fprintf(
       trace_log,
-      "CSR %s (0x%03X) <- 0x%0*" PRIX64 "\n",
+      "CSR %s (0x%03" PRIX64 ") <- 0x%0*" PRIX64 "\n",
       csr_name,
       reg,
       static_cast<int>(value.len / 4),
@@ -91,11 +105,11 @@ void log_callbacks::csr_full_write_callback(ModelImpl &, const_sail_string csr_n
   }
 }
 
-void log_callbacks::csr_full_read_callback(ModelImpl &, const_sail_string csr_name, unsigned reg, sbits value) {
+void log_callbacks::csr_full_read_callback(ModelImpl &, const_sail_string csr_name, uint64_t reg, sbits value) {
   if (trace_log != nullptr && config_print_csr) {
     fprintf(
       trace_log,
-      "CSR %s (0x%03X) -> 0x%0*" PRIX64 "\n",
+      "CSR %s (0x%03" PRIX64 ") -> 0x%0*" PRIX64 "\n",
       csr_name,
       reg,
       static_cast<int>(value.len / 4),
@@ -104,9 +118,9 @@ void log_callbacks::csr_full_read_callback(ModelImpl &, const_sail_string csr_na
   }
 }
 
-void log_callbacks::vreg_write_callback(ModelImpl &, unsigned reg, lbits value) {
+void log_callbacks::vreg_write_callback(ModelImpl &, uint64_t reg, lbits value) {
   if (trace_log != nullptr && config_print_vreg) {
-    fprintf(trace_log, "v%d <- ", reg);
+    fprintf(trace_log, "v%" PRId64 " <- ", reg);
     gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }
@@ -123,7 +137,7 @@ void log_callbacks::ptw_start_callback(
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
       trace_log,
-      "PTW: Start, stage=%s, level=%" PRId64 ", vpn=0x%" PRIx64 ", access_type=%s, privilege=%s\n",
+      "PTW: Start, stage=%s, level=%" PRId64 ", vpn=0x%" PRIX64 ", access_type=%s, privilege=%s\n",
       model.translation_stage_to_string(stage).c_str(),
       level,
       vpn,
@@ -161,7 +175,7 @@ void log_callbacks::ptw_success_callback(
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
       trace_log,
-      "PTW: Success, stage=%s, level=%" PRId64 ", final_ppn=0x%" PRIx64 "\n",
+      "PTW: Success, stage=%s, level=%" PRId64 ", final_ppn=0x%" PRIX64 "\n",
       model.translation_stage_to_string(stage).c_str(),
       level,
       final_ppn
@@ -184,6 +198,44 @@ void log_callbacks::ptw_fail_callback(
       level,
       model.ptw_error_to_string(error_type).c_str(),
       pte_addr.bits
+    );
+  }
+}
+
+void log_callbacks::address_translation_start_callback(
+  ModelImpl &model,
+  ModelImpl::TranslationStage stage,
+  ModelImpl::Privilege privilege,
+  sbits vaddr,
+  ModelImpl::MemoryAccessType access
+) {
+  if (trace_log != nullptr && config_print_ptw) {
+    fprintf(
+      trace_log,
+      "Address Translation Start: stage=%s, privilege=%s, vaddr=0x%" PRIX64 ", access=%s\n",
+      model.translation_stage_to_string(stage).c_str(),
+      model.privilege_to_string(privilege).c_str(),
+      vaddr.bits,
+      model.memory_access_type_to_string(access).c_str()
+    );
+  }
+}
+
+void log_callbacks::address_translated_callback(
+  ModelImpl &model,
+  ModelImpl::TranslationStage stage,
+  sbits vaddr,
+  sbits paddr,
+  ModelImpl::MemoryAccessType access
+) {
+  if (trace_log != nullptr && config_print_ptw) {
+    fprintf(
+      trace_log,
+      "Address Translation Done: stage=%s, vaddr=0x%" PRIX64 ", paddr=0x%" PRIX64 ", access=%s\n",
+      model.translation_stage_to_string(stage).c_str(),
+      vaddr.bits,
+      paddr.bits,
+      model.memory_access_type_to_string(access).c_str()
     );
   }
 }

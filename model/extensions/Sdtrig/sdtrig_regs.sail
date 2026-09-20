@@ -43,7 +43,9 @@ function clause write_CSR(0x7a1, value) = {
   let t = trigger_write_tdata1(idx, t, value);
   triggers[idx] = t;
   written_trigger_index = Some(idx, TDATA1);
-  Ok(tdata1_of_trigger(t))
+  let data = tdata1_of_trigger(t);
+  trigger_tdata_write_callback(tselect, 1, data);
+  Ok(data)
 }
 
 mapping clause csr_name_map = 0x7a2  <-> "tdata2"
@@ -59,7 +61,9 @@ function clause write_CSR(0x7a2, value) = {
   let t = trigger_write_tdata2(idx, triggers[idx], value);
   triggers[idx] = t;
   written_trigger_index = Some(idx, TDATA2);
-  Ok(tdata2_of_trigger(t))
+  let data = tdata2_of_trigger(t);
+  trigger_tdata_write_callback(tselect, 2, data);
+  Ok(data)
 }
 
 mapping clause csr_name_map = 0x7a3  <-> "tdata3"
@@ -75,7 +79,9 @@ function clause write_CSR(0x7a3, value) = {
   let t = trigger_write_tdata3(idx, triggers[idx], value);
   triggers[idx] = t;
   written_trigger_index = Some(idx, TDATA3);
-  Ok(tdata3_of_trigger(t))
+  let data = tdata3_of_trigger(t);
+  trigger_tdata_write_callback(tselect, 3, data);
+  Ok(data)
 }
 
 mapping clause csr_name_map = 0x7a4  <-> "tinfo"

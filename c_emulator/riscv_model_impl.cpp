@@ -47,25 +47,37 @@ void ModelImpl::set_reservation_invalidate_on_same_hart_store(bool invalidate_on
   m_reservation_invalidate_on_same_hart_store = invalidate_on_same_hart_store;
 }
 
-unit ModelImpl::fetch_callback(sbits opcode) {
+unit ModelImpl::fetch_callback(sbits pc, sbits opcode) {
   for (auto c : m_callbacks) {
-    c->fetch_callback(*this, opcode);
+    c->fetch_callback(*this, pc, opcode);
   }
   return UNIT;
 }
 
-unit ModelImpl::mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_write_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_write_callback(*this, type, paddr, width, value);
+    c->mem_write_callback(*this, privilege, access, paddr, width, value);
   }
   if (m_reservation_invalidate_on_same_hart_store && match_reservation(paddr)) {
     cancel_reservation(UNIT);
   };
   return UNIT;
 }
-unit ModelImpl::mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_read_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_read_callback(*this, type, paddr, width, value);
+    c->mem_read_callback(*this, privilege, access, paddr, width, value);
   }
   return UNIT;
 }
@@ -84,28 +96,28 @@ unit ModelImpl::xreg_full_write_callback(const_sail_string abi_name, sbits reg, 
   return UNIT;
 }
 
-unit ModelImpl::freg_write_callback(unsigned reg, sbits value) {
+unit ModelImpl::freg_write_callback(uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
     c->freg_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value) {
+unit ModelImpl::csr_full_write_callback(const_sail_string csr_name, uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
     c->csr_full_write_callback(*this, csr_name, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value) {
+unit ModelImpl::csr_full_read_callback(const_sail_string csr_name, uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
     c->csr_full_read_callback(*this, csr_name, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::vreg_write_callback(unsigned reg, lbits value) {
+unit ModelImpl::vreg_write_callback(uint64_t reg, lbits value) {
   for (auto c : m_callbacks) {
     c->vreg_write_callback(*this, reg, value);
   }
@@ -119,6 +131,13 @@ unit ModelImpl::pc_write_callback(sbits new_pc) {
   return UNIT;
 }
 
+unit ModelImpl::trigger_tdata_write_callback(sbits tselect, int64_t tdata_num, sbits data) {
+  for (auto c : m_callbacks) {
+    c->trigger_tdata_write_callback(*this, tselect, tdata_num, data);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::redirect_callback(sbits new_pc) {
   for (auto c : m_callbacks) {
     c->redirect_callback(*this, new_pc);
@@ -126,9 +145,16 @@ unit ModelImpl::redirect_callback(sbits new_pc) {
   return UNIT;
 }
 
-unit ModelImpl::trap_callback(bool is_interrupt, fbits cause) {
+unit ModelImpl::interrupt_callback(fbits cause) {
   for (auto c : m_callbacks) {
-    c->trap_callback(*this, is_interrupt, cause);
+    c->interrupt_callback(*this, cause);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::exception_callback(fbits cause, ExceptionContext ctx) {
+  for (auto c : m_callbacks) {
+    c->exception_callback(*this, cause, ctx);
   }
   return UNIT;
 }
@@ -195,6 +221,25 @@ unit ModelImpl::ptw_fail_callback(TranslationStage stage, int64_t level, PTW_Err
   return UNIT;
 }
 
+unit ModelImpl::address_translation_start_callback(
+  TranslationStage stage,
+  Privilege privilege,
+  sbits vaddr,
+  MemoryAccessType access
+) {
+  for (auto c : m_callbacks) {
+    c->address_translation_start_callback(*this, stage, privilege, vaddr, access);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::address_translated_callback(TranslationStage stage, sbits vaddr, sbits paddr, MemoryAccessType access) {
+  for (auto c : m_callbacks) {
+    c->address_translated_callback(*this, stage, vaddr, paddr, access);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::tlb_add_callback(TLB tlb, uint64_t index) {
   for (auto c : m_callbacks) {
     c->tlb_add_callback(*this, tlb, index);
@@ -223,6 +268,13 @@ unit ModelImpl::tlb_flush_end_callback(TLB tlb) {
   return UNIT;
 }
 
+unit ModelImpl::tlb_hit_callback(TranslationStage stage, int64_t level, sbits pte_addr, uint64_t pte, int64_t index) {
+  for (auto c : m_callbacks) {
+    c->tlb_hit_callback(*this, stage, level, pte_addr, pte, index);
+  }
+  return UNIT;
+}
+
 // Provides entropy for the scalar cryptography extension.
 mach_bits ModelImpl::plat_get_16_random_bits(unit) {
   // This function can be changed to support deterministic sequences of
@@ -247,9 +299,11 @@ unit ModelImpl::load_reservation(sbits addr, uint64_t width) {
 }
 
 bool ModelImpl::match_reservation(sbits addr) {
-  return m_reservation_valid && (m_reservation_require_exact_addr ? (addr.bits == m_reservation_addr)
-                                                                  : (m_reservation & m_reservation_set_addr_mask) ==
-                                                                      (addr.bits & m_reservation_set_addr_mask));
+  m_last_reservation_match =
+    m_reservation_valid && (m_reservation_require_exact_addr ? (addr.bits == m_reservation_addr)
+                                                             : (m_reservation & m_reservation_set_addr_mask) ==
+                                                                 (addr.bits & m_reservation_set_addr_mask));
+  return m_last_reservation_match;
 }
 
 unit ModelImpl::cancel_reservation(unit) {
@@ -378,6 +432,10 @@ unit ModelImpl::dispatch_events(unit) {
   return UNIT;
 }
 
+bool ModelImpl::last_reservation_match() const {
+  return m_last_reservation_match;
+}
+
 unit ModelImpl::plat_term_write(mach_bits s) {
   char c = static_cast<char>(s);
   if (write(m_term_fd, &c, sizeof(c)) < 0) {
@@ -457,6 +515,10 @@ bool ModelImpl::get_config_use_abi_names(unit) {
   return m_config_use_abi_names;
 }
 
+bool ModelImpl::get_config_use_no_tlb(unit) {
+  return m_config_use_no_tlb;
+}
+
 mach_bits ModelImpl::get_initramfs_base(unit) {
   if (m_initramfs_region.has_value()) {
     return m_initramfs_region.value().base;
@@ -509,6 +571,10 @@ void ModelImpl::set_config_rvfi(bool on) {
 
 void ModelImpl::set_config_use_abi_names(bool on) {
   m_config_use_abi_names = on;
+}
+
+void ModelImpl::set_config_use_no_tlb(bool on) {
+  m_config_use_no_tlb = on;
 }
 
 void ModelImpl::set_config_print_step(bool on) {
@@ -687,6 +753,34 @@ std::string ModelImpl::translation_stage_to_string(TranslationStage stage) {
   return str;
 }
 
+bool ModelImpl::is_fetch(MemoryAccessType access) {
+  return zis_fetch_access(access);
+}
+
+bool ModelImpl::is_implicit_access(MemoryAccessType access) {
+  return zis_implicit_access(access);
+}
+
+bool ModelImpl::is_pte_access(MemoryAccessType access) {
+  return zis_pte_access(access);
+}
+
+bool ModelImpl::is_store_conditional(MemoryAccessType access) {
+  return zis_store_conditional(access);
+}
+
+bool ModelImpl::is_virtual_privilege(Privilege privilege) {
+  return privilege == hart::zVirtualUser || privilege == hart::zVirtualSupervisor;
+}
+
+bool ModelImpl::is_memory_exception(const ExceptionContext &ctx) {
+  return zis_memory_exception(ctx.ztrap);
+}
+
+bool ModelImpl::is_fetch_exception(const ExceptionContext &ctx) {
+  return zis_fetch_exception(ctx.ztrap);
+}
+
 void ModelImpl::tick_clock() {
   ztick_clock(UNIT);
 }
@@ -718,6 +812,14 @@ int64_t ModelImpl::vlen() const {
 
 int64_t ModelImpl::physaddrbits_len() const {
   return zphysaddrbits_len;
+}
+
+ModelImpl::Privilege ModelImpl::cur_privilege() const {
+  return zcur_privilege;
+}
+
+uint64_t ModelImpl::privilege_as_bits(ModelImpl::Privilege privilege) {
+  return zprivLevel_to_bits(privilege);
 }
 
 uint64_t ModelImpl::pc() const {

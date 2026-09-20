@@ -185,14 +185,14 @@ function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege
 }
 
 // trap value
-function tval(excinfo : option(xlenbits)) -> xlenbits = {
+private function tval(excinfo : option(xlenbits)) -> xlenbits = {
   match (excinfo) {
     Some(e) => e,
     None()  => zeros()
   }
 }
 
-function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> unit = {
+private function track_trap(p : Privilege, cause : exc_code, trap : TrapCause) -> unit = {
   long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
   match (p) {
     Machine => {
@@ -224,7 +224,10 @@ function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> uni
     },
   };
 
-  trap_callback(is_interrupt, cause);
+  match trap {
+    Interrupt(_)   => interrupt_callback(cause),
+    Exception(ctx) => exception_callback(cause, ctx),
+  }
 }
 
 // Compute the value to write to xtval on a trap.
@@ -316,7 +319,7 @@ function trap_handler_inner(
 
       if currentlyEnabled(Ext_Sdtrig) then tcontrol_trap_into_mmode();
 
-      track_trap(del_priv, is_interrupt, cause);
+      track_trap(del_priv, cause, c);
 
       prepare_trap_vector(del_priv, mcause)
     },
@@ -349,7 +352,7 @@ function trap_handler_inner(
 
       handle_trap_extension(del_priv, pc, ext);
 
-      track_trap(del_priv, is_interrupt, cause);
+      track_trap(del_priv, cause, c);
 
       prepare_trap_vector(del_priv, scause)
     },
@@ -376,7 +379,7 @@ function trap_handler_inner(
 
       handle_trap_extension(del_priv, pc, ext);
 
-      track_trap(del_priv, is_interrupt, cause);
+      track_trap(del_priv, cause, c);
 
       prepare_trap_vector(del_priv, vscause)
     },

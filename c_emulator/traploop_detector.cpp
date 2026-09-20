@@ -13,7 +13,7 @@ void traploop_detector::reset() {
   nested_trap_count = 0;
 }
 
-void traploop_detector::trap_callback(ModelImpl &model, bool, fbits) {
+void traploop_detector::exception_callback(ModelImpl &model, fbits, const ModelImpl::ExceptionContext &) {
   if (nested_trap_count == 0) {
     mepc_at_first_trap = model.mepc();
     sepc_at_first_trap = model.sepc();
