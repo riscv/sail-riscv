@@ -46,6 +46,7 @@ struct run_info {
   steady_clock::time_point init_end = {};
   uint64_t total_insns = 0;
   FILE *trace_log = stdout;
+  FILE *rvvi_text_log = nullptr;
 };
 
 // Initialization result used during startup.

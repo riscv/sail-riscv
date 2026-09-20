@@ -1,0 +1,9 @@
+{
+  "window": "main",
+  "events": [
+    { "match": "csrs" },
+    { "match": "vsetivli" },
+    { "match": "vle32.v", "mem_d": [4, 4, 4, 4, 4, 4, 4, 4], "v_rd": 1 },
+    { "match": "vse32.v", "mem_d": [4, 4, 4, 4, 4, 4, 4, 4] }
+  ]
+}

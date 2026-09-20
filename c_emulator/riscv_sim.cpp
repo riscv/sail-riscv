@@ -7,6 +7,7 @@
 #include "jsoncons/config/version.hpp"
 #include "jsoncons/json.hpp"
 #include "riscv_callbacks_rvfi.h"
+#include "riscv_callbacks_rvvi_text.h"
 #include "riscv_callbacks_stop_at_pc.h"
 #include "riscv_model_impl.h"
 #ifdef SAILCOV
@@ -455,6 +456,9 @@ void close_logs(run_info &run_info) {
   if (run_info.trace_log != stdout) {
     fclose(run_info.trace_log);
   }
+  if (run_info.rvvi_text_log != nullptr) {
+    fclose(run_info.rvvi_text_log);
+  }
 #ifdef SAILCOV
   if (sail_coverage_exit() != 0) {
     fprintf(stderr, "Could not write coverage information!\n");
@@ -800,6 +804,29 @@ InitResult init_model(
       return InitResult::ExitFailure;
     }
     model.register_callback(std::make_shared<rvfi_callbacks>());
+  }
+
+  if (opts.config_print_rvvi_text) {
+    // RVVI-TEXT is a standalone format, so give it a file of its own when one is
+    // requested; otherwise it shares --trace-output, or stdout.
+    FILE *rvvi_log = run_info.trace_log != stdout ? run_info.trace_log : stdout;
+    if (!opts.rvvi_text_log_path.empty()) {
+      run_info.rvvi_text_log = fopen(opts.rvvi_text_log_path.c_str(), "w+");
+      if (run_info.rvvi_text_log == nullptr) {
+        fprintf(stderr, "Cannot create RVVI-TEXT log '%s': %s\n", opts.rvvi_text_log_path.c_str(), strerror(errno));
+        return InitResult::ExitFailure;
+      }
+      fprintf(stderr, "using %s for RVVI-TEXT output.\n", opts.rvvi_text_log_path.c_str());
+      rvvi_log = run_info.rvvi_text_log;
+    }
+    model.register_callback(
+      std::make_shared<rvvi_text_callbacks>(
+        rvvi_log,
+        static_cast<uint64_t>(model.xlen()),
+        model.has_float_registers(),
+        model.has_vector_registers()
+      )
+    );
   }
 
   if (!opts.dtb_file.empty()) {
