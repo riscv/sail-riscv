@@ -1,41 +1,36 @@
 #include "riscv_callbacks_rvvi_text.h"
-
 #include "riscv_model_impl.h"
+#include "sail.h"
 
-#include <cctype>
-#include <gmp.h>
-#include <inttypes.h>
+#include <array>
+#include <iomanip>
+#include <sstream>
 
 rvvi_text_callbacks::rvvi_text_callbacks(FILE *trace_log) : m_trace_log(trace_log) {
 }
 
 std::string rvvi_text_callbacks::hex_value(const sbits &value) {
-  const unsigned nibbles = static_cast<unsigned>((value.len + 3) / 4);
-  char buf[32];
-  snprintf(buf, sizeof(buf), "%0*" PRIX64, nibbles, value.bits);
-  return std::string(buf);
+  std::ostringstream str;
+  const int nibbles = static_cast<int>((value.len + 3) / 4);
+  str << "0x" << std::setw(nibbles) << std::hex << std::setfill('0') << value.bits;
+  return str.str();
 }
 
 std::string rvvi_text_callbacks::hex_value_lbits(const lbits &value) {
-  const unsigned nibbles = static_cast<unsigned>((value.len + 3) / 4);
-  char *raw = mpz_get_str(nullptr, 16, *value.bits);
-  std::string s = raw ? raw : "";
-  free(raw);
-  if (s.length() < nibbles) {
-    s.insert(0, nibbles - s.length(), '0');
-  }
-  for (char &c : s) {
-    c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-  }
-  return s;
+  sail_string sstr = nullptr;
+  CREATE(sail_string)(&sstr);
+  hex_str_upper(&sstr, *value.bits);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
 }
 
-const char *rvvi_text_callbacks::page_type_letter(int64_t level) {
-  static const char *const letters[] = {"K", "M", "G", "T", "P"};
-  if (level >= 0 && level < 5) {
-    return letters[level];
+char rvvi_text_callbacks::page_type_letter(int64_t level) {
+  static std::array<char, 5> letters{'K', 'M', 'G', 'T', 'P'};
+  if (level >= 0 && level < letters.size()) {
+    return letters.at(level);
   }
-  return "?";
+  return '?';
 }
 
 bool rvvi_text_callbacks::access_is_fetch(ModelImpl &model, ModelImpl::MemoryAccessType access) {
@@ -71,10 +66,9 @@ void rvvi_text_callbacks::reset_instruction_buffer() {
 }
 
 void rvvi_text_callbacks::record_reg(char kind, uint64_t index, std::string value) {
-  if (!m_first_fetch_seen) {
-    return;
+  if (m_first_fetch_seen) {
+    m_reg_changes.push_back({kind, index, std::move(value)});
   }
-  m_reg_changes.push_back({kind, index, std::move(value)});
 }
 
 void rvvi_text_callbacks::fetch_callback(ModelImpl &model, sbits opcode) {
@@ -183,11 +177,11 @@ void rvvi_text_callbacks::emit_instruction(ModelImpl &model) {
 
   for (const auto &change : m_reg_changes) {
     if (change.kind == 'C') {
-      fprintf(m_trace_log, " C 0x%llX 0x%s", static_cast<unsigned long long>(change.index), change.value.c_str());
+      fprintf(m_trace_log, " C 0x%llX %s", static_cast<unsigned long long>(change.index), change.value.c_str());
     } else {
       fprintf(
         m_trace_log,
-        " %c %llu 0x%s",
+        " %c %llu %s",
         change.kind,
         static_cast<unsigned long long>(change.index),
         change.value.c_str()
@@ -204,7 +198,7 @@ void rvvi_text_callbacks::emit_instruction(ModelImpl &model) {
     if (access.has_pte) {
       fprintf(
         m_trace_log,
-        " MEM %s %d 0x%0*llX 0x%0*llX 2 PTE 0x%0*llX PT %s",
+        " MEM %s %d 0x%0*llX 0x%0*llX 2 PTE 0x%0*llX PT %c",
         bus,
         nbytes,
         xlen_nibbles,
