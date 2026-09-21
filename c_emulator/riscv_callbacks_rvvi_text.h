@@ -54,7 +54,7 @@ private:
 
   static std::string hex_value(const sbits &value);
   static std::string hex_value_lbits(const lbits &value);
-  static const char *page_type_letter(int64_t level);
+  static char page_type_letter(int64_t level);
   // to_str(access) is "X" for instruction fetches; loads and stores are
   // both data accesses for MEM purposes.
   static bool access_is_fetch(ModelImpl &model, ModelImpl::MemoryAccessType access);
