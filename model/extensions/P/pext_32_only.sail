@@ -1166,10 +1166,10 @@ function clause execute (PWMUL2H_32ONLY(funct4, rs1, rs2, rdp)) = {
     PM2WADDAU_H => rd_val + zero_extend(mulu(rs1_halfword_odd, rs2_halfword_odd)) + zero_extend(mulu(rs1_halfword_even, rs2_halfword_even)),
     PM2WADDSU_H => sign_extend(mulsu(rs1_halfword_odd, rs2_halfword_odd)) + sign_extend(mulsu(rs1_halfword_even, rs2_halfword_even)),
     PM2WADDASU_H => rd_val + sign_extend(mulsu(rs1_halfword_odd, rs2_halfword_odd)) + sign_extend(mulsu(rs1_halfword_even, rs2_halfword_even)),
-    PM2WSUB_H => sign_extend(muls(rs1_halfword_odd, rs2_halfword_odd)) - sign_extend(muls(rs1_halfword_even, rs2_halfword_even)),
-    PM2WSUBA_H => rd_val + sign_extend(muls(rs1_halfword_odd, rs2_halfword_odd)) - sign_extend(muls(rs1_halfword_even, rs2_halfword_even)),
-    PM2WSUB_HX => sign_extend(muls(rs1_halfword_odd, rs2_halfword_even)) - sign_extend(muls(rs1_halfword_even, rs2_halfword_odd)),
-    PM2WSUBA_HX => rd_val + sign_extend(muls(rs1_halfword_odd, rs2_halfword_even)) - sign_extend(muls(rs1_halfword_even, rs2_halfword_odd)),
+    PM2WSUB_H => sign_extend(muls(rs1_halfword_even, rs2_halfword_even)) - sign_extend(muls(rs1_halfword_odd, rs2_halfword_odd)),
+    PM2WSUBA_H => rd_val + sign_extend(muls(rs1_halfword_even, rs2_halfword_even)) - sign_extend(muls(rs1_halfword_odd, rs2_halfword_odd)),
+    PM2WSUB_HX => sign_extend(muls(rs1_halfword_even, rs2_halfword_odd)) - sign_extend(muls(rs1_halfword_odd, rs2_halfword_even)),
+    PM2WSUBA_HX => rd_val + sign_extend(muls(rs1_halfword_even, rs2_halfword_odd)) - sign_extend(muls(rs1_halfword_odd, rs2_halfword_even)),
   };
   X_pair(regidx_of_pregidx(rdp)) = result;
   RETIRE_SUCCESS
