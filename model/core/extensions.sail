@@ -703,6 +703,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     // annotate the chain of dependencies
     Ext_D => 2, // > F
     Ext_Sscounterenw => 2, // > S
+    Ext_Ssdbltrp => 2, // > S
     Ext_Sv39 => 2, // > S
     Ext_Zfh => 2, // > F
     Ext_Zvbb => 2, // > Zve32x
