@@ -561,6 +561,10 @@ mapping clause assembly = ECALL() <-> "ecall"
 
 // *****************************************************************
 
+private function xret_modifies_vsstatus(prev_priv : Privilege, new_priv : Privilege) -> bool =
+  currentlyEnabled(Ext_H) & read_henvcfg()[DTE] == 0b1
+  & (new_priv == VirtualUser | prev_priv == VirtualSupervisor)
+
 /// Clear the double trap bits on MRET or SRET.
 function xret_clear_dbltrp(prev_priv : Privilege, new_priv : Privilege) -> unit = {
   // "executing an mret instruction, or executing an sret instruction while the
@@ -583,6 +587,7 @@ function xret_clear_dbltrp(prev_priv : Privilege, new_priv : Privilege) -> unit 
   // "when SRET is executed in HS-mode, if the new privilege mode is VU, the
   // SRET instruction sets vsstatus.SDT to 0. When executed in VS-mode,
   // vsstatus.SDT is set to 0."
+  // Same goes for MRET: "Additionally, if it is VU, then vsstatus.SDT is also set to 0."
   if currentlyEnabled(Ext_H) & read_henvcfg()[DTE] == 0b1
      & (new_priv == VirtualUser | prev_priv == VirtualSupervisor)
   then vsstatus[SDT] = 0b0;
@@ -618,6 +623,8 @@ function clause execute MRET() = {
     then zicfilp_restore_elp_on_xret(mRET, prev_priv, cur_privilege);
 
     long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
+    if   xret_modifies_vsstatus(prev_priv, cur_privilege)
+    then csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0]);
 
     if   get_config_print_exception()
     then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
@@ -686,7 +693,7 @@ function clause execute SRET() = {
     then zicfilp_restore_elp_on_xret(sRET, prev_priv, cur_privilege);
 
     long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
-    if   privLevel_is_virtual(prev_priv)
+    if   privLevel_is_virtual(prev_priv) | xret_modifies_vsstatus(prev_priv, cur_privilege)
     then csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0])
     else if currentlyEnabled(Ext_H)
     then csr_write_callback("hstatus", hstatus.bits[xlen - 1 .. 0]);
