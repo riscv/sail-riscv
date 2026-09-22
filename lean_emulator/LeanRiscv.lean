@@ -243,11 +243,27 @@ def initializeRegisters (elf: ELF64File): SailM PUnit :=
     writeReg minstretcfg (← (undefined_CountSmcntrpmf ()))
     writeReg mtimecmp (← (undefined_bitvector 64))
     writeReg stimecmp (← (undefined_bitvector 64))
-    writeReg htif_done (← (undefined_bool ()))
-    writeReg htif_exit_code (← (undefined_bitvector 64))
-    writeReg htif_cmd_write (← (undefined_bit ()))
-    writeReg htif_payload_writes (← (undefined_bitvector 4))
+    -- Preserve the HTIF state initialized by sail_model_init. In particular,
+    -- an undefined true htif_done would skip execution of the ELF entirely.
     writeReg satp (← (undefined_bitvector ((2 ^i 2) *i 8)))
+
+    -- Hypervisor registers without Sail initializers, including registers read
+    -- during reset and interrupt polling even when executing in Machine mode.
+    writeReg vstvec (← (undefined_Mtvec ()))
+    writeReg vsscratch (← (undefined_bitvector 64))
+    writeReg vsepc (← (undefined_bitvector 64))
+    writeReg vscause (← (undefined_Mcause ()))
+    writeReg vstval (← (undefined_bitvector 64))
+    writeReg hcounteren (← (undefined_Counteren ()))
+    writeReg htimedelta (← (undefined_bitvector 64))
+    writeReg htval (← (undefined_bitvector 64))
+    writeReg htinst (← (undefined_bitvector 64))
+    writeReg vstimecmp (← (undefined_bitvector 64))
+    writeReg hvip (← (undefined_Minterrupts ()))
+    writeReg hedeleg (← (undefined_Medeleg ()))
+    writeReg hideleg (← (undefined_Minterrupts ()))
+    writeReg vsie (← (undefined_bitvector 64))
+    writeReg vsip (← (undefined_bitvector 64))
 
 def my_main (elf: ELF64File) : SailM Int :=
   open LeanRV64DExecutable.Functions in
