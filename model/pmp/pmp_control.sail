@@ -75,12 +75,10 @@ private function pmpRangeMatch(
 
 // Bits pmpaddr[G-1..0] do not affect TOR address matching, regardless of
 // whether the register supplies the lower or upper bound.
-private function pmpTORBound(addr : xlenbits, grain : range(0, 63)) -> xlenbits =
-  if grain == 0 then addr
-  else {
-    let mask : xlenbits = zero_extend(ones(min(grain, xlen)));
-    addr & ~(mask)
-  }
+private function pmpTORBound(addr : xlenbits, grain : range(0, 63)) -> xlenbits = {
+  let mask : xlenbits = zero_extend(ones(min(grain, xlen)));
+  addr & ~(mask)
+}
 
 $[test]
 private function test_pmpTORBound() -> unit = {
