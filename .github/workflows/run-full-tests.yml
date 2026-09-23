@@ -32,6 +32,7 @@ jobs:
             RISCV_VECTOR_TESTS_V256_E64,
             RISCV_VECTOR_TESTS_V512_E64,
           ]
+
     steps:
       - name: Check out repository code
         uses: actions/checkout@v7
@@ -39,15 +40,10 @@ jobs:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
 
-      - name: Get Sail version
-        run: |
-          echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> "$GITHUB_ENV"
-
       - name: Common setup
         uses: ./.github/actions/sail-setup
         with:
           install-clang: "true"
-          sail-version: "${{ env.SAIL_VERSION }}"
 
       - name: Build simulator
         run: |

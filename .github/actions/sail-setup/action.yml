@@ -7,7 +7,7 @@ inputs:
     default: "4.1.2"
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
-    required: true
+    required: false
   install-clang:
     description: "Install latest Clang"
     required: false
@@ -93,33 +93,43 @@ runs:
           cmake_suffix="universal"
         fi
         curl --location https://github.com/Kitware/CMake/releases/download/v${{ inputs.cmake-version }}/cmake-${{ inputs.cmake-version }}-${{ runner.os }}-$cmake_suffix.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+
+    - name: Set Sail version
+      shell: bash
+      run: |
+        if [ -n ${{ inputs.sail-version }} ]; then
+          echo "SAIL_VERSION=$(cat cmake/sail_required_version.txt)" >> $GITHUB_ENV
+        else
+          echo "SAIL_VERSION=${{ inputs.sail-version }}" >>  $GITHUB_ENV
+        fi
+
     - name: Restore cached opam (macOS or latest Sail)
-      if: runner.os == 'macOS' || inputs.sail-version == 'latest'
+      if: runner.os == 'macOS' || env.SAIL_VERSION == 'latest'
       id: cache-opam-restore
       uses: actions/cache/restore@v4
       with:
         path: ~/.opam
-        key: ${{ runner.os }}-${{ runner.arch }}-cmake-${{ inputs.cmake-version }}-sail-${{ inputs.sail-version }}-opam
+        key: ${{ runner.os }}-${{ runner.arch }}-cmake-${{ inputs.cmake-version }}-sail-${{ env.SAIL_VERSION }}-opam
 
     - name: Install Sail (Linux binary)
-      if: runner.os == 'Linux' && inputs.sail-version != 'latest'
+      if: runner.os == 'Linux' && env.SAIL_VERSION != 'latest'
       shell: bash
       run: |
         sudo mkdir -p /usr/local
-        curl --location https://github.com/rems-project/sail/releases/download/${{ inputs.sail-version }}-binary/sail-$(uname)-$(arch).tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+        curl --location https://github.com/rems-project/sail/releases/download/${{ env.SAIL_VERSION }}-binary/sail-$(uname)-$(arch).tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
 
     - name: Install Sail (macOS opam)
-      if: runner.os == 'macOS' && steps.cache-opam-restore.outputs.cache-hit != 'true' && inputs.sail-version != 'latest'
+      if: runner.os == 'macOS' && steps.cache-opam-restore.outputs.cache-hit != 'true' && env.SAIL_VERSION != 'latest'
       shell: bash
       run: |
         opam init --auto-setup --bare
         opam switch create default 5.3.0
         eval $(opam env)
         opam update
-        opam install -y sail.${{ inputs.sail-version }}
+        opam install -y sail.${{ env.SAIL_VERSION }}
 
     - name: Install opam (latest Sail)
-      if: inputs.sail-version == 'latest'
+      if: env.SAIL_VERSION == 'latest'
       shell: bash
       run: |
         if [ "${{ runner.os }}" = "Linux" ]; then
@@ -129,14 +139,14 @@ runs:
         fi
 
     - name: Setup opam (latest Sail)
-      if: inputs.sail-version == 'latest' && steps.cache-opam-restore.outputs.cache-hit != 'true'
+      if: env.SAIL_VERSION == 'latest' && steps.cache-opam-restore.outputs.cache-hit != 'true'
       shell: bash
       run: |
         opam init --yes --no-setup --shell=sh --compiler=5.3.0
         opam install dune
 
     - name: Install Sail (latest Sail)
-      if: inputs.sail-version == 'latest'
+      if: env.SAIL_VERSION == 'latest'
       shell: bash
       run: |
         git clone https://github.com/rems-project/sail.git
@@ -146,7 +156,7 @@ runs:
 
     - name: Save cached opam (macOS or latest Sail)
       # Update cache only on the master branch
-      if: (runner.os == 'macOS' || inputs.sail-version == 'latest') && github.ref == 'refs/heads/master'
+      if: (runner.os == 'macOS' || env.SAIL_VERSION == 'latest') && github.ref == 'refs/heads/master'
       id: cache-opam-save
       uses: actions/cache/save@v4
       with:
