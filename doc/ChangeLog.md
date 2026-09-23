@@ -1,8 +1,8 @@
 # Release notes for the next version
 
 - The following extensions have been added:
-  Smdbltrp
-  Ssdbltrp
+  - Smdbltrp
+  - Ssdbltrp
 
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `mcountinhibit` CSR is supported, and if so, which
