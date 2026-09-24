@@ -215,7 +215,6 @@ function reverse_bits (xs)  = {
   ys
 }
 
-overload operator * = {mult_atom, mult_int}
 // quot_round_zero and rem_round_zero are deliberately not
 // added to these overloads to avoid accidentally doing
 // division or modulo with negative numbers which is almost
