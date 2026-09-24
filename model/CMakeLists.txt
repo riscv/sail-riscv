@@ -420,9 +420,6 @@ foreach (xlen IN ITEMS 32 64)
     set(lean_sail_common
         --config ${config_file}
         --lean
-        # G-stage translation cannot recursively translate PTE addresses again.
-        # Specialize its constant stage argument to break the VS/G-stage cycle.
-        -const_prop_mutrec translate_g_stage
         --memo-z3
         --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
         --lean-force-output
