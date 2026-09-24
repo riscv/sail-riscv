@@ -1018,17 +1018,12 @@ function clause is_CSR_accessible(0x200, _, _) = currentlyEnabled(Ext_H) // vsst
 function clause read_CSR(0x200) = lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]
 function clause write_CSR(0x200, value) = { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
 
-function read_real_sstatus() -> Sstatus =
-  lower_mstatus(mstatus, false)
-
-function read_nominal_sstatus() -> Sstatus =
-  if inVirtualPrivilege()
-  then lower_mstatus(vsstatus, true)
-  else lower_mstatus(mstatus, false)
-
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
-function clause read_CSR(0x100) = read_nominal_sstatus().bits[xlen - 1 .. 0]
+function clause read_CSR(0x100) =
+  (if inVirtualPrivilege()
+   then lower_mstatus(vsstatus, true)
+   else lower_mstatus(mstatus, false)).bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) =
   if inVirtualPrivilege()
   then { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }

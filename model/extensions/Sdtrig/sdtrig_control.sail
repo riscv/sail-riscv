@@ -18,7 +18,7 @@ function prevent_reentrance(act: Trig_Action, priv : Privilege) -> bool = {
     Use_tcontrol          => priv == Machine & tcontrol[mte] == 0b0,
     Use_interrupt_enables => match priv {
       Machine             => mstatus[MIE] == 0b0,
-      Supervisor          => medeleg[Breakpoint] == 0b1 & read_real_sstatus()[SIE] == 0b0,
+      Supervisor          => medeleg[Breakpoint] == 0b1 & mstatus[SIE] == 0b0,
       VirtualSupervisor   => medeleg[Breakpoint] == 0b1 & hedeleg[Breakpoint] == 0b1 & vsstatus[SIE] == 0b0,
       VirtualUser         => false,
       User                => false,
