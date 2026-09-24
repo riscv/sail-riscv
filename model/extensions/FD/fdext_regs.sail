@@ -111,7 +111,7 @@ function dirty_fd_context() -> unit = {
   assert(hartSupports(Ext_F));
   mstatus[FS] = extStatus_map(Dirty);
   mstatus[SD] = 0b1;
-  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+  long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
   // When V=1 both vsstatus.FS and mstatus.FS are in effect, and modifying
   // floating-point state must set both to Dirty.
   if inVirtualPrivilege() then {
