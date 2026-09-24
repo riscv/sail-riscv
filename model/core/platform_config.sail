@@ -152,9 +152,9 @@ let hardware_error_exception_writes_xtval : bool = config base.xtval_nonzero.har
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
 
 // Sdtrig configuration
-let sdtrig_has_icount   : bool = config extensions.Sdtrig.icount.supported
-let sdtrig_has_etrigger : bool = config extensions.Sdtrig.etrigger.supported
-let sdtrig_has_itrigger : bool = config extensions.Sdtrig.itrigger.supported
+let sdtrig_has_icount    : bool = config extensions.Sdtrig.icount.supported
+let sdtrig_has_etrigger  : bool = config extensions.Sdtrig.etrigger.supported
+let sdtrig_has_itrigger  : bool = config extensions.Sdtrig.itrigger.supported
 
 // Sdtrig context CSRs
 let sdtrig_has_mcontext : bool = config extensions.Sdtrig.mcontext.supported

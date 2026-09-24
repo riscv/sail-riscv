@@ -127,6 +127,20 @@ mapping hit_bits : bits(2) <-> Hit = {
   0b11 <-> Hit_imm_after,
 }
 
+mapping hit_name : Hit <-> string = {
+  Hit_false     <-> "not-hit",
+  Hit_before    <-> "hit-before",
+  Hit_after     <-> "hit-after",
+  Hit_imm_after <-> "hit-imm-after",
+}
+
+enum Compare_Selection = {Compare_Address, Compare_Data}
+
+mapping compare_select_bits : bits(1) <-> Compare_Selection = {
+  0b0 <-> Compare_Address,
+  0b1 <-> Compare_Data,
+}
+
 type Trig_Match_Size = {0, 8, 16, 32, 48, 64, 128}
 
 mapping trig_match_size : bits(3) <-> Trig_Match_Size = {
@@ -138,6 +152,10 @@ mapping trig_match_size : bits(3) <-> Trig_Match_Size = {
   0b101 <-> 64,
   0b110 <-> 128,
 }
+
+function is_supported_match_size(s : bits(3)) -> bool =
+  // TODO: config options
+  trig_match_size_forwards_matches(s)
 
 enum Trig_Match = {
   TM_EQ, TM_NAPOT, TM_GE, TM_LT, TM_MASK_LO, TM_MASK_HI,
@@ -156,6 +174,10 @@ mapping trig_match_val : bits(4) <-> Trig_Match = {
   0b1100 <-> TM_NOT_MASK_LO,
   0b1101 <-> TM_NOT_MASK_HI,
 }
+
+function is_supported_match_val(m : bits(4)) -> bool =
+  // TODO: config options
+  trig_match_val_forwards_matches(m)
 
 // Trigger types and their layouts.
 //
@@ -185,25 +207,25 @@ function TDisabled_to_bits(t : TDisabled) -> TDisabled_bits =
   ]
 
 struct MControl6 = {
-  dmode      : bool,
-  uncertain  : bool,
-  hit        : Hit,
-  vs         : bool,
-  vu         : bool,
-  select     : bool,
-  size       : Trig_Match_Size,
-  action     : Trig_Action,
-  chain      : bool,
-  t_match    : Trig_Match,
-  m          : bool,
-  uncertainm : bool,
-  s          : bool,
-  u          : bool,
-  execute    : bool,
-  store      : bool,
-  load       : bool,
-  tdata2     : xlenbits,
-  tdata3     : xlenbits,
+  dmode       : bool,
+  uncertain   : bool,
+  hit         : Hit,
+  vs          : bool,
+  vu          : bool,
+  select      : Compare_Selection,
+  size        : Trig_Match_Size,
+  action      : Trig_Action,
+  chain       : bool,
+  t_match     : Trig_Match,
+  m           : bool,
+  uncertainen : bool,
+  s           : bool,
+  u           : bool,
+  execute     : bool,
+  store       : bool,
+  load        : bool,
+  tdata2      : xlenbits,
+  tdata3      : xlenbits,
 }
 
 bitfield MControl6_bits : xlenbits = {
@@ -220,7 +242,7 @@ bitfield MControl6_bits : xlenbits = {
   chain         : 11,
   t_match       : 10 .. 7,
   m             : 6,
-  uncertainm    : 5,
+  uncertainen   : 5,
   s             : 4,
   u             : 3,
   execute       : 2,
@@ -231,25 +253,25 @@ bitfield MControl6_bits : xlenbits = {
 function MControl6_to_bits(t : MControl6) -> MControl6_bits =
   let hit = hit_bits(t.hit) in
   [Mk_MControl6_bits(zeros()) with
-    trig_type  = trig_type_bits(TT_mcontrol6),
-    dmode      = bool_bit(t.dmode),
-    uncertain  = bool_bit(t.uncertain),
-    hit1       = [hit[1]],
-    vs         = bool_bit(t.vs),
-    vu         = bool_bit(t.vu),
-    hit0       = [hit[0]],
-    select     = bool_bit(t.select),
-    size       = trig_match_size(t.size),
-    action     = trig_action(t.action)[3..0],
-    chain      = bool_bit(t.chain),
-    t_match    = trig_match_val(t.t_match),
-    m          = bool_bit(t.m),
-    uncertainm = bool_bit(t.uncertainm),
-    s          = bool_bit(t.s),
-    u          = bool_bit(t.u),
-    execute    = bool_bit(t.execute),
-    store      = bool_bit(t.store),
-    load       = bool_bit(t.load),
+    trig_type   = trig_type_bits(TT_mcontrol6),
+    dmode       = bool_bit(t.dmode),
+    uncertain   = bool_bit(t.uncertain),
+    hit1        = [hit[1]],
+    vs          = bool_bit(t.vs),
+    vu          = bool_bit(t.vu),
+    hit0        = [hit[0]],
+    select      = compare_select_bits(t.select),
+    size        = trig_match_size(t.size),
+    action      = trig_action(t.action)[3..0],
+    chain       = bool_bit(t.chain),
+    t_match     = trig_match_val(t.t_match),
+    m           = bool_bit(t.m),
+    uncertainen = bool_bit(t.uncertainen),
+    s           = bool_bit(t.s),
+    u           = bool_bit(t.u),
+    execute     = bool_bit(t.execute),
+    store       = bool_bit(t.store),
+    load        = bool_bit(t.load),
   ]
 
 let icount_count_is_hardwired_one : bool = config extensions.Sdtrig.icount.count_hardwired_one
@@ -379,10 +401,10 @@ union Trigger = {
 
 function trigger_name(t : Trigger) -> string =
   match t {
-    T_disabled(_) => "disabled",
-    T_icount(_)   => "icount",
-    T_itrigger(_) => "itrigger",
-    T_etrigger(_) => "etrigger",
+    T_disabled(_)  => "disabled",
+    T_icount(_)    => "icount",
+    T_itrigger(_)  => "itrigger",
+    T_etrigger(_)  => "etrigger",
   }
 
 let trig_reset_val : Trigger =
