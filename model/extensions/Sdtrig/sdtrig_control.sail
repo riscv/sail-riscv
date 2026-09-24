@@ -15,13 +15,13 @@ function prevent_reentrance(act: Trig_Action, priv : Privilege) -> bool = {
   if act != TA_Breakpoint then return false;
 
   match sdtrig_breakpoint_reentrancy {
-    Use_tcontrol => priv == Machine & tcontrol[mte] == 0b0,
+    Use_tcontrol          => priv == Machine & tcontrol[mte] == 0b0,
     Use_interrupt_enables => match priv {
-      Machine            => mstatus[MIE] == 0b0,
-      Supervisor         => medeleg[Breakpoint] == 0b1 & read_real_sstatus()[SIE] == 0b0,
-      VirtualSupervisor  => medeleg[Breakpoint] == 0b1 & hedeleg[Breakpoint] == 0b1 & vsstatus[SIE] == 0b0,
-      VirtualUser        => false,
-      User               => false,
+      Machine             => mstatus[MIE] == 0b0,
+      Supervisor          => medeleg[Breakpoint] == 0b1 & read_real_sstatus()[SIE] == 0b0,
+      VirtualSupervisor   => medeleg[Breakpoint] == 0b1 & hedeleg[Breakpoint] == 0b1 & vsstatus[SIE] == 0b0,
+      VirtualUser         => false,
+      User                => false,
     },
     No_reentrancy_support => false,
   }
@@ -29,7 +29,7 @@ function prevent_reentrance(act: Trig_Action, priv : Privilege) -> bool = {
 
 // icount triggers
 
-function icount_priv_check(t : ICount, priv : Privilege, act : Trig_Action) -> bool = {
+function icount_match(t : ICount, priv : Privilege, act : Trig_Action) -> bool = {
   not(prevent_reentrance(act, priv)) & (match priv {
     Machine           => t.m,
     Supervisor        => t.s,
@@ -44,27 +44,24 @@ function match_icount_triggers(priv : Privilege) -> unit = {
 
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
-      T_icount(t) => {
-        if icount_priv_check(t, priv, t.action) then {
-          let new_t =
+      T_icount(t) =>
+        if icount_match(t, priv, t.action) then {
+          // As implemented, this trigger cannot match for multiple
+          // events during a single instruction.
+          let new_t : ICount = match unsigned(t.count) {
             // When count is 0, it stays at 0 until explicitly written.
-            if t.count == zeros()
-            then t
-            else
-              // As implemented, this trigger cannot match for
-              // multiple events during a single instruction.
-              if t.count != zero_extend(0b1)
-              then {t with count = t.count - 1}
-              else {t with
-                     count = if icount_count_is_hardwired_one then t.count else zeros(),
-                     pending = true};
+            0 => t,
+            1 => {t with
+                   count = if icount_count_is_hardwired_one then t.count else zeros(),
+                   pending = true},
+            _ => {t with count = t.count - 1},
+          };
           triggers[i] = T_icount(new_t);
 
           if get_config_print_trigger()
           then print_log("Matched icount at index #" ^ dec_str(i) ^ " with action " ^ trigger_action_name(t.action));
           trigger_match_callback(i);
-        }
-      },
+        },
       _ => (),
     }
   }
@@ -74,7 +71,7 @@ function match_icount_triggers(priv : Privilege) -> unit = {
 
 // TODO: handle NMI interrupts.
 
-function itrigger_priv_check(t : ITrigger, priv : Privilege, intr : InterruptType) -> bool = {
+function itrigger_match(t : ITrigger, priv : Privilege, intr : InterruptType) -> bool = {
   let priv_match : bool = not(prevent_reentrance(t.action, priv)) & (match priv {
     Machine           => t.m,
     Supervisor        => t.s,
@@ -92,7 +89,7 @@ function match_itrigger_triggers(priv : Privilege, intr : InterruptType) -> unit
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
       T_itrigger(t) =>
-        if itrigger_priv_check(t, priv, intr) then {
+        if itrigger_match(t, priv, intr) then {
           triggers[i] = T_itrigger({t with hit = true, match_val = Some(intr)});
 
           if get_config_print_trigger()
@@ -106,7 +103,7 @@ function match_itrigger_triggers(priv : Privilege, intr : InterruptType) -> unit
 
 // etrigger
 
-private function etrigger_priv_check(t : ETrigger, priv : Privilege, e : ExceptionType) -> bool = {
+private function etrigger_match(t : ETrigger, priv : Privilege, e : ExceptionType) -> bool = {
   let priv_match : bool = not(prevent_reentrance(t.action, priv)) & (match priv {
     Machine           => t.m,
     Supervisor        => t.s,
@@ -124,7 +121,7 @@ function match_etrigger_triggers(priv : Privilege, exc : ExceptionType) -> unit 
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
       T_etrigger(t) =>
-        if etrigger_priv_check(t, priv, exc) then {
+        if etrigger_match(t, priv, exc) then {
           triggers[i] = T_etrigger({t with hit = true, match_val = Some(exc)});
 
           if get_config_print_trigger()
@@ -142,8 +139,8 @@ function fire_trigger(idx : trigger_index) -> unit = {
   let (t, action) : (Trigger, Trig_Action) = match triggers[idx] {
     T_icount(t) => {
       let t = if icount_count_is_hardwired_one
-               then {t with m = false, s = false, u = false, vs = false, vu = false}
-               else t;
+              then {t with m = false, s = false, u = false, vs = false, vu = false}
+              else t;
       (T_icount({t with pending = false, hit = true}), t.action)
     },
     T_itrigger(t) => {
@@ -172,7 +169,6 @@ type pending_trigger_info = (Trig_Action, trigger_index, xlenbits)
 function find_highest_priority_pending_trigger(priv : Privilege) -> option(pending_trigger_info) = {
   if not(currentlyEnabled(Ext_Sdtrig)) then return None();
   // TODO: Triggers do not fire while in Debug Mode.
-  // if (currentlyEnabled(Ext_Sdext)) then return None();
 
   // TODO: Cover mcontrol6 `after (previous instruction)`
   // when mcontrol6 is added.
@@ -187,7 +183,7 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
       T_disabled(_) => (),
       T_icount(t) =>
         // icount triggers fire in a mode where the trigger is enabled.
-        if t.pending & icount_priv_check(t, priv, t.action) then {
+        if t.pending & icount_match(t, priv, t.action) then {
           trig_info = Some(t.action, i, zeros());
           fire_trigger(i);
         },
