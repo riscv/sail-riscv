@@ -2,9 +2,9 @@ name: "sail-riscv CI setup"
 description: "Composite action to install packages, setup CMake, and install/build Sail"
 inputs:
   cmake-version:
-    description: "CMake version to install"
+    description: 'CMake version to install (use "default" for the latest version)'
     required: false
-    default: "4.1.2"
+    default: "default"
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
     required: false
@@ -19,19 +19,19 @@ inputs:
 #                          | RISC-V Model                 |sail-riscv-tests|first-party-tests|   Rocq    |    Lean        | Linux boot
 #--------------------------------------------------------------------------------------------------------------------------------------
 # ubuntu-22.04 (x86_64):   | Sail:  default (binary)      |                |                 |           |                |
-#                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
+#                          | CMake: default + 3.20.0      |       x        |       x         |           |                |
 #                          | Clang: latest (apt.llvm.org) |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # ubuntu-24.04-arm:        | Sail:  default (binary)      |                |                 |           |                |
-#                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
+#                          | CMake: default + 3.20.0      |       x        |       x         |           |                |
 #                          | Clang: latest (apt.llvm.org) |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # macos-latest:            | Sail:  default (opam)        |                |                 |           |                |
-#                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
+#                          | CMake: default + 3.20.0      |       x        |       x         |           |                |
 #                          | Clang: brew versions         |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # ubuntu-latest:           | Sail:  default (binary)      |                |                 |           | Sail: latest   |
-#                          | CMake: (4.1.2)               |       x        |       x         |           | CMake: (4.1.2) |    x
+#                          | CMake: (default)             |       x        |       x         |           | CMake: (default) |    x
 #                          | Clang: latest (apt.llvm.org) |                |                 |           | Clang: -       |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # ubuntu-24.04:            | Sail:  (default)             |                |                 |           |                |
@@ -47,6 +47,10 @@ inputs:
 #--------------------------------------------------------------------------------------------------------------------------------------
 # rockylinux:8.9           | Sail:  default               |                |                 |           |                |
 # runner: ubuntu-24.04-arm | CMake: 3.20.0                |       x        |                 |           |                |
+#                          | Clang: -                     |                |                 |           |                |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# rocq/rocq-prover:9.0.1   | Sail:  (default)             |                |                 |           |                |
+# runner: ubuntu-latest    | CMake: (default)             |                |                 | coq 9.0.1 |                |
 #                          | Clang: -                     |                |                 |           |                |
 
 runs:
@@ -84,6 +88,19 @@ runs:
         brew install opam llvm lld
         echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
+    - name: Resolve CMake version
+      id: resolve_cmake
+      env:
+        CMAKE_DEFAULT_VERSION: "4.1.2"
+      shell: bash
+      run: |
+        if [ "${{ inputs.cmake-version }}" = "default" ]; then
+          cmake_version="$CMAKE_DEFAULT_VERSION"
+        else
+          cmake_version="${{ inputs.cmake-version }}"
+        fi
+        echo "version=$cmake_version" >> "$GITHUB_OUTPUT"
+
     - name: Install CMake
       shell: bash
       run: |
@@ -92,14 +109,14 @@ runs:
         elif [ "${{ runner.os }}" = "macOS" ]; then
           cmake_suffix="universal"
         fi
-        curl --location https://github.com/Kitware/CMake/releases/download/v${{ inputs.cmake-version }}/cmake-${{ inputs.cmake-version }}-${{ runner.os }}-$cmake_suffix.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
+        curl --location https://github.com/Kitware/CMake/releases/download/v${{ steps.resolve_cmake.outputs.version }}/cmake-${{ steps.resolve_cmake.outputs.version }}-${{ runner.os }}-$cmake_suffix.tar.gz | sudo tar xvz --directory=/usr/local --strip-components=1
     - name: Restore cached opam (macOS or latest Sail)
       if: runner.os == 'macOS' || inputs.sail-version == 'latest'
       id: cache-opam-restore
       uses: actions/cache/restore@v4
       with:
         path: ~/.opam
-        key: ${{ runner.os }}-${{ runner.arch }}-cmake-${{ inputs.cmake-version }}-sail-${{ inputs.sail-version }}-opam
+        key: ${{ runner.os }}-${{ runner.arch }}-cmake-${{ steps.resolve_cmake.outputs.version }}-sail-${{ inputs.sail-version }}-opam
 
     - name: Install Sail (Linux binary)
       if: runner.os == 'Linux' && inputs.sail-version != 'latest'
