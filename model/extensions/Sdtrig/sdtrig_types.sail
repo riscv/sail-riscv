@@ -518,14 +518,15 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
     TT_icount => {
       let v = Mk_ICount_bits(tdata1.bits);
       let act = v[action];
+      let count = if icount_count_is_hardwired_one then zero_extend(0x1) else v[count];
       if is_supported_action(act) then {
         T_icount(struct {
           dmode = false,
           vs = if currentlyEnabled(Ext_H) then bool_bit(v[vs]) else false,
           vu = if currentlyEnabled(Ext_H) then bool_bit(v[vu]) else false,
           hit = bool_bit(v[hit]),
-          count = if icount_count_is_hardwired_one then zero_extend(0x1) else v[count],
-          new_count = None(),
+          count = count,
+          new_count = Some(count),
           m = bool_bit(v[m]),
           pending = bool_bit(v[pending]),
           s = if currentlyEnabled(Ext_S) then bool_bit(v[s]) else false,
@@ -612,7 +613,7 @@ function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbit
     T_icount(s) => {
       let data = Mk_ICount_bits(tdata1);
       let hit = data[hit];
-      let count = data[count];
+      let count = if icount_count_is_hardwired_one then zero_extend(0x1) else data[count];
       if get_config_print_trigger()
       then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": hit <- " ^ bits_str(hit) ^ ", count <- " ^ bits_str(count));
       T_icount({s with hit = bool_bit(hit), new_count = Some(count)})

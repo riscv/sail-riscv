@@ -230,12 +230,15 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
 function update_triggers() -> unit = {
   match written_trigger_idx {
     None()    => (),
-    Some(idx) => match triggers[idx] {
-      T_icount(t) => match t.new_count {
-        Some(c) => triggers[idx] = T_icount({t with count = c, new_count = None()}),
-        None()  => (),
-      },
-      _ => (),
-    }
+    Some(idx) => {
+      match triggers[idx] {
+        T_icount(t) => match t.new_count {
+          Some(c) => triggers[idx] = T_icount({t with count = c, new_count = None()}),
+          None()  => (),
+        },
+        _ => (),
+      };
+      written_trigger_idx = None()
+    },
   }
 }
