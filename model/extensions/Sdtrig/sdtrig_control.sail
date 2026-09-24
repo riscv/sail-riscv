@@ -158,11 +158,9 @@ function fire_trigger(idx : trigger_index) -> unit = {
   trigger_fire_callback(idx);
 }
 
-// Finds and fires the highest priority pending triggers.  This
-// currently covers etrigger, icount and itrigger triggers (which are
-// all of the same priority).  It returns the index and `tval` for the
-// last one, regardless of action. For the `TA_Enter_Debug` action,
-// the `tval` should not be used.
+// Find and fire the highest priority pending triggers, and return the
+// selected action, trigger index and `tval`.  If the selected action is
+// not `TA_Breakpoint`, then the `tval` should not be used.
 
 type pending_trigger_info = (Trig_Action, trigger_index, xlenbits)
 
@@ -170,13 +168,27 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
   if not(currentlyEnabled(Ext_Sdtrig)) then return None();
   // TODO: Triggers do not fire while in Debug Mode.
 
+  assert(num_triggers > 0);
+
   // TODO: Cover mcontrol6 `after (previous instruction)`
   // when mcontrol6 is added.
   // TODO: When TA_Enter_Debug when Sdext is supported and TA_Enter_Debug
   // and TA_Breakpoint actions are both pending, make both actions
   // take place.
 
-  var trig_info : option(pending_trigger_info) = None();
+  // Currently, all triggers are at the same priority.
+  //
+  // "If more than one of these triggers has action=0 (TA_Breakpoint),
+  // then tval is updated in accordance with one of them, but which
+  // one is unspecified."
+  //
+  // Here, we pick `tval` from the last fired trigger with an action
+  // of `TA_Breakpoint`.
+
+  var found_pending : bool = false;
+  var pending_index : trigger_index = 0;
+  var pending_action : Trig_Action = TA_Breakpoint;
+  var pending_tval : xlenbits = zeros();
 
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
@@ -184,23 +196,33 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
       T_icount(t) =>
         // icount triggers fire in a mode where the trigger is enabled.
         if t.pending & icount_match(t, priv, t.action) then {
-          trig_info = Some(t.action, i, zeros());
+          found_pending = true;
+          pending_index  = i;
+          pending_action = t.action;
+          if pending_action == TA_Breakpoint then pending_tval = zeros();
           fire_trigger(i);
         },
       T_itrigger(t) =>
         if t.hit & is_some(t.match_val) & not(prevent_reentrance(t.action, priv)) then {
-          trig_info = Some(t.action, i, zeros());
+          found_pending = true;
+          pending_index  = i;
+          pending_action = t.action;
+          if pending_action == TA_Breakpoint then pending_tval = zeros();
           fire_trigger(i);
         },
       T_etrigger(t) =>
         if t.hit & is_some(t.match_val) & not(prevent_reentrance(t.action, priv)) then {
-          trig_info = Some(t.action, i, zeros());
+          found_pending = true;
+          pending_index  = i;
+          pending_action = t.action;
+          if pending_action == TA_Breakpoint then pending_tval = zeros();
           fire_trigger(i);
         },
     }
   };
 
-  trig_info
+  if found_pending then Some(pending_action, pending_index, pending_tval)
+  else None()
 }
 
 // update at the end of a step
