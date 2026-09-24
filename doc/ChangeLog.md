@@ -1,9 +1,15 @@
 # Release notes for the next version
 
-- Sdtrig now supports context matching in `textra32` and `textra64`,
-  allowing more precise control over when triggers match and fire.
+- Sdtrig now supports the `mcontrol6` trigger and context matching in
+  `textra32` and `textra64`, allowing more precise control over when
+  triggers match and fire.
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Configuration options have been added for `mcontrol6` in Sdtrig;
+    see `extensions.Sdtrig.mcontrol6`.
+  - The supported `textra` context matches for `mhselect` and `sselect`
+    and the number of implemented `mhvalue` and `svalue` bits can
+    be configured, see `extensions.Sdtrig.textra`.
   - Each bit of `mstateen0`, `hstateen0` and `sstateen0` can now be
     configured as writable, read-only zero or read-only one (`CSRBit_Writable`,
     `CSRBit_ReadOnlyZero` or `CSRBit_ReadOnlyOne`), see `mstateen0`,
@@ -12,9 +18,6 @@
     configured the same way, see `mstateen1`, `mstateen2` and `mstateen3`
     under `extensions.Stateen`. `C_readonly_zero` and `SE0_readonly_zero`
     have been removed as part of this change.
-  - The supported `textra` context matches for `mhselect` and `sselect`
-    and the number of implemented `mhvalue` and `svalue` bits can
-    be configured, see `extensions.Sdtrig.textra`.
   - Whether an implicit access to a VS-stage PTE sets the D bit of a
     writable G-stage PTE can now be specified, see
     `extensions.H.implicit_vs_pte_access_sets_gstage_d`.

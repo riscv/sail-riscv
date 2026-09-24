@@ -88,3 +88,55 @@ function count_ones(x) = {
   };
   count
 }
+
+val lowest_index_of : forall 'n, 'n >= 0. (bits('n), bits(1)) -> option(range(0, 'n - 1))
+function lowest_index_of(x, b) = {
+  foreach (i from 0 to ('n - 1)) {
+    if x[i] == b then return Some(i);
+  };
+  None()
+}
+
+$[test]
+private function test_lowest_index_of() -> unit = {
+  assert(lowest_index_of(0x0, 0b1) == None());
+  assert(lowest_index_of(0x0, 0b0) == Some(0));
+  assert(lowest_index_of(0x1, 0b0) == Some(1));
+  assert(lowest_index_of(0x8, 0b0) == Some(0));
+  assert(lowest_index_of(0xe, 0b0) == Some(0));
+  assert(lowest_index_of(0x7, 0b0) == Some(3));
+}
+
+val highest_index_of : forall 'n, 'n >= 0. (bits('n), bits(1)) -> option(range(0, 'n - 1))
+function highest_index_of(x, b) = {
+  foreach (i from ('n - 1) downto 0) {
+    if x[i] == b then return Some(i);
+  };
+  None()
+}
+
+$[test]
+private function test_highest_index_of() -> unit = {
+  assert(highest_index_of(0x0, 0b1) == None());
+  assert(highest_index_of(0x0, 0b0) == Some(3));
+  assert(highest_index_of(0x1, 0b0) == Some(3));
+  assert(highest_index_of(0x8, 0b0) == Some(2));
+  assert(highest_index_of(0xe, 0b0) == Some(0));
+  assert(highest_index_of(0x7, 0b0) == Some(3));
+}
+
+val least_significant_zero : forall 'n, 'n >= 0. (bits('n)) -> option(range(0, 'n - 1))
+function least_significant_zero(x) =
+  lowest_index_of(x, 0b0)
+
+val least_significant_one : forall 'n, 'n >= 0. (bits('n)) -> option(range(0, 'n - 1))
+function least_significant_one(x) =
+  lowest_index_of(x, 0b1)
+
+val most_significant_zero : forall 'n, 'n >= 0. (bits('n)) -> option(range(0, 'n - 1))
+function most_significant_zero(x) =
+  highest_index_of(x, 0b0)
+
+val most_significant_one : forall 'n, 'n >= 0. (bits('n)) -> option(range(0, 'n - 1))
+function most_significant_one(x) =
+  highest_index_of(x, 0b1)

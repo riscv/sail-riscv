@@ -83,6 +83,15 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
 
+  // AMO addresses are always available for triggers.  Trigger address
+  // matches have higher priority than Load/SAMO misaligned exceptions
+  // and data memory protection faults. An AMO is considered as both a
+  // load and a store for address purposes.
+  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_AMO, bits_of(vaddr), width)) {
+    Some(pti) => return PendingTrigger(pti),
+    None()    => (),
+  };
+
   if not(is_aligned_addr(vaddr, width)) then {
     // Check if the model is configured to raise an exception based on
     // the misaligned virtual address.
@@ -100,7 +109,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
-  let loaded : bits('width * 8) = match mem_write_ea(addr, width, eff_priv, access, pbmt, aq & rl, rl, true) {
+  let loaded : bits(8 * 'width) = match mem_write_ea(addr, width, eff_priv, access, pbmt, aq & rl, rl, true) {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
@@ -122,9 +131,9 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   // AMOCAS.D for RV32 and AMOCAS.Q for RV64 operate on a pair of
   // registers. When the first register of a register pair is
   // x0, then both halves of the pair read/write as zero.
-  let rs2_val : bits('width * 8) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
+  let rs2_val : bits(8 * 'width) = if width <= xlen_bytes then trunc(X(rs2)) else trunc(X_pair(rs2));
 
-  let result : bits('width * 8) = match op {
+  let stored : bits(8 * 'width) = match op {
     AMOSWAP => rs2_val,
     AMOADD  => rs2_val + loaded,
     AMOXOR  => rs2_val ^ loaded,
@@ -139,13 +148,13 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   };
 
   // All operations except CAS where loaded != X(rd) write their value back.
-  if op == AMOCAS & loaded != (if width <= xlen_bytes then trunc(X(rd)) else trunc(X_pair(rd))) then {
+  let res = if op == AMOCAS & loaded != (if width <= xlen_bytes then trunc(X(rd)) else trunc(X_pair(rd))) then {
     // Compared, but didn't swap.
     if width <= xlen_bytes
     then X(rd) = sign_extend(loaded)
     else X_pair(rd) = sign_extend(loaded);
     RETIRE_SUCCESS
-  } else match mem_write_value(addr, width, sign_extend(result), eff_priv, access, pbmt, aq & rl, rl, true) {
+  } else match mem_write_value(addr, width, sign_extend(stored), eff_priv, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => {
       if width <= xlen_bytes
       then X(rd) = sign_extend(loaded)
@@ -158,7 +167,18 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       assert(exc_addr == addr);
       memory_exception(e, bits_of(vaddr), access_info)
     }
-  }
+  };
+
+  // The spec leaves open whether the loaded value of an AMO is
+  // available to trigger on, and UNSPECIFIED whether the AMO store is
+  // matched by data store triggers.  This implementation implements data
+  // triggers for AMOs as `after` triggers to retain AMO atomicity.
+
+  if res == RETIRE_SUCCESS then {
+    match_memory_trigger_after(cur_privilege, TriggerAMOData(bits_of(vaddr), loaded, stored, width));
+  };
+
+  res
 }
 
 mapping clause assembly = AMO(op, aq, rl, rs2, rs1, width, rd)

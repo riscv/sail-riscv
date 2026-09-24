@@ -113,7 +113,7 @@ extensions {
       files extensions/A/aext_types.sail
     }
     Zaamo {
-      requires core, sys, exceptions, A_types
+      requires core, sys, exceptions, A_types, Sdtrig
       files extensions/A/zaamo_insts.sail
     }
     Zalrsc {
@@ -234,7 +234,7 @@ extensions {
     }
 
     V_instructions {
-      requires sys, I, FD, V_types, V_core
+      requires sys, I, FD, V_types, V_core, Sdtrig
       files
         extensions/V/vext_utils_insts.sail,
         extensions/V/vext_fp_utils_insts.sail,
@@ -377,6 +377,7 @@ extensions {
       extensions/Sdtrig/sdtrig_type_utils.sail,
       extensions/Sdtrig/sdtrig_types.sail,
       extensions/Sdtrig/sdtrig_regs.sail,
+      extensions/Sdtrig/sdtrig_utils.sail,
       extensions/Sdtrig/sdtrig_control.sail,
   }
 
@@ -400,7 +401,7 @@ extensions {
       files extensions/cfi/zicfiss_regs.sail
     }
     Zicfiss_insts {
-      requires sys, exceptions, CFI_types, Zicfiss_regs, A_types
+      requires sys, exceptions, CFI_types, Zicfiss_regs, A_types, Sdtrig
       files extensions/cfi/zicfiss_insts.sail
     }
   }
@@ -428,7 +429,7 @@ extensions {
       files extensions/Zicbom/zicbom_types.sail
     }
     Zicbom_insts {
-      requires core, sys, exceptions, Zicbom_types
+      requires core, sys, exceptions, Zicbom_types, Sdtrig
       files extensions/Zicbom/zicbom_insts.sail
     }
   }
@@ -459,7 +460,7 @@ extensions {
   }
 
   Zicboz {
-    requires core, sys, exceptions
+    requires core, sys, exceptions, Sdtrig
     files extensions/Zicboz/zicboz_insts.sail
   }
 

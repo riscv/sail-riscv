@@ -574,8 +574,11 @@ function xret_clear_dbltrp(prev_priv : Privilege, new_priv : Privilege) -> unit 
   // "executing an mret instruction, or executing an sret instruction while the
   // current privilege mode is M, has the following additional effects. The MDT
   // bit is set to 0."
-  if currentlyEnabled(Ext_Smdbltrp) & prev_priv == Machine
-  then mstatus[MDT] = 0b0;
+  if currentlyEnabled(Ext_Smdbltrp) & prev_priv == Machine then {
+    if get_config_print_exception() | get_config_print_interrupt()
+    then print_log("clearing mstatus[MDT] for Double Trap");
+    mstatus[MDT] = 0b0;
+  };
 
   // "If the Ssdbltrp extension is also implemented, and the new privilege mode
   // is U, VS, or VU, then sstatus.SDT is also set to 0."
@@ -586,7 +589,11 @@ function xret_clear_dbltrp(prev_priv : Privilege, new_priv : Privilege) -> unit 
     Machine    => new_priv == User | new_priv == VirtualSupervisor | new_priv == VirtualUser,
     Supervisor => true,
     _          => false,
-  }) then mstatus[SDT] = 0b0;
+  }) then {
+    if get_config_print_exception() | get_config_print_interrupt()
+    then print_log("clearing mstatus[SDT] for Double Trap");
+    mstatus[SDT] = 0b0;
+  };
 
   // "when SRET is executed in HS-mode, if the new privilege mode is VU, the
   // SRET instruction sets vsstatus.SDT to 0. When executed in VS-mode,
@@ -594,7 +601,11 @@ function xret_clear_dbltrp(prev_priv : Privilege, new_priv : Privilege) -> unit 
   // Same goes for MRET: "Additionally, if it is VU, then vsstatus.SDT is also set to 0."
   if currentlyEnabled(Ext_H) & read_henvcfg()[DTE] == 0b1
      & (new_priv == VirtualUser | prev_priv == VirtualSupervisor)
-  then vsstatus[SDT] = 0b0;
+  then {
+    if get_config_print_exception() | get_config_print_interrupt()
+    then print_log("clearing vsstatus[SDT] for Double Trap");
+    vsstatus[SDT] = 0b0;
+  };
 }
 
 union clause instruction = MRET : unit

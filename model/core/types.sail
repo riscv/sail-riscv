@@ -163,6 +163,8 @@ type is_mem_width('w) = 'w in {1, 2, 4, 8}
 type max_mem_width_bytes_exp : Nat = 3
 type max_mem_width_bytes : Nat = 2 ^ max_mem_width_bytes_exp
 
+type is_mem_width_wide('w) = 'w in {1, 2, 4, 8, 16}
+
 // architectural interrupt definitions
 
 enum InterruptType = {

@@ -214,6 +214,12 @@ function mtval_is_readonly_zero() -> bool =
 let sdtrig_has_icount    : bool = config extensions.Sdtrig.icount.supported
 let sdtrig_has_etrigger  : bool = config extensions.Sdtrig.etrigger.supported
 let sdtrig_has_itrigger  : bool = config extensions.Sdtrig.itrigger.supported
+let sdtrig_has_mcontrol6 : bool = config extensions.Sdtrig.mcontrol6.supported
+
+type sdtrig_mcontrol6_maskmax : Int = config extensions.Sdtrig.mcontrol6.maskmax6
+constraint 0 < sdtrig_mcontrol6_maskmax < xlen
+let sdtrig_mcontrol6_maskmax = sizeof(sdtrig_mcontrol6_maskmax)
+let sdtrig_max_chain_limit : int = config extensions.Sdtrig.mcontrol6.max_chain_length
 
 // Sdtrig context CSRs
 let sdtrig_has_mcontext : bool = config extensions.Sdtrig.mcontext.supported

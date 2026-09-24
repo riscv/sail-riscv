@@ -142,6 +142,15 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // Other AMOs currently don't go through `vmem_utils` functions.
   assert(res == is_load_reserved(access));
 
+  // Trigger address matches have higher priority than Load/SAMO
+  // misaligned exceptions and data memory protection faults. Trigger
+  // matching is done on the current privilege and not on the
+  // effective privilege of the access.
+  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Load, bits_of(vaddr), width)) {
+    Some(pti) => return Err(PendingTrigger(pti)),
+    None()    => (),
+  };
+
   let eff_priv = access_info.eff_privilege;
 
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
@@ -205,6 +214,13 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
     }
   };
 
+  // The spec leaves UNSPECIFIED whether a memory access trigger
+  // matches if the destination register for this load is `x0`; this
+  // implementation _does_ match in this case.  Trigger matching is
+  // done for the current privilege, and not the effective privilege
+  // of the access.
+  match_memory_trigger_after(cur_privilege, TriggerLoadData(bits_of(vaddr), data, width));
+
   Ok(data)
 }
 
@@ -243,6 +259,20 @@ val vmem_write_addr : forall 'width, is_mem_width('width).
 function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) = {
   // Other AMOs currently don't go through `vmem_utils` functions.
   assert(res == is_store_conditional(access));
+
+  // The spec leaves UNSPECIFIED whether memory triggers match if the
+  // access is a failing StoreConditional; this implementation _does_
+  // match in this case.
+
+  // Trigger matching is done for the current privilege, and not the
+  // effective privilege of the access.
+
+  // Trigger address and data matches have higher priority than Load/SAMO
+  // misaligned exceptions and data memory protection faults.
+  match match_memory_trigger_before(cur_privilege, TriggerStore(bits_of(vaddr), data, width)) {
+    Some(pti) => return Err(PendingTrigger(pti)),
+    None()    => (),
+  };
 
   let eff_priv = access_info.eff_privilege;
 
