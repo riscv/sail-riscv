@@ -21,6 +21,14 @@ public:
 
   virtual void mem_exception_callback(ModelImpl &model, sbits paddr, uint64_t num_of_exception);
 
+  virtual void vmem_access_callback(
+    ModelImpl &model,
+    sbits vaddr,
+    sbits paddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
+  );
+
   virtual void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value);
 
   virtual void freg_write_callback(ModelImpl &model, unsigned reg, sbits value);

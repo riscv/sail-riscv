@@ -1,0 +1,13 @@
+{
+  "window": "main",
+  "events": [
+    { "match": "sw", "mem_d": [4] },
+    {
+      "match": "amoadd.w",
+      "mem_d": [4],
+      "x_rd": true,
+      "allow_overlap": true
+    },
+    { "match": "lw", "mem_d": [4], "x_rd": true }
+  ]
+}

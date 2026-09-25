@@ -1,0 +1,15 @@
+{
+  "window": "main",
+  "events": [
+    { "match": "sd", "when": "xlen==64", "mem_d": [8] },
+    { "match": "lr.d", "when": "xlen==64", "mem_d": [8], "x_rd": true },
+    { "match": "sc.d", "when": "xlen==64", "mem_d": [], "x_rd": true },
+    { "match": "lr.d", "when": "xlen==64", "mem_d": [8], "x_rd": true },
+    { "match": "sc.d", "when": "xlen==64", "mem_d": [8], "x_rd": true },
+    { "match": "sw", "when": "xlen==32", "mem_d": [4] },
+    { "match": "lr.w", "when": "xlen==32", "mem_d": [4], "x_rd": true },
+    { "match": "sc.w", "when": "xlen==32", "mem_d": [], "x_rd": true },
+    { "match": "lr.w", "when": "xlen==32", "mem_d": [4], "x_rd": true },
+    { "match": "sc.w", "when": "xlen==32", "mem_d": [4], "x_rd": true }
+  ]
+}

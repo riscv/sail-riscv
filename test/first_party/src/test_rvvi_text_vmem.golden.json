@@ -1,0 +1,12 @@
+{
+  "window": "main",
+  "events": [
+    { "match": "mret" },
+    { "match": "ld", "when": "xlen==64", "mem_d": [8], "pt": "G" },
+    { "match": "lw", "when": "xlen==32", "mem_d": [4], "pt": "M" },
+    { "match": "ld", "when": "xlen==64", "mem_d": [8], "pt": "K" },
+    { "match": "ld", "when": "xlen==64", "mem_d_sum": 8 },
+    { "match": "lw", "when": "xlen==32", "mem_d_sum": 4 },
+    { "match": "ecall", "event": "TRAP", "mem_d": [] }
+  ]
+}
