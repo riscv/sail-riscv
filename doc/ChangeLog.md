@@ -8,6 +8,8 @@
   - Whether the `mcountinhibit` CSR is supported, and if so, which
     bits are writable, can now be specified; see `base.mcountinhibit`.
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1967 : `mhpmevent*` and `mhpmcounter*` should not depend on Zihpm
 - Other notes:
   - The model now requires the Sail 0.20.3 compiler version.
 

@@ -120,6 +120,9 @@ contains helpers to interpret their content, such as WLRL and WARL
 fields. CSRs dealing with interrupts are in
 [interrupt_regs.sail](../model/core/interrupt_regs.sail).
 
+[hpm.sail](../model/core/hpm.sail) defines the machine hardware
+performance monitoring CSRs.
+
 [ext_regs.sail](../model/core/ext_regs.sail) contains some register
 handling definitions that can be overridden by out-of-tree extensions.
 
