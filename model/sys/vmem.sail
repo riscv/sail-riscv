@@ -157,7 +157,7 @@ function pt_walk(
   stage,
   ext_ptw,
 ) = {
-  ptw_start_callback(zero_extend(vpn), access, (priv, ()));
+  ptw_start_callback(zero_extend(vpn), access, priv);
 
   let 'log_pte_size_bytes = if 'v == 32 | 'v == 34 then 2 else 3;
   let 'vpn_i_size         = pagesize_bits - 'log_pte_size_bytes;
