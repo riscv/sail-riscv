@@ -45,10 +45,12 @@ newtype regno = Regno : range(0, 2 ^ regidx_bit_width - 1)
 function creg2reg_idx(Cregidx(i) : cregidx) -> regidx = Regidx(zero_extend(0b1 @ i))
 
 // some architecture and ABI relevant register identifiers
-let zreg : regidx = Regidx(zero_extend(0b00)) // x0, zero register
-let ra   : regidx = Regidx(zero_extend(0b01)) // x1, return address
-let sp   : regidx = Regidx(zero_extend(0b10)) // x2, stack pointer
-let t0   : regidx = Regidx(zero_extend(0b101)) // x5, alternate link register
+let zreg : regidx = Regidx(zero_extend(0b00))   // x0, zero register
+let ra   : regidx = Regidx(zero_extend(0b01))   // x1, return address
+let sp   : regidx = Regidx(zero_extend(0b10))   // x2, stack pointer
+let t0   : regidx = Regidx(zero_extend(0b101))  // x5, alternate link register
+let a0   : regidx = Regidx(zero_extend(0b1010)) // x10, function argument / return value
+let a1   : regidx = Regidx(zero_extend(0b1011)) // x11, function argument / return value
 
 // base architecture definitions
 

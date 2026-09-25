@@ -807,6 +807,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssdbltrp extension is enabled but S is disabled: supporting Ssdbltrp requires S.");
   };
+  if (config extensions.Zcmp.supported : bool) & (config extensions.Zcd.supported : bool) then {
+    valid = false;
+    print_endline("The Zcmp and Zcd extensions are mutually exclusive and cannot be supported simultaneously.");
+  };
   valid
 }
 
