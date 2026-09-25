@@ -7,6 +7,9 @@
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `mcountinhibit` CSR is supported, and if so, which
     bits are writable, can now be specified; see `base.mcountinhibit`.
+  - Each bit of `misa` can now be individually marked mutable; see
+    `extensions.M.mutable_misa`, `extensions.F.mutable_misa`, etc.
+    `base.writable_misa` has been removed as part of this change.
 
 - Other notes:
   - The model now requires the Sail 0.20.3 compiler version.

@@ -44,6 +44,37 @@ private function require_Sv32(ext_name : string) -> bool = {
   true
 }
 
+
+private function check_mutable_misa() -> bool = {
+  var valid : bool = true;
+  if (config extensions.F.mutable_misa : bool) &
+     ((hartSupports(Ext_D) & not(config extensions.D.mutable_misa : bool)) |
+      (hartSupports(Ext_V) & not(config extensions.V.mutable_misa : bool)))
+  then {
+    valid = false;
+    print_endline("`extensions.F.mutable_misa` is true but `extensions.D.mutable_misa` and/or `extensions.V.mutable_misa` is false: mutable F requires mutable D and V when they are supported.");
+  };
+  if (config extensions.D.mutable_misa : bool) & hartSupports(Ext_V) & not(config extensions.V.mutable_misa : bool)
+  then {
+    valid = false;
+    print_endline("`extensions.D.mutable_misa` is true but `extensions.V.mutable_misa` is false: mutable D requires mutable V if V is supported.");
+  };
+  if (config extensions.U.mutable_misa : bool) &
+     ((hartSupports(Ext_S) & not(config extensions.S.mutable_misa : bool)) |
+      (hartSupports(Ext_H) & not(config extensions.H.mutable_misa : bool)))
+  then {
+    valid = false;
+    print_endline("`extensions.U.mutable_misa` is true but `extensions.S.mutable_misa` and/or `extensions.H.mutable_misa` is false: mutable U requires mutable S and H when they are supported.");
+  };
+  if (config extensions.S.mutable_misa : bool) & hartSupports(Ext_H) & not(config extensions.H.mutable_misa : bool)
+  then {
+    valid = false;
+    print_endline("`extensions.S.mutable_misa` is true but `extensions.H.mutable_misa` is false: mutable S requires mutable H if H is supported.");
+  };
+
+  valid
+}
+
 private function require_Sv39(ext_name : string) -> bool = {
   if not(config extensions.Sv39.supported : bool) then {
     print_endline("The " ^ ext_name ^ " extension is enabled but Sv39 is disabled: " ^ ext_name ^ " depends on Sv39 on RV64.");
@@ -999,6 +1030,7 @@ private function check_version_constraints() -> bool = {
 function config_is_valid() -> bool = {
     check_privs()
   & check_tvecs()
+  & check_mutable_misa()
   & check_mstatus_fields()
   & check_physaddr_bits()
   & check_mmu_config()
