@@ -410,7 +410,7 @@ private function translate_TLB_hit forall 'v, is_sv_or_svx4_mode('v) . (
   ext_ptw   : ext_ptw,
 ) -> TR_Result(ppn_bits('v), PTW_Error) = {
 
-  let pte_size  = if sv_width == 32 then 4 else 8;
+  let 'pte_size = if 'v == 32 | 'v == 34 then 4 else 8;
   let pte       = tlb_get_pte(pte_size, ent);  // Step 2 of VATP.
   let ext_pte   = ext_bits_of_PTE(pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
