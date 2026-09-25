@@ -59,6 +59,17 @@ function convertToGuestException(e: ExceptionType) -> ExceptionType = {
     _                    => e
   }
 }
+
+// Only guest-page faults write a guest physical address to htval/mtval2 (and a pseudoinstruction to
+// htinst/mtinst); an access fault during G-stage translation writes zero.
+function is_guest_page_fault(e : ExceptionType) -> bool =
+  match e {
+    E_Fetch_GPage_Fault() => true,
+    E_Load_GPage_Fault()  => true,
+    E_SAMO_GPage_Fault()  => true,
+    _                     => false,
+  }
+
 // Convert translation/PTW failures into architectural exceptions
 function translationException(access : MemoryAccessType(mem_payload),
                               err : PTW_Error)

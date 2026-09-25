@@ -642,11 +642,12 @@ private function build_exception_context(
             Load(_)  => false,
             _        => internal_error(__FILE__, __LINE__, "invalid memory access type"),
           };
-          let tval2 = if sys_guest_page_fault_writes_htval
+          let trap = convertToGuestException(e);
+          let tval2 = if is_guest_page_fault(trap) & sys_guest_page_fault_writes_htval
                       then truncate(pte_addr >> 2, xlen)
                       else zeros();
           struct {
-            trap  = convertToGuestException(e),
+            trap  = trap,
             excinfo_is_gva = true,
             excinfo  = zero_extend(bits_of(gva)),
             excinfo2 = Some(tval2),
@@ -682,11 +683,12 @@ private function build_exception_context(
       }
     },
     G_Stage => {
-      let tval2 = if sys_guest_page_fault_writes_htval
+      let trap = convertToGuestException(translationException(access, ptw_error));
+      let tval2 = if is_guest_page_fault(trap) & sys_guest_page_fault_writes_htval
                   then truncate(gpa >> 2, xlen)
                   else zeros();
       struct {
-        trap  = convertToGuestException(translationException(access, ptw_error)),
+        trap  = trap,
         excinfo_is_gva = true,
         excinfo  = zero_extend(bits_of(gva)),
         excinfo2 = Some(tval2),
