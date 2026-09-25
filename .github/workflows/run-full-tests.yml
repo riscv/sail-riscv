@@ -32,20 +32,24 @@ jobs:
             RISCV_VECTOR_TESTS_V256_E64,
             RISCV_VECTOR_TESTS_V512_E64,
           ]
+
     steps:
       - name: Check out repository code
         uses: actions/checkout@v7
         with:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
+
       - name: Common setup
         uses: ./.github/actions/sail-setup
         with:
           install-clang: "true"
+
       - name: Build simulator
         run: |
           cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_${{ matrix.TEST_SUITE }}=TRUE -DENABLE_LTO=TRUE
           ninja -C build all
+
       - name: Run tests
         run: |
           ctest --test-dir build --output-on-failure

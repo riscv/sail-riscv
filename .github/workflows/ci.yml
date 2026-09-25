@@ -58,8 +58,7 @@ jobs:
 
       - name: Get tests version
         run: |
-          SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)
-          echo "SAIL_RISCV_TESTS_VERSION=$SAIL_RISCV_TESTS_VERSION" >> $GITHUB_ENV
+          echo "SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)" >> $GITHUB_ENV
 
       - name: Restore cached tests
         uses: actions/cache/restore@v6
