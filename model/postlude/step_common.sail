@@ -24,7 +24,9 @@ union HartState = {
   // because WFI and WRS can time out and cause an illegal
   // instruction exception so we need to know what to write
   // to mtval.
-  HART_WAITING : (WaitReason, instbits),
+  // The fetch privilege is used for the icount trigger,
+  // which performs its match after the instruction has retired.
+  HART_WAITING : (WaitReason, instbits, Privilege),
 }
 
 // utility predicates

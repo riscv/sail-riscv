@@ -12,13 +12,15 @@ register hart_state : HartState = HART_ACTIVE()
 
 private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
+  Step_Pending_Trigger    : (Trig_Action, trigger_index, xlenbits),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : ExceptionContext,
-  Step_Execute            : (ExecutionResult, instbits),
-  Step_Waiting            : WaitReason,
+  // The privilege below is the one at which the originating instruction was fetched.
+  Step_Execute            : (ExecutionResult, instbits, Privilege),
+  Step_Waiting            : (WaitReason, Privilege),
 }
 
-private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
+private function run_hart_waiting(_step_no : nat, wr : WaitReason, instbits : instbits, fetch_priv : Privilege, exit_wait : bool) -> Step = {
   // successfully interrupted waits
   if shouldWakeForInterrupt() then {
     if get_config_print_instr()
@@ -27,7 +29,7 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
     // The waiting instruction retires successfully.  The
     // pending interrupts will be handled in the next step.
     hart_state = HART_ACTIVE();
-    return Step_Execute(Retire_Success(), instbits)
+    return Step_Execute(Retire_Success(), instbits, fetch_priv)
   };
 
   match (wr, valid_reservation(), exit_wait) {
@@ -36,14 +38,14 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
-      Step_Execute(Retire_Success(), instbits)
+      Step_Execute(Retire_Success(), instbits, fetch_priv)
     },
     (WAIT_WRS_NTO, false, _) => {
       if get_config_print_instr()
       then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
-      Step_Execute(Retire_Success(), instbits)
+      Step_Execute(Retire_Success(), instbits, fetch_priv)
     },
     // Transition out of waiting states as instructed.
     (WAIT_WFI, _, true) => {
@@ -63,16 +65,16 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       // For VS-mode, VTW is checked instead since a set TW was already
       // caught in execute as an immediate illegal instruction.
       match cur_privilege {
-        Machine           => Step_Execute(Retire_Success(), instbits),
+        Machine           => Step_Execute(Retire_Success(), instbits, fetch_priv),
         User              => if   mstatus[TW] == 0b1 | currentlyEnabled(Ext_S)
-                             then Step_Execute(Illegal_Instruction(), instbits)
-                             else Step_Execute(Retire_Success(), instbits),
+                             then Step_Execute(Illegal_Instruction(), instbits, fetch_priv)
+                             else Step_Execute(Retire_Success(), instbits, fetch_priv),
         VirtualSupervisor => if   hstatus[VTW] == 0b1
-                             then Step_Execute(Virtual_Instruction(), instbits)
-                             else Step_Execute(Retire_Success(), instbits),
+                             then Step_Execute(Virtual_Instruction(), instbits, fetch_priv)
+                             else Step_Execute(Retire_Success(), instbits, fetch_priv),
         _                 => if   mstatus[TW] == 0b1
-                             then Step_Execute(Illegal_Instruction(), instbits)
-                             else Step_Execute(Retire_Success(), instbits),
+                             then Step_Execute(Illegal_Instruction(), instbits, fetch_priv)
+                             else Step_Execute(Retire_Success(), instbits, fetch_priv),
       }
     },
     (WAIT_WRS_STO, _, true) => {
@@ -80,7 +82,7 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       then print_log("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
-      Step_Execute(Retire_Success(), instbits)
+      Step_Execute(Retire_Success(), instbits, fetch_priv)
     },
     (WAIT_WRS_NTO, _, true) => {
       if get_config_print_instr()
@@ -95,26 +97,47 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       // the TW bit in mstatus is clear, and the WRS.NTO does not complete
       // within an implementation-specific bounded time limit, the WRS.NTO
       // instruction will cause a virtual-instruction exception."
-      if      cur_privilege == Machine then Step_Execute(Retire_Success(), instbits)
-      else if mstatus[TW] == 0b1       then Step_Execute(Illegal_Instruction(), instbits)
+      if      cur_privilege == Machine then Step_Execute(Retire_Success(), instbits, fetch_priv)
+      else if mstatus[TW] == 0b1       then Step_Execute(Illegal_Instruction(), instbits, fetch_priv)
       else if inVirtualPrivilege() & hstatus[VTW] == 0b1
-                                       then Step_Execute(Virtual_Instruction(), instbits)
-      else Step_Execute(Retire_Success(), instbits)
+                                       then Step_Execute(Virtual_Instruction(), instbits, fetch_priv)
+      else Step_Execute(Retire_Success(), instbits, fetch_priv)
     },
     // remain waiting
     (_, _, false) => {
       if get_config_print_instr()
       then print_log("remaining in " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
-      Step_Waiting(wr)
+      Step_Waiting(wr, fetch_priv)
     }
   }
 }
 
 private function run_hart_active(step_no: nat) -> Step = {
+  // The Sdtrig extension does not define the priority of triggers
+  // with respect to pending interrupts. See however:
+  //   https://github.com/riscv/riscv-debug-spec/pull/802
+  // and the related issue:
+  //   https://github.com/riscv/riscv-debug-spec/issues/796
+  //
+  // For now, the implementation follows #802 by prioritizing the
+  // itrigger, etrigger and icount triggers above asynchronous
+  // interrupts.  When mcontrol6 triggers are implemented, their
+  // `after` versions should also be handled here.
+  match find_highest_priority_pending_trigger(cur_privilege) {
+    Some(action, idx, breakpoint_tval) => return Step_Pending_Trigger(action, idx, breakpoint_tval),
+    None() => (),
+  };
+
   match dispatchInterrupt(cur_privilege) {
     Some(intr, priv) => return Step_Pending_Interrupt(intr, priv),
     None() => (),
   };
+
+  // `icount` triggers match based on the privilege used for fetching,
+  // but the match is performed after the instruction retires, by which time
+  // the privilege might have changed (e.g. the xRET instructions).
+  let fetch_priv = cur_privilege;
+
   match ext_fetch_hook(fetch()) {
     // extension error
     F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
@@ -134,7 +157,7 @@ private function run_hart_active(step_no: nat) -> Step = {
       // the non-RVC `LPAD` instruction.
       if is_landing_pad_expected() then {
         let r = trap(make_landing_pad_exception());
-        Step_Execute(r, instbits)
+        Step_Execute(r, instbits, fetch_priv)
       }
       // check for RVC once here instead of every RVC execute clause.
       else if currentlyEnabled(Ext_Zca) then {
@@ -143,9 +166,9 @@ private function run_hart_active(step_no: nat) -> Step = {
           ExecuteAs(other_inst) => execute(other_inst),
           result => result,
         };
-        Step_Execute(result, instbits)
+        Step_Execute(result, instbits, fetch_priv)
       } else {
-        Step_Execute(Illegal_Instruction(), instbits)
+        Step_Execute(Illegal_Instruction(), instbits, fetch_priv)
       }
     },
     F_Base(w) => {
@@ -162,14 +185,14 @@ private function run_hart_active(step_no: nat) -> Step = {
       // exception with a landing pad fault code is thrown.
       if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
         let r = trap(make_landing_pad_exception());
-        Step_Execute(r, instbits)
+        Step_Execute(r, instbits, fetch_priv)
       } else {
         nextPC = PC + 4;
         let result : ExecutionResult = match execute(instruction) {
           ExecuteAs(other_inst) => execute(other_inst),
           result => result,
         };
-        Step_Execute(result, instbits)
+        Step_Execute(result, instbits, fetch_priv)
       }
     }
   }
@@ -222,11 +245,19 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   minstret_increment = should_inc_minstret(cur_privilege);
 
   let step_val : Step = match hart_state {
-      HART_WAITING(wr, instbits) => run_hart_waiting(step_no, wr, instbits, exit_wait),
-      HART_ACTIVE()              => run_hart_active(step_no),
+      HART_WAITING(wr, instbits, fetch_priv) => run_hart_waiting(step_no, wr, instbits, fetch_priv, exit_wait),
+      HART_ACTIVE()                          => run_hart_active(step_no),
     };
 
   match step_val {
+    Step_Pending_Trigger(action, _, trigger_tval) => {
+      match action {
+        TA_Breakpoint =>
+          handle_exception(exception_context(E_Breakpoint(Brk_Hardware), trigger_tval)),
+        _ =>
+          internal_error(__FILE__, __LINE__, "Trigger action " ^ trigger_action_name(action) ^ " not supported."),
+      }
+    },
     Step_Pending_Interrupt(intr, priv) => {
       if   get_config_print_instr()
       then print_bits("Handling interrupt: ", interruptType_bits(intr));
@@ -235,18 +266,21 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
     Step_Fetch_Failure(e) => handle_exception(e),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
-    Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
+    Step_Execute(Retire_Success(), _, fetch_priv) => {
+      assert(hart_is_active(hart_state));
+      match_icount_triggers(fetch_priv)
+    },
     // We only support one level of ExecuteAs redirection, primarily intended
     // for compressed instructions (though it can be used elsewhere). If there
     // is more than one ExecuteAs indirection we'll get to here. This isn't supported.
-    Step_Execute(ExecuteAs(_), _) => internal_error(__FILE__, __LINE__, "Multiple chained ExecuteAs (only one redirection is supported)."),
+    Step_Execute(ExecuteAs(_), _, _) => internal_error(__FILE__, __LINE__, "Multiple chained ExecuteAs (only one redirection is supported)."),
     // standard errors
-    Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Illegal_Instruction(), instbits) =>
+    Step_Execute(Trap(priv, ctl, pc), _, _) => set_next_pc(exception_handler(priv, ctl, pc)),
+    Step_Execute(Illegal_Instruction(), instbits, _) =>
       handle_exception(make_instr_exception_context(E_Illegal_Instr(), zero_extend(instbits))),
-    Step_Execute(Virtual_Instruction(), instbits) =>
+    Step_Execute(Virtual_Instruction(), instbits, _) =>
       handle_exception(make_instr_exception_context(E_Virtual_Instr(), zero_extend(instbits))),
-    Step_Execute(Enter_Wait(wr), instbits) => {
+    Step_Execute(Enter_Wait(wr), instbits, fetch_priv) => {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
         assert(hart_is_active(hart_state));
@@ -255,14 +289,14 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
         if   get_config_print_instr()
         then print_log("entering " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
 
-        hart_state = HART_WAITING(wr, instbits);
+        hart_state = HART_WAITING(wr, instbits, fetch_priv);
       }
     },
     // errors from extensions
-    Step_Execute(Ext_CSR_Check_Failure(), _) => ext_check_CSR_fail(),
-    Step_Execute(Ext_ControlAddr_Check_Failure(e), _) => ext_handle_control_check_error(e),
-    Step_Execute(Ext_DataAddr_Check_Failure(e), _) => ext_handle_data_check_error(e),
-    Step_Execute(Ext_XRET_Priv_Failure(), _) => ext_fail_xret_priv(),
+    Step_Execute(Ext_CSR_Check_Failure(), _, _) => ext_check_CSR_fail(),
+    Step_Execute(Ext_ControlAddr_Check_Failure(e), _, _) => ext_handle_control_check_error(e),
+    Step_Execute(Ext_DataAddr_Check_Failure(e), _, _) => ext_handle_data_check_error(e),
+    Step_Execute(Ext_XRET_Priv_Failure(), _, _) => ext_fail_xret_priv(),
   };
 
   match hart_state {
@@ -271,11 +305,11 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       tick_pc();
 
       let retired : bool = match step_val {
-        Step_Execute(Retire_Success(), _) => true,
+        Step_Execute(Retire_Success(), _, _) => true,
         // WFI, WRS.{STO, NTO} retire immediately if the model is configured
         // to treat them as a nop.  Otherwise they always wait for at least
         // one call of `try_step()`.
-        Step_Execute(Enter_Wait(wr), _) if wait_is_nop(wr) => true,
+        Step_Execute(Enter_Wait(wr), _, _) if wait_is_nop(wr) => true,
         _ => false,
       };
 
@@ -283,6 +317,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       // update wasn't suppressed by writing to it explicitly or
       // mcountinhibit[IR] or minstretcfg.
       if retired & minstret_increment then minstret = minstret + 1;
+
+      // Update any triggers that were written.
+      update_triggers();
 
       // Record the next PC for RVFI.
       // TODO: Remove this and implement it in C.
