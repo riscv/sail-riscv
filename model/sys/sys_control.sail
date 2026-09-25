@@ -192,7 +192,7 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
 }
 
 function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> unit = {
-  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+  long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
   match (p) {
     Machine => {
       csr_write_callback("mcause", mcause.bits);
@@ -252,15 +252,15 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
     E_VS_EnvCall() => false,
     E_M_EnvCall()  => false,
     E_Extension(_) => true,
+    E_Double_Trap() => true,
     // the rest are all reserved exceptions
     E_Reserved_14() => reserved_exceptions_write_xtval,
-    E_Reserved_16() => reserved_exceptions_write_xtval,
     E_Reserved_17() => reserved_exceptions_write_xtval,
   } then Some(excinfo) else None()
 }
 
-// handle exceptional ctl flow by updating nextPC and operating privilege
-function trap_handler(
+// Handle a trap, after the double trap checks in trap_handler.
+function trap_handler_inner(
   del_priv       : Privilege,
   c              : TrapCause,
   pc             : xlenbits,
@@ -370,6 +370,94 @@ function trap_handler(
   };
 }
 
+// "When a trap is to be taken into M-mode, if the MDT bit is currently 0, it is
+// then set to 1, and the trap is delivered as expected. However, if MDT is
+// already set to 1, then this is an unexpected trap."
+function machine_trap_set_mdt() -> unit = {
+  if currentlyEnabled(Ext_Smdbltrp) then {
+    if mstatus[MDT] == 0b0
+    then mstatus[MDT] = 0b1
+    else {
+      // "the hart enters a critical-error state without updating any
+      // architectural state, including the pc", ceasing execution and
+      // signalling the platform.
+      // TODO (Optional): print the frozen state and return a double trap
+      // result from try_step() instead of aborting here.
+      // TODO: with Smrnmi and mnstatus[NMIE] set, this traps to the RNMI
+      // handler instead of entering the critical-error state.
+      assert(false, "unexpected trap taken in machine mode")
+    }
+  }
+}
+
+// The double-trap exception delivered to M-mode for an unexpected trap c.
+// "the hart writes registers, except mcause and mtval2, with the same
+// information that the unexpected trap would have written if it was taken into
+// M-mode. The mtval2 register is then set to what would be otherwise written
+// into the mcause register by the unexpected trap."
+function double_trap_cause(c : TrapCause) -> TrapCause = {
+  let unexpected_cause = [Mk_Mcause(zeros()) with
+    IsInterrupt = bool_to_bit(trapCause_is_interrupt(c)),
+    Cause       = zero_extend(trapCause_bits(c)),
+  ].bits;
+  Exception(match c {
+    Interrupt(_) => struct {
+      trap           = E_Double_Trap(),
+      excinfo_is_gva = false,
+      excinfo        = zeros(),
+      excinfo2       = Some(unexpected_cause),
+      excinst        = None(),
+      ext            = None(),
+    },
+    Exception(e) => struct {
+      trap           = E_Double_Trap(),
+      excinfo_is_gva = e.excinfo_is_gva,
+      // mtval gets what the unexpected trap would have written.
+      excinfo        = tval(xtval_exception_value(e.trap, e.excinfo)),
+      excinfo2       = Some(unexpected_cause),
+      excinst        = e.excinst,
+      ext            = e.ext,
+    },
+  })
+}
+
+// Handle exceptional ctl flow by updating nextPC and operating privilege,
+// checking for a double trap first.
+function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits) -> xlenbits = {
+  // This must come before trap_handler_inner, because an unexpected trap in
+  // M-mode updates no architectural state at all.
+  match del_priv {
+    Machine => machine_trap_set_mdt(),
+    // "When a trap is to be taken into S-mode, if the SDT bit is currently 0,
+    // it is then set to 1 [...] However, if SDT is already set to 1, then this
+    // is an unexpected trap. In the event of an unexpected trap, a double-trap
+    // exception trap is delivered into M-mode."
+    Supervisor =>
+      if currentlyEnabled(Ext_Ssdbltrp) then {
+        if mstatus[SDT] == 0b0
+        then mstatus[SDT] = 0b1
+        else {
+          machine_trap_set_mdt();
+          return trap_handler_inner(Machine, double_trap_cause(c), pc)
+        }
+      },
+    VirtualSupervisor =>
+      if currentlyEnabled(Ext_Ssdbltrp) & read_henvcfg()[DTE] == 0b1 then {
+        if vsstatus[SDT] == 0b0
+        then vsstatus[SDT] = 0b1
+        else {
+          machine_trap_set_mdt();
+          return trap_handler_inner(Machine, double_trap_cause(c), pc)
+        }
+      },
+    // trap_handler_inner reports these as internal errors.
+    User        => (),
+    VirtualUser => (),
+  };
+
+  trap_handler_inner(del_priv, c, pc)
+}
+
 function exception_handler(cur_priv : Privilege, exc_context : ExceptionContext, pc: xlenbits) -> xlenbits = {
   let del_priv = exception_delegatee(exc_context.trap, cur_priv);
   if   get_config_print_exception()
@@ -428,6 +516,9 @@ function reset_sys() -> unit = {
   mstatus[MIE] = 0b0;
   mstatus[MPRV] = 0b0;
 
+  // "Upon reset, the MDT field is set to 1."
+  if hartSupports(Ext_Smdbltrp) then mstatus[MDT] = 0b1;
+
   // Though {ms}tvec are unspecified on reset, their mode should hold
   // a supported value when read.
   reset_tvecs();
@@ -439,7 +530,7 @@ function reset_sys() -> unit = {
   // See https://github.com/riscv/sail-riscv/issues/639
   // mstatus[MBE] = 0b0;
 
-  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+  long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
 
   // "The misa register is reset to enable the maximal set of supported extensions"
   reset_misa();

@@ -194,7 +194,7 @@ function have_nominal_privLevel(priv : nom_priv_bits) -> bool =
 bitfield Mstatus : bits(64) = {
   SD   : xlen - 1,
 
-  //MDT  : 42,
+  MDT  : 42,
   MPELP: 41,
 
   MPV  : 39,
@@ -206,7 +206,7 @@ bitfield Mstatus : bits(64) = {
   SXL  : 35 .. 34,
   UXL  : 33 .. 32,
 
-  //SDT  : 24,
+  SDT  : 24,
   SPELP: 23,
   TSR  : 22,
   TW   : 21,
@@ -236,7 +236,7 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   let v = Mk_Mstatus(v);
 
   let o = [o with
-    // MDT = v[MDT],
+    MDT   = if currentlyEnabled(Ext_Smdbltrp) then v[MDT] else 0b0,
     MPELP = if hartSupports(Ext_Zicfilp) then v[MPELP] else 0b0,
     MPV   = if currentlyEnabled(Ext_H) then v[MPV] else 0b0,
     GVA   = if currentlyEnabled(Ext_H) then v[GVA] else 0b0,
@@ -246,7 +246,8 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // We don't support dynamic changes to SXL and UXL.
     // SXL = if xlen == 64 then v[SXL] else o[SXL],
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
-    // SDT = v[SDT],
+    // If Ssdbltrp is disabled via menvcfg[DTE] then status[SDT] is read-only zero.
+    SDT = if currentlyEnabled(Ext_Ssdbltrp) then v[SDT] else 0b0,
     SPELP = if hartSupports(Ext_Zicfilp) & currentlyEnabled(Ext_S) then v[SPELP] else 0b0,
     TSR = if currentlyEnabled(Ext_S) then v[TSR] else 0b0,
     TW = if currentlyEnabled(Ext_U) then v[TW] else 0b0,
@@ -265,8 +266,10 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
-    MIE = v[MIE],
-    SIE = if currentlyEnabled(Ext_S) then v[SIE] else 0b0,
+    // "When the MDT bit is set to 1 by an explicit CSR write, the MIE (Machine Interrupt Enable) bit is cleared to 0."
+    MIE = if not(currentlyEnabled(Ext_Smdbltrp) & v[MDT] == 0b1) then v[MIE] else 0b0,
+    // "When the SDT bit is set to 1 by an explicit CSR write, the SIE (Supervisor Interrupt Enable) bit is cleared to 0."
+    SIE = if not(currentlyEnabled(Ext_Ssdbltrp) & v[SDT] == 0b1) & currentlyEnabled(Ext_S) then v[SIE] else 0b0,
   ];
 
   // TODO: When dynamic SXL/UXL changes are supported,
@@ -300,12 +303,18 @@ mapping clause csr_name_map = 0x310  <-> "mstatush"
 function clause is_CSR_accessible(0x300, _, _) = true // mstatus
 function clause is_CSR_accessible(0x310, _, _) = mstatush_is_defined & xlen == 32 // mstatush
 
-function clause read_CSR(0x300) = mstatus.bits[xlen - 1 .. 0]
-function clause read_CSR(0x310 if xlen == 32) = mstatus.bits[63 .. 32]
+// menvcfg[DTE] can be cleared while mstatus[SDT] is set, so the zeroing
+// cannot be left to legalize_mstatus. Any read of mstatus must go through
+// this function instead of using mstatus.bits directly
+function read_mstatus() -> Mstatus =
+  [mstatus with SDT = if currentlyEnabled(Ext_Ssdbltrp) then mstatus[SDT] else 0b0]
 
-function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_mstatus(mstatus, value); Ok(mstatus.bits) }
-function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); Ok(mstatus.bits[31 .. 0]) }
-function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); Ok(mstatus.bits[63 .. 32]) }
+function clause read_CSR(0x300) = read_mstatus().bits[xlen - 1 .. 0]
+function clause read_CSR(0x310 if xlen == 32) = read_mstatus().bits[63 .. 32]
+
+function clause write_CSR((0x300, value) if xlen == 64) = { mstatus = legalize_mstatus(mstatus, value); Ok(read_mstatus().bits) }
+function clause write_CSR((0x300, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, mstatus.bits[63 .. 32] @ value); Ok(read_mstatus().bits[31 .. 0]) }
+function clause write_CSR((0x310, value) if xlen == 32) = { mstatus = legalize_mstatus(mstatus, value @ mstatus.bits[31 .. 0]); Ok(read_mstatus().bits[63 .. 32]) }
 
 bitfield Hstatus : bits(64) = {
   HUPMM : 49 .. 48,
@@ -419,6 +428,8 @@ bitfield MEnvcfg : bits(64) = {
   PBMTE  : 62,
   // Svadu
   ADUE   : 61,
+  // Double Trap
+  DTE    : 59,
   // Pointer Masking Extension
   PMM    : 33 .. 32,
   // Cache Block Zero instruction Enable
@@ -491,6 +502,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     CBIE = if currentlyEnabled(Ext_Zicbom) then legalize_xenvcfg_cbie(o[CBIE], v[CBIE]) else 0b00,
     STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
     PMM = if currentlyEnabled(Ext_Smnpm) & is_supported_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
+    DTE = if hartSupports(Ext_Ssdbltrp) then v[DTE] else 0b0,
     ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
     PBMTE = if currentlyEnabled(Ext_Svpbmt) then v[PBMTE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
@@ -527,7 +539,7 @@ private function legalize_henvcfg(h : HEnvcfg, v : bits(64)) -> HEnvcfg = {
     STCE  = if currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then v[STCE]  else 0b0,
     PBMTE = if currentlyEnabled(Ext_Svpbmt) & menvcfg[PBMTE] == 0b1 then v[PBMTE] else 0b0,
     ADUE  = if currentlyEnabled(Ext_Svadu) & menvcfg[ADUE] == 0b1 then v[ADUE] else 0b0,
-    // DTE  = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
+    DTE   = if currentlyEnabled(Ext_Ssdbltrp) then v[DTE] else 0b0,
     PMM  = if currentlyEnabled(Ext_Ssnpm) & is_supported_pmm(PM_SSNPM, pmm_mode(v[PMM])) then v[PMM] else h[PMM],
     CBZE  = if currentlyEnabled(Ext_Zicboz) then v[CBZE]  else 0b0,
     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
@@ -549,6 +561,7 @@ function read_henvcfg() -> HEnvcfg =
     STCE  = menvcfg[STCE]  & henvcfg[STCE],
     PBMTE = menvcfg[PBMTE] & henvcfg[PBMTE],
     ADUE  = menvcfg[ADUE]  & henvcfg[ADUE],
+    DTE   = menvcfg[DTE]   & henvcfg[DTE],
     SSE   = menvcfg[SSE]   & henvcfg[SSE],
   ]
 
@@ -611,6 +624,9 @@ function is_fiom_active() -> bool = {
     VirtualUser       => (menvcfg[FIOM] | henvcfg[FIOM] | senvcfg[FIOM]) == 0b1,
   }
 }
+
+function clause currentlyEnabled(Ext_Ssdbltrp) =
+  hartSupports(Ext_Ssdbltrp) & currentlyEnabled(Ext_S) & menvcfg[DTE] == 0b1
 
 // registers for trap handling
 
@@ -690,6 +706,8 @@ function legalize_cause(o : Mcause, v : xlenbits, is_scause : bool) -> Mcause = 
     // a custom exception is only used for an old version of CHERI, but
     // the current version should now have exception codes in the standard space.
     if is_reserved_or_custom_exception(exc) then return o;
+    if exc == E_Double_Trap() & not(hartSupports(Ext_Ssdbltrp))
+    then return o;
     if exc == E_Software_Check() & not(hartSupports(Ext_Zicfilp) | hartSupports(Ext_Zicfiss))
     then return o;
     // The hardware-error exception code was introduced in version 1.13.
@@ -816,14 +834,13 @@ bitfield Counterin : bits(32) = {
 }
 
 private function legalize_mcountinhibit(_c : Counterin, v : xlenbits) -> Counterin = {
-  // Note the 0 in 0b101 is because the mtimer counter can't be paused.
-  let supported_counters = sys_writable_hpm_counters[31 .. 3] @ 0b101;
-  Mk_Counterin(v[31 .. 0] & supported_counters)
+  Mk_Counterin(v[31 .. 0] & plat_mcountinhibit_writable_bits)
 }
 
-register mcountinhibit : Counterin
+// "If mcountinhibit is not implemented, the model should behave as if the register was zero."
+register mcountinhibit : Counterin = Mk_Counterin(zeros())
 mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
-function clause is_CSR_accessible(0x320, _, _) = true // mcountinhibit
+function clause is_CSR_accessible(0x320, _, _) = plat_have_mcountinhibit // mcountinhibit
 function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Ok(zero_extend(mcountinhibit.bits)) }
 
@@ -880,7 +897,7 @@ mapping clause csr_name_map = 0x34A  <-> "mtinst"
 mapping clause csr_name_map = 0x34B  <-> "mtval2"
 
 function clause is_CSR_accessible(0x34A, _, _) = currentlyEnabled(Ext_H) // mtinst
-function clause is_CSR_accessible(0x34B, _, _) = currentlyEnabled(Ext_H) // mtval2
+function clause is_CSR_accessible(0x34B, _, _) = currentlyEnabled(Ext_H) | hartSupports(Ext_Ssdbltrp) // mtval2
 
 function clause read_CSR(0x34A) = mtinst
 function clause read_CSR(0x34B) = mtval2
@@ -926,7 +943,7 @@ bitfield Sstatus : bits(64) = {
   SD    : xlen - 1,
 
   UXL   : 33 .. 32,
-//  SDT   : 24,
+  SDT   : 24,
   SPELP : 23,
   MXR   : 19,
   SUM   : 18,
@@ -939,13 +956,18 @@ bitfield Sstatus : bits(64) = {
 }
 // sstatus is a view of mstatus, so there is no register defined.
 
-private function lower_mstatus(m : Mstatus) -> Sstatus = {
+private function lower_mstatus(m : Mstatus, virt : bool) -> Sstatus = {
   let s = Mk_Sstatus(zeros());
 
   [s with
     SD = m[SD],
     UXL = m[UXL],
-    //SDT = m[SDT],
+    // "When menvcfg.DTE is zero, [...]. When Ssdbltrp is not
+    // implemented sstatus.SDT, vsstatus.SDT, and henvcfg.DTE bits are read-only zero."
+    // "When henvcfg.DTE is zero, the implementation behaves as though Ssdbltrp is
+    // not implemented for VS-mode and the vsstatus.SDT bit is read-only zero."
+    SDT = if currentlyEnabled(Ext_Ssdbltrp) & (not(virt) | read_henvcfg()[DTE] == 0b1)
+          then m[SDT] else 0b0,
     SPELP = m[SPELP],
     MXR = m[MXR],
     SUM = m[SUM],
@@ -965,7 +987,7 @@ private function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   [m with
     SD = bool_to_bit(dirty),
     UXL = s[UXL],
-    //SDT = s[SDT],
+    SDT = s[SDT],
     SPELP = s[SPELP],
     MXR = s[MXR],
     SUM = s[SUM],
@@ -978,8 +1000,10 @@ private function lift_sstatus(m : Mstatus, s : Sstatus) -> Mstatus = {
   ]
 }
 
-private function legalize_sstatus(m : Mstatus, v : xlenbits) -> Mstatus = {
-  legalize_mstatus(m, lift_sstatus(m, Mk_Sstatus(zero_extend(v))).bits)
+private function legalize_sstatus(m : Mstatus, v : xlenbits, virt : bool) -> Mstatus = {
+  let s = Mk_Sstatus(zero_extend(v));
+  let s = [s with SDT = if virt & read_henvcfg()[DTE] == 0b0 then 0b0 else s[SDT]];
+  legalize_mstatus(m, lift_sstatus(m, s).bits)
 }
 
 // Unlike sstatus, which is only a view of mstatus, vsstatus is a real register
@@ -991,16 +1015,19 @@ register vsstatus : Mstatus = [Mk_Mstatus(zeros()) with
 
 mapping clause csr_name_map = 0x200  <-> "vsstatus"
 function clause is_CSR_accessible(0x200, _, _) = currentlyEnabled(Ext_H) // vsstatus
-function clause read_CSR(0x200) = lower_mstatus(vsstatus).bits[xlen - 1 .. 0]
-function clause write_CSR(0x200, value) = { vsstatus = legalize_sstatus(vsstatus, value); Ok(lower_mstatus(vsstatus).bits[xlen - 1 .. 0]) }
+function clause read_CSR(0x200) = lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]
+function clause write_CSR(0x200, value) = { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
 
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // sstatus
-function clause read_CSR(0x100) = lower_mstatus(if inVirtualPrivilege() then vsstatus else mstatus).bits[xlen - 1 .. 0]
+function clause read_CSR(0x100) =
+  if inVirtualPrivilege()
+  then lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]
+  else lower_mstatus(mstatus, false).bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) =
   if inVirtualPrivilege()
-  then { vsstatus = legalize_sstatus(vsstatus, value); Ok(lower_mstatus(vsstatus).bits[xlen - 1 .. 0]) }
-  else { mstatus  = legalize_sstatus(mstatus, value);  Ok(lower_mstatus(mstatus).bits[xlen - 1 .. 0])  }
+  then { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }
+  else { mstatus  = legalize_sstatus(mstatus, value, false); Ok(lower_mstatus(mstatus, false).bits[xlen - 1 .. 0]) }
 
 // Virtual Supervisor related state registers
 register vstvec    : Mtvec

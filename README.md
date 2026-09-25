@@ -83,8 +83,6 @@ $ ./build_simulator.sh
 
 will build the simulator at `build/c_emulator/sail_riscv_sim`.
 
-If you get an error message saying `sail: unknown option '--require-version'.` it's because your Sail compiler is too old. You need version 0.20.2 or later.
-
 By default [`build_simulator.sh`](./build_simulator.sh) will download and build [libgmp](https://gmplib.org).
 To use a system installation of libgmp, run `env DOWNLOAD_GMP=FALSE ./build_simulator.sh` instead.
 
@@ -200,6 +198,7 @@ An experimental emulator in the Lean language is available, see its
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
+- Smdbltrp/Ssdbltrp extensions for Double Trap, v1.0
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0
 - Ssccptr extension for Main memory supports hardware page table reads, v1.0

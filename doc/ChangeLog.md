@@ -1,8 +1,34 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - Smdbltrp
+  - Ssdbltrp
+
+- Updates to the [configuration file](../config/config.json.in):
+  - Whether the `mcountinhibit` CSR is supported, and if so, which
+    bits are writable, can now be specified; see `base.mcountinhibit`.
+
+- Other notes:
+  - The model now requires the Sail 0.20.3 compiler version.
+
+# Release notes for version 0.14.1
+
+This is primarily a bug-fix release with fixes for the issues listed
+below. There are no changes to the configuration file, so the model
+configuration is fully compatible with that of version 0.14.
+
+This release fixes the page-straddling access limitation for
+hypervisor `HLV*`/`HSV*` load/store instructions mentioned in release
+0.14.
+
+- Support for booting Linux with an `initramfs` has been added, see
+  [os-boot/README.md](../os-boot/README.md). This allows a boot upto a
+  terminal shell prompt.
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1943 : `mstatus.SPELP` should be read-only zero when Supervisor mode is not implemented
   - https://github.com/riscv/sail-riscv/issues/1938 : `scause`/`vscause` rejected Exception Codes in 0-31 that the spec requires them to hold, such as hypervisor codes when `H` is not implemented
+  - https://github.com/riscv/sail-riscv/issues/1913 : `hlv*` and `hsv*` did not correctly handle page-straddling misaligned accesses
 
 # Release notes for version 0.14
 

@@ -54,6 +54,7 @@ public:
   void set_config_rvfi(bool on);
   void set_config_use_abi_names(bool on);
 
+  void set_initramfs_location(uint64_t ramfs_start, uint64_t ramfs_size);
   void set_elf_symbols(std::map<uint64_t, std::string> symbols);
   void set_term_fd(int fd);
   void set_trace_log(FILE *log);
@@ -84,6 +85,15 @@ public:
   bool supports_hypervisor() const {
     return m_supports_hypervisor;
   }
+  bool supports_D_extension() const {
+    return m_supports_D_extension;
+  }
+  bool has_float_registers() const {
+    return m_has_float_registers;
+  }
+  bool has_vector_registers() const {
+    return zvector_support_level != hart::zDisabled;
+  }
 
   // read access to model state
 
@@ -92,6 +102,7 @@ public:
 
   int64_t xlen() const;
   int64_t flen() const;
+  int64_t vlen() const;
   int64_t physaddrbits_len() const;
   uint64_t mepc() const;
   uint64_t sepc() const;
@@ -181,6 +192,9 @@ private:
   bool get_config_rvfi(unit) override;
   bool get_config_use_abi_names(unit) override;
 
+  mach_bits get_initramfs_base(unit) override;
+  mach_bits get_initramfs_size(unit) override;
+
   bool m_config_print_instr = false;
   bool m_config_print_clint = false;
   bool m_config_print_exception = false;
@@ -194,11 +208,14 @@ private:
   bool m_config_print_step = false;
 
   bool m_supports_hypervisor = false;
+  bool m_supports_D_extension = false;
+  bool m_has_float_registers = false;
 
   // Initialization.
   uint64_t m_elf_entry = 0;
-  std::string m_config_file = {};
-  std::optional<uint64_t> m_htif_tohost_address = {};
+  std::string m_config_file;
+  std::optional<uint64_t> m_htif_tohost_address;
+  std::optional<MemoryRegion> m_initramfs_region;
 
   std::map<uint64_t, std::string> m_symbols;
   int m_term_fd = 1;

@@ -350,6 +350,10 @@ private function check_vext_config() -> bool = {
     valid = false;
     print_endline("Zvkt is enabled but Zve32x is disabled: Zvkt requires Zve32x.");
   };
+  if (config extensions.Zvabd.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
+    valid = false;
+    print_endline("Zvabd is enabled but Zve32x is disabled: Zvabd requires Zve32x.");
+  };
   valid;
 }
 
@@ -551,6 +555,33 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The F and Zfinx extensions are mutually exclusive and cannot be supported simultaneously.");
   };
+  if not(config extensions.F.supported : bool) then {
+    if (config extensions.Zfa.supported : bool) then {
+      valid = false;
+      print_endline("The Zfa extension is enabled but F is disabled: supporting Zfa requires F.");
+    };
+    if (config extensions.Zfh.supported : bool) then {
+      valid = false;
+      print_endline("The Zfh extension is enabled but F is disabled: supporting Zfh requires F.");
+    };
+    if (config extensions.Zfhmin.supported : bool) then {
+      valid = false;
+      print_endline("The Zfhmin extension is enabled but F is disabled: supporting Zfhmin requires F.");
+    };
+    if (config extensions.Zfbfmin.supported : bool) then {
+      valid = false;
+      print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
+    };
+    if (config extensions.Zcf.supported : bool) then {
+      valid = false;
+      print_endline("The Zcf extension is enabled but F is disabled: supporting Zcf requires F.");
+    };
+  };
+  if (config extensions.Zcd.supported : bool) & not(constraint(ext_d_supported)) then {
+    valid = false;
+    print_endline("The Zcd extension is enabled but D is disabled: supporting Zcd requires D.");
+  };
+
   // See https://github.com/riscv/sail-riscv/issues/1508 for the next two checks.
   if (config extensions.Zabha.supported : bool) & not((config extensions.Zaamo.supported : bool) | (config extensions.A.supported : bool)) then {
     valid = false;
@@ -584,10 +615,6 @@ private function check_misc_extension_dependencies() -> bool = {
   if (config extensions.Zicfiss.supported : bool) & not((config extensions.Zicsr.supported : bool) & (config extensions.Zimop.supported : bool) & ((config extensions.Zaamo.supported : bool) | (config extensions.A.supported : bool))) then {
     valid = false;
     print_endline("The Zicfiss extension is enabled but one or more of Zicsr, Zimop and (Zaamo or A) are disabled: supporting Zicfiss requires Zicsr, Zimop and (Zaamo or A).");
-  };
-  if (config extensions.Zfbfmin.supported : bool) & not(config extensions.F.supported : bool) then {
-    valid = false;
-    print_endline("The Zfbfmin extension is enabled but F is disabled: supporting Zfbfmin requires F.");
   };
   if (config extensions.Zvfbfmin.supported : bool) & not(hartSupports(Ext_Zve32f)) then {
     valid = false;
@@ -683,6 +710,14 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("The Shcounterenw extension is enabled but `hcounteren` is not writable (via `base.hcounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
     };
   };
+  // When Smcdeleg/Ssccfg are supported, `mcountinhibit` will be required.
+  if (config base.mcountinhibit.supported : bool) then {
+    let inhibitable_counters : bits(32) = config base.mcountinhibit.writable_bits;
+    if inhibitable_counters[1] == 0b1 then {
+      valid = false;
+      print_endline("Bit 1 of `base.mcountinhibit.writable_bits` is set; `mcountinhibit[1]` is read-only zero.");
+    }
+  };
   if (xlen == 32 & ((config extensions.Ssnpm.supported : bool) | (config extensions.Smmpm.supported : bool) | (config extensions.Smnpm.supported : bool))) then {
     valid = false;
     print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
@@ -767,6 +802,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_sha_dependency("Shvsatpa", (config extensions.Shvsatpa.supported : bool));
     valid = valid & check_sha_dependency("Shvstvala", (config extensions.Shvstvala.supported : bool));
     valid = valid & check_sha_dependency("Shvstvecd", (config extensions.Shvstvecd.supported : bool));
+  };
+  if (config extensions.Ssdbltrp.supported : bool) & not(config extensions.S.supported : bool) then {
+    valid = false;
+    print_endline("The Ssdbltrp extension is enabled but S is disabled: supporting Ssdbltrp requires S.");
   };
   valid
 }

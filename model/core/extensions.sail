@@ -506,6 +506,10 @@ function clause hartSupports(Ext_Sscofpmf) = config extensions.Sscofpmf.supporte
 enum clause extension = Ext_Sscounterenw
 mapping clause extensionName = Ext_Sscounterenw <-> "sscounterenw"
 function clause hartSupports(Ext_Sscounterenw) = config extensions.Sscounterenw.supported
+// Double Trap (Supervisor)
+enum clause extension = Ext_Ssdbltrp
+mapping clause extensionName = Ext_Ssdbltrp <-> "ssdbltrp"
+function clause hartSupports(Ext_Ssdbltrp) = config extensions.Ssdbltrp.supported
 // Supervisor-Level pointer masking for next lower privilege mode
 enum clause extension = Ext_Ssnpm
 mapping clause extensionName = Ext_Ssnpm <-> "ssnpm"
@@ -602,6 +606,11 @@ function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
+// Double Trap (Machine)
+enum clause extension = Ext_Smdbltrp
+mapping clause extensionName = Ext_Smdbltrp <-> "smdbltrp"
+function clause hartSupports(Ext_Smdbltrp) = config extensions.Smdbltrp.supported
+function clause currentlyEnabled(Ext_Smdbltrp) = hartSupports(Ext_Smdbltrp)
 // Machine-Level pointer masking for machine mode
 enum clause extension = Ext_Smmpm
 mapping clause extensionName = Ext_Smmpm <-> "smmpm"
@@ -694,6 +703,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
     // annotate the chain of dependencies
     Ext_D => 2, // > F
     Ext_Sscounterenw => 2, // > S
+    Ext_Ssdbltrp => 2, // > S
     Ext_Sv39 => 2, // > S
     Ext_Zfh => 2, // > F
     Ext_Zvbb => 2, // > Zve32x
@@ -883,6 +893,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
+  Ext_Ssdbltrp,
   Ext_Ssnpm,
   Ext_Sspm,
   Ext_Ssqosid,
@@ -912,6 +923,7 @@ let extensions_ordered_for_isa_string = [
 
   // Machine mode extensions, ordered alphabetically.
   Ext_Smcntrpmf,
+  Ext_Smdbltrp,
   Ext_Smmpm,
   Ext_Smnpm,
   Ext_Smstateen,

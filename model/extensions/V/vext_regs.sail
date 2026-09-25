@@ -138,7 +138,7 @@ function dirty_v_context() -> unit = {
   assert(hartSupports(Ext_Zve32x));
   mstatus[VS] = extStatus_map(Dirty);
   mstatus[SD] = 0b1;
-  long_csr_write_callback("mstatus", "mstatush", mstatus.bits);
+  long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
   // When V=1 both vsstatus.VS and mstatus.VS are in effect, and modifying
   // vector state must set both to Dirty.
   if inVirtualPrivilege() then {

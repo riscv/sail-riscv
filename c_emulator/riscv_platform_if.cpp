@@ -218,3 +218,11 @@ bool PlatformInterface::get_config_rvfi(unit) {
 bool PlatformInterface::get_config_use_abi_names(unit) {
   return false;
 }
+
+mach_bits PlatformInterface::get_initramfs_base(unit) {
+  return 0;
+}
+
+mach_bits PlatformInterface::get_initramfs_size(unit) {
+  return 0;
+}
