@@ -286,8 +286,18 @@ struct ICount = {
   pending    : bool,
   s          : bool,
   u          : bool,
+  // When the trigger matches on a write to the trigger that sets the
+  // count, the match uses the existing count, but the trigger
+  // contains the newly written count after the match. This field
+  // contains a newly written count.
   new_count  : option(bits(14)),
   action     : Trig_Action,
+  // The trigger can only match if it was enabled when an instruction
+  // was fetched, and cannot match the instruction that created it
+  // since it did not exist when the instruction was fetched.  The
+  // trigger becomes active once the instruction that created it
+  // retires.
+  active     : bool,
   tdata2     : xlenbits,
   tdata3     : xlenbits,
 }
@@ -532,6 +542,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
           s = if currentlyEnabled(Ext_S) then bool_bit(v[s]) else false,
           u = if currentlyEnabled(Ext_U) then bool_bit(v[u]) else false,
           action = trig_action(act),
+          active = false,
           tdata2 = tdata2,
           tdata3 = tdata3,
         })

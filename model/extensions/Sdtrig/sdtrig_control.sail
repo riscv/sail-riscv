@@ -45,7 +45,7 @@ function match_icount_triggers(priv : Privilege) -> unit = {
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
       T_icount(t) =>
-        if icount_match(t, priv, t.action) then {
+        if t.active & icount_match(t, priv, t.action) then {
           // As implemented, this trigger cannot match for multiple
           // events during a single instruction.
           let new_t : ICount = match unsigned(t.count) {
@@ -193,7 +193,8 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
       T_disabled(_) => (),
-      T_icount(t) =>
+      T_icount(t) => {
+        assert(t.pending ==> t.active);
         // icount triggers fire in a mode where the trigger is enabled.
         if t.pending & icount_match(t, priv, t.action) then {
           found_pending = true;
@@ -201,7 +202,8 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
           pending_action = t.action;
           if pending_action == TA_Breakpoint then pending_tval = zeros();
           fire_trigger(i);
-        },
+        }
+      },
       T_itrigger(t) =>
         if t.hit & is_some(t.match_val) & not(prevent_reentrance(t.action, priv)) then {
           found_pending = true;
@@ -233,8 +235,8 @@ function update_triggers() -> unit = {
     Some(idx) => {
       match triggers[idx] {
         T_icount(t) => match t.new_count {
-          Some(c) => triggers[idx] = T_icount({t with count = c, new_count = None()}),
-          None()  => (),
+          Some(c) => triggers[idx] = T_icount({t with count = c, new_count = None(), active = true}),
+          None()  => assert(t.active),
         },
         _ => (),
       };
