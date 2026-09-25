@@ -25,6 +25,9 @@ hypervisor `HLV*`/`HSV*` load/store instructions mentioned in release
   [os-boot/README.md](../os-boot/README.md). This allows a boot upto a
   terminal shell prompt.
 
+- The following unratified extensions have been added:
+  - P (packed SIMD / DSP, draft 020, experimental)
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1943 : `mstatus.SPELP` should be read-only zero when Supervisor mode is not implemented
   - https://github.com/riscv/sail-riscv/issues/1938 : `scause`/`vscause` rejected Exception Codes in 0-31 that the spec requires them to hold, such as hypervisor codes when `H` is not implemented
