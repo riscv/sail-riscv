@@ -36,6 +36,7 @@ core {
     core/regs.sail,
     core/pc_access.sail,
     core/sys_regs.sail,
+    core/hpm.sail,
     core/ext_regs.sail,
     core/interrupt_interface.sail,
     core/interrupt_regs.sail,
