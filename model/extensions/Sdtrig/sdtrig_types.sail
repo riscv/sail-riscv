@@ -598,16 +598,17 @@ function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbit
 
   let disable = tdata1 == zeros() | tdata1_bitfield[trig_type] == trig_type_bits(TT_disabled);
   if disable then {
+    let newt = make_disabled_trigger(tdata1_bitfield, tdata2_of_trigger(t), tdata3_of_trigger(t));
     if get_config_print_trigger()
-    then print_log("Disabling trigger #" ^ dec_str(idx) ^ " (was " ^ trigger_name(t) ^ ").");
-    return make_disabled_trigger(tdata1_bitfield, tdata2_of_trigger(t), tdata3_of_trigger(t))
+    then print_log(trigger_name(newt) ^ " trigger #" ^ dec_str(idx) ^ " (was " ^ trigger_name(t) ^ ").");
+    return newt
   };
 
   match t {
     T_disabled(s) => {
       let newt = make_trigger(tdata1_bitfield, s.tdata2, s.tdata3);
       if get_config_print_trigger()
-      then print_log("Set trigger #" ^ dec_str(idx) ^ " to " ^ trigger_name(newt) ^ " (was " ^ trigger_name(t) ^ ").");
+      then print_log(trigger_name(newt) ^ " trigger #" ^ dec_str(idx) ^ ": enabled (was " ^ trigger_name(t) ^ ").");
       newt
     },
     T_icount(s) => {
@@ -641,27 +642,27 @@ function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbit
   match t {
     T_disabled(s) => {
       if get_config_print_trigger()
-      then print_log("Setting tdata2 for " ^ trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ".");
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(tdata2));
       T_disabled({s with tdata2 = tdata2})
     },
     _ => {
       if get_config_print_trigger()
-      then print_log("Ignoring setting tdata2 for already configured " ^ trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ".");
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": ignoring write to tdata2 of " ^ bits_str(tdata2));
       t
     },
   }
 
 // For now, ignore all tdata3 configuration.
-function trigger_write_tdata3(idx : trigger_index, t : Trigger, _tdata3 : xlenbits) -> Trigger =
+function trigger_write_tdata3(idx : trigger_index, t : Trigger, tdata3 : xlenbits) -> Trigger =
   match t {
     T_disabled(s) => {
       if get_config_print_trigger()
-      then print_log("Setting tdata3 for " ^ trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ".");
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(tdata3));
       T_disabled({s with tdata3 = zeros()})
     },
     _ => {
       if get_config_print_trigger()
-      then print_log("Ignoring setting tdata2 for already configured " ^ trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ".");
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": ignoring write to tdata3 of " ^ bits_str(tdata3));
       t
     },
   }
