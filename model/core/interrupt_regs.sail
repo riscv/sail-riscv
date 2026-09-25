@@ -363,6 +363,10 @@ private function lower_mip_to_hip(m : Minterrupts) -> Minterrupts = {
   ]
 }
 
+mapping clause csr_name_map = 0x645 <-> "hvip"
+mapping clause csr_name_map = 0x604 <-> "hie"
+mapping clause csr_name_map = 0x644 <-> "hip"
+
 function clause is_CSR_accessible(0x645, _, _) = currentlyEnabled(Ext_H) // hvip
 function clause is_CSR_accessible(0x604, _, _) = currentlyEnabled(Ext_H) // hie
 function clause is_CSR_accessible(0x644, _, _) = currentlyEnabled(Ext_H) // hip
