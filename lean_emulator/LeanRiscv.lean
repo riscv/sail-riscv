@@ -8,6 +8,7 @@ import Sail.Sail
 open LeanRV64DExecutable
 
 open Register
+open Sail.ArchSem
 
 def readElf (elfFilepath : System.FilePath) : IO (Except String RawELFFile) := do
   let bytes <- IO.FS.readBinFile elfFilepath
@@ -242,11 +243,27 @@ def initializeRegisters (elf: ELF64File): SailM PUnit :=
     writeReg minstretcfg (← (undefined_CountSmcntrpmf ()))
     writeReg mtimecmp (← (undefined_bitvector 64))
     writeReg stimecmp (← (undefined_bitvector 64))
-    writeReg htif_done (← (undefined_bool ()))
-    writeReg htif_exit_code (← (undefined_bitvector 64))
-    writeReg htif_cmd_write (← (undefined_bit ()))
-    writeReg htif_payload_writes (← (undefined_bitvector 4))
+    -- Preserve the HTIF state initialized by sail_model_init. In particular,
+    -- an undefined true htif_done would skip execution of the ELF entirely.
     writeReg satp (← (undefined_bitvector ((2 ^i 2) *i 8)))
+
+    -- Hypervisor registers without Sail initializers, including registers read
+    -- during reset and interrupt polling even when executing in Machine mode.
+    writeReg vstvec (← (undefined_Mtvec ()))
+    writeReg vsscratch (← (undefined_bitvector 64))
+    writeReg vsepc (← (undefined_bitvector 64))
+    writeReg vscause (← (undefined_Mcause ()))
+    writeReg vstval (← (undefined_bitvector 64))
+    writeReg hcounteren (← (undefined_Counteren ()))
+    writeReg htimedelta (← (undefined_bitvector 64))
+    writeReg htval (← (undefined_bitvector 64))
+    writeReg htinst (← (undefined_bitvector 64))
+    writeReg vstimecmp (← (undefined_bitvector 64))
+    writeReg hvip (← (undefined_Minterrupts ()))
+    writeReg hedeleg (← (undefined_Medeleg ()))
+    writeReg hideleg (← (undefined_Minterrupts ()))
+    writeReg vsie (← (undefined_bitvector 64))
+    writeReg vsip (← (undefined_bitvector 64))
 
 def my_main (elf: ELF64File) : SailM Int :=
   open LeanRV64DExecutable.Functions in
@@ -276,12 +293,13 @@ def runElf64 (elf : ELF64File) : IO UInt32 :=
   do
     let mem := initializeMemory MachineBits.B64 elf
     let regs := Std.ExtDHashMap.emptyWithCapacity
-    let initialState := ⟨regs, (), mem, default, default, default⟩
+    let initialState : SequentialState _ := ⟨regs, mem, (), 0, #[]⟩
     let main := do
       sail_model_init ()
       initializeRegisters elf
       my_main elf
-    match main.run initialState with
+    let result := (interpretSailEffects main).run initialState
+    match result with
     | .ok res s => do
       for m in s.sailOutput do
         IO.print m

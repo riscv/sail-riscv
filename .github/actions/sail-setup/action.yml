@@ -56,6 +56,7 @@ runs:
       if: runner.os == 'Linux' && job.container == null
       shell: bash
       run: |
+        sudo apt update
         sudo apt install -y --no-install-recommends pkg-config libgmp-dev curl ninja-build
 
     - name: Install packages (Linux container)
