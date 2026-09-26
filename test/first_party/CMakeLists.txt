@@ -135,6 +135,7 @@ add_first_party_test("test_vrgatherei16_reg_group.S")
 add_first_party_test("test_tlb_stale_pte_access_fault.S")
 add_first_party_test("test_misaligned_page_straddle_hlv_hsv_g_stage.S")
 add_first_party_test("test_misaligned_page_straddle_hlv_hsv_vs_stage.S")
+add_first_party_test("test_g_stage_tlb_hit_ad_update_pte_size.S")
 
 add_first_party_override_test("test_sew_elen_bound.S" "elen_32.json")
 add_first_party_override_test("test_satp_physaddr_bits.S" "satp_physaddr_bits.json")
