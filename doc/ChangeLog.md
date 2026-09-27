@@ -1,6 +1,7 @@
 # Release notes for the next version
 
 - The following extensions have been added:
+  - Shlcofideleg
   - Smdbltrp
   - Ssdbltrp
 

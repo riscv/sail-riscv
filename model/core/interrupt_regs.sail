@@ -400,6 +400,9 @@ private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts 
     VSEI = v[VSEI],
     VSTI = v[VSTI],
     VSSI = v[VSSI],
+    // "If the Shlcofideleg extension is implemented, hideleg bit 13 is
+    //  writable; otherwise, it is read-only zero."
+    LCOFI = if currentlyEnabled(Ext_Shlcofideleg) then v[LCOFI] else 0b0,
   ]
 }
 
@@ -475,6 +478,9 @@ private function lower_mip_to_vsip(m : Minterrupts, d : Minterrupts) -> Sinterru
     SEI = m[VSEI] & d[VSEI],
     STI = m[VSTI] & d[VSTI],
     SSI = m[VSSI] & d[VSSI],
+    // Shlcofideleg: vsip.LCOFIP is an alias of sip.LCOFIP (so also gated by
+    // mideleg) when hideleg bit 13 is set, else read-only zero.
+    LCOFI = m[LCOFI] & d[LCOFI] & mideleg[LCOFI],
   ]
 }
 
@@ -487,6 +493,9 @@ private function lower_mie_to_vsie(m : Minterrupts, d : Minterrupts) -> Minterru
     SEI = m[VSEI] & d[VSEI],
     STI = m[VSTI] & d[VSTI],
     SSI = m[VSSI] & d[VSSI],
+    // Shlcofideleg: vsie.LCOFIE is an alias of sie.LCOFIE when hideleg bit 13
+    // is set, else read-only zero.
+    LCOFI = m[LCOFI] & d[LCOFI] & mideleg[LCOFI],
   ]
 }
 
@@ -506,7 +515,10 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 // Returns new mip from previous mip (m) and the written vsip (v) as delegated by hideleg (d)
 private function legalize_vsip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  supported_interrupts_mask([m with VSSI = v[SSI] & d[VSSI]])
+  supported_interrupts_mask([m with
+    VSSI = v[SSI] & d[VSSI],
+    LCOFI = if (d[LCOFI] & mideleg[LCOFI]) == 0b1 then v[LCOFI] else m[LCOFI],
+  ])
 }
 
 function read_sip(read_type : XipReadType) -> Sinterrupts = {
@@ -551,6 +563,7 @@ private function legalize_vsie(m : Minterrupts, d : Minterrupts, v : xlenbits) -
     VSEI = v[SEI] & d[VSEI],
     VSTI = v[STI] & d[VSTI],
     VSSI = v[SSI] & d[VSSI],
+    LCOFI = if (d[LCOFI] & mideleg[LCOFI]) == 0b1 then v[LCOFI] else m[LCOFI],
   ])
 }
 
