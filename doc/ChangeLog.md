@@ -10,6 +10,8 @@
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1967 : `mhpmevent*` and `mhpmcounter*` should not depend on Zihpm
+  - https://github.com/riscv/sail-riscv/issues/1850 : schema validation fails to catch invalid configs
+
 - Other notes:
   - The model now requires the Sail 0.20.3 compiler version.
 
