@@ -12,6 +12,7 @@
   - https://github.com/riscv/sail-riscv/issues/1967 : `mhpmevent*` and `mhpmcounter*` should not depend on Zihpm
 - Other notes:
   - The model now requires the Sail 0.20.3 compiler version.
+  - The model now uses version 2 of the Sail concurrency interface.
 
 # Release notes for version 0.14.1
 
