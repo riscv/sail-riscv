@@ -60,7 +60,12 @@ function select_instr_or_fcsr_rm(instr_rm : rounding_mode) -> option(rounding_mo
       Fcsr_RM_Illegal => None(),
     }
   }
-  else Some(instr_rm)
+  else if valid_rounding_mode(encdec_rounding_mode(instr_rm))
+     then Some(instr_rm)
+     else match static_rm_reserved_behavior {
+       Static_RM_Fatal   => reserved_behavior("Static floating-point rounding mode reserved behavior"),
+       Static_RM_Illegal => None(),
+     }
 
 // ***************************************************************
 // Floating point accrued exception flags
