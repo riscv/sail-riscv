@@ -185,10 +185,10 @@ private function is_mag_applicable_access(access : MemoryAccessType(mem_payload)
     // Not in the base ISA.
     Load(ShadowStack)                   => false,
     Store(ShadowStack)                  => false,
-    // AMOs
+    // Standard AMOs.
     Atomic(_, _, _, Data, Data)         => true,
-    // Treat like an AMO.
-    Atomic(_, _, _, ShadowStack, ShadowStack) => true,
+    // Not applicable to Shadow Stack AMOs.
+    Atomic(_, _, _, ShadowStack, ShadowStack) => false,
 
     // Other not applicable.
     InstructionFetch()                  => false,
