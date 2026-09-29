@@ -206,6 +206,7 @@ An experimental emulator in the Lean language is available, see its
 - Sscofpmf extension for Count Overflow and Mode-Based Filtering, v1.0
 - Ssqosid extension for Quality-of-Service (QoS) Identifiers, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
+- Ssstrict extension for Extension Conformance, v1.0
 - Sstvala extension for `stval` provides all needed values, v1.0
 - Sstvecd extension for Direct Trap Vectoring, v1.0
 - Ssu64xl extension to ensure `sstatus.UXL` is capable of supporting UXLEN=64, v1.0

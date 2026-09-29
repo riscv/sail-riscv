@@ -519,6 +519,11 @@ function clause currentlyEnabled(Ext_Ssnpm) = hartSupports(Ext_Ssnpm) & currentl
 enum clause extension = Ext_Ssstateen
 mapping clause extensionName = Ext_Ssstateen <-> "ssstateen"
 function clause hartSupports(Ext_Ssstateen) = config extensions.Stateen.Ssstateen.supported
+// Extension conformance
+enum clause extension = Ext_Ssstrict
+mapping clause extensionName = Ext_Ssstrict <-> "ssstrict"
+function clause hartSupports(Ext_Ssstrict) = config extensions.Ssstrict.supported
+function clause currentlyEnabled(Ext_Ssstrict) = hartSupports(Ext_Ssstrict)
 
 // Sha is declared above with the other hypervisor extensions. This clause has to
 // live here because it needs every dependency to be declared first.
@@ -898,6 +903,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Sspm,
   Ext_Ssqosid,
   Ext_Ssstateen,
+  Ext_Ssstrict,
   Ext_Sstc,
   Ext_Sstvala,
   Ext_Sstvecd,
