@@ -151,6 +151,14 @@ let software_check_exception_writes_xtval : bool = config base.xtval_nonzero.sof
 let hardware_error_exception_writes_xtval : bool = config base.xtval_nonzero.hardware_error
 let reserved_exceptions_write_xtval : bool = config base.xtval_nonzero.reserved_exceptions
 
+// "If the hardware platform specifies that no exceptions set mtval to a nonzero value, then mtval is read-only zero."
+function mtval_is_readonly_zero() -> bool =
+  not(illegal_instruction_writes_xtval | virtual_instruction_writes_xtval | software_breakpoint_writes_xtval | hardware_breakpoint_writes_xtval |
+      misaligned_load_writes_xtval | load_access_fault_writes_xtval | load_page_fault_writes_xtval | load_guest_page_fault_writes_xtval |
+      misaligned_samo_writes_xtval | samo_access_fault_writes_xtval | samo_page_fault_writes_xtval | samo_guest_page_fault_writes_xtval |
+      misaligned_fetch_writes_xtval | fetch_access_fault_writes_xtval | fetch_page_fault_writes_xtval | fetch_guest_page_fault_writes_xtval |
+      software_check_exception_writes_xtval | hardware_error_exception_writes_xtval | reserved_exceptions_write_xtval)
+
 // Define the policy for handling reserved behaviors.
 
 enum AmocasOddRegisterReservedBehavior = {
