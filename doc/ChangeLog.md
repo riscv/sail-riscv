@@ -9,6 +9,7 @@
     bits are writable, can now be specified; see `base.mcountinhibit`.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1984 : `fence.i` is supported though `Zifencei` is configured as unsupported
   - https://github.com/riscv/sail-riscv/issues/1979 : the MAG PMA does not apply to `ssamoswap`
   - https://github.com/riscv/sail-riscv/issues/1967 : `mhpmevent*` and `mhpmcounter*` should not depend on Zihpm
   - https://github.com/riscv/sail-riscv/issues/1850 : schema validation fails to catch invalid configs
