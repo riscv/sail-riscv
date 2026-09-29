@@ -439,7 +439,7 @@ function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, _mop) = {
 
   if illegal_vstart(VSTART_LOAD_STORE, num_elem, EMUL_data_pow) |
      illegal_indexed_store(vs3, nf, 2 ^ EEW_index_pow, EMUL_index_pow, EMUL_data_pow) |
-     not(valid_src_overlap(vs2, EEW_index, EMUL_index_pow, vs3, EEW_data, EMUL_data_pow)) |
+     not(valid_src_overlap_segmented(vs2, EEW_index, EMUL_index_pow, vs3, EEW_data, EMUL_data_pow, nf)) |
      not(valid_vm_src_overlap(vm, vs2, EEW_index)) |
      not(valid_vm_src_overlap(vm, vs3, EEW_data))
   then return Illegal_Instruction();
