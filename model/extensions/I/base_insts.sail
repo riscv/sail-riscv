@@ -552,6 +552,7 @@ function clause execute ECALL() = {
     excinfo        = zeros(),
     excinfo2       = None(),
     excinst        = None(),
+    excinst_offset = zeros(),
     ext            = None(),
   };
   trap(c)

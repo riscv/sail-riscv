@@ -631,6 +631,7 @@ private function build_exception_context(
         excinfo  = zero_extend(bits_of(gva)),
         excinfo2 = None(),
         excinst  = None(),
+        excinst_offset = zeros(),
         ext      = None(),
       }
     },
@@ -665,6 +666,7 @@ private function build_exception_context(
                                 then if is_write then zero_extend(0x00002020) else zero_extend(0x00002000)
                                 else if is_write then zero_extend(0x00003020) else zero_extend(0x00003000))
                       else None(),
+            excinst_offset = zeros(),
             ext = None(),
           }
         },
@@ -676,6 +678,7 @@ private function build_exception_context(
             excinfo  = zero_extend(bits_of(gva)),
             excinfo2 = Some(zeros()),
             excinst  = None(),
+            excinst_offset = zeros(),
             ext      = None(),
           }
         }
@@ -691,6 +694,7 @@ private function build_exception_context(
         excinfo  = zero_extend(bits_of(gva)),
         excinfo2 = Some(tval2),
         excinst  = None(),
+        excinst_offset = zeros(),
         ext      = None(),
       }
     }
@@ -746,6 +750,7 @@ function translateAddr(
       excinfo  = zero_extend(bits_of(gva)),
       excinfo2 = None(),
       excinst  = None(),
+      excinst_offset = zeros(),
       ext      = None(),
     }, init_ext_ptw);
   };

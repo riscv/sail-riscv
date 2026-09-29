@@ -7,6 +7,9 @@
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `mcountinhibit` CSR is supported, and if so, which
     bits are writable, can now be specified; see `base.mcountinhibit`.
+  - Whether a trap writes a transformed instruction to `mtinst`/`htinst`
+    instead of zero can now be specified per exception type, see
+    `extensions.H.transformed_instruction`.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1979 : the MAG PMA does not apply to `ssamoswap`

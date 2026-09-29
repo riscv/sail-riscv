@@ -385,6 +385,7 @@ struct ExceptionContext = {
   excinfo        : xlenbits,
   excinfo2       : option(xlenbits),
   excinst        : option(xlenbits),
+  excinst_offset : bits(5),
   ext            : option(ext_exception)
 }
 

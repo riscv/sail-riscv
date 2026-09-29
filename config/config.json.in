@@ -627,6 +627,21 @@
       "supported": true,
       // GEILEN, the number of guest external interrupts. The maximum is XLEN-1.
       "geilen": @CONFIG__H__GEILEN@,
+      // Whether a trap into M or HS mode caused by the specified exception
+      // writes the transformed trapping instruction to `mtinst`/`htinst`.
+      // This applies to integer and floating-point loads and stores
+      // (including compressed forms), LR/SC, AMOs, HLV/HLVX/HSV and CBOs.
+      // If false, zero is written instead.
+      "transformed_instruction": {
+        "load_address_misaligned": true,
+        "load_access_fault": true,
+        "load_page_fault": true,
+        "load_guest_page_fault": true,
+        "samo_address_misaligned": true,
+        "samo_access_fault": true,
+        "samo_page_fault": true,
+        "samo_guest_page_fault": true
+      },
       // Whether a guest-page fault writes the faulting guest physical address
       // to `htval`/`mtval2`. If false, `htval`/`mtval2` is written as zero.
       // Enabling Shtvala requires this option to be enabled.
