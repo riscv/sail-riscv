@@ -58,12 +58,13 @@ register hvip : Minterrupts
 private function supported_interrupts_mask(i : Minterrupts) -> Minterrupts =
   Mk_Minterrupts(
     [Mk_Minterrupts(ones()) with
-      MEI = bool_to_bit(plat_has_mei),
-      MSI = bool_to_bit(plat_has_msi),
-      MTI = bool_to_bit(plat_has_mti),
-      SEI = bool_to_bit(plat_has_sei),
-      SSI = bool_to_bit(plat_has_ssi),
-      STI = bool_to_bit(plat_has_sti),
+      MEI  = bool_to_bit(plat_has_mei),
+      MSI  = bool_to_bit(plat_has_msi),
+      MTI  = bool_to_bit(plat_has_mti),
+      SEI  = bool_to_bit(plat_has_sei),
+      SSI  = bool_to_bit(plat_has_ssi),
+      STI  = bool_to_bit(plat_has_sti),
+      SGEI = bool_to_bit(geilen > 0),
     ].bits & i.bits
   )
 
@@ -268,8 +269,6 @@ function update_mip() -> unit = {
   };
 
   if currentlyEnabled(Ext_H) then {
-    // `hvip` is the only `VSEI` source while `hgeip` is hardwired to zero. Once it is
-    // drivable this also needs the `hgeip` bit selected by `hstatus.VGEIN`.
     new_mip[VSEI] = hvip[VSEI];
 
     // VSTI is the OR of hvip.VSTI and the hardware timer comparator.
