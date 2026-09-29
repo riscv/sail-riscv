@@ -15,7 +15,7 @@ function clause currentlyEnabled(Ext_Zifencei) = hartSupports(Ext_Zifencei)
 
 union clause instruction = FENCEI : (bits(12), regidx, regidx)
 
-$[wavedrom "funct12 rs1 FENCE.I rd MISC-MEM"]
+$[wavedrom "_  _ FENCE.I _ MISC-MEM"]
 mapping clause encdec = FENCEI(funct12, rs1, rd)
   <-> funct12 : bits(12) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0001111
   when currentlyEnabled(Ext_Zifencei)
