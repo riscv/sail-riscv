@@ -184,6 +184,7 @@
       // "Fcsr_RM_Fatal"  – raise a Sail exception, stopping execution.
       // "Fcsr_RM_Illegal" – treat it as an illegal instruction.
       "fcsr_rm": "Fcsr_RM_Illegal",
+ "static_rm": "Static_RM_Fatal",
       // This option determines how to handle writes to a `pmpcfg` register of a reserved
       // combination with `R=0` and `W=1`.
       // "PMP_Fatal"  – raise a Sail exception, stopping execution.
