@@ -3,6 +3,7 @@
 - The following extensions have been added:
   - Smdbltrp
   - Ssdbltrp
+  - Ssstrict
 
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `mcountinhibit` CSR is supported, and if so, which
