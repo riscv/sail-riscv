@@ -6,6 +6,27 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
+// machine counters/timers
+mapping clause csr_name_map = 0xB00  <-> "mcycle"
+mapping clause csr_name_map = 0xB02  <-> "minstret"
+mapping clause csr_name_map = 0xB80  <-> "mcycleh"
+mapping clause csr_name_map = 0xB82  <-> "minstreth"
+
+function clause is_CSR_accessible(0xB00, _, _) = true // mcycle
+function clause is_CSR_accessible(0xB02, _, _) = true // minstret
+function clause is_CSR_accessible(0xB80, _, _) = xlen == 32 // mcycleh
+function clause is_CSR_accessible(0xB82, _, _) = xlen == 32 // minstreth
+
+function clause read_CSR(0xB00) = mcycle[(xlen - 1) .. 0]
+function clause read_CSR(0xB02) = minstret[(xlen - 1) .. 0]
+function clause read_CSR(0xB80 if xlen == 32)= mcycle[63 .. 32]
+function clause read_CSR(0xB82 if xlen == 32) = minstret[63 .. 32]
+
+function clause write_CSR(0xB00, value) = { mcycle[(xlen - 1) .. 0] = value; Ok(value) }
+function clause write_CSR(0xB02, value) = { minstret[(xlen - 1) .. 0] = value; minstret_increment = false; Ok(value) }
+function clause write_CSR((0xB80, value) if xlen == 32) = { mcycle[63 .. 32] = value; Ok(value) }
+function clause write_CSR((0xB82, value) if xlen == 32) = { minstret[63 .. 32] = value; minstret_increment = false; Ok(value) }
+
 // hardware performance counter event selection
 mapping clause csr_name_map = 0x323  <-> "mhpmevent3"
 mapping clause csr_name_map = 0x324  <-> "mhpmevent4"
