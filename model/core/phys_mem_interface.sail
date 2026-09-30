@@ -53,12 +53,7 @@ function ak_memory_access(acc : access_kind) -> MemoryAccessType(mem_payload) =
   }
 
 function ak_is_explicit(acc : access_kind) -> bool =
-  match ak_memory_access(acc) {
-    InstructionFetch() => false,
-    Load(PageTableEntry) => false,
-    Store(PageTableEntry) => false,
-    _ => true,
-  }
+  not(is_implicit_access(ak_memory_access(acc)))
 function ak_is_ifetch(acc : access_kind) -> bool =
   ak_memory_access(acc) == InstructionFetch()
 function ak_is_ttw(acc : access_kind) -> bool =
