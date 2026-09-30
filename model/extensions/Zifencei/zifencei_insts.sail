@@ -15,18 +15,17 @@ function clause currentlyEnabled(Ext_Zifencei) = hartSupports(Ext_Zifencei)
 
 union clause instruction = FENCEI : (bits(12), regidx, regidx)
 
-$[wavedrom "0 0 FENCE.I 0 MISC-MEM"]
-mapping clause encdec = FENCEI(imm, rs, rd)
-  <-> imm : bits(12) @ encdec_reg(rs) @ 0b001 @ encdec_reg(rd) @ 0b0001111
+$[wavedrom "_  _ FENCE.I _ MISC-MEM"]
+mapping clause encdec = FENCEI(funct12, rs1, rd)
+  <-> funct12 : bits(12) @ encdec_reg(rs1) @ 0b001 @ encdec_reg(rd) @ 0b0001111
+  when currentlyEnabled(Ext_Zifencei)
 
 // fence.i is a nop for the memory model
-function clause execute FENCEI(_imm, _rs, _rd) = {
+function clause execute FENCEI(_funct12, _rs1, _rd) = {
   // "The unused fields in the FENCE.I instruction, funct12, rs1, and rd, are
   // reserved for finer-grain fences in future extensions. For forward
   // compatibility, base implementations shall ignore these fields, and
   // standard software shall zero these fields."
-  //
-  // `funct12` is `imm` here.
 
   sail_barrier(Barrier_RISCV_i);
   RETIRE_SUCCESS
@@ -36,8 +35,8 @@ function clause execute FENCEI(_imm, _rs, _rd) = {
 // Unfortunately we need to split forwards and backwards because there's
 // no way to write a zero regidx as a literal.
 mapping clause assembly =
-  forwards FENCEI(0x000, rs, rd) => "fence.i"
-    when rs == zreg & rd == zreg
+  forwards FENCEI(0x000, rs1, rd) => "fence.i"
+    when rs1 == zreg & rd == zreg
 
 mapping clause assembly =
   backwards "fence.i" => FENCEI(0x000, zreg, zreg)
