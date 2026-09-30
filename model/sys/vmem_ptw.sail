@@ -62,12 +62,7 @@ function convertToGuestException(e: ExceptionType) -> ExceptionType = {
 
 // Only guest-page faults write the GPA to htval/mtval2, other traps write zero
 private function g_stage_tval2_exception_value(trap : ExceptionType, gpa: gpabits) -> xlenbits =
-  if sys_guest_page_fault_writes_htval & (match trap {
-    E_Fetch_GPage_Fault() => true,
-    E_Load_GPage_Fault()  => true,
-    E_SAMO_GPage_Fault()  => true,
-    _                     => false
-  })
+  if is_guest_page_fault(trap) & sys_guest_page_fault_writes_htval
   then truncate(gpa >> 2, xlen)
   else zeros()
 
