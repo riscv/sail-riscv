@@ -772,7 +772,7 @@ function clause is_CSR_accessible(0x340, _, _) = true // mscratch
 function clause read_CSR(0x343) = mtval
 function clause read_CSR(0x340) = mscratch
 
-function clause write_CSR(0x343, value) = { mtval = value; Ok(mtval) }
+function clause write_CSR(0x343, value) = { mtval = if mtval_is_readonly_zero() then zeros() else value; Ok(mtval) }
 function clause write_CSR(0x340, value) = { mscratch = value; Ok(mscratch) }
 
 // counters

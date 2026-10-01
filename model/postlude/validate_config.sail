@@ -879,6 +879,10 @@ private function check_extension_param_constraints() -> bool = {
       valid = false;
       print_endline("`extensions.H.geilen` is " ^ dec_str(geilen) ^ " but cannot be greater than " ^ dec_str(xlen - 1) ^ " for RV" ^ dec_str(xlen) ^ ".");
     };
+    if mtval_is_readonly_zero() then {
+      valid = false;
+      print_endline("The hypervisor extension (H) is enabled but `mtval` is read-only zero (`base.xtval_non_zero.*` are all false)): H requires that `mtval` cannot be read-only zero.");
+    };
   };
   if not(sys_enable_writable_fiom) then {
     if xlen == 64 & (config extensions.Sv39.supported : bool) then {
