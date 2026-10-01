@@ -494,10 +494,6 @@ mapping clause extensionName = Ext_Zvksg <-> "zvksg"
 function clause hartSupports(Ext_Zvksg) = hartSupports(Ext_Zvks) & hartSupports(Ext_Zvkg)
 function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 
-// Triggers
-enum clause extension = Ext_Sdtrig
-mapping clause extensionName = Ext_Sdtrig <-> "sdtrig"
-function clause hartSupports(Ext_Sdtrig) = config extensions.Sdtrig.supported
 // Main memory supports page table reads
 enum clause extension = Ext_Ssccptr
 mapping clause extensionName = Ext_Ssccptr <-> "ssccptr"
@@ -528,6 +524,11 @@ enum clause extension = Ext_Ssstrict
 mapping clause extensionName = Ext_Ssstrict <-> "ssstrict"
 function clause hartSupports(Ext_Ssstrict) = config extensions.Ssstrict.supported
 function clause currentlyEnabled(Ext_Ssstrict) = hartSupports(Ext_Ssstrict) & currentlyEnabled(Ext_S)
+
+// Triggers
+enum clause extension = Ext_Sdtrig
+mapping clause extensionName = Ext_Sdtrig <-> "sdtrig"
+function clause hartSupports(Ext_Sdtrig) = config extensions.Sdtrig.supported
 
 // Sha is declared above with the other hypervisor extensions. This clause has to
 // live here because it needs every dependency to be declared first.
@@ -900,7 +901,6 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
-  Ext_Sdtrig,
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
@@ -939,4 +939,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Smmpm,
   Ext_Smnpm,
   Ext_Smstateen,
+
+  // Debug extensions
+  Ext_Sdtrig,
 ]

@@ -924,7 +924,6 @@
       // . `Use_tcontrol`: use the `mte` and `mpte` bits in the `tcontrol` CSR (this also makes the `tcontrol` CSR available)
       // . `Use_interrupt_enables`: use `mstatus.MIE` and the `SIE` bits in `sstatus` and `vsstatus`
       // . `No_reentrancy_support`: no specific support for reentrancy
-      // Note: `Use_tcontrol` hardwires medeleg[3] to 0, which breaks the `sbreak` test in `riscv-tests`.
       "breakpoint_reentrancy": "Use_interrupt_enables",
       // CSRs
       "mcontext": {

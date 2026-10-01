@@ -15,14 +15,14 @@ type trigger_index = range(0, num_triggers - 1)
 
 // Trigger field types and encodings
 enum Trig_Type = {
-  TT_none,       // no trigger
+  TT_none,         // no trigger
   TT_legacy,
-  TT_mcontrol,   // address/data match (deprecated)
-  TT_icount,     // instruction count
-  TT_itrigger,   // interrupt
-  TT_etrigger,   // exception
-  TT_mcontrol6,  // address/data match
-  TT_exttrigger, // external
+  TT_mcontrol,     // address/data match (deprecated)
+  TT_icount,       // instruction count
+  TT_itrigger,     // interrupt
+  TT_etrigger,     // exception
+  TT_mcontrol6,    // address/data match
+  TT_tmexttrigger, // external
   TT_custom,
   TT_disabled,
   TT_reserved,
@@ -36,7 +36,7 @@ mapping trig_type_bits : bits(4) <-> Trig_Type = {
   0b0100 <-> TT_itrigger,
   0b0101 <-> TT_etrigger,
   0b0110 <-> TT_mcontrol6,
-  0b0111 <-> TT_exttrigger,
+  0b0111 <-> TT_tmexttrigger,
   0b1111 <-> TT_disabled,
   forwards 0b1100 => TT_custom,
   forwards 0b1101 => TT_custom,
@@ -48,17 +48,17 @@ mapping trig_type_bits : bits(4) <-> Trig_Type = {
 }
 
 mapping trig_type_name : Trig_Type <-> string = {
-  TT_none       <-> "none",
-  TT_legacy     <-> "legacy",
-  TT_mcontrol   <-> "mcontrol",
-  TT_icount     <-> "icount",
-  TT_itrigger   <-> "itrigger",
-  TT_etrigger   <-> "etrigger",
-  TT_mcontrol6  <-> "mcontrol6",
-  TT_exttrigger <-> "exttrigger",
-  TT_custom     <-> "custom",
-  TT_disabled   <-> "disabled",
-  TT_reserved   <-> "reserved",
+  TT_none         <-> "none",
+  TT_legacy       <-> "legacy",
+  TT_mcontrol     <-> "mcontrol",
+  TT_icount       <-> "icount",
+  TT_itrigger     <-> "itrigger",
+  TT_etrigger     <-> "etrigger",
+  TT_mcontrol6    <-> "mcontrol6",
+  TT_tmexttrigger <-> "tmexttrigger",
+  TT_custom       <-> "custom",
+  TT_disabled     <-> "disabled",
+  TT_reserved     <-> "reserved",
 }
 
 function is_supported_trigger_type(tt : bits(4)) -> bool = {
@@ -344,6 +344,7 @@ struct ITrigger = {
   action     : Trig_Action,
   tdata2     : xlenbits,
   tdata3     : xlenbits,
+  pending    : bool,
 }
 
 struct ETrigger = {
@@ -357,6 +358,7 @@ struct ETrigger = {
   action     : Trig_Action,
   tdata2     : xlenbits,
   tdata3     : xlenbits,
+  pending    : bool,
 }
 
 bitfield IETrigger_bits : xlenbits = {
@@ -565,6 +567,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
           action = trig_action(act),
           tdata2 = tdata2 & supported_itrigger_mask,
           tdata3 = tdata3,
+          pending = false,
         })
       } else {
         make_disabled_trigger(tdata1, tdata2, tdata3)
@@ -585,6 +588,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
           action = trig_action(act),
           tdata2 = tdata2 & supported_etrigger_mask,
           tdata3 = tdata3,
+          pending = false,
         })
       } else {
         make_disabled_trigger(tdata1, tdata2, tdata3)
@@ -599,8 +603,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
   }
 }
 
-// Handle a minimal set of writes to tdata1 registers.  Since all
-// fields are WARL, this is a legal implementation.
+// Handle a minimal set of writes to tdata1 registers.
 function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbits) -> Trigger = {
   let tdata1_bitfield = Mk_TData1(tdata1);
 
@@ -622,10 +625,11 @@ function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbit
     T_icount(s) => {
       let data = Mk_ICount_bits(tdata1);
       let hit = data[hit];
+      let pending = data[pending];
       let count = if icount_count_is_hardwired_one then zero_extend(0x1) else data[count];
       if get_config_print_trigger()
       then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": hit <- " ^ bits_str(hit) ^ ", count <- " ^ bits_str(count));
-      T_icount({s with hit = bool_bit(hit), new_count = Some(count)})
+      T_icount({s with hit = bool_bit(hit), pending = bool_bit(pending), new_count = Some(count)})
     },
     T_itrigger(s) => {
       let data = Mk_IETrigger_bits(tdata1);

@@ -15,7 +15,7 @@ mapping clause csr_name_map = 0x7a0  <-> "tselect"
 function clause is_CSR_accessible(0x7a0, _, _) = currentlyEnabled(Ext_Sdtrig)
 function clause read_CSR(0x7a0) = tselect
 function clause write_CSR(0x7a0, value) = {
-  if num_triggers <= 0
+  if num_triggers == 0
   then tselect = zeros()
   else if unsigned(value) >= num_triggers
   then tselect = to_bits(num_triggers - 1)
