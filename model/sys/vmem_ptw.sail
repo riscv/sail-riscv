@@ -59,6 +59,13 @@ function convertToGuestException(e: ExceptionType) -> ExceptionType = {
     _                    => e
   }
 }
+
+// Only guest-page faults write the GPA to htval/mtval2, other traps write zero
+private function g_stage_tval2_exception_value(trap : ExceptionType, gpa: gpabits) -> xlenbits =
+  if is_guest_page_fault(trap) & sys_guest_page_fault_writes_htval
+  then truncate(gpa >> 2, xlen)
+  else zeros()
+
 // Convert translation/PTW failures into architectural exceptions
 function translationException(access : MemoryAccessType(mem_payload),
                               err : PTW_Error)

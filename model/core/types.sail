@@ -365,6 +365,14 @@ function is_hypervisor_exception(e : ExceptionType) -> bool =
     _                     => false,
   }
 
+function is_guest_page_fault(e : ExceptionType) -> bool =
+  match e {
+    E_Fetch_GPage_Fault() => true,
+    E_Load_GPage_Fault()  => true,
+    E_SAMO_GPage_Fault()  => true,
+    _                     => false,
+  }
+
 // SW check exception codes
 enum SWCheckCodes = {LANDING_PAD_FAULT}
 
