@@ -82,8 +82,8 @@ function match_icount_triggers(priv : Privilege) -> unit = {
 
 // TODO: handle NMI interrupts.
 
-function itrigger_match(t : ITrigger, priv : Privilege, intr : InterruptType) -> bool = {
-  let priv_match : bool = not(prevent_reentrance(t.action, priv)) & (match priv {
+function itrigger_match(t : ITrigger, intr : InterruptType, from_priv : Privilege, to_priv : Privilege) -> bool = {
+  let priv_match : bool = not(prevent_reentrance(t.action, to_priv)) & (match from_priv {
     Machine           => t.m,
     Supervisor        => t.s,
     User              => t.u,
@@ -94,14 +94,14 @@ function itrigger_match(t : ITrigger, priv : Privilege, intr : InterruptType) ->
   priv_match & ((t.tdata2 & make_itrigger_flag(intr)) != zeros())
 }
 
-function match_itrigger_triggers(priv : Privilege, intr : InterruptType) -> unit = {
+function match_itrigger_triggers(intr : InterruptType, from_priv : Privilege, to_priv : Privilege) -> unit = {
   if not(currentlyEnabled(Ext_Sdtrig)) then return ();
 
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
       T_itrigger(t) =>
-        if itrigger_match(t, priv, intr) then {
-          triggers[i] = T_itrigger({t with hit = true});
+        if itrigger_match(t, intr, from_priv, to_priv) then {
+          triggers[i] = T_itrigger({t with pending = true, hit = true});
 
           if get_config_print_trigger()
           then print_log("Interrupt " ^ interruptType_to_str(intr) ^ " matched itrigger at index #" ^ dec_str(i) ^ " with action " ^ trigger_action_name(t.action));
@@ -114,8 +114,8 @@ function match_itrigger_triggers(priv : Privilege, intr : InterruptType) -> unit
 
 // etrigger
 
-private function etrigger_match(t : ETrigger, priv : Privilege, e : ExceptionType) -> bool = {
-  let priv_match : bool = not(prevent_reentrance(t.action, priv)) & (match priv {
+private function etrigger_match(t : ETrigger, e : ExceptionType, from_priv : Privilege, to_priv : Privilege) -> bool = {
+  let priv_match : bool = not(prevent_reentrance(t.action, to_priv)) & (match from_priv {
     Machine           => t.m,
     Supervisor        => t.s,
     User              => t.u,
@@ -126,14 +126,14 @@ private function etrigger_match(t : ETrigger, priv : Privilege, e : ExceptionTyp
   priv_match & ((t.tdata2 & make_etrigger_flag(e)) != zeros())
 }
 
-function match_etrigger_triggers(priv : Privilege, exc : ExceptionType) -> unit = {
+function match_etrigger_triggers(exc : ExceptionType, from_priv : Privilege, to_priv : Privilege) -> unit = {
   if not(currentlyEnabled(Ext_Sdtrig)) then return ();
 
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
       T_etrigger(t) =>
-        if etrigger_match(t, priv, exc) then {
-          triggers[i] = T_etrigger({t with hit = true});
+        if etrigger_match(t, exc, from_priv, to_priv) then {
+          triggers[i] = T_etrigger({t with pending = true, hit = true});
 
           if get_config_print_trigger()
           then print_log("Exception " ^ exceptionType_to_str(exc) ^ " matched etrigger at index #" ^ dec_str(i) ^ " with action " ^ trigger_action_name(t.action));
@@ -155,10 +155,10 @@ function fire_trigger(idx : trigger_index) -> unit = {
       (T_icount({t with pending = false, hit = true}), t.action)
     },
     T_itrigger(t) => {
-      (T_itrigger(t), t.action)
+      (T_itrigger({t with pending = false}), t.action)
     },
     T_etrigger(t) => {
-      (T_etrigger(t), t.action)
+      (T_etrigger({t with pending = false}), t.action)
     },
     T_disabled(_) => internal_error(__FILE__, __LINE__, "Disabled triggers cannot fire."),
   };
@@ -216,7 +216,7 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
         }
       },
       T_itrigger(t) =>
-        if t.hit & not(prevent_reentrance(t.action, priv)) then {
+        if t.pending & not(prevent_reentrance(t.action, priv)) then {
           found_pending = true;
           pending_index  = i;
           pending_action = t.action;
@@ -224,7 +224,7 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
           fire_trigger(i);
         },
       T_etrigger(t) =>
-        if t.hit & not(prevent_reentrance(t.action, priv)) then {
+        if t.pending & not(prevent_reentrance(t.action, priv)) then {
           found_pending = true;
           pending_index  = i;
           pending_action = t.action;

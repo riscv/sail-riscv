@@ -344,6 +344,7 @@ struct ITrigger = {
   action     : Trig_Action,
   tdata2     : xlenbits,
   tdata3     : xlenbits,
+  pending    : bool,
 }
 
 struct ETrigger = {
@@ -357,6 +358,7 @@ struct ETrigger = {
   action     : Trig_Action,
   tdata2     : xlenbits,
   tdata3     : xlenbits,
+  pending    : bool,
 }
 
 bitfield IETrigger_bits : xlenbits = {
@@ -565,6 +567,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
           action = trig_action(act),
           tdata2 = tdata2 & supported_itrigger_mask,
           tdata3 = tdata3,
+          pending = false,
         })
       } else {
         make_disabled_trigger(tdata1, tdata2, tdata3)
@@ -585,6 +588,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
           action = trig_action(act),
           tdata2 = tdata2 & supported_etrigger_mask,
           tdata3 = tdata3,
+          pending = false,
         })
       } else {
         make_disabled_trigger(tdata1, tdata2, tdata3)
