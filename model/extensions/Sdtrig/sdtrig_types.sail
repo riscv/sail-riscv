@@ -599,8 +599,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
   }
 }
 
-// Handle a minimal set of writes to tdata1 registers.  Since all
-// fields are WARL, this is a legal implementation.
+// Handle a minimal set of writes to tdata1 registers.
 function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbits) -> Trigger = {
   let tdata1_bitfield = Mk_TData1(tdata1);
 
@@ -622,10 +621,11 @@ function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbit
     T_icount(s) => {
       let data = Mk_ICount_bits(tdata1);
       let hit = data[hit];
+      let pending = data[pending];
       let count = if icount_count_is_hardwired_one then zero_extend(0x1) else data[count];
       if get_config_print_trigger()
       then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": hit <- " ^ bits_str(hit) ^ ", count <- " ^ bits_str(count));
-      T_icount({s with hit = bool_bit(hit), new_count = Some(count)})
+      T_icount({s with hit = bool_bit(hit), pending = bool_bit(pending), new_count = Some(count)})
     },
     T_itrigger(s) => {
       let data = Mk_IETrigger_bits(tdata1);

@@ -49,7 +49,8 @@ function match_icount_triggers(priv : Privilege) -> unit = {
           // If the trigger matched on a write to the icount trigger
           // with count = 1, pending might (configured with
           // `write_sets_pending` as true) or might not
-          // (`write_sets_pending` as false) be set.
+          // (`write_sets_pending` as false) be set.  If that write
+          // updated `pending`, that value may be overridden.
           let set_pending : bool = match written_trigger_index {
             Some(idx, TDATA1) => idx != i | icount_self_write_sets_pending,
             Some(_, _)        => true,
