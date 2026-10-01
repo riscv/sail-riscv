@@ -79,7 +79,7 @@ jobs:
       - name: Configure the build
         run: |
           eval $(opam config env)
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSAIL_MODULES="H;Zca;Zicbom_insts;Zicboz;Zicsr_insts;Zkr;Sscofpmf;postlude" -DPRINT_EFFECTS=true -DENABLE_LEAN_EMULATOR_TESTS=TRUE
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSAIL_MODULES="H;Zca;Zicbom_insts;Zicboz;Zicsr_insts;Zicfiss_regs;Zimop;Zaamo;Zicntr;Zkr;Sscofpmf;Ssqosid;postlude" -DPRINT_EFFECTS=true -DENABLE_LEAN_EMULATOR_TESTS=TRUE
 
       - name: Setup Lean
         uses: leanprover/lean-action@v1
