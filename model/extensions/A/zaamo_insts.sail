@@ -106,15 +106,19 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       assert(exc_addr == addr);
       return memory_exception(e, bits_of(vaddr), access_info)
     },
-    Ok(_)  => match mem_read(access, pbmt, eff_priv, addr, width, aq, aq & rl, true) {
-      Err(exc_addr, e) => {
-        // AMOs should not get split.
-        assert(exc_addr == addr);
-        return memory_exception(e, bits_of(vaddr), access_info)
-      },
-      Ok(loaded) => loaded,
-    },
+    Ok(_)  => {
+      vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(addr), access, width);
+      match mem_read(access, pbmt, eff_priv, addr, width, aq, aq & rl, true) {
+        Err(exc_addr, e) => {
+          // AMOs should not get split.
+          assert(exc_addr == addr);
+          return memory_exception(e, bits_of(vaddr), access_info)
+        },
+        Ok(loaded) => loaded,
+      }
+    }
   };
+
 
   // Sequence the read of `rs2` after the call to `mem_write_ea` with the effective address.
   // See https://github.com/riscv/sail-riscv/issues/1761.
@@ -157,7 +161,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
       // AMOs should not get split.
       assert(exc_addr == addr);
       memory_exception(e, bits_of(vaddr), access_info)
-    }
+    },
   }
 }
 

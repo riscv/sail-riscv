@@ -25,6 +25,7 @@ struct CLIOptions {
   std::vector<std::string> config_overrides = {};
   std::string term_log = {};
   std::string trace_log_path = {};
+  std::string rvvi_text_log_path = {};
   std::string dtb_file;
   std::string initramfs_file;
   unsigned rvfi_dii_port = 0;
@@ -53,6 +54,7 @@ struct CLIOptions {
   bool config_print_pma = false;
   bool config_print_pmp = false;
   bool config_print_rvfi = false;
+  bool config_print_rvvi_text = false;
   bool config_print_step = false;
   bool config_print_ptw = false;
   bool config_print_tlb = false;

@@ -112,8 +112,11 @@ public:
   uint64_t pc() const;
   uint64_t fcsr() const;
 
+  bool virt_enabled() const;
+
   // These state accessors are not const due to the generated read
   // accessors not being marked const in hart::Model.
+  uint64_t cur_privilege_mode();
   uint64_t xreg(int64_t reg);
   uint64_t freg(int64_t reg);
   // returns std::nullopt if the model has not thrown an exception.
@@ -141,6 +144,7 @@ private:
   unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
   unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
+  unit vmem_access_callback(sbits vaddr, sbits paddr, MemoryAccessType access, int64_t width) override;
   unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
   unit freg_write_callback(unsigned reg, sbits value) override;
   // `full` indicates that the name and index of the CSR are provided.

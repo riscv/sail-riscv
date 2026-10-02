@@ -76,6 +76,13 @@ unit ModelImpl::mem_exception_callback(sbits paddr, uint64_t num_of_exception) {
   return UNIT;
 }
 
+unit ModelImpl::vmem_access_callback(sbits vaddr, sbits paddr, MemoryAccessType access, int64_t width) {
+  for (auto c : m_callbacks) {
+    c->vmem_access_callback(*this, vaddr, paddr, access, width);
+  }
+  return UNIT;
+}
+
 unit ModelImpl::xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) {
   for (auto c : m_callbacks) {
     c->xreg_full_write_callback(*this, abi_name, reg, value);
@@ -561,6 +568,14 @@ int64_t ModelImpl::vlen() const {
 
 int64_t ModelImpl::physaddrbits_len() const {
   return zphysaddrbits_len;
+}
+
+uint64_t ModelImpl::cur_privilege_mode() {
+  return zprivLevel_to_bits(zcur_privilege);
+}
+
+bool ModelImpl::virt_enabled() const {
+  return zcur_privilege == hart::zVirtualUser || zcur_privilege == hart::zVirtualSupervisor;
 }
 
 uint64_t ModelImpl::pc() const {
