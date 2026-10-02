@@ -100,10 +100,10 @@ set(common_deps
     "src/common/nanoprintf.h"
     "src/common/runtime.c"
     "src/common/runtime.h"
-    "src/common/rvviTextChecker.py"
-    "src/common/lint_rvvi_trace.py"
-    "src/common/compare_rvvi_golden.py"
-    "src/common/test_rvvi_text_negative.py"
+    "src/scripts/rvviTextChecker.py"
+    "src/scripts/lint_rvvi_trace.py"
+    "src/scripts/compare_rvvi_golden.py"
+    "src/scripts/test_rvvi_text_negative.py"
 )
 
 set(tests)
@@ -256,8 +256,8 @@ endforeach()
 # RVVI-TEXT tests: compile each ELF, then match --trace-rvvi-text against golden.json.
 list(LENGTH rvvi_tests rvvi_tests_len)
 math(EXPR rvvi_test_last "${rvvi_tests_len} - 1")
-set(rvvi_checker "${CMAKE_CURRENT_SOURCE_DIR}/src/common/rvviTextChecker.py")
-set(rvvi_lint "${CMAKE_CURRENT_SOURCE_DIR}/src/common/lint_rvvi_trace.py")
+set(rvvi_checker "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/rvviTextChecker.py")
+set(rvvi_lint "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/lint_rvvi_trace.py")
 foreach(idx RANGE 0 ${rvvi_test_last} 3)
     list(SUBLIST rvvi_tests ${idx} 3 entry)
     list(GET entry 0 test_source)
@@ -303,11 +303,11 @@ foreach(idx RANGE 0 ${rvvi_test_last} 3)
     add_custom_target(build_rvvi_${arch}_${test_source} ALL DEPENDS ${elf} ${config} ${override_config})
 
     string(REPLACE ".S" ".golden.json" golden_file "${test_source}")
-    set(golden "${CMAKE_CURRENT_SOURCE_DIR}/src/${golden_file}")
+    set(golden "${CMAKE_CURRENT_SOURCE_DIR}/test_data/golden/${golden_file}")
     add_test(
         NAME "first_party_${arch}_${test_source}_rvvi_golden"
         COMMAND ${Python3_EXECUTABLE}
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/common/compare_rvvi_golden.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/compare_rvvi_golden.py"
             --sim $<TARGET_FILE:sail_riscv_sim>
             --elf ${elf}
             --config ${config}
@@ -322,11 +322,11 @@ endforeach()
 add_test(
     NAME first_party_rvvi_text_match_unit
     COMMAND ${Python3_EXECUTABLE}
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/common/test_match_rvvi_trace.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/test_match_rvvi_trace.py"
 )
 
 add_test(
     NAME first_party_rvvi_text_negative
     COMMAND ${Python3_EXECUTABLE}
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/common/test_rvvi_text_negative.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/test_rvvi_text_negative.py"
 )
