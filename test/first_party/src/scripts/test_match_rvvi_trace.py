@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import sys
 import unittest
+from typing import Any
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -34,6 +35,7 @@ class ParseTests(unittest.TestCase):
             "V 1 0x1 V 1 0x2 MEM D 4 0x80001000 0x80001000 0 MODE 0x3 VIRT 0x0"
         )
         ev = parse_event_line(line)
+        assert ev is not None
         self.assertEqual(ev["v"], {1: 2})
 
     def test_mnemonic_load_store(self):
@@ -50,9 +52,13 @@ class ParseTests(unittest.TestCase):
 
 
 class MatchTests(unittest.TestCase):
-    def _ev(self, extra: str, insn="0x00628023", event="RET"):
+    def _ev(
+        self, extra: str, insn: str = "0x00628023", event: str = "RET"
+    ) -> dict[str, Any]:
         line = f"HART 0 {event} 0x80002000 {insn} {extra} MODE 0x3 VIRT 0x0"
-        return parse_event_line(line)
+        ev = parse_event_line(line)
+        assert ev is not None
+        return ev
 
     def test_subsequence_skips_unrelated(self):
         events = [

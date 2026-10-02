@@ -58,6 +58,8 @@ def event_matches(ev: dict[str, Any], spec: dict[str, Any], xlen: int) -> bool:
     if ev["event"] != want_event:
         return False
     name = mnemonic(ev["inst"], xlen)
+    if name is None:
+        return False
     got = ALIASES.get(name, name)
     want = spec["match"]
     return got == want or name == want

@@ -124,9 +124,9 @@ def check_PARAMS(state, tokens):
         raise AssertionError(f"XLEN must be 32 or 64, got {state.xlen}.")
     if state.flen not in [0, 32, 64, 128]:
         raise AssertionError(f"FLEN must be 0, 32, 64, or 128 got {state.flen}.")
-    if state.nharts <= 0:
+    if not isinstance(state.nharts, int) or state.nharts <= 0:
         raise AssertionError(f"NHARTS must be a positive integer, got {state.nharts}.")
-    if state.nretire <= 0:
+    if not isinstance(state.nretire, int) or state.nretire <= 0:
         raise AssertionError(f"RETIRE must be a positive integer, got {state.nretire}.")
 
     timescales = ["s", "ms", "us", "ns", "ps", "fs"]

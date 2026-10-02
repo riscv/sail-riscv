@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+from collections.abc import Sequence
 from typing import Any
 
 OPCODE_LOAD = 0b0000011
@@ -75,7 +76,7 @@ def parse_hex(tok: str) -> int:
     return int(tok, 16)
 
 
-def last_write_wins(pairs: list[tuple[int, str | int]]) -> dict[int, int]:
+def last_write_wins(pairs: Sequence[tuple[int, str | int]]) -> dict[int, int]:
     out: dict[int, int] = {}
     for idx, val in pairs:
         out[idx] = val if isinstance(val, int) else parse_hex(str(val))
