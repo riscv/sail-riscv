@@ -52,6 +52,7 @@ function clause execute ZICBOZ(rs1) = {
         // equal to rs1, but pointer masking can change that.
         Err(e, _) => trap({ e with excinfo = bits_of(vaddr - negative_offset) }),
         Ok(paddr, pbmt, _) => {
+          vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), access, cache_block_size);
           match mem_write_ea(paddr, cache_block_size, eff_priv, access, pbmt, false, false, false) {
             Err(exc_addr, e) => {
               // Cache accesses should not get split.

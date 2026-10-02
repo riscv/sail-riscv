@@ -107,6 +107,7 @@ void callbacks_if::instret_callback([[maybe_unused]] ModelImpl &model) {
 // Page table walk callbacks
 void callbacks_if::ptw_start_callback(
   [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
   [[maybe_unused]] uint64_t vpn,
   [[maybe_unused]] ModelImpl::MemoryAccessType access_type,
   [[maybe_unused]] ModelImpl::Privilege privilege
@@ -115,6 +116,7 @@ void callbacks_if::ptw_start_callback(
 
 void callbacks_if::ptw_step_callback(
   [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] sbits pte_addr,
   [[maybe_unused]] uint64_t pte
@@ -123,6 +125,7 @@ void callbacks_if::ptw_step_callback(
 
 void callbacks_if::ptw_success_callback(
   [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
   [[maybe_unused]] uint64_t final_ppn,
   [[maybe_unused]] int64_t level
 ) {
@@ -130,6 +133,7 @@ void callbacks_if::ptw_success_callback(
 
 void callbacks_if::ptw_fail_callback(
   [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
   [[maybe_unused]] ModelImpl::PTW_Error error_type,
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] sbits pte_addr

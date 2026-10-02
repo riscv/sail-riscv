@@ -153,30 +153,35 @@ unit ModelImpl::instret_callback(unit) {
   return UNIT;
 }
 
-unit ModelImpl::ptw_start_callback(uint64_t vpn, MemoryAccessType access_type, Privilege privilege) {
+unit ModelImpl::ptw_start_callback(
+  TranslationStage stage,
+  uint64_t vpn,
+  MemoryAccessType access_type,
+  Privilege privilege
+) {
   for (auto c : m_callbacks) {
-    c->ptw_start_callback(*this, vpn, access_type, privilege);
+    c->ptw_start_callback(*this, stage, vpn, access_type, privilege);
   }
   return UNIT;
 }
 
-unit ModelImpl::ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte) {
+unit ModelImpl::ptw_step_callback(TranslationStage stage, int64_t level, sbits pte_addr, uint64_t pte) {
   for (auto c : m_callbacks) {
-    c->ptw_step_callback(*this, level, pte_addr, pte);
+    c->ptw_step_callback(*this, stage, level, pte_addr, pte);
   }
   return UNIT;
 }
 
-unit ModelImpl::ptw_success_callback(uint64_t final_ppn, int64_t level) {
+unit ModelImpl::ptw_success_callback(TranslationStage stage, uint64_t final_ppn, int64_t level) {
   for (auto c : m_callbacks) {
-    c->ptw_success_callback(*this, final_ppn, level);
+    c->ptw_success_callback(*this, stage, final_ppn, level);
   }
   return UNIT;
 }
 
-unit ModelImpl::ptw_fail_callback(PTW_Error error_type, int64_t level, sbits pte_addr) {
+unit ModelImpl::ptw_fail_callback(TranslationStage stage, PTW_Error error_type, int64_t level, sbits pte_addr) {
   for (auto c : m_callbacks) {
-    c->ptw_fail_callback(*this, error_type, level, pte_addr);
+    c->ptw_fail_callback(*this, stage, error_type, level, pte_addr);
   }
   return UNIT;
 }

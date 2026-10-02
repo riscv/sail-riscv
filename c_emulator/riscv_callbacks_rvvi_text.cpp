@@ -145,11 +145,22 @@ void rvvi_text_callbacks::post_step_callback(ModelImpl &model, bool) {
   }
 }
 
-void rvvi_text_callbacks::ptw_step_callback(ModelImpl &, int64_t, sbits, uint64_t pte) {
+void rvvi_text_callbacks::ptw_step_callback(
+  ModelImpl &,
+  ModelImpl::TranslationStage stage,
+  int64_t,
+  sbits,
+  uint64_t pte
+) {
   m_last_pte = pte;
 }
 
-void rvvi_text_callbacks::ptw_success_callback(ModelImpl &, uint64_t, int64_t level) {
+void rvvi_text_callbacks::ptw_success_callback(
+  ModelImpl &,
+  ModelImpl::TranslationStage stage,
+  uint64_t,
+  int64_t level
+) {
   m_ptw_success = true;
   m_ptw_success_level = level;
 }

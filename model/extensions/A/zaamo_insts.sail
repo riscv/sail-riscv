@@ -100,22 +100,20 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Ok(addr, pbmt, _) => (addr, pbmt),
   };
 
+  vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(addr), access, width);
   let loaded : bits('width * 8) = match mem_write_ea(addr, width, eff_priv, access, pbmt, aq & rl, rl, true) {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
       return memory_exception(e, bits_of(vaddr), access_info)
     },
-    Ok(_)  => {
-      vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(addr), access, width);
-      match mem_read(access, pbmt, eff_priv, addr, width, aq, aq & rl, true) {
-        Err(exc_addr, e) => {
-          // AMOs should not get split.
-          assert(exc_addr == addr);
-          return memory_exception(e, bits_of(vaddr), access_info)
-        },
-        Ok(loaded) => loaded,
-      }
+    Ok(_)  =>match mem_read(access, pbmt, eff_priv, addr, width, aq, aq & rl, true) {
+      Err(exc_addr, e) => {
+        // AMOs should not get split.
+        assert(exc_addr == addr);
+        return memory_exception(e, bits_of(vaddr), access_info)
+      },
+      Ok(loaded) => loaded,
     }
   };
 

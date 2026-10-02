@@ -160,10 +160,15 @@ private:
   unit instret_callback(unit) override;
 
   // Page table walk callbacks
-  unit ptw_start_callback(uint64_t vpn, MemoryAccessType access_type, Privilege privilege) override;
-  unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte) override;
-  unit ptw_success_callback(uint64_t final_ppn, int64_t level) override;
-  unit ptw_fail_callback(PTW_Error error_type, int64_t level, sbits pte_addr) override;
+  unit ptw_start_callback(
+    TranslationStage stage,
+    uint64_t vpn,
+    MemoryAccessType access_type,
+    Privilege privilege
+  ) override;
+  unit ptw_step_callback(TranslationStage stage, int64_t level, sbits pte_addr, uint64_t pte) override;
+  unit ptw_success_callback(TranslationStage stage, uint64_t final_ppn, int64_t level) override;
+  unit ptw_fail_callback(TranslationStage stage, PTW_Error error_type, int64_t level, sbits pte_addr) override;
   unit tlb_add_callback(TLB tlb, uint64_t index) override;
   unit tlb_flush_begin_callback(unit) override;
   unit tlb_flush_callback(uint64_t index) override;

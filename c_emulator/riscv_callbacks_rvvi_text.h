@@ -27,8 +27,19 @@ public:
   void vreg_write_callback(ModelImpl &model, unsigned reg, lbits value) override;
   void trap_callback(ModelImpl &model, bool is_interrupt, fbits cause) override;
   void instret_callback(ModelImpl &model) override;
-  void ptw_step_callback(ModelImpl &model, int64_t level, sbits pte_addr, uint64_t pte) override;
-  void ptw_success_callback(ModelImpl &model, uint64_t final_ppn, int64_t level) override;
+  void ptw_step_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    int64_t level,
+    sbits pte_addr,
+    uint64_t pte
+  ) override;
+  void ptw_success_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    uint64_t final_ppn,
+    int64_t level
+  ) override;
 
 private:
   struct RegChange {

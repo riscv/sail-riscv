@@ -114,6 +114,7 @@ void log_callbacks::vreg_write_callback(ModelImpl &, unsigned reg, lbits value) 
 // Page table walk callback
 void log_callbacks::ptw_start_callback(
   ModelImpl &model,
+  ModelImpl::TranslationStage stage,
   uint64_t vpn,
   ModelImpl::MemoryAccessType access_type,
   ModelImpl::Privilege privilege
@@ -121,7 +122,8 @@ void log_callbacks::ptw_start_callback(
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
       trace_log,
-      "PTW: Start, vpn=0x%" PRIx64 ", access_type=%s, privilege=%s\n",
+      "PTW: Start, stage=%s, vpn=0x%" PRIx64 ", access_type=%s, privilege=%s\n",
+      model.translation_stage_to_string(stage).c_str(),
       vpn,
       model.memory_access_type_to_string(access_type).c_str(),
       model.privilege_to_string(privilege).c_str()
@@ -129,11 +131,18 @@ void log_callbacks::ptw_start_callback(
   }
 }
 
-void log_callbacks::ptw_step_callback(ModelImpl & /*model*/, int64_t level, sbits pte_addr, uint64_t pte) {
+void log_callbacks::ptw_step_callback(
+  ModelImpl &model,
+  ModelImpl::TranslationStage stage,
+  int64_t level,
+  sbits pte_addr,
+  uint64_t pte
+) {
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
       trace_log,
-      "PTW: Step, level=%" PRId64 ", pte=0x%" PRIX64 ", pte_addr=0x%" PRIX64 "\n",
+      "PTW: Step, stage=%s, level=%" PRId64 ", pte=0x%" PRIX64 ", pte_addr=0x%" PRIX64 "\n",
+      model.translation_stage_to_string(stage).c_str(),
       level,
       pte,
       pte_addr.bits
@@ -141,14 +150,26 @@ void log_callbacks::ptw_step_callback(ModelImpl & /*model*/, int64_t level, sbit
   }
 }
 
-void log_callbacks::ptw_success_callback(ModelImpl & /*model*/, uint64_t final_ppn, int64_t level) {
+void log_callbacks::ptw_success_callback(
+  ModelImpl &model,
+  ModelImpl::TranslationStage stage,
+  uint64_t final_ppn,
+  int64_t level
+) {
   if (trace_log != nullptr && config_print_ptw) {
-    fprintf(trace_log, "PTW: Success, final_ppn=0x%" PRIx64 ", level=%" PRId64 "\n", final_ppn, level);
+    fprintf(
+      trace_log,
+      "PTW: Success, stage=%s, final_ppn=0x%" PRIx64 ", level=%" PRId64 "\n",
+      model.translation_stage_to_string(stage).c_str(),
+      final_ppn,
+      level
+    );
   }
 }
 
 void log_callbacks::ptw_fail_callback(
   ModelImpl &model,
+  ModelImpl::TranslationStage stage,
   ModelImpl::PTW_Error error_type,
   int64_t level,
   sbits pte_addr
@@ -156,7 +177,8 @@ void log_callbacks::ptw_fail_callback(
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
       trace_log,
-      "PTW: failed, error=%s, level=%" PRId64 ", pte_addr=0x%" PRIX64 "\n",
+      "PTW: failed, stage=%s, error=%s, level=%" PRId64 ", pte_addr=0x%" PRIX64 "\n",
+      model.translation_stage_to_string(stage).c_str(),
       model.ptw_error_to_string(error_type).c_str(),
       level,
       pte_addr.bits

@@ -100,7 +100,10 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
             Err(e)  => memory_exception(e, bits_of(vaddr_for_error), access_info),
             // If there is no error, the model has no caches so there's no
             // more action required.
-            Ok(_)   => RETIRE_SUCCESS
+            Ok(_)   => {
+              vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), access, cache_block_size);
+              RETIRE_SUCCESS
+            },
           }
         },
         Err(e, _) =>  trap({ e with excinfo = bits_of(vaddr_for_error) }),
