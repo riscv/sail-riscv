@@ -211,24 +211,24 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
   match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => Err(trap(e)),
 
-    Ok(paddr, pbmt, _) => {
-      vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), access, width);
-      match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq, rl, res) {
+    Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
           let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
           Err(memory_exception(e, bits_of(exc_vaddr), access_info))
         },
 
-        Ok(()) => match mem_write_value(paddr, width, value, eff_priv, access, pbmt, aq, rl, res) {
-          Err(exc_paddr, e) => {
-            let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-            Err(memory_exception(e, bits_of(exc_vaddr), access_info))
-          },
+        Ok(()) => {
+          vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), access, width);
+          match mem_write_value(paddr, width, value, eff_priv, access, pbmt, aq, rl, res) {
+            Err(exc_paddr, e) => {
+              let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+              Err(memory_exception(e, bits_of(exc_vaddr), access_info))
+            },
 
-          Ok(s) => Ok(s),
+            Ok(s) => Ok(s),
+          }
         },
-      }
-    },
+      },
   }
 }
 
@@ -296,25 +296,23 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
           Err(e) => return Err(memory_exception(e, bits_of(vaddr), access_info)),
           Ok(_)  => write_success = false,
         }
-      } else {
-        vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), access, access_width);
-        match mem_write_ea(paddr, access_width, eff_priv, access, pbmt, aq, rl, res) {
-          Err(exc_paddr, e) => {
-            let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-            return Err(memory_exception(e, bits_of(exc_vaddr), access_info))
-          },
+      } else match mem_write_ea(paddr, access_width, eff_priv, access, pbmt, aq, rl, res) {
+        Err(exc_paddr, e) => {
+          let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+          return Err(memory_exception(e, bits_of(exc_vaddr), access_info))
+        },
 
-          Ok(()) => {
-            let write_value = data[8 * access_width - 1 .. 0];
-            match mem_write_value(paddr, access_width, write_value, eff_priv, access, pbmt, aq, rl, res) {
-              Err(exc_paddr, e) => {
-                let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-                return Err(memory_exception(e, bits_of(exc_vaddr), access_info))
-              },
-              Ok(s)  => write_success = write_success & s,
-            }
-          },
-        }
+        Ok(()) => {
+          vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), access, access_width);
+          let write_value = data[8 * access_width - 1 .. 0];
+          match mem_write_value(paddr, access_width, write_value, eff_priv, access, pbmt, aq, rl, res) {
+            Err(exc_paddr, e) => {
+              let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
+              return Err(memory_exception(e, bits_of(exc_vaddr), access_info))
+            },
+            Ok(s)  => write_success = write_success & s,
+          }
+        },
       }
     },
   };
