@@ -14,7 +14,10 @@
   - https://github.com/riscv/sail-riscv/issues/1984 : `fence.i` is supported though `Zifencei` is configured as unsupported
   - https://github.com/riscv/sail-riscv/issues/1981 : `mtval` must be read-only zero if no exceptions set `mtval` to a non-zero value
   - https://github.com/riscv/sail-riscv/issues/1979 : the MAG PMA does not apply to `ssamoswap`
+  - https://github.com/riscv/sail-riscv/issues/1972 : `hie.SGEIE` and `mie.SGEIE` should be read-only zero when GEILEN is 0
+  - https://github.com/riscv/sail-riscv/issues/1971 : `htval`/`mtval2` must be zero for non guest-page faults caused by G-stage failures
   - https://github.com/riscv/sail-riscv/issues/1967 : `mhpmevent*` and `mhpmcounter*` should not depend on Zihpm
+  - https://github.com/riscv/sail-riscv/pull/1965 : a G-stage TLB hit under Sv32x4 used an 8-byte PTE, overwriting the adjacent PTE on A/D updates
   - https://github.com/riscv/sail-riscv/issues/1850 : schema validation fails to catch invalid configs
 
 - Other notes:
