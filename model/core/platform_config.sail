@@ -171,6 +171,14 @@ enum FcsrRmReservedBehavior = {
   Fcsr_RM_Illegal,
 }
 
+// Behavior when an FP instruction encodes a reserved static rounding mode
+// (rm = 0b101 or 0b110).
+enum StaticRmReservedBehavior = {
+  // Report the reserved behavior as a fatal error and stop the simulation.
+  Static_RM_Fatal,
+  // Treat the instruction as illegal (raise an illegal instruction exception).
+  Static_RM_Illegal,
+}
 enum PmpWriteOnlyReservedBehavior = {
   PMP_Fatal,
   PMP_ClearPermissions,
@@ -206,6 +214,8 @@ enum OOBVstartReservedBehavior = {
 
 let amocas_odd_register_reserved_behavior : AmocasOddRegisterReservedBehavior = config base.reserved_behavior.amocas_odd_register
 let fcsr_rm_reserved_behavior : FcsrRmReservedBehavior = config base.reserved_behavior.fcsr_rm
+// Controls how reserved static rounding modes are handled; see config.json.
+let static_rm_reserved_behavior : StaticRmReservedBehavior = config base.reserved_behavior.static_rm
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
 let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reserved_behavior.xtvec_mode
