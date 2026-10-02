@@ -315,6 +315,9 @@ foreach(idx RANGE 0 ${rvvi_test_last} 3)
             --lint ${rvvi_lint}
             --inst-limit 10000
     )
+    set_property(TEST "first_party_${arch}_${test_source}_rvvi_golden"
+        PROPERTY LABELS TestAtBuildTime
+    )
 endforeach()
 
 add_test(
@@ -322,9 +325,15 @@ add_test(
     COMMAND ${Python3_EXECUTABLE}
         "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/test_match_rvvi_trace.py"
 )
+set_property(TEST first_party_rvvi_text_match_unit
+    PROPERTY LABELS TestAtBuildTime
+)
 
 add_test(
     NAME first_party_rvvi_text_negative
     COMMAND ${Python3_EXECUTABLE}
         "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/test_rvvi_text_negative.py"
+)
+set_property(TEST first_party_rvvi_text_negative
+    PROPERTY LABELS TestAtBuildTime
 )
