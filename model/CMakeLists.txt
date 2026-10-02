@@ -234,6 +234,17 @@ foreach (xlen IN ITEMS 32 64)
     # for backwards compatibility.
     set(arch "rv${xlen}d")
 
+    # Allow a project that consumes the formal output to generate this architecture from
+    # its own configuration instead of the default one, keeping every target and output
+    # name unchanged. Set to an absolute path.
+    string(TOUPPER ${arch} arch_uc)
+    set(SAIL_FORMAL_CONFIG_${arch_uc} "" CACHE FILEPATH
+        "Configuration JSON the ${arch} formal backends are generated from instead of the default.")
+    if (SAIL_FORMAL_CONFIG_${arch_uc})
+        set(config_file "${SAIL_FORMAL_CONFIG_${arch_uc}}")
+        message(STATUS "Formal backends: ${arch} uses ${config_file}")
+    endif()
+
     ############# SMT #############
 
     # Generate smtlib2 code from the Sail code.
