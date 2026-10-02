@@ -926,6 +926,10 @@
     "Shtvala": {
       "supported": true
     },
+    // Enabling Shlcofideleg requires H and Sscofpmf.
+    "Shlcofideleg": {
+      "supported": true
+    },
     // Enabling Sstvala requires that the exceptions specified in the extension
     // have their appropriate settings under `base.xtval_nonzero`.
     "Sstvala": {
