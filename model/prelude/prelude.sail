@@ -207,7 +207,7 @@ function rotate_bits_left (value, shift) = rotatel(value, unsigned(shift))
 overload operator >>> = {rotate_bits_right, rotater}
 overload operator <<< = {rotate_bits_left, rotatel}
 
-val reverse_bits : forall 'n, 'n > 0. bits('n) -> bits('n)
+val reverse_bits : forall 'n, 'n >= 0. bits('n) -> bits('n)
 function reverse_bits (xs)  = {
   var ys : bits('n) = zeros();
   foreach (i from 0 to ('n - 1))
