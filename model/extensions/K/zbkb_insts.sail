@@ -12,7 +12,7 @@ union clause instruction = ZBKB_RTYPE : (regidx, regidx, regidx, brop_zbkb)
 $[wavedrom "PACK _ _ PACK _ OP"]
 mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, PACK)
   <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0110011
-  when currentlyEnabled(Ext_Zbkb)
+  when currentlyEnabled(Ext_Zbkb) | currentlyEnabled(Ext_P)
 
 $[wavedrom "PACKH _ _ PACKH _ OP"]
 mapping clause encdec = ZBKB_RTYPE(rs2, rs1, rd, PACKH)

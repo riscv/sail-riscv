@@ -315,7 +315,12 @@ mapping clause csr_name_map = 0xC21  <-> "vtype"
 mapping clause csr_name_map = 0xC22  <-> "vlenb"
 
 function clause is_CSR_accessible(0x008, _, _) = currentlyEnabled(Ext_Zve32x) // vstart
-function clause is_CSR_accessible(0x009, _, _) = currentlyEnabled(Ext_Zve32x) // vxsat
+// vxsat is also written by the saturating instructions of the P extension,
+// which can be implemented on harts without any vector support. When the
+// vector context does exist (Zve32x is supported), access continues to
+// require mstatus.VS to be on, as specified in the P specification's
+// "Access to the vxsat CSR" chapter.
+function clause is_CSR_accessible(0x009, _, _) = currentlyEnabled(Ext_Zve32x) | (currentlyEnabled(Ext_P) & not(hartSupports(Ext_Zve32x))) // vxsat
 function clause is_CSR_accessible(0x00A, _, _) = currentlyEnabled(Ext_Zve32x) // vxrm
 function clause is_CSR_accessible(0x00F, _, _) = currentlyEnabled(Ext_Zve32x) // vcsr
 function clause is_CSR_accessible(0xC20, _, _) = currentlyEnabled(Ext_Zve32x) // vl
@@ -350,14 +355,16 @@ function set_vstart(value : bits(16)) -> unit = {
 private function write_vcsr(vxrm_val : bits(2), vxsat_val : bits(1)) -> unit = {
   vcsr[vxrm]  = vxrm_val; // Note: frm can be an illegal value, 101, 110, 111
   vcsr[vxsat] = vxsat_val;
-  dirty_v_context()
+  // vxsat is also writable through the P extension on harts without the
+  // vector context; only dirty mstatus.VS while that context is live.
+  if currentlyEnabled(Ext_Zve32x) then dirty_v_context()
 }
 
 function write_vxsat(vxsat_val: bits(1)) -> unit = {
-  if vcsr[vxsat] != vxsat_val then {
-    vcsr[vxsat] = vxsat_val;
-    dirty_v_context();
-  };
+  vcsr[vxsat] = vxsat_val;
+  // Writing vxsat dirties the vector context, but P can write it on harts
+  // without one; only dirty mstatus.VS while that context is live.
+  if currentlyEnabled(Ext_Zve32x) then dirty_v_context();
   csr_write_callback("vxsat", zero_extend(vcsr[vxsat]));
   csr_write_callback("vcsr", zero_extend(vcsr.bits));
 }

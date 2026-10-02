@@ -605,6 +605,10 @@
     "B": {
       "supported": true
     },
+    // Packed-SIMD / DSP. Experimental: also gated by --enable-experimental-extensions.
+    "P": {
+      "supported": true
+    },
     "S": {
       "supported": true,
       "interrupts": {
