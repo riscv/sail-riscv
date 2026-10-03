@@ -60,6 +60,9 @@ trigger_lcofi:
   # Trigger overflow
   li t3, -1
   csrw mhpmcounter3, t3
+#if __riscv_xlen == 32
+  csrw mhpmcounter3h, t3
+#endif
   # Setup a test flag to ensure an interrupt occurred
   li s3, 1
   fence
