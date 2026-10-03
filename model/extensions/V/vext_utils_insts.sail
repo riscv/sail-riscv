@@ -174,6 +174,27 @@ function valid_src_overlap(rs1 : vregidx, EEW_rs1 : nat, EMUL_pow_rs1 : int,
   rs1_int + rs1_group <= rs2_int | rs2_int + rs2_group <= rs1_int
 }
 
+// Check for valid overlaps between a source register group and the
+// source register groups of a segment: `rs2_fields` consecutive groups
+// starting at `rs2`, all read with `EEW_rs2`. As in `valid_src_overlap`,
+// overlaps are not allowed if the EEWs are different, and this also
+// checks if the register groups are valid.
+function valid_src_overlap_segmented(rs1 : vregidx, EEW_rs1 : nat, EMUL_pow_rs1 : int,
+                                     rs2 : vregidx, EEW_rs2 : nat, EMUL_pow_rs2 : int,
+                                     rs2_fields : nfields) -> bool = {
+  let rs1_group = 2 ^ max(EMUL_pow_rs1, 0);
+  let rs2_group = 2 ^ max(EMUL_pow_rs2, 0);
+  let rs1_int = unsigned(vregidx_bits(rs1));
+  let rs2_int = unsigned(vregidx_bits(rs2));
+
+  if rs1_int % rs1_group != 0 | rs2_int % rs2_group != 0
+  then return false;
+
+  if EEW_rs1 == EEW_rs2 then return true;
+
+  rs1_int + rs1_group <= rs2_int | rs2_int + rs2_group * rs2_fields <= rs1_int
+}
+
 // Check for valid overlaps between a source register group and the v0
 // mask register; this is a specialization of `valid_src_overlap` for
 // the mask register.
