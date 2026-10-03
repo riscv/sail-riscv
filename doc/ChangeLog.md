@@ -14,6 +14,7 @@
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1988 : `mcycle` and `minstret` should not depend on Zicntr
+  - https://github.com/riscv/sail-riscv/issues/1986 : indexed segment stores accepted reserved encodings where the index register group overlaps a data field other than the first with a different EEW
   - https://github.com/riscv/sail-riscv/issues/1984 : `fence.i` is supported though `Zifencei` is configured as unsupported
   - https://github.com/riscv/sail-riscv/issues/1981 : `mtval` must be read-only zero if no exceptions set `mtval` to a non-zero value
   - https://github.com/riscv/sail-riscv/issues/1979 : the MAG PMA does not apply to `ssamoswap`
