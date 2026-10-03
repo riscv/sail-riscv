@@ -250,7 +250,7 @@ private:
   // same selector.
   std::map<EventSelector, std::set<HpmIdx>> m_selector_to_hpmidxs;
   // Events that were generated during the current instruction.
-  std::vector<std::pair<Event, Privilege>> generated_events;
+  std::vector<std::pair<Event, Privilege>> m_generated_events;
 
   bool m_enable_experimental_extensions = false;
 
