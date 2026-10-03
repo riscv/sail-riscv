@@ -19,6 +19,7 @@ function exception_context(e : ExceptionType, excinfo : xlenbits) -> ExceptionCo
     excinfo        = excinfo,
     excinfo2       = None(),
     excinst        = None(),
+    excinst_offset = zeros(),
     ext            = None()
   }
 }
@@ -36,6 +37,7 @@ function make_exception_context(
     excinfo        = excinfo,
     excinfo2       = excinfo2,
     excinst        = None(),
+    excinst_offset = zeros(),
     ext            = None(),
   }
 }
@@ -51,6 +53,7 @@ function make_instr_exception_context(
     excinfo        = excinfo,
     excinfo2       = None(),
     excinst        = None(),
+    excinst_offset = zeros(),
     ext            = None(),
   }
 }

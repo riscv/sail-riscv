@@ -100,6 +100,16 @@ private function access_is_gva(access_info : AccessInfo) -> bool =
 private function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access_info : AccessInfo) -> ExceptionContext =
   make_exception_context(e, excinfo, access_is_gva(access_info), None())
 
+// Records the Addr. Offset for a transformed mtinst/htinst.
+private function with_excinst_offset(e : ExecutionResult, vaddr : virtaddr) -> ExecutionResult =
+  match e {
+    // "[...] Offset field that replaces the instruction’s rs1 field in bits 19:15 is
+    // the positive difference between the faulting virtual address (written to mtval
+    // or stval) and the original virtual address."
+    Trap(priv, ctx, pc) => Trap(priv, { ctx with excinst_offset = truncate(ctx.excinfo - bits_of(vaddr), 5) }, pc),
+    _ => e,
+  }
+
 function memory_exception(e : ExceptionType, excinfo : xlenbits, access_info : AccessInfo) -> ExecutionResult =
   trap(mem_exception_context(e, excinfo, access_info))
 
@@ -346,7 +356,10 @@ function vmem_read_explicit(rs, offset, width, access, access_info, aq, rl, res)
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_read_addr(vaddr, width, access, access_info, aq, rl, res)
+  match vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) {
+    Ok(data) => Ok(data),
+    Err(e)   => Err(with_excinst_offset(e, vaddr)),
+  }
 }
 
 val vmem_read : forall 'width, is_mem_width('width).
@@ -369,7 +382,10 @@ function vmem_write_explicit(rs_addr, offset, width, data, access, access_info, 
     Ext_DataAddr_Error(e)  => return Err(Ext_DataAddr_Check_Failure(e)),
   };
 
-  vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res)
+  match vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) {
+    Ok(s)  => Ok(s),
+    Err(e) => Err(with_excinst_offset(e, vaddr)),
+  }
 }
 
 val vmem_write : forall 'width, is_mem_width('width).

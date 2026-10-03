@@ -14,11 +14,11 @@ private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : ExceptionContext,
-  Step_Execute            : (ExecutionResult, instbits),
+  Step_Execute            : (ExecutionResult, instr_info),
   Step_Waiting            : WaitReason,
 }
 
-private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : instbits, exit_wait : bool) -> Step = {
+private function run_hart_waiting(_step_no : nat, wr: WaitReason, instr_info : instr_info, exit_wait : bool) -> Step = {
   // successfully interrupted waits
   if shouldWakeForInterrupt() then {
     if get_config_print_instr()
@@ -27,7 +27,7 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
     // The waiting instruction retires successfully.  The
     // pending interrupts will be handled in the next step.
     hart_state = HART_ACTIVE();
-    return Step_Execute(Retire_Success(), instbits)
+    return Step_Execute(Retire_Success(), instr_info)
   };
 
   match (wr, valid_reservation(), exit_wait) {
@@ -36,14 +36,14 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
-      Step_Execute(Retire_Success(), instbits)
+      Step_Execute(Retire_Success(), instr_info)
     },
     (WAIT_WRS_NTO, false, _) => {
       if get_config_print_instr()
       then print_log("reservation invalid exit from " ^ wait_name(WAIT_WRS_NTO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
-      Step_Execute(Retire_Success(), instbits)
+      Step_Execute(Retire_Success(), instr_info)
     },
     // Transition out of waiting states as instructed.
     (WAIT_WFI, _, true) => {
@@ -63,16 +63,16 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       // For VS-mode, VTW is checked instead since a set TW was already
       // caught in execute as an immediate illegal instruction.
       match cur_privilege {
-        Machine           => Step_Execute(Retire_Success(), instbits),
+        Machine           => Step_Execute(Retire_Success(), instr_info),
         User              => if   mstatus[TW] == 0b1 | currentlyEnabled(Ext_S)
-                             then Step_Execute(Illegal_Instruction(), instbits)
-                             else Step_Execute(Retire_Success(), instbits),
+                             then Step_Execute(Illegal_Instruction(), instr_info)
+                             else Step_Execute(Retire_Success(), instr_info),
         VirtualSupervisor => if   hstatus[VTW] == 0b1
-                             then Step_Execute(Virtual_Instruction(), instbits)
-                             else Step_Execute(Retire_Success(), instbits),
+                             then Step_Execute(Virtual_Instruction(), instr_info)
+                             else Step_Execute(Retire_Success(), instr_info),
         _                 => if   mstatus[TW] == 0b1
-                             then Step_Execute(Illegal_Instruction(), instbits)
-                             else Step_Execute(Retire_Success(), instbits),
+                             then Step_Execute(Illegal_Instruction(), instr_info)
+                             else Step_Execute(Retire_Success(), instr_info),
       }
     },
     (WAIT_WRS_STO, _, true) => {
@@ -80,7 +80,7 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       then print_log("timed-out exit from " ^ wait_name(WAIT_WRS_STO) ^ " state at PC " ^ bits_str(PC));
 
       hart_state = HART_ACTIVE();
-      Step_Execute(Retire_Success(), instbits)
+      Step_Execute(Retire_Success(), instr_info)
     },
     (WAIT_WRS_NTO, _, true) => {
       if get_config_print_instr()
@@ -95,11 +95,11 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instbits : ins
       // the TW bit in mstatus is clear, and the WRS.NTO does not complete
       // within an implementation-specific bounded time limit, the WRS.NTO
       // instruction will cause a virtual-instruction exception."
-      if      cur_privilege == Machine then Step_Execute(Retire_Success(), instbits)
-      else if mstatus[TW] == 0b1       then Step_Execute(Illegal_Instruction(), instbits)
+      if      cur_privilege == Machine then Step_Execute(Retire_Success(), instr_info)
+      else if mstatus[TW] == 0b1       then Step_Execute(Illegal_Instruction(), instr_info)
       else if inVirtualPrivilege() & hstatus[VTW] == 0b1
-                                       then Step_Execute(Virtual_Instruction(), instbits)
-      else Step_Execute(Retire_Success(), instbits)
+                                       then Step_Execute(Virtual_Instruction(), instr_info)
+      else Step_Execute(Retire_Success(), instr_info)
     },
     // remain waiting
     (_, _, false) => {
@@ -125,51 +125,59 @@ private function run_hart_active(step_no: nat) -> Step = {
       sail_instr_announce(h);
       fetch_callback(h);
       let instbits : instbits = zero_extend(h);
-      let instruction = ext_decode_compressed(h);
+      let fetched_instruction = ext_decode_compressed(h);
       if   get_config_print_instr()
       then {
-        print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(instruction), zero_extend(PC));
+        print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(h) ^ ") " ^ to_str(fetched_instruction), zero_extend(PC));
       };
       // When ELP is set to LP_EXPECTED, the next instruction needs to be
       // the non-RVC `LPAD` instruction.
       if is_landing_pad_expected() then {
         let r = trap(make_landing_pad_exception());
-        Step_Execute(r, instbits)
+        let executed_instruction : option(instruction) = None();
+        let instr_info = struct instr_info { instbits, fetched_instruction, executed_instruction, compressed = true };
+        Step_Execute(r, instr_info)
       }
       // check for RVC once here instead of every RVC execute clause.
       else if currentlyEnabled(Ext_Zca) then {
         nextPC = PC + 2;
-        let result : ExecutionResult = match execute(instruction) {
-          ExecuteAs(other_inst) => execute(other_inst),
-          result => result,
+        let (executed_instruction, result) : (option(instruction), ExecutionResult) = match execute(fetched_instruction) {
+          ExecuteAs(other_inst) => (Some(other_inst), execute(other_inst)),
+          result => (Some(fetched_instruction), result),
         };
-        Step_Execute(result, instbits)
+        let instr_info = struct instr_info { fetched_instruction, executed_instruction, instbits, compressed = true };
+        Step_Execute(result, instr_info)
       } else {
-        Step_Execute(Illegal_Instruction(), instbits)
+        let executed_instruction : option(instruction) = None();
+        let instr_info = struct instr_info { fetched_instruction, executed_instruction, instbits, compressed = true };
+        Step_Execute(Illegal_Instruction(), instr_info)
       }
     },
     F_Base(w) => {
       sail_instr_announce(w);
       fetch_callback(w);
       let instbits : instbits = zero_extend(w);
-      let instruction = ext_decode(w);
+      let fetched_instruction = ext_decode(w);
       if   get_config_print_instr()
       then {
-        print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(instruction), zero_extend(PC));
+        print_log_instr("[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege) ^ "]: " ^ bits_str(PC) ^ " (" ^ bits_str(w) ^ ") " ^ to_str(fetched_instruction), zero_extend(PC));
       };
       // When ELP is set to LP_EXPECTED, if the next instruction in
       // the instruction stream is not LPAD, then a software check
       // exception with a landing pad fault code is thrown.
-      if is_landing_pad_expected() & not(is_lpad_instruction(instruction)) then {
+      if is_landing_pad_expected() & not(is_lpad_instruction(fetched_instruction)) then {
         let r = trap(make_landing_pad_exception());
-        Step_Execute(r, instbits)
+        let executed_instruction : option(instruction) = None();
+        let instr_info = struct instr_info { fetched_instruction, executed_instruction, instbits, compressed = false };
+        Step_Execute(r, instr_info)
       } else {
         nextPC = PC + 4;
-        let result : ExecutionResult = match execute(instruction) {
-          ExecuteAs(other_inst) => execute(other_inst),
-          result => result,
+        let (executed_instruction, result) : (option(instruction), ExecutionResult) = match execute(fetched_instruction) {
+          ExecuteAs(other_inst) => (Some(other_inst), execute(other_inst)),
+          result => (Some(fetched_instruction), result),
         };
-        Step_Execute(result, instbits)
+        let instr_info = struct instr_info { fetched_instruction, executed_instruction, instbits, compressed = false };
+        Step_Execute(result, instr_info)
       }
     }
   }
@@ -222,8 +230,8 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   minstret_increment = should_inc_minstret(cur_privilege);
 
   let step_val : Step = match hart_state {
-      HART_WAITING(wr, instbits) => run_hart_waiting(step_no, wr, instbits, exit_wait),
-      HART_ACTIVE()              => run_hart_active(step_no),
+      HART_WAITING(wr, instr_info) => run_hart_waiting(step_no, wr, instr_info, exit_wait),
+      HART_ACTIVE()                => run_hart_active(step_no),
     };
 
   match step_val {
@@ -241,12 +249,15 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     // is more than one ExecuteAs indirection we'll get to here. This isn't supported.
     Step_Execute(ExecuteAs(_), _) => internal_error(__FILE__, __LINE__, "Multiple chained ExecuteAs (only one redirection is supported)."),
     // standard errors
-    Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
-    Step_Execute(Illegal_Instruction(), instbits) =>
-      handle_exception(make_instr_exception_context(E_Illegal_Instr(), zero_extend(instbits))),
-    Step_Execute(Virtual_Instruction(), instbits) =>
-      handle_exception(make_instr_exception_context(E_Virtual_Instr(), zero_extend(instbits))),
-    Step_Execute(Enter_Wait(wr), instbits) => {
+    Step_Execute(Trap(priv, ctx, pc), instr_info) => {
+      let ctx = transform_exception_context(ctx, instr_info);
+      set_next_pc(exception_handler(priv, ctx, pc))
+    },
+    Step_Execute(Illegal_Instruction(), instr_info) =>
+      handle_exception(make_instr_exception_context(E_Illegal_Instr(), zero_extend(instr_info.instbits))),
+    Step_Execute(Virtual_Instruction(), instr_info) =>
+      handle_exception(make_instr_exception_context(E_Virtual_Instr(), zero_extend(instr_info.instbits))),
+    Step_Execute(Enter_Wait(wr), instr_info) => {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
         assert(hart_is_active(hart_state));
@@ -255,7 +266,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
         if   get_config_print_instr()
         then print_log("entering " ^ wait_name(wr) ^ " state at PC " ^ bits_str(PC));
 
-        hart_state = HART_WAITING(wr, instbits);
+        hart_state = HART_WAITING(wr, instr_info);
       }
     },
     // errors from extensions

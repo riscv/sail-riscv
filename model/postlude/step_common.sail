@@ -6,6 +6,15 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
+// Information about the current instruction being executed.
+
+struct instr_info = {
+  fetched_instruction  : instruction,
+  executed_instruction : option(instruction),
+  instbits             : instbits,
+  compressed           : bool,
+}
+
 // The state of the emulator.
 //
 // The RISC-V hart could either be active (fetching and executing
@@ -18,13 +27,14 @@
 // instruction should finish execution.  Note that in the latter
 // case, the platform can decide to end the stall for any reason,
 // even if there are no interrupts or invalidated reservation set.
+
 union HartState = {
   HART_ACTIVE  : unit,
   // The instruction that caused the wait. This is needed
   // because WFI and WRS can time out and cause an illegal
   // instruction exception so we need to know what to write
   // to mtval.
-  HART_WAITING : (WaitReason, instbits),
+  HART_WAITING : (WaitReason, instr_info),
 }
 
 // utility predicates
@@ -48,5 +58,5 @@ union FetchResult = {
   F_Ext_Error : ext_fetch_addr_error,      // For extensions
   F_Base      : word,                      // Base ISA
   F_RVC       : half,                      // Compressed ISA
-  F_Error     : ExceptionContext          // Exception Context
+  F_Error     : ExceptionContext           // Exception Context
 }

@@ -407,6 +407,7 @@ function double_trap_cause(c : TrapCause) -> TrapCause = {
       excinfo        = zeros(),
       excinfo2       = Some(unexpected_cause),
       excinst        = None(),
+      excinst_offset = zeros(),
       ext            = None(),
     },
     Exception(e) => struct {
@@ -416,6 +417,7 @@ function double_trap_cause(c : TrapCause) -> TrapCause = {
       excinfo        = tval(xtval_exception_value(e.trap, e.excinfo)),
       excinfo2       = Some(unexpected_cause),
       excinst        = e.excinst,
+      excinst_offset = e.excinst_offset,
       ext            = e.ext,
     },
   })

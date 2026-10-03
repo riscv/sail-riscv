@@ -104,6 +104,16 @@ let sys_vsatp_sv39_supported : bool = config extensions.H.vsatp_modes.Sv39
 let sys_vsatp_sv48_supported : bool = config extensions.H.vsatp_modes.Sv48
 let sys_vsatp_sv57_supported : bool = config extensions.H.vsatp_modes.Sv57
 
+// Whether each exception writes the transformed instruction to mtinst/htinst.
+let sys_misaligned_load_writes_tinst : bool = config extensions.H.transformed_instruction.load_address_misaligned
+let sys_load_access_fault_writes_tinst : bool = config extensions.H.transformed_instruction.load_access_fault
+let sys_load_page_fault_writes_tinst : bool = config extensions.H.transformed_instruction.load_page_fault
+let sys_load_guest_page_fault_writes_tinst : bool = config extensions.H.transformed_instruction.load_guest_page_fault
+let sys_misaligned_samo_writes_tinst : bool = config extensions.H.transformed_instruction.samo_address_misaligned
+let sys_samo_access_fault_writes_tinst : bool = config extensions.H.transformed_instruction.samo_access_fault
+let sys_samo_page_fault_writes_tinst : bool = config extensions.H.transformed_instruction.samo_page_fault
+let sys_samo_guest_page_fault_writes_tinst : bool = config extensions.H.transformed_instruction.samo_guest_page_fault
+
 // Whether a guest-page fault writes the faulting guest physical address to
 // htval/mtval2, or writes zero instead. Shtvala requires the address to be
 // written, which validate_config() checks.
