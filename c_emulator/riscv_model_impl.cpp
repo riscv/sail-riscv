@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cassert>
 #include <random>
+#include <set>
 #include <unistd.h>
 
 #include "config_utils.h"
@@ -240,6 +241,123 @@ bool ModelImpl::valid_reservation(unit) {
   return m_reservation_valid;
 }
 
+bool ModelImpl::validate_event_selectors(unit) {
+  std::set<EventSelector> selectors;
+  std::map<Event, EventSelector> event_map;
+
+  // The event values here have not been legalized by the model's
+  // event legalizers, so handle it here.
+  int64_t selector_width = zevent_selector_width(UNIT);
+  uint64_t event_mask = selector_width == 64 ? -1 : (1ULL << selector_width) - 1;
+
+  // Since this is called from Sail by `validate_config.sail`, use the
+  // same print function when logging errors, i.e. `print_endline()`.
+  int idx = 0;
+  for (const auto *ent = zplatform_event_selectors; ent != nullptr; ent = ent->tl) {
+    auto event = ent->hd.zevent;
+    auto sel = ent->hd.zselector;
+
+    std::ostringstream msg;
+    std::ostringstream event_buf;
+    event_buf << "event #" << idx << " (i.e. " << name_of_event(event) << ")";
+
+    bool valid = true;
+    if (sel == 0) {
+      valid = false;
+      msg << "The selector for " << event_buf.str()
+          << " in `platform.event_selectors` is 0; selector 0 is reserved for 'no event'." << std::endl;
+      print_endline(msg.str().c_str());
+    }
+    if ((sel & event_mask) != sel) {
+      valid = false;
+      msg << "The selector for " << event_buf.str() << " in `platform.event_selectors` is 0x" << std::hex << sel
+          << " which does not fit in " << std::dec << selector_width << " bits." << std::endl;
+      print_endline(msg.str().c_str());
+    }
+    if (selectors.find(sel) != selectors.end()) {
+      valid = false;
+      msg << "The selector 0x" << std::hex << sel << " for " << event_buf.str()
+          << " in `platform.event_selectors` is repeated; event selectors need to be unique." << std::endl;
+      print_endline(msg.str().c_str());
+    }
+    if (event_map.find(event) != event_map.end()) {
+      valid = false;
+      msg << "The " << event_buf.str() << " in `platform.event_selectors` repeats an event; events need to be unique."
+          << std::endl;
+      print_endline(msg.str().c_str());
+    }
+
+    if (!valid) {
+      return false;
+    }
+
+    selectors.insert(sel);
+    event_map[event] = sel;
+    ++idx;
+  }
+
+  m_event_to_selector = event_map;
+  return true;
+}
+
+// TODO: This code implements an exact match on selectors.
+// Implementations could use a bitmask match (e.g. a bit per event).
+// This could be extended to support such common cases.
+unit ModelImpl::event_csr_write_callback(HpmIdx index, EventSelector old_selector, EventSelector new_selector) {
+  // Unregister index for its previous selector.  `old_selector` could be
+  // zero, but if so it should not be found.
+  auto sel_ent = m_selector_to_hpmidxs.find(old_selector);
+  if (sel_ent != m_selector_to_hpmidxs.end()) {
+    sel_ent->second.erase(index);
+  }
+
+  if (new_selector == 0) {
+    // No event.
+    return UNIT;
+  }
+
+  auto ev_ent = std::find_if(m_event_to_selector.begin(), m_event_to_selector.end(), [&new_selector](const auto &elem) {
+    return elem.second == new_selector;
+  });
+  if (ev_ent == m_event_to_selector.end()) {
+    // TODO: this could be used as a legalizer by
+    // `zihpm.sail:legalize_hpmevent()`: `new_selector` is legal only if it
+    // is registered in the config.
+    return UNIT;
+  }
+
+  // Register index for the new selector.
+  auto &idxs = m_selector_to_hpmidxs[new_selector];
+  idxs.insert(index);
+  return UNIT;
+}
+
+unit ModelImpl::event_callback(Event ev, Privilege priv) {
+  m_generated_events.push_back(std::make_pair(ev, priv));
+  return UNIT;
+}
+
+unit ModelImpl::dispatch_events(unit) {
+  for (const auto &[ev, priv] : m_generated_events) {
+    auto event_ent = m_event_to_selector.find(ev);
+    if (event_ent == m_event_to_selector.end()) {
+      // No selector specified for this event.
+      continue;
+    }
+    auto selector_ent = m_selector_to_hpmidxs.find(event_ent->second);
+    if (selector_ent == m_selector_to_hpmidxs.end()) {
+      // This selector was not written to any `mhpmevent`.
+      continue;
+    }
+    for (const auto &idx : selector_ent->second) {
+      zdispatchEventCounter(idx, priv);
+    }
+  }
+
+  m_generated_events.clear();
+  return UNIT;
+}
+
 unit ModelImpl::plat_term_write(mach_bits s) {
   char c = static_cast<char>(s);
   if (write(m_term_fd, &c, sizeof(c)) < 0) {
@@ -434,6 +552,8 @@ void ModelImpl::model_init() {
 }
 
 void ModelImpl::model_fini() {
+  m_generated_events.clear();
+  m_selector_to_hpmidxs.clear();
   hart::Model::model_fini();
 }
 
@@ -477,6 +597,15 @@ std::string ModelImpl::generate_isa_string() {
   std::string isa(c_isa);
   KILL(sail_string)(&c_isa);
   return isa;
+}
+
+std::string ModelImpl::name_of_event(Event ev) {
+  sail_string str = nullptr;
+  CREATE(sail_string)(&str);
+  zname_of_event(&str, ev);
+  std::string name(str);
+  KILL(sail_string)(&str);
+  return name;
 }
 
 std::optional<std::string> ModelImpl::string_of_current_exception() {

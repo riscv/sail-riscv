@@ -5,12 +5,22 @@
   - Ssdbltrp
   - Ssstrict
 
+- The model now supports the selection and configuration for a few
+  basic events; this enables event counters to be incremented.
+
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `mcountinhibit` CSR is supported, and if so, which
     bits are writable, can now be specified; see `base.mcountinhibit`.
   - Whether a trap writes a transformed instruction to `mtinst`/`htinst`
     instead of zero can now be specified per exception type, see
     `extensions.H.transformed_instruction`.
+  - The number of implemented bits in the `mhpmevent` and
+    `mhpmcounter` CSRs can be configured; see
+    `base.hpmevent_width_bits` and `base.hpmcounter_width_bits`.
+  - Events can be configured using `platform.event_selectors`.
+  - Whether a HPM counter increments during a write to its associated
+    event CSR can be configured; see
+    `base.hpmcounter_increments_in_self_hpmevent_write`.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1988 : `mcycle` and `minstret` should not depend on Zicntr

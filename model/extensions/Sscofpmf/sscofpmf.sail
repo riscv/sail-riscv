@@ -41,33 +41,23 @@ mapping clause csr_name_map = 0x73F  <-> "mhpmevent31h"
 
 mapping clause csr_name_map = 0xDA0  <-> "scountovf"
 
-private function read_mhpmeventh(index : hpmidx) -> bits(32) = mhpmevent[index].bits[63 .. 32]
-
-private function write_mhpmeventh(index : hpmidx, value : bits(32)) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then
-  mhpmevent[index] = legalize_hpmevent(Mk_HpmEvent(value @ mhpmevent[index].bits[31 .. 0]))
+private function read_mhpmeventh(index : hpmidx) -> bits(32) = mhpmevent[index][63 .. 32]
 
 // mhpmevent3..31h
 function clause is_CSR_accessible((0b0111001 /* 0x720 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Sscofpmf) & (xlen == 32)
 function clause read_CSR(0b0111001 /* 0x720 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmeventh(hpmidx_from_bits(index))
 function clause write_CSR((0b0111001 /* 0x720 */ @ index : bits(5), value) if xlen == 32 & unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
-  write_mhpmeventh(index, value);
+  write_mhpmevent(index, value @ mhpmevent[index][31 .. 0]);
   Ok(read_mhpmeventh(index))
 }
 
 // scountovf collates the OF (overflow) bit for each event.
 private function get_scountovf(priv : Privilege) -> bits(32) = {
-  let overflow =
-    mhpmevent[31][OF] @ mhpmevent[30][OF] @ mhpmevent[29][OF] @ mhpmevent[28][OF] @
-    mhpmevent[27][OF] @ mhpmevent[26][OF] @ mhpmevent[25][OF] @ mhpmevent[24][OF] @
-    mhpmevent[23][OF] @ mhpmevent[22][OF] @ mhpmevent[21][OF] @ mhpmevent[20][OF] @
-    mhpmevent[19][OF] @ mhpmevent[18][OF] @ mhpmevent[17][OF] @ mhpmevent[16][OF] @
-    mhpmevent[15][OF] @ mhpmevent[14][OF] @ mhpmevent[13][OF] @ mhpmevent[12][OF] @
-    mhpmevent[11][OF] @ mhpmevent[10][OF] @ mhpmevent[ 9][OF] @ mhpmevent[ 8][OF] @
-    mhpmevent[ 7][OF] @ mhpmevent[ 6][OF] @ mhpmevent[ 5][OF] @ mhpmevent[ 4][OF] @
-    mhpmevent[ 3][OF] @ 0b000;
-
+  var overflow = zeros(32);
+  foreach (i from 3 to 31) {
+    overflow[i] = Mk_HpmEvent(mhpmevent[i])[OF]
+  };
   match priv {
     Machine           => overflow,
     Supervisor        => overflow & mcounteren.bits,

@@ -488,6 +488,9 @@ function clause execute FENCE(_fm, pred, succ, _rs, _rd) = {
     (_   , 0b00) => (),
     (0b00, _   ) => (),
   };
+
+  generate_event(EV_FENCE);
+
   RETIRE_SUCCESS
 }
 

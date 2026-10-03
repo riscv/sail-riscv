@@ -9,9 +9,12 @@ namespace hart {
 class Model;
 
 struct zMemoryAccessTypezIEmem_payloadz5zK;
-enum zPrivilege : int;
 struct zPTW_Error;
 struct zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
+
+enum zPrivilege : int;
+enum zEvent : int;
+
 } // namespace hart
 
 // The Model class derives from this one so when Sail calls C callback
@@ -65,6 +68,12 @@ public:
   virtual unit tlb_flush_begin_callback(unit);
   virtual unit tlb_flush_callback(uint64_t index);
   virtual unit tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb);
+
+  // Events
+  virtual bool validate_event_selectors(unit);
+  virtual unit event_callback(hart::zEvent ev, hart::zPrivilege privilege);
+  virtual unit event_csr_write_callback(int64_t index, uint64_t old_selector, uint64_t new_selector);
+  virtual unit dispatch_events(unit);
 
   // Provides entropy for the scalar cryptography extension.
   virtual mach_bits plat_get_16_random_bits(unit);
