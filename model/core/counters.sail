@@ -297,12 +297,14 @@ function dispatchEventCounter(index : hpmidx, event_priv : Privilege) -> unit = 
   let event_csr   : csreg   = 0b0011001 /* 0x320 */ @ index_bits;
 
   // Check overflow and increment.
-  let count : xlenbits = mhpmcounter[index][(xlen - 1) .. 0];
-  let overflowed : bool = count == legalize_hpmcounter_value_xlen(ones());
-  let new_count = legalize_hpmcounter_value_xlen(count + 1);
+  let count = mhpmcounter[index];
+  let overflowed : bool = count == legalize_hpmcounter_value(ones());
+  let new_count = legalize_hpmcounter_value(count + 1);
+  mhpmcounter[index] = new_count;
 
-  mhpmcounter[index][(xlen - 1) .. 0] = new_count;
-  csr_write_callback(counter_csr, new_count);
+  // Use the long-form callback since we're writing 64 bits.
+  let counter_csr_name = csr_name_map(counter_csr);
+  long_csr_write_callback(counter_csr_name, counter_csr_name ^ "h", new_count);
 
   // Set OF and LCOFI if needed.
   if currentlyEnabled(Ext_Sscofpmf) & overflowed then {
@@ -313,7 +315,6 @@ function dispatchEventCounter(index : hpmidx, event_priv : Privilege) -> unit = 
       mhpmevent[index] = new_event_cfg.bits;
       mip = supported_interrupts_mask([mip with LCOFI = 0b1]);
 
-      // Use the long-form callback since we're writing 64 bits.
       let event_csr_name = csr_name_map(event_csr);
       long_csr_write_callback(event_csr_name, event_csr_name ^ "h", new_event_cfg.bits);
       csr_write_callback("mip", read_mip(IncludePlatformInterrupts).bits);
