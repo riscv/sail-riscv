@@ -9,6 +9,7 @@
 // Information about the current instruction being executed.
 
 struct instr_info = {
+  fetch_privilege      : Privilege,
   fetched_instruction  : instruction,
   executed_instruction : option(instruction),
   instbits             : instbits,

@@ -235,6 +235,8 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     list(FILTER test_elfs EXCLUDE REGEX ".*/InterruptsSSm-00\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/InterruptsU-00\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/S-00\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS-01\\.elf$")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS-02\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/UV-00\\.elf$")
 
     # These tests fail because
@@ -264,9 +266,13 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm_VectorInstr-0[01]\\.elf$")
     list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictU_VectorInstr-0[01]\\.elf$")
 
-    # This checks bit 24 of mstateen0h (P1P13), which became writable
+    # This checks bit 24 (P1P13) of mstateen0h, which became writable
     # when hedelegh was gated on it. The signature assumes a non-H config.
     list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv32-max/.*/Smstateen-00\\.elf$")
+    # This checks bit 57 (CONTEXT) of mstateen0, which became writable
+    # when hcontext and scontext were gated on it.  The signature assumes
+    # no support for Sdtrig with hcontext and/or scontext.
+    list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/Smstateen-00\\.elf$")
 
     set(${elfs_to_use_varname} "${test_elfs}" PARENT_SCOPE)
 endfunction()

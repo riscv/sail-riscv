@@ -4,6 +4,10 @@
   - Smdbltrp
   - Ssdbltrp
   - Ssstrict
+  - Sdtrig
+    - This support is partial: only icount, itrigger, and etrigger
+      triggers are supported; tdata3 and context CSRs are supported
+      however context matching in textra is not yet supported.
 
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `mcountinhibit` CSR is supported, and if so, which
@@ -11,6 +15,12 @@
   - Whether a trap writes a transformed instruction to `mtinst`/`htinst`
     instead of zero can now be specified per exception type, see
     `extensions.H.transformed_instruction`.
+  - Various configuration options have been added for Sdtrig; see
+    `extensions.Sdtrig`.
+
+- The command line interface has been updated:
+  - A `--trace-trigger` command-line option has been added to track
+    triggers in the execution trace.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1988 : `mcycle` and `minstret` should not depend on Zicntr
