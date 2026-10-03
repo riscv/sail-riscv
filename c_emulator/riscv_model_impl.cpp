@@ -264,12 +264,11 @@ bool ModelImpl::valid_reservation(unit) {
 bool ModelImpl::validate_event_selectors(unit) {
   std::set<EventSelector> selectors;
   std::map<Event, EventSelector> event_map;
-  std::ostringstream msg;
 
   // The event values here have not been legalized by the model's
   // event legalizers, so handle it here.
   int64_t selector_width = zevent_selector_width(UNIT);
-  int64_t event_mask = selector_width == 64 ? -1 : (1LL << selector_width) - 1;
+  uint64_t event_mask = selector_width == 64 ? -1 : (1ULL << selector_width) - 1;
 
   // Since this is called from Sail by `validate_config.sail`, use the
   // same print function when logging errors, i.e. `print_endline()`.
@@ -278,6 +277,7 @@ bool ModelImpl::validate_event_selectors(unit) {
     auto event = ent->hd.zevent;
     auto sel = ent->hd.zselector;
 
+    std::ostringstream msg;
     std::ostringstream event_buf;
     event_buf << "event #" << idx << " (i.e. " << name_of_event(event) << ")";
 
@@ -353,12 +353,12 @@ unit ModelImpl::event_csr_write_callback(HpmIdx index, EventSelector old_selecto
 }
 
 unit ModelImpl::event_callback(Event ev, Privilege priv) {
-  generated_events.push_back(std::make_pair(ev, priv));
+  m_generated_events.push_back(std::make_pair(ev, priv));
   return UNIT;
 }
 
 unit ModelImpl::dispatch_events(unit) {
-  for (const auto &[ev, priv] : generated_events) {
+  for (const auto &[ev, priv] : m_generated_events) {
     auto event_ent = m_event_to_selector.find(ev);
     if (event_ent == m_event_to_selector.end()) {
       // No selector specified for this event.
@@ -374,7 +374,7 @@ unit ModelImpl::dispatch_events(unit) {
     }
   }
 
-  generated_events.clear();
+  m_generated_events.clear();
   return UNIT;
 }
 
@@ -580,6 +580,8 @@ void ModelImpl::model_init() {
 }
 
 void ModelImpl::model_fini() {
+  m_generated_events.clear();
+  m_selector_to_hpmidxs.clear();
   hart::Model::model_fini();
 }
 
