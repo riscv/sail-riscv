@@ -43,16 +43,12 @@ mapping clause csr_name_map = 0xDA0  <-> "scountovf"
 
 private function read_mhpmeventh(index : hpmidx) -> bits(32) = mhpmevent[index][63 .. 32]
 
-private function write_mhpmeventh(index : hpmidx, value : bits(32)) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then
-  mhpmevent[index] = legalize_hpmevent(value @ mhpmevent[index][31 .. 0])
-
 // mhpmevent3..31h
 function clause is_CSR_accessible((0b0111001 /* 0x720 */ @ index : bits(5), _, _) if unsigned(index) >= 3) = currentlyEnabled(Ext_Sscofpmf) & (xlen == 32)
 function clause read_CSR(0b0111001 /* 0x720 */ @ index : bits(5) if xlen == 32 & unsigned(index) >= 3) = read_mhpmeventh(hpmidx_from_bits(index))
 function clause write_CSR((0b0111001 /* 0x720 */ @ index : bits(5), value) if xlen == 32 & unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
-  write_mhpmeventh(index, value);
+  write_mhpmevent(index, value @ mhpmevent[index][31 .. 0]);
   Ok(read_mhpmeventh(index))
 }
 

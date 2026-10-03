@@ -218,14 +218,10 @@ function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
 
 val event_csr_write_callback = pure {cpp: "event_csr_write_callback"} : (hpmidx, bits(64), bits(64)) -> unit
 
-function write_mhpmevent(index : hpmidx, value : xlenbits) -> unit =
+function write_mhpmevent(index : hpmidx, value : bits(64)) -> unit =
   if sys_writable_hpm_counters[index] == 0b1 then {
     let old_value = mhpmevent[index];
-    let value = legalize_hpmevent(match xlen {
-      32 => mhpmevent[index][63 .. 32] @ value,
-      64 => value,
-      _  => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
-    });
+    let value = legalize_hpmevent(value);
     mhpmevent[index] = value;
 
     written_event_index = Some(index, EV_EVENT);
@@ -239,7 +235,12 @@ function clause is_CSR_accessible((0b0011001 /* 0x320 */ @ index : bits(5), _, _
 function clause read_CSR(0b0011001 /* 0x320 */ @ index : bits(5) if unsigned(index) >= 3) = read_mhpmevent(hpmidx_from_bits(index))
 function clause write_CSR((0b0011001 /* 0x320 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
-  write_mhpmevent(index, value);
+  let full_value : bits(64) = match xlen {
+    32 => mhpmevent[index][63 .. 32] @ value,
+    64 => value,
+    _  => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
+  };
+  write_mhpmevent(index, full_value);
   Ok(read_mhpmevent(index))
 }
 
@@ -266,6 +267,8 @@ function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xl
 function dispatchEventCounter(index : hpmidx, event_priv : Privilege) -> unit = {
   // This must be a writable event counter.
   assert(sys_writable_hpm_counters[index] == 0b1);
+
+  if mcountinhibit[HPM][index - 3] == 0b1 then return ();
 
   // Filter the privilege mode according to Sscofpmf.
   if currentlyEnabled(Ext_Sscofpmf) then {
