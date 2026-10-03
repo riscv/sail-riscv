@@ -202,17 +202,9 @@ function clear_written_event_index() -> unit =
   written_event_index = None()
 
 // Write the HPM CSRs.
-function write_mhpmcounter(index : hpmidx, value : xlenbits) -> unit =
+function write_mhpmcounter(index : hpmidx, value : bits(64)) -> unit =
   if sys_writable_hpm_counters[index] == 0b1 then {
-    let value = legalize_hpmcounter_value_xlen(value);
-    mhpmcounter[index][(xlen - 1) .. 0] = value;
-    written_event_index = Some(index, EV_COUNTER)
-  }
-
-function write_mhpmcounterh(index : hpmidx, value : bits(32)) -> unit =
-  if sys_writable_hpm_counters[index] == 0b1 then {
-    let value = legalize_hpmcounter_value(value @ mhpmcounter[index][31 .. 0]);
-    mhpmcounter[index][63 .. 32] = value[63 .. 32];
+    mhpmcounter[index] = legalize_hpmcounter_value(value);
     written_event_index = Some(index, EV_COUNTER)
   }
 
@@ -253,12 +245,17 @@ function clause read_CSR(0b1011100 /* 0xB80 */ @ index : bits(5) if xlen == 32 &
 
 function clause write_CSR((0b1011000 /* 0xB00 */ @ index : bits(5), value) if unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
-  write_mhpmcounter(index, value);
+  let full_value : bits(64) = match xlen {
+    32 => mhpmcounter[index][63 .. 32] @ value,
+    64 => value,
+    _  => internal_error(__FILE__, __LINE__, "Unsupported xlen"),
+  };
+  write_mhpmcounter(index, full_value);
   Ok(read_mhpmcounter(index))
 }
 function clause write_CSR((0b1011100 /* 0xB80 */ @ index : bits(5), value) if xlen == 32 & unsigned(index) >= 3) = {
   let index = hpmidx_from_bits(index);
-  write_mhpmcounterh(index, value);
+  write_mhpmcounter(index, value @ mhpmcounter[index][31 .. 0]);
   Ok(read_mhpmcounterh(index))
 }
 
