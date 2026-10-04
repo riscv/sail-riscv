@@ -56,7 +56,7 @@ function select_instr_or_fcsr_rm(instr_rm : rounding_mode) -> option(rounding_mo
     then Some(encdec_rounding_mode(fcsr_rm))
     else match fcsr_rm_reserved_behavior {
       Fcsr_RM_Fatal  => reserved_behavior("Dynamic floating-point rounding mode reserved behavior: fcsr.FRM contains reserved value " ^ bits_str(fcsr_rm)),
-             // Note: None() will be caught and converted into Illegal_Instruction() when this function is called.
+      // Note: None() will be caught and converted into Illegal_Instruction() when this function is called.
       Fcsr_RM_Illegal => None(),
     }
   }
@@ -68,7 +68,7 @@ function select_instr_or_fcsr_rm(instr_rm : rounding_mode) -> option(rounding_mo
      then Some(instr_rm)
      else match static_rm_reserved_behavior {
        Static_RM_Fatal   => reserved_behavior("Static floating-point rounding mode reserved behavior"),
-// Note: None() will be caught and converted into Illegal_Instruction.
+       // Note: None() will be caught and converted into Illegal_Instruction.
        Static_RM_Illegal => None(),
      }
 
