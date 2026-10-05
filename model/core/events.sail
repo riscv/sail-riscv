@@ -11,15 +11,15 @@
 enum Event = {
   EV_FENCE,
   EV_TLB_MISS,
-  EV_MISALIGNED_LOAD,
-  EV_MISALIGNED_STORE,
+  EV_MISALIGNED_LOAD_EXCEPTION,
+  EV_MISALIGNED_STORE_EXCEPTION,
 }
 
 mapping event_name : Event <-> string = {
-  EV_FENCE            <-> "fence",
-  EV_TLB_MISS         <-> "TLB miss",
-  EV_MISALIGNED_LOAD  <-> "misaligned load",
-  EV_MISALIGNED_STORE <-> "misaligned store",
+  EV_FENCE                      <-> "fence",
+  EV_TLB_MISS                   <-> "TLB miss",
+  EV_MISALIGNED_LOAD_EXCEPTION  <-> "misaligned load exception",
+  EV_MISALIGNED_STORE_EXCEPTION <-> "misaligned store exception",
 }
 
 // For C++.
@@ -32,8 +32,8 @@ function generate_event(event : Event) -> unit =
 
 function generate_trap_event(trap : TrapCause) -> unit = {
   match trap {
-    Exception(struct ExceptionContext { trap = E_Load_Addr_Align(), _ }) => generate_event(EV_MISALIGNED_LOAD),
-    Exception(struct ExceptionContext { trap = E_SAMO_Addr_Align(), _ }) => generate_event(EV_MISALIGNED_STORE),
+    Exception(struct ExceptionContext { trap = E_Load_Addr_Align(), _ }) => generate_event(EV_MISALIGNED_LOAD_EXCEPTION),
+    Exception(struct ExceptionContext { trap = E_SAMO_Addr_Align(), _ }) => generate_event(EV_MISALIGNED_STORE_EXCEPTION),
     _                                                                    => (),
   }
 }

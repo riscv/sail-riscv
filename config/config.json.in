@@ -541,8 +541,8 @@
     // The model can generate the following events that can be tracked
     // using the HPM counters:
     // - EV_FENCE
-    // - EV_MISALIGNED_LOAD
-    // - EV_MISALIGNED_STORE
+    // - EV_MISALIGNED_LOAD_EXCEPTION
+    // - EV_MISALIGNED_STORE_EXCEPTION
     // - EV_TLB_MISS
     //
     // An event can be mapped to a selector value, that when written
@@ -569,14 +569,14 @@
         }
       },
       {
-        "event": "EV_MISALIGNED_LOAD",
+        "event": "EV_MISALIGNED_LOAD_EXCEPTION",
         "selector": {
           "len": 64,
           "value": "0x2"
         }
       },
       {
-        "event": "EV_MISALIGNED_STORE",
+        "event": "EV_MISALIGNED_STORE_EXCEPTION",
         "selector": {
           "len": 64,
           "value": "0x3"
