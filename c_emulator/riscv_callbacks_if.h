@@ -44,16 +44,35 @@ public:
   // Page table walk callbacks
   virtual void ptw_start_callback(
     ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    int64_t level,
     uint64_t vpn,
     ModelImpl::MemoryAccessType access_type,
     ModelImpl::Privilege privilege
   );
 
-  virtual void ptw_step_callback(ModelImpl &model, int64_t level, sbits pte_addr, uint64_t pte);
+  virtual void ptw_step_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    int64_t level,
+    sbits pte_addr,
+    uint64_t pte
+  );
 
-  virtual void ptw_success_callback(ModelImpl &model, uint64_t final_ppn, int64_t level);
+  virtual void ptw_success_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    int64_t level,
+    uint64_t final_ppn
+  );
 
-  virtual void ptw_fail_callback(ModelImpl &model, ModelImpl::PTW_Error error_type, int64_t level, sbits pte_addr);
+  virtual void ptw_fail_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    int64_t level,
+    ModelImpl::PTW_Error error_type,
+    sbits pte_addr
+  );
 
   virtual void tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index);
 

@@ -90,6 +90,8 @@ unit PlatformInterface::instret_callback(unit) {
 }
 
 unit PlatformInterface::ptw_start_callback(
+  [[maybe_unused]] hart::zTranslationStage stage,
+  [[maybe_unused]] int64_t level,
   [[maybe_unused]] uint64_t vpn,
   [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
   [[maybe_unused]] hart::zPrivilege privilege
@@ -98,18 +100,24 @@ unit PlatformInterface::ptw_start_callback(
 }
 
 unit PlatformInterface::ptw_step_callback(
+  [[maybe_unused]] hart::zTranslationStage stage,
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] sbits pte_addr,
   [[maybe_unused]] uint64_t pte
 ) {
   return UNIT;
 }
-unit PlatformInterface::ptw_success_callback([[maybe_unused]] uint64_t final_ppn, [[maybe_unused]] int64_t level) {
+unit PlatformInterface::ptw_success_callback(
+  [[maybe_unused]] hart::zTranslationStage stage,
+  [[maybe_unused]] int64_t level,
+  [[maybe_unused]] uint64_t final_ppn
+) {
   return UNIT;
 }
 unit PlatformInterface::ptw_fail_callback(
-  [[maybe_unused]] hart::zPTW_Error error_type,
+  [[maybe_unused]] hart::zTranslationStage stage,
   [[maybe_unused]] int64_t level,
+  [[maybe_unused]] hart::zPTW_Error error_type,
   [[maybe_unused]] sbits pte_addr
 ) {
   return UNIT;
