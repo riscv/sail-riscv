@@ -31,6 +31,7 @@ let regidx_bit_width = sizeof(regidx_bit_width)
 
 newtype regidx = Regidx : bits(regidx_bit_width)  // uncompressed register identifiers
 newtype cregidx = Cregidx : bits(3) // identifiers in RVC instructions
+newtype pregidx  = Pregidx : bits(4)   /* identifiers in RVP instructions */
 type csreg = bits(12)  // CSR addressing
 
 function regidx_offset(Regidx(r) : regidx, o : bits(regidx_bit_width)) -> regidx = Regidx(r + o)
