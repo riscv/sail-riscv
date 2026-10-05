@@ -161,11 +161,10 @@ void log_callbacks::ptw_success_callback(
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
       trace_log,
-      "PTW: Success, stage=%s, level=%" PRId64 ", final_ppn=0x%" PRIx64 ", level=%" PRId64 "\n",
+      "PTW: Success, stage=%s, level=%" PRId64 ", final_ppn=0x%" PRIx64 "\n",
       model.translation_stage_to_string(stage).c_str(),
       level,
-      final_ppn,
-      level
+      final_ppn
     );
   }
 }
@@ -180,9 +179,10 @@ void log_callbacks::ptw_fail_callback(
   if (trace_log != nullptr && config_print_ptw) {
     fprintf(
       trace_log,
-      "PTW: failed, error=%s, level=%" PRId64 ", pte_addr=0x%" PRIX64 "\n",
-      model.ptw_error_to_string(error_type).c_str(),
+      "PTW: Failed, stage=%s, level=%" PRId64 ", error=%s, pte_addr=0x%" PRIX64 "\n",
+      model.translation_stage_to_string(stage).c_str(),
       level,
+      model.ptw_error_to_string(error_type).c_str(),
       pte_addr.bits
     );
   }
