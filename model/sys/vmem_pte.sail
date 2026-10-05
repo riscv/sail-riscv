@@ -104,8 +104,9 @@ private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext, stage 
   | not(page_based_mem_type_forwards_matches(pte_ext[PBMT])) & currentlyEnabled(Ext_Svpbmt)
   // Early versions of the spec did not require reserved bits to be zero.
   | pte_reserved_bits_must_be_zero & (
-    // A/D/U and all ext bits are currently reserved for non-leaf PTEs.
-      pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1 | pte_ext.bits != zeros())
+    // A/D/U and all ext bits except Svrsw60t59b's are currently reserved for non-leaf PTEs.
+      pte_is_non_leaf(pte_flags) & (pte_flags[A] == 0b1 | pte_flags[D] == 0b1 | pte_flags[U] == 0b1
+                                    | [pte_ext with RSW_60t59b = zeros()].bits != zeros())
     // N/PBMT/60t59b are reserved if not implemented.
     | pte_ext[N]          != zeros() & not(currentlyEnabled(Ext_Svnapot))
     | pte_ext[PBMT]       != zeros() & (menvcfg[PBMTE] == 0b0
