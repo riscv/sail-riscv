@@ -153,7 +153,7 @@ function pt_walk(
   stage,
   ext_ptw,
 ) = {
-  ptw_start_callback(zero_extend(vpn), access, priv);
+  ptw_start_callback(stage, level, zero_extend(vpn), access, priv);
 
   let 'log_pte_size_bytes = if 'v == 32 | 'v == 34 then 2 else 3;
   let 'vpn_i_size         = pagesize_bits - 'log_pte_size_bytes;
@@ -187,18 +187,18 @@ function pt_walk(
   // Read this-level PTE from mem (Step 2 of VATP)
   match read_pte(pte_addr, 2 ^ log_pte_size_bytes) {
     Err(_)  => {
-      ptw_fail_callback(PTW_No_Access(), level, bits_of(pte_addr));
+      ptw_fail_callback(stage, level, PTW_No_Access(), bits_of(pte_addr));
       Err(PTW_No_Access(), ext_ptw)
     },
     Ok(pte) => {
-      ptw_step_callback(level, bits_of(pte_addr), zero_extend(pte));
+      ptw_step_callback(stage, level, bits_of(pte_addr), zero_extend(pte));
 
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
       let pte_ext   = ext_bits_of_PTE(pte);
 
       if pte_is_invalid(pte_flags, pte_ext, stage) then {
         // Step 3 of VATP.
-        ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
+        ptw_fail_callback(stage, level, PTW_Invalid_PTE(), bits_of(pte_addr));
         Err(PTW_Invalid_PTE(), ext_ptw)
       }
       else {
@@ -213,7 +213,7 @@ function pt_walk(
             pt_walk(sv_width, vpn, access, priv, mxr, do_sum, ppn, level - 1, global, stage, ext_ptw)
           else {
             // level 0 PTE, but contains a pointer instead of a leaf
-            ptw_fail_callback(PTW_Invalid_PTE(), level, bits_of(pte_addr));
+            ptw_fail_callback(stage, level, PTW_Invalid_PTE(), bits_of(pte_addr));
             Err(PTW_Invalid_PTE(), ext_ptw)
           }
         } else {
@@ -223,14 +223,14 @@ function pt_walk(
             // Check for misaligned superpage.
             if   ppn[low_bits - 1 .. 0] != zeros()
             then {
-              ptw_fail_callback(PTW_Misaligned(), level, bits_of(pte_addr));
+              ptw_fail_callback(stage, level, PTW_Misaligned(), bits_of(pte_addr));
               return Err(PTW_Misaligned(), ext_ptw);
             };
           };
           // Steps 6, 7 and 8 of VATP.
           match check_PTE_permission(access, priv, stage, mxr, do_sum, pte_flags, pte_ext, ext_ptw) {
             PTE_Check_Failure(ext_ptw, pte_failure) => {
-              ptw_fail_callback(ext_get_ptw_error(pte_failure), level, bits_of(pte_addr));
+              ptw_fail_callback(stage, level, ext_get_ptw_error(pte_failure), bits_of(pte_addr));
               Err(ext_get_ptw_error(pte_failure), ext_ptw)
             },
             PTE_Check_Success(ext_ptw) => {
@@ -257,7 +257,7 @@ function pt_walk(
                          then PBMT_PMA
                          else page_based_mem_type(pte_ext[PBMT]);
 
-              ptw_success_callback(zero_extend(ppn), level);
+              ptw_success_callback(stage, level, zero_extend(ppn));
               // Store the original (pre-translation) PTE address for 2-stage translation in VS-Stage.
               // For G-Stage or S-Stage, pte_addr == pte_address_original.
               Ok(struct {ppn=ppn, pte=pte, pteAddr = pte_addr_original, level=level, pbmt=pbmt, global=global}, ext_ptw)

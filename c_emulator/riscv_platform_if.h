@@ -9,9 +9,12 @@ namespace hart {
 class Model;
 
 struct zMemoryAccessTypezIEmem_payloadz5zK;
-enum zPrivilege : int;
 struct zPTW_Error;
 struct zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
+
+enum zPrivilege : int;
+enum zTranslationStage : int;
+
 } // namespace hart
 
 // The Model class derives from this one so when Sail calls C callback
@@ -53,13 +56,20 @@ public:
 
   // Page table walk callbacks
   virtual unit ptw_start_callback(
+    hart::zTranslationStage stage,
+    int64_t level,
     uint64_t vpn,
     hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
     hart::zPrivilege privilege
   );
-  virtual unit ptw_step_callback(int64_t level, sbits pte_addr, uint64_t pte);
-  virtual unit ptw_success_callback(uint64_t final_ppn, int64_t level);
-  virtual unit ptw_fail_callback(hart::zPTW_Error error_type, int64_t level, sbits pte_addr);
+  virtual unit ptw_step_callback(hart::zTranslationStage stage, int64_t level, sbits pte_addr, uint64_t pte);
+  virtual unit ptw_success_callback(hart::zTranslationStage stage, int64_t level, uint64_t final_ppn);
+  virtual unit ptw_fail_callback(
+    hart::zTranslationStage stage,
+    int64_t level,
+    hart::zPTW_Error error_type,
+    sbits pte_addr
+  );
 
   virtual unit tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index);
   virtual unit tlb_flush_begin_callback(unit);
