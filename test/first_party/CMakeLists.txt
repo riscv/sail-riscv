@@ -7,7 +7,7 @@
 #    Unfortunately it is possible to build it without RISC-V support, e.g. RHEL 8 does this, so we
 #    need to check that. You can download a binary from https://github.com/llvm/llvm-project/releases
 #    On macOS, /usr/bin/clang is in $PATH by default but does not support the RISC-V target, so we default to
-#    a version installed by homebrew if we can find one.
+#    a version installed by homebrew if we can find it.
 # 2. GCC via riscv32-unknown-elf-gcc. Unlike Clang you have to specifically build GCC as a cross
 #    compiler. You can download a binary from https://github.com/riscv-collab/riscv-gnu-toolchain/releases
 # 3. GCC via riscv64-unknown-elf-gcc, but only if it has "multilib" support, so we'll try riscv32-... first.
@@ -317,6 +317,9 @@ foreach(idx RANGE 0 ${rvvi_test_last} 3)
             --lint ${rvvi_lint}
             --inst-limit 10000
     )
+    set_property(TEST "first_party_${arch}_${test_source}_rvvi_golden"
+        PROPERTY LABELS TestAtBuildTime
+    )
 endforeach()
 
 add_test(
@@ -324,9 +327,15 @@ add_test(
     COMMAND ${Python3_EXECUTABLE}
         "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/test_match_rvvi_trace.py"
 )
+set_property(TEST first_party_rvvi_text_match_unit
+    PROPERTY LABELS TestAtBuildTime
+)
 
 add_test(
     NAME first_party_rvvi_text_negative
     COMMAND ${Python3_EXECUTABLE}
         "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts/test_rvvi_text_negative.py"
+)
+set_property(TEST first_party_rvvi_text_negative
+    PROPERTY LABELS TestAtBuildTime
 )

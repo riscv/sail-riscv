@@ -58,6 +58,9 @@ def main() -> int:
     parser.add_argument("--lint", required=True)
     args = parser.parse_args()
 
+    # When debugging failures, preserve the files in the tmp directory
+    # using
+    # with tempfile.TemporaryDirectory(delete=False) as tmp:
     with tempfile.TemporaryDirectory() as tmp:
         first = os.path.join(tmp, "first.rvvi")
         second = os.path.join(tmp, "second.rvvi")
@@ -76,20 +79,27 @@ def main() -> int:
             b = f.read()
         if a != b:
             print(
-                "FAIL: RVVI-TEXT is not deterministic across two runs", file=sys.stderr
+                f"FAIL: RVVI-TEXT is not deterministic across two runs (first={first}, second={second})",
+                file=sys.stderr,
             )
             return 1
 
         checker = run_validator(args.checker, first)
         if checker.returncode != 0:
-            print("FAIL: rvviTextChecker.py rejected the trace", file=sys.stderr)
+            print(
+                f"FAIL: rvviTextChecker.py rejected the trace in {first}",
+                file=sys.stderr,
+            )
             if checker.stderr:
                 print(checker.stderr, file=sys.stderr)
             return 1
 
         lint = run_validator(args.lint, first)
         if lint.returncode != 0:
-            print("FAIL: lint_rvvi_trace.py rejected the trace", file=sys.stderr)
+            print(
+                f"FAIL: lint_rvvi_trace.py rejected the trace in {first}",
+                file=sys.stderr,
+            )
             if lint.stderr:
                 print(lint.stderr, file=sys.stderr)
             return 1
@@ -98,10 +108,15 @@ def main() -> int:
             golden = json.load(f)
         errors = match_text(a, golden, args.elf)
         if errors:
-            print("FAIL: TRACE field mismatch in main window", file=sys.stderr)
+            print(
+                f"FAIL: TRACE field mismatch in main window for {first}",
+                file=sys.stderr,
+            )
             for err in errors:
                 print(" ", err, file=sys.stderr)
             return 1
+
+        print(f"PASS: first={first}")
 
     print("PASS")
     return 0

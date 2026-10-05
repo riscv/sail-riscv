@@ -715,9 +715,10 @@ function is_svukte_qualified(
 
 // Top-level addr-translation function
 // PUBLIC: invoked from load-store utils, instr-fetch, atomics and CBOs, etc.
-function translateAddr(
+function translateAddr forall 'n, 0 < 'n <= max_mem_access . (
   gva    : virtaddr,
   access : MemoryAccessType(mem_payload),
+  width  : int('n),
   p      : Privilege
 ) -> TR_Result(physaddr, ExceptionContext) = {
 
@@ -754,18 +755,23 @@ function translateAddr(
     return Err(make_exception_context(translationException(access, PTW_Invalid_Addr()), zero_extend(bits_of(gva)), is_virtual_access, None()), init_ext_ptw);
   };
 
+  address_translation_start_callback(p, zero_extend(bits_of(gva)), access, width);
+
   // First stage: GVA -> GPA (or VA -> PA for single-stage)
   match translate_vs_stage(gva, access, p) {
     Ok(gpa, vs_pbmt, ext_ptw) => {
       if not(is_virtual_access) then {
+        address_translated_callback(S_Stage, zero_extend(bits_of(gva)), gpa, access, width);
         return Ok(Physaddr(gpa), vs_pbmt, ext_ptw)
       };
+      address_translated_callback(VS_Stage, zero_extend(bits_of(gva)), gpa, access, width);
       // Second stage: GPA -> SPA
       match translate_g_stage(gpa, access) {
         Ok(spa, g_pbmt, ext_ptw)  => {
           // A non-zero G-stage PBMT overrides the PMAs to give the intermediate
           // attributes, then a non-zero VS-stage PBMT overrides those in turn.
           let pbmt = if vs_pbmt != PBMT_PMA then vs_pbmt else g_pbmt;
+          address_translated_callback(G_Stage, gpa, spa, access, width);
           Ok(Physaddr(spa), pbmt, ext_ptw)
         },
         // G-Stage failure

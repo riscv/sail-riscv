@@ -292,6 +292,8 @@ def lint_trace(text: str) -> list[str]:
         if ev["event"] == "RET" and not is_compressed(inst):
             opcode = inst & 0x7F
             c_indices = [idx for idx, _ in ev.get("c_writes", [])]
+            # Remove `mip` (0x344) since it may be written by other sources
+            c_indices = set(c_indices) - {0x344}
             if opcode in _NO_CSR_WRITE_OPCODES and c_indices:
                 errors.append(
                     f"{loc}: opcode {opcode:#09b} must not write CSRs "
@@ -320,16 +322,19 @@ def lint_trace(text: str) -> list[str]:
         for mem in mems:
             if mem["bytes"] <= 0:
                 errors.append(f"{loc}: MEM {mem['bus']} bytes must be positive")
-            # kv parse is best-effort; only flag if count is clearly too big
-            if mem["count"] != len(mem["kv"]) and mem["count"] > 8:
+            # kv parse is best-effort
+            if mem["count"] != len(mem["kv"]):
                 errors.append(f"{loc}: MEM count {mem['count']} looks implausible")
             if "PT" in mem["kv"] and mem["kv"]["PT"] not in ("K", "M", "G", "T", "P"):
                 errors.append(f"{loc}: bad PT value {mem['kv']['PT']}")
-            if "PTE" in mem["kv"]:
-                try:
-                    parse_hex(mem["kv"]["PTE"])
-                except ValueError:
-                    errors.append(f"{loc}: PTE value is not hex: {mem['kv']['PTE']}")
+            for pte in ["PTE", "GPTE"]:
+                if pte in mem["kv"]:
+                    try:
+                        parse_hex(mem["kv"][pte])
+                    except ValueError:
+                        errors.append(
+                            f"{loc}: {pte} value is not hex: {mem['kv'][pte]}"
+                        )
 
         # Fetch faults use inst=0 and may omit MEM I.
         if ev["event"] == "RET" or inst != 0:
@@ -389,7 +394,7 @@ def main() -> int:
     with open(args.trace, encoding="utf-8") as f:
         errors = lint_trace(f.read())
     if errors:
-        print(f"FAIL: {len(errors)} lint error(s)", file=sys.stderr)
+        print(f"FAIL: {args.trace} has {len(errors)} lint error(s)", file=sys.stderr)
         for err in errors:
             print(f"  {err}", file=sys.stderr)
         return 1

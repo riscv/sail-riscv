@@ -38,15 +38,6 @@ void callbacks_if::mem_exception_callback(
 ) {
 }
 
-void callbacks_if::vmem_access_callback(
-  [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] sbits vaddr,
-  [[maybe_unused]] sbits paddr,
-  [[maybe_unused]] ModelImpl::MemoryAccessType access,
-  [[maybe_unused]] int64_t width
-) {
-}
-
 void callbacks_if::xreg_full_write_callback(
   [[maybe_unused]] ModelImpl &model,
   [[maybe_unused]] const_sail_string abi_name,
@@ -144,6 +135,25 @@ void callbacks_if::ptw_fail_callback(
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] ModelImpl::PTW_Error error_type,
   [[maybe_unused]] sbits pte_addr
+) {
+}
+
+void callbacks_if::address_translation_start_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
+  [[maybe_unused]] int64_t width
+) {
+}
+
+void callbacks_if::address_translated_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] sbits paddr,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
+  [[maybe_unused]] int64_t width
 ) {
 }
 

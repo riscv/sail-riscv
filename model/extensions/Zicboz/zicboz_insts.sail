@@ -45,7 +45,7 @@ function clause execute ZICBOZ(rs1) = {
       //  and atomicity, including individual bytes."
       //
       // This implementation does a single atomic write.
-      match translateAddr(vaddr, access, eff_priv) {
+      match translateAddr(vaddr, access, cache_block_size, eff_priv) {
         // vaddr is the aligned address, but errors report the address that
         // was encoded in the instruction. We subtract the negative offset
         // (add the positive offset) to get it. Normally this will be

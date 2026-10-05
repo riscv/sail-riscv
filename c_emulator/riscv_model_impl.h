@@ -79,6 +79,14 @@ public:
   std::string ptw_error_to_string(PTW_Error error_type);
   std::string translation_stage_to_string(TranslationStage stage);
 
+  // other conversions
+  uint64_t privilege_as_bits(ModelImpl::Privilege privilege);
+
+  // other utilities
+  bool is_fetch(MemoryAccessType access);
+  bool is_store_conditional(MemoryAccessType access);
+  static bool is_virtual_privilege(Privilege privilege);
+
   // access to model configuration
 
   bool config_is_valid();
@@ -110,6 +118,8 @@ public:
   int64_t vlen() const;
   int64_t physaddrbits_len() const;
 
+
+  Privilege cur_privilege() const;
   uint64_t mepc() const;
   uint64_t sepc() const;
   uint64_t htif_exit_code() const;
@@ -118,11 +128,14 @@ public:
   uint64_t pc() const;
   uint64_t fcsr() const;
 
-  bool virt_enabled() const;
+  // Whether the last store-conditional (SC) matched the reservation.
+  // This helps decide whether an SC accessed memory: if the last
+  // reservation did not match, a just executed SC did not access
+  // memory.
+  bool last_reservation_match() const;
 
   // These state accessors are not const due to the generated read
   // accessors not being marked const in hart::Model.
-  uint64_t cur_privilege_mode();
   uint64_t xreg(int64_t reg);
   uint64_t freg(int64_t reg);
   // returns std::nullopt if the model has not thrown an exception.
@@ -150,7 +163,6 @@ private:
   unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
   unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
-  unit vmem_access_callback(sbits vaddr, sbits paddr, MemoryAccessType access, int64_t width) override;
   unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
   unit freg_write_callback(unsigned reg, sbits value) override;
   // `full` indicates that the name and index of the CSR are provided.
@@ -178,6 +190,21 @@ private:
   unit ptw_step_callback(TranslationStage stage, int64_t level, sbits pte_addr, uint64_t pte) override;
   unit ptw_success_callback(TranslationStage stage, int64_t level, uint64_t final_ppn) override;
   unit ptw_fail_callback(TranslationStage stage, int64_t level, PTW_Error error_type, sbits pte_addr) override;
+
+  unit address_translation_start_callback(
+    Privilege privilege,
+    sbits vaddr,
+    MemoryAccessType access,
+    int64_t width
+  ) override;
+  unit address_translated_callback(
+    TranslationStage stage,
+    sbits vaddr,
+    sbits paddr,
+    MemoryAccessType access,
+    int64_t width
+  ) override;
+
   unit tlb_add_callback(TLB tlb, uint64_t index) override;
   unit tlb_flush_begin_callback(unit) override;
   unit tlb_flush_callback(uint64_t index) override;
@@ -253,6 +280,7 @@ private:
   uint64_t m_reservation = 0;
   uint64_t m_reservation_addr = 0;
   bool m_reservation_valid = false;
+  bool m_last_reservation_match = false;
 
   uint64_t m_reservation_set_addr_mask = 0;
   bool m_reservation_require_exact_addr = false;

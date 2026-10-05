@@ -21,14 +21,6 @@ public:
 
   virtual void mem_exception_callback(ModelImpl &model, sbits paddr, uint64_t num_of_exception);
 
-  virtual void vmem_access_callback(
-    ModelImpl &model,
-    sbits vaddr,
-    sbits paddr,
-    ModelImpl::MemoryAccessType access,
-    int64_t width
-  );
-
   virtual void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value);
 
   virtual void freg_write_callback(ModelImpl &model, unsigned reg, sbits value);
@@ -84,6 +76,23 @@ public:
     int64_t level,
     ModelImpl::PTW_Error error_type,
     sbits pte_addr
+  );
+
+  virtual void address_translation_start_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    sbits vaddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
+  );
+
+  virtual void address_translated_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    sbits vaddr,
+    sbits paddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
   );
 
   virtual void tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index);

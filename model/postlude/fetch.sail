@@ -36,12 +36,10 @@ private function fetch_bytes forall 'n, 'n in {2, 4} . (fetch_start : xlenbits, 
   let access : MemoryAccessType(mem_payload) = InstructionFetch();
   let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
 
-  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(Virtaddr(granule_start), access, eff_priv) {
+  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(Virtaddr(granule_start), access, width, eff_priv) {
     Err(e, _)    => return FetchBytes_Exception(e),
     Ok(paddr, pbmt, _) => (paddr, pbmt),
   };
-
-  vmem_access_callback(zero_extend(granule_start), bits_of(paddr), InstructionFetch(), width);
 
   match mem_read(access, pbmt, eff_priv, paddr, width, false, false, false) {
     Err(exc_addr, e) => {

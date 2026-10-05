@@ -37,15 +37,6 @@ unit PlatformInterface::mem_exception_callback(
   return UNIT;
 }
 
-unit PlatformInterface::vmem_access_callback(
-  [[maybe_unused]] sbits vaddr,
-  [[maybe_unused]] sbits paddr,
-  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
-  [[maybe_unused]] int64_t width
-) {
-  return UNIT;
-}
-
 unit PlatformInterface::xreg_full_write_callback(
   [[maybe_unused]] const_sail_string abi_name,
   [[maybe_unused]] sbits reg,
@@ -136,6 +127,25 @@ unit PlatformInterface::ptw_fail_callback(
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] hart::zPTW_Error error_type,
   [[maybe_unused]] sbits pte_addr
+) {
+  return UNIT;
+}
+
+unit PlatformInterface::address_translation_start_callback(
+  [[maybe_unused]] hart::zPrivilege privilege,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
+  [[maybe_unused]] int64_t width
+) {
+  return UNIT;
+}
+
+unit PlatformInterface::address_translated_callback(
+  [[maybe_unused]] hart::zTranslationStage stage,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] sbits paddr,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
+  [[maybe_unused]] int64_t width
 ) {
   return UNIT;
 }

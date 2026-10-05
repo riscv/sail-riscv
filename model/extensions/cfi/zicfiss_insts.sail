@@ -198,7 +198,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     };
   };
 
-  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, eff_priv) {
+  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, width, eff_priv) {
     Ok(addr, pbmt, _) => (addr, pbmt),
     Err(e, _)   => return trap(e),
   };
@@ -215,17 +215,14 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
       assert(exc_addr == paddr);
       return memory_exception(e, bits_of(vaddr), access_info)
     },
-    Ok(_) => {
-      vmem_access_callback(zero_extend(bits_of(vaddr)), bits_of(paddr), access, width);
-      match mem_read(access, pbmt, eff_priv, paddr, width, aq, aq & rl, true) {
-        Err(exc_addr, e) => {
-          // AMOs should not get split.
-          assert(exc_addr == paddr);
-          return memory_exception(e, bits_of(vaddr), access_info)
-        },
-        Ok(v)  => v,
-      }
-    }
+    Ok(_) => match mem_read(access, pbmt, eff_priv, paddr, width, aq, aq & rl, true) {
+      Err(exc_addr, e) => {
+        // AMOs should not get split.
+        assert(exc_addr == paddr);
+        return memory_exception(e, bits_of(vaddr), access_info)
+      },
+      Ok(v)  => v,
+    },
   };
 
   // This constraint is ensured by the instruction decode clause.

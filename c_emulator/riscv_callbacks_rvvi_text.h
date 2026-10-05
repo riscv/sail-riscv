@@ -5,6 +5,8 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -14,21 +16,34 @@ public:
 
   void post_step_callback(ModelImpl &model, bool is_waiting) override;
   void fetch_callback(ModelImpl &model, sbits opcode) override;
-  void vmem_access_callback(
-    ModelImpl &model,
-    sbits vaddr,
-    sbits paddr,
-    ModelImpl::MemoryAccessType access,
-    int64_t width
-  ) override;
   void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value) override;
   void freg_write_callback(ModelImpl &model, unsigned reg, sbits value) override;
   void csr_full_write_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value) override;
   void vreg_write_callback(ModelImpl &model, unsigned reg, lbits value) override;
   void trap_callback(ModelImpl &model, bool is_interrupt, fbits cause) override;
   void instret_callback(ModelImpl &model) override;
-  void ptw_step_callback(ModelImpl &model, int64_t level, sbits pte_addr, uint64_t pte) override;
-  void ptw_success_callback(ModelImpl &model, uint64_t final_ppn, int64_t level) override;
+  void ptw_step_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    int64_t level,
+    sbits pte_addr,
+    uint64_t pte
+  ) override;
+  void address_translation_start_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    sbits vaddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
+  ) override;
+  void address_translated_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    sbits vaddr,
+    sbits paddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
+  ) override;
 
 private:
   struct RegChange {
@@ -47,17 +62,37 @@ private:
     int64_t page_level = -1;
   };
 
+  struct PTWStep {
+    ModelImpl::TranslationStage stage;
+    int64_t level;
+    uint64_t pte_addr;
+    uint64_t pte;
+  };
+
+  struct MemoryAccessTrace {
+    MemoryAccessTrace(ModelImpl::Privilege p, uint64_t vaddr, ModelImpl::MemoryAccessType a, int64_t w) :
+        privilege(p),
+        virt_addr(vaddr),
+        access_type(a),
+        width(w) {};
+
+    bool is_eligible(ModelImpl &model) const;
+
+    std::string print(ModelImpl &model) const;
+
+    ModelImpl::Privilege privilege;
+    uint64_t virt_addr = 0;
+    ModelImpl::MemoryAccessType access_type;
+    int64_t width = 0;
+    std::optional<uint64_t> guest_phys_addr;
+    std::optional<uint64_t> phys_addr;
+    std::vector<PTWStep> ptw_steps;
+  };
+
   void emit_header(ModelImpl &model);
   void emit_instruction(ModelImpl &model);
   void reset_instruction_buffer();
   void record_reg(char kind, uint64_t index, std::string value);
-
-  static std::string hex_value(const sbits &value);
-  static std::string hex_value_lbits(const lbits &value);
-  static char page_type_letter(int64_t level);
-  // to_str(access) is "X" for instruction fetches; loads and stores are
-  // both data accesses for MEM purposes.
-  static bool access_is_fetch(ModelImpl &model, ModelImpl::MemoryAccessType access);
 
   FILE *m_trace_log;
   bool m_header_emitted = false;
@@ -73,8 +108,7 @@ private:
   unsigned m_event_virt = 0;
   std::vector<RegChange> m_reg_changes;
   std::vector<MemAccess> m_mem_accesses;
-  // Last successful PTW, consumed by the next vmem_access_callback.
-  bool m_ptw_success = false;
-  uint64_t m_last_pte = 0;
-  int64_t m_ptw_success_level = -1;
+
+  std::vector<std::unique_ptr<MemoryAccessTrace>> m_mem_traces;
+  std::unique_ptr<MemoryAccessTrace> m_cur_mem_trace;
 };
