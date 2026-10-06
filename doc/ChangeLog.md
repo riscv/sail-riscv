@@ -11,6 +11,9 @@
   - Whether a trap writes a transformed instruction to `mtinst`/`htinst`
     instead of zero can now be specified per exception type, see
     `extensions.H.transformed_instruction`.
+  - Each bit of `misa` can now be individually marked mutable; see
+    `extensions.M.mutable_misa`, `extensions.F.mutable_misa`, etc.
+    `base.writable_misa` has been removed as part of this change.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1997 : a non-leaf PTE with bit 59 or 60 set raises a page fault even when Svrsw60t59b is enabled
