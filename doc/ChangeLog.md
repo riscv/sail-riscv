@@ -36,6 +36,7 @@
     triggers in the execution trace.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/2001 : `hstatus.GVA` and `mstatus.GVA` were set even when no guest virtual address was written to `stval`/`mtval`
   - https://github.com/riscv/sail-riscv/issues/1997 : a non-leaf PTE with bit 59 or 60 set raises a page fault even when Svrsw60t59b is enabled
   - https://github.com/riscv/sail-riscv/issues/1988 : `mcycle` and `minstret` should not depend on Zicntr
   - https://github.com/riscv/sail-riscv/issues/1984 : `fence.i` is supported though `Zifencei` is configured as unsupported
