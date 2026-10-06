@@ -36,6 +36,7 @@
     triggers in the execution trace.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/pull/2009 : `medeleg` and `hedeleg` bit 19 (hardware error) should be read-only zero before priv 1.13
   - https://github.com/riscv/sail-riscv/issues/1997 : a non-leaf PTE with bit 59 or 60 set raises a page fault even when Svrsw60t59b is enabled
   - https://github.com/riscv/sail-riscv/issues/1988 : `mcycle` and `minstret` should not depend on Zicntr
   - https://github.com/riscv/sail-riscv/issues/1984 : `fence.i` is supported though `Zifencei` is configured as unsupported

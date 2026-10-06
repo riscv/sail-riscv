@@ -394,12 +394,15 @@ function clause write_CSR(0x604, value) = { mie = legalize_hie(mie, value); Ok(l
 function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(lower_mip_to_hip(read_mip(IncludePlatformInterrupts)).bits) }
 
 // hedeleg is writable only for the synchronous exceptions that may be
-// delegated to VS-mode. Codes 0-8, 12, 13, 15, 18, 19, everything else is
-// read-only zero.
-let hedeleg_writable_mask : bits(64) = 0x00000000000CB1FF
+// delegated to VS-mode. Codes 0-8, 12, 13, 15, 18, 19 (only from priv 1.13),
+// everything else is read-only zero.
+function hedeleg_writable_mask() -> bits(64) =
+  [Mk_Medeleg(0x00000000000CB1FF) with
+    Hardware_Error = if priv_isa_version >= Privileged_ISA_1_13 then 0b1 else 0b0
+  ].bits
 
 private function legalize_hedeleg(_m : Medeleg, v : bits(64)) -> Medeleg =
-  Mk_Medeleg(v & hedeleg_writable_mask)
+  Mk_Medeleg(v & hedeleg_writable_mask())
 
 private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
