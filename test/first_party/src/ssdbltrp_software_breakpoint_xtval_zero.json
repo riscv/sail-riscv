@@ -1,0 +1,12 @@
+{
+  "base": {
+    "xtval_nonzero": {
+      "software_breakpoint": false
+    }
+  },
+  "extensions": {
+    "Ssdbltrp": {
+      "supported": true
+    }
+  }
+}
