@@ -182,6 +182,7 @@ private function legalize_medeleg(_o : Medeleg, v : bits(64)) -> Medeleg = {
     Load_GPage_Fault  = if currentlyEnabled(Ext_H) then v[Load_GPage_Fault]  else 0b0,
     Fetch_GPage_Fault = if currentlyEnabled(Ext_H) then v[Fetch_GPage_Fault] else 0b0,
     VSEnvCall         = if currentlyEnabled(Ext_H) then v[VSEnvCall]         else 0b0,
+    Hardware_Error    = if priv_isa_version >= Privileged_ISA_1_13 then v[Hardware_Error] else 0b0,
     // M-EnvCalls and DoubleTrap cannot be delegated.
     Double_Trap       = 0b0,
     MEnvCall          = 0b0,
@@ -397,8 +398,10 @@ function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(l
 // read-only zero.
 let hedeleg_writable_mask : bits(64) = 0x00000000000CB1FF
 
-private function legalize_hedeleg(_m : Medeleg, v : bits(64)) -> Medeleg =
-  Mk_Medeleg(v & hedeleg_writable_mask)
+private function legalize_hedeleg(_m : Medeleg, v : bits(64)) -> Medeleg = {
+  let v = Mk_Medeleg(v & hedeleg_writable_mask);
+  [v with Hardware_Error = if priv_isa_version >= Privileged_ISA_1_13 then v[Hardware_Error] else 0b0]
+}
 
 private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
