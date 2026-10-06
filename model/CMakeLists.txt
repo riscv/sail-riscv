@@ -424,6 +424,8 @@ foreach (xlen IN ITEMS 32 64)
         --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
         --lean-force-output
         --lean-non-beq-type instruction
+        --lean-non-beq-type instr_info
+        --lean-non-beq-type HartState
         --lean-non-beq-type ExecutionResult
         --lean-non-beq-type Step
     )
