@@ -917,6 +917,10 @@ private function check_extension_param_constraints() -> bool = {
       valid = false;
       print_endline("Bit 11 (Environment call from M-mode) in `base.medeleg.delegatable_bits` is set; this environment call cannot be delegated.");
     };
+    if medelegation[Hardware_Error] != 0b0 & priv_isa_version < Privileged_ISA_1_13 then {
+      valid = false;
+      print_endline("Bit 19 (Hardware Error) in `base.medeleg.delegatable_bits` is set, but the hardware-error exception requires privileged ISA version 1.13 or later.");
+    };
     if (medelegation.bits & reserved_exception_mask()) != zeros() then {
       valid = false;
       print_endline("Bits for reserved exceptions are set in `base.medeleg.delegatable_bits`.");
