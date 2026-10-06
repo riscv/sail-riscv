@@ -103,6 +103,20 @@ enum ExtContextPolicy = {
 let plat_mstatus_legal_fs : ExtContextPolicy = config base.mstatus.fs_legal_states
 let plat_mstatus_legal_vs : ExtContextPolicy = config base.mstatus.vs_legal_states
 
+// Width of performance counters
+type plat_hpmcounter_width_bits : Int = config base.hpmcounter_width_bits
+constraint 1 <= plat_hpmcounter_width_bits <= 64
+let plat_hpmcounter_width_bits = sizeof(plat_hpmcounter_width_bits)
+
+// Width of `mhpmevent` CSRs.
+type plat_hpmevent_width_bits : Int = config base.hpmevent_width_bits
+constraint 1 <= plat_hpmevent_width_bits <= 64
+let plat_hpmevent_width_bits = sizeof(plat_hpmevent_width_bits)
+
+// Whether a `mhpmcounter` increments if the event it is counting was
+// generated during a write to its corresponding `mhpmevent` CSR.
+let plat_hpmcounter_increments_in_self_hpmevent_write : bool = config base.hpmcounter_increments_in_self_hpmevent_write
+
 // Location of clock-interface, which should match with the spec in the DTB
 let plat_have_clint : bool = config platform.clint.supported
 let plat_clint_base : physaddrbits = to_bits_checked(config platform.clint.base : int)

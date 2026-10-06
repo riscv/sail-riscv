@@ -58,13 +58,14 @@ register hvip : Minterrupts
 private function supported_interrupts_mask(i : Minterrupts) -> Minterrupts =
   Mk_Minterrupts(
     [Mk_Minterrupts(ones()) with
-      MEI  = bool_to_bit(plat_has_mei),
-      MSI  = bool_to_bit(plat_has_msi),
-      MTI  = bool_to_bit(plat_has_mti),
-      SEI  = bool_to_bit(plat_has_sei),
-      SSI  = bool_to_bit(plat_has_ssi),
-      STI  = bool_to_bit(plat_has_sti),
-      SGEI = bool_to_bit(geilen > 0),
+      MEI   = bool_to_bit(plat_has_mei),
+      MSI   = bool_to_bit(plat_has_msi),
+      MTI   = bool_to_bit(plat_has_mti),
+      SEI   = bool_to_bit(plat_has_sei),
+      SSI   = bool_to_bit(plat_has_ssi),
+      STI   = bool_to_bit(plat_has_sti),
+      SGEI  = bool_to_bit(geilen > 0),
+      LCOFI = if currentlyEnabled(Ext_Sscofpmf) then 0b1 else 0b0,
     ].bits & i.bits
   )
 
