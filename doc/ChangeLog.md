@@ -1,5 +1,11 @@
 # Release notes for the next version
 
+# Release notes for version 0.15
+
+The highlights of this release are the addition of the Double Trap
+extension, partial support for the Sdtrig extension, and a basic event
+framework.
+
 - The following extensions have been added:
   - Smdbltrp
   - Ssdbltrp
