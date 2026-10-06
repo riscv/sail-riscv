@@ -282,7 +282,11 @@ function trap_handler_inner(
 
   if hartSupports(Ext_Zicfilp) then zicfilp_preserve_elp_on_trap(del_priv);
 
-  match (del_priv) {
+  let prev_priv = cur_privilege;
+  // Match icount before the trap state update, the trap happens in the old mode
+  match_icount_triggers(prev_priv, prevent_reentrance(TA_Breakpoint, prev_priv));
+
+  let tvec : xlenbits = match del_priv {
     Machine => {
       mcause[IsInterrupt] = bool_to_bit(is_interrupt);
       mcause[Cause]       = zero_extend(cause);
@@ -302,6 +306,8 @@ function trap_handler_inner(
       cur_privilege = del_priv;
 
       handle_trap_extension(del_priv, pc, ext);
+
+      if currentlyEnabled(Ext_Sdtrig) then tcontrol_trap_into_mmode();
 
       track_trap(del_priv, is_interrupt, cause);
 
@@ -368,6 +374,14 @@ function trap_handler_inner(
       prepare_trap_vector(del_priv, vscause)
     },
   };
+
+  // Match after the trap state update so the reentrancy check reads the
+  // handler's MIE or SIE (interrupt-enabled reentrancy) or MTE (tcontrol-based reentrancy).
+  match c {
+    Interrupt(intr) => match_itrigger_triggers(intr, prev_priv, del_priv),
+    Exception(ctx)  => match_etrigger_triggers(ctx.trap, prev_priv, del_priv),
+  };
+  tvec
 }
 
 // "When a trap is to be taken into M-mode, if the MDT bit is currently 0, it is

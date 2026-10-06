@@ -12,6 +12,7 @@ register hart_state : HartState = HART_ACTIVE()
 
 private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
+  Step_Pending_Trigger    : (Trig_Action, trigger_index, xlenbits),
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : ExceptionContext,
   Step_Execute            : (ExecutionResult, instr_info),
@@ -111,10 +112,34 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instr_info : i
 }
 
 private function run_hart_active(step_no: nat) -> Step = {
+  // The Sdtrig extension does not define the priority of triggers
+  // with respect to pending interrupts. See however:
+  //   https://github.com/riscv/riscv-debug-spec/pull/802
+  // and the related issue:
+  //   https://github.com/riscv/riscv-debug-spec/issues/796
+  //
+  // For now, the implementation follows #802 by prioritizing the
+  // itrigger, etrigger and icount triggers above asynchronous
+  // interrupts.  When mcontrol6 triggers are implemented, their
+  // `after` versions should also be handled here.
+  match find_highest_priority_pending_trigger(cur_privilege) {
+    Some(action, idx, breakpoint_tval) => return Step_Pending_Trigger(action, idx, breakpoint_tval),
+    None() => (),
+  };
+
   match dispatchInterrupt(cur_privilege) {
     Some(intr, priv) => return Step_Pending_Interrupt(intr, priv),
     None() => (),
   };
+
+  // `icount` triggers match based on the privilege used for fetching,
+  // but the match is performed after the instruction retires, by which time
+  // the privilege might have changed (e.g. the xRET instructions).
+  let fetch_privilege = cur_privilege;
+  // Similarly, compute `icount` trigger reentrancy at fetch time,
+  // before xRET restores MIE, SIE or tcontrol.mte.
+  let fetch_trigger_reentrance = prevent_reentrance(TA_Breakpoint, fetch_privilege);
+
   match ext_fetch_hook(fetch()) {
     // extension error
     F_Ext_Error(e)   => Step_Ext_Fetch_Failure(e),
@@ -135,7 +160,7 @@ private function run_hart_active(step_no: nat) -> Step = {
       if is_landing_pad_expected() then {
         let r = trap(make_landing_pad_exception());
         let executed_instruction : option(instruction) = None();
-        let instr_info = struct instr_info { instbits, fetched_instruction, executed_instruction, compressed = true };
+        let instr_info = struct instr_info { fetch_privilege, fetch_trigger_reentrance, instbits, fetched_instruction, executed_instruction, compressed = true };
         Step_Execute(r, instr_info)
       }
       // check for RVC once here instead of every RVC execute clause.
@@ -145,11 +170,11 @@ private function run_hart_active(step_no: nat) -> Step = {
           ExecuteAs(other_inst) => (Some(other_inst), execute(other_inst)),
           result => (Some(fetched_instruction), result),
         };
-        let instr_info = struct instr_info { fetched_instruction, executed_instruction, instbits, compressed = true };
+        let instr_info = struct instr_info { fetch_privilege, fetch_trigger_reentrance, fetched_instruction, executed_instruction, instbits, compressed = true };
         Step_Execute(result, instr_info)
       } else {
         let executed_instruction : option(instruction) = None();
-        let instr_info = struct instr_info { fetched_instruction, executed_instruction, instbits, compressed = true };
+        let instr_info = struct instr_info { fetch_privilege, fetch_trigger_reentrance, fetched_instruction, executed_instruction, instbits, compressed = true };
         Step_Execute(Illegal_Instruction(), instr_info)
       }
     },
@@ -168,7 +193,7 @@ private function run_hart_active(step_no: nat) -> Step = {
       if is_landing_pad_expected() & not(is_lpad_instruction(fetched_instruction)) then {
         let r = trap(make_landing_pad_exception());
         let executed_instruction : option(instruction) = None();
-        let instr_info = struct instr_info { fetched_instruction, executed_instruction, instbits, compressed = false };
+        let instr_info = struct instr_info { fetch_privilege, fetch_trigger_reentrance, fetched_instruction, executed_instruction, instbits, compressed = false };
         Step_Execute(r, instr_info)
       } else {
         nextPC = PC + 4;
@@ -176,7 +201,7 @@ private function run_hart_active(step_no: nat) -> Step = {
           ExecuteAs(other_inst) => (Some(other_inst), execute(other_inst)),
           result => (Some(fetched_instruction), result),
         };
-        let instr_info = struct instr_info { fetched_instruction, executed_instruction, instbits, compressed = false };
+        let instr_info = struct instr_info { fetch_privilege, fetch_trigger_reentrance, fetched_instruction, executed_instruction, instbits, compressed = false };
         Step_Execute(result, instr_info)
       }
     }
@@ -235,6 +260,14 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     };
 
   match step_val {
+    Step_Pending_Trigger(action, _, trigger_tval) => {
+      match action {
+        TA_Breakpoint =>
+          handle_exception(exception_context(E_Breakpoint(Brk_Hardware), trigger_tval)),
+        _ =>
+          internal_error(__FILE__, __LINE__, "Trigger action " ^ trigger_action_name(action) ^ " not supported."),
+      }
+    },
     Step_Pending_Interrupt(intr, priv) => {
       if   get_config_print_instr()
       then print_bits("Handling interrupt: ", interruptType_bits(intr));
@@ -243,7 +276,10 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
     Step_Fetch_Failure(e) => handle_exception(e),
     Step_Waiting(_) => assert(hart_is_waiting(hart_state), "cannot be Waiting in a non-Wait state"),
-    Step_Execute(Retire_Success(), _) => assert(hart_is_active(hart_state)),
+    Step_Execute(Retire_Success(), instr_info) => {
+      assert(hart_is_active(hart_state));
+      match_icount_triggers(instr_info.fetch_privilege, instr_info.fetch_trigger_reentrance)
+    },
     // We only support one level of ExecuteAs redirection, primarily intended
     // for compressed instructions (though it can be used elsewhere). If there
     // is more than one ExecuteAs indirection we'll get to here. This isn't supported.
@@ -261,6 +297,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       if wait_is_nop(wr) then {
         // This is the same as the RETIRE_OK case.
         assert(hart_is_active(hart_state));
+        match_icount_triggers(instr_info.fetch_privilege, instr_info.fetch_trigger_reentrance);
       } else {
         // Transition into the wait state.
         if   get_config_print_instr()
@@ -294,6 +331,9 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
       // update wasn't suppressed by writing to it explicitly or
       // mcountinhibit[IR] or minstretcfg.
       if retired & minstret_increment then minstret = minstret + 1;
+
+      // Update any triggers that were written.
+      update_triggers();
 
       // Record the next PC for RVFI.
       // TODO: Remove this and implement it in C.

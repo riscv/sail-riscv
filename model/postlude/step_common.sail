@@ -9,10 +9,12 @@
 // Information about the current instruction being executed.
 
 struct instr_info = {
-  fetched_instruction  : instruction,
-  executed_instruction : option(instruction),
-  instbits             : instbits,
-  compressed           : bool,
+  fetch_privilege           : Privilege,
+  fetch_trigger_reentrance  : bool,
+  fetched_instruction       : instruction,
+  executed_instruction      : option(instruction),
+  instbits                  : instbits,
+  compressed                : bool,
 }
 
 // The state of the emulator.

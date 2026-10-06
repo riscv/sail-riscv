@@ -4,6 +4,10 @@
   - Smdbltrp
   - Ssdbltrp
   - Ssstrict
+  - Sdtrig
+    - This support is partial: only icount, itrigger, and etrigger
+      triggers are supported; tdata3 and context CSRs are supported
+      however context matching in textra is not yet supported.
 
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `mcountinhibit` CSR is supported, and if so, which
@@ -14,6 +18,12 @@
   - Each bit of `misa` can now be individually marked mutable; see
     `extensions.M.mutable_misa`, `extensions.F.mutable_misa`, etc.
     `base.writable_misa` has been removed as part of this change.
+  - Various configuration options have been added for Sdtrig; see
+    `extensions.Sdtrig`.
+
+- The command line interface has been updated:
+  - A `--trace-trigger` command-line option has been added to track
+    triggers in the execution trace.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/1997 : a non-leaf PTE with bit 59 or 60 set raises a page fault even when Svrsw60t59b is enabled
