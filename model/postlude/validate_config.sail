@@ -873,6 +873,13 @@ private function check_misc_extension_dependencies() -> bool = {
       valid = false;
       print_endline("Bits for reserved interrupts are set in `extensions.Sdtrig.itrigger.supported_interrupts`.");
     };
+    if (config extensions.Sdtrig.breakpoint_reentrancy : Sdtrig_breakpoint_reentrancy == Use_tcontrol) then {
+      let medelegation = Mk_Medeleg(config base.medeleg.delegatable_bits);
+      if medelegation[Breakpoint] != 0b0 then {
+        valid = false;
+        print_endline("Bit 3 (Breakpoint) in `base.medeleg.delegatable_bits` is set, but `extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol`: `tcontrol`-based reentrancy control hardwires this bit to 0.");
+      };
+    };
   };
   valid
 }
