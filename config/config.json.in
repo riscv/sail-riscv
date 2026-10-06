@@ -124,7 +124,10 @@
       // delegatable traps of the implementation. Bits should not be
       // set for traps that cannot be delegated as per the
       // specification, and delegation of reserved traps is not
-      // supported.  This value is ignored when the `medeleg` CSR does
+      // supported. Bit 19 (hardware error) must not be set for
+      // privileged ISA versions before 1.13, since that exception
+      // code is reserved there.
+      // This value is ignored when the `medeleg` CSR does
       // not exist.
       "delegatable_bits": {
         "len": 64,
