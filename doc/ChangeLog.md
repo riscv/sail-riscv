@@ -7,6 +7,7 @@
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/2005 : `medeleg` and `hedeleg` bit 18 (software check) should be read-only zero before priv 1.13 unless Zicfilp or Zicfiss is supported
+  - https://github.com/riscv/sail-riscv/issues/2001 : `hstatus.GVA` and `mstatus.GVA` were set even when no guest virtual address was written to `stval`/`mtval`
   - https://github.com/riscv/sail-riscv/issues/1986 : Indexed segment stores only check the index group against the first field for source EEW overlap
 
 # Release notes for version 0.15

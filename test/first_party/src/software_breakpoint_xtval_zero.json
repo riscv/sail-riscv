@@ -1,0 +1,7 @@
+{
+  "base": {
+    "xtval_nonzero": {
+      "software_breakpoint": false
+    }
+  }
+}
