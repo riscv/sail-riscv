@@ -288,10 +288,20 @@ private function check_PTE_permission(
   PTE_Check_Success(())
 }
 
+// Whether hardware updates the PTE A/D bits for this stage. If neither Svadu
+// nor Svade is supported, the current default is to update.
+private function hw_updates_enabled(stage : TranslationStage) -> bool =
+  (currentlyEnabled(Ext_Svadu) & (match stage {
+    VS_Stage => read_henvcfg()[ADUE] == 0b1,
+    _        => menvcfg[ADUE] == 0b1,
+  }))
+  | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)))
+
 // Update PTE bits if needed; return new PTE if updated
 private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
   pte : bits('pte_size),
   access : MemoryAccessType(mem_payload),
+  stage : TranslationStage,
 ) -> option(bits('pte_size)) = {
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
 
@@ -300,7 +310,8 @@ private function update_PTE_Bits forall 'pte_size, 'pte_size in {32, 64} . (
                         & (match access {
                              InstructionFetch()          => false,
                              LoadExecute(_)              => false,
-                             Load(_)                     => false,
+                             // Payload PageTableEntry and stage G_Stage indicate an implicit access to a VS-stage PTE
+                             Load(p)                     => sys_implicit_vs_pte_access_sets_gstage_d & stage == G_Stage & p == PageTableEntry & pte_flags[W] == 0b1 & hw_updates_enabled(stage),
                              LoadReserved(_)             => false,
                              Store(_)                    => true,
                              // NOTE: According to the spec: "it is UNSPECIFIED
