@@ -88,3 +88,61 @@ function count_ones(x) = {
   };
   count
 }
+
+val least_significant_bit : forall 'n, 'n >= 0. (bits('n), bits(1)) -> option(range(0, 'n - 1))
+function least_significant_bit(x, b) = {
+  var idx : option(range(0, 'n - 1)) = None();
+  var saw_zero : bool = false;
+  foreach (i from 0 to ('n - 1)) {
+    if not(saw_zero) & x[i] == b
+    then {
+      idx = Some(i);
+      saw_zero = true;
+    }
+  };
+  idx
+}
+
+$[test]
+private function test_least_significant_bit() -> unit = {
+  assert(least_significant_bit(0x0, 0b1) == None());
+  assert(least_significant_bit(0x0, 0b0) == Some(0));
+  assert(least_significant_bit(0x1, 0b0) == Some(1));
+  assert(least_significant_bit(0x8, 0b0) == Some(0));
+  assert(least_significant_bit(0xe, 0b0) == Some(0));
+  assert(least_significant_bit(0x7, 0b0) == Some(3));
+}
+
+val most_significant_bit : forall 'n, 'n >= 0. (bits('n), bits(1)) -> option(range(0, 'n - 1))
+function most_significant_bit(x, b) = {
+  match least_significant_bit(reverse_bits(x), b) {
+    Some(i) => Some('n - 1 - i),
+    None()  => None(),
+  }
+}
+
+$[test]
+private function test_most_significant_bit() -> unit = {
+  assert(most_significant_bit(0x0, 0b1) == None());
+  assert(most_significant_bit(0x0, 0b0) == Some(3));
+  assert(most_significant_bit(0x1, 0b0) == Some(3));
+  assert(most_significant_bit(0x8, 0b0) == Some(2));
+  assert(most_significant_bit(0xe, 0b0) == Some(0));
+  assert(most_significant_bit(0x7, 0b0) == Some(3));
+}
+
+val least_significant_zero : forall 'n, 'n >= 0. (bits('n)) -> option(range(0, 'n - 1))
+function least_significant_zero(x) =
+  least_significant_bit(x, 0b0)
+
+val least_significant_one : forall 'n, 'n >= 0. (bits('n)) -> option(range(0, 'n - 1))
+function least_significant_one(x) =
+  least_significant_bit(x, 0b1)
+
+val most_significant_zero : forall 'n, 'n >= 0. (bits('n)) -> option(range(0, 'n - 1))
+function most_significant_zero(x) =
+  most_significant_bit(x, 0b0)
+
+val most_significant_one : forall 'n, 'n >= 0. (bits('n)) -> option(range(0, 'n - 1))
+function most_significant_one(x) =
+  most_significant_bit(x, 0b1)
