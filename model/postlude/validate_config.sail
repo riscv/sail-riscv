@@ -747,6 +747,16 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("The Shcounterenw extension is enabled but `hcounteren` is not writable (via `base.hcounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
     };
   };
+  if (config extensions.Shlcofideleg.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shlcofideleg extension is enabled but the H extension is disabled: supporting Shlcofideleg requires H.");
+    };
+    if not(config extensions.Sscofpmf.supported : bool) then {
+      valid = false;
+      print_endline("The Shlcofideleg extension is enabled but the Sscofpmf extension is disabled: supporting Shlcofideleg requires Sscofpmf.");
+    };
+  };
   // When Smcdeleg/Ssccfg are supported, `mcountinhibit` will be required.
   if (config base.mcountinhibit.supported : bool) then {
     let inhibitable_counters : bits(32) = config base.mcountinhibit.writable_bits;
