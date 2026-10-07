@@ -93,6 +93,43 @@ struct GlobalMisalignedExceptions = {
 // The handling of misaligned accesses before address translation.
 let plat_misaligned_access : GlobalMisalignedExceptions = config memory.misaligned.exceptions
 
+// Legal configurations for a CSR bit
+enum CSRBitConfig = {
+  CSRBit_Writable,
+  CSRBit_ReadOnlyZero,
+  CSRBit_ReadOnlyOne,
+}
+
+// Bits for features that are not enabled are always read-only zero.
+function legalize_csr_bit(c : CSRBitConfig, feature_enabled : bool, v : bits(1)) -> bits(1) =
+  match (feature_enabled, c) {
+    (false, _)                  => 0b0,
+    (true, CSRBit_ReadOnlyZero) => 0b0,
+    (true, CSRBit_ReadOnlyOne)  => 0b1,
+    (true, CSRBit_Writable)     => v,
+  }
+
+// Stateen
+let mstateen0_se0     : CSRBitConfig = config extensions.Stateen.mstateen0.SE0
+let mstateen0_envcfg  : CSRBitConfig = config extensions.Stateen.mstateen0.ENVCFG
+let mstateen0_context : CSRBitConfig = config extensions.Stateen.mstateen0.CONTEXT
+let mstateen0_p1p13   : CSRBitConfig = config extensions.Stateen.mstateen0.P1P13
+let mstateen0_srmcfg  : CSRBitConfig = config extensions.Stateen.mstateen0.SRMCFG
+let mstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.mstateen0.FCSR
+let mstateen0_c       : CSRBitConfig = config extensions.Stateen.mstateen0.C
+
+let mstateen1_se1     : CSRBitConfig = config extensions.Stateen.mstateen1.SE1
+let mstateen2_se2     : CSRBitConfig = config extensions.Stateen.mstateen2.SE2
+let mstateen3_se3     : CSRBitConfig = config extensions.Stateen.mstateen3.SE3
+
+let hstateen0_envcfg  : CSRBitConfig = config extensions.Stateen.hstateen0.ENVCFG
+let hstateen0_context : CSRBitConfig = config extensions.Stateen.hstateen0.CONTEXT
+let hstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.hstateen0.FCSR
+let hstateen0_c       : CSRBitConfig = config extensions.Stateen.hstateen0.C
+
+let sstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.sstateen0.FCSR
+let sstateen0_c       : CSRBitConfig = config extensions.Stateen.sstateen0.C
+
 // Legal values for FS and VS.  This is an enumeration to avoid lists.
 enum ExtContextPolicy = {
   ExtContext_Off,        // The extension is always off.
