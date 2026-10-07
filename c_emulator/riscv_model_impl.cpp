@@ -47,25 +47,37 @@ void ModelImpl::set_reservation_invalidate_on_same_hart_store(bool invalidate_on
   m_reservation_invalidate_on_same_hart_store = invalidate_on_same_hart_store;
 }
 
-unit ModelImpl::fetch_callback(sbits opcode) {
+unit ModelImpl::fetch_callback(sbits pc, sbits opcode) {
   for (auto c : m_callbacks) {
-    c->fetch_callback(*this, opcode);
+    c->fetch_callback(*this, pc, opcode);
   }
   return UNIT;
 }
 
-unit ModelImpl::mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_write_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_write_callback(*this, type, paddr, width, value);
+    c->mem_write_callback(*this, privilege, access, paddr, width, value);
   }
   if (m_reservation_invalidate_on_same_hart_store && match_reservation(paddr)) {
     cancel_reservation(UNIT);
   };
   return UNIT;
 }
-unit ModelImpl::mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_read_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_read_callback(*this, type, paddr, width, value);
+    c->mem_read_callback(*this, privilege, access, paddr, width, value);
   }
   return UNIT;
 }
@@ -196,13 +208,14 @@ unit ModelImpl::ptw_fail_callback(TranslationStage stage, int64_t level, PTW_Err
 }
 
 unit ModelImpl::address_translation_start_callback(
+  TranslationStage stage,
   Privilege privilege,
   sbits vaddr,
   MemoryAccessType access,
   int64_t width
 ) {
   for (auto c : m_callbacks) {
-    c->address_translation_start_callback(*this, privilege, vaddr, access, width);
+    c->address_translation_start_callback(*this, stage, privilege, vaddr, access, width);
   }
   return UNIT;
 }

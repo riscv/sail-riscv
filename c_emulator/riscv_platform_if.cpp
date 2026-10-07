@@ -8,12 +8,13 @@
 // A better solution is to allow passing in `hart::Model&` to `model_test()`.
 // See https://github.com/rems-project/sail/issues/1556
 
-unit PlatformInterface::fetch_callback([[maybe_unused]] sbits opcode) {
+unit PlatformInterface::fetch_callback([[maybe_unused]] sbits pc, [[maybe_unused]] sbits opcode) {
   return UNIT;
 }
 
 unit PlatformInterface::mem_write_callback(
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] hart::zPrivilege privilege,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -22,7 +23,8 @@ unit PlatformInterface::mem_write_callback(
 }
 
 unit PlatformInterface::mem_read_callback(
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] hart::zPrivilege privilege,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -132,6 +134,7 @@ unit PlatformInterface::ptw_fail_callback(
 }
 
 unit PlatformInterface::address_translation_start_callback(
+  [[maybe_unused]] hart::zTranslationStage stage,
   [[maybe_unused]] hart::zPrivilege privilege,
   [[maybe_unused]] sbits vaddr,
   [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,

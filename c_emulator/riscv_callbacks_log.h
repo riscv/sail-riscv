@@ -19,14 +19,29 @@ public:
   );
 
   // callbacks_if
-  void mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) override;
-  void mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) override;
+  void mem_write_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
+  void mem_read_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
+
   void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value) override;
   void freg_write_callback(ModelImpl &model, unsigned reg, sbits value) override;
   void csr_full_write_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value) override;
   void csr_full_read_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value) override;
   void vreg_write_callback(ModelImpl &model, unsigned reg, lbits value) override;
-  // Page table walk callback
+
   void ptw_start_callback(
     ModelImpl &model,
     ModelImpl::TranslationStage stage,
@@ -55,6 +70,24 @@ public:
     ModelImpl::PTW_Error error_type,
     sbits pte_addr
   ) override;
+
+  void address_translation_start_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    ModelImpl::Privilege privilege,
+    sbits vaddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
+  ) override;
+  void address_translated_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    sbits vaddr,
+    sbits paddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
+  ) override;
+
   void tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index) override;
   void tlb_flush_begin_callback(ModelImpl &model) override;
   void tlb_flush_callback(ModelImpl &model, uint64_t index) override;

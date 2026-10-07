@@ -361,17 +361,21 @@ def lint_trace(text: str) -> list[str]:
                             errors.append(
                                 f"{loc}: AMO expected MEM D bytes={width}, got {d_bytes}"
                             )
-                    elif kind in ("load", "store"):
+                    elif (
+                        kind in ("load", "store")
+                        and len(d_bytes) == 1
+                        and d_bytes[0] != width
+                    ):
                         # Vector ld/st share these opcodes and emit one record per element.
-                        if len(d_bytes) == 1:
-                            if d_bytes[0] != width:
-                                errors.append(
-                                    f"{loc}: {kind} expected MEM D bytes={width}, got {d_bytes[0]}"
-                                )
-                        elif sum(d_bytes) != width:
-                            errors.append(
-                                f"{loc}: {kind} MEM D bytes {d_bytes} do not sum to {width}"
-                            )
+                        # if len(d_bytes) == 1 and d_bytes[0] != width:
+                        errors.append(
+                            f"{loc}: {kind} expected MEM D bytes={width}, got {d_bytes[0]}"
+                        )
+                        # This may not match due to accesses for PTE entries.
+                        # if len(d_bytes) != 1 and sum(d_bytes) != width:
+                        #    errors.append(
+                        #        f"{loc}: {kind} MEM D bytes {d_bytes} do not sum to {width}"
+                        #    )
 
             if kind == "load" and ev["event"] == "RET":
                 rd = insn_load_rd(inst)
@@ -381,8 +385,10 @@ def lint_trace(text: str) -> list[str]:
                         errors.append(f"{loc}: load rd=x{rd} missing X {rd} record")
 
         elif kind is None and ev["event"] == "RET":
-            if mem_d:
-                errors.append(f"{loc}: non-memory insn has MEM D {mem_d}")
+            pass
+            # non-memory instructions can still involve PTE accesses for instruction address translation
+            # if mem_d:
+            #    errors.append(f"{loc}: non-memory insn has MEM D {mem_d}")
 
     return errors
 

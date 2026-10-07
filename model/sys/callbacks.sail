@@ -41,7 +41,7 @@ function ptw_fail_callback(_) = ()
 // privilege in the start callback and zero associated
 // `ptw_start_callback`s.
 
-val address_translation_start_callback = pure {cpp: "address_translation_start_callback"} : forall 'n, 0 < 'n <= max_mem_access . (Privilege, /* vaddr */ physaddrbits, /* access */ MemoryAccessType(mem_payload), /* width */ int('n)) -> unit
+val address_translation_start_callback = pure {cpp: "address_translation_start_callback"} : forall 'n, 0 < 'n <= max_mem_access . (TranslationStage, Privilege, /* vaddr */ physaddrbits, /* access */ MemoryAccessType(mem_payload), /* width */ int('n)) -> unit
 val address_translated_callback = pure {cpp: "address_translated_callback"} : forall 'n, 0 < 'n <= max_mem_access . (TranslationStage, /* vaddr */ physaddrbits, /* paddr */ physaddrbits, /* access */ MemoryAccessType(mem_payload), /* width */ int('n)) -> unit
 function address_translated_callback(_) = ()
 

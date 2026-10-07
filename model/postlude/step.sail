@@ -148,7 +148,7 @@ private function run_hart_active(step_no: nat) -> Step = {
     // non-error cases:
     F_RVC(h) => {
       sail_instr_announce(h);
-      fetch_callback(h);
+      fetch_callback(PC, h);
       let instbits : instbits = zero_extend(h);
       let fetched_instruction = ext_decode_compressed(h);
       if   get_config_print_instr()
@@ -180,7 +180,7 @@ private function run_hart_active(step_no: nat) -> Step = {
     },
     F_Base(w) => {
       sail_instr_announce(w);
-      fetch_callback(w);
+      fetch_callback(PC, w);
       let instbits : instbits = zero_extend(w);
       let fetched_instruction = ext_decode(w);
       if   get_config_print_instr()

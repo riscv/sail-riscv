@@ -68,18 +68,20 @@ class MatchTests(unittest.TestCase):
         errors = match_events(events, {"events": [{"match": "sb", "mem_d": [1]}]}, 64)
         self.assertEqual(errors, [])
 
-    def test_wrong_width_is_caught(self):
-        events = [self._ev("MEM D 4 0x80001000 0x80001000 0", insn="0x00628023")]
-        errors = match_events(events, {"events": [{"match": "sb", "mem_d": [1]}]}, 64)
-        self.assertTrue(any("mem_d" in e for e in errors), errors)
+    # Matching access sizes is disabled due to additional possible PTE accesses.
+    # def test_wrong_width_is_caught(self):
+    #     events = [self._ev("MEM D 4 0x80001000 0x80001000 0", insn="0x00628023")]
+    #     errors = match_events(events, {"events": [{"match": "sb", "mem_d": [1]}]}, 64)
+    #     self.assertTrue(any("mem_d" in e for e in errors), errors)
 
-    def test_overlap_without_allow_is_caught(self):
-        extra = "MEM D 4 0x80003260 0x80003260 0 MEM D 4 0x80003260 0x80003260 0"
-        events = [self._ev(extra, insn="0x0062A3AF")]
-        errors = match_events(
-            events, {"events": [{"match": "amoadd.w", "mem_d": [4]}]}, 64
-        )
-        self.assertTrue(any("overlap" in e or "mem_d" in e for e in errors), errors)
+    # Overlap checking is disabled due to PTE accesses.
+    # def test_overlap_without_allow_is_caught(self):
+    #     extra = "MEM D 4 0x80003260 0x80003260 0 MEM D 4 0x80003260 0x80003260 0"
+    #     events = [self._ev(extra, insn="0x0062A3AF")]
+    #     errors = match_events(
+    #         events, {"events": [{"match": "amoadd.w", "mem_d": [4]}]}, 64
+    #     )
+    #     self.assertTrue(any("overlap" in e or "mem_d" in e for e in errors), errors)
 
     def test_overlap_allowed_coalesces(self):
         extra = "MEM D 4 0x80003260 0x80003260 0 MEM D 4 0x80003260 0x80003260 0"

@@ -17,7 +17,7 @@ sys.path.insert(0, HERE)
 from match_rvvi_trace import match_text
 
 
-def run_sim(args, trace_path: str) -> subprocess.CompletedProcess:
+def run_sim(args, rvvi_path: str, trace_path: str) -> subprocess.CompletedProcess:
     cmd = [
         args.sim,
         "--config",
@@ -25,6 +25,10 @@ def run_sim(args, trace_path: str) -> subprocess.CompletedProcess:
         "--config-override",
         args.config_override,
         "--trace-rvvi-text",
+        "--rvvi-text-output",
+        rvvi_path,
+        "--trace",
+        "--trace-ptw",
         "--trace-output",
         trace_path,
         "--inst-limit",
@@ -61,15 +65,18 @@ def main() -> int:
     # When debugging failures, preserve the files in the tmp directory
     # using
     # with tempfile.TemporaryDirectory(delete=False) as tmp:
+    # but don't use delete=True since pyrefly doesn't like it.
     with tempfile.TemporaryDirectory() as tmp:
         first = os.path.join(tmp, "first.rvvi")
+        first_trace = os.path.join(tmp, "first.trace")
         second = os.path.join(tmp, "second.rvvi")
-        r1 = run_sim(args, first)
+        second_trace = os.path.join(tmp, "second.trace")
+        r1 = run_sim(args, first, first_trace)
         if r1.returncode != 0:
             print(f"FAIL: simulator exited {r1.returncode}", file=sys.stderr)
             print(r1.stderr, file=sys.stderr)
             return 1
-        r2 = run_sim(args, second)
+        r2 = run_sim(args, second, second_trace)
         if r2.returncode != 0:
             print(f"FAIL: second simulator run exited {r2.returncode}", file=sys.stderr)
             return 1

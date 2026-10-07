@@ -118,7 +118,6 @@ public:
   int64_t vlen() const;
   int64_t physaddrbits_len() const;
 
-
   Privilege cur_privilege() const;
   uint64_t mepc() const;
   uint64_t sepc() const;
@@ -159,9 +158,21 @@ private:
 
   // These functions are called by the Sail code.
 
-  unit fetch_callback(sbits opcode) override;
-  unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
-  unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
+  unit fetch_callback(sbits pc, sbits opcode) override;
+  unit mem_write_callback(
+    Privilege privilege,
+    MemoryAccessType access_type,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
+  unit mem_read_callback(
+    Privilege privilege,
+    MemoryAccessType access_type,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
   unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
   unit freg_write_callback(unsigned reg, sbits value) override;
@@ -192,6 +203,7 @@ private:
   unit ptw_fail_callback(TranslationStage stage, int64_t level, PTW_Error error_type, sbits pte_addr) override;
 
   unit address_translation_start_callback(
+    TranslationStage stage,
     Privilege privilege,
     sbits vaddr,
     MemoryAccessType access,

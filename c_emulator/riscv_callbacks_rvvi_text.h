@@ -15,22 +15,16 @@ public:
   rvvi_text_callbacks(FILE *trace_log);
 
   void post_step_callback(ModelImpl &model, bool is_waiting) override;
-  void fetch_callback(ModelImpl &model, sbits opcode) override;
+  void fetch_callback(ModelImpl &model, sbits pc, sbits opcode) override;
   void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value) override;
   void freg_write_callback(ModelImpl &model, unsigned reg, sbits value) override;
   void csr_full_write_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value) override;
   void vreg_write_callback(ModelImpl &model, unsigned reg, lbits value) override;
   void trap_callback(ModelImpl &model, bool is_interrupt, fbits cause) override;
   void instret_callback(ModelImpl &model) override;
-  void ptw_step_callback(
-    ModelImpl &model,
-    ModelImpl::TranslationStage stage,
-    int64_t level,
-    sbits pte_addr,
-    uint64_t pte
-  ) override;
   void address_translation_start_callback(
     ModelImpl &model,
+    ModelImpl::TranslationStage stage,
     ModelImpl::Privilege privilege,
     sbits vaddr,
     ModelImpl::MemoryAccessType access,
@@ -44,6 +38,29 @@ public:
     ModelImpl::MemoryAccessType access,
     int64_t width
   ) override;
+  void ptw_step_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    int64_t level,
+    sbits pte_addr,
+    uint64_t pte
+  ) override;
+  void mem_write_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
+  void mem_read_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
 
 private:
   struct RegChange {
@@ -52,47 +69,54 @@ private:
     std::string value;
   };
 
-  struct MemAccess {
-    bool is_fetch = false;
-    int64_t width = 0;
-    uint64_t vaddr = 0;
-    uint64_t paddr = 0;
-    bool has_pte = false;
-    uint64_t pte = 0;
-    int64_t page_level = -1;
-  };
-
   struct PTWStep {
-    ModelImpl::TranslationStage stage;
     int64_t level;
-    uint64_t pte_addr;
+    sbits pte_addr;
     uint64_t pte;
   };
-
-  struct MemoryAccessTrace {
-    MemoryAccessTrace(ModelImpl::Privilege p, uint64_t vaddr, ModelImpl::MemoryAccessType a, int64_t w) :
-        privilege(p),
-        virt_addr(vaddr),
-        access_type(a),
-        width(w) {};
-
-    bool is_eligible(ModelImpl &model) const;
+  struct MemoryAccess {
+    ModelImpl::MemoryAccessType access_type;
+    sbits paddr;
+    sbits vaddr;
+    int64_t width;
+    std::optional<PTWStep> pte;
+    std::optional<sbits> gpaddr;
+    std::optional<PTWStep> gpte;
 
     std::string print(ModelImpl &model) const;
+  };
 
-    ModelImpl::Privilege privilege;
-    uint64_t virt_addr = 0;
-    ModelImpl::MemoryAccessType access_type;
-    int64_t width = 0;
-    std::optional<uint64_t> guest_phys_addr;
-    std::optional<uint64_t> phys_addr;
-    std::vector<PTWStep> ptw_steps;
+  struct TranslationState {
+    sbits vaddr = {0, 0};
+    int64_t width;
+    std::optional<sbits> paddr;
+    std::optional<PTWStep> last_ptw_step;
+
+    void reset() {
+      vaddr = {0, 0};
+      width = 0;
+      paddr.reset();
+      last_ptw_step.reset();
+    }
+  };
+
+  struct VSTranslationState {
+    TranslationState vs_state;
+    // A VS-stage translation may involve multiple G-stage translations.
+    // This records the last one.
+    std::optional<TranslationState> g_state;
   };
 
   void emit_header(ModelImpl &model);
   void emit_instruction(ModelImpl &model);
   void reset_instruction_buffer();
   void record_reg(char kind, uint64_t index, std::string value);
+  void record_mem_access(
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width
+  );
 
   FILE *m_trace_log;
   bool m_header_emitted = false;
@@ -107,8 +131,9 @@ private:
   uint64_t m_event_mode = 3;
   unsigned m_event_virt = 0;
   std::vector<RegChange> m_reg_changes;
-  std::vector<MemAccess> m_mem_accesses;
 
-  std::vector<std::unique_ptr<MemoryAccessTrace>> m_mem_traces;
-  std::unique_ptr<MemoryAccessTrace> m_cur_mem_trace;
+  // memory accesses
+  std::vector<MemoryAccess> m_mem_accesses;
+  std::optional<TranslationState> m_sstage_translation;
+  std::optional<VSTranslationState> m_vsstage_translation;
 };

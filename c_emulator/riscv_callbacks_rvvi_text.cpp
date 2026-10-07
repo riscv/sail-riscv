@@ -25,6 +25,10 @@ std::string hex_value_lbits(const lbits &value) {
   return str;
 }
 
+bool operator==(const sbits &lhs, const sbits &rhs) {
+  return lhs.len == rhs.len && lhs.bits == rhs.bits;
+}
+
 char page_type_letter(int64_t level) {
   static std::array<char, 5> letters{'K', 'M', 'G', 'T', 'P'};
   if (level >= 0 && level < letters.size()) {
@@ -33,8 +37,14 @@ char page_type_letter(int64_t level) {
   return '?';
 }
 
-bool is_GStage(ModelImpl::TranslationStage stage) {
-  return stage == hart::zG_Stage;
+void buf_append_sbits(std::ostringstream &buf, const sbits &sbits) {
+  const int nibbles = static_cast<int>((sbits.len + 3) / 4);
+  buf << " 0x" << std::hex << std::setw(nibbles) << std::setfill('0') << sbits.bits;
+}
+
+void buf_append_uint64(std::ostringstream &buf, uint64_t bits, int64_t len) {
+  const int nibbles = static_cast<int>((len + 3) / 4);
+  buf << " 0x" << std::hex << std::setw(nibbles) << std::setfill('0') << bits;
 }
 
 } // namespace
@@ -48,9 +58,10 @@ void rvvi_text_callbacks::reset_instruction_buffer() {
   m_have_inst = false;
   m_pending_trap = false;
   m_reg_changes.clear();
+
   m_mem_accesses.clear();
-  m_mem_traces.clear();
-  m_cur_mem_trace.reset();
+  m_sstage_translation.reset();
+  m_vsstage_translation.reset();
 }
 
 void rvvi_text_callbacks::record_reg(char kind, uint64_t index, std::string value) {
@@ -59,7 +70,7 @@ void rvvi_text_callbacks::record_reg(char kind, uint64_t index, std::string valu
   }
 }
 
-void rvvi_text_callbacks::fetch_callback(ModelImpl &model, sbits opcode) {
+void rvvi_text_callbacks::fetch_callback(ModelImpl &model, sbits pc, sbits opcode) {
   emit_header(model);
   m_first_fetch_seen = true;
   m_event_mode = model.privilege_as_bits(model.cur_privilege());
@@ -68,7 +79,7 @@ void rvvi_text_callbacks::fetch_callback(ModelImpl &model, sbits opcode) {
   if (m_have_inst) {
     reset_instruction_buffer();
   }
-  m_pending_pc = model.pc();
+  m_pending_pc = pc.bits;
   m_pending_inst = opcode.bits;
   m_have_inst = true;
 }
@@ -78,9 +89,7 @@ void rvvi_text_callbacks::xreg_full_write_callback(ModelImpl &, const_sail_strin
 }
 
 void rvvi_text_callbacks::freg_write_callback(ModelImpl &model, unsigned reg, sbits value) {
-  if (model.has_float_registers()) {
-    record_reg('F', reg, hex_value(value));
-  }
+  record_reg('F', reg, hex_value(value));
 }
 
 void rvvi_text_callbacks::csr_full_write_callback(ModelImpl &, const_sail_string, unsigned reg, sbits value) {
@@ -88,9 +97,7 @@ void rvvi_text_callbacks::csr_full_write_callback(ModelImpl &, const_sail_string
 }
 
 void rvvi_text_callbacks::vreg_write_callback(ModelImpl &model, unsigned reg, lbits value) {
-  if (model.has_vector_registers()) {
-    record_reg('V', reg, hex_value_lbits(value));
-  }
+  record_reg('V', reg, hex_value_lbits(value));
 }
 
 void rvvi_text_callbacks::ptw_step_callback(
@@ -100,21 +107,55 @@ void rvvi_text_callbacks::ptw_step_callback(
   sbits pte_addr,
   uint64_t pte
 ) {
-  assert(m_cur_mem_trace);
-  m_cur_mem_trace->ptw_steps.push_back({stage, level, pte_addr.bits, pte});
+  switch (stage) {
+  case hart::zS_Stage: {
+    assert(m_sstage_translation.has_value());
+    auto &translation = m_sstage_translation.value();
+    translation.last_ptw_step = {level, pte_addr, pte};
+    break;
+  };
+  case hart::zVS_Stage: {
+    assert(m_vsstage_translation.has_value());
+    auto &translation = m_vsstage_translation.value();
+    translation.vs_state.last_ptw_step = {level, pte_addr, pte};
+    break;
+  };
+  case hart::zG_Stage: {
+    assert(m_vsstage_translation.has_value());
+    auto &translation = m_vsstage_translation.value();
+    assert(translation.g_state.has_value());
+    auto &g_state = translation.g_state.value();
+    g_state.last_ptw_step = {level, pte_addr, pte};
+    break;
+  };
+  }
 }
 
 void rvvi_text_callbacks::address_translation_start_callback(
   ModelImpl &,
+  ModelImpl::TranslationStage stage,
   ModelImpl::Privilege privilege,
   sbits vaddr,
   ModelImpl::MemoryAccessType access,
   int64_t width
 ) {
-  if (m_cur_mem_trace) {
-    m_mem_traces.push_back(std::move(m_cur_mem_trace));
+  switch (stage) {
+  case hart::zS_Stage: {
+    m_sstage_translation = {vaddr, width, std::nullopt, std::nullopt};
+    break;
+  };
+  case hart::zVS_Stage: {
+    TranslationState vs_state = {vaddr, width, std::nullopt, std::nullopt};
+    m_vsstage_translation = {vs_state, std::nullopt};
+    break;
+  };
+  case hart::zG_Stage: {
+    assert(m_vsstage_translation.has_value());
+    auto &translation = m_vsstage_translation.value();
+    translation.g_state = {vaddr, width, std::nullopt, std::nullopt};
+    break;
+  };
   }
-  m_cur_mem_trace = std::make_unique<MemoryAccessTrace>(privilege, vaddr.bits, access, width);
 }
 
 void rvvi_text_callbacks::address_translated_callback(
@@ -125,28 +166,116 @@ void rvvi_text_callbacks::address_translated_callback(
   ModelImpl::MemoryAccessType,
   int64_t width
 ) {
-  assert(m_cur_mem_trace);
-  assert(m_cur_mem_trace->width == width);
-
   switch (stage) {
-  case hart::zS_Stage:
-    assert(m_cur_mem_trace->virt_addr == vaddr.bits);
-    m_cur_mem_trace->phys_addr = paddr.bits;
-    // End this trace.
-    m_mem_traces.push_back(std::move(m_cur_mem_trace));
+  case hart::zS_Stage: {
+    assert(m_sstage_translation.has_value());
+    auto &translation = m_sstage_translation.value();
+    assert(vaddr == translation.vaddr);
+    assert(width == translation.width);
+    translation.paddr = paddr;
     break;
-  case hart::zVS_Stage:
-    assert(m_cur_mem_trace->virt_addr == vaddr.bits);
-    m_cur_mem_trace->guest_phys_addr = paddr.bits;
+  };
+  case hart::zVS_Stage: {
+    assert(m_vsstage_translation.has_value());
+    auto &translation = m_vsstage_translation.value();
+    assert(vaddr == translation.vs_state.vaddr);
+    assert(width == translation.vs_state.width);
+    translation.vs_state.paddr = paddr;
     break;
-  case hart::zG_Stage:
-    assert(m_cur_mem_trace->guest_phys_addr.has_value());
-    assert(m_cur_mem_trace->guest_phys_addr.value() == vaddr.bits);
-    m_cur_mem_trace->phys_addr = paddr.bits;
-    // End this trace.
-    m_mem_traces.push_back(std::move(m_cur_mem_trace));
+  };
+  case hart::zG_Stage: {
+    assert(m_vsstage_translation.has_value());
+    auto &translation = m_vsstage_translation.value();
+    assert(translation.g_state.has_value());
+    auto &g_state = translation.g_state.value();
+    g_state.paddr = paddr;
     break;
+  };
   }
+}
+
+void rvvi_text_callbacks::record_mem_access(
+  ModelImpl::Privilege privilege,
+  ModelImpl::MemoryAccessType access,
+  sbits paddr,
+  int64_t width
+) {
+  // M-mode Bare address translations are reported as S_Stage.
+  auto use_vsstage = privilege == hart::zVirtualUser || privilege == hart::zVirtualSupervisor;
+  if (use_vsstage) {
+    if (m_vsstage_translation.has_value()) {
+      const auto &translation = m_vsstage_translation.value();
+      // A G-stage translation should always complete before a memory
+      // access, though a VS-stage translation may still be in progress.
+      assert(translation.g_state.has_value());
+      const auto &g_state = translation.g_state.value();
+      assert(g_state.paddr.has_value());
+      std::optional<sbits> gpaddr = std::nullopt;
+      std::optional<PTWStep> gpte = std::nullopt;
+      std::optional<PTWStep> pte = std::nullopt;
+      // If the VS-Stage translation is incomplete (e.g. this is an
+      // access for an intermediate PTE), use the paddr as vaddr.
+      auto vaddr = paddr;
+      if (paddr == g_state.paddr.value()) {
+        // The access is using the same paddr as the output of the
+        // G-stage translation, so record the access as using the
+        // G-stage input as the guest physical address and its last
+        // G-stage pte.
+        gpaddr = g_state.vaddr;
+        gpte = g_state.last_ptw_step;
+      }
+      if (translation.vs_state.paddr.has_value() && paddr == translation.vs_state.paddr.value()) {
+        // The VS-stage translation has completed and the access is
+        // using the same paddr as the output of the VS-stage
+        // translation, so record the access as using the VS-stage
+        // input as the virtual address and its last pte.
+        pte = translation.vs_state.last_ptw_step;
+        vaddr = translation.vs_state.vaddr;
+      }
+      MemoryAccess mem_access{access, paddr, translation.vs_state.vaddr, width, pte, gpaddr, gpte};
+      m_mem_accesses.push_back(std::move(mem_access));
+      return;
+    }
+  } else if (m_sstage_translation.has_value()) {
+    const auto &translation = m_sstage_translation.value();
+    const auto &opt_paddr = translation.paddr;
+    if (opt_paddr.has_value() && paddr == opt_paddr.value()) {
+      // The access is using the same paddr as the output of the
+      // S-stage translation.  Record the access as using the input
+      // vaddr, and copy the last_pte used in the translation.
+      auto pte = translation.last_ptw_step;
+      MemoryAccess mem_access{access, paddr, translation.vaddr, width, pte, std::nullopt, std::nullopt};
+      m_mem_accesses.push_back(std::move(mem_access));
+      return;
+    }
+  }
+
+  // Default to using vaddr = paddr when paddr is not known to be a
+  // translated address.  This can happen for PTE accesses that occur
+  // before the translation completes.
+  MemoryAccess mem_access{access, paddr, paddr, width, std::nullopt, std::nullopt, std::nullopt};
+  m_mem_accesses.push_back(std::move(mem_access));
+}
+void rvvi_text_callbacks::mem_write_callback(
+  ModelImpl &,
+  ModelImpl::Privilege privilege,
+  ModelImpl::MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits
+) {
+  record_mem_access(privilege, access, paddr, width);
+}
+
+void rvvi_text_callbacks::mem_read_callback(
+  ModelImpl &,
+  ModelImpl::Privilege privilege,
+  ModelImpl::MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits
+) {
+  record_mem_access(privilege, access, paddr, width);
 }
 
 void rvvi_text_callbacks::instret_callback(ModelImpl &model) {
@@ -163,10 +292,6 @@ void rvvi_text_callbacks::trap_callback(ModelImpl &model, bool, fbits) {
     m_have_inst = true;
   }
   m_pending_trap = true;
-
-  if (m_cur_mem_trace) {
-    m_mem_traces.push_back(std::move(m_cur_mem_trace));
-  }
 }
 
 void rvvi_text_callbacks::post_step_callback(ModelImpl &model, bool) {
@@ -175,6 +300,42 @@ void rvvi_text_callbacks::post_step_callback(ModelImpl &model, bool) {
     emit_instruction(model);
     reset_instruction_buffer();
   }
+}
+
+std::string rvvi_text_callbacks::MemoryAccess::print(ModelImpl &model) const {
+  std::ostringstream buf;
+  // The python linter/checker scripts expect uppercase hex.  This
+  // should not be strictly necessary.
+  buf << std::uppercase;
+  buf << "MEM ";
+  // "bus"
+  buf << (model.is_fetch(access_type) ? "I " : "D ");
+  // "bytes"
+  buf << std::dec << width;
+  // "vaddr"
+  buf_append_sbits(buf, vaddr);
+  // "paddr"
+  buf_append_sbits(buf, paddr);
+  // "count"
+  int count = (pte.has_value() ? 2 : 0) + (gpte.has_value() ? 2 : 0) + (gpaddr.has_value() ? 1 : 0);
+  buf << " " << std::dec << count;
+  if (pte.has_value()) {
+    const auto &step = pte.value();
+    buf << " PTE";
+    buf_append_uint64(buf, step.pte, model.xlen());
+    buf << " PT " << page_type_letter(step.level);
+  }
+  if (gpte.has_value()) {
+    const auto &step = gpte.value();
+    buf << " GPTE";
+    buf_append_uint64(buf, step.pte, model.xlen());
+    buf << " GPT " << page_type_letter(step.level);
+  }
+  if (gpaddr.has_value()) {
+    buf << " GPADDR";
+    buf_append_sbits(buf, gpaddr.value());
+  }
+  return buf.str();
 }
 
 void rvvi_text_callbacks::emit_header(ModelImpl &model) {
@@ -191,54 +352,6 @@ void rvvi_text_callbacks::emit_header(ModelImpl &model) {
     static_cast<unsigned long long>(model.has_float_registers() ? model.flen() : 0),
     static_cast<unsigned long long>(model.has_vector_registers() ? model.vlen() : 0)
   );
-}
-
-bool rvvi_text_callbacks::MemoryAccessTrace::is_eligible(ModelImpl &model) const {
-  // For now, print only complete traces.
-  if (!phys_addr.has_value()) {
-    return false;
-  }
-  // If a store-conditional did not match its reservation, it does not
-  // access memory.
-  if (model.is_store_conditional(access_type) && !model.last_reservation_match()) {
-    return false;
-  }
-  return true;
-}
-
-std::string rvvi_text_callbacks::MemoryAccessTrace::print(ModelImpl &model) const {
-  // For now, print only complete traces.
-  assert(phys_addr.has_value());
-
-  std::ostringstream buf;
-  // The python linter/checker scripts expect uppercase hex.  This should not
-  // be strictly necessary.
-  buf << std::uppercase;
-  buf << "MEM ";
-  // "bus"
-  buf << (model.is_fetch(access_type) ? "I " : "D ");
-  // "bytes"
-  buf << std::dec << width;
-  // "vaddr"
-  buf << " 0x" << std::hex << virt_addr;
-  // "paddr"
-  buf << " 0x" << std::hex << phys_addr.value();
-  // "count"
-  auto count = (ptw_steps.size() * 2) + (guest_phys_addr.has_value() ? 1 : 0);
-  buf << " " << std::dec << count;
-  for (const auto &step : ptw_steps) {
-    bool is_gstage = is_GStage(step.stage);
-    // pte
-    buf << (is_gstage ? " GPTE " : " PTE ");
-    buf << "0x" << std::hex << step.pte;
-    // pt
-    buf << (is_gstage ? " GPT " : " PT ");
-    buf << page_type_letter(step.level);
-  }
-  if (guest_phys_addr.has_value()) {
-    buf << " GPADDR 0x" << std::hex << guest_phys_addr.value();
-  }
-  return buf.str();
 }
 
 void rvvi_text_callbacks::emit_instruction(ModelImpl &model) {
@@ -271,11 +384,9 @@ void rvvi_text_callbacks::emit_instruction(ModelImpl &model) {
     }
   }
 
-  for (const auto &mem : m_mem_traces) {
-    if (mem->is_eligible(model)) {
-      std::string mem_record = mem->print(model);
-      fprintf(m_trace_log, " %s", mem_record.c_str());
-    }
+  for (const auto &mem_access : m_mem_accesses) {
+    std::string mem_record = mem_access.print(model);
+    fprintf(m_trace_log, " %s", mem_record.c_str());
   }
 
   fprintf(m_trace_log, " MODE 0x%llX", static_cast<unsigned long long>(m_event_mode));
