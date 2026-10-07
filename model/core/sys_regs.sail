@@ -116,6 +116,9 @@ let sys_samo_guest_page_fault_writes_tinst : bool = config extensions.H.transfor
 // written, which validate_config() checks.
 let sys_guest_page_fault_writes_htval : bool = config extensions.H.guest_page_fault_writes_htval
 
+// Whether an implicit access to a VS-stage PTE sets the D bit of a writable G-stage PTE
+let sys_implicit_vs_pte_access_sets_gstage_d : bool = config extensions.H.implicit_vs_pte_access_sets_gstage_d
+
 // Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored.
 let sys_writable_hpm_counters : bits(32) = config base.writable_hpm_counters
 

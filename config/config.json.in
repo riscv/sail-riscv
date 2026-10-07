@@ -703,6 +703,8 @@
       "mutable_misa": true,
       // GEILEN, the number of guest external interrupts. The maximum is XLEN-1.
       "geilen": @CONFIG__H__GEILEN@,
+      // Whether an implicit access to a VS-stage PTE sets the D bit of a writable G-stage PTE
+      "implicit_vs_pte_access_sets_gstage_d": false,
       // Whether a trap into M or HS mode caused by the specified exception
       // writes the transformed trapping instruction to `mtinst`/`htinst`.
       // This applies to integer and floating-point loads and stores
