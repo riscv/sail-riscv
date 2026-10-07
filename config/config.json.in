@@ -1147,8 +1147,32 @@
       "Ssstateen": {
         "supported": true
       },
-      "C_readonly_zero": true,
-      "SE0_readonly_zero": false
+      // Each stateen bit is one of Stateen_Writable,
+      // Stateen_ReadOnlyZero or Stateen_ReadOnlyOne.
+      // Bits for features the model does not implement stay
+      // read-only zero. However bits that depend on misa (ENVCFG
+      // on misa.S, P1P13 on misa.H) also read as zero while that
+      // extension is disabled at run time.
+      "mstateen0": {
+        "SE0": "Stateen_Writable",
+        "ENVCFG": "Stateen_Writable",
+        "CONTEXT": "Stateen_Writable",
+        "P1P13": "Stateen_Writable",
+        "SRMCFG": "Stateen_Writable",
+        "FCSR": "Stateen_Writable",
+        "C": "Stateen_ReadOnlyZero"
+      },
+      // hstateen0.SE0 is always writable.
+      "hstateen0": {
+        "ENVCFG": "Stateen_Writable",
+        "CONTEXT": "Stateen_Writable",
+        "FCSR": "Stateen_Writable",
+        "C": "Stateen_ReadOnlyZero"
+      },
+      "sstateen0": {
+        "FCSR": "Stateen_Writable",
+        "C": "Stateen_ReadOnlyZero"
+      }
     },
     "Ssqosid": {
       "supported": true,

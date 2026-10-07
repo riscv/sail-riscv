@@ -1,5 +1,12 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - Each bit of `mstateen0`, `hstateen0` and `sstateen0` can now be
+    configured as writable, read-only zero or read-only one, see
+    `mstateen0`, `hstateen0` and `sstateen0` (under `extensions.Stateen`).
+    `C_readonly_zero` and `SE0_readonly_zero` have been removed as part
+    of this change.
+
 # Release notes for version 0.15
 
 The highlights of this release are the addition of the Double Trap

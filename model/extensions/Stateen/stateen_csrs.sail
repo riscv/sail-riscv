@@ -24,11 +24,11 @@ function clause is_CSR_accessible(0x31D, _, _) = is_mstateen_accessible() & (xle
 function clause is_CSR_accessible(0x31E, _, _) = is_mstateen_accessible() & (xlen == 32)
 function clause is_CSR_accessible(0x31F, _, _) = is_mstateen_accessible() & (xlen == 32)
 
-function clause read_CSR(0x30C) = mstateen0.bits[xlen - 1 .. 0]
+function clause read_CSR(0x30C) = read_mstateen0().bits[xlen - 1 .. 0]
 function clause read_CSR(0x30D) = mstateen1.bits[xlen - 1 .. 0]
 function clause read_CSR(0x30E) = mstateen2.bits[xlen - 1 .. 0]
 function clause read_CSR(0x30F) = mstateen3.bits[xlen - 1 .. 0]
-function clause read_CSR(0x31C if xlen == 32) = mstateen0.bits[63 .. 32]
+function clause read_CSR(0x31C if xlen == 32) = read_mstateen0().bits[63 .. 32]
 function clause read_CSR(0x31D if xlen == 32) = mstateen1.bits[63 .. 32]
 function clause read_CSR(0x31E if xlen == 32) = mstateen2.bits[63 .. 32]
 function clause read_CSR(0x31F if xlen == 32) = mstateen3.bits[63 .. 32]
