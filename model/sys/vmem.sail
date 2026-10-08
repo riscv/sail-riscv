@@ -103,8 +103,7 @@ private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . 
   match update_PTE_Bits(pte, access, stage) {
     None()    => Ok(None()),
     Some(pte) => // The PTE has new A/D bits.
-                if hw_updates_enabled(stage)
-                 then {
+                 if hw_updates_pte(stage) then {
                    // Translate PTE address if performing a VS-stage access
                    let write_paddr : physaddr = match translate_PTE_addr(bits_of(pteAddr), Store(PageTableEntry), stage, ext_ptw) {
                      Ok(pa, _, _) => pa,
