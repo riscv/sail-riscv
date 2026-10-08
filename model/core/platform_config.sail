@@ -93,6 +93,22 @@ struct GlobalMisalignedExceptions = {
 // The handling of misaligned accesses before address translation.
 let plat_misaligned_access : GlobalMisalignedExceptions = config memory.misaligned.exceptions
 
+// Legal configurations for a CSR bit
+enum CSRBitConfig = {
+  CSRBit_Writable,
+  CSRBit_ReadOnlyZero,
+  CSRBit_ReadOnlyOne,
+}
+
+// Bits for features that are not enabled are always read-only zero.
+function legalize_csr_bit(c : CSRBitConfig, feature_enabled : bool, v : bits(1)) -> bits(1) =
+  match (feature_enabled, c) {
+    (false, _)                  => 0b0,
+    (true, CSRBit_ReadOnlyZero) => 0b0,
+    (true, CSRBit_ReadOnlyOne)  => 0b1,
+    (true, CSRBit_Writable)     => v,
+  }
+
 // Legal values for FS and VS.  This is an enumeration to avoid lists.
 enum ExtContextPolicy = {
   ExtContext_Off,        // The extension is always off.

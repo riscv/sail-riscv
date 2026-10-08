@@ -2,8 +2,9 @@
 
 - Updates to the [configuration file](../config/config.json.in):
   - Each bit of `mstateen0`, `hstateen0` and `sstateen0` can now be
-    configured as writable, read-only zero or read-only one, see
-    `mstateen0`, `hstateen0` and `sstateen0` (under `extensions.Stateen`).
+    configured as writable, read-only zero or read-only one (`CSRBit_Writable`,
+    `CSRBit_ReadOnlyZero` or `CSRBit_ReadOnlyOne`), see `mstateen0`,
+    `hstateen0` and `sstateen0` (under `extensions.Stateen`).
     `C_readonly_zero` and `SE0_readonly_zero` have been removed as part
     of this change.
 

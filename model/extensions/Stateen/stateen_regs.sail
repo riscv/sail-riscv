@@ -27,23 +27,21 @@ mapping stateen_bit_index : stateen_bit <-> range(0, 63) = {
   STATEEN_FCSR    <-> 1,
 }
 
-enum StateenBitConfig = {Stateen_Writable, Stateen_ReadOnlyZero, Stateen_ReadOnlyOne}
+let mstateen0_se0     : CSRBitConfig = config extensions.Stateen.mstateen0.SE0
+let mstateen0_envcfg  : CSRBitConfig = config extensions.Stateen.mstateen0.ENVCFG
+let mstateen0_context : CSRBitConfig = config extensions.Stateen.mstateen0.CONTEXT
+let mstateen0_p1p13   : CSRBitConfig = config extensions.Stateen.mstateen0.P1P13
+let mstateen0_srmcfg  : CSRBitConfig = config extensions.Stateen.mstateen0.SRMCFG
+let mstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.mstateen0.FCSR
+let mstateen0_c       : CSRBitConfig = config extensions.Stateen.mstateen0.C
 
-let mstateen0_se0     : StateenBitConfig = config extensions.Stateen.mstateen0.SE0
-let mstateen0_envcfg  : StateenBitConfig = config extensions.Stateen.mstateen0.ENVCFG
-let mstateen0_context : StateenBitConfig = config extensions.Stateen.mstateen0.CONTEXT
-let mstateen0_p1p13   : StateenBitConfig = config extensions.Stateen.mstateen0.P1P13
-let mstateen0_srmcfg  : StateenBitConfig = config extensions.Stateen.mstateen0.SRMCFG
-let mstateen0_fcsr    : StateenBitConfig = config extensions.Stateen.mstateen0.FCSR
-let mstateen0_c       : StateenBitConfig = config extensions.Stateen.mstateen0.C
+let hstateen0_envcfg  : CSRBitConfig = config extensions.Stateen.hstateen0.ENVCFG
+let hstateen0_context : CSRBitConfig = config extensions.Stateen.hstateen0.CONTEXT
+let hstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.hstateen0.FCSR
+let hstateen0_c       : CSRBitConfig = config extensions.Stateen.hstateen0.C
 
-let hstateen0_envcfg  : StateenBitConfig = config extensions.Stateen.hstateen0.ENVCFG
-let hstateen0_context : StateenBitConfig = config extensions.Stateen.hstateen0.CONTEXT
-let hstateen0_fcsr    : StateenBitConfig = config extensions.Stateen.hstateen0.FCSR
-let hstateen0_c       : StateenBitConfig = config extensions.Stateen.hstateen0.C
-
-let sstateen0_fcsr    : StateenBitConfig = config extensions.Stateen.sstateen0.FCSR
-let sstateen0_c       : StateenBitConfig = config extensions.Stateen.sstateen0.C
+let sstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.sstateen0.FCSR
+let sstateen0_c       : CSRBitConfig = config extensions.Stateen.sstateen0.C
 
 bitfield Mstateen0 : bits(64) = {
   SE0     : 63,
@@ -71,25 +69,16 @@ register mstateen1 : Mstateen1 = Mk_Mstateen1(zeros())
 register mstateen2 : Mstateen2 = Mk_Mstateen2(zeros())
 register mstateen3 : Mstateen3 = Mk_Mstateen3(zeros())
 
-// Bits for features that are not enabled are always read-only zero.
-function legalize_stateen_bit(c : StateenBitConfig, feature_enabled : bool, v : bits(1)) -> bits(1) =
-  match (feature_enabled, c) {
-    (false, _)                   => 0b0,
-    (true, Stateen_ReadOnlyZero) => 0b0,
-    (true, Stateen_ReadOnlyOne)  => 0b1,
-    (true, Stateen_Writable)     => v,
-  }
-
 function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
   let v = Mk_Mstateen0(v);
   [m with
-    SE0     = legalize_stateen_bit(mstateen0_se0, true, v[SE0]),
-    ENVCFG  = legalize_stateen_bit(mstateen0_envcfg, currentlyEnabled(Ext_S), v[ENVCFG]),
-    CONTEXT = legalize_stateen_bit(mstateen0_context, currentlyEnabled(Ext_Sdtrig) & (sdtrig_has_scontext | sdtrig_has_hcontext), v[CONTEXT]),
-    P1P13   = legalize_stateen_bit(mstateen0_p1p13, delegh_csrs_are_defined & currentlyEnabled(Ext_H) & xlen == 32, v[P1P13]),
-    SRMCFG  = legalize_stateen_bit(mstateen0_srmcfg, currentlyEnabled(Ext_Ssqosid), v[SRMCFG]),
-    FCSR    = legalize_stateen_bit(mstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
-    C       = legalize_stateen_bit(mstateen0_c, true, v[C]),
+    SE0     = legalize_csr_bit(mstateen0_se0, true, v[SE0]),
+    ENVCFG  = legalize_csr_bit(mstateen0_envcfg, currentlyEnabled(Ext_S), v[ENVCFG]),
+    CONTEXT = legalize_csr_bit(mstateen0_context, currentlyEnabled(Ext_Sdtrig) & (sdtrig_has_scontext | sdtrig_has_hcontext), v[CONTEXT]),
+    P1P13   = legalize_csr_bit(mstateen0_p1p13, delegh_csrs_are_defined & currentlyEnabled(Ext_H) & xlen == 32, v[P1P13]),
+    SRMCFG  = legalize_csr_bit(mstateen0_srmcfg, currentlyEnabled(Ext_Ssqosid), v[SRMCFG]),
+    FCSR    = legalize_csr_bit(mstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
+    C       = legalize_csr_bit(mstateen0_c, true, v[C]),
   ];
 }
 
@@ -153,10 +142,10 @@ function legalize_hstateen0(h : Hstateen0, v : bits(64)) -> Hstateen0 = {
   let v = Mk_Hstateen0(v & get_hstateen_mask(0));
   [h with
     SE0     = v[SE0], // bit 63 of hstateen is always writable
-    ENVCFG  = legalize_stateen_bit(hstateen0_envcfg, currentlyEnabled(Ext_S), v[ENVCFG]),
-    CONTEXT = legalize_stateen_bit(hstateen0_context, currentlyEnabled(Ext_Sdtrig) & sdtrig_has_scontext, v[CONTEXT]),
-    FCSR    = legalize_stateen_bit(hstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
-    C       = legalize_stateen_bit(hstateen0_c, true, v[C]),
+    ENVCFG  = legalize_csr_bit(hstateen0_envcfg, currentlyEnabled(Ext_S), v[ENVCFG]),
+    CONTEXT = legalize_csr_bit(hstateen0_context, currentlyEnabled(Ext_Sdtrig) & sdtrig_has_scontext, v[CONTEXT]),
+    FCSR    = legalize_csr_bit(hstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
+    C       = legalize_csr_bit(hstateen0_c, true, v[C]),
   ];
 }
 
@@ -206,8 +195,8 @@ function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
   let v = Mk_Sstateen0(v);
   let mask = get_sstateen_mask(0);
   let legalized = [s with
-    FCSR = legalize_stateen_bit(sstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
-    C    = legalize_stateen_bit(sstateen0_c, true, v[C]),
+    FCSR = legalize_csr_bit(sstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
+    C    = legalize_csr_bit(sstateen0_c, true, v[C]),
   ];
   Mk_Sstateen0(legalized.bits & mask[31..0])
 }

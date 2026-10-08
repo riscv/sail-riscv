@@ -977,27 +977,27 @@ private function check_extension_param_constraints() -> bool = {
 private function check_stateen_config() -> bool = {
   if not(config extensions.Stateen.Smstateen.supported : bool) & not(config extensions.Stateen.Ssstateen.supported : bool) then return true;
   var valid : bool = true;
-  if mstateen0_se0 == Stateen_ReadOnlyZero & hartSupports(Ext_H) then {
+  if mstateen0_se0 == CSRBit_ReadOnlyZero & hartSupports(Ext_H) then {
     valid = false;
     print_endline("Stateen mstateen0.SE0 is read-only zero but H extension is supported: SE0 must not be read-only zero when H is implemented.");
   };
   // TODO: Update when Zcmt is implemented
-  if mstateen0_se0 == Stateen_ReadOnlyZero &
-     ((config extensions.Zfinx.supported : bool & sstateen0_fcsr != Stateen_ReadOnlyZero & mstateen0_fcsr != Stateen_ReadOnlyZero) |
-      (sstateen0_c != Stateen_ReadOnlyZero & mstateen0_c != Stateen_ReadOnlyZero)) then {
+  if mstateen0_se0 == CSRBit_ReadOnlyZero &
+     ((config extensions.Zfinx.supported : bool & sstateen0_fcsr != CSRBit_ReadOnlyZero & mstateen0_fcsr != CSRBit_ReadOnlyZero) |
+      (sstateen0_c != CSRBit_ReadOnlyZero & mstateen0_c != CSRBit_ReadOnlyZero)) then {
     valid = false;
     print_endline("Stateen mstateen0.SE0 is read-only zero but sstateen0 is not all read-only zero: SE0 must not be read-only zero.");
   };
   // A bit can only be read-only one in hstateen0 if it is read-only one in mstateen0.
   if hartSupports(Ext_Smstateen) &
-     ((hstateen0_envcfg == Stateen_ReadOnlyOne & mstateen0_envcfg != Stateen_ReadOnlyOne) | (hstateen0_context == Stateen_ReadOnlyOne & mstateen0_context != Stateen_ReadOnlyOne) |
-      (hstateen0_fcsr == Stateen_ReadOnlyOne & mstateen0_fcsr != Stateen_ReadOnlyOne) | (hstateen0_c == Stateen_ReadOnlyOne & mstateen0_c != Stateen_ReadOnlyOne)) then {
+     ((hstateen0_envcfg == CSRBit_ReadOnlyOne & mstateen0_envcfg != CSRBit_ReadOnlyOne) | (hstateen0_context == CSRBit_ReadOnlyOne & mstateen0_context != CSRBit_ReadOnlyOne) |
+      (hstateen0_fcsr == CSRBit_ReadOnlyOne & mstateen0_fcsr != CSRBit_ReadOnlyOne) | (hstateen0_c == CSRBit_ReadOnlyOne & mstateen0_c != CSRBit_ReadOnlyOne)) then {
     valid = false;
     print_endline("Stateen hstateen0 has a read-only one bit that is not read-only one in mstateen0.");
   };
   // A bit can only be read-only one in sstateen0 if it is read-only one in mstateen0 and hstateen0.
-  if (sstateen0_fcsr == Stateen_ReadOnlyOne & ((hartSupports(Ext_Smstateen) & mstateen0_fcsr != Stateen_ReadOnlyOne) | (hartSupports(Ext_H) & hstateen0_fcsr != Stateen_ReadOnlyOne))) |
-     (sstateen0_c == Stateen_ReadOnlyOne & ((hartSupports(Ext_Smstateen) & mstateen0_c != Stateen_ReadOnlyOne) | (hartSupports(Ext_H) & hstateen0_c != Stateen_ReadOnlyOne))) then {
+  if (sstateen0_fcsr == CSRBit_ReadOnlyOne & ((hartSupports(Ext_Smstateen) & mstateen0_fcsr != CSRBit_ReadOnlyOne) | (hartSupports(Ext_H) & hstateen0_fcsr != CSRBit_ReadOnlyOne))) |
+     (sstateen0_c == CSRBit_ReadOnlyOne & ((hartSupports(Ext_Smstateen) & mstateen0_c != CSRBit_ReadOnlyOne) | (hartSupports(Ext_H) & hstateen0_c != CSRBit_ReadOnlyOne))) then {
     valid = false;
     print_endline("Stateen sstateen0 has a read-only one bit that is not read-only one in mstateen0 and hstateen0.");
   };
