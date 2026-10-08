@@ -219,6 +219,7 @@ enum StaticRmReservedBehavior = {
   // Treat the instruction as illegal (raise an illegal instruction exception).
   Static_RM_Illegal,
 }
+
 enum PmpWriteOnlyReservedBehavior = {
   PMP_Fatal,
   PMP_ClearPermissions,
