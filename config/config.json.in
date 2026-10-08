@@ -1147,8 +1147,32 @@
       "Ssstateen": {
         "supported": true
       },
-      "C_readonly_zero": true,
-      "SE0_readonly_zero": false
+      // Each stateen bit is one of CSRBit_Writable,
+      // CSRBit_ReadOnlyZero or CSRBit_ReadOnlyOne.
+      // Bits for features the model does not implement stay
+      // read-only zero. However bits that depend on misa (ENVCFG
+      // on misa.S, P1P13 on misa.H) also read as zero while that
+      // extension is disabled at run time.
+      "mstateen0": {
+        "SE0": "CSRBit_Writable",
+        "ENVCFG": "CSRBit_Writable",
+        "CONTEXT": "CSRBit_Writable",
+        "P1P13": "CSRBit_Writable",
+        "SRMCFG": "CSRBit_Writable",
+        "FCSR": "CSRBit_Writable",
+        "C": "CSRBit_ReadOnlyZero"
+      },
+      // hstateen0.SE0 is always writable.
+      "hstateen0": {
+        "ENVCFG": "CSRBit_Writable",
+        "CONTEXT": "CSRBit_Writable",
+        "FCSR": "CSRBit_Writable",
+        "C": "CSRBit_ReadOnlyZero"
+      },
+      "sstateen0": {
+        "FCSR": "CSRBit_Writable",
+        "C": "CSRBit_ReadOnlyZero"
+      }
     },
     "Ssqosid": {
       "supported": true,

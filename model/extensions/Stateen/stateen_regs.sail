@@ -27,6 +27,22 @@ mapping stateen_bit_index : stateen_bit <-> range(0, 63) = {
   STATEEN_FCSR    <-> 1,
 }
 
+let mstateen0_se0     : CSRBitConfig = config extensions.Stateen.mstateen0.SE0
+let mstateen0_envcfg  : CSRBitConfig = config extensions.Stateen.mstateen0.ENVCFG
+let mstateen0_context : CSRBitConfig = config extensions.Stateen.mstateen0.CONTEXT
+let mstateen0_p1p13   : CSRBitConfig = config extensions.Stateen.mstateen0.P1P13
+let mstateen0_srmcfg  : CSRBitConfig = config extensions.Stateen.mstateen0.SRMCFG
+let mstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.mstateen0.FCSR
+let mstateen0_c       : CSRBitConfig = config extensions.Stateen.mstateen0.C
+
+let hstateen0_envcfg  : CSRBitConfig = config extensions.Stateen.hstateen0.ENVCFG
+let hstateen0_context : CSRBitConfig = config extensions.Stateen.hstateen0.CONTEXT
+let hstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.hstateen0.FCSR
+let hstateen0_c       : CSRBitConfig = config extensions.Stateen.hstateen0.C
+
+let sstateen0_fcsr    : CSRBitConfig = config extensions.Stateen.sstateen0.FCSR
+let sstateen0_c       : CSRBitConfig = config extensions.Stateen.sstateen0.C
+
 bitfield Mstateen0 : bits(64) = {
   SE0     : 63,
   ENVCFG  : 62,
@@ -53,27 +69,31 @@ register mstateen1 : Mstateen1 = Mk_Mstateen1(zeros())
 register mstateen2 : Mstateen2 = Mk_Mstateen2(zeros())
 register mstateen3 : Mstateen3 = Mk_Mstateen3(zeros())
 
+function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
+  let v = Mk_Mstateen0(v);
+  [m with
+    SE0     = legalize_csr_bit(mstateen0_se0, true, v[SE0]),
+    ENVCFG  = legalize_csr_bit(mstateen0_envcfg, currentlyEnabled(Ext_S), v[ENVCFG]),
+    CONTEXT = legalize_csr_bit(mstateen0_context, currentlyEnabled(Ext_Sdtrig) & (sdtrig_has_scontext | sdtrig_has_hcontext), v[CONTEXT]),
+    P1P13   = legalize_csr_bit(mstateen0_p1p13, delegh_csrs_are_defined & currentlyEnabled(Ext_H) & xlen == 32, v[P1P13]),
+    SRMCFG  = legalize_csr_bit(mstateen0_srmcfg, currentlyEnabled(Ext_Ssqosid), v[SRMCFG]),
+    FCSR    = legalize_csr_bit(mstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
+    C       = legalize_csr_bit(mstateen0_c, true, v[C]),
+  ];
+}
+
+// misa can change after the last write, so mstateen0 can be stale.
+// Any read of mstateen0 must go through this function.
+function read_mstateen0() -> Mstateen0 = legalize_mstateen0(mstateen0, mstateen0.bits)
+
 private function get_mstateen(idx : range(0, 3)) -> bits(64) = {
   if not(is_mstateen_accessible()) then ones()
   else match idx {
-    0 => mstateen0.bits,
+    0 => read_mstateen0().bits,
     1 => mstateen1.bits,
     2 => mstateen2.bits,
     3 => mstateen3.bits,
   }
-}
-
-function legalize_mstateen0(m : Mstateen0, v : bits(64)) -> Mstateen0 = {
-  let v = Mk_Mstateen0(v);
-  [m with
-    SE0     = if config extensions.Stateen.SE0_readonly_zero then 0b0 else v[SE0],
-    ENVCFG  = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
-    CONTEXT = if currentlyEnabled(Ext_Sdtrig) & (sdtrig_has_scontext | sdtrig_has_hcontext) then v[CONTEXT] else 0b0,
-    P1P13   = if delegh_csrs_are_defined & currentlyEnabled(Ext_H) & xlen == 32 then v[P1P13] else 0b0,
-    SRMCFG  = if currentlyEnabled(Ext_Ssqosid) then v[SRMCFG] else 0b0,
-    FCSR    = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
-    C       = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
-  ];
 }
 
 function legalize_mstateen1(m : Mstateen1, _v : bits(64)) -> Mstateen1 = { m }
@@ -121,11 +141,11 @@ function get_hstateen_mask(idx : range(0, 3)) -> bits(64) = get_mstateen(idx)
 function legalize_hstateen0(h : Hstateen0, v : bits(64)) -> Hstateen0 = {
   let v = Mk_Hstateen0(v & get_hstateen_mask(0));
   [h with
-    SE0     = if config extensions.Stateen.SE0_readonly_zero then 0b0 else v[SE0],
-    ENVCFG  = if currentlyEnabled(Ext_S) then v[ENVCFG] else 0b0,
-    CONTEXT = if currentlyEnabled(Ext_Sdtrig) & sdtrig_has_scontext then v[CONTEXT] else 0b0,
-    FCSR    = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
-    C       = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
+    SE0     = v[SE0], // bit 63 of hstateen is always writable
+    ENVCFG  = legalize_csr_bit(hstateen0_envcfg, currentlyEnabled(Ext_S), v[ENVCFG]),
+    CONTEXT = legalize_csr_bit(hstateen0_context, currentlyEnabled(Ext_Sdtrig) & sdtrig_has_scontext, v[CONTEXT]),
+    FCSR    = legalize_csr_bit(hstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
+    C       = legalize_csr_bit(hstateen0_c, true, v[C]),
   ];
 }
 
@@ -175,8 +195,8 @@ function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
   let v = Mk_Sstateen0(v);
   let mask = get_sstateen_mask(0);
   let legalized = [s with
-    FCSR = if hartSupports(Ext_Zfinx) & (misa[F] == 0b0) then v[FCSR] else 0b0,
-    C    = if config extensions.Stateen.C_readonly_zero then 0b0 else v[C],
+    FCSR = legalize_csr_bit(sstateen0_fcsr, hartSupports(Ext_Zfinx) & (misa[F] == 0b0), v[FCSR]),
+    C    = legalize_csr_bit(sstateen0_c, true, v[C]),
   ];
   Mk_Sstateen0(legalized.bits & mask[31..0])
 }
@@ -203,7 +223,10 @@ function is_zfinx_enabled_by_stateen() -> bool = check_stateen_bit(cur_privilege
 termination_measure is_zfinx_enabled_by_stateen() = 8 // > check_stateen_bit
 
 function reset_stateen() -> unit = {
-  mstateen0.bits = zeros();
+  mstateen0 = legalize_mstateen0(Mk_Mstateen0(zeros()), zeros());
+  // hstateen0 and sstateen0 are not reset, but read-only one bits must read as one at startup.
+  hstateen0 = legalize_hstateen0(hstateen0, hstateen0.bits);
+  sstateen0 = legalize_sstateen0(sstateen0, sstateen0.bits);
   mstateen1.bits = zeros();
   mstateen2.bits = zeros();
   mstateen3.bits = zeros();
