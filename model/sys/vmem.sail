@@ -100,16 +100,10 @@ private function update_and_write_pte forall 'pte_width, 'pte_width in {4, 8} . 
   stage    : TranslationStage,
   ext_ptw  : ext_ptw,
 ) -> result(option(bits('pte_width * 8)), PTW_Error) =
-  match update_PTE_Bits(pte, access) {
+  match update_PTE_Bits(pte, access, stage) {
     None()    => Ok(None()),
-    Some(pte) => // The PTE has new A/D bits.  If neither Svadu or Svade is supported,
-                 // the current default is to update the PTE.
-                if (currentlyEnabled(Ext_Svadu) & (match stage {
-                    VS_Stage => read_henvcfg()[ADUE] == 0b1,
-                    _        => menvcfg[ADUE] == 0b1,
-                    }))
-                  | (not(currentlyEnabled(Ext_Svadu)) & not(currentlyEnabled(Ext_Svade)))
-                 then {
+    Some(pte) => // The PTE has new A/D bits.
+                 if hw_updates_pte(stage) then {
                    // Translate PTE address if performing a VS-stage access
                    let write_paddr : physaddr = match translate_PTE_addr(bits_of(pteAddr), Store(PageTableEntry), stage, ext_ptw) {
                      Ok(pa, _, _) => pa,

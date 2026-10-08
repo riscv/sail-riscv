@@ -1,5 +1,10 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - Whether an implicit access to a VS-stage PTE sets the D bit of a
+    writable G-stage PTE can now be specified, see
+    `extensions.H.implicit_vs_pte_access_sets_gstage_d`.
+
 # Release notes for version 0.15
 
 The highlights of this release are the addition of the Double Trap
