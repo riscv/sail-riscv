@@ -32,3 +32,10 @@ Definition sys_enable_experimental_extensions (_:unit) : bool := false.
 Definition mults_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mults_vec l r.
 Definition mult_vec {n} (l : mword n) (r : mword n) : mword (2 * n) := mult_vec l r.
 Definition print_string (_ _:string) : unit := tt.
+
+Axiom load_reservation : forall {Mon : Type -> Type} `{base.MRet Mon} {n}, mword n -> Z -> Mon unit.
+Axiom cancel_reservation : forall {Mon : Type -> Type} `{base.MRet Mon}, unit -> Mon unit.
+Axiom match_reservation : forall {n}, mword n -> bool.
+Axiom valid_reservation : unit -> bool.
+Axiom plat_term_write : forall {Mon : Type -> Type} `{base.MRet Mon}, mword 8 -> Mon unit.
+Axiom plat_term_read : forall {Mon : Type -> Type} `{base.MRet Mon}, unit -> Mon (mword 8).
