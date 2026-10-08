@@ -199,7 +199,7 @@
       // "Fcsr_RM_Fatal"  – raise a Sail exception, stopping execution.
       // "Fcsr_RM_Illegal" – treat it as an illegal instruction.
       "fcsr_rm": "Fcsr_RM_Illegal",
-       // This option determines how to handle execution of a floating-point
+      // This option determines how to handle execution of a floating-point
       // instruction with a reserved rounding mode statically encoded in the
       // instruction (0b101 or 0b110).
       // "Static_RM_Fatal"   – raise a Sail exception, stopping execution.
