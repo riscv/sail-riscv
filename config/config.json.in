@@ -137,7 +137,11 @@
       // delegatable traps of the implementation. Bits should not be
       // set for traps that cannot be delegated as per the
       // specification, and delegation of reserved traps is not
-      // supported. Bit 19 (hardware error) must not be set for
+      // supported.
+      // Bit 18 (software check) must not be set for privileged ISA
+      // versions before 1.13, where that exception code is reserved,
+      // unless Zicfilp or Zicfiss is supported.
+      // Bit 19 (hardware error) must not be set for
       // privileged ISA versions before 1.13, since that exception
       // code is reserved there.
       // This value is ignored when the `medeleg` CSR does
