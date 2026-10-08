@@ -60,8 +60,7 @@ function select_instr_or_fcsr_rm(instr_rm : rounding_mode) -> option(rounding_mo
       Fcsr_RM_Illegal => None(),
     }
   }
-
-// Static rounding mode: rm values 0b101 and 0b110 are reserved by the
+  // Static rounding mode: rm values 0b101 and 0b110 are reserved by the
   // spec. Behavior is configurable, mirroring fcsr_rm above for the
   // dynamic case
   else if valid_rounding_mode(encdec_rounding_mode(instr_rm))
