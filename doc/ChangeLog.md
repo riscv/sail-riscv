@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/1986 : Indexed segment stores only check the index group against the first field for source EEW overlap
+
 # Release notes for version 0.15
 
 The highlights of this release are the addition of the Double Trap
