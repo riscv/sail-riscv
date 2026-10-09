@@ -1,0 +1,7 @@
+project-includes = [
+    "test/first_party/src/scripts",
+    ".github/scripts",
+]
+search-path = [
+    "test/first_party/src/scripts",
+]

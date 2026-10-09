@@ -337,7 +337,7 @@ function mem_read_priv_meta (access, pbmt, priv, paddr, width, aq, rl, res, meta
     (_, _, _)             => checked_mem_read(access, pbmt, priv, paddr, width, aq, rl, res, meta)
   };
   match result {
-    Ok(value, _) => mem_read_callback(to_str(access), bits_of(paddr), width, value),
+    Ok(value, _) => mem_read_callback(priv, access, bits_of(paddr), width, value),
     Err(addr, e) => mem_exception_callback(bits_of(addr), exceptionType_bits(e)),
   };
   result
@@ -490,7 +490,7 @@ val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr,
 function mem_write_value_priv_meta (paddr, width, value, access, pbmt, priv, meta, aq, rl, con) = {
   let result = checked_mem_write(paddr, width, value, access, pbmt, priv, meta, aq, rl, con);
   match result {
-    Ok(_) => mem_write_callback(to_str(access), bits_of(paddr), width, value),
+    Ok(_) => mem_write_callback(priv, access, bits_of(paddr), width, value),
     Err(addr, e) => mem_exception_callback(bits_of(addr), exceptionType_bits(e)),
   };
   result

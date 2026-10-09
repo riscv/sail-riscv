@@ -25,7 +25,7 @@ private function rvfi_fetch() -> FetchResult = {
   let access : MemoryAccessType(mem_payload) = InstructionFetch();
   let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
 
-  match translateAddr(Virtaddr(PC), access, eff_priv) {
+  match translateAddr(Virtaddr(PC), access, 2, eff_priv) {
     Err(e, _)   => return F_Error(e),
     Ok(_, _, _) => (),
   };
@@ -42,7 +42,7 @@ private function rvfi_fetch() -> FetchResult = {
     None()  => (),
   };
 
-  match translateAddr(Virtaddr(PC_hi), access, eff_priv) {
+  match translateAddr(Virtaddr(PC_hi), access, 2, eff_priv) {
     Err(e, _)   => F_Error({ e with excinfo = PC }),
     Ok(_, _, _) => F_Base(i)
   }

@@ -10,12 +10,17 @@ void callbacks_if::pre_step_callback([[maybe_unused]] ModelImpl &model, [[maybe_
 void callbacks_if::post_step_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] bool is_waiting) {
 }
 
-void callbacks_if::fetch_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] sbits opcode) {
+void callbacks_if::fetch_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] sbits pc,
+  [[maybe_unused]] sbits opcode
+) {
 }
 
 void callbacks_if::mem_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -24,7 +29,8 @@ void callbacks_if::mem_write_callback(
 
 void callbacks_if::mem_read_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -135,6 +141,26 @@ void callbacks_if::ptw_fail_callback(
   [[maybe_unused]] int64_t level,
   [[maybe_unused]] ModelImpl::PTW_Error error_type,
   [[maybe_unused]] sbits pte_addr
+) {
+}
+
+void callbacks_if::address_translation_start_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
+  [[maybe_unused]] int64_t width
+) {
+}
+
+void callbacks_if::address_translated_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] ModelImpl::TranslationStage stage,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] sbits paddr,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
+  [[maybe_unused]] int64_t width
 ) {
 }
 

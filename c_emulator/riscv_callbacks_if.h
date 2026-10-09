@@ -13,11 +13,27 @@ public:
   // Callback invoked after each step
   virtual void post_step_callback(ModelImpl &model, bool is_waiting);
 
-  virtual void fetch_callback(ModelImpl &model, sbits opcode);
+  // See model/core/callbacks.sail.
 
-  virtual void mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value);
+  virtual void fetch_callback(ModelImpl &model, sbits pc, sbits opcode);
 
-  virtual void mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value);
+  virtual void mem_write_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
+
+  virtual void mem_read_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
 
   virtual void mem_exception_callback(ModelImpl &model, sbits paddr, uint64_t num_of_exception);
 
@@ -39,13 +55,14 @@ public:
 
   virtual void xret_callback(ModelImpl &model, bool is_mret);
 
-  virtual void instret_callback(ModelImpl &model);
-
   virtual void trigger_match_callback(hart::Model &model, sail_int trig_index);
 
   virtual void trigger_fire_callback(hart::Model &model, sail_int trig_index);
 
-  // Page table walk callbacks
+  // See model/sys/callbacks.sail.
+
+  virtual void instret_callback(ModelImpl &model);
+
   virtual void ptw_start_callback(
     ModelImpl &model,
     ModelImpl::TranslationStage stage,
@@ -77,6 +94,26 @@ public:
     ModelImpl::PTW_Error error_type,
     sbits pte_addr
   );
+
+  virtual void address_translation_start_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    ModelImpl::Privilege privilege,
+    sbits vaddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
+  );
+
+  virtual void address_translated_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    sbits vaddr,
+    sbits paddr,
+    ModelImpl::MemoryAccessType access,
+    int64_t width
+  );
+
+  // See model/sys/vmem_tlb.sail.
 
   virtual void tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index);
 
