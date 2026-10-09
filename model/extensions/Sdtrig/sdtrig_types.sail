@@ -179,6 +179,96 @@ function is_supported_match_val(m : bits(4)) -> bool =
   // TODO: config options
   trig_match_val_forwards_matches(m)
 
+bitfield Trigger_Extra_RV32 : bits(32) = {
+  mhvalue   : 31 .. 26,
+  mhselect  : 25 .. 23,
+  sbytemask : 19 .. 18,
+  svalue    : 17 .. 2,
+  sselect   : 1 .. 0,
+}
+
+bitfield Trigger_Extra_RV64 : bits(64) = {
+  mhvalue   : 63 .. 51,
+  mhselect  : 50 .. 48,
+  sbytemask : 39 .. 36,
+  svalue    : 33 .. 2,
+  sselect   : 1 .. 0,
+}
+
+struct TExtra = {
+  mhvalue   : bits(13),
+  mhselect  : bits(3),
+  sbytemask : bits(4),
+  svalue    : bits(32),
+  sselect   : bits(2),
+}
+
+function TExtra_to_bits(t : TExtra) -> xlenbits = {
+  if xlen == 32 then {
+    [Mk_Trigger_Extra_RV32(zeros()) with
+      mhvalue   = trunc(t.mhvalue),
+      mhselect  = t.mhselect,
+      sbytemask = trunc(t.sbytemask),
+      svalue    = trunc(t.svalue),
+      sselect   = t.sselect,
+    ].bits
+  } else {
+    [Mk_Trigger_Extra_RV64(zeros()) with
+      mhvalue   = t.mhvalue,
+      mhselect  = t.mhselect,
+      sbytemask = t.sbytemask,
+      svalue    = t.svalue,
+      sselect   = t.sselect,
+    ].bits
+  }
+}
+
+function legalize_mhselect(mhselect : bits(3)) -> bits(3) = {
+  // 1, 4 and 5 compare against mcontext
+  let has_mcontext = sdtrig_has_mcontext | sdtrig_has_hcontext;
+  match mhselect {
+    0b000 => mhselect,                                                       // 0
+    0b001 => if hartSupports(Ext_H) & has_mcontext then mhselect else 0b000, // 1
+    0b010 => if hartSupports(Ext_H) then mhselect else 0b000,                // 2
+    0b011 => 0b000,                                                          // 3
+    0b100 => if has_mcontext then mhselect else 0b000,                       // 4
+    0b101 => if hartSupports(Ext_H) & has_mcontext then mhselect else 0b000, // 5
+    0b110 => if hartSupports(Ext_H) then mhselect else 0b000,                // 6
+    0b111 => 0b000,                                                          // 7
+  }
+}
+
+function legalize_sselect(sselect : bits(2)) -> bits(2) = {
+  match sselect {
+    0b00 => sselect,                                                             // 0
+    0b01 => if hartSupports(Ext_S) & sdtrig_has_scontext then sselect else 0b00, // 1
+    0b10 => if hartSupports(Ext_S) then sselect else 0b00,                       // 2
+    0b11 => 0b00,                                                                // 3
+  }
+}
+
+function make_textra(v : xlenbits) -> TExtra = {
+  if xlen == 32 then {
+    let data = Mk_Trigger_Extra_RV32(v);
+    struct {
+      mhvalue   = zero_extend(data[mhvalue]),
+      mhselect  = legalize_mhselect(data[mhselect]),
+      sbytemask = if hartSupports(Ext_S) & sdtrig_has_scontext then zero_extend(data[sbytemask]) else zeros(),
+      svalue    = if hartSupports(Ext_S) then zero_extend(data[svalue]) else zeros(),
+      sselect   = legalize_sselect(data[sselect]),
+    }
+  } else {
+    let data = Mk_Trigger_Extra_RV64(v);
+    struct {
+      mhvalue   = data[mhvalue],
+      mhselect  = legalize_mhselect(data[mhselect]),
+      sbytemask = if hartSupports(Ext_S) & sdtrig_has_scontext then data[sbytemask] else zeros(),
+      svalue    = if hartSupports(Ext_S) then data[svalue] else zeros(),
+      sselect   = legalize_sselect(data[sselect]),
+    }
+  }
+}
+
 // Trigger types and their layouts.
 //
 // Each trigger has an associated struct and a bitfield.  The struct
@@ -300,7 +390,7 @@ struct ICount = {
   // retires.
   active     : bool,
   tdata2     : xlenbits,
-  tdata3     : xlenbits,
+  textra     : TExtra,
 }
 
 bitfield ICount_bits : xlenbits = {
@@ -343,7 +433,7 @@ struct ITrigger = {
   u          : bool,
   action     : Trig_Action,
   tdata2     : xlenbits,
-  tdata3     : xlenbits,
+  textra     : TExtra,
   pending    : bool,
 }
 
@@ -357,7 +447,7 @@ struct ETrigger = {
   u          : bool,
   action     : Trig_Action,
   tdata2     : xlenbits,
-  tdata3     : xlenbits,
+  textra     : TExtra,
   pending    : bool,
 }
 
@@ -440,9 +530,9 @@ function tdata2_of_trigger(t : Trigger) -> xlenbits =
 function tdata3_of_trigger(t : Trigger) -> xlenbits =
   match t {
     T_disabled(s)  => s.tdata3,
-    T_icount(s)    => s.tdata3,
-    T_itrigger(s)  => s.tdata3,
-    T_etrigger(s)  => s.tdata3,
+    T_icount(s)    => TExtra_to_bits(s.textra),
+    T_itrigger(s)  => TExtra_to_bits(s.textra),
+    T_etrigger(s)  => TExtra_to_bits(s.textra),
   }
 
 // For now, every trigger supports each supported type.
@@ -489,22 +579,6 @@ bitfield External_Trigger : xlenbits = {
   action    : 6,
 }
 
-bitfield Trigger_Extra_RV32 : bits(32) = {
-  mhvalue   : 31 .. 26,
-  mhselect  : 25 .. 23,
-  sbytemask : 19 .. 18,
-  svalue    : 17 .. 2,
-  sselect   : 1 .. 0,
-}
-
-bitfield Trigger_Extra_RV64 : bits(64) = {
-  mhvalue   : 63 .. 51,
-  mhselect  : 50 .. 48,
-  sbytemask : 39 .. 36,
-  svalue    : 33 .. 2,
-  sselect   : 1 .. 0,
-}
-
 // Retain the new bits in the ignored fields.
 function make_disabled_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> Trigger =
   T_disabled(struct { dmode  = false,
@@ -545,7 +619,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
           action = trig_action(act),
           active = false,
           tdata2 = tdata2,
-          tdata3 = tdata3,
+          textra = make_textra(tdata3),
         })
       } else {
         make_disabled_trigger(tdata1, tdata2, tdata3)
@@ -566,7 +640,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
           u = if currentlyEnabled(Ext_U) then bool_bit(v[u]) else false,
           action = trig_action(act),
           tdata2 = tdata2 & supported_itrigger_mask,
-          tdata3 = tdata3,
+          textra = make_textra(tdata3),
           pending = false,
         })
       } else {
@@ -587,7 +661,7 @@ function make_trigger(tdata1 : TData1, tdata2 : xlenbits, tdata3 : xlenbits) -> 
           u = if currentlyEnabled(Ext_U) then bool_bit(v[u]) else false,
           action = trig_action(act),
           tdata2 = tdata2 & supported_etrigger_mask,
-          tdata3 = tdata3,
+          textra = make_textra(tdata3),
           pending = false,
         })
       } else {
@@ -648,7 +722,7 @@ function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbit
   }
 }
 
-// For now, ignore all writes to `tdata2` and `tdata3` of non-disabled
+// For now, ignore all writes to `tdata2` of non-disabled
 // triggers.
 function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbits) -> Trigger =
   match t {
@@ -664,17 +738,13 @@ function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbit
     },
   }
 
-// For now, ignore all tdata3 configuration.
-function trigger_write_tdata3(idx : trigger_index, t : Trigger, tdata3 : xlenbits) -> Trigger =
+function trigger_write_tdata3(idx : trigger_index, t : Trigger, tdata3 : xlenbits) -> Trigger = {
+  if get_config_print_trigger()
+  then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(tdata3));
   match t {
-    T_disabled(s) => {
-      if get_config_print_trigger()
-      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(tdata3));
-      T_disabled({s with tdata3 = zeros()})
-    },
-    _ => {
-      if get_config_print_trigger()
-      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": ignoring write to tdata3 of " ^ bits_str(tdata3));
-      t
-    },
+    T_disabled(s) => T_disabled({s with tdata3 = TExtra_to_bits(make_textra(tdata3))}),
+    T_icount(s)   => T_icount({s with textra = make_textra(tdata3)}),
+    T_itrigger(s) => T_itrigger({s with textra = make_textra(tdata3)}),
+    T_etrigger(s) => T_etrigger({s with textra = make_textra(tdata3)}),
   }
+}
