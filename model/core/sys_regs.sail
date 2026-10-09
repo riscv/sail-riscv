@@ -1086,7 +1086,6 @@ function clause write_CSR(0x143, value) = if inVirtualPrivilege() then { vstval 
 
 //
 // Hypervisor guest address translation and protection (hgatp) layout.
-// The actual hgatp register is defined in `vmem.sail`.
 bitfield Hgatp64 : bits(64) = {
   Mode : 63 .. 60,
   VMID : 57 .. 44,
@@ -1098,6 +1097,8 @@ bitfield Hgatp32 : bits(32) = {
   VMID : 28 .. 22,
   PPN  : 21 .. 0
 }
+
+register hgatp : xlenbits
 
 function legalize_hgatp(
   arch : Architecture,
@@ -1157,7 +1158,6 @@ function legalize_hgatp(
 
 //
 // S-mode address translation and protection (satp) layout.
-// The actual satp register is defined in an architecture-specific file.
 
 bitfield Satp64 : bits(64) = {
   Mode : 63 .. 60,
@@ -1170,6 +1170,21 @@ bitfield Satp32 : bits(32) = {
   Asid : 30 .. 22,
   PPN  : 21 .. 0
 }
+
+register satp : xlenbits
+register vsatp : xlenbits
+
+// ASID is 9b in Sv32, 16b in Sv39/Sv48/Sv57
+function get_asid(stage : TranslationStage) -> asidbits = {
+  match stage {
+    S_Stage  => if xlen == 32 then Mk_Satp32(satp)[Asid]  else Mk_Satp64(satp)[Asid],
+    VS_Stage => if xlen == 32 then Mk_Satp32(vsatp)[Asid] else Mk_Satp64(vsatp)[Asid],
+    G_Stage  => zeros(),
+  }
+}
+
+function get_vmid(stage : TranslationStage) -> vmidbits =
+  if stage == S_Stage then zeros() else if xlen == 32 then Mk_Hgatp32(hgatp)[VMID] else Mk_Hgatp64(hgatp)[VMID]
 
 function legalize_satp(
   arch : Architecture,

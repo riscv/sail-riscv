@@ -273,7 +273,6 @@ termination_measure pt_walk(_,_,_,_,_,_,_,level,_,_, _) = level
 
 // ****************************************************************
 // Architectural HGATP CSR
-register hgatp : xlenbits
 mapping clause csr_name_map = 0x680 <-> "hgatp"
 
 function clause is_CSR_accessible(0x680, priv, _) = currentlyEnabled(Ext_H) & (priv == Machine | (priv == Supervisor & mstatus[TVM] == 0b0))
@@ -282,7 +281,6 @@ function clause read_CSR(0x680) = hgatp
 function clause write_CSR(0x680, value) = { hgatp = legalize_hgatp(architecture(cur_privilege), hgatp, value); Ok(hgatp) }
 
 // Architectural VSATP CSR
-register vsatp : xlenbits
 mapping clause csr_name_map = 0x280 <-> "vsatp"
 
 function clause is_CSR_accessible(0x280, _, _) = currentlyEnabled(Ext_H)
@@ -299,7 +297,6 @@ private function is_satp_accessible(priv : Privilege) -> bool =
     VirtualUser       => false,
   }
 
-register satp : xlenbits
 mapping clause csr_name_map = 0x180  <-> "satp"
 function clause is_CSR_accessible(0x180, priv, _) = is_satp_accessible(priv)
 function clause is_CSR_exception_virtual(0x180, _, _) = true
@@ -311,18 +308,6 @@ function clause write_CSR(0x180, value) =
 
 // ----------------
 // Fields of SATP
-
-// ASID is 9b in Sv32, 16b in Sv39/Sv48/Sv57
-private function get_asid(stage : TranslationStage) -> asidbits = {
-  match stage {
-    S_Stage  => if xlen == 32 then Mk_Satp32(satp)[Asid]  else Mk_Satp64(satp)[Asid],
-    VS_Stage => if xlen == 32 then Mk_Satp32(vsatp)[Asid] else Mk_Satp64(vsatp)[Asid],
-    G_Stage  => zeros(),
-  }
-}
-
-function get_vmid(stage : TranslationStage) -> vmidbits =
-  if stage == S_Stage then zeros() else if xlen == 32 then Mk_Hgatp32(hgatp)[VMID] else Mk_Hgatp64(hgatp)[VMID]
 
 private function xatp_to_ppn(stage : TranslationStage) -> bits(if xlen == 32 then 22 else 44) = {
   match stage {
