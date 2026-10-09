@@ -195,6 +195,12 @@ bitfield Trigger_Extra_RV64 : bits(64) = {
   sselect   : 1 .. 0,
 }
 
+let mhselect_mcontext_match : bool = config extensions.Sdtrig.textra.mhselect.mcontext_match
+let mhselect_vmid_match : bool = config extensions.Sdtrig.textra.mhselect.vmid_match
+
+let sselect_scontext_match : bool = config extensions.Sdtrig.textra.sselect.scontext_match
+let sselect_asid_match : bool = config extensions.Sdtrig.textra.sselect.asid_match
+
 struct TExtra = {
   mhvalue   : bits(13),
   mhselect  : bits(3),
@@ -202,6 +208,10 @@ struct TExtra = {
   svalue    : bits(32),
   sselect   : bits(2),
 }
+
+// The number of implemented mhvalue and svalue bits.
+let sdtrig_mhvalue_len : range(0, 13) = config extensions.Sdtrig.textra.mhvalue_len
+let sdtrig_svalue_len : range(0, 32) = config extensions.Sdtrig.textra.svalue_len
 
 function TExtra_to_bits(t : TExtra) -> xlenbits = {
   if xlen == 32 then {
@@ -225,45 +235,51 @@ function TExtra_to_bits(t : TExtra) -> xlenbits = {
 
 function legalize_mhselect(mhselect : bits(3)) -> bits(3) = {
   // 1, 4 and 5 compare against mcontext
-  let has_mcontext = sdtrig_has_mcontext | sdtrig_has_hcontext;
+  let mcontext_match = (sdtrig_has_mcontext | sdtrig_has_hcontext) & mhselect_mcontext_match;
+  // 2 and 6 compare against the VMID
+  let vmid_match = hartSupports(Ext_H) & mhselect_vmid_match;
   match mhselect {
-    0b000 => mhselect,                                                       // 0
-    0b001 => if hartSupports(Ext_H) & has_mcontext then mhselect else 0b000, // 1
-    0b010 => if hartSupports(Ext_H) then mhselect else 0b000,                // 2
-    0b011 => 0b000,                                                          // 3
-    0b100 => if has_mcontext then mhselect else 0b000,                       // 4
-    0b101 => if hartSupports(Ext_H) & has_mcontext then mhselect else 0b000, // 5
-    0b110 => if hartSupports(Ext_H) then mhselect else 0b000,                // 6
-    0b111 => 0b000,                                                          // 7
+    0b000 => mhselect,                                                         // 0
+    0b001 => if hartSupports(Ext_H) & mcontext_match then mhselect else 0b000, // 1
+    0b010 => if vmid_match then mhselect else 0b000,                           // 2
+    0b011 => 0b000,                                                            // 3
+    0b100 => if mcontext_match then mhselect else 0b000,                       // 4
+    0b101 => if hartSupports(Ext_H) & mcontext_match then mhselect else 0b000, // 5
+    0b110 => if vmid_match then mhselect else 0b000,                           // 6
+    0b111 => 0b000,                                                            // 7
   }
 }
 
 function legalize_sselect(sselect : bits(2)) -> bits(2) = {
+  let scontext_match = hartSupports(Ext_S) & sdtrig_has_scontext & sselect_scontext_match;
+  let asid_match = hartSupports(Ext_S) & sselect_asid_match;
   match sselect {
-    0b00 => sselect,                                                             // 0
-    0b01 => if hartSupports(Ext_S) & sdtrig_has_scontext then sselect else 0b00, // 1
-    0b10 => if hartSupports(Ext_S) then sselect else 0b00,                       // 2
-    0b11 => 0b00,                                                                // 3
+    0b00 => sselect,                                  // 0
+    0b01 => if scontext_match then sselect else 0b00, // 1
+    0b10 => if asid_match then sselect else 0b00,     // 2
+    0b11 => 0b00,                                     // 3
   }
 }
 
 function make_textra(v : xlenbits) -> TExtra = {
+  let mhvalue_mask : bits(13) = zero_extend(ones(sdtrig_mhvalue_len));
+  let svalue_mask : bits(32) = zero_extend(ones(sdtrig_svalue_len));
   if xlen == 32 then {
     let data = Mk_Trigger_Extra_RV32(v);
     struct {
-      mhvalue   = zero_extend(data[mhvalue]),
+      mhvalue   = zero_extend(data[mhvalue]) & mhvalue_mask,
       mhselect  = legalize_mhselect(data[mhselect]),
-      sbytemask = if hartSupports(Ext_S) & sdtrig_has_scontext then zero_extend(data[sbytemask]) else zeros(),
-      svalue    = if hartSupports(Ext_S) then zero_extend(data[svalue]) else zeros(),
+      sbytemask = if hartSupports(Ext_S) & sdtrig_has_scontext & sselect_scontext_match then zero_extend(data[sbytemask]) else zeros(),
+      svalue    = if hartSupports(Ext_S) then zero_extend(data[svalue]) & svalue_mask else zeros(),
       sselect   = legalize_sselect(data[sselect]),
     }
   } else {
     let data = Mk_Trigger_Extra_RV64(v);
     struct {
-      mhvalue   = data[mhvalue],
+      mhvalue   = data[mhvalue] & mhvalue_mask,
       mhselect  = legalize_mhselect(data[mhselect]),
-      sbytemask = if hartSupports(Ext_S) & sdtrig_has_scontext then data[sbytemask] else zeros(),
-      svalue    = if hartSupports(Ext_S) then data[svalue] else zeros(),
+      sbytemask = if hartSupports(Ext_S) & sdtrig_has_scontext & sselect_scontext_match then data[sbytemask] else zeros(),
+      svalue    = if hartSupports(Ext_S) then data[svalue] & svalue_mask else zeros(),
       sselect   = legalize_sselect(data[sselect]),
     }
   }
