@@ -27,10 +27,45 @@ function prevent_reentrance(act: Trig_Action, priv : Privilege) -> bool = {
   }
 }
 
+function sselect_match(t : TExtra, priv : Privilege) -> bool = {
+  let ctx = scontext[data];
+  match t.sselect {
+    0b00 => true,                                                                                  // 0
+    // Bytes with their sbytemask bit set are ignored, RV32 only has 2 bytes
+    0b01 => (t.sbytemask[0] == bitone | ctx[7 .. 0] == t.svalue[7 .. 0])                           // 1
+          & (t.sbytemask[1] == bitone | ctx[15 .. 8] == t.svalue[15 .. 8])
+          & (xlen == 32 | t.sbytemask[2] == bitone | ctx[23 .. 16] == t.svalue[23 .. 16])
+          & (xlen == 32 | t.sbytemask[3] == bitone | ctx[31 .. 24] == t.svalue[31 .. 24]),
+    // VS/VU compare vsatp, all other modes compare satp
+    0b10 => get_asid(if privLevel_is_virtual(priv) then VS_Stage else S_Stage) == trunc(t.svalue), // 2
+    // 3 (reserved value) is always legalized to 0
+    _    => true,
+  }
+}
+
+function mhselect_match(t : TExtra) -> bool = {
+  let ctx = mcontext[hcontext];
+  let v   = t.mhvalue @ t.mhselect[2 .. 2];
+  match t.mhselect {
+    0b000 => true,                                                                               // 0
+    0b001 => if xlen == 32 then ctx[6 .. 0] == v[6 .. 0] else ctx == v,                          // 1
+    0b010 => get_vmid(VS_Stage) == trunc(v),                                                     // 2
+    0b100 => if xlen == 32 then ctx[5 .. 0] == t.mhvalue[5 .. 0] else ctx[12 .. 0] == t.mhvalue, // 4
+    0b101 => if xlen == 32 then ctx[6 .. 0] == v[6 .. 0] else ctx == v,                          // 5
+    0b110 => get_vmid(VS_Stage) == trunc(v),                                                     // 6
+    // 3 and 7 (reserved values) are always legalized to 0
+    _     => true,
+  };
+}
+
+// For itrigger and etrigger, priv is the mode the trap was taken from
+// See https://github.com/riscv/riscv-debug-spec/issues/1208
+function textra_match(t : TExtra, priv : Privilege) -> bool = mhselect_match(t) & sselect_match(t, priv)
+
 // icount triggers
 
 function icount_match(t : ICount, priv : Privilege, reentrance : bool) -> bool = {
-  not(t.action == TA_Breakpoint & reentrance) & (match priv {
+  not(t.action == TA_Breakpoint & reentrance) & textra_match(t.textra, priv) & (match priv {
     Machine           => t.m,
     Supervisor        => t.s,
     User              => t.u,
@@ -83,7 +118,7 @@ function match_icount_triggers(priv : Privilege, reentrance : bool) -> unit = {
 // TODO: handle NMI interrupts.
 
 function itrigger_match(t : ITrigger, intr : InterruptType, from_priv : Privilege, to_priv : Privilege) -> bool = {
-  let priv_match : bool = not(prevent_reentrance(t.action, to_priv)) & (match from_priv {
+  let priv_match : bool = not(prevent_reentrance(t.action, to_priv)) & textra_match(t.textra, from_priv) & (match from_priv {
     Machine           => t.m,
     Supervisor        => t.s,
     User              => t.u,
@@ -115,7 +150,7 @@ function match_itrigger_triggers(intr : InterruptType, from_priv : Privilege, to
 // etrigger
 
 private function etrigger_match(t : ETrigger, e : ExceptionType, from_priv : Privilege, to_priv : Privilege) -> bool = {
-  let priv_match : bool = not(prevent_reentrance(t.action, to_priv)) & (match from_priv {
+  let priv_match : bool = not(prevent_reentrance(t.action, to_priv)) & textra_match(t.textra, from_priv) & (match from_priv {
     Machine           => t.m,
     Supervisor        => t.s,
     User              => t.u,

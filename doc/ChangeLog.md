@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- Sdtrig now supports context matching in `textra32` and `textra64`,
+  allowing more precise control over when triggers match and fire.
+
 # Release notes for version 0.15
 
 The highlights of this release are the addition of the Double Trap
