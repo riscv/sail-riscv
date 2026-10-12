@@ -149,6 +149,8 @@ add_first_party_override_test("test_vs_ebreak_double_trap_xtval_zero_gva.S" "ssd
 
 add_first_party_experimental_test("test_zilx.S")
 
+add_first_party_test_with_config("test_tval_truncate_invalid_physaddr.S" "rv64gcvh_zfbfmin" 64 "tval_truncate_invalid_physaddr.json")
+
 list(LENGTH tests tests_len)
 math(EXPR test_last "${tests_len} - 1")
 foreach(idx RANGE 0 ${test_last} 4)

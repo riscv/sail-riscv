@@ -252,6 +252,29 @@
     // bitvectors in the model and since it is unlikely real implementations
     // will have lower values.
     "physaddr_bits": @CONFIG__PHYSADDR__BITS@,
+    // Whether physical addresses reported in `xtval` are truncated to
+    // `physaddr_bits` can be specified.  When valid physical
+    // addresses result from truncating invalid physical addresses to
+    // `physaddr_bits`, the parameter below may specify a constant
+    // value of `xlen` bits that should be reported as an invalid
+    // address instead in `xtval`. The model does not currently
+    // support arbitrary transformations of invalid physical
+    // addresses.
+    //
+    // Any specified invalid address need not fit within the
+    // `physaddr_bits` specified above, and it should not lie within
+    // any specified PMA region.  The value should be specified as
+    //   `{"Some": {"len": "xlen", "value": "0x<constant>"}}`.
+    // Note that if pointer masking extensions are enabled, the
+    // specified address needs to be a valid pointer-masked address
+    // for each supported `PMLEN`.
+    //
+    // If no truncation should take place, use `{"None": null}`.  In
+    // this case, the original faulting address is reported without
+    // truncation.
+    "invalid_physical_address": {
+      "None": null
+    },
     // This specifies the number of implemented ASID bits (ASIDLEN) in
     // the `satp` register.  If ASIDLEN > 0, ASID[ASIDLEN-1:0] is writable and bits above that are
     // read-only zero. The maximal value (ASIDMAX) is 9 for Sv32 or 16 for

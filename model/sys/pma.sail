@@ -286,6 +286,11 @@ function matching_pma_region(regions : list(PMA_Region), addr : physaddr, width 
   matching_pma_region_bits_range(regions, zero_extend(bits_of(addr)), to_bits(width))
 }
 
+// This checks whether a 1-byte access at the specified address lies within a configured PMA.
+function is_valid_physaddr(regions : list(PMA_Region), addr : physaddr) -> bool = {
+  is_some(matching_pma_region_bits_range(regions, zero_extend(bits_of(addr)), zero_extend(0b1)))
+}
+
 function pma_misaligned_to_str(m : PMAMisalignedExceptions) -> string =
   "misaligned-load-store:" ^ optional_misaligned_exception_str(m.load_store) ^
   " misaligned-amo:" ^ misaligned_exception_str(m.amo) ^

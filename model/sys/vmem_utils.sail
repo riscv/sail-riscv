@@ -37,27 +37,10 @@ function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res :
   else plat_misaligned_access.load_store
 }
 
-// Memory exceptions from `mem.sail` are reported in terms of
-// `physaddr`, while the utilities here need to report them in terms
-// of the corresponding `virtaddr`.  In particular, since the original
-// `virtaddr` access may be split into smaller `physaddr` accesses,
-// the correct offset from the base `virtaddr` needs to be reported.
-// Since `virtaddr` accesses that straddle page boundaries are already
-// split, the offset computation is quite simple. The result is also
-// masked to physaddr_bits, since bits above it aren't part of any
-// physical address this configuration implements.
-
-function offset_virtaddr_by(
-  Virtaddr(base_vaddr) : virtaddr,
-  Physaddr(base_paddr) : physaddr,
-  Physaddr(exc_paddr)  : physaddr,
-) -> virtaddr = {
-  // Physical addresses may have a different size.
-  let offset = (exc_paddr - base_paddr)[xlen - 1 .. 0];
-  let reconstructed = base_vaddr + offset;
-  let masked = if physaddr_bits < xlen then reconstructed & zero_extend(ones(physaddr_bits)) else reconstructed;
-  Virtaddr(masked)
-}
+function is_vmem_active(eff_priv : Privilege) -> bool =
+  if   privLevel_is_virtual(eff_priv)
+  then vsatp_mode() != Bare | hgatp_mode() != HBare
+  else satp_mode(eff_priv) != Bare
 
 // The context for an access.
 
@@ -65,6 +48,72 @@ struct AccessInfo = {
   eff_privilege  : Privilege,
   pmlen          : pm_len,
   as_guest       : bool,
+}
+
+// Memory exceptions from `mem.sail` are reported in terms of
+// `physaddr`, while the utilities here need to report them in terms
+// of the corresponding `virtaddr`.  In particular, since the original
+// `virtaddr` access may be split into smaller `physaddr` accesses,
+// the correct offset from the base `virtaddr` needs to be reported.
+// Since `virtaddr` accesses that straddle page boundaries are already
+// split, the offset computation is quite simple.
+//
+// When reporting physical addresses, the result is also
+// masked to physaddr_bits, since bits above it aren't part of any
+// physical address this configuration implements.  If the masking
+// results in a valid physical address, the configured platform
+// invalid address is reported instead.
+
+function exception_vaddr(
+  access_info          : AccessInfo,
+  Virtaddr(base_vaddr) : virtaddr,
+  Physaddr(base_paddr) : physaddr,
+  Physaddr(exc_paddr)  : physaddr,
+) -> xlenbits = {
+  // Report virtual addresses without modification.
+  if is_vmem_active(access_info.eff_privilege) then {
+    let offset = (exc_paddr - base_paddr)[xlen - 1 .. 0];
+    let exc_vaddr = base_vaddr + offset;
+    return exc_vaddr
+  };
+
+  // `base_vaddr` is the faulting physical address when there is no
+  // address translation.  In this case, there should be no split,
+  // i.e. no offset between `base_paddr` and `exc_paddr`.
+  assert(exc_paddr == base_paddr);
+
+  // However, `base_vaddr` may differ from `base_paddr` for CMO
+  // instructions, where `base_paddr` would be cache-block aligned.
+  let exc_paddr : physaddrbits = zero_extend(base_vaddr);
+
+  // Report the faulting physical address without modification if it
+  // is valid or no truncation is requested.
+  let exc_paddr_is_valid = is_valid_physaddr(pma_regions, Physaddr(exc_paddr));
+
+  // Truncate to `xlen` bits for reporting in `xtval` on RV32.  Since no paging is
+  // active, this should not change the value of the address.
+  let exc_paddr = exc_paddr[xlen - 1 .. 0];
+  if exc_paddr_is_valid then return exc_paddr;
+
+  // Decide how to handle invalid physical addresses with respect to
+  // truncation to `physaddr_bits`.
+  match plat_invalid_physical_address {
+    // No truncation requested.
+    None() => exc_paddr,
+
+    Some(inv_addr) => {
+      let trimmed_exc_paddr = if   physaddr_bits < xlen
+                              then exc_paddr & zero_extend(ones(physaddr_bits))
+                              else exc_paddr;
+      // Report the possibly trimmed value if it is an invalid address.
+      if not(is_valid_physaddr(pma_regions, Physaddr(zero_extend(trimmed_exc_paddr))))
+      then trimmed_exc_paddr
+      // The trimmed value is valid, in which case the original invalid address
+      // needs to be transformed into another invalid address. Use the configured
+      // invalid address here.
+      else inv_addr
+    },
+  }
 }
 
 function default_access_info(access : MemoryAccessType(mem_payload)) -> AccessInfo = {
@@ -125,8 +174,8 @@ private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_a
 
     Ok(paddr, pbmt, _) => match mem_read(access, pbmt, eff_priv, paddr, width, aq, rl, res) {
       Err(exc_paddr, e) => {
-        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(e, bits_of(exc_vaddr), access_info))
+        let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_paddr);
+        Err(memory_exception(e, exc_vaddr, access_info))
       },
 
       Ok(v) => Ok(paddr, v),
@@ -167,10 +216,7 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // We should only split the access before address translation if (a)
   // virtual memory is in effect, and (b) it crosses a page boundary.
   // If we do split, perform the split access in the configured order.
-  let vmem_active : bool = if privLevel_is_virtual(eff_priv)
-                           then vsatp_mode() != Bare | hgatp_mode() != HBare
-                           else satp_mode(eff_priv) != Bare;
-  let do_split_access = vmem_active & next_page_bytes > 0 & not(res);
+  let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res);
 
   if sys_misaligned_order_decreasing & do_split_access then {
     // Do next page access first.
@@ -220,14 +266,14 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
 
     Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq, rl, res) {
       Err(exc_paddr, e) => {
-        let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-        Err(memory_exception(e, bits_of(exc_vaddr), access_info))
+        let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_paddr);
+        Err(memory_exception(e, exc_vaddr, access_info))
       },
 
       Ok(()) => match mem_write_value(paddr, width, value, eff_priv, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
-          let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          Err(memory_exception(e, bits_of(exc_vaddr), access_info))
+          let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_paddr);
+          Err(memory_exception(e, exc_vaddr, access_info))
         },
 
         Ok(s) => Ok(s),
@@ -269,10 +315,7 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
 
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
 
-  let vmem_active : bool = if privLevel_is_virtual(eff_priv)
-                           then vsatp_mode() != Bare | hgatp_mode() != HBare
-                           else satp_mode(eff_priv) != Bare;
-  let do_split_access = vmem_active & next_page_bytes > 0 & not(res);
+  let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res);
 
   if sys_misaligned_order_decreasing & do_split_access then {
     let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
@@ -296,21 +339,24 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
         // PMP region without write permissions raises a store
         // access-fault exception."
         match phys_access_check(access, pbmt, eff_priv, paddr, access_width, true) {
-          Err(e) => return Err(memory_exception(e, bits_of(vaddr), access_info)),
+          Err(e) => {
+            let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, paddr);
+            return Err(memory_exception(e, exc_vaddr, access_info))
+          },
           Ok(_)  => write_success = false,
         }
       } else match mem_write_ea(paddr, access_width, eff_priv, access, pbmt, aq, rl, res) {
         Err(exc_paddr, e) => {
-          let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-          return Err(memory_exception(e, bits_of(exc_vaddr), access_info))
+          let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_paddr);
+          return Err(memory_exception(e, exc_vaddr, access_info))
         },
 
         Ok(()) => {
           let write_value = data[8 * access_width - 1 .. 0];
           match mem_write_value(paddr, access_width, write_value, eff_priv, access, pbmt, aq, rl, res) {
             Err(exc_paddr, e) => {
-              let exc_vaddr = offset_virtaddr_by(vaddr, paddr, exc_paddr);
-              return Err(memory_exception(e, bits_of(exc_vaddr), access_info))
+              let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_paddr);
+              return Err(memory_exception(e, exc_vaddr, access_info))
             },
             Ok(s)  => write_success = write_success & s,
           }
