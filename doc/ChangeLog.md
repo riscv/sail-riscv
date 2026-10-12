@@ -1,5 +1,10 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - Whether an implicit access to a VS-stage PTE sets the D bit of a
+    writable G-stage PTE can now be specified, see
+    `extensions.H.implicit_vs_pte_access_sets_gstage_d`.
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/2005 : `medeleg` and `hedeleg` bit 18 (software check) should be read-only zero before priv 1.13 unless Zicfilp or Zicfiss is supported
   - https://github.com/riscv/sail-riscv/issues/1986 : Indexed segment stores only check the index group against the first field for source EEW overlap
