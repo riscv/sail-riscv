@@ -1037,16 +1037,15 @@
         // Which context matches are supported. Writes of unsupported
         // `mhselect` and `sselect` values are legalized to 0 (ignore).
         "mhselect": {
-          // Values 1, 4 and 5, match on `mcontext`. Has no effect unless
-          // the `mcontext` or `hcontext` CSR is supported.
-          // Values 1 and 5 also require H.
+          // Values 1, 4 and 5, match on `mcontext`. Requires the
+          // `mcontext` CSR. Values 1 and 5 also require H.
           "mcontext_match": true,
           // Values 2 and 6, match on the VMID in `hgatp`. Requires H.
           "vmid_match": true
         },
         "sselect": {
-          // Value 1, match on `scontext`. Has no effect unless S and the
-          // `scontext` CSR are supported.
+          // Value 1, match on `scontext`. Requires S and the `scontext`
+          // CSR.
           "scontext_match": true,
           // Value 2, match on the ASID in `satp` or `vsatp`. Requires S.
           "asid_match": true

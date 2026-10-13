@@ -234,30 +234,24 @@ function TExtra_to_bits(t : TExtra) -> xlenbits = {
 }
 
 function legalize_mhselect(mhselect : bits(3)) -> bits(3) = {
-  // 1, 4 and 5 compare against mcontext
-  let mcontext_match = (sdtrig_has_mcontext | sdtrig_has_hcontext) & mhselect_mcontext_match;
-  // 2 and 6 compare against the VMID
-  let vmid_match = hartSupports(Ext_H) & mhselect_vmid_match;
   match mhselect {
-    0b000 => mhselect,                                                         // 0
-    0b001 => if hartSupports(Ext_H) & mcontext_match then mhselect else 0b000, // 1
-    0b010 => if vmid_match then mhselect else 0b000,                           // 2
-    0b011 => 0b000,                                                            // 3
-    0b100 => if mcontext_match then mhselect else 0b000,                       // 4
-    0b101 => if hartSupports(Ext_H) & mcontext_match then mhselect else 0b000, // 5
-    0b110 => if vmid_match then mhselect else 0b000,                           // 6
-    0b111 => 0b000,                                                            // 7
+    0b000 => mhselect,                                                                  // 0
+    0b001 => if hartSupports(Ext_H) & mhselect_mcontext_match then mhselect else 0b000, // 1
+    0b010 => if mhselect_vmid_match then mhselect else 0b000,                           // 2
+    0b011 => 0b000,                                                                     // 3
+    0b100 => if mhselect_mcontext_match then mhselect else 0b000,                       // 4
+    0b101 => if hartSupports(Ext_H) & mhselect_mcontext_match then mhselect else 0b000, // 5
+    0b110 => if mhselect_vmid_match then mhselect else 0b000,                           // 6
+    0b111 => 0b000,                                                                     // 7
   }
 }
 
 function legalize_sselect(sselect : bits(2)) -> bits(2) = {
-  let scontext_match = hartSupports(Ext_S) & sdtrig_has_scontext & sselect_scontext_match;
-  let asid_match = hartSupports(Ext_S) & sselect_asid_match;
   match sselect {
-    0b00 => sselect,                                  // 0
-    0b01 => if scontext_match then sselect else 0b00, // 1
-    0b10 => if asid_match then sselect else 0b00,     // 2
-    0b11 => 0b00,                                     // 3
+    0b00 => sselect,                                          // 0
+    0b01 => if sselect_scontext_match then sselect else 0b00, // 1
+    0b10 => if sselect_asid_match then sselect else 0b00,     // 2
+    0b11 => 0b00,                                             // 3
   }
 }
 
@@ -269,7 +263,7 @@ function make_textra(v : xlenbits) -> TExtra = {
     struct {
       mhvalue   = zero_extend(data[mhvalue]) & mhvalue_mask,
       mhselect  = legalize_mhselect(data[mhselect]),
-      sbytemask = if hartSupports(Ext_S) & sdtrig_has_scontext & sselect_scontext_match then zero_extend(data[sbytemask]) else zeros(),
+      sbytemask = if sselect_scontext_match then zero_extend(data[sbytemask]) else zeros(),
       svalue    = if hartSupports(Ext_S) then zero_extend(data[svalue]) & svalue_mask else zeros(),
       sselect   = legalize_sselect(data[sselect]),
     }
@@ -278,7 +272,7 @@ function make_textra(v : xlenbits) -> TExtra = {
     struct {
       mhvalue   = data[mhvalue] & mhvalue_mask,
       mhselect  = legalize_mhselect(data[mhselect]),
-      sbytemask = if hartSupports(Ext_S) & sdtrig_has_scontext & sselect_scontext_match then data[sbytemask] else zeros(),
+      sbytemask = if sselect_scontext_match then data[sbytemask] else zeros(),
       svalue    = if hartSupports(Ext_S) then data[svalue] & svalue_mask else zeros(),
       sselect   = legalize_sselect(data[sselect]),
     }
