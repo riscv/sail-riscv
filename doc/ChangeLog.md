@@ -1,6 +1,12 @@
 # Release notes for the next version
 
+- Sdtrig now supports context matching in `textra32` and `textra64`,
+  allowing more precise control over when triggers match and fire.
+
 - Updates to the [configuration file](../config/config.json.in):
+  - The supported `textra` context matches for `mhselect` and `sselect`
+    and the number of implemented `mhvalue` and `svalue` bits can
+    be configured, see `extensions.Sdtrig.textra`.
   - Whether an implicit access to a VS-stage PTE sets the D bit of a
     writable G-stage PTE can now be specified, see
     `extensions.H.implicit_vs_pte_access_sets_gstage_d`.

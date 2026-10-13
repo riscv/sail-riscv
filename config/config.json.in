@@ -1032,6 +1032,29 @@
           "len": "xlen",
           "value": "@CONFIG_SDTRIG_SUPPORTED_ITRIGGERS_VALUE@"
         }
+      },
+      "textra": {
+        // Which context matches are supported. Writes of unsupported
+        // `mhselect` and `sselect` values are legalized to 0 (ignore).
+        "mhselect": {
+          // Values 1, 4 and 5, match on `mcontext`. Requires the
+          // `mcontext` CSR. Values 1 and 5 also require H.
+          "mcontext_match": true,
+          // Values 2 and 6, match on the VMID in `hgatp`. Requires H.
+          "vmid_match": true
+        },
+        "sselect": {
+          // Value 1, match on `scontext`. Requires S and the `scontext`
+          // CSR.
+          "scontext_match": true,
+          // Value 2, match on the ASID in `satp` or `vsatp`. Requires S.
+          "asid_match": true
+        },
+        // The number of implemented `mhvalue` and `svalue` bits. Bits
+        // above these are read only zero. At most 6 and 16 on RV32,
+        // 13 and 32 on RV64.
+        "mhvalue_len": @CONFIG__SDTRIG__MHVALUE__LEN@,
+        "svalue_len": @CONFIG__SDTRIG__SVALUE__LEN@
       }
     },
     "Sscofpmf": {

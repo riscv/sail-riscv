@@ -887,6 +887,33 @@ private function check_misc_extension_dependencies() -> bool = {
         print_endline("Bit 3 (Breakpoint) in `base.medeleg.delegatable_bits` is set, but `extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol`: `tcontrol`-based reentrancy control hardwires this bit to 0.");
       };
     };
+    if (config extensions.Sdtrig.textra.mhselect.mcontext_match : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
+      valid = false;
+      print_endline("`extensions.Sdtrig.textra.mhselect.mcontext_match` is enabled but the `mcontext` CSR is not supported: mcontext matching requires `mcontext`.");
+    };
+    if (config extensions.Sdtrig.textra.mhselect.vmid_match : bool) & not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("`extensions.Sdtrig.textra.mhselect.vmid_match` is enabled but the H extension is not supported: VMID matching requires H.");
+    };
+    if (config extensions.Sdtrig.textra.sselect.scontext_match : bool)
+      & (not(config extensions.S.supported : bool) | not(config extensions.Sdtrig.scontext.supported : bool)) then {
+      valid = false;
+      print_endline("`extensions.Sdtrig.textra.sselect.scontext_match` is enabled but S or the `scontext` CSR is not supported: scontext matching requires both.");
+    };
+    if (config extensions.Sdtrig.textra.sselect.asid_match : bool) & not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("`extensions.Sdtrig.textra.sselect.asid_match` is enabled but the S extension is not supported: ASID matching requires S.");
+    };
+    let mhvalue_max : nat = if xlen == 32 then 6 else 13;
+    if sdtrig_mhvalue_len > mhvalue_max then {
+      valid = false;
+      print_endline("`extensions.Sdtrig.textra.mhvalue_len` is " ^ dec_str(sdtrig_mhvalue_len) ^ " but cannot be greater than " ^ dec_str(mhvalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
+    };
+    let svalue_max : nat = if xlen == 32 then 16 else 32;
+    if sdtrig_svalue_len > svalue_max then {
+      valid = false;
+      print_endline("`extensions.Sdtrig.textra.svalue_len` is " ^ dec_str(sdtrig_svalue_len) ^ " but cannot be greater than " ^ dec_str(svalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
+    };
   };
   valid
 }
