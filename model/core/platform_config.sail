@@ -102,11 +102,11 @@ enum CSRBitConfig = {
 
 // Bits for features that are not enabled are always read-only zero.
 function legalize_csr_bit(c : CSRBitConfig, feature_enabled : bool, v : bits(1)) -> bits(1) =
-  match (feature_enabled, c) {
-    (false, _)                  => 0b0,
-    (true, CSRBit_ReadOnlyZero) => 0b0,
-    (true, CSRBit_ReadOnlyOne)  => 0b1,
-    (true, CSRBit_Writable)     => v,
+  if not(feature_enabled) then 0b0
+  else match c {
+    CSRBit_ReadOnlyZero => 0b0,
+    CSRBit_ReadOnlyOne  => 0b1,
+    CSRBit_Writable     => v,
   }
 
 // Stateen

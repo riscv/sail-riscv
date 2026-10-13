@@ -763,6 +763,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssstrict extension is enabled but supervisor mode (S) is disabled: supporting Ssstrict requires S.");
   };
+  if (config extensions.Stateen.Ssstateen.supported : bool) & not(config extensions.S.supported : bool) then {
+    valid = false;
+    print_endline("The Ssstateen extension is enabled but supervisor mode (S) is disabled: supporting Ssstateen requires S.");
+  };
   if (config extensions.H.supported : bool) then {
     if base_E_enabled then {
       valid = false;
