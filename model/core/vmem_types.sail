@@ -87,6 +87,38 @@ function accessType_to_str(access : MemoryAccessType(mem_payload)) -> string =
 
 overload to_str = {accessType_to_str}
 
+// Some useful predicates on the kind of memory access
+
+function is_load_store(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    Load(_)             => true,
+    Store(_)            => true,
+    LoadReserved(_)     => true,
+    LoadExecute(_)      => true,
+    StoreConditional(_) => true,
+    Atomic(_)           => true,
+    InstructionFetch(_) => false,
+    CacheAccess(_)      => true,
+  }
+
+function is_prefetch_access(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    CacheAccess(CB_prefetch(_)) => true,
+    _ => false,
+  }
+
+function is_load_reserved(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    LoadReserved(_) => true,
+    _ => false,
+  }
+
+function is_store_conditional(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    StoreConditional(_) => true,
+    _ => false,
+  }
+
 function is_shadow_stack_access(access : MemoryAccessType(mem_payload)) -> bool =
   match access {
     Load(ShadowStack)                   => true,
@@ -118,6 +150,12 @@ function is_amo_access(access : MemoryAccessType(mem_payload)) -> bool =
   match access {
     Atomic(_) => true,
     _         => false,
+  }
+
+function is_fetch_access(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    InstructionFetch(_) => true,
+    _                   => false,
   }
 
 function is_shadow_stack_amo(access : MemoryAccessType(mem_payload)) -> bool =

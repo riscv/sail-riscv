@@ -29,11 +29,23 @@ enum zEvent : int;
 
 class PlatformInterface {
 public:
-  virtual unit fetch_callback(sbits opcode);
+  virtual unit fetch_callback(sbits pc, sbits opcode);
 
-  virtual unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value);
+  virtual unit mem_write_callback(
+    hart::zPrivilege privilege,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
 
-  virtual unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value);
+  virtual unit mem_read_callback(
+    hart::zPrivilege privilege,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
 
   virtual unit mem_exception_callback(sbits paddr, uint64_t num_of_exception);
 
@@ -57,6 +69,20 @@ public:
 
   virtual unit trigger_match_callback(sail_int index);
   virtual unit trigger_fire_callback(sail_int index);
+
+  virtual unit address_translation_start_callback(
+    hart::zTranslationStage stage,
+    hart::zPrivilege privilege,
+    sbits vaddr,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access
+  );
+
+  virtual unit address_translated_callback(
+    hart::zTranslationStage stage,
+    sbits vaddr,
+    sbits paddr,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access
+  );
 
   // Page table walk callbacks
   virtual unit ptw_start_callback(
