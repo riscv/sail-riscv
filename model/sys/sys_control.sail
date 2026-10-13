@@ -259,6 +259,10 @@ function xtval_exception_value(e : ExceptionType, excinfo : xlenbits) -> option(
   } then Some(excinfo) else None()
 }
 
+// GVA is only set if a guest VA is actually written to xtval.
+function xtval_is_gva(e : ExceptionContext) -> bool =
+  e.excinfo_is_gva & is_some(xtval_exception_value(e.trap, e.excinfo))
+
 // Handle a trap, after the double trap checks in trap_handler.
 function trap_handler_inner(
   del_priv       : Privilege,
@@ -271,7 +275,7 @@ function trap_handler_inner(
   // TODO: Improve this
   let (excinfo_is_gva, excinfo, excinfo2, excinst, ext) : (bool, option(xlenbits), option(xlenbits), option(xlenbits), option(ext_exception)) = match c {
     Interrupt(_) => (false, Some(zeros()), None(), None(), None()),
-    Exception(ctx) => (ctx.excinfo_is_gva, xtval_exception_value(ctx.trap, ctx.excinfo), ctx.excinfo2, ctx.excinst, ctx.ext),
+    Exception(ctx) => (xtval_is_gva(ctx), xtval_exception_value(ctx.trap, ctx.excinfo), ctx.excinfo2, ctx.excinst, ctx.ext),
   };
 
   if   get_config_print_exception() | get_config_print_interrupt()
@@ -428,7 +432,7 @@ function double_trap_cause(c : TrapCause) -> TrapCause = {
     },
     Exception(e) => struct {
       trap           = E_Double_Trap(),
-      excinfo_is_gva = e.excinfo_is_gva,
+      excinfo_is_gva = xtval_is_gva(e),
       // mtval gets what the unexpected trap would have written.
       excinfo        = tval(xtval_exception_value(e.trap, e.excinfo)),
       excinfo2       = Some(unexpected_cause),
