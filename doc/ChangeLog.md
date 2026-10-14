@@ -4,6 +4,14 @@
   allowing more precise control over when triggers match and fire.
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Each bit of `mstateen0`, `hstateen0` and `sstateen0` can now be
+    configured as writable, read-only zero or read-only one (`CSRBit_Writable`,
+    `CSRBit_ReadOnlyZero` or `CSRBit_ReadOnlyOne`), see `mstateen0`,
+    `hstateen0` and `sstateen0` under `extensions.Stateen`.
+    Bit 63 of `mstateen1`, `mstateen2` and `mstateen3` can now be
+    configured the same way, see `mstateen1`, `mstateen2` and `mstateen3`
+    under `extensions.Stateen`. `C_readonly_zero` and `SE0_readonly_zero`
+    have been removed as part of this change.
   - The supported `textra` context matches for `mhselect` and `sselect`
     and the number of implemented `mhvalue` and `svalue` bits can
     be configured, see `extensions.Sdtrig.textra`.
@@ -12,6 +20,7 @@
     `extensions.H.implicit_vs_pte_access_sets_gstage_d`.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/2021 : `mstateen1/2/3` and `hstateen1/2/3` bit 63 should be writable when H is implemented
   - https://github.com/riscv/sail-riscv/issues/2005 : `medeleg` and `hedeleg` bit 18 (software check) should be read-only zero before priv 1.13 unless Zicfilp or Zicfiss is supported
   - https://github.com/riscv/sail-riscv/issues/2001 : `hstatus.GVA` and `mstatus.GVA` were set even when no guest virtual address was written to `stval`/`mtval`
   - https://github.com/riscv/sail-riscv/issues/1986 : Indexed segment stores only check the index group against the first field for source EEW overlap

@@ -763,6 +763,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssstrict extension is enabled but supervisor mode (S) is disabled: supporting Ssstrict requires S.");
   };
+  if (config extensions.Stateen.Ssstateen.supported : bool) & not(config extensions.S.supported : bool) then {
+    valid = false;
+    print_endline("The Ssstateen extension is enabled but supervisor mode (S) is disabled: supporting Ssstateen requires S.");
+  };
   if (config extensions.H.supported : bool) then {
     if base_E_enabled then {
       valid = false;
@@ -1005,18 +1009,56 @@ private function check_extension_param_constraints() -> bool = {
   valid
 }
 
+// A bit for a feature the hart does not support must be read-only zero.
+private function check_stateen_bit_feature(name : string, c : CSRBitConfig, feature_supported : bool) -> bool = {
+  if c != CSRBit_ReadOnlyZero & not(feature_supported) then {
+    print_endline("Stateen " ^ name ^ " is not read-only zero but the feature it controls is not supported: bits for unsupported features must be read-only zero.");
+    return false;
+  };
+  true
+}
+
 private function check_stateen_config() -> bool = {
   if not(config extensions.Stateen.Smstateen.supported : bool) & not(config extensions.Stateen.Ssstateen.supported : bool) then return true;
   var valid : bool = true;
-  if config extensions.Stateen.SE0_readonly_zero : bool & hartSupports(Ext_H) then {
+  if (mstateen0_se0 == CSRBit_ReadOnlyZero | mstateen1_se1 == CSRBit_ReadOnlyZero |
+      mstateen2_se2 == CSRBit_ReadOnlyZero | mstateen3_se3 == CSRBit_ReadOnlyZero) & hartSupports(Ext_H) then {
     valid = false;
-    print_endline("Stateen SE0_readonly_zero is true but H extension is supported: SE0 must be writable when H is implemented.");
+    print_endline("Stateen bit 63 of mstateen0, mstateen1, mstateen2 or mstateen3 is read-only zero but H extension is supported: bit 63 must not be read-only zero when H is implemented.");
   };
   // TODO: Update when Zcmt is implemented
-  if config extensions.Stateen.SE0_readonly_zero : bool & ((config extensions.Zfinx.supported : bool) | not(config extensions.Stateen.C_readonly_zero : bool)) then {
+  if mstateen0_se0 == CSRBit_ReadOnlyZero &
+     ((config extensions.Zfinx.supported : bool & sstateen0_fcsr != CSRBit_ReadOnlyZero & mstateen0_fcsr != CSRBit_ReadOnlyZero) |
+      (sstateen0_c != CSRBit_ReadOnlyZero & mstateen0_c != CSRBit_ReadOnlyZero)) then {
     valid = false;
-    print_endline("Stateen SE0_readonly_zero is true but sstateen0 has writable bits (FCSR due to Zfinx support or C due to disabled C_readonly_zero): SE0 must be writable.");
+    print_endline("Stateen mstateen0.SE0 is read-only zero but sstateen0 is not all read-only zero: SE0 must not be read-only zero.");
   };
+  // A bit can only be read-only one in hstateen0 if it is read-only one in mstateen0.
+  if hartSupports(Ext_Smstateen) &
+     ((hstateen0_envcfg == CSRBit_ReadOnlyOne & mstateen0_envcfg != CSRBit_ReadOnlyOne) | (hstateen0_context == CSRBit_ReadOnlyOne & mstateen0_context != CSRBit_ReadOnlyOne) |
+      (hstateen0_fcsr == CSRBit_ReadOnlyOne & mstateen0_fcsr != CSRBit_ReadOnlyOne) | (hstateen0_c == CSRBit_ReadOnlyOne & mstateen0_c != CSRBit_ReadOnlyOne)) then {
+    valid = false;
+    print_endline("Stateen hstateen0 has a read-only one bit that is not read-only one in mstateen0.");
+  };
+  // A bit can only be read-only one in sstateen0 if it is read-only one in mstateen0 and hstateen0.
+  if (sstateen0_fcsr == CSRBit_ReadOnlyOne & ((hartSupports(Ext_Smstateen) & mstateen0_fcsr != CSRBit_ReadOnlyOne) | (hartSupports(Ext_H) & hstateen0_fcsr != CSRBit_ReadOnlyOne))) |
+     (sstateen0_c == CSRBit_ReadOnlyOne & ((hartSupports(Ext_Smstateen) & mstateen0_c != CSRBit_ReadOnlyOne) | (hartSupports(Ext_H) & hstateen0_c != CSRBit_ReadOnlyOne))) then {
+    valid = false;
+    print_endline("Stateen sstateen0 has a read-only one bit that is not read-only one in mstateen0 and hstateen0.");
+  };
+  if hartSupports(Ext_Smstateen) then {
+    valid = check_stateen_bit_feature("mstateen0.ENVCFG",  mstateen0_envcfg,  hartSupports(Ext_S)) & valid;
+    valid = check_stateen_bit_feature("mstateen0.CONTEXT", mstateen0_context, hartSupports(Ext_Sdtrig) & (sdtrig_has_scontext | sdtrig_has_hcontext)) & valid;
+    valid = check_stateen_bit_feature("mstateen0.P1P13",   mstateen0_p1p13,   delegh_csrs_are_defined & hartSupports(Ext_H) & xlen == 32) & valid;
+    valid = check_stateen_bit_feature("mstateen0.SRMCFG",  mstateen0_srmcfg,  hartSupports(Ext_Ssqosid)) & valid;
+    valid = check_stateen_bit_feature("mstateen0.FCSR",    mstateen0_fcsr,    hartSupports(Ext_Zfinx)) & valid;
+  };
+  if hartSupports(Ext_H) then {
+    valid = check_stateen_bit_feature("hstateen0.CONTEXT", hstateen0_context, hartSupports(Ext_Sdtrig) & sdtrig_has_scontext) & valid;
+    valid = check_stateen_bit_feature("hstateen0.FCSR",    hstateen0_fcsr,    hartSupports(Ext_Zfinx)) & valid;
+  };
+  if hartSupports(Ext_S) then
+    valid = check_stateen_bit_feature("sstateen0.FCSR",    sstateen0_fcsr,    hartSupports(Ext_Zfinx)) & valid;
   valid
 }
 
