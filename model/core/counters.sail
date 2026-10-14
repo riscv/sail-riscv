@@ -209,6 +209,8 @@ function write_mhpmcounter(index : hpmidx, value : bits(64)) -> unit =
   }
 
 val event_csr_write_callback = pure {cpp: "event_csr_write_callback"} : (hpmidx, bits(64), bits(64)) -> unit
+// Ignore on other targets
+function event_csr_write_callback(_, _, _) = ()
 
 function write_mhpmevent(index : hpmidx, value : bits(64)) -> unit =
   if sys_writable_hpm_counters[index] == 0b1 then {
