@@ -539,10 +539,7 @@ function trigger_name(t : Trigger) -> string =
     T_icount(_)    => "icount",
     T_itrigger(_)  => "itrigger",
     T_etrigger(_)  => "etrigger",
-    T_mcontrol6(s) => {
-      let chain_info : string = if s.chain then "in-chain" else "chain-terminating";
-      chain_info ^ " mcontrol6"
-    },
+    T_mcontrol6(s) => "mcontrol6 (chain=" ^ bits_str(bool_bit(s.chain)) ^ ")",
   }
 
 let trig_reset_val : Trigger =
