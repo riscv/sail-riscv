@@ -93,7 +93,7 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
       // equal to rs1, but pointer masking can change that.
       let vaddr_for_error = vaddr - negative_offset;
       // TODO/NOTE: This is weird, we should not translateAddr a different address than specified and report it
-      match translateAddr(vaddr, access, eff_priv) {
+      match translateAddr(vaddr, access, cache_block_size, eff_priv) {
         Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
           match phys_access_check(access, pbmt, eff_priv, paddr, cache_block_size, false) {

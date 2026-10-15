@@ -95,7 +95,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     };
   };
 
-  let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, eff_priv) {
+  let (addr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, width, eff_priv) {
     Err(e, _) => return trap(e),
     Ok(addr, pbmt, _) => (addr, pbmt),
   };

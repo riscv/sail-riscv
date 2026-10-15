@@ -1,0 +1,16 @@
+{
+  "window": "main",
+  "events": [
+    { "match": "sb", "mem_d": [1] },
+    { "match": "lb", "mem_d": [1], "x_rd": true },
+    { "match": "lbu", "mem_d": [1], "x_rd": true },
+    { "match": "sh", "mem_d": [2] },
+    { "match": "lh", "mem_d": [2], "x_rd": true },
+    { "match": "lhu", "mem_d": [2], "x_rd": true },
+    { "match": "sw", "mem_d": [4] },
+    { "match": "lw", "mem_d": [4], "x_rd": true },
+    { "match": "lwu", "when": "xlen==64", "mem_d": [4], "x_rd": true },
+    { "match": "sd", "when": "xlen==64", "mem_d": [8] },
+    { "match": "ld", "when": "xlen==64", "mem_d": [8], "x_rd": true }
+  ]
+}

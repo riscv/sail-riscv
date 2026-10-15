@@ -198,7 +198,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     };
   };
 
-  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, eff_priv) {
+  let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(vaddr, access, width, eff_priv) {
     Ok(addr, pbmt, _) => (addr, pbmt),
     Err(e, _)   => return trap(e),
   };

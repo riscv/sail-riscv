@@ -8,15 +8,15 @@
 
 // Callbacks for state-changing events
 
-/// Called upon successful instruction fetch with the opcode.
+/// Called upon successful instruction fetch with the PC and instruction opcode.
 /// If there is a fetch error then this is not called (but trap_callback() will be).
-val fetch_callback = pure {cpp: "fetch_callback"} : forall 'n, 'n in {16, 32}. (bits('n)) -> unit
+val fetch_callback = pure {cpp: "fetch_callback"} : forall 'n, 'n in {16, 32}. (/* pc */ xlenbits, bits('n)) -> unit
 function fetch_callback(_) = ()
 
-val mem_write_callback = pure {cpp: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+val mem_write_callback = pure {cpp: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (Privilege, MemoryAccessType(mem_payload), /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_write_callback(_) = ()
 
-val mem_read_callback = pure {cpp: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+val mem_read_callback = pure {cpp: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (Privilege, MemoryAccessType(mem_payload), /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_read_callback(_) = ()
 
 val mem_exception_callback = pure {cpp: "mem_exception_callback"} : (/* addr */ physaddrbits, /* exception code */ exc_code) -> unit

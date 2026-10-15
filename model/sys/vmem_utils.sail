@@ -120,7 +120,7 @@ private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_a
 
   let eff_priv = access_info.eff_privilege;
 
-  match translateAddr(vaddr, access, eff_priv) {
+  match translateAddr(vaddr, access, width, eff_priv) {
     Err(e, _) => Err(trap(e)),
 
     Ok(paddr, pbmt, _) => match mem_read(access, pbmt, eff_priv, paddr, width, aq, rl, res) {
@@ -215,7 +215,7 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
 
   let eff_priv = access_info.eff_privilege;
 
-  match translateAddr(vaddr, access, eff_priv) {
+  match translateAddr(vaddr, access, width, eff_priv) {
     Err(e, _) => Err(trap(e)),
 
     Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq, rl, res) {
@@ -284,7 +284,7 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
   };
 
   let access_width = if do_split_access then in_page_bytes else width;
-  match translateAddr(vaddr, access, eff_priv) {
+  match translateAddr(vaddr, access, width, eff_priv) {
     Err(e, _) => return Err(trap(e)),
 
     Ok(paddr, pbmt, _) => {
