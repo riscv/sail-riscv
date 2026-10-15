@@ -671,6 +671,8 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           textra,
         })
       } else {
+        if get_config_print_trigger()
+        then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported action " ^ bits_str(act) ^ ".");
         make_disabled_trigger(tdata1, tdata2, textra)
       }
     },
@@ -698,6 +700,12 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           pending = false,
         })
       } else {
+        if get_config_print_trigger() then {
+          if not(is_action_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported action " ^ bits_str(act) ^ ".");
+          if not(is_interrupts_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported interrupts " ^ bits_str(tdata2) ^ " (supported = " ^ bits_str(supported_itrigger_mask) ^ ").");
+        };
         make_disabled_trigger(tdata1, tdata2, textra)
       }
     },
@@ -724,6 +732,12 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           pending = false,
         })
       } else {
+        if get_config_print_trigger() then {
+          if not(is_action_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported action " ^ bits_str(act) ^ ".");
+          if not(is_exceptions_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported exceptions " ^ bits_str(tdata2) ^ " (supported = " ^ bits_str(supported_etrigger_mask) ^ ").");
+        };
         make_disabled_trigger(tdata1, tdata2, textra)
       }
     },
@@ -771,6 +785,16 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           match_info = None(),
         })
       } else {
+        if get_config_print_trigger() then {
+          if not(is_action_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported action " ^ bits_str(act) ^ ".");
+          if not(is_size_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported match size " ^ bits_str(v[size]) ^ ".");
+          if not(is_match_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported match " ^ bits_str(v[t_match]) ^ ".");
+          if is_match_supported & not(is_size_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with invalid NAPOT compare value " ^ bits_str(tdata2) ^ ".");
+        };
         make_disabled_trigger(tdata1, tdata2, textra)
       }
     },
@@ -848,14 +872,20 @@ function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbit
                       then legalize_napot_compare_value(tdata2)
                       else tdata2;
       if get_config_print_trigger()
-      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(legalized) ^ " (given " ^ bits_str(tdata2) ^ ")");
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(legalized) ^ " (write=" ^ bits_str(tdata2) ^ ")");
       T_mcontrol6({s with tdata2 = legalized})
     },
     T_itrigger(s) => {
-      T_itrigger({s with tdata2 = tdata2 & supported_itrigger_mask})
+      let legalized = tdata2 & supported_itrigger_mask;
+      if get_config_print_trigger()
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(legalized) ^ " (write=" ^ bits_str(tdata2) ^ ")");
+      T_itrigger({s with tdata2 = legalized})
     },
     T_etrigger(s) => {
-      T_etrigger({s with tdata2 = tdata2 & supported_etrigger_mask})
+      let legalized = tdata2 & supported_etrigger_mask;
+      if get_config_print_trigger()
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(legalized) ^ " (write=" ^ bits_str(tdata2) ^ ")");
+      T_etrigger({s with tdata2 = legalized})
     },
     _ => {
       if get_config_print_trigger()
