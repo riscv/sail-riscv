@@ -117,6 +117,8 @@ add_custom_command(
         --c-preserve string_of_exception
         --c-preserve name_of_event
         --c-preserve event_selector_width
+        --c-preserve is_fetch_access
+        --c-preserve is_store_conditional
         # Preserve RVFI functions.
         --c-preserve rvfi_set_instr_packet
         --c-preserve rvfi_get_cmd

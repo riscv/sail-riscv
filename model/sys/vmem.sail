@@ -547,15 +547,27 @@ private function translate_stage forall 'n 'v, is_sv_or_svx4_mode('v) & 'n >= 'v
 private function translate_vs_stage(
   vaddr  : virtaddr,
   access : MemoryAccessType(mem_payload),
-  p      : Privilege
+  p      : Privilege,
 ) -> TR_Result(gpabits, PTW_Error) = {
   let (stage, mode) = if p == VirtualSupervisor | p == VirtualUser
                       then (VS_Stage, vsatp_mode())
                       else (S_Stage, satp_mode(p));
-  if mode == Bare then return Ok(zero_extend(bits_of(vaddr)), PBMT_PMA, init_ext_ptw);
+
+  address_translation_start_callback(stage, p, zero_extend(bits_of(vaddr)), access);
+
+  if mode == Bare then {
+    let vaddr : physaddrbits = zero_extend(bits_of(vaddr));
+    address_translated_callback(stage, vaddr, vaddr, access);
+    return Ok(vaddr, PBMT_PMA, init_ext_ptw);
+  };
   let sv_width = satp_mode_width(mode);
   assert(sv_width <= xlen);
-  translate_stage(sv_width, bits_of(vaddr), access, p, stage)
+  let translation = translate_stage(sv_width, bits_of(vaddr), access, p, stage);
+  match translation {
+    Ok(gpa, _, _) => address_translated_callback(stage, zero_extend(bits_of(vaddr)), gpa, access),
+    Err(_)        => (),
+  };
+  translation
 }
 
 // Wrapper for G-stage translation (takes physaddr).
@@ -564,11 +576,24 @@ function translate_g_stage(
   gpa    : gpabits,
   access : MemoryAccessType(mem_payload),
 ) -> TR_Result(gpabits, PTW_Error) = {
+
+  let stage = G_Stage;
+  address_translation_start_callback(stage, User, gpa, access);
+
   let mode = hgatp_mode();
-  if mode == HBare then return Ok(gpa, PBMT_PMA, init_ext_ptw);
+  if mode == HBare then {
+    address_translated_callback(stage, gpa, gpa, access);
+    return Ok(gpa, PBMT_PMA, init_ext_ptw);
+  };
+
   let sv_width = hgatp_mode_width(mode);
   assert(sv_width <= gpalen);
-  translate_stage(sv_width, gpa, access, User, G_Stage)
+  let translation = translate_stage(sv_width, gpa, access, User, stage);
+  match translation {
+    Ok(spa, _, _) => address_translated_callback(stage, gpa, spa, access),
+    Err(_)        => (),
+  };
+  translation
 }
 
 // This option tells Sail to unroll the multi-stage translation for theorem prover

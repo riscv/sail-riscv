@@ -47,25 +47,37 @@ void ModelImpl::set_reservation_invalidate_on_same_hart_store(bool invalidate_on
   m_reservation_invalidate_on_same_hart_store = invalidate_on_same_hart_store;
 }
 
-unit ModelImpl::fetch_callback(sbits opcode) {
+unit ModelImpl::fetch_callback(sbits pc, sbits opcode) {
   for (auto c : m_callbacks) {
-    c->fetch_callback(*this, opcode);
+    c->fetch_callback(*this, pc, opcode);
   }
   return UNIT;
 }
 
-unit ModelImpl::mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_write_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_write_callback(*this, type, paddr, width, value);
+    c->mem_write_callback(*this, privilege, access, paddr, width, value);
   }
   if (m_reservation_invalidate_on_same_hart_store && match_reservation(paddr)) {
     cancel_reservation(UNIT);
   };
   return UNIT;
 }
-unit ModelImpl::mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_read_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_read_callback(*this, type, paddr, width, value);
+    c->mem_read_callback(*this, privilege, access, paddr, width, value);
   }
   return UNIT;
 }
@@ -157,6 +169,25 @@ unit ModelImpl::trigger_match_callback(sail_int index) {
 unit ModelImpl::trigger_fire_callback(sail_int index) {
   for (auto c : m_callbacks) {
     c->trigger_fire_callback(*this, index);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::address_translation_start_callback(
+  TranslationStage stage,
+  Privilege privilege,
+  sbits vaddr,
+  MemoryAccessType access
+) {
+  for (auto c : m_callbacks) {
+    c->address_translation_start_callback(*this, stage, privilege, vaddr, access);
+  }
+  return UNIT;
+}
+
+unit ModelImpl::address_translated_callback(TranslationStage stage, sbits vaddr, sbits paddr, MemoryAccessType access) {
+  for (auto c : m_callbacks) {
+    c->address_translated_callback(*this, stage, vaddr, paddr, access);
   }
   return UNIT;
 }
@@ -687,6 +718,16 @@ std::string ModelImpl::translation_stage_to_string(TranslationStage stage) {
   return str;
 }
 
+bool ModelImpl::is_fetch(MemoryAccessType access) {
+  return zis_fetch_access(access);
+}
+bool ModelImpl::is_store_conditional(MemoryAccessType access) {
+  return zis_store_conditional(access);
+}
+bool ModelImpl::is_virtual_privilege(Privilege privilege) {
+  return privilege == hart::zVirtualUser || privilege == hart::zVirtualSupervisor;
+}
+
 void ModelImpl::tick_clock() {
   ztick_clock(UNIT);
 }
@@ -718,6 +759,14 @@ int64_t ModelImpl::vlen() const {
 
 int64_t ModelImpl::physaddrbits_len() const {
   return zphysaddrbits_len;
+}
+
+ModelImpl::Privilege ModelImpl::cur_privilege() const {
+  return zcur_privilege;
+}
+
+uint64_t ModelImpl::privilege_as_bits(ModelImpl::Privilege privilege) {
+  return zprivLevel_to_bits(privilege);
 }
 
 uint64_t ModelImpl::pc() const {

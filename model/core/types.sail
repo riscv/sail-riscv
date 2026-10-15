@@ -117,37 +117,6 @@ union MemoryAccessType ('a : Type) = {
   CacheAccess      : cacheop
 }
 
-// Some useful predicates on the kind of memory access
-function is_load_store forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
-  match access {
-    Load(_)             => true,
-    Store(_)            => true,
-    LoadReserved(_)     => true,
-    LoadExecute(_)      => true,
-    StoreConditional(_) => true,
-    Atomic(_)           => true,
-    InstructionFetch(_) => false,
-    CacheAccess(_)      => true,
-  }
-
-function is_prefetch_access forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
-  match access {
-    CacheAccess(CB_prefetch(_)) => true,
-    _ => false,
-  }
-
-function is_load_reserved forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
-  match access {
-    LoadReserved(_) => true,
-    _ => false,
-  }
-
-function is_store_conditional forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
-  match access {
-    StoreConditional(_) => true,
-    _ => false,
-  }
-
 // CSR access types
 enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
 

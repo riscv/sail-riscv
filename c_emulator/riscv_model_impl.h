@@ -79,6 +79,14 @@ public:
   std::string ptw_error_to_string(PTW_Error error_type);
   std::string translation_stage_to_string(TranslationStage stage);
 
+  // other conversions
+  uint64_t privilege_as_bits(ModelImpl::Privilege privilege);
+
+  // other utilities
+  bool is_fetch(MemoryAccessType access);
+  bool is_store_conditional(MemoryAccessType access);
+  static bool is_virtual_privilege(Privilege privilege);
+
   // access to model configuration
 
   bool config_is_valid();
@@ -105,6 +113,7 @@ public:
   void tick_clock();
   bool try_step(int64_t step_no, bool exit_wait);
 
+  Privilege cur_privilege() const;
   int64_t xlen() const;
   int64_t flen() const;
   int64_t vlen() const;
@@ -143,9 +152,21 @@ private:
 
   // These functions are called by the Sail code.
 
-  unit fetch_callback(sbits opcode) override;
-  unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
-  unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
+  unit fetch_callback(sbits pc, sbits opcode) override;
+  unit mem_write_callback(
+    Privilege privilege,
+    MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
+  unit mem_read_callback(
+    Privilege privilege,
+    MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
   unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
   unit freg_write_callback(unsigned reg, sbits value) override;
@@ -162,6 +183,14 @@ private:
   unit instret_callback(unit) override;
   unit trigger_match_callback(sail_int index) override;
   unit trigger_fire_callback(sail_int index) override;
+
+  unit address_translation_start_callback(
+    TranslationStage stage,
+    Privilege privilege,
+    sbits vaddr,
+    MemoryAccessType access
+  ) override;
+  unit address_translated_callback(TranslationStage stage, sbits vaddr, sbits paddr, MemoryAccessType access) override;
 
   // Page table walk callbacks
   unit ptw_start_callback(
