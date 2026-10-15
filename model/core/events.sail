@@ -26,6 +26,8 @@ mapping event_name : Event <-> string = {
 function name_of_event(event : Event) -> string = event_name(event)
 
 val event_callback = impure {cpp: "event_callback", c: "event_callback"} : (Event, Privilege) -> unit
+// Ignore event callbacks on other targets
+function event_callback(_, _) = ()
 
 function generate_event(event : Event) -> unit =
   event_callback(event, cur_privilege)

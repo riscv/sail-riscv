@@ -755,12 +755,12 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_Sha => 6, // > its dependencies
 
-    Ext_Zfinx => 9, // > is_zfinx_enabled_by_stateen
+    Ext_Zfinx => 10, // > is_zfinx_enabled_by_stateen
 
-    Ext_Zdinx => 10, // > Zdinx
-    Ext_Zhinx => 10, // > Zfinx
+    Ext_Zdinx => 11, // > Zfinx
+    Ext_Zhinx => 11, // > Zfinx
 
-    Ext_Zhinxmin => 11, // > Zhinx
+    Ext_Zhinxmin => 12, // > Zhinx
 
     _ => 2
   }

@@ -1156,6 +1156,8 @@ private function check_version_constraints() -> bool = {
 // Checks for selector-value validity are done in C++ for efficiency
 // since Sail does not have a `set` type.
 val validate_event_selectors = pure {cpp:"validate_event_selectors"} : unit -> bool
+// Ignore on other targets
+function validate_event_selectors() = true
 
 private function check_platform_constraints() -> bool =
   validate_event_selectors()
