@@ -1,0 +1,103 @@
+name: "sail-riscv build"
+description: "Composite action for a build of the Sail RISC-V model."
+inputs:
+  cmake_version:
+    description: "CMake version to install"
+    required: true
+  run_all_steps:
+    description: "Whether to run additional steps in the build"
+    required: false
+    default: false
+  first_party_tests:
+    description: "Whether to run first party tests"
+    required: true
+  clang_tidy:
+    description: "Whether to run clang-tidy"
+    required: false
+    default: false
+  build_name:
+    description: "Name of the output build"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check out repository code
+      uses: actions/checkout@v7
+      with:
+        # Git history is needed for `git describe` in the build to work.
+        fetch-depth: 0
+
+    - name: Common setup
+      uses: ./.github/actions/sail-setup
+      with:
+        cmake-version: "${{ inputs.cmake_version }}"
+        install-clang: "true"
+
+    - name: Ensure pre-commit checks pass
+      if: ${{ inputs.run_all_steps }}
+      shell: bash
+      run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
+
+    - name: Get tests version
+      shell: bash
+      run: |
+        echo "SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)" >> $GITHUB_ENV
+
+    - name: Restore cached tests
+      uses: actions/cache/restore@v6
+      id: sail-riscv-tests-cache-restore
+      with:
+        path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
+        key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
+
+    - name: Build simulator and first party tests
+      shell: bash
+      run: |
+        # CLANG_VERSION is set by the sail-setup action when install-clang is enabled.
+        CLANG_FLAG=""
+        if [ -n "$CLANG_VERSION" ]; then
+          CLANG_FLAG="-DCLANG_BIN=/usr/bin/clang-$CLANG_VERSION"
+        fi
+        # Ninja is used because the CMake Makefile generator doesn't
+        # build top-level targets in parallel unfortunately.
+        # First party tests cannot be built in the Rocky container due to lack of a suitable toolchain.
+        cmake -S . -B build -GNinja \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DWARNINGS_AS_ERRORS=TRUE \
+          -DFIRST_PARTY_TESTS=${{ inputs.first_party_tests }} \
+          -DENABLE_RISCV_TESTS=TRUE \
+          -DENABLE_RISCV_ARCH_TESTS=TRUE \
+          -DENABLE_DAMO_TESTS=TRUE \
+          -DENABLE_RISCV_VECTOR_TESTS_V64_E64=TRUE \
+          -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE \
+          -DENABLE_LTO=TRUE \
+          -DENABLE_CLANG_TIDY=${{ inputs.clang_tidy }} \
+          $CLANG_FLAG
+        ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
+
+    - name: Cache downloaded tests
+      uses: actions/cache/save@v6
+      # Update cache only on the master branch, and from only one of the jobs in the matrix.
+      if: ${{ inputs.run_all_steps && steps.sail-riscv-tests-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master' }}
+      with:
+        path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
+        key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
+
+    - name: Run build-time tests
+      # This currently comprises first-party tests and tests that
+      # need the Sail compiler (e.g. the SMT property tests).  Both
+      # types are gated on `first_party_tests`, to workaround the
+      # `ctest` limitation that only one test grouping can be
+      # specified at a time (i.e. `-R smt -R first_party` does not
+      # work).
+      if: ${{ inputs.first_party_tests }}
+      shell: bash
+      run: |
+        ctest --test-dir build -L TestAtBuildTime --output-on-failure
+
+    - name: Upload built simulator
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.build_name }}
+        path: build/c_emulator
