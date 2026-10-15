@@ -680,7 +680,12 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
     TT_itrigger => {
       let v = Mk_IETrigger_bits(tdata1.bits);
       let act = v[action];
-      if is_supported_action(act) then {
+
+      let is_action_supported     = is_supported_action(act);
+      let is_interrupts_supported = (tdata2 & supported_itrigger_mask) == tdata2;
+      let is_valid_config         = is_action_supported & is_interrupts_supported;
+
+      if is_valid_config then {
         T_itrigger(struct {
           dmode = false,
           hit = bool_bit(v[hit]),
@@ -702,7 +707,12 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
     TT_etrigger => {
       let v = Mk_IETrigger_bits(tdata1.bits);
       let act = v[action];
-      if is_supported_action(act) then {
+
+      let is_action_supported     = is_supported_action(act);
+      let is_exceptions_supported = (tdata2 & supported_etrigger_mask) == tdata2;
+      let is_valid_config         = is_action_supported & is_exceptions_supported;
+
+      if is_valid_config then {
         T_etrigger(struct {
           dmode = false,
           hit = bool_bit(v[hit]),
@@ -828,8 +838,7 @@ function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbit
   }
 }
 
-// For now, ignore writes to `tdata2` of non-disabled triggers, unless
-// required.
+// For now, ignore most writes to `tdata2` of non-disabled triggers.
 function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbits) -> Trigger =
   match t {
     T_disabled(s) => {
@@ -844,6 +853,12 @@ function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbit
       if get_config_print_trigger()
       then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(legalized) ^ " (given " ^ bits_str(tdata2) ^ ")");
       T_mcontrol6({s with tdata2 = legalized})
+    },
+    T_itrigger(s) => {
+      T_itrigger({s with tdata2 = tdata2 & supported_itrigger_mask})
+    },
+    T_etrigger(s) => {
+      T_etrigger({s with tdata2 = tdata2 & supported_etrigger_mask})
     },
     _ => {
       if get_config_print_trigger()
