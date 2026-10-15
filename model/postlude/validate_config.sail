@@ -925,7 +925,10 @@ private function check_misc_extension_dependencies() -> bool = {
         print_endline("`extensions.Sdtrig.mcontrol6.maskmax6` is set to " ^ dec_str(maskmax) ^ ", but needs to be between 1 and `xlen` - 1 (" ^ dec_str(xlen - 1) ^ "), inclusive.");
       };
       let max_chain_length = config extensions.Sdtrig.mcontrol6.max_chain_length : int;
-      if max_chain_length > num_triggers then {
+      if max_chain_length < 0 then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.mcontrol6.max_chain_length` is set to " ^ dec_str(max_chain_length) ^ " which is an invalid number of triggers.");
+      } else if max_chain_length > num_triggers then {
         valid = false;
         print_endline("`extensions.Sdtrig.mcontrol6.max_chain_length` is set to " ^ dec_str(max_chain_length) ^ " which exceeds the number of triggers (" ^ dec_str(num_triggers) ^ ".");
       };
