@@ -103,15 +103,13 @@ function clause write_CSR(0x7a5, value) = {
 }
 
 function tcontrol_trap_into_mmode() -> unit = {
-  if get_config_print_trigger()
-  then print_log("tcontrol: entering M-mode, mte <- 0, mpte <- " ^ bits_str(tcontrol[mte]));
   tcontrol = [tcontrol with mpte = tcontrol[mte], mte = 0b0];
+  csr_write_callback("tcontrol", tcontrol.bits);
 }
 
 function tcontrol_mret_from_mmode() -> unit = {
-  if get_config_print_trigger()
-  then print_log("tcontrol: mret-ting from M-mode, mte <- " ^ bits_str(tcontrol[mpte]));
   tcontrol = [tcontrol with mte = tcontrol[mpte]];
+  csr_write_callback("tcontrol", tcontrol.bits);
 }
 
 register scontext : SContext = Mk_SContext(zeros())

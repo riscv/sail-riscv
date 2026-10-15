@@ -659,7 +659,7 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           vs = if currentlyEnabled(Ext_H) then bool_bit(v[vs]) else false,
           vu = if currentlyEnabled(Ext_H) then bool_bit(v[vu]) else false,
           hit = bool_bit(v[hit]),
-          count = count,
+          count,
           new_count = Some(count),
           m = bool_bit(v[m]),
           pending = bool_bit(v[pending]),
@@ -667,7 +667,7 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           u = if currentlyEnabled(Ext_U) then bool_bit(v[u]) else false,
           action = trig_action(act),
           active = false,
-          tdata2 = tdata2,
+          tdata2,
           textra,
         })
       } else {
@@ -780,7 +780,7 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           execute = bool_bit(v[execute]),
           store = bool_bit(v[store]),
           load = bool_bit(v[load]),
-          tdata2 = tdata2,
+          tdata2,
           textra,
           match_info = None(),
         })

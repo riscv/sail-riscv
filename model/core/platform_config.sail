@@ -219,7 +219,7 @@ let sdtrig_has_mcontrol6 : bool = config extensions.Sdtrig.mcontrol6.supported
 type sdtrig_mcontrol6_maskmax : Int = config extensions.Sdtrig.mcontrol6.maskmax6
 constraint 0 < sdtrig_mcontrol6_maskmax < xlen
 let sdtrig_mcontrol6_maskmax = sizeof(sdtrig_mcontrol6_maskmax)
-let sdtrig_max_chain_limit : int = config extensions.Sdtrig.mcontrol6.max_chain_length
+let sdtrig_max_chain_limit : nat = config extensions.Sdtrig.mcontrol6.max_chain_length
 
 // Sdtrig context CSRs
 let sdtrig_has_mcontext : bool = config extensions.Sdtrig.mcontext.supported
