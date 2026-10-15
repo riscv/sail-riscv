@@ -519,7 +519,7 @@ foreach (xlen IN ITEMS 32 64)
             ${project_file}
         COMMAND
             echo
-            "declare {isabelle} rename field sync_exception_ext = sync_exception_ext_exception"
+            "declare {isabelle} rename field ExceptionContext_ext = ExceptionContext_ext_exception"
             >>
             ${CMAKE_CURRENT_BINARY_DIR}/${arch}_types.lem
 

@@ -156,10 +156,14 @@ function generate_soc_clint() -> option(string) = {
 val get_initramfs_base = pure {
     cpp: "get_initramfs_base"
 } : unit -> bits(64)
+// Default for other targets
+function get_initramfs_base _ = zeros()
 
 val get_initramfs_size = pure {
     cpp: "get_initramfs_size"
 } : unit -> bits(64)
+// Default for other targets
+function get_initramfs_size _ = zeros()
 
 private function have_initrd() -> bool =
   get_initramfs_size() != zeros()
