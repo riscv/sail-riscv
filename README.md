@@ -186,6 +186,7 @@ An experimental emulator in the Lean language is available, see its
 - Zvbc extension for vector carryless multiplication, v1.0
 - Zvkb extension for vector cryptography bit-manipulation, v1.0
 - Zvkg extension for vector GCM/GMAC, v1.0
+- Zvkgs extension for vector-scalar GCM/GMAC (proposed, not yet ratified)
 - Zvkn extension for vector cryptography NIST Algorithm Suite
 - Zvknc extension for vector cryptography NIST Algorithm Suite with carryless multiply
 - Zvkned extension for vector cryptography NIST Suite: Vector AES Block Cipher, v1.0

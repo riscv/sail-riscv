@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- Added support for the proposed Zvkgs extension (vector-scalar `vghsh.vs` and
+  `vgmul.vs`), enabled by default and configurable with `extensions.Zvkgs`.
+  It requires Zvkg.
+
 # Release notes for version 0.16
 
 The highlight of this release is the essential completion of the
