@@ -76,7 +76,7 @@ function clause execute VLSEGTYPE(nf, vm, rs1, width, vd) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
-      set_vstart(to_bits_unsafe(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
         match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Vector), false, false, false) {
@@ -146,7 +146,7 @@ function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
             // in the future. If vl is trimmed instead, the trigger's match_info
             // must be cleared too, otherwise the next step still sees it.
             Err(PendingTrigger(pti)) => {
-              set_vstart(to_bits_checked(16, i));
+              set_vstart(to_bits(i));
               return PendingTrigger(pti)
             },
             Err(e)   => if i == 0 then return e
@@ -218,7 +218,7 @@ function clause execute VSSEGTYPE(nf, vm, rs1, width, vs3) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
-      set_vstart(to_bits_unsafe(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = (i * nf + j) * load_width_bytes;
         let vs = vregidx_offset(vs3, to_bits_unsafe(5, j * EMUL_reg));
@@ -274,7 +274,7 @@ function clause execute VLSSEGTYPE(nf, vm, rs2, rs1, width, vd) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
-      set_vstart(to_bits_unsafe(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
         match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), load_width_bytes, Load(Vector), false, false, false) {
@@ -334,7 +334,7 @@ function clause execute VSSSEGTYPE(nf, vm, rs2, rs1, width, vs3) = {
 
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
-      set_vstart(to_bits_unsafe(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset = i * rs2_val + j * load_width_bytes;
         let vs = vregidx_offset(vs3, to_bits_unsafe(5, j * EMUL_reg));
@@ -400,7 +400,7 @@ function clause execute VLXSEGTYPE(nf, vm, vs2, rs1, width, vd, _mop) = {
   // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
-      set_vstart(to_bits_unsafe(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
         match vmem_read(rs1, to_bits_unsafe(xlen, elem_offset), EEW_data_bytes, Load(Vector), false, false, false) {
@@ -464,7 +464,7 @@ function clause execute VSXSEGTYPE(nf, vm, vs2, rs1, width, vs3, _mop) = {
   // As mentioned above, currently mop = 1 (unordered) or 3 (ordered) do the same operations.
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then { // active segments
-      set_vstart(to_bits_unsafe(16, i));
+      set_vstart(to_bits(i));
       foreach (j from 0 to (nf - 1)) {
         let elem_offset : int = unsigned(vs2_val[i]) + j * EEW_data_bytes;
         let vs = vregidx_offset(vs3, to_bits_unsafe(5, j * EMUL_data_reg));
@@ -632,7 +632,7 @@ function clause execute VMTYPE(rs1, vd_or_vs3, op) = {
 
   foreach (i from start_element to (num_elem - 1)) {
     if i < evl then { // active elements
-      set_vstart(to_bits_unsafe(16, i));
+      set_vstart(to_bits(i));
       if op == VLM then { // load
         match vmem_read(rs1, to_bits_unsafe(xlen, i), 1, Load(Vector), false, false, false) {
           Ok(elem) => write_single_element(8, i, vd_or_vs3, elem),
