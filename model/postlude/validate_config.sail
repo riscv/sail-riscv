@@ -549,7 +549,23 @@ private function check_mem_layout() -> bool =
                    within_configured_pma_memory("simple interrupt generator (platform.simple_interrupt_generator)", Some(IOMemory),
                                                 to_bits_checked(config platform.simple_interrupt_generator.base : int),
                                                 zero_extend(plat_sig_size));
-    pmas_ok & clint_ok & sig_ok
+    if not(pmas_ok & clint_ok & sig_ok)
+    then return false;
+
+    var valid : bool = true;
+    let physaddr_bits_nat : nat = physaddr_bits;
+    if physaddr_bits_nat < xlen then {
+      match (config memory.invalid_physical_address : option(xlenbits)) {
+        None()      => (),
+        Some(paddr) => {
+          if is_valid_physaddr(pma_regions, Physaddr(zero_extend(paddr))) then {
+            valid = false;
+            print_endline("The configured `memory.invalid_physical_address` (" ^ bits_str(paddr) ^ ") lies within a configured PMA region, and hence is valid.");
+          };
+        },
+      }
+    };
+    valid
   }
 
 private function check_pmp() -> bool = {
@@ -755,9 +771,45 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("Bit 1 of `base.mcountinhibit.writable_bits` is set; `mcountinhibit[1]` is read-only zero.");
     }
   };
-  if (xlen == 32 & ((config extensions.Ssnpm.supported : bool) | (config extensions.Smmpm.supported : bool) | (config extensions.Smnpm.supported : bool))) then {
-    valid = false;
-    print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
+  if (config extensions.Ssnpm.supported : bool) | (config extensions.Smmpm.supported : bool) | (config extensions.Smnpm.supported : bool) then {
+    if xlen == 32 then {
+      valid = false;
+      print_endline("The Ssnpm, Smmpm and Smnpm extensions are not supported on RV32.");
+    } else if (config extensions.Ssnpm.supported : bool) & not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("The Ssnpm extensions is enabled but supervisor mode (S) is disabled: supporting Ssnpm requires S.");
+    } else match (config memory.invalid_physical_address : option(xlenbits)) {
+        None() => (),
+        Some(inv_addr) => {
+          // If `memory.invalid_physical_address` is specified for use
+          // when reporting invalid physical addresses in `xtval`, that
+          // address should be a valid under pointer masking for each
+          // supported `PMLEN`.
+          let check_pmlen_7 : bool =
+                               ((config extensions.Svbare.supported : bool) & (config extensions.Ssnpm.supported : bool) & (config extensions.Ssnpm.supported_pmlen_7 : bool))
+                             | ((config extensions.Smnpm.supported : bool) & (config extensions.Smnpm.supported_pmlen_7 : bool))
+                             | ((config extensions.Smmpm.supported : bool) & (config extensions.Smmpm.supported_pmlen_7 : bool));
+
+          if check_pmlen_7 then {
+            let Virtaddr(transformed_inv_addr) = pm_transform_PA(Virtaddr(inv_addr), 7);
+            if transformed_inv_addr != inv_addr then {
+              valid = false;
+              print_endline("Pointer masking with PMLEN=7 is supported, but the specified `memory.invalid_physical_address` (" ^ bits_str(inv_addr) ^ ") is not invariant under this pointer masking (pointer masked value is " ^ bits_str(transformed_inv_addr) ^ ").");
+            };
+          };
+
+          let check_pmlen_16 = ((config extensions.Svbare.supported : bool) & (config extensions.Ssnpm.supported : bool) & (config extensions.Ssnpm.supported_pmlen_16 : bool))
+                             | ((config extensions.Smnpm.supported : bool) & (config extensions.Smnpm.supported_pmlen_16 : bool))
+                             | ((config extensions.Smmpm.supported : bool) & (config extensions.Smmpm.supported_pmlen_16 : bool));
+          if check_pmlen_16 then {
+            let Virtaddr(transformed_inv_addr) = pm_transform_PA(Virtaddr(inv_addr), 16);
+            if transformed_inv_addr != inv_addr then {
+              valid = false;
+              print_endline("Pointer masking with PMLEN=16 is supported, but the specified `memory.invalid_physical_address` (" ^ bits_str(inv_addr) ^ ") is not invariant under this pointer masking (pointer masked value is " ^ bits_str(transformed_inv_addr) ^ ").");
+            };
+          };
+        },
+    };
   };
   if (config extensions.Ssstrict.supported : bool) & not(config extensions.S.supported : bool) then {
     valid = false;

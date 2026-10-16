@@ -220,13 +220,15 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == paddr);
-      return memory_exception(e, bits_of(vaddr), access_info)
+      let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_addr);
+      return memory_exception(e, exc_vaddr, access_info)
     },
     Ok(_) => match mem_read(access, pbmt, eff_priv, paddr, width, aq, aq & rl, true) {
       Err(exc_addr, e) => {
         // AMOs should not get split.
         assert(exc_addr == paddr);
-        return memory_exception(e, bits_of(vaddr), access_info)
+        let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_addr);
+        return memory_exception(e, exc_vaddr, access_info)
       },
       Ok(v)  => v,
     },
@@ -244,7 +246,8 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == paddr);
-      return memory_exception(e, bits_of(vaddr), access_info)
+      let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_addr);
+      return memory_exception(e, exc_vaddr, access_info)
     },
   };
 

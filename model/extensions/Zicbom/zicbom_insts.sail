@@ -103,7 +103,14 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
         Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
           match phys_access_check(access, pbmt, eff_priv, paddr, cache_block_size, false) {
-            Err(e)  => memory_exception(e, bits_of(vaddr_for_error), access_info),
+            Err(e)  => {
+              // `exception_vaddr()` is expecting the physical
+              // addresses corresponding to the faulting virtual
+              // address (i.e. `vaddr_for_error`).
+              let paddr_for_error = paddr - negative_offset;
+              let exc_vaddr = exception_vaddr(access_info, vaddr_for_error, paddr_for_error, paddr_for_error);
+              memory_exception(e, exc_vaddr, access_info)
+            },
             // If there is no error, the model has no caches so there's no
             // more action required.
             Ok(_)   => RETIRE_SUCCESS

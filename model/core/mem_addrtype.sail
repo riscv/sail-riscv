@@ -20,8 +20,9 @@ function bits_of_physaddr(Physaddr(paddr) : physaddr) -> physaddrbits = paddr
 function bits_of_virtaddr(Virtaddr(vaddr) : virtaddr) -> xlenbits = vaddr
 
 function sub_virtaddr_xlenbits(Virtaddr(addr) : virtaddr, offset : xlenbits) -> virtaddr = Virtaddr(addr - offset)
+function sub_physaddr_xlenbits(Physaddr(addr) : physaddr, offset : xlenbits) -> physaddr = Physaddr(addr - zero_extend(offset))
 
-overload operator - = { sub_virtaddr_xlenbits }
+overload operator - = { sub_virtaddr_xlenbits, sub_physaddr_xlenbits }
 
 overload bits_of = { bits_of_physaddr, bits_of_virtaddr }
 

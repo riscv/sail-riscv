@@ -21,12 +21,16 @@
   - Whether an implicit access to a VS-stage PTE sets the D bit of a
     writable G-stage PTE can now be specified, see
     `extensions.H.implicit_vs_pte_access_sets_gstage_d`.
+  - When invalid physical addresses need to be transformed to be
+    reported in `xtval`, a constant invalid physical address can now
+    be specified; see `memory.invalid_physical_address`.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/2021 : `mstateen1/2/3` and `hstateen1/2/3` bit 63 should be writable when H is implemented
   - https://github.com/riscv/sail-riscv/issues/2005 : `medeleg` and `hedeleg` bit 18 (software check) should be read-only zero before priv 1.13 unless Zicfilp or Zicfiss is supported
   - https://github.com/riscv/sail-riscv/issues/2001 : `hstatus.GVA` and `mstatus.GVA` were set even when no guest virtual address was written to `stval`/`mtval`
   - https://github.com/riscv/sail-riscv/issues/1986 : Indexed segment stores only check the index group against the first field for source EEW overlap
+  - https://github.com/riscv/sail-riscv/issues/1962 : invalid addresses were converted into valid addresses in `xtval`
 
 # Release notes for version 0.15
 

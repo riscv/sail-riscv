@@ -113,13 +113,15 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
-      return memory_exception(e, bits_of(vaddr), access_info)
+      let exc_vaddr = exception_vaddr(access_info, vaddr, addr, exc_addr);
+      return memory_exception(e, exc_vaddr, access_info)
     },
     Ok(_)  => match mem_read(access, pbmt, eff_priv, addr, width, aq, aq & rl, true) {
       Err(exc_addr, e) => {
         // AMOs should not get split.
         assert(exc_addr == addr);
-        return memory_exception(e, bits_of(vaddr), access_info)
+        let exc_vaddr = exception_vaddr(access_info, vaddr, addr, exc_addr);
+        return memory_exception(e, exc_vaddr, access_info)
       },
       Ok(loaded) => loaded,
     },
@@ -165,7 +167,8 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == addr);
-      memory_exception(e, bits_of(vaddr), access_info)
+      let exc_vaddr = exception_vaddr(access_info, vaddr, addr, exc_addr);
+      memory_exception(e, exc_vaddr, access_info)
     }
   };
 

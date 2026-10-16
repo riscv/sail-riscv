@@ -164,6 +164,9 @@ let plat_have_sig : bool = config platform.simple_interrupt_generator.supported
 let plat_sig_base : physaddrbits = to_bits_checked(config platform.simple_interrupt_generator.base : int)
 let plat_sig_size : physaddrbits = zero_extend(0x20)
 
+// The configuration for reporting invalid physical addresses in xtval.
+let plat_invalid_physical_address : option(xlenbits) = config memory.invalid_physical_address
+
 let plat_insns_per_tick : nat1 = config platform.instructions_per_tick
 
 // Whether WFI is available to User mode.
