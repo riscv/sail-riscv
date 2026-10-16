@@ -64,6 +64,11 @@ struct AccessInfo = {
 // results in a valid physical address, the configured platform
 // invalid address is reported instead.
 
+// `vaddr` is the explicitly accessed virtual address, `paddr` is its
+// translated physical address, and `exc_paddr` is the physical
+// address that experienced the exception.  These need to be handled
+// specially for CMO instructions; see the comments in
+// `zicbo{m,z}_insts.sail`.
 function exception_vaddr(
   access_info          : AccessInfo,
   Virtaddr(base_vaddr) : virtaddr,
@@ -76,15 +81,6 @@ function exception_vaddr(
     let exc_vaddr = base_vaddr + offset;
     return exc_vaddr
   };
-
-  // `base_vaddr` is the faulting physical address when there is no
-  // address translation.  In this case, there should be no split,
-  // i.e. no offset between `base_paddr` and `exc_paddr`.
-  assert(exc_paddr == base_paddr);
-
-  // However, `base_vaddr` may differ from `base_paddr` for CMO
-  // instructions, where `base_paddr` would be cache-block aligned.
-  let exc_paddr : physaddrbits = zero_extend(base_vaddr);
 
   // Report the faulting physical address without modification if it
   // is valid or no truncation is requested.

@@ -45,18 +45,27 @@ function clause execute ZICBOZ(rs1) = {
       //  and atomicity, including individual bytes."
       //
       // This implementation does a single atomic write.
+      let vaddr_for_error = vaddr - negative_offset;
       match translateAddr(vaddr, access, eff_priv) {
         // vaddr is the aligned address, but errors report the address that
         // was encoded in the instruction. We subtract the negative offset
         // (add the positive offset) to get it. Normally this will be
         // equal to rs1, but pointer masking can change that.
-        Err(e, _) => trap({ e with excinfo = bits_of(vaddr - negative_offset) }),
+        Err(e, _) => trap({ e with excinfo = bits_of(vaddr_for_error) }),
         Ok(paddr, pbmt, _) => {
+
+          // `exception_vaddr()` is expecting the physical addresses
+          // corresponding to the faulting virtual address, so they
+          // need to be offset like the virtual address was done for
+          // the `trap()` above.
+          let paddr_for_error = paddr - negative_offset;
+
           match mem_write_ea(paddr, cache_block_size, eff_priv, access, pbmt, false, false, false) {
             Err(exc_addr, e) => {
               // Cache accesses should not get split.
               assert(exc_addr == paddr);
-              let exc_vaddr = exception_vaddr(access_info, vaddr - negative_offset, paddr, exc_addr);
+              // See above.
+              let exc_vaddr = exception_vaddr(access_info, vaddr_for_error, paddr_for_error, paddr_for_error);
               memory_exception(e, exc_vaddr, access_info)
             },
             Ok(_)  => {
@@ -66,7 +75,8 @@ function clause execute ZICBOZ(rs1) = {
                 Err(exc_addr, e) => {
                   // Cache accesses should not get split.
                   assert(exc_addr == paddr);
-                  let exc_vaddr = exception_vaddr(access_info, vaddr - negative_offset, paddr, exc_addr);
+                  // See above.
+                  let exc_vaddr = exception_vaddr(access_info, vaddr_for_error, paddr_for_error, paddr_for_error);
                   memory_exception(e, exc_vaddr, access_info)
                 },
               }
