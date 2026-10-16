@@ -730,6 +730,9 @@
       "mutable_misa": true,
       // GEILEN, the number of guest external interrupts. The maximum is XLEN-1.
       "geilen": @CONFIG__H__GEILEN@,
+      // Whether hedeleg[0] (the bit corresponding to instruction address misaligned exceptions)
+      // is writable. Must be true if compressed instructions are not supported.
+      "hedeleg_zero_writable": true,
       // Whether an implicit access to a VS-stage PTE sets the D bit of a writable G-stage PTE
       "implicit_vs_pte_access_sets_gstage_d": false,
       // Whether a trap into M or HS mode caused by the specified exception

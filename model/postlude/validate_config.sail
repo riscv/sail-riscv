@@ -1069,6 +1069,10 @@ private function check_extension_param_constraints() -> bool = {
       print_endline("`base.writable_fiom` is false but Sv32 is supported: FIOM may only be read-only zero when satp.MODE is always Bare.");
     }
   };
+  if not(config extensions.H.hedeleg_zero_writable : bool) & (config extensions.H.supported : bool) & not(config extensions.Zca.supported : bool) then {
+    valid = false;
+    print_endline("extensions.H.hedeleg_zero_writable is false but IALIGN=32 (Zca is disabled): hedeleg[0] must be writable when IALIGN=32.")
+  };
 
   valid
 }
