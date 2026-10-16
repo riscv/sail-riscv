@@ -392,7 +392,7 @@ function write_velem_quad_vec(vd, SEW, input, i) = {
 // Get the starting element index from the vstart csr. The validity of
 // vstart is checked by illegal_vstart at the start of each instruction,
 // so this just returns the value.
-function get_start_element() -> nat = unsigned(vstart)
+function get_start_element() -> velemidx = unsigned(vstart)
 
 // Get the ending element index from csr vl
 function get_end_element() -> int = unsigned(vl) - 1
