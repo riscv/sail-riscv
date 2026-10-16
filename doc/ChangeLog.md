@@ -1,5 +1,10 @@
 # Release notes for the next version
 
+# Release notes for version 0.16
+
+The highlight of this release is the essential completion of the
+Sdtrig extension (though external triggers are not yet supported).
+
 - Sdtrig now supports the `mcontrol6` trigger and context matching in
   `textra32` and `textra64`, allowing more precise control over when
   triggers match and fire.
