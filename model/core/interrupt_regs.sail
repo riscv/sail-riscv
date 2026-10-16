@@ -396,9 +396,10 @@ function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(l
 // hedeleg is writable only for the synchronous exceptions that may be
 // delegated to VS-mode. Codes 0-8, 12, 13, 15, 18 (only from priv 1.13 or
 // with Zicfilp/Zicfiss), 19 (only from priv 1.13), everything else is
-// read-only zero.
+// read-only zero. 0 may be read-only-zero when IALIGN != 32.
 function hedeleg_writable_mask() -> bits(64) =
   [Mk_Medeleg(0x00000000000CB1FF) with
+    Fetch_Addr_Align = if plat_hedeleg_zero_writable then 0b1 else 0b0,
     Software_Check = if priv_isa_version >= Privileged_ISA_1_13 | hartSupports(Ext_Zicfiss) | hartSupports(Ext_Zicfilp) then 0b1 else 0b0,
     Hardware_Error = if priv_isa_version >= Privileged_ISA_1_13 then 0b1 else 0b0
   ].bits
