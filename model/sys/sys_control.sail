@@ -395,9 +395,11 @@ function trap_handler_inner(
 // already set to 1, then this is an unexpected trap."
 function machine_trap_set_mdt() -> unit = {
   if currentlyEnabled(Ext_Smdbltrp) then {
-    if mstatus[MDT] == 0b0
-    then mstatus[MDT] = 0b1
-    else {
+    if mstatus[MDT] == 0b0 then {
+      if get_config_print_exception() | get_config_print_interrupt()
+      then print_log("setting mstatus[MDT] for Double Trap");
+      mstatus[MDT] = 0b1
+    } else {
       // "the hart enters a critical-error state without updating any
       // architectural state, including the pc", ceasing execution and
       // signalling the platform.
@@ -456,18 +458,22 @@ function trap_handler(del_priv : Privilege, c : TrapCause, pc : xlenbits) -> xle
     // exception trap is delivered into M-mode."
     Supervisor =>
       if currentlyEnabled(Ext_Ssdbltrp) then {
-        if mstatus[SDT] == 0b0
-        then mstatus[SDT] = 0b1
-        else {
+        if mstatus[SDT] == 0b0 then {
+          if get_config_print_exception() | get_config_print_interrupt()
+          then print_log("setting mstatus[SDT] for Double Trap");
+          mstatus[SDT] = 0b1
+        } else {
           machine_trap_set_mdt();
           return trap_handler_inner(Machine, double_trap_cause(c), pc)
         }
       },
     VirtualSupervisor =>
       if currentlyEnabled(Ext_Ssdbltrp) & read_henvcfg()[DTE] == 0b1 then {
-        if vsstatus[SDT] == 0b0
-        then vsstatus[SDT] = 0b1
-        else {
+        if vsstatus[SDT] == 0b0 then {
+          if get_config_print_exception() | get_config_print_interrupt()
+          then print_log("setting vsstatus[SDT] for Double Trap");
+          vsstatus[SDT] = 0b1
+        } else {
           machine_trap_set_mdt();
           return trap_handler_inner(Machine, double_trap_cause(c), pc)
         }

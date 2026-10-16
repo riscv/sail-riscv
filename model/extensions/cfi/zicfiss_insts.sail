@@ -184,6 +184,13 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
     Ext_DataAddr_OK(vaddr) => vaddr,
   };
 
+  // See `zaamo_insts.sail` for an explanation of the current implementation of
+  // trigger handling for AMOs.
+  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_AMO, bits_of(vaddr), width)) {
+    Some(pti) => return PendingTrigger(pti),
+    None()    => (),
+  };
+
   // "The same exception options [as AMOs in the A extension] apply if
   // the address is not naturally aligned."
   if not(is_aligned_addr(vaddr, width)) then {
@@ -209,7 +216,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
   // implement multiprocessor synchronization."
 
   let 'width = width;
-  let mem_val : bits('width * 8) = match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq & rl, rl, true) {
+  let mem_val : bits(8 * 'width) = match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq & rl, rl, true) {
     Err(exc_addr, e) => {
       // AMOs should not get split.
       assert(exc_addr == paddr);
@@ -230,7 +237,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   // Sequence the read of `rs2` after the call to `mem_write_ea` with the effective address.
   // See https://github.com/riscv/sail-riscv/issues/1761.
-  let write_val : bits('width * 8) = X(rs2)['width * 8 - 1 .. 0];
+  let write_val : bits(8 * 'width) = X(rs2)['width * 8 - 1 .. 0];
   match mem_write_value(paddr, width, write_val, eff_priv, access, pbmt, aq & rl, rl, true) {
     Ok(true)  => X(rd) = sign_extend(mem_val),
     Ok(false) => internal_error(__FILE__, __LINE__, "AMOSWAP_SS got false from mem_write_value"),
@@ -240,6 +247,10 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
       return memory_exception(e, bits_of(vaddr), access_info)
     },
   };
+
+  // See `zaamo_insts.sail` for an explanation of the current implementation of
+  // trigger handling for AMOs.
+  match_memory_trigger_after(cur_privilege, TriggerAMOData(bits_of(vaddr), mem_val, write_val, width));
 
   RETIRE_SUCCESS
 }

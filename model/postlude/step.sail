@@ -12,7 +12,8 @@ register hart_state : HartState = HART_ACTIVE()
 
 private union Step = {
   Step_Pending_Interrupt  : (InterruptType, Privilege),
-  Step_Pending_Trigger    : (Trig_Action, trigger_index, xlenbits),
+  Step_Pending_Trigger    : pending_trigger_info,
+  Step_Fetch_Trigger      : pending_trigger_info,
   Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
   Step_Fetch_Failure      : ExceptionContext,
   Step_Execute            : (ExecutionResult, instr_info),
@@ -119,17 +120,21 @@ private function run_hart_active(step_no: nat) -> Step = {
   //   https://github.com/riscv/riscv-debug-spec/issues/796
   //
   // For now, the implementation follows #802 by prioritizing the
-  // itrigger, etrigger and icount triggers above asynchronous
-  // interrupts.  When mcontrol6 triggers are implemented, their
-  // `after` versions should also be handled here.
+  // itrigger, etrigger, icount and mcontrol6-after triggers above
+  // asynchronous interrupts.
   match find_highest_priority_pending_trigger(cur_privilege) {
-    Some(action, idx, breakpoint_tval) => return Step_Pending_Trigger(action, idx, breakpoint_tval),
+    Some(pti) => return Step_Pending_Trigger(pti),
     None() => (),
   };
 
   match dispatchInterrupt(cur_privilege) {
     Some(intr, priv) => return Step_Pending_Interrupt(intr, priv),
     None() => (),
+  };
+
+  match match_memory_trigger_before(cur_privilege, TriggerFetchAddr(PC)) {
+    Some(pti) => return Step_Fetch_Trigger(pti),
+    None()    => (),
   };
 
   // `icount` triggers match based on the privilege used for fetching,
@@ -149,6 +154,12 @@ private function run_hart_active(step_no: nat) -> Step = {
     F_RVC(h) => {
       sail_instr_announce(h);
       fetch_callback(h);
+
+      match match_memory_trigger_before(cur_privilege, TriggerFetchInstr(PC, h, 2)) {
+        Some(pti) => return Step_Fetch_Trigger(pti),
+        None()    => (),
+      };
+
       let instbits : instbits = zero_extend(h);
       let fetched_instruction = ext_decode_compressed(h);
       if   get_config_print_instr()
@@ -181,6 +192,12 @@ private function run_hart_active(step_no: nat) -> Step = {
     F_Base(w) => {
       sail_instr_announce(w);
       fetch_callback(w);
+
+      match match_memory_trigger_before(cur_privilege, TriggerFetchInstr(PC, w, 4)) {
+        Some(pti) => return Step_Fetch_Trigger(pti),
+        None()    => (),
+      };
+
       let instbits : instbits = zero_extend(w);
       let fetched_instruction = ext_decode(w);
       if   get_config_print_instr()
@@ -205,6 +222,15 @@ private function run_hart_active(step_no: nat) -> Step = {
         Step_Execute(result, instr_info)
       }
     }
+  }
+}
+
+private function handle_pending_trigger((action, _, trigger_tval) : pending_trigger_info) -> unit = {
+  match action {
+    TA_Breakpoint =>
+      handle_exception(exception_context(E_Breakpoint(Brk_Hardware), trigger_tval)),
+    _ =>
+      internal_error(__FILE__, __LINE__, "Trigger action " ^ trigger_action_name(action) ^ " not supported."),
   }
 }
 
@@ -260,18 +286,26 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     };
 
   match step_val {
-    Step_Pending_Trigger(action, _, trigger_tval) => {
-      match action {
-        TA_Breakpoint =>
-          handle_exception(exception_context(E_Breakpoint(Brk_Hardware), trigger_tval)),
-        _ =>
-          internal_error(__FILE__, __LINE__, "Trigger action " ^ trigger_action_name(action) ^ " not supported."),
-      }
+    Step_Pending_Trigger(pti) => {
+      if get_config_print_trigger() then {
+        let (_, idx, _) = pti;
+        print_log("Handling trigger at index #" ^ dec_str(idx));
+      };
+      handle_pending_trigger(pti);
     },
     Step_Pending_Interrupt(intr, priv) => {
       if   get_config_print_instr()
       then print_bits("Handling interrupt: ", interruptType_bits(intr));
       handle_interrupt(intr, priv)
+    },
+    Step_Fetch_Trigger(pti) => {
+      if get_config_print_trigger() then {
+        let (_, idx, _) = pti;
+        print_log("Handling trigger at index #" ^ dec_str(idx));
+      };
+      // Highest priority `before` trigger.
+      fire_pending_before_triggers(pti);
+      handle_pending_trigger(pti)
     },
     Step_Ext_Fetch_Failure(e) => ext_handle_fetch_check_error(e),
     Step_Fetch_Failure(e) => handle_exception(e),
@@ -306,6 +340,16 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
         hart_state = HART_WAITING(wr, instr_info);
       }
     },
+    // Handle lower priority `before` triggers.
+    Step_Execute(PendingTrigger(pti), _) => {
+      if get_config_print_trigger() then {
+        let (_, idx, _) = pti;
+        print_log("Handling trigger at index #" ^ dec_str(idx));
+      };
+      fire_pending_before_triggers(pti);
+      handle_pending_trigger(pti)
+    },
+
     // errors from extensions
     Step_Execute(Ext_CSR_Check_Failure(), _) => ext_check_CSR_fail(),
     Step_Execute(Ext_ControlAddr_Check_Failure(e), _) => ext_handle_control_check_error(e),

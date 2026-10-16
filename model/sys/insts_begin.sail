@@ -35,6 +35,7 @@ union ExecutionResult = {
   Illegal_Instruction            : unit,
   Virtual_Instruction            : unit,
   Trap                           : (Privilege, ExceptionContext, xlenbits),
+  PendingTrigger                 : pending_trigger_info,
 
   // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : unit,

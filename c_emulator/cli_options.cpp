@@ -120,15 +120,16 @@ CLIOptions parse_cli(int argc, char **argv) {
   app.add_flag_callback(
     "--trace-platform",
     [&opts] {
-      opts.config_print_clint = true;
-      opts.config_print_exception = true;
       opts.config_print_interrupt = true;
+      opts.config_print_exception = true;
+      opts.config_print_trigger = true;
+      opts.config_print_clint = true;
       opts.config_print_htif = true;
       opts.config_print_pma = true;
       opts.config_print_pmp = true;
     },
     "Enable trace output for platform-level events (MMIO, interrupts, "
-    "exceptions, CLINT, HTIF, PMA, PMP)"
+    "exceptions, triggers, CLINT, HTIF, PMA, PMP)"
   );
   app.add_flag("--trace-step", opts.config_print_step, "Add a blank line between steps in the trace output");
   app.add_flag("--trace-gdbserver", opts.config_print_gdbserver, "Enable trace output for gdbserver");
@@ -146,6 +147,7 @@ CLIOptions parse_cli(int argc, char **argv) {
       opts.config_print_clint = true;
       opts.config_print_exception = true;
       opts.config_print_interrupt = true;
+      opts.config_print_trigger = true;
       opts.config_print_htif = true;
       opts.config_print_pma = true;
       opts.config_print_pmp = true;

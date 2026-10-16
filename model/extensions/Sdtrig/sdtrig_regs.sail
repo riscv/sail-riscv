@@ -104,10 +104,12 @@ function clause write_CSR(0x7a5, value) = {
 
 function tcontrol_trap_into_mmode() -> unit = {
   tcontrol = [tcontrol with mpte = tcontrol[mte], mte = 0b0];
+  csr_write_callback("tcontrol", tcontrol.bits);
 }
 
 function tcontrol_mret_from_mmode() -> unit = {
   tcontrol = [tcontrol with mte = tcontrol[mpte]];
+  csr_write_callback("tcontrol", tcontrol.bits);
 }
 
 register scontext : SContext = Mk_SContext(zeros())

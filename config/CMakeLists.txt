@@ -6,12 +6,14 @@ foreach(CONFIG__BASE__XLEN IN ITEMS 32 64)
         foreach(CONFIG__V__VLEN_EXP RANGE 6 9)
             math(EXPR vlen "1 << ${CONFIG__V__VLEN_EXP}")
             math(EXPR elen "1 << ${CONFIG__V__ELEN_EXP}")
+            math(EXPR xlen_minus_one "${CONFIG__BASE__XLEN} - 1")
 
             set(config_filename "rv${CONFIG__BASE__XLEN}d_v${vlen}_e${elen}.json")
 
             set(CONFIG_XLEN_IS_32 "false")
             set(CONFIG_XLEN_IS_64 "false")
             set(CONFIG_XLEN_IS_${CONFIG__BASE__XLEN} "true")
+            set(CONFIG_XLEN_MINUS_ONE "${xlen_minus_one}")
 
             if (${CONFIG__BASE__XLEN} EQUAL 32)
               set(CONFIG_MIDELEG_DELEGATABLE_BITS_VALUE   "0x0000_2222")

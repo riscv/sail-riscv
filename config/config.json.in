@@ -1033,6 +1033,18 @@
           "value": "@CONFIG_SDTRIG_SUPPORTED_ITRIGGERS_VALUE@"
         }
       },
+      "mcontrol6": {
+        "supported": true,
+        // If `mcontrol6` is supported, this value needs to be in the range
+        // 0 < `maskmax6` < XLEN.
+        "maskmax6": @CONFIG_XLEN_MINUS_ONE@,
+        // Whether an address selection matches all the accessed addresses.
+        // If set to `false`, it matches only the lowest address.
+        "address_select_matches_all_addresses" : true,
+        // Maximum length of a chain. This cannot exceed the number of
+        // triggers.  A value of 0 implies chains are not supported.
+        "max_chain_length": 4
+      },
       "textra": {
         // Which context matches are supported. Writes of unsupported
         // `mhselect` and `sselect` values are legalized to 0 (ignore).
