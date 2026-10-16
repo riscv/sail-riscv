@@ -103,7 +103,7 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
               // address (i.e. `vaddr_for_error`).
               let paddr_for_error = paddr - negative_offset;
               let exc_vaddr = exception_vaddr(access_info, vaddr_for_error, paddr_for_error, paddr_for_error);
-              memory_exception(e, bits_of(vaddr_for_error), access_info)
+              memory_exception(e, exc_vaddr, access_info)
             },
             // If there is no error, the model has no caches so there's no
             // more action required.
