@@ -357,6 +357,10 @@ private function check_vext_config() -> bool = {
     valid = false;
     print_endline("Zvkg is enabled but Zve32x is disabled: Zvkg requires Zve32x.");
   };
+  if (config extensions.Zvkgs.supported : bool) & not(hartSupports(Ext_Zvkg)) then {
+    valid = false;
+    print_endline("Zvkgs is enabled but Zvkg is disabled: Zvkgs requires Zvkg.");
+  };
   if (config extensions.Zvkned.supported : bool) & not(hartSupports(Ext_Zve32x)) then {
     valid = false;
     print_endline("Zvkned is enabled but Zve32x is disabled: Zvkned requires Zve32x.");

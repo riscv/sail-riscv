@@ -428,6 +428,10 @@ function clause hartSupports(Ext_Zvkb) = config extensions.Zvkb.supported
 enum clause extension = Ext_Zvkg
 mapping clause extensionName = Ext_Zvkg <-> "zvkg"
 function clause hartSupports(Ext_Zvkg) = config extensions.Zvkg.supported
+// Vector-Scalar GCM/GMAC
+enum clause extension = Ext_Zvkgs
+mapping clause extensionName = Ext_Zvkgs <-> "zvkgs"
+function clause hartSupports(Ext_Zvkgs) = config extensions.Zvkgs.supported
 // NIST Suite: Vector AES Block Cipher
 enum clause extension = Ext_Zvkned
 mapping clause extensionName = Ext_Zvkned <-> "zvkned"
@@ -879,6 +883,7 @@ let extensions_ordered_for_isa_string = [
   // Zvk
   Ext_Zvkb,
   Ext_Zvkg,
+  Ext_Zvkgs,
   Ext_Zvkn,
   Ext_Zvknc,
   Ext_Zvkned,
