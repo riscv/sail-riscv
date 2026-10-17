@@ -8,8 +8,44 @@
 
 function clause currentlyEnabled(Ext_Zfa) = hartSupports(Ext_Zfa) & currentlyEnabled(Ext_F)
 
-// FLI.H
+// Zfa FLI assembly operands name the constant, not its encoding index.
+// FLI.H entries 29 and 30 both produce infinity but have distinct encodings.
+private mapping fli_constant_mnemonic : bits(5) <-> string = {
+  0b00000 <-> "-1.0",
+  0b00001 <-> "min",
+  0b00010 <-> "0x1p-16",
+  0b00011 <-> "0x1p-15",
+  0b00100 <-> "0x1p-8",
+  0b00101 <-> "0x1p-7",
+  0b00110 <-> "0.0625",
+  0b00111 <-> "0.125",
+  0b01000 <-> "0.25",
+  0b01001 <-> "0.3125",
+  0b01010 <-> "0.375",
+  0b01011 <-> "0.4375",
+  0b01100 <-> "0.5",
+  0b01101 <-> "0.625",
+  0b01110 <-> "0.75",
+  0b01111 <-> "0.875",
+  0b10000 <-> "1.0",
+  0b10001 <-> "1.25",
+  0b10010 <-> "1.5",
+  0b10011 <-> "1.75",
+  0b10100 <-> "2.0",
+  0b10101 <-> "2.5",
+  0b10110 <-> "3.0",
+  0b10111 <-> "4.0",
+  0b11000 <-> "8.0",
+  0b11001 <-> "16.0",
+  0b11010 <-> "128.0",
+  0b11011 <-> "256.0",
+  0b11100 <-> "32768.0",
+  0b11101 <-> "65536.0",
+  0b11110 <-> "inf",
+  0b11111 <-> "nan",
+}
 
+// FLI.H
 union clause instruction = FLI_H : (bits(5), fregidx)
 
 mapping clause encdec = FLI_H(constantidx, rd)
@@ -17,7 +53,7 @@ mapping clause encdec = FLI_H(constantidx, rd)
   when (currentlyEnabled(Ext_Zfh) | currentlyEnabled(Ext_Zvfh)) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = FLI_H(constantidx, rd)
-  <-> "fli.h" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
+  <-> "fli.h" ^ spc() ^ freg_name(rd) ^ sep() ^ fli_constant_mnemonic(constantidx)
 
 function clause execute FLI_H(constantidx, rd) = {
   let bits : bits(16) = match constantidx {
@@ -67,7 +103,7 @@ mapping clause encdec = FLI_S(constantidx, rd)
   when currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = FLI_S(constantidx, rd)
-  <-> "fli.s" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
+  <-> "fli.s" ^ spc() ^ freg_name(rd) ^ sep() ^ fli_constant_mnemonic(constantidx)
 
 function clause execute FLI_S(constantidx, rd) = {
   let bits : bits(32) = match constantidx {
@@ -117,7 +153,7 @@ mapping clause encdec = FLI_D(constantidx, rd)
   when currentlyEnabled(Ext_D) & currentlyEnabled(Ext_Zfa)
 
 mapping clause assembly = FLI_D(constantidx, rd)
-  <-> "fli.d" ^ spc() ^ freg_name(rd) ^ sep() ^ hex_bits_5(constantidx)
+  <-> "fli.d" ^ spc() ^ freg_name(rd) ^ sep() ^ fli_constant_mnemonic(constantidx)
 
 function clause execute FLI_D(constantidx, rd) = {
   let bits : bits(64) = match constantidx {
