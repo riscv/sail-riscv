@@ -617,10 +617,11 @@ postlude {
 
 unit_tests {
   after postlude
-  requires prelude, core, sys, exceptions, postlude
+  requires prelude, core, sys, exceptions, postlude, FD_core, FD_instructions, V_core, Zvfbfmin, Zvfbfwma
 
   files
     unit_tests/test_mstatus.sail,
+    unit_tests/test_assembly.sail,
 }
 
 main {

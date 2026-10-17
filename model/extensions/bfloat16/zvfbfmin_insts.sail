@@ -58,7 +58,7 @@ function clause execute (VFNCVTBF16_F_F_W(vm, vs2, vd)) = {
 }
 
 mapping clause assembly = VFNCVTBF16_F_F_W(vm, vs2, vd)
-  <-> "vfncvtbf16.f.f.w" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vfncvtbf16.f.f.w" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
 
 union clause instruction = VFWCVTBF16_F_F_V : (bits(1), vregidx, vregidx)
 
@@ -108,4 +108,4 @@ function clause execute (VFWCVTBF16_F_F_V(vm, vs2, vd)) = {
 }
 
 mapping clause assembly = VFWCVTBF16_F_F_V(vm, vs2, vd)
-  <-> "vfwcvtbf16.f.f.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ maybe_vmask(vm)
+  <-> "vfwcvtbf16.f.f.v" ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ maybe_vmask(vm)
