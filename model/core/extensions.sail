@@ -84,6 +84,10 @@ enum clause extension = Ext_Shgatpa
 mapping clause extensionName = Ext_Shgatpa <-> "shgatpa"
 function clause hartSupports(Ext_Shgatpa) = config extensions.Shgatpa.supported
 function clause currentlyEnabled(Ext_Shgatpa) = hartSupports(Ext_Shgatpa) & currentlyEnabled(Ext_H)
+// Local counter-overflow interrupts (LCOFI) can be delegated to VS-mode
+enum clause extension = Ext_Shlcofideleg
+mapping clause extensionName = Ext_Shlcofideleg <-> "shlcofideleg"
+function clause hartSupports(Ext_Shlcofideleg) = config extensions.Shlcofideleg.supported
 // `htval` must be written with the faulting guest physical address in all circumstances permitted by the ISA
 enum clause extension = Ext_Shtvala
 mapping clause extensionName = Ext_Shtvala <-> "shtvala"
@@ -542,6 +546,12 @@ function clause currentlyEnabled(Ext_Sha) = hartSupports(Ext_Sha)
   & currentlyEnabled(Ext_Shvstvala)
   & currentlyEnabled(Ext_Shvstvecd)
 
+// Shlcofideleg is declared above with the other hypervisor extensions. This
+// clause has to live here because it needs Sscofpmf to be declared first.
+function clause currentlyEnabled(Ext_Shlcofideleg) = hartSupports(Ext_Shlcofideleg)
+  & currentlyEnabled(Ext_H)
+  & currentlyEnabled(Ext_Sscofpmf)
+
 // Supervisor-mode Timer Interrupts
 enum clause extension = Ext_Sstc
 mapping clause extensionName = Ext_Sstc <-> "sstc"
@@ -746,6 +756,7 @@ function currentlyEnabled_measure(ext : extension) -> int =
 
     Ext_Shcounterenw => 5, // > H
     Ext_Shgatpa => 5, // > H
+    Ext_Shlcofideleg => 5, // > H
     Ext_Shtvala => 5, // > H
     Ext_Shvsatpa => 5, // > H
     Ext_Shvstvala => 5, // > H
@@ -928,6 +939,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Sha,
   Ext_Shcounterenw,
   Ext_Shgatpa,
+  Ext_Shlcofideleg,
   Ext_Shtvala,
   Ext_Shvsatpa,
   Ext_Shvstvala,

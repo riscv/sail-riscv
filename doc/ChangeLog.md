@@ -44,6 +44,7 @@ extension, partial support for the Sdtrig extension, and a basic event
 framework.
 
 - The following extensions have been added:
+  - Shlcofideleg
   - Smdbltrp
   - Ssdbltrp
   - Ssstrict
