@@ -67,13 +67,13 @@ private function handle_illegal_vtype(rd : regidx) -> ExecutionResult = {
   vtype.bits = 0b1 @ zeros(xlen - 1); // set vtype.vill
   vl = zeros();
   csr_write_callback("vtype", vtype.bits);
-  csr_write_callback("vl", vl);
+  csr_write_callback("vl", zero_extend(vl));
   set_vstart(zeros());
 
   // "The vset{i}vl{i} instructions set the vtype and vl CSRs based on their arguments,
   //  and write the new value of vl into rd."
   // So `rd` should be written even if the arguments were illegal or reserved.
-  X(rd) = vl;
+  X(rd) = zero_extend(vl);
   RETIRE_SUCCESS
 }
 
@@ -126,7 +126,7 @@ private function execute_vsetvl_type(
   let VLMAX = 2 ^ (LMUL_pow_new + vlen_exp - SEW_pow_new);
 
   vl = to_bits(calculate_new_vl(avl, VLMAX));
-  X(rd) = vl;
+  X(rd) = zero_extend(vl);
 
   vtype = [Mk_Vtype(zeros()) with
     vill = 0b0,
@@ -140,8 +140,8 @@ private function execute_vsetvl_type(
   set_vstart(zeros());
 
   csr_write_callback("vtype", vtype.bits);
-  csr_write_callback("vl", vl);
-  csr_write_callback("vstart", vstart);
+  csr_write_callback("vl", zero_extend(vl));
+  csr_write_callback("vstart", zero_extend(vstart));
 
   RETIRE_SUCCESS
 }
@@ -160,7 +160,7 @@ function clause execute VSETVLI(vtr, ma, ta, sew, lmul, rs1, rd) = {
   let avl =
     if rs1 != zreg then X(rs1)
     else if rd != zreg then ones()
-    else vl;
+    else zero_extend(vl);
 
   let requires_fixed_vlmax = rd == zreg & rs1 == zreg;
 
@@ -187,7 +187,7 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let avl =
     if rs1 != zreg then X(rs1)
     else if rd != zreg then ones()
-    else vl;
+    else zero_extend(vl);
 
   let requires_fixed_vlmax = rd == zreg & rs1 == zreg;
 
