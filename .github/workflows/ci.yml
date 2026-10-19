@@ -2,6 +2,10 @@ name: CI
 
 on: [push, pull_request, workflow_dispatch, merge_group]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   define-matrix:
     name: Define CI matrix
