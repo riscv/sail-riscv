@@ -25,6 +25,12 @@ function zvk_check_encdec(EGW : nat, EGS : nat1) -> bool = {
   (unsigned(vl) % EGS == 0) & (unsigned(vstart) % EGS == 0) & LMUL_times_VLEN >= EGW & vstart_in_bounds
 }
 
+// Utility functions for Zvkg/Zvkgs
+// ----------------------------------------------------------------------
+
+enum zvk_vghsh_funct6 = {ZVKG_VGHSH_VV, ZVKGS_VGHSH_VS}
+enum zvk_vgmul_funct6 = {ZVKG_VGMUL_VV, ZVKGS_VGMUL_VS}
+
 // Utility functions for Zvknh[ab]
 // ----------------------------------------------------------------------
 
