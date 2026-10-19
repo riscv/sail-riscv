@@ -11,6 +11,7 @@ import sys
 def define_build_matrix_entries() -> list[dict]:
     entries: list[dict] = []
 
+    # "default" uses the version from the sail-setup action.
     entries.append(
         {
             "os": "ubuntu-22.04",
@@ -21,7 +22,7 @@ def define_build_matrix_entries() -> list[dict]:
     entries.append(
         {
             "os": "ubuntu-22.04",
-            "cmake_version": "4.1.2",
+            "cmake_version": "default",
             "first_party_tests": True,
             "run_all_steps": True,
         }
@@ -36,7 +37,7 @@ def define_build_matrix_entries() -> list[dict]:
     entries.append(
         {
             "os": "ubuntu-24.04-arm",
-            "cmake_version": "4.1.2",
+            "cmake_version": "default",
             "first_party_tests": True,
             "clang_tidy": True,
         }
@@ -51,7 +52,7 @@ def define_build_matrix_entries() -> list[dict]:
     entries.append(
         {
             "os": "macos-latest",
-            "cmake_version": "4.1.2",
+            "cmake_version": "default",
             "first_party_tests": True,
         }
     )
