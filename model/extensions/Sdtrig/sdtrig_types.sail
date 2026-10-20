@@ -156,10 +156,15 @@ mapping trig_match_size : bits(3) <-> Trig_Match_Size = {
   0b110 <-> 128,
 }
 
-function is_supported_match_size(s : bits(3)) -> bool = {
+function is_supported_match_size(s : bits(3), select : Compare_Selection) -> bool = {
   if not(trig_match_size_forwards_matches(s)) then return false;
   // TODO: config options
-  trig_match_size(s) <= xlen
+  match select {
+    // data compares are limited by the size of `tdata2`.
+    Compare_Data    => trig_match_size(s) <= xlen,
+    // allow any access size for address compares
+    Compare_Address => true
+  }
 }
 
 enum Trig_Match = {
@@ -744,8 +749,9 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
     TT_mcontrol6 => {
       let v = Mk_MControl6_bits(tdata1.bits);
       let act = v[action];
+      let select = compare_select_bits(v[select]);
 
-      let is_size_supported      = is_supported_match_size(v[size]);
+      let is_size_supported      = is_supported_match_size(v[size], select);
       let is_action_supported    = is_supported_action(zero_extend(act));
       let is_match_supported     = is_supported_match_val(v[t_match]);
       let is_compare_value_valid =
@@ -767,7 +773,7 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           hit = Hit_false,
           vs = if currentlyEnabled(Ext_H) then bool_bit(v[vs]) else false,
           vu = if currentlyEnabled(Ext_H) then bool_bit(v[vu]) else false,
-          select = compare_select_bits(v[select]),
+          select,
           size = trig_match_size(v[size]),
           action = trig_action(zero_extend(act)),
           chain = allow_chain,
