@@ -1069,7 +1069,23 @@
         "address_select_matches_all_addresses" : true,
         // Maximum length of a chain. This cannot exceed the number of
         // triggers.  A value of 0 implies chains are not supported.
-        "max_chain_length": 4
+        "max_chain_length": 4,
+        "supported_address_access_sizes": {
+          "bits8": true,
+          "bits16": true,
+          "bits32": true,
+          "bits48": true,
+          "bits64": true,
+          "bits128": true
+        },
+        // Data access widths greater than XLEN cannot be supported.
+        "supported_data_access_sizes": {
+          "bits8": true,
+          "bits16": true,
+          "bits32": true,
+          "bits48": @CONFIG_XLEN_IS_64@,
+          "bits64": @CONFIG_XLEN_IS_64@
+        }
       },
       "textra": {
         // Which context matches are supported. Writes of unsupported

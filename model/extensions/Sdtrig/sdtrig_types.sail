@@ -156,14 +156,42 @@ mapping trig_match_size : bits(3) <-> Trig_Match_Size = {
   0b110 <-> 128,
 }
 
+let data_access_size_supports_8bits   : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits8
+let data_access_size_supports_16bits  : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits16
+let data_access_size_supports_32bits  : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits32
+let data_access_size_supports_48bits  : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits48
+let data_access_size_supports_64bits  : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits64
+
+let address_access_size_supports_8bits   : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits8
+let address_access_size_supports_16bits  : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits16
+let address_access_size_supports_32bits  : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits32
+let address_access_size_supports_48bits  : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits48
+let address_access_size_supports_64bits  : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits64
+let address_access_size_supports_128bits : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits128
+
 function is_supported_match_size(s : bits(3), select : Compare_Selection) -> bool = {
   if not(trig_match_size_forwards_matches(s)) then return false;
-  // TODO: config options
   match select {
-    // data compares are limited by the size of `tdata2`.
-    Compare_Data    => trig_match_size(s) <= xlen,
-    // allow any access size for address compares
-    Compare_Address => true
+    // data compares are limited by the size of `tdata2`,
+    // which is validated in `validate_config`.
+    Compare_Data    => match trig_match_size(s) {
+      0   => true,
+      8   => data_access_size_supports_8bits,
+      16  => data_access_size_supports_16bits,
+      32  => data_access_size_supports_32bits,
+      48  => data_access_size_supports_48bits,
+      64  => data_access_size_supports_64bits,
+      128 => false,
+    },
+    Compare_Address => match trig_match_size(s) {
+      0   => true,
+      8   => address_access_size_supports_8bits,
+      16  => address_access_size_supports_16bits,
+      32  => address_access_size_supports_32bits,
+      48  => address_access_size_supports_48bits,
+      64  => address_access_size_supports_64bits,
+      128 => address_access_size_supports_128bits,
+    },
   }
 }
 
