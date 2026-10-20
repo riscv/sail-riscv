@@ -1,5 +1,9 @@
 # Release notes for the next version
 
+- Updates to the [configuration file](../config/config.json.in):
+  - Whether bit 0 of `hedeleg` (instruction address misaligned exceptions)
+    is writable can now be specified; see `extensions.H.hedeleg_zero_writable`.
+
 # Release notes for version 0.16
 
 The highlight of this release is the essential completion of the

@@ -33,6 +33,10 @@ let plat_vstvec_vectored_base_alignment_exp : tvec_alignment = config base.vstve
 let plat_medeleg_delegatable_bits : bits(64) = config base.medeleg.delegatable_bits
 let plat_mideleg_delegatable_bits : xlenbits = config base.mideleg.delegatable_bits
 
+// Whether hedeleg[0] (the bit corresponding to instruction address misaligned exceptions)
+// is writable.
+let plat_hedeleg_zero_writable : bool = config extensions.H.hedeleg_zero_writable
+
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.
