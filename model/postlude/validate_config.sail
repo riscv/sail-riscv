@@ -45,8 +45,32 @@ private function require_Sv32(ext_name : string) -> bool = {
 }
 
 
+private function check_mutable_misa_for_extension(ext : string, mutable_ext_misa : bool) -> bool = {
+  if mutable_ext_misa then {
+    print_endline("`base.misa_implemented` is set to false, but `extensions." ^ ext ^ ".mutable_misa` is set to true; `mutable_misa` for an extension cannot be set if `misa` is not implemented.");
+    return false;
+  };
+  true
+}
+
 private function check_mutable_misa() -> bool = {
   var valid : bool = true;
+
+  if not(config base.misa_implemented : bool) then {
+    valid = valid & check_mutable_misa_for_extension("A", (config extensions.A.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("B", (config extensions.B.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("C", (config extensions.C.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("D", (config extensions.D.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("F", (config extensions.F.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("H", (config extensions.H.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("M", (config extensions.M.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("S", (config extensions.S.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("U", (config extensions.U.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("V", (config extensions.V.mutable_misa : bool));
+
+    return valid
+  };
+
   if (config extensions.F.mutable_misa : bool) &
      ((hartSupports(Ext_D) & not(config extensions.D.mutable_misa : bool)) |
       (hartSupports(Ext_V) & not(config extensions.V.mutable_misa : bool)))
@@ -60,13 +84,13 @@ private function check_mutable_misa() -> bool = {
     print_endline("`extensions.D.mutable_misa` is true but `extensions.V.mutable_misa` is false: mutable D requires mutable V if V is supported.");
   };
   if (config extensions.U.mutable_misa : bool) &
-     ((hartSupports(Ext_S) & not(config extensions.S.mutable_misa : bool)) |
-      (hartSupports(Ext_H) & not(config extensions.H.mutable_misa : bool)))
+     (((config extensions.S.supported : bool) & not(config extensions.S.mutable_misa : bool)) |
+      ((config extensions.H.supported : bool) & not(config extensions.H.mutable_misa : bool)))
   then {
     valid = false;
     print_endline("`extensions.U.mutable_misa` is true but `extensions.S.mutable_misa` and/or `extensions.H.mutable_misa` is false: mutable U requires mutable S and H when they are supported.");
   };
-  if (config extensions.S.mutable_misa : bool) & hartSupports(Ext_H) & not(config extensions.H.mutable_misa : bool)
+  if (config extensions.S.mutable_misa : bool) & (config extensions.H.supported : bool) & not(config extensions.H.mutable_misa : bool)
   then {
     valid = false;
     print_endline("`extensions.S.mutable_misa` is true but `extensions.H.mutable_misa` is false: mutable S requires mutable H if H is supported.");

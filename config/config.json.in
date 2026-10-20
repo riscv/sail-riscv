@@ -16,6 +16,11 @@
     // x16-31 is reserved and in this implementation will
     // raise an illegal instruction exception.
     "E": false,
+    // Whether the `misa` CSR is implemented.  If not implemented,
+    // reads of `misa` always return 0.  Note that if `misa` is not
+    // implemented, then `mutable_misa` cannot be set to `true`
+    // in the extensions with this field below.
+    "misa_implemented": true,
     "writable_fiom": true,
     // The top 29 bits in this value control whether the corresponding
     // HPM counters (hpmcounter31 .. hpmcounter3) are supported

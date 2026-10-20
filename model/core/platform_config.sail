@@ -8,6 +8,9 @@
 
 // Platform-specific configuration parameters.
 
+// Whether the `misa` CSR is implemented
+let plat_implements_misa : bool = config base.misa_implemented
+
 // Configuration for `mcountinhibit`.
 let plat_have_mcountinhibit : bool = config base.mcountinhibit.supported
 let plat_mcountinhibit_writable_bits : bits(32) = config base.mcountinhibit.writable_bits
