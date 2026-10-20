@@ -3,6 +3,9 @@
 - Updates to the [configuration file](../config/config.json.in):
   - Whether bit 0 of `hedeleg` (instruction address misaligned exceptions)
     is writable can now be specified; see `extensions.H.hedeleg_zero_writable`.
+  - The sizes supported by the `mcontrol6` trigger in the Sdtrig
+    extension can now be specified; see
+    `extensions.Sdtrig.mcontrol6.supported_{address,data}_access_sizes`.
 
 # Release notes for version 0.16
 
