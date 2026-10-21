@@ -156,10 +156,43 @@ mapping trig_match_size : bits(3) <-> Trig_Match_Size = {
   0b110 <-> 128,
 }
 
-function is_supported_match_size(s : bits(3)) -> bool = {
+let data_access_size_supports_8bits   : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits8
+let data_access_size_supports_16bits  : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits16
+let data_access_size_supports_32bits  : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits32
+let data_access_size_supports_48bits  : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits48
+let data_access_size_supports_64bits  : bool = config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits64
+
+let address_access_size_supports_8bits   : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits8
+let address_access_size_supports_16bits  : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits16
+let address_access_size_supports_32bits  : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits32
+let address_access_size_supports_48bits  : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits48
+let address_access_size_supports_64bits  : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits64
+let address_access_size_supports_128bits : bool = config extensions.Sdtrig.mcontrol6.supported_address_access_sizes.bits128
+
+function is_supported_match_size(s : bits(3), select : Compare_Selection) -> bool = {
   if not(trig_match_size_forwards_matches(s)) then return false;
-  // TODO: config options
-  trig_match_size(s) <= xlen
+  match select {
+    // data compares are limited by the size of `tdata2`,
+    // which is validated in `validate_config`.
+    Compare_Data    => match trig_match_size(s) {
+      0   => true,
+      8   => data_access_size_supports_8bits,
+      16  => data_access_size_supports_16bits,
+      32  => data_access_size_supports_32bits,
+      48  => data_access_size_supports_48bits,
+      64  => data_access_size_supports_64bits,
+      128 => false,
+    },
+    Compare_Address => match trig_match_size(s) {
+      0   => true,
+      8   => address_access_size_supports_8bits,
+      16  => address_access_size_supports_16bits,
+      32  => address_access_size_supports_32bits,
+      48  => address_access_size_supports_48bits,
+      64  => address_access_size_supports_64bits,
+      128 => address_access_size_supports_128bits,
+    },
+  }
 }
 
 enum Trig_Match = {
@@ -744,8 +777,9 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
     TT_mcontrol6 => {
       let v = Mk_MControl6_bits(tdata1.bits);
       let act = v[action];
+      let select = compare_select_bits(v[select]);
 
-      let is_size_supported      = is_supported_match_size(v[size]);
+      let is_size_supported      = is_supported_match_size(v[size], select);
       let is_action_supported    = is_supported_action(zero_extend(act));
       let is_match_supported     = is_supported_match_val(v[t_match]);
       let is_compare_value_valid =
@@ -767,7 +801,7 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           hit = Hit_false,
           vs = if currentlyEnabled(Ext_H) then bool_bit(v[vs]) else false,
           vu = if currentlyEnabled(Ext_H) then bool_bit(v[vu]) else false,
-          select = compare_select_bits(v[select]),
+          select,
           size = trig_match_size(v[size]),
           action = trig_action(zero_extend(act)),
           chain = allow_chain,

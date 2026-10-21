@@ -981,6 +981,16 @@ private function check_misc_extension_dependencies() -> bool = {
         valid = false;
         print_endline("`extensions.Sdtrig.mcontrol6.max_chain_length` is set to " ^ dec_str(max_chain_length) ^ " which exceeds the number of triggers (" ^ dec_str(num_triggers) ^ ".");
       };
+      if xlen == 32 then {
+        if (config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits48 : bool) then {
+          valid = false;
+          print_endline("`extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits48` is enabled on RV32, but data triggers cannot match accesses wider than XLEN (= 32).");
+        };
+        if (config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits64 : bool) then {
+          valid = false;
+          print_endline("`extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits64` is enabled on RV32, but data triggers cannot match accesses wider than XLEN (= 32).");
+        };
+      };
     };
   };
   valid
