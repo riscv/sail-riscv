@@ -1,6 +1,8 @@
 # Release notes for the next version
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Whether the `misa` CSR is implemented can now be specified; see
+    `base.misa_implemented`.
   - Whether bit 0 of `hedeleg` (instruction address misaligned exceptions)
     is writable can now be specified; see `extensions.H.hedeleg_zero_writable`.
   - The sizes supported by the `mcontrol6` trigger in the Sdtrig

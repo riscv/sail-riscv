@@ -158,7 +158,7 @@ private function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
 
 mapping clause csr_name_map = 0x301  <-> "misa"
 function clause is_CSR_accessible(0x301, _, _) = true // misa
-function clause read_CSR(0x301) = misa.bits
+function clause read_CSR(0x301) = if plat_implements_misa then misa.bits else zeros()
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); Ok(misa.bits) }
 
 // Are supervisor/user mode currently enabled? Although
