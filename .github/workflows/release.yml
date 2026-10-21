@@ -32,6 +32,7 @@ permissions:
 
 jobs:
   build:
+    if: github.event_name != 'schedule' || github.repository == 'riscv/sail-riscv'
     strategy:
       matrix:
         include:
@@ -117,6 +118,7 @@ jobs:
 
   release:
     needs: build
+    if: github.event_name != 'schedule' || github.repository == 'riscv/sail-riscv'
     runs-on: ubuntu-latest
     permissions:
       # Required to create a release.
