@@ -200,6 +200,19 @@ enum Trig_Match = {
   TM_NEQ, TM_NOT_NAPOT, TM_NOT_MASK_LO, TM_NOT_MASK_HI,
 }
 
+mapping trig_match_name : Trig_Match <-> string = {
+  TM_EQ          <-> "EQ",
+  TM_NAPOT       <-> "NAPOT",
+  TM_GE          <-> "GE",
+  TM_LT          <-> "LT",
+  TM_MASK_LO     <-> "MASK_LO",
+  TM_MASK_HI     <-> "MASK_HI",
+  TM_NEQ         <-> "NEQ",
+  TM_NOT_NAPOT   <-> "NOT_NAPOT",
+  TM_NOT_MASK_LO <-> "NOT_MASK_LO",
+  TM_NOT_MASK_HI <-> "NOT_MASK_HI",
+}
+
 mapping trig_match_val : bits(4) <-> Trig_Match = {
   0b0000 <-> TM_EQ,
   0b0001 <-> TM_NAPOT,
