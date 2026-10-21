@@ -187,7 +187,11 @@ private function compare_access_size forall 'n, 0 < 'n <= max_mem_access. (
 ) -> bool =
   (t_size == 0) | (t_size == 8 * width)
 
-private function compare_value_napot(value : xlenbits, tdata2 : xlenbits) -> bool = {
+private function compare_value_napot forall 'width, 0 < 'width <= xlen_bytes. (
+  width  : int('width),
+  value  : bits(8 * 'width),
+  tdata2 : xlenbits
+) -> bool = {
   let lsz : range(0, xlen - 1) = match least_significant_zero(tdata2) {
     None()  => internal_error(__FILE__, __LINE__, "Invalid tdata2 for NAPOT match: " ^ bits_str(tdata2)),
     Some(i) => i,
@@ -196,7 +200,13 @@ private function compare_value_napot(value : xlenbits, tdata2 : xlenbits) -> boo
   assert(lsz < sdtrig_mcontrol6_maskmax);
   let M = xlen - 1 - lsz;
   assert(M > 0);
-  value[xlen - 1 .. xlen - M] == tdata2[xlen - 1 .. xlen - M]
+
+  // Since the compare value might have fewer than M bits, only the
+  // top min(M, width) bits of the compare value and tdata2 are
+  // compared.
+  if   M < 8 * width
+  then value[8 * width - 1 .. 8 * width - M] == tdata2[xlen - 1 .. xlen - M]
+  else value == tdata2[xlen - 1 .. xlen - 8 * width]
 }
 
 private enum mask_type = {MASK_LO, MASK_HI}
@@ -215,14 +225,14 @@ private function compare_value_xlen forall 'width, 0 < 'width <= xlen_bytes. (t_
   let low_tdata2 = tdata2[8 * 'width - 1 .. 0];
   match t_match {
     TM_EQ          => value == low_tdata2,
-    TM_NAPOT       => compare_value_napot(zero_extend(value), tdata2),
+    TM_NAPOT       => compare_value_napot(width, value, tdata2),
     TM_GE          => value >=_u low_tdata2,
     TM_LT          => value <_u low_tdata2,
     TM_MASK_LO     => compare_value_mask(zero_extend(value), tdata2, MASK_LO),
     TM_MASK_HI     => compare_value_mask(zero_extend(value), tdata2, MASK_HI),
 
     TM_NEQ         => value != low_tdata2,
-    TM_NOT_NAPOT   => not(compare_value_napot(zero_extend(value), tdata2)),
+    TM_NOT_NAPOT   => not(compare_value_napot(width, value, tdata2)),
     TM_NOT_MASK_LO => not(compare_value_mask(zero_extend(value), tdata2, MASK_LO)),
     TM_NOT_MASK_HI => not(compare_value_mask(zero_extend(value), tdata2, MASK_HI)),
   }

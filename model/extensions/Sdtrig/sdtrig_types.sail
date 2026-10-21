@@ -115,6 +115,8 @@ mapping trigger_action_name : Trig_Action <-> string = {
   TA_Ext_Trigger_1 <-> "External Trigger Output 1",
 }
 
+overload to_str = {trigger_action_name}
+
 function is_supported_action(a : bits(6)) -> bool = {
   if not(trig_action_forwards_matches(a)) then return false;
   let act = trig_action(a) in
@@ -136,6 +138,8 @@ mapping hit_name : Hit <-> string = {
   Hit_after     <-> "hit-after",
   Hit_imm_after <-> "hit-imm-after",
 }
+
+overload to_str = {hit_name}
 
 enum Compare_Selection = {Compare_Address, Compare_Data}
 
@@ -212,6 +216,8 @@ mapping trig_match_name : Trig_Match <-> string = {
   TM_NOT_MASK_LO <-> "NOT_MASK_LO",
   TM_NOT_MASK_HI <-> "NOT_MASK_HI",
 }
+
+overload to_str = {trig_match_name}
 
 mapping trig_match_val : bits(4) <-> Trig_Match = {
   0b0000 <-> TM_EQ,
@@ -587,6 +593,8 @@ function trigger_name(t : Trigger) -> string =
     T_etrigger(_)  => "etrigger",
     T_mcontrol6(s) => "mcontrol6 (chain=" ^ bits_str(bool_bit(s.chain)) ^ ")",
   }
+
+overload to_str = {trigger_name}
 
 let trig_reset_val : Trigger =
   T_disabled(struct { dmode = false, data = zeros(), tdata2 = zeros(), textra = make_textra(zeros()) })

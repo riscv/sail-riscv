@@ -1,12 +1,23 @@
 #include "common/encoding.h"
 
-# Sized (select = 1) data triggers with value matches, RV64. Same reporting as mask_match.S.
+# Test to check data compares for triggers are done using the right width.
+#
+# Sized (select = 1) data triggers with value matches.
 #   case  match  size  access  value  tdata2                low-N-bit compare (spec)
 #   0     eq     8     sb      0x55   0xFFFFFFFFFFFFFF55    fire
 #   1     ge     8     sb      0x60   0xFFFFFFFFFFFFFF55    fire
 #   2     lt     8     sb      0x60   0x0000000000000155    no fire
 #   3     ne     8     sb      0x55   0xFFFFFFFFFFFFFF55    no fire
 #   4     eq     32    sw      0x55   0xFFFFFFFF00000055    fire
+#   M=8 N=8
+#   5  napot     8     sb      0x55   0x557FFFFFFFFFFFFF    fire
+#   6  napot     8     sb      0x60   0x557FFFFFFFFFFFFF    no fire
+#   M=8 N=16
+#   7  napot     16    sh      0x55   0x557FFFFFFFFFFFFF    no fire
+#   8  napot     16    sh      0x55   0x007FFFFFFFFFFFFF    fire
+#   M=16 N=8
+#   9  napot     8     sb      0x55   0x55607FFFFFFFFFFF    fire
+#  10  napot     8     sb      0x60   0x55607FFFFFFFFFFF    no fire
 
 /* type 6, select = 1 (data), m, store */
 #if __riscv_xlen == 32
@@ -19,17 +30,23 @@
 #define SIZE16 (2 << 16)
 #define SIZE32 (3 << 16)
 
+#define MATCH_EQ    (0 << 7)
+#define MATCH_NAPOT (1 << 7)
+#define MATCH_GE    (2 << 7)
+#define MATCH_LT    (3 << 7)
+#define MATCH_NE    (8 << 7)
+
 # Each case is represented by the corresponding bit in KEPT and FIRED.
 # KEPT tracks whether the trigger configuration was accepted, and
 # FIRED tracks whether the trigger fired.
 
 # All triggers should be kept
-#define EXPECTED_KEPT  0x1F
+#define EXPECTED_KEPT  0x7FF
 # Firing should follow spec
-#define EXPECTED_FIRED 0x13
+#define EXPECTED_FIRED 0x333
 
-.macro CASE idx, t1val, t2val, op, val
-  li    s2, 0
+.macro CASE idx, t1val, t2val, op, val, exp
+  li    s2, 0                   # clear expected state
   csrw  tdata1, zero
   li    t1, \t2val
   csrw  tdata2, t1
@@ -37,15 +54,15 @@
   csrw  tdata1, t2
   csrr  t3, tdata1
   bne   t3, t2, 1f
-  ori   s1, s1, (1 << \idx)
+  ori   s1, s1, (1 << \idx)     # update KEPT
 1:
   li    a1, \val
   \op   a1, 0(a0)
-  nop
-  nop
   csrw  tdata1, zero
-  beqz  s2, 2f
-  ori   s0, s0, (1 << \idx)
+  li    t1, \exp
+  bne   s2, t1, fail            # check expected state
+  beqz  s2, 2f                  # if trigger did not fire, skip update
+  ori   s0, s0, (1 << \idx)     # update FIRED
 2:
 .endm
 
@@ -58,8 +75,8 @@ main:
   la    t0, test_trap_handler
   csrw  mtvec, t0
   csrsi 0x744, 0x8              # mnstatus.NMIE = 1 (Smrnmi); skipped if mnstatus is absent
-  li    s0, 0                   # FIRED
-  li    s1, 0                   # KEPT
+  li    s0, 0                   # initialize FIRED
+  li    s1, 0                   # initialize KEPT
   csrsi mstatus, 0x8            # MIE = 1 (interrupt-enable reentrancy)
   csrsi 0x7a5, 0x8              # tcontrol.MTE = 1 (tcontrol reentrancy); skipped if tcontrol is absent
   csrw  tselect, zero
@@ -67,37 +84,79 @@ main:
 
 case0:
 #if __riscv_xlen == 32
-  CASE 0, BASE|(0 << 7)|SIZE8,  0xFFFFFF55, sb, 0x55
+  CASE 0, BASE|MATCH_EQ|SIZE8,          0xFFFFFF55, sb, 0x55, 1
 #else
-  CASE 0, BASE|(0 << 7)|SIZE8,  0xFFFFFFFFFFFFFF55, sb, 0x55
+  CASE 0, BASE|MATCH_EQ|SIZE8,  0xFFFFFFFFFFFFFF55, sb, 0x55, 1
 #endif
 
 case1:
 #if __riscv_xlen == 32
-  CASE 1, BASE|(2 << 7)|SIZE8,  0xFFFFFF55, sb, 0x60
+  CASE 1, BASE|MATCH_GE|SIZE8,          0xFFFFFF55, sb, 0x60, 1
 #else
-  CASE 1, BASE|(2 << 7)|SIZE8,  0xFFFFFFFFFFFFFF55, sb, 0x60
+  CASE 1, BASE|MATCH_GE|SIZE8,  0xFFFFFFFFFFFFFF55, sb, 0x60, 1
 #endif
 
 case2:
 #if __riscv_xlen == 32
-  CASE 2, BASE|(3 << 7)|SIZE8,  0x00000155, sb, 0x60
+  CASE 2, BASE|MATCH_LT|SIZE8,          0x00000155, sb, 0x60, 0
 #else
-  CASE 2, BASE|(3 << 7)|SIZE8,  0x0000000000000155, sb, 0x60
+  CASE 2, BASE|MATCH_LT|SIZE8,  0x0000000000000155, sb, 0x60, 0
 #endif
 
 case3:
 #if __riscv_xlen == 32
-  CASE 3, BASE|(8 << 7)|SIZE8,  0xFFFFFF55, sb, 0x55
+  CASE 3, BASE|MATCH_NE|SIZE8,          0xFFFFFF55, sb, 0x55, 0
 #else
-  CASE 3, BASE|(8 << 7)|SIZE8,  0xFFFFFFFFFFFFFF55, sb, 0x55
+  CASE 3, BASE|MATCH_NE|SIZE8,  0xFFFFFFFFFFFFFF55, sb, 0x55, 0
 #endif
 
 case4:
 #if __riscv_xlen == 32
-  CASE 4, BASE|(0 << 7)|SIZE16, 0xFFFF0055, sh, 0x55
+  CASE 4, BASE|MATCH_EQ|SIZE16,         0xFFFF0055, sh, 0x55, 1
 #else
-  CASE 4, BASE|(0 << 7)|SIZE32, 0xFFFFFFFF00000055, sw, 0x55
+  CASE 4, BASE|MATCH_EQ|SIZE32, 0xFFFFFFFF00000055, sw, 0x55, 1
+#endif
+
+case5:
+#if __riscv_xlen == 32
+  CASE 5, BASE|MATCH_NAPOT|SIZE8,         0x557FFFFF, sb, 0x55, 1
+#else
+  CASE 5, BASE|MATCH_NAPOT|SIZE8, 0x557FFFFFFFFFFFFF, sb, 0x55, 1
+#endif
+
+case6:
+#if __riscv_xlen == 32
+  CASE 6, BASE|MATCH_NAPOT|SIZE8,         0x557FFFFF, sb, 0x60, 0
+#else
+  CASE 6, BASE|MATCH_NAPOT|SIZE8, 0x557FFFFFFFFFFFFF, sb, 0x60, 0
+#endif
+
+case7:
+#if __riscv_xlen == 32
+  CASE 7, BASE|MATCH_NAPOT|SIZE16,         0x557FFFFF, sh, 0x55, 0
+#else
+  CASE 7, BASE|MATCH_NAPOT|SIZE16, 0x557FFFFFFFFFFFFF, sh, 0x55, 0
+#endif
+
+case8:
+#if __riscv_xlen == 32
+  CASE 8, BASE|MATCH_NAPOT|SIZE16,         0x007FFFFF, sh, 0x55, 1
+#else
+  CASE 8, BASE|MATCH_NAPOT|SIZE16, 0x007FFFFFFFFFFFFF, sh, 0x55, 1
+#endif
+
+case9:
+#if __riscv_xlen == 32
+  CASE 9, BASE|MATCH_NAPOT|SIZE8,         0x55607FFF, sb, 0x55, 1
+#else
+  CASE 9, BASE|MATCH_NAPOT|SIZE8, 0x55607FFFFFFFFFFF, sb, 0x55, 1
+#endif
+
+case10:
+#if __riscv_xlen == 32
+  CASE 10, BASE|MATCH_NAPOT|SIZE8,         0x55607FFF, sb, 0x60, 0
+#else
+  CASE 10, BASE|MATCH_NAPOT|SIZE8, 0x55607FFFFFFFFFFF, sb, 0x60, 0
 #endif
 
 check:
