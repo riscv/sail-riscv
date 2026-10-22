@@ -911,6 +911,9 @@
     "Zcmop": {
       "supported": true
     },
+    "Zcmp": {
+      "supported": false
+    },
     "Zba": {
       "supported": false
     },
