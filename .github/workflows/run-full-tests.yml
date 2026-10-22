@@ -5,12 +5,18 @@ on:
     - cron: "0 0 * * 0"
   pull_request:
     # Explicit listing of types is necessary to run the workflow when a label is added
+    # unlabeled is included so the job stops if the 'run-full-tests' label is removed
     types:
       - opened
       - synchronize
       - reopened
       - labeled
       - unlabeled
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: true
+
 jobs:
   run-full-tests:
     # If triggered by a PR event, only run if the 'run-full-tests' label is present

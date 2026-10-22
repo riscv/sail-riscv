@@ -30,6 +30,12 @@ permissions:
   id-token: write
   attestations: write
 
+# Serialize release jobs to avoid concurrent releases
+# (e.g. manual release and scheduled release at the same time)
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: false
+
 jobs:
   build:
     if: github.event_name != 'schedule' || github.repository == 'riscv/sail-riscv'

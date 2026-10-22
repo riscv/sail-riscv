@@ -8,6 +8,10 @@ env:
   rocq_stdlib_version: 9.0.0
   rocq_stdpp_version: 1.13.0
 
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-24.04
