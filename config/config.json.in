@@ -1020,11 +1020,14 @@
       // model does not support more than 16 triggers.
       "num_triggers": 16,
       // `breakpoint_reentrancy` must be one of the below strings:
-      // . `Use_tcontrol`: use the `mte` and `mpte` bits in the `tcontrol` CSR (this also makes the `tcontrol` CSR available)
+      // . `Use_tcontrol`: use the `mte` and `mpte` bits in the `tcontrol` CSR (requires tcontrol.supported to be set to true.)
       // . `Use_interrupt_enables`: use `mstatus.MIE` and the `SIE` bits in `sstatus` and `vsstatus`
       // . `No_reentrancy_support`: no specific support for reentrancy
       "breakpoint_reentrancy": "Use_interrupt_enables",
       // CSRs
+      "tcontrol": {
+        "supported": false
+      },
       "mcontext": {
         "supported": true
       },

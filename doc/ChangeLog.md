@@ -8,6 +8,9 @@
   - The sizes supported by the `mcontrol6` trigger in the Sdtrig
     extension can now be specified; see
     `extensions.Sdtrig.mcontrol6.supported_{address,data}_access_sizes`.
+  - Whether the `tcontrol` CSR is supported can now be specified. Previously,
+    this was controlled implicitly by the use of the `Use_tcontrol` reentrancy
+    option; now it can be specified directly; see `extensions.Sdtrig.tcontrol.supported`.
 
 # Release notes for version 0.16
 
