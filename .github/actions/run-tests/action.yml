@@ -1,0 +1,75 @@
+name: "sail-riscv test runner"
+description: "Composite action for a test run of a build of the Sail RISC-V model."
+inputs:
+  build_name:
+    description: "Name of the input build"
+    required: true
+  cmake_version:
+    description: "CMake version to use"
+    required: true
+  test_label:
+    description: "Name of the test suite label"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Common setup
+      uses: ./.github/actions/sail-setup
+      with:
+        cmake-version: "${{ inputs.cmake_version }}"
+        install-clang: "false"
+
+    - name: Download build
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ inputs.build_name }}
+        path: built_c_emulator
+
+    - name: Make downloaded simulator executable
+      # This is a workaround for a still-open Github bug from 2019
+      # https://github.com/actions/download-artifact/issues/14
+      # where permissions are lost by downloaded artifacts.
+      # Sanity check that the simulator can execute on this platform.
+      shell: bash
+      run: |
+        chmod +rx ./built_c_emulator/sail_riscv_sim
+        ./built_c_emulator/sail_riscv_sim --help
+
+    - name: Get tests version
+      shell: bash
+      run: |
+        SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)
+        echo "SAIL_RISCV_TESTS_VERSION=$SAIL_RISCV_TESTS_VERSION" >> $GITHUB_ENV
+
+    - name: Restore cached tests
+      uses: actions/cache/restore@v6
+      id: sail-riscv-tests-cache-restore
+      # On the master branch, we could set `fail-on-cache-miss:` to
+      # 'true', but while the PR with this workflow is not merged
+      # into master, the cache won't get created, so don't set it.
+      # Similarly, the same issue will arise for the PR that updates
+      # the version of the tests.
+      with:
+        path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
+        key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
+
+    - name: Configure ${{ inputs.test_label }} suite
+      # Specify the pre-built simulator for the tests.  This only
+      # sets up the tests; the simulator is not actually built, so
+      # only the minimal required flags are specified.
+      shell: bash
+      run: |
+        cmake -S . -B build -GNinja \
+          -DSAIL_RISCV_SIM=built_c_emulator/sail_riscv_sim \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DENABLE_RISCV_TESTS=TRUE \
+          -DENABLE_RISCV_ARCH_TESTS=TRUE \
+          -DENABLE_DAMO_TESTS=TRUE \
+          -DENABLE_RISCV_VECTOR_TESTS_V64_E64=TRUE \
+          -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
+
+    - name: Run ${{ inputs.test_label }} suite
+      shell: bash
+      run: |
+        ctest --test-dir build -L ${{ inputs.test_label }} --output-on-failure
