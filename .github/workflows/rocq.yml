@@ -1,6 +1,11 @@
 name: Rocq
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
 
 env:
   ocaml_version: 5.2.1
