@@ -136,6 +136,7 @@ add_first_party_test("test_tlb_stale_pte_access_fault.S")
 add_first_party_test("test_misaligned_page_straddle_hlv_hsv_g_stage.S")
 add_first_party_test("test_misaligned_page_straddle_hlv_hsv_vs_stage.S")
 add_first_party_test("test_indexed_segment_store_eew_overlap.S")
+add_first_party_test("test_mcontrol6_value_match_width.S")
 
 add_first_party_override_test("test_sew_elen_bound.S" "elen_32.json")
 add_first_party_override_test("test_satp_physaddr_bits.S" "satp_physaddr_bits.json")
