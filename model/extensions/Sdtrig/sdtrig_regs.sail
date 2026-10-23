@@ -96,9 +96,13 @@ register tcontrol : TControl = Mk_TControl(zeros())
 mapping clause csr_name_map = 0x7a5  <-> "tcontrol"
 function clause is_CSR_accessible(0x7a5, _, _) = currentlyEnabled(Ext_Sdtrig) & sdtrig_has_tcontrol
 function clause read_CSR(0x7a5) = tcontrol.bits
+let use_tcontrol_reentrancy = sdtrig_breakpoint_reentrancy == Use_tcontrol
 function clause write_CSR(0x7a5, value) = {
   let v = Mk_TControl(value);
-  tcontrol = [tcontrol with mpte = v[mpte], mte = v[mte]];
+  tcontrol = [tcontrol with
+    mpte = if use_tcontrol_reentrancy then v[mpte] else 0b0,
+    mte  = if use_tcontrol_reentrancy then v[mte] else 0b0
+  ];
   Ok(tcontrol.bits)
 }
 

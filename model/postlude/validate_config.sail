@@ -966,6 +966,10 @@ private function check_misc_extension_dependencies() -> bool = {
         valid = false;
         print_endline("Bit 3 (Breakpoint) in `base.medeleg.delegatable_bits` is set, but `extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol`: `tcontrol`-based reentrancy control hardwires this bit to 0.");
       };
+      if not(config extensions.Sdtrig.tcontrol.supported : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol` but `extensions.Sdtrig.tcontrol.supported` is false: tcontrol-based reentrancy control requires the `tcontrol` CSR.");
+      };
     };
     if (config extensions.Sdtrig.textra.mhselect.mcontext_match : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
       valid = false;
