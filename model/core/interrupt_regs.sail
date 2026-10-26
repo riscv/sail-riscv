@@ -413,6 +413,7 @@ private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts 
     VSEI = v[VSEI],
     VSTI = v[VSTI],
     VSSI = v[VSSI],
+    LCOFI = if currentlyEnabled(Ext_Shlcofideleg) then v[LCOFI] else 0b0,
   ]
 }
 
@@ -485,9 +486,10 @@ private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 // hip if delegated by hideleg
 private function lower_mip_to_vsip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   [Mk_Sinterrupts(zeros()) with
-    SEI = m[VSEI] & d[VSEI],
-    STI = m[VSTI] & d[VSTI],
-    SSI = m[VSSI] & d[VSSI],
+    SEI   = m[VSEI] & d[VSEI],
+    STI   = m[VSTI] & d[VSTI],
+    SSI   = m[VSSI] & d[VSSI],
+    LCOFI = lower_mip(m, mideleg)[LCOFI] & d[LCOFI],
   ]
 }
 
@@ -497,9 +499,10 @@ private function lower_mie_to_vsie(m : Minterrupts, d : Minterrupts) -> Minterru
   // Standard S-mode bits in vsie are aliases of corresponding VS-mode bits in
   // hie if delegated by hideleg
   [vs with
-    SEI = m[VSEI] & d[VSEI],
-    STI = m[VSTI] & d[VSTI],
-    SSI = m[VSSI] & d[VSSI],
+    SEI   = m[VSEI] & d[VSEI],
+    STI   = m[VSTI] & d[VSTI],
+    SSI   = m[VSSI] & d[VSSI],
+    LCOFI = lower_mie(m, mideleg)[LCOFI] & d[LCOFI],
   ]
 }
 
@@ -519,7 +522,10 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 // Returns new mip from previous mip (m) and the written vsip (v) as delegated by hideleg (d)
 private function legalize_vsip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  supported_interrupts_mask([m with VSSI = v[SSI] & d[VSSI]])
+  supported_interrupts_mask([m with
+    VSSI  = v[SSI] & d[VSSI],
+    LCOFI = if d[LCOFI] == 0b1 then lift_sip(m, mideleg, Mk_Sinterrupts(v.bits))[LCOFI] else m[LCOFI],
+  ])
 }
 
 function read_sip(read_type : XipReadType) -> Sinterrupts = {
@@ -564,6 +570,7 @@ private function legalize_vsie(m : Minterrupts, d : Minterrupts, v : xlenbits) -
     VSEI = v[SEI] & d[VSEI],
     VSTI = v[STI] & d[VSTI],
     VSSI = v[SSI] & d[VSSI],
+    LCOFI = if d[LCOFI] == 0b1 then lift_sie(m, mideleg, Mk_Sinterrupts(v.bits))[LCOFI] else m[LCOFI],
   ])
 }
 

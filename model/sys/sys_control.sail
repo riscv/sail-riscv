@@ -115,9 +115,10 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
 //
 // This is used when the hart is in the Active state.
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
-  // If supervisor mode is not currently enabled then ignore mideleg
-  // (it does not exist).
+  // If S-mode is not currently enabled then ignore mideleg.
   let mideleg_bits = if currentlyEnabled(Ext_S) then mideleg.bits else zeros();
+  // If HS-mode is not currently enabled then ignore hideleg.
+  let hideleg_bits = if currentlyEnabled(Ext_H) then hideleg.bits else zeros();
 
   // Read mip with the external platform interrupts ORed in.
   let pending    = read_mip(IncludePlatformInterrupts).bits & mie.bits;
@@ -126,8 +127,8 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // `core/interrupt_regs.sail:legalize_mideleg()`), but those
   // interrupts are not known in `findPendingInterrupt()` above.
   let pending_m  = pending & ~(mideleg_bits);
-  let pending_s  = pending &   mideleg_bits  & ~(hideleg.bits);
-  let pending_vs = pending &   mideleg_bits  &   hideleg.bits;
+  let pending_s  = pending &   mideleg_bits  & ~(hideleg_bits);
+  let pending_vs = pending &   mideleg_bits  &   hideleg_bits;
 
   let mIE  = (priv == Machine           & mstatus[MIE] == 0b1)  | priv != Machine;
   let sIE  = (priv == Supervisor        & mstatus[SIE] == 0b1)  | priv == User | priv == VirtualSupervisor | priv == VirtualUser;

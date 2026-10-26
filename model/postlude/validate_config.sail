@@ -884,6 +884,16 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_shgatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_hgatp_sv48x4_supported);
     valid = valid & check_shgatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_hgatp_sv57x4_supported);
   };
+  if (config extensions.Shlcofideleg.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shlcofideleg extension is enabled but the H extension is disabled: supporting Shlcofideleg requires H.");
+    };
+    if not(config extensions.Sscofpmf.supported : bool) then {
+      valid = false;
+      print_endline("The Shlcofideleg extension is enabled but the Sscofpmf extension is disabled: supporting Shlcofideleg requires Sscofpmf.");
+    };
+  };
   // "`htval` must be written with the faulting guest physical address in all
   //  circumstances permitted by the ISA."
   if (config extensions.Shtvala.supported : bool) then {
