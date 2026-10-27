@@ -120,7 +120,10 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 }
 
 private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  let v = Mk_Minterrupts(v & plat_mideleg_delegatable_bits);
+  // Bits in `plat_mideleg_read_only_one_bits` are read-only one. Config
+  // validation ensures that they are only set for supported lower-level (i.e.
+  // not machine-level or reserved) interrupts.
+  let v = Mk_Minterrupts((v & plat_mideleg_delegatable_bits) | plat_mideleg_read_only_one_bits);
   // Using `v` allows bits to be set for interrupts designated for
   // platform use. This is useful for bit-matching test frameworks
   // like ACT, but these bits do not affect the model as those
@@ -316,6 +319,15 @@ function clause write_CSR((0x302, value) if xlen == 64) = { medeleg = legalize_m
 function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, medeleg.bits[63 .. 32] @ value); Ok(medeleg.bits[31 .. 0]) }
 function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); Ok(medeleg.bits[63 .. 32]) }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); Ok(mideleg.bits) }
+
+// mideleg is not reset, but its configured read-only-one bits must
+// read as one at startup.
+function reset_mideleg() -> unit = {
+  if hartSupports(Ext_S) then {
+    mideleg = legalize_mideleg(mideleg, mideleg.bits);
+    csr_write_callback("mideleg", mideleg.bits);
+  }
+}
 
 private function legalize_hvip(h : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
