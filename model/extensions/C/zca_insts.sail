@@ -211,7 +211,7 @@ function clause execute C_LUI(imm, rd) = {
 }
 
 mapping clause assembly = C_LUI(imm, rd)
-  <-> "c.lui" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_signed_6(imm)
+  <-> "c.lui" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_6(imm)
   when rd != sp & imm != 0b000000
 
 // *****************************************************************
