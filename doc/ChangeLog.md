@@ -1,6 +1,8 @@
 # Release notes for the next version
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Whether xRET clears any outstanding LR reservation can now be specified;
+    see `platform.reservation.invalidate_on_xret`.
   - Whether the `misa` CSR is implemented can now be specified; see
     `base.misa_implemented`.
   - Whether bit 0 of `hedeleg` (instruction address misaligned exceptions)
