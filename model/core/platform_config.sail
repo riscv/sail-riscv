@@ -250,7 +250,7 @@ enum Sdtrig_breakpoint_reentrancy = {
 let sdtrig_breakpoint_reentrancy : Sdtrig_breakpoint_reentrancy = config extensions.Sdtrig.breakpoint_reentrancy
 
 // tcontrol only exists for tcontrol-based reentrancy
-let sdtrig_has_tcontrol : bool = sdtrig_breakpoint_reentrancy == Use_tcontrol
+let sdtrig_has_tcontrol : bool = config extensions.Sdtrig.tcontrol.supported
 
 // Define the policy for handling reserved behaviors.
 
