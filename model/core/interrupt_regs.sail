@@ -410,9 +410,9 @@ private function legalize_hedeleg(_m : Medeleg, v : bits(64)) -> Medeleg =
 private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
-    VSEI = v[VSEI],
-    VSTI = v[VSTI],
-    VSSI = v[VSSI],
+    VSEI  = v[VSEI],
+    VSTI  = v[VSTI],
+    VSSI  = v[VSSI],
     LCOFI = if currentlyEnabled(Ext_Shlcofideleg) then v[LCOFI] else 0b0,
   ]
 }
@@ -567,9 +567,9 @@ private function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 private function legalize_vsie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   supported_interrupts_mask([m with
-    VSEI = v[SEI] & d[VSEI],
-    VSTI = v[STI] & d[VSTI],
-    VSSI = v[SSI] & d[VSSI],
+    VSEI  = v[SEI] & d[VSEI],
+    VSTI  = v[STI] & d[VSTI],
+    VSSI  = v[SSI] & d[VSSI],
     LCOFI = if d[LCOFI] == 0b1 then lift_sie(m, mideleg, Mk_Sinterrupts(v.bits))[LCOFI] else m[LCOFI],
   ])
 }
