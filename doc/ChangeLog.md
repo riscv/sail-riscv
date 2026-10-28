@@ -1,6 +1,15 @@
 # Release notes for the next version
 
 - Updates to the [configuration file](../config/config.json.in):
+  - Whether the `tdata3` CSR is implemented can now be specified; see
+    `extensions.Sdtrig.tdata3.supported`. The Debug spec makes `tdata3`
+    optional if no implemented triggers use it. Types 2-6 use it as
+    `textra32`/`textra64` when textra is implemented; if `tdata3` is
+    unimplemented, access raises illegal-instruction.
+  - Whether textra matching is implemented can now be specified; see
+    `extensions.Sdtrig.textra.supported`. Unimplemented textra requires
+    all match options to be false and `mhvalue_len`/`svalue_len` to be 0,
+    and cannot be enabled without `tdata3`.
   - Whether the `misa` CSR is implemented can now be specified; see
     `base.misa_implemented`.
   - Whether bit 0 of `hedeleg` (instruction address misaligned exceptions)

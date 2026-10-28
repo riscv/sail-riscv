@@ -239,6 +239,13 @@ let sdtrig_has_mcontext : bool = config extensions.Sdtrig.mcontext.supported
 let sdtrig_has_hcontext : bool = config extensions.Sdtrig.hcontext.supported
 let sdtrig_has_scontext : bool = config extensions.Sdtrig.scontext.supported
 
+// tdata3 is optional if no implemented triggers use it (Debug spec 1.0).
+// Types 2-6 use it as textra32/64 when textra is implemented. If this is
+// false, access raises illegal-instruction.
+let sdtrig_has_tdata3 : bool = config extensions.Sdtrig.tdata3.supported
+// Whether textra32/64 matching is implemented. Requires tdata3.
+let sdtrig_has_textra : bool = config extensions.Sdtrig.textra.supported
+
 type num_triggers : Int = config extensions.Sdtrig.num_triggers
 // The number of bits to index the triggers needs to fit into `tselect`,
 // but for practical reasons is constrained to be much smaller.
