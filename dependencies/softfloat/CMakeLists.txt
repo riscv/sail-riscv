@@ -55,7 +55,6 @@ target_include_directories(softfloat
 target_compile_options(softfloat PRIVATE
     -Werror=implicit-function-declaration
     -Wno-unused-parameter
-    -Wno-unused-variable
     $<$<BOOL:${HAVE_WIMPLICIT_FALLTHROUGH}>:-Wno-implicit-fallthrough>
 )
 
