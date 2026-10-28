@@ -1,0 +1,22 @@
+{
+  "extensions": {
+    "Sdtrig": {
+      "tdata3": {
+        "supported": false
+      },
+      "textra": {
+        "supported": false,
+        "mhselect": {
+          "mcontext_match": false,
+          "vmid_match": false
+        },
+        "sselect": {
+          "scontext_match": false,
+          "asid_match": false
+        },
+        "mhvalue_len": 0,
+        "svalue_len": 0
+      }
+    }
+  }
+}
