@@ -19,8 +19,9 @@
   - Bits of `mideleg` for lower-level interrupts can now be configured
     as read-only one (i.e. always delegated); see
     `base.mideleg.read_only_one_bits`.
-  - `mideleg.SGEI` can now be configured as writable or read-only one when
-    GEILEN is 0 via `base.mideleg.read_only_one_bits`.
+  - When GEILEN is 0, `mideleg.SGEI` can now be configured as writable via
+    `base.mideleg.delegatable_bits` or read-only one via
+    `base.mideleg.read_only_one_bits`.
 
 # Release notes for version 0.16
 
