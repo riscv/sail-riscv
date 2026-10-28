@@ -177,8 +177,10 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   // matched by data store triggers.  This implementation implements data
   // triggers for AMOs as `after` triggers to retain AMO atomicity.
 
-  if res == RETIRE_SUCCESS then {
-    match_memory_trigger_after(cur_privilege, TriggerAMOData(bits_of(vaddr), loaded, stored, width));
+  match res {
+    Retire_Success() =>
+      match_memory_trigger_after(cur_privilege, TriggerAMOData(bits_of(vaddr), loaded, stored, width)),
+    _ => ()
   };
 
   res
