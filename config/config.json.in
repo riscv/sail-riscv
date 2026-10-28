@@ -168,6 +168,21 @@
       "delegatable_bits": {
         "len": "xlen",
         "value": "@CONFIG_MIDELEG_DELEGATABLE_BITS_VALUE@"
+      },
+      // A bit set to 1 in this value specifies that the corresponding
+      // bit of `mideleg` is read-only one, i.e. the corresponding
+      // interrupt is always delegated. These bits are implicitly
+      // delegatable and do not need to be set in `delegatable_bits`.
+      // The specification does not allow bits for machine-level
+      // interrupts to be read-only one, and delegation of reserved
+      // interrupts is not supported. Bit 13 (LCOFI) may only be set
+      // when Sscofpmf is supported. The read-only-one bits for VS-level
+      // and guest external interrupts that are mandated by the H
+      // extension are handled separately and must not be set here.
+      // This value is ignored when the `mideleg` CSR does not exist.
+      "read_only_one_bits": {
+        "len": "xlen",
+        "value": "@CONFIG_MIDELEG_READ_ONLY_ONE_BITS_VALUE@"
       }
     },
     // These settings control whether the specified exceptions

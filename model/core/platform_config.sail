@@ -36,6 +36,9 @@ let plat_vstvec_vectored_base_alignment_exp : tvec_alignment = config base.vstve
 let plat_medeleg_delegatable_bits : bits(64) = config base.medeleg.delegatable_bits
 let plat_mideleg_delegatable_bits : xlenbits = config base.mideleg.delegatable_bits
 
+// Read-only-one bits of `mideleg`, i.e. interrupts that are always delegated.
+let plat_mideleg_read_only_one_bits : xlenbits = config base.mideleg.read_only_one_bits
+
 // Whether hedeleg[0] (the bit corresponding to instruction address misaligned exceptions)
 // is writable.
 let plat_hedeleg_zero_writable : bool = config extensions.H.hedeleg_zero_writable

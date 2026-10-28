@@ -1078,6 +1078,26 @@ private function check_extension_param_constraints() -> bool = {
       print_endline("Bits for reserved interrupts are set in `base.mideleg.delegatable_bits`.");
     };
 
+    let mideleg_ro_one = Mk_Minterrupts(config base.mideleg.read_only_one_bits);
+    // "an implementation shall not fix as read-only one any bits of mideleg
+    // corresponding to machine-level interrupts (but may do so for
+    // lower-level interrupts)."
+    if mideleg_ro_one[MEI] != 0b0 | mideleg_ro_one[MTI] != 0b0 | mideleg_ro_one[MSI] != 0b0 then {
+      valid = false;
+      print_endline("Bits for machine-level interrupts are set in `base.mideleg.read_only_one_bits`; these bits cannot be read-only one.");
+    };
+    // The reserved interrupt mask also covers the VS-level and guest
+    // external interrupt bits, whose read-only-one behaviour is
+    // governed by the H extension.
+    if (mideleg_ro_one.bits & reserved_interrupt_mask) != zeros() then {
+      valid = false;
+      print_endline("Bits for reserved, VS-level or guest external interrupts are set in `base.mideleg.read_only_one_bits`.");
+    };
+    if mideleg_ro_one[LCOFI] != 0b0 & not(config extensions.Sscofpmf.supported : bool) then {
+      valid = false;
+      print_endline("Bit 13 (LCOFI) in `base.mideleg.read_only_one_bits` is set, but the Sscofpmf extension is not supported.");
+    };
+
     // Sstc implies supervisor timer interrupts should be supported.
     if (config extensions.Sstc.supported : bool) then {
       if not(config extensions.S.interrupts.timer.supported : bool) then {

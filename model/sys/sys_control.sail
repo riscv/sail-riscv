@@ -563,6 +563,9 @@ function reset_sys() -> unit = {
   // "The misa register is reset to enable the maximal set of supported extensions"
   reset_misa();
 
+  // An implementation may fix some mideleg bits to one.
+  reset_mideleg();
+
   // "For implementations with the "A" standard extension, there is no valid load reservation."
   cancel_reservation();
 

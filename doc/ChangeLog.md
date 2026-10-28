@@ -11,6 +11,9 @@
   - Whether the `tcontrol` CSR is supported can now be specified. Previously,
     this was controlled implicitly by the use of the `Use_tcontrol` reentrancy
     option; now it can be specified directly; see `extensions.Sdtrig.tcontrol.supported`.
+  - Bits of `mideleg` for lower-level interrupts can now be configured
+    as read-only one (i.e. always delegated); see
+    `base.mideleg.read_only_one_bits`.
 
 # Release notes for version 0.16
 
