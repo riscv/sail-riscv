@@ -642,11 +642,11 @@ bitfield TControl : xlenbits = {
 }
 
 bitfield SContext : xlenbits = {
-  data : 31 .. 0,
+  data : sdtrig_scontext_width - 1 .. 0,
 }
 
 bitfield MContext : xlenbits = {
-  hcontext : 13 .. 0,
+  hcontext : sdtrig_hcontext_width - 1 .. 0,
 }
 
 bitfield External_Trigger : xlenbits = {

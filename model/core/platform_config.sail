@@ -241,6 +241,12 @@ let sdtrig_max_chain_limit : nat = config extensions.Sdtrig.mcontrol6.max_chain_
 let sdtrig_has_mcontext : bool = config extensions.Sdtrig.mcontext.supported
 let sdtrig_has_hcontext : bool = config extensions.Sdtrig.hcontext.supported
 let sdtrig_has_scontext : bool = config extensions.Sdtrig.scontext.supported
+type sdtrig_hcontext_width : Int = config extensions.Sdtrig.hcontext.width
+constraint 1 <= sdtrig_hcontext_width < xlen
+let sdtrig_hcontext_width = sizeof(sdtrig_hcontext_width)
+type sdtrig_scontext_width : Int = config extensions.Sdtrig.scontext.width
+constraint 1 <= sdtrig_scontext_width < xlen
+let sdtrig_scontext_width = sizeof(sdtrig_scontext_width)
 
 type num_triggers : Int = config extensions.Sdtrig.num_triggers
 // The number of bits to index the triggers needs to fit into `tselect`,
