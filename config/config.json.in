@@ -534,7 +534,9 @@
       // reservation on stores from the same hart.  If this is set to `true`, the
       // model invalidates the reservation if a store from the same hart lies within
       // the reservation set.
-      "invalidate_on_same_hart_store": false
+      "invalidate_on_same_hart_store": false,
+      // Whether xRET clears any outstanding LR reservation.
+      "invalidate_on_xret": false
     },
     "interrupts": {
       "machine": {
