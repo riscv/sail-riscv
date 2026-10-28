@@ -60,7 +60,8 @@ function mhselect_match(t : TExtra) -> bool = {
 
 // For itrigger and etrigger, priv is the mode the trap was taken from
 // See https://github.com/riscv/riscv-debug-spec/issues/1208
-function textra_match(t : TExtra, priv : Privilege) -> bool = mhselect_match(t) & sselect_match(t, priv)
+function textra_match(t : TExtra, priv : Privilege) -> bool =
+  not(sdtrig_has_textra) | (mhselect_match(t) & sselect_match(t, priv))
 
 // icount triggers
 

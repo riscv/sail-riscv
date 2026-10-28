@@ -147,6 +147,7 @@ add_first_party_override_test("test_event_counter.S" "misaligned_event.json")
 add_first_party_override_test("test_vs_ebreak_xtval_zero_gva.S" "software_breakpoint_xtval_zero.json")
 add_first_party_override_test("test_vs_ebreak_double_trap_xtval_zero_gva.S" "ssdbltrp_software_breakpoint_xtval_zero.json")
 add_first_party_override_test("test_mideleg_read_only_one.S" "mideleg_read_only_one.json")
+add_first_party_override_test("test_tdata3_unimplemented.S" "tdata3_unimplemented.json")
 
 add_first_party_experimental_test("test_zilx.S")
 

@@ -971,6 +971,23 @@ private function check_misc_extension_dependencies() -> bool = {
         print_endline("`extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol` but `extensions.Sdtrig.tcontrol.supported` is false: tcontrol-based reentrancy control requires the `tcontrol` CSR.");
       };
     };
+    if (config extensions.Sdtrig.textra.supported : bool) & not(config extensions.Sdtrig.tdata3.supported : bool) then {
+      valid = false;
+      print_endline("`extensions.Sdtrig.textra.supported` is enabled but `tdata3` is not: textra32/64 is tdata3 for trigger types 2-6.");
+    };
+    if not(config extensions.Sdtrig.textra.supported : bool) then {
+      if (config extensions.Sdtrig.textra.mhselect.mcontext_match : bool)
+        | (config extensions.Sdtrig.textra.mhselect.vmid_match : bool)
+        | (config extensions.Sdtrig.textra.sselect.scontext_match : bool)
+        | (config extensions.Sdtrig.textra.sselect.asid_match : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.supported` is false but a textra match option is enabled: unimplemented textra cannot match on mcontext, VMID, scontext or ASID.");
+      };
+      if sdtrig_mhvalue_len != 0 | sdtrig_svalue_len != 0 then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.supported` is false but `mhvalue_len` or `svalue_len` is non-zero: unimplemented textra has no value bits.");
+      };
+    };
     if (config extensions.Sdtrig.textra.mhselect.mcontext_match : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
       valid = false;
       print_endline("`extensions.Sdtrig.textra.mhselect.mcontext_match` is enabled but the `mcontext` CSR is not supported: mcontext matching requires `mcontext`.");

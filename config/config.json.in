@@ -1052,6 +1052,13 @@
       "scontext": {
         "supported": true
       },
+      // tdata3 is optional if no implemented triggers use it (Debug spec 1.0).
+      // Types 2-6 use it as textra32/64 when textra is implemented. If this
+      // is false, access raises illegal-instruction and textra must also
+      // be unsupported.
+      "tdata3": {
+        "supported": true
+      },
       // Triggers
       "icount": {
         "supported": true,
@@ -1111,6 +1118,10 @@
         }
       },
       "textra": {
+        // Whether textra32/64 (tdata3 for types 2-6) is implemented.
+        // If false, matching is ignored, `mhvalue_len`/`svalue_len` must be
+        // 0, and `tdata3` may also be unimplemented.
+        "supported": true,
         // Which context matches are supported. Writes of unsupported
         // `mhselect` and `sselect` values are legalized to 0 (ignore).
         "mhselect": {

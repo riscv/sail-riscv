@@ -294,6 +294,15 @@ function legalize_sselect(sselect : bits(2)) -> bits(2) = {
 }
 
 function make_textra(v : xlenbits) -> TExtra = {
+  if not(sdtrig_has_textra) then {
+    return struct {
+      mhvalue   = zeros(),
+      mhselect  = zeros(),
+      sbytemask = zeros(),
+      svalue    = zeros(),
+      sselect   = zeros(),
+    }
+  };
   let mhvalue_mask : bits(13) = zero_extend(ones(sdtrig_mhvalue_len));
   let svalue_mask : bits(32) = zero_extend(ones(sdtrig_svalue_len));
   if xlen == 32 then {
