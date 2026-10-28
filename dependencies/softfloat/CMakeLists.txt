@@ -1,4 +1,14 @@
-SET(source_dir "${CMAKE_CURRENT_SOURCE_DIR}/berkeley-softfloat-3")
+include(FetchContent)
+
+FetchContent_Declare(
+    berkeley_softfloat
+    URL https://github.com/ucb-bar/berkeley-softfloat-3/archive/0a5ad290c6b287f6605bb99a35ad0842c1e61aa5.tar.gz
+    URL_HASH SHA256=b646bbef1883c8b50920ec3414307327a599818a4f72c5fc36629f9d6c9052bd
+)
+
+FetchContent_MakeAvailable(berkeley_softfloat)
+
+SET(source_dir "${berkeley_softfloat_SOURCE_DIR}")
 
 # Generic source plus RISC-V specific source.
 file(GLOB riscv_source
@@ -45,7 +55,6 @@ target_include_directories(softfloat
 target_compile_options(softfloat PRIVATE
     -Werror=implicit-function-declaration
     -Wno-unused-parameter
-    -Wno-unused-variable
     $<$<BOOL:${HAVE_WIMPLICIT_FALLTHROUGH}>:-Wno-implicit-fallthrough>
 )
 
