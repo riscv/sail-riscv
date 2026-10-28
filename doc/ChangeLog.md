@@ -1,5 +1,8 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - Shlcofideleg
+
 - Updates to the [configuration file](../config/config.json.in):
   - Whether the `misa` CSR is implemented can now be specified; see
     `base.misa_implemented`.
