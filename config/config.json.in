@@ -1051,16 +1051,16 @@
       },
       "hcontext": {
         "supported": true,
-        // The implemented width in bits; this must be greater than
-        // zero and less than XLEN. A valid value must be provided in
-        // this range even if `hcontext` is not supported.
+        // The implemented width in bits, upto a max of 14. A valid
+        // value must be provided in this range even if `hcontext` is
+        // not supported.
         "width": @CONFIG_SDTRIG_HCONTEXT_WIDTH@
       },
       "scontext": {
         "supported": true,
-        // The implemented width in bits; this must be greater than
-        // zero and less than XLEN. A valid value must be provided in
-        // this range even if `scontext` is not supported.
+        // The implemented width in bits, upto a max of 32. A valid
+        // value must be provided in this range even if `hcontext` is
+        // not supported.
         "width": @CONFIG_SDTRIG_SCONTEXT_WIDTH@
       },
       // Triggers

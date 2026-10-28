@@ -28,9 +28,7 @@ function prevent_reentrance(act: Trig_Action, priv : Privilege) -> bool = {
 }
 
 function sselect_match(t : TExtra, priv : Privilege) -> bool = {
-  let ctx : bits(32) = if   sdtrig_scontext_width >= 32
-                       then scontext[data][31 .. 0]
-                       else zero_extend(scontext[data]);
+  let ctx = scontext[data];
   match t.sselect {
     0b00 => true,                                                                                  // 0
     // Bytes with their sbytemask bit set are ignored, RV32 only has 2 bytes
@@ -46,10 +44,7 @@ function sselect_match(t : TExtra, priv : Privilege) -> bool = {
 }
 
 function mhselect_match(t : TExtra) -> bool = {
-  let ctx : bits(14) = if   sdtrig_hcontext_width >= 14
-                       then mcontext[hcontext][13 .. 0]
-                       else zero_extend(mcontext[hcontext]);
-
+  let ctx = mcontext[hcontext];
   let v   = t.mhvalue @ t.mhselect[2 .. 2];
   match t.mhselect {
     0b000 => true,                                                                               // 0
