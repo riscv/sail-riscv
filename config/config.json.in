@@ -1059,7 +1059,7 @@
       "scontext": {
         "supported": true,
         // The implemented width in bits, upto a max of 32. A valid
-        // value must be provided in this range even if `hcontext` is
+        // value must be provided in this range even if `scontext` is
         // not supported.
         "width": @CONFIG_SDTRIG_SCONTEXT_WIDTH@
       },
