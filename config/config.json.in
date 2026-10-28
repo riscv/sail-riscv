@@ -177,9 +177,9 @@
       // interrupts to be read-only one, and delegation of reserved
       // interrupts is not supported. Bit 13 (LCOFI) may only be set
       // when Sscofpmf is supported. The read-only-one bits for VS-level
-      // and guest external interrupts that are mandated by the H
-      // extension are handled separately and must not be set here.
-      // This value is ignored when the `mideleg` CSR does not exist.
+      // interrupts that are mandated by the H extension are handled
+      // separately and must not be set here. This value is ignored when
+      // the `mideleg` CSR does not exist.
       "read_only_one_bits": {
         "len": "xlen",
         "value": "@CONFIG_MIDELEG_READ_ONLY_ONE_BITS_VALUE@"
