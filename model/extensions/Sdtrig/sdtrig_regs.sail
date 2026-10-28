@@ -147,6 +147,6 @@ function clause is_CSR_accessible(0x6a8, _, _) = currentlyEnabled(Ext_Sdtrig) & 
 function clause read_CSR(0x6a8) = mcontext.bits
 function clause write_CSR(0x6a8, value) = {
   let v = Mk_MContext(value);
-  mcontext = [mcontext with hcontext = v[hcontext]];
+  mcontext = [mcontext with hcontext = v[hcontext] & hcontext_mask];
   Ok(mcontext.bits)
 }
