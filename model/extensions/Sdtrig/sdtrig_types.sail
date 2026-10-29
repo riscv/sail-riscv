@@ -668,6 +668,11 @@ function make_disabled_trigger(tdata1 : TData1, tdata2 : xlenbits, textra : TExt
 let supported_etrigger_mask : xlenbits = config extensions.Sdtrig.etrigger.supported_exceptions
 let supported_itrigger_mask : xlenbits = config extensions.Sdtrig.itrigger.supported_interrupts
 
+let icount_uses_textra    : bool = config extensions.Sdtrig.icount.uses_textra
+let etrigger_uses_textra  : bool = config extensions.Sdtrig.etrigger.uses_textra
+let itrigger_uses_textra  : bool = config extensions.Sdtrig.itrigger.uses_textra
+let mcontrol6_uses_textra : bool = config extensions.Sdtrig.mcontrol6.uses_textra
+
 // Forward declaration.
 val allow_chain_at : (trigger_index) -> bool
 
@@ -680,13 +685,22 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
     then print_log("Cannot create unsupported trigger type " ^ bits_str(tt) ^ ".");
     return make_disabled_trigger(tdata1, tdata2, textra)
   };
+
   let tt = trig_type_bits(tt);
+  let textra_bits = TExtra_to_bits(textra);
+
   match tt {
     TT_icount => {
       let v = Mk_ICount_bits(tdata1.bits);
       let act = v[action];
       let count = if icount_count_is_hardwired_one then zero_extend(0x1) else v[count];
-      if is_supported_action(act) then {
+
+      let is_action_supported = is_supported_action(act);
+      // Should there be an option to take tdata3 but ignore it?
+      let is_textra_supported = icount_uses_textra | (textra_bits == zeros());
+      let is_valid_config     = is_action_supported & is_textra_supported;
+
+      if is_valid_config then {
         T_icount(struct {
           dmode = false,
           vs = if currentlyEnabled(Ext_H) then bool_bit(v[vs]) else false,
@@ -715,7 +729,9 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
 
       let is_action_supported     = is_supported_action(act);
       let is_interrupts_supported = (tdata2 & supported_itrigger_mask) == tdata2;
-      let is_valid_config         = is_action_supported & is_interrupts_supported;
+      // Should there be an option to take tdata3 but ignore it?
+      let is_textra_supported     = itrigger_uses_textra | (textra_bits == zeros());
+      let is_valid_config         = is_action_supported & is_interrupts_supported & is_textra_supported;
 
       if is_valid_config then {
         T_itrigger(struct {
@@ -748,7 +764,9 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
 
       let is_action_supported     = is_supported_action(act);
       let is_exceptions_supported = (tdata2 & supported_etrigger_mask) == tdata2;
-      let is_valid_config         = is_action_supported & is_exceptions_supported;
+      // Should there be an option to take tdata3 but ignore it?
+      let is_textra_supported     = etrigger_uses_textra | (textra_bits == zeros());
+      let is_valid_config         = is_action_supported & is_exceptions_supported & is_textra_supported;
 
       if is_valid_config then {
         T_etrigger(struct {
@@ -786,11 +804,14 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
         is_match_supported &
         ((trig_match_val(v[t_match]) != TM_NAPOT & trig_match_val(v[t_match]) != TM_NOT_NAPOT)
          | is_valid_napot_compare_value(tdata2));
+      // Should there be an option to take tdata3 but ignore it?
+      let is_textra_supported    = mcontrol6_uses_textra | (textra_bits == zeros());
 
       let allow_chain = if bool_bit(v[chain]) then allow_chain_at(idx) else false;
 
       let is_valid_config = is_size_supported & is_action_supported &
-                            is_match_supported & is_compare_value_valid;
+                            is_match_supported & is_compare_value_valid &
+                            is_textra_supported;
 
       if is_valid_config then {
         T_mcontrol6(struct {
@@ -934,9 +955,9 @@ function trigger_write_tdata3(idx : trigger_index, t : Trigger, tdata3 : xlenbit
   then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(TExtra_to_bits(textra)) ^ " (write=" ^ bits_str(tdata3) ^ ")");
   match t {
     T_disabled(s)  => T_disabled({s with textra}),
-    T_icount(s)    => T_icount({s with textra}),
-    T_itrigger(s)  => T_itrigger({s with textra}),
-    T_etrigger(s)  => T_etrigger({s with textra}),
-    T_mcontrol6(s) => T_mcontrol6({s with textra}),
+    T_icount(s)    => T_icount(if icount_uses_textra then {s with textra} else s),
+    T_itrigger(s)  => T_itrigger(if itrigger_uses_textra then {s with textra} else s),
+    T_etrigger(s)  => T_etrigger(if etrigger_uses_textra then {s with textra} else s),
+    T_mcontrol6(s) => T_mcontrol6(if mcontrol6_uses_textra then {s with textra} else s),
   }
 }

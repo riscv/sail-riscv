@@ -237,10 +237,12 @@ constraint 0 < sdtrig_mcontrol6_maskmax < xlen
 let sdtrig_mcontrol6_maskmax = sizeof(sdtrig_mcontrol6_maskmax)
 let sdtrig_max_chain_limit : nat = config extensions.Sdtrig.mcontrol6.max_chain_length
 
-// Sdtrig context CSRs
+// Sdtrig CSR support
 let sdtrig_has_mcontext : bool = config extensions.Sdtrig.mcontext.supported
 let sdtrig_has_hcontext : bool = config extensions.Sdtrig.hcontext.supported
 let sdtrig_has_scontext : bool = config extensions.Sdtrig.scontext.supported
+let sdtrig_has_tdata2   : bool = config extensions.Sdtrig.tdata2.supported
+let sdtrig_has_textra   : bool = config extensions.Sdtrig.textra.supported
 
 type num_triggers : Int = config extensions.Sdtrig.num_triggers
 // The number of bits to index the triggers needs to fit into `tselect`,

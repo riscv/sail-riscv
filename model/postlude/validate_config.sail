@@ -616,6 +616,20 @@ private function check_required_xtval_option(ext_name : string, name : string, v
   }
 }
 
+private function check_tdata2_support(trigger : string, supported : bool) -> bool = {
+  if supported then {
+    print_endline("The " ^ trigger ^ " trigger, which requires the `tdata2` register, is supported but `extensions.Sdtrig.tdata2.supported` is not enabled.");
+    false
+  } else true
+}
+
+private function check_textra_support(trigger : string, uses_textra : bool) -> bool = {
+  if uses_textra then {
+    print_endline("The " ^ trigger ^ " trigger is supported and uses `textra` (as per `extensions.Sdtrig." ^ trigger ^ ".uses_textra`) but `extensions.Sdtrig.textra.supported` is not enabled.");
+    false
+  } else true
+}
+
 private function reserved_exception_mask() -> bits(64) =
   if config extensions.H.supported : bool
   // Hypervisor codes 10,20-23 are valid, not reserved
@@ -981,32 +995,44 @@ private function check_misc_extension_dependencies() -> bool = {
         print_endline("`extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol` but `extensions.Sdtrig.tcontrol.supported` is false: tcontrol-based reentrancy control requires the `tcontrol` CSR.");
       };
     };
-    if (config extensions.Sdtrig.textra.mhselect.mcontext_match : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.mhselect.mcontext_match` is enabled but the `mcontext` CSR is not supported: mcontext matching requires `mcontext`.");
+    if not(config extensions.Sdtrig.tdata2.supported : bool) then {
+       valid = valid & check_tdata2_support("etrigger",  (config extensions.Sdtrig.etrigger.supported : bool));
+       valid = valid & check_tdata2_support("itrigger",  (config extensions.Sdtrig.itrigger.supported : bool));
+       valid = valid & check_tdata2_support("mcontrol6", (config extensions.Sdtrig.mcontrol6.supported : bool));
     };
-    if (config extensions.Sdtrig.textra.mhselect.vmid_match : bool) & not(config extensions.H.supported : bool) then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.mhselect.vmid_match` is enabled but the H extension is not supported: VMID matching requires H.");
-    };
-    if (config extensions.Sdtrig.textra.sselect.scontext_match : bool)
-      & (not(config extensions.S.supported : bool) | not(config extensions.Sdtrig.scontext.supported : bool)) then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.sselect.scontext_match` is enabled but S or the `scontext` CSR is not supported: scontext matching requires both.");
-    };
-    if (config extensions.Sdtrig.textra.sselect.asid_match : bool) & not(config extensions.S.supported : bool) then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.sselect.asid_match` is enabled but the S extension is not supported: ASID matching requires S.");
-    };
-    let mhvalue_max : nat = if xlen == 32 then 6 else 13;
-    if sdtrig_mhvalue_len > mhvalue_max then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.mhvalue_len` is " ^ dec_str(sdtrig_mhvalue_len) ^ " but cannot be greater than " ^ dec_str(mhvalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
-    };
-    let svalue_max : nat = if xlen == 32 then 16 else 32;
-    if sdtrig_svalue_len > svalue_max then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.svalue_len` is " ^ dec_str(sdtrig_svalue_len) ^ " but cannot be greater than " ^ dec_str(svalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
+    if not(config extensions.Sdtrig.textra.supported : bool) then {
+       valid = valid & check_textra_support("icount",    (config extensions.Sdtrig.icount.supported : bool) & (config extensions.Sdtrig.icount.uses_textra : bool));
+       valid = valid & check_textra_support("etrigger",  (config extensions.Sdtrig.etrigger.supported : bool) & (config extensions.Sdtrig.etrigger.uses_textra : bool));
+       valid = valid & check_textra_support("itrigger",  (config extensions.Sdtrig.itrigger.supported : bool) & (config extensions.Sdtrig.itrigger.uses_textra : bool));
+       valid = valid & check_textra_support("mcontrol6", (config extensions.Sdtrig.mcontrol6.supported : bool) & (config extensions.Sdtrig.mcontrol6.uses_textra : bool));
+    } else {
+      if (config extensions.Sdtrig.textra.mhselect.mcontext_match : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.mhselect.mcontext_match` is enabled but the `mcontext` CSR is not supported: mcontext matching requires `mcontext`.");
+      };
+      if (config extensions.Sdtrig.textra.mhselect.vmid_match : bool) & not(config extensions.H.supported : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.mhselect.vmid_match` is enabled but the H extension is not supported: VMID matching requires H.");
+      };
+      if (config extensions.Sdtrig.textra.sselect.scontext_match : bool)
+        & (not(config extensions.S.supported : bool) | not(config extensions.Sdtrig.scontext.supported : bool)) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.sselect.scontext_match` is enabled but S or the `scontext` CSR is not supported: scontext matching requires both.");
+      };
+      if (config extensions.Sdtrig.textra.sselect.asid_match : bool) & not(config extensions.S.supported : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.sselect.asid_match` is enabled but the S extension is not supported: ASID matching requires S.");
+      };
+      let mhvalue_max : nat = if xlen == 32 then 6 else 13;
+      if sdtrig_mhvalue_len > mhvalue_max then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.mhvalue_len` is " ^ dec_str(sdtrig_mhvalue_len) ^ " but cannot be greater than " ^ dec_str(mhvalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
+      };
+      let svalue_max : nat = if xlen == 32 then 16 else 32;
+      if sdtrig_svalue_len > svalue_max then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.svalue_len` is " ^ dec_str(sdtrig_svalue_len) ^ " but cannot be greater than " ^ dec_str(svalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
+      };
     };
     if (config extensions.Sdtrig.mcontrol6.supported : bool) then {
       let maskmax : nat = sdtrig_mcontrol6_maskmax;

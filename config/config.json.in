@@ -1060,7 +1060,9 @@
         "count_hardwired_one": false,
         // Whether a `tdata1` write to an `icount` trigger with `count`=1 also makes it
         // pending when that write's instruction matches the trigger.
-        "self_write_sets_pending": true
+        "self_write_sets_pending": true,
+        // Whether `textra` is implemented for this trigger.
+        "uses_textra": true
       },
       "etrigger": {
         "supported": true,
@@ -1071,7 +1073,9 @@
         "supported_exceptions": {
           "len": "xlen",
           "value": "@CONFIG_SDTRIG_SUPPORTED_ETRIGGERS_VALUE@"
-        }
+        },
+        // Whether `textra` is implemented for this trigger.
+        "uses_textra": true
       },
       "itrigger": {
         "supported": true,
@@ -1082,7 +1086,9 @@
         "supported_interrupts": {
           "len": "xlen",
           "value": "@CONFIG_SDTRIG_SUPPORTED_ITRIGGERS_VALUE@"
-        }
+        },
+        // Whether `textra` is implemented for this trigger.
+        "uses_textra": true
       },
       "mcontrol6": {
         "supported": true,
@@ -1110,9 +1116,18 @@
           "bits32": true,
           "bits48": @CONFIG_XLEN_IS_64@,
           "bits64": @CONFIG_XLEN_IS_64@
-        }
+        },
+        // Whether `textra` is implemented for this trigger.
+        "uses_textra": true
+      },
+      // Whether the `tdata2` register is supported.
+      "tdata2": {
+        "supported": true
       },
       "textra": {
+        // Whether the `tdata3` register is supported.  This should be
+        // enabled if any of the supported triggers has enabled `uses_textra`.
+        "supported": true,
         // Which context matches are supported. Writes of unsupported
         // `mhselect` and `sselect` values are legalized to 0 (ignore).
         "mhselect": {
