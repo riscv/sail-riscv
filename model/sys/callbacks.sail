@@ -26,6 +26,25 @@ function ptw_success_callback(_) = ()
 val ptw_fail_callback = pure {cpp: "ptw_fail_callback"} : (TranslationStage, /* level */ range(0, 4), /* error_type */ PTW_Error, /* pte_addr */ physaddrbits) -> unit
 function ptw_fail_callback(_) = ()
 
+// In the address translation callbacks, the virtual address `vaddr`
+// is specified in `physaddrbits` since it could be a guest physical
+// address in a G-stage translation; the `paddr` is the result of the
+// translation for the `access` of `width` bytes.
+//
+// For two-stage translation, the start callback can be followed by
+// upto two associated address-translated callbacks, one for each
+// stage.  There may also be zero such callbacks; in this case, there
+// would be an associated `exception_callback`.
+//
+// M-mode `Bare` "address translation completions" are reported as
+// S-stage translations; these can be disambiguated by an M-mode
+// privilege in the start callback and zero associated
+// `ptw_start_callback`s.
+
+val address_translation_start_callback = pure {cpp: "address_translation_start_callback"} : (TranslationStage, Privilege, /* vaddr */ physaddrbits, /* access */ MemoryAccessType(mem_payload)) -> unit
+val address_translated_callback = pure {cpp: "address_translated_callback"} : (TranslationStage, /* vaddr */ physaddrbits, /* paddr */ physaddrbits, /* access */ MemoryAccessType(mem_payload)) -> unit
+function address_translated_callback(_) = ()
+
 // Instruction retire callback.  This allows tracking retires without using
 // minstret, since that is only conditionally incremented on retires.
 val instret_callback = pure {cpp: "instret_callback"} : (unit) -> unit

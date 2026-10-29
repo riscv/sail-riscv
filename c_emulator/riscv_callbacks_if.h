@@ -13,39 +13,60 @@ public:
   // Callback invoked after each step
   virtual void post_step_callback(ModelImpl &model, bool is_waiting);
 
-  virtual void fetch_callback(ModelImpl &model, sbits opcode);
+  // See model/core/callbacks.sail.
 
-  virtual void mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value);
+  virtual void fetch_callback(ModelImpl &model, sbits pc, sbits opcode);
 
-  virtual void mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value);
+  virtual void mem_write_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
+
+  virtual void mem_read_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
 
   virtual void mem_exception_callback(ModelImpl &model, sbits paddr, uint64_t num_of_exception);
 
   virtual void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value);
 
-  virtual void freg_write_callback(ModelImpl &model, unsigned reg, sbits value);
+  virtual void freg_write_callback(ModelImpl &model, uint64_t reg, sbits value);
 
-  virtual void csr_full_write_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value);
+  virtual void csr_full_write_callback(ModelImpl &model, const_sail_string csr_name, uint64_t reg, sbits value);
 
-  virtual void csr_full_read_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value);
+  virtual void csr_full_read_callback(ModelImpl &model, const_sail_string csr_name, uint64_t reg, sbits value);
 
-  virtual void vreg_write_callback(ModelImpl &model, unsigned reg, lbits value);
+  virtual void vreg_write_callback(ModelImpl &model, uint64_t reg, lbits value);
 
   virtual void pc_write_callback(ModelImpl &model, sbits new_pc);
 
+  virtual void trigger_tdata_write_callback(ModelImpl &model, sbits tselect, int64_t tdata_num, sbits data);
+
   virtual void redirect_callback(ModelImpl &model, sbits new_pc);
 
-  virtual void trap_callback(ModelImpl &model, bool is_interrupt, fbits cause);
+  virtual void interrupt_callback(ModelImpl &model, fbits cause);
+
+  virtual void exception_callback(ModelImpl &model, fbits cause, const ModelImpl::ExceptionContext &ctx);
 
   virtual void xret_callback(ModelImpl &model, bool is_mret);
-
-  virtual void instret_callback(ModelImpl &model);
 
   virtual void trigger_match_callback(hart::Model &model, sail_int trig_index);
 
   virtual void trigger_fire_callback(hart::Model &model, sail_int trig_index);
 
-  // Page table walk callbacks
+  // See model/sys/callbacks.sail.
+
+  virtual void instret_callback(ModelImpl &model);
+
   virtual void ptw_start_callback(
     ModelImpl &model,
     ModelImpl::TranslationStage stage,
@@ -78,6 +99,24 @@ public:
     sbits pte_addr
   );
 
+  virtual void address_translation_start_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    ModelImpl::Privilege privilege,
+    sbits vaddr,
+    ModelImpl::MemoryAccessType access
+  );
+
+  virtual void address_translated_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    sbits vaddr,
+    sbits paddr,
+    ModelImpl::MemoryAccessType access
+  );
+
+  // See model/sys/vmem_tlb.sail.
+
   virtual void tlb_add_callback(ModelImpl &model, ModelImpl::TLB tlb, uint64_t index);
 
   virtual void tlb_flush_begin_callback(ModelImpl &model);
@@ -85,4 +124,13 @@ public:
   virtual void tlb_flush_callback(ModelImpl &model, uint64_t index);
 
   virtual void tlb_flush_end_callback(ModelImpl &model, ModelImpl::TLB tlb);
+
+  virtual void tlb_hit_callback(
+    ModelImpl &model,
+    ModelImpl::TranslationStage stage,
+    int64_t level,
+    sbits pte_addr,
+    uint64_t pte,
+    int64_t index
+  );
 };

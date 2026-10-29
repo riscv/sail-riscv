@@ -1,0 +1,10 @@
+{
+  "window": "main",
+  "events": [
+    { "match": "sd", "when": "xlen==64", "mem_d": [8] },
+    { "match": "sw", "when": "xlen==32", "mem_d": [4] },
+    { "match": "fld", "mem_d": [8], "f_rd": true },
+    { "match": "fsd", "mem_d": [8] },
+    { "match": "fld", "mem_d": [8], "f_rd": true }
+  ]
+}

@@ -8,12 +8,13 @@
 // A better solution is to allow passing in `hart::Model&` to `model_test()`.
 // See https://github.com/rems-project/sail/issues/1556
 
-unit PlatformInterface::fetch_callback([[maybe_unused]] sbits opcode) {
+unit PlatformInterface::fetch_callback([[maybe_unused]] sbits pc, [[maybe_unused]] sbits opcode) {
   return UNIT;
 }
 
 unit PlatformInterface::mem_write_callback(
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] hart::zPrivilege privilege,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -22,7 +23,8 @@ unit PlatformInterface::mem_write_callback(
 }
 
 unit PlatformInterface::mem_read_callback(
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] hart::zPrivilege privilege,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -45,13 +47,13 @@ unit PlatformInterface::xreg_full_write_callback(
   return UNIT;
 }
 
-unit PlatformInterface::freg_write_callback([[maybe_unused]] unsigned reg, [[maybe_unused]] sbits value) {
+unit PlatformInterface::freg_write_callback([[maybe_unused]] uint64_t reg, [[maybe_unused]] sbits value) {
   return UNIT;
 }
 
 unit PlatformInterface::csr_full_write_callback(
   [[maybe_unused]] const_sail_string csr_name,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] sbits value
 ) {
   return UNIT;
@@ -59,13 +61,13 @@ unit PlatformInterface::csr_full_write_callback(
 
 unit PlatformInterface::csr_full_read_callback(
   [[maybe_unused]] const_sail_string csr_name,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] sbits value
 ) {
   return UNIT;
 }
 
-unit PlatformInterface::vreg_write_callback([[maybe_unused]] unsigned reg, [[maybe_unused]] lbits value) {
+unit PlatformInterface::vreg_write_callback([[maybe_unused]] uint64_t reg, [[maybe_unused]] lbits value) {
   return UNIT;
 }
 
@@ -73,11 +75,23 @@ unit PlatformInterface::pc_write_callback([[maybe_unused]] sbits new_pc) {
   return UNIT;
 }
 
+unit PlatformInterface::trigger_tdata_write_callback(
+  [[maybe_unused]] sbits tselect,
+  [[maybe_unused]] int64_t tdata_num,
+  [[maybe_unused]] sbits data
+) {
+  return UNIT;
+}
+
 unit PlatformInterface::redirect_callback([[maybe_unused]] sbits new_pc) {
   return UNIT;
 }
 
-unit PlatformInterface::trap_callback([[maybe_unused]] bool is_interrupt, [[maybe_unused]] fbits cause) {
+unit PlatformInterface::interrupt_callback([[maybe_unused]] fbits cause) {
+  return UNIT;
+}
+
+unit PlatformInterface::exception_callback([[maybe_unused]] fbits cause, [[maybe_unused]] hart::zExceptionContext ctx) {
   return UNIT;
 }
 
@@ -131,6 +145,24 @@ unit PlatformInterface::ptw_fail_callback(
   return UNIT;
 }
 
+unit PlatformInterface::address_translation_start_callback(
+  [[maybe_unused]] hart::zTranslationStage stage,
+  [[maybe_unused]] hart::zPrivilege privilege,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access
+) {
+  return UNIT;
+}
+
+unit PlatformInterface::address_translated_callback(
+  [[maybe_unused]] hart::zTranslationStage stage,
+  [[maybe_unused]] sbits vaddr,
+  [[maybe_unused]] sbits paddr,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access
+) {
+  return UNIT;
+}
+
 unit PlatformInterface::tlb_add_callback(
   [[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb,
   [[maybe_unused]] uint64_t index
@@ -147,6 +179,16 @@ unit PlatformInterface::tlb_flush_callback([[maybe_unused]] uint64_t index) {
 }
 
 unit PlatformInterface::tlb_flush_end_callback([[maybe_unused]] hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb) {
+  return UNIT;
+}
+
+unit PlatformInterface::tlb_hit_callback(
+  [[maybe_unused]] hart::zTranslationStage stage,
+  [[maybe_unused]] int64_t level,
+  [[maybe_unused]] sbits pte_addr,
+  [[maybe_unused]] uint64_t pte,
+  [[maybe_unused]] int64_t index
+) {
   return UNIT;
 }
 
@@ -252,6 +294,10 @@ bool PlatformInterface::get_config_rvfi(unit) {
 }
 
 bool PlatformInterface::get_config_use_abi_names(unit) {
+  return false;
+}
+
+bool PlatformInterface::get_config_use_no_tlb(unit) {
   return false;
 }
 
