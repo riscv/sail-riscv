@@ -158,13 +158,14 @@
     },
     "mideleg": {
       // A bit set to 1 in this value specifies that the corresponding
-      // bit of `mideleg` can be set to 1. It represents the subset of
-      // delegatable interrupts of the implementation. Bits should not
-      // be set for interrupts that cannot be delegated as per the
-      // specification, and delegation of reserved interrupts is not
-      // supported. Bits set for interrupts designated for platform
-      // use are ignored. This value is ignored when the `mideleg` CSR
-      // does not exist.
+      // bit of `mideleg` can be set to 1, unless the bit is also set in
+      // `read_only_one_bits` below, in which case it is read-only one.
+      // It represents the subset of delegatable interrupts of the
+      // implementation. Bits should not be set for interrupts that cannot
+      // be delegated as per the specification, and delegation of reserved
+      // interrupts is not supported. Bits set for interrupts designated
+      // for platform use are ignored. This value is ignored when the
+      // `mideleg` CSR does not exist.
       "delegatable_bits": {
         "len": "xlen",
         "value": "@CONFIG_MIDELEG_DELEGATABLE_BITS_VALUE@"
