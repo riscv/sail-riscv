@@ -145,7 +145,7 @@ private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts
     VSSI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
     // "if any guest external interrupts are implemented (GEILEN is nonzero),
     //  bit 12 of mideleg ... is also read-only one."
-    SGEI = if currentlyEnabled(Ext_H) & geilen > 0 then 0b1 else 0b0,
+    SGEI = if not(currentlyEnabled(Ext_H)) then 0b0 else if geilen > 0 then 0b1 else v[SGEI],
   ]
 }
 

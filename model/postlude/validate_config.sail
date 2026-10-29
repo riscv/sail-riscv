@@ -1082,7 +1082,7 @@ private function check_extension_param_constraints() -> bool = {
 
     let midelegation = Mk_Minterrupts(config base.mideleg.delegatable_bits);
     // Ignore bits set for interrupts designated for platform use.
-    let reserved_interrupt_mask : xlenbits = zero_extend(0xD555);
+    let reserved_interrupt_mask : xlenbits = zero_extend(0xC555);
     if (midelegation.bits & reserved_interrupt_mask) != zeros() then {
       valid = false;
       print_endline("Bits for reserved interrupts are set in `base.mideleg.delegatable_bits`.");
@@ -1096,12 +1096,11 @@ private function check_extension_param_constraints() -> bool = {
       valid = false;
       print_endline("Bits for machine-level interrupts are set in `base.mideleg.read_only_one_bits`; these bits cannot be read-only one.");
     };
-    // The reserved interrupt mask also covers the VS-level and guest
-    // external interrupt bits, whose read-only-one behaviour is
-    // governed by the H extension.
+    // The reserved interrupt mask also covers the VS-level interrupt
+    // bits, whose read-only-one behaviour is governed by the H extension.
     if (mideleg_ro_one.bits & reserved_interrupt_mask) != zeros() then {
       valid = false;
-      print_endline("Bits for reserved, VS-level or guest external interrupts are set in `base.mideleg.read_only_one_bits`.");
+      print_endline("Bits for reserved or VS-level interrupts are set in `base.mideleg.read_only_one_bits`.");
     };
     if mideleg_ro_one[LCOFI] != 0b0 & not(config extensions.Sscofpmf.supported : bool) then {
       valid = false;
