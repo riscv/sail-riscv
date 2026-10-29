@@ -1,7 +1,11 @@
-include(FetchContent)
-
 # Allow downloads to be turned off (in particular, for targets that don't need it).
 option(DOWNLOAD_JSONCONS "Download jsoncons" ON)
+
+if (NOT DOWNLOAD_JSONCONS)
+  return()
+endif()
+
+include(FetchContent)
 
 # The jsoncons `unit_tests` target conflicts with our own.
 set(JSONCONS_BUILD_TESTS OFF)
@@ -12,10 +16,8 @@ FetchContent_Declare(
   URL_HASH SHA3_256=c1f7957049ce756005ce67917ce8b6f09c0cf56e630664edeb272365229baada
 )
 
-if (DOWNLOAD_JSONCONS)
-    FetchContent_MakeAvailable(jsoncons)
+FetchContent_MakeAvailable(jsoncons)
 
-    set_target_properties(jsoncons
-        PROPERTIES SKIP_LINTING ON
-    )
-endif()
+set_target_properties(jsoncons
+  PROPERTIES SKIP_LINTING ON
+)

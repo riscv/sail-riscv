@@ -1,3 +1,10 @@
+# Allow downloads to be turned off (in particular, for targets that don't need it).
+option(DOWNLOAD_SOFTFLOAT "Download softfloat" ON)
+
+if (NOT DOWNLOAD_SOFTFLOAT)
+    return()
+endif()
+
 include(FetchContent)
 
 FetchContent_Declare(
