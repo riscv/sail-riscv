@@ -16,6 +16,12 @@
   - Whether the `tcontrol` CSR is supported can now be specified. Previously,
     this was controlled implicitly by the use of the `Use_tcontrol` reentrancy
     option; now it can be specified directly; see `extensions.Sdtrig.tcontrol.supported`.
+  - Whether the `tdata2` and `tdata3` CSRs are supported can be
+    configured, see `extensions.Sdtrig.tdata2` and
+    `extensions.Sdtrig.textra.supported` (note the `textra` instead of
+    `tdata3`)
+  - Whether a trigger uses `textra`-based matching can be specified;
+    see the `uses_textra` field for each trigger under `extensions.Sdtrig`.
   - Bits of `mideleg` for lower-level interrupts can now be configured
     as read-only one (i.e. always delegated); see
     `base.mideleg.read_only_one_bits`.

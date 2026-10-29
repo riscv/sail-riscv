@@ -47,7 +47,7 @@ function clause write_CSR(0x7a1, value) = {
 }
 
 mapping clause csr_name_map = 0x7a2  <-> "tdata2"
-function clause is_CSR_accessible(0x7a2, _, _) = currentlyEnabled(Ext_Sdtrig)
+function clause is_CSR_accessible(0x7a2, _, _) = currentlyEnabled(Ext_Sdtrig) & sdtrig_has_tdata2
 function clause read_CSR(0x7a2) = {
   let idx = unsigned(tselect);
   assert(idx < num_triggers, "read(tdata2): out-of-range tselect: " ^ bits_str(tselect));
@@ -63,7 +63,7 @@ function clause write_CSR(0x7a2, value) = {
 }
 
 mapping clause csr_name_map = 0x7a3  <-> "tdata3"
-function clause is_CSR_accessible(0x7a3, _, _) = currentlyEnabled(Ext_Sdtrig)
+function clause is_CSR_accessible(0x7a3, _, _) = currentlyEnabled(Ext_Sdtrig) & sdtrig_has_textra
 function clause read_CSR(0x7a3) = {
   let idx = unsigned(tselect);
   assert(idx < num_triggers, "read(tdata3): out-of-range tselect: " ^ bits_str(tselect));
