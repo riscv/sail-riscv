@@ -458,6 +458,7 @@ extension.
   - Zicclsm
   - Ziccrse
   - Zicfiss
+  - Zcmp
   - Ssccptr
   - Sscounterenw
   - Svade
