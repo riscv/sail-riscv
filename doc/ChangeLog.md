@@ -27,6 +27,9 @@
     this was controlled implicitly by the use of the `Use_tcontrol` reentrancy
     option; now it can be specified directly; see `extensions.Sdtrig.tcontrol.supported`.
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
+
 # Release notes for version 0.16
 
 The highlight of this release is the essential completion of the

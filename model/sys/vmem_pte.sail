@@ -238,7 +238,7 @@ private function check_PTE_permission(
   // Step 8 of VATP (see vmem.sail).
 
   // Handle `mxr` (Make eXecutable Readable).
-  let pte_R = pte_R | (pte_X & mxr);
+  let pte_R = pte_R | (pte_X & mxr & not(is_implicit_access(access)));
   let access_ok : bool = match access {
     Load(_)                     => pte_R,
     LoadReserved(_)             => pte_R,
