@@ -1050,10 +1050,18 @@
         "supported": true
       },
       "hcontext": {
-        "supported": true
+        "supported": true,
+        // The implemented width in bits, upto a max of 14. A valid
+        // value must be provided in this range even if `hcontext` is
+        // not supported.
+        "width": @CONFIG_SDTRIG_HCONTEXT_WIDTH@
       },
       "scontext": {
-        "supported": true
+        "supported": true,
+        // The implemented width in bits, upto a max of 32. A valid
+        // value must be provided in this range even if `scontext` is
+        // not supported.
+        "width": @CONFIG_SDTRIG_SCONTEXT_WIDTH@
       },
       // Triggers
       "icount": {

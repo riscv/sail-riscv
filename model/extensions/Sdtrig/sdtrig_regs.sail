@@ -116,15 +116,21 @@ function tcontrol_mret_from_mmode() -> unit = {
   csr_write_callback("tcontrol", tcontrol.bits);
 }
 
+let sdtrig_scontext_width : range(0, 32) = config extensions.Sdtrig.scontext.width
+let scontext_mask : bits(32) = zero_extend(ones(sdtrig_scontext_width))
+
 register scontext : SContext = Mk_SContext(zeros())
 mapping clause csr_name_map = 0x5a8  <-> "scontext"
 function clause is_CSR_accessible(0x5a8, _, _) = currentlyEnabled(Ext_Sdtrig) & sdtrig_has_scontext
 function clause read_CSR(0x5a8) = scontext.bits
 function clause write_CSR(0x5a8, value) = {
   let v = Mk_SContext(value);
-  scontext = [scontext with data = v[data]];
+  scontext = [scontext with data = v[data] & scontext_mask];
   Ok(scontext.bits)
 }
+
+let sdtrig_hcontext_width : range(0, 14) = config extensions.Sdtrig.hcontext.width
+let hcontext_mask : bits(14) = zero_extend(ones(sdtrig_hcontext_width))
 
 register mcontext : MContext = Mk_MContext(zeros())
 mapping clause csr_name_map = 0x7a8  <-> "mcontext"
@@ -132,7 +138,7 @@ function clause is_CSR_accessible(0x7a8, _, _) = currentlyEnabled(Ext_Sdtrig) & 
 function clause read_CSR(0x7a8) = mcontext.bits
 function clause write_CSR(0x7a8, value) = {
   let v = Mk_MContext(value);
-  mcontext = [mcontext with hcontext = v[hcontext]];
+  mcontext = [mcontext with hcontext = v[hcontext] & hcontext_mask];
   Ok(mcontext.bits)
 }
 
@@ -141,6 +147,6 @@ function clause is_CSR_accessible(0x6a8, _, _) = currentlyEnabled(Ext_Sdtrig) & 
 function clause read_CSR(0x6a8) = mcontext.bits
 function clause write_CSR(0x6a8, value) = {
   let v = Mk_MContext(value);
-  mcontext = [mcontext with hcontext = v[hcontext]];
+  mcontext = [mcontext with hcontext = v[hcontext] & hcontext_mask];
   Ok(mcontext.bits)
 }

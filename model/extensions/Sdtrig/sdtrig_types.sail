@@ -249,7 +249,10 @@ struct TExtra = {
 
 // The number of implemented mhvalue and svalue bits.
 let sdtrig_mhvalue_len : range(0, 13) = config extensions.Sdtrig.textra.mhvalue_len
-let sdtrig_svalue_len : range(0, 32) = config extensions.Sdtrig.textra.svalue_len
+let sdtrig_svalue_len  : range(0, 32) = config extensions.Sdtrig.textra.svalue_len
+// The corresponding masks for their values.
+let mhvalue_mask : bits(13) = zero_extend(ones(sdtrig_mhvalue_len))
+let svalue_mask  : bits(32) = zero_extend(ones(sdtrig_svalue_len))
 
 function TExtra_to_bits(t : TExtra) -> xlenbits = {
   if xlen == 32 then {
@@ -294,8 +297,6 @@ function legalize_sselect(sselect : bits(2)) -> bits(2) = {
 }
 
 function make_textra(v : xlenbits) -> TExtra = {
-  let mhvalue_mask : bits(13) = zero_extend(ones(sdtrig_mhvalue_len));
-  let svalue_mask : bits(32) = zero_extend(ones(sdtrig_svalue_len));
   if xlen == 32 then {
     let data = Mk_Trigger_Extra_RV32(v);
     struct {
