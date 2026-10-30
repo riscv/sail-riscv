@@ -23,6 +23,9 @@
     `base.mideleg.delegatable_bits` or read-only one via
     `base.mideleg.read_only_one_bits`.
 
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
+
 # Release notes for version 0.16
 
 The highlight of this release is the essential completion of the
