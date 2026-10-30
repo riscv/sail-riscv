@@ -1268,6 +1268,7 @@
       "mstateen0": {
         "SE0": "CSRBit_Writable",
         "ENVCFG": "CSRBit_Writable",
+        "CSRIND": "CSRBit_Writable",
         "CONTEXT": "CSRBit_Writable",
         "P1P13": "@CONFIG__STATEEN__P1P13@",
         "SRMCFG": "CSRBit_Writable",
@@ -1288,6 +1289,7 @@
       // hstateen0.SE0 is always writable.
       "hstateen0": {
         "ENVCFG": "CSRBit_Writable",
+        "CSRIND": "CSRBit_Writable",
         "CONTEXT": "CSRBit_Writable",
         "FCSR": "CSRBit_ReadOnlyZero",
         "C": "CSRBit_ReadOnlyZero"
@@ -1309,6 +1311,12 @@
       "supported": @CONFIG_XLEN_IS_64@
     },
     "Svvptc": {
+      "supported": true
+    },
+    "Sscsrind": {
+      "supported": true
+    },
+    "Smcsrind": {
       "supported": true
     }
   }

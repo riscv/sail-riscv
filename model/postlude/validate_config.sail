@@ -945,6 +945,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssdbltrp extension is enabled but S is disabled: supporting Ssdbltrp requires S.");
   };
+  if (config extensions.Sscsrind.supported : bool) & not(config extensions.S.supported : bool) then {
+    valid = false;
+    print_endline("The Sscsrind extension is enabled but S is disabled: supporting Sscsrind requires S.");
+  };
   if (config extensions.Sdtrig.supported : bool) then {
     if num_triggers == 0 then {
       valid = false;
@@ -1171,7 +1175,8 @@ private function check_stateen_config() -> bool = {
   // A bit can only be read-only one in hstateen0 if it is read-only one in mstateen0.
   if hartSupports(Ext_Smstateen) &
      ((hstateen0_envcfg == CSRBit_ReadOnlyOne & mstateen0_envcfg != CSRBit_ReadOnlyOne) | (hstateen0_context == CSRBit_ReadOnlyOne & mstateen0_context != CSRBit_ReadOnlyOne) |
-      (hstateen0_fcsr == CSRBit_ReadOnlyOne & mstateen0_fcsr != CSRBit_ReadOnlyOne) | (hstateen0_c == CSRBit_ReadOnlyOne & mstateen0_c != CSRBit_ReadOnlyOne)) then {
+      (hstateen0_fcsr == CSRBit_ReadOnlyOne & mstateen0_fcsr != CSRBit_ReadOnlyOne) | (hstateen0_c == CSRBit_ReadOnlyOne & mstateen0_c != CSRBit_ReadOnlyOne) |
+      (hstateen0_csrind == CSRBit_ReadOnlyOne & mstateen0_csrind != CSRBit_ReadOnlyOne)) then {
     valid = false;
     print_endline("Stateen hstateen0 has a read-only one bit that is not read-only one in mstateen0.");
   };
@@ -1183,12 +1188,14 @@ private function check_stateen_config() -> bool = {
   };
   if hartSupports(Ext_Smstateen) then {
     valid = check_stateen_bit_feature("mstateen0.ENVCFG",  mstateen0_envcfg,  hartSupports(Ext_S)) & valid;
+    valid = check_stateen_bit_feature("mstateen0.CSRIND",  mstateen0_csrind,  (hartSupports(Ext_Sscsrind) | hartSupports(Ext_Smcsrind)) & hartSupports(Ext_S)) & valid;
     valid = check_stateen_bit_feature("mstateen0.CONTEXT", mstateen0_context, hartSupports(Ext_Sdtrig) & (sdtrig_has_scontext | sdtrig_has_hcontext)) & valid;
     valid = check_stateen_bit_feature("mstateen0.P1P13",   mstateen0_p1p13,   delegh_csrs_are_defined & hartSupports(Ext_H) & xlen == 32) & valid;
     valid = check_stateen_bit_feature("mstateen0.SRMCFG",  mstateen0_srmcfg,  hartSupports(Ext_Ssqosid)) & valid;
     valid = check_stateen_bit_feature("mstateen0.FCSR",    mstateen0_fcsr,    hartSupports(Ext_Zfinx)) & valid;
   };
   if hartSupports(Ext_H) then {
+    valid = check_stateen_bit_feature("hstateen0.CSRIND",  hstateen0_csrind,  (hartSupports(Ext_Sscsrind) | hartSupports(Ext_Smcsrind)) & hartSupports(Ext_S)) & valid;
     valid = check_stateen_bit_feature("hstateen0.CONTEXT", hstateen0_context, hartSupports(Ext_Sdtrig) & sdtrig_has_scontext) & valid;
     valid = check_stateen_bit_feature("hstateen0.FCSR",    hstateen0_fcsr,    hartSupports(Ext_Zfinx)) & valid;
   };

@@ -2,6 +2,8 @@
 
 - The following extensions have been added:
   - Shlcofideleg
+  - Smcsrind
+  - Sscsrind
 
 - Updates to the [configuration file](../config/config.json.in):
   - Whether xRET clears any outstanding LR reservation can now be specified;
