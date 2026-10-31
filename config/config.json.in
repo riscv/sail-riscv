@@ -794,6 +794,11 @@
         "Sv57": @CONFIG_XLEN_IS_64@
       }
     },
+    "X":  {
+      // Whether non-standard extensions are supported.  This affects
+      // the value of the `misa.X` bit, which is currently read-only.
+      "supported": false
+    },
     "Zibi": {
       "supported": true
     },
