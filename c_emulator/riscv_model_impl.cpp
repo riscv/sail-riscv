@@ -788,10 +788,9 @@ void ModelImpl::set_freg(int64_t reg, uint64_t val) {
 }
 
 void ModelImpl::set_pc(uint64_t val) {
-  sbits sail_val;
-  sail_val.len = zPC.len;
-  sail_val.bits = val;
-  (void)zset_next_pc(sail_val);
+  assert(zPC.len == 32 || zPC.len == 64);
+  val = (zPC.len == 32) ? (val << 32) >> 32 : val;
+  zPC.bits = val;
 }
 
 void ModelImpl::set_fcsr(uint64_t val) {

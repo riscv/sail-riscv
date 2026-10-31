@@ -285,7 +285,7 @@ public:
     uint64_t regval{};
     {
       auto val_str = cmd.substr(last_idx, idx - last_idx);
-      auto opt_val = string_to_opt_uint64t(val_str);
+      auto opt_val = string_to_opt_uint64t_regdata(val_str);
       if (!opt_val.has_value()) {
         return std::nullopt;
       }
