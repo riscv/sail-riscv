@@ -282,15 +282,7 @@ public:
     if (idx == std::string::npos) {
       idx = cmd.length();
     }
-    uint64_t regval{};
-    {
-      auto val_str = cmd.substr(last_idx, idx - last_idx);
-      auto opt_val = string_to_opt_uint64t(val_str);
-      if (!opt_val.has_value()) {
-        return std::nullopt;
-      }
-      regval = opt_val.value();
-    }
+    std::string regval = cmd.substr(last_idx, idx - last_idx);
     // Ignore any thread suffix since we don't have threads.
     return response_handler_ptr(new response::write_register(regidx, regval));
   }

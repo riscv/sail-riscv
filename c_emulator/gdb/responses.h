@@ -115,14 +115,14 @@ private:
 
 class write_register : public response_handler {
 public:
-  write_register(uint64_t regidx, uint64_t regval) : m_regidx(regidx), m_regval(regval) {
+  write_register(uint64_t regidx, const std::string &regval) : m_regidx(regidx), m_regval(regval) {
   }
 
   void dispatch(protocol_handler &, gdb_run_info &) override;
 
 private:
   uint64_t m_regidx = 0;
-  uint64_t m_regval = 0;
+  std::string m_regval;
 };
 
 class qXfer_features_read : public response_handler {

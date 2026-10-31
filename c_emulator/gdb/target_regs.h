@@ -30,4 +30,4 @@ std::string get_general_regs(protocol_handler &proto_handler);
 // Generates the response for `p` (read register).
 std::string get_register(protocol_handler &proto_handler, uint64_t regidx);
 // Generates the response for `P` (write register).
-std::string set_register(protocol_handler &proto_handler, uint64_t regidx, uint64_t val);
+std::string set_register(protocol_handler &proto_handler, uint64_t regidx, const std::string &val);
