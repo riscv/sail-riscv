@@ -8,6 +8,8 @@
     see `platform.reservation.invalidate_on_xret`.
   - Whether the `misa` CSR is implemented can now be specified; see
     `base.misa_implemented`.
+  - The read-only value of the `misa.X` bit can now be configured; see
+    `extensions.X.supported`.
   - Whether bit 0 of `hedeleg` (instruction address misaligned exceptions)
     is writable can now be specified; see `extensions.H.hedeleg_zero_writable`.
   - Bits of `mideleg` for lower-level interrupts can now be configured

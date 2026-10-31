@@ -10,6 +10,8 @@
 
 // Whether the `misa` CSR is implemented
 let plat_implements_misa : bool = config base.misa_implemented
+// Whether non-standard extensions are present.
+let plat_has_non_standard_extensions : bool = config extensions.X.supported
 
 // Configuration for `mcountinhibit`.
 let plat_have_mcountinhibit : bool = config base.mcountinhibit.supported
