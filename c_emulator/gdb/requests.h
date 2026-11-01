@@ -7,6 +7,7 @@
 #include <vector>
 
 struct gdb_run_info;
+class protocol_handler;
 
 using response_handler_ptr = std::shared_ptr<response::response_handler>;
 
@@ -16,7 +17,7 @@ class request_parser {
 public:
   virtual ~request_parser() = default;
 
-  virtual std::optional<response_handler_ptr> parse(const std::string &, gdb_run_info &enable_trace) const = 0;
+  virtual std::optional<response_handler_ptr> parse(protocol_handler &, const std::string &, gdb_run_info &) const = 0;
 
 protected:
   request_parser() = default;

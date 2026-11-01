@@ -789,8 +789,23 @@ void ModelImpl::set_freg(int64_t reg, uint64_t val) {
 
 void ModelImpl::set_pc(uint64_t val) {
   assert(zPC.len == 32 || zPC.len == 64);
+
   val = (zPC.len == 32) ? (val << 32) >> 32 : val;
+
+  // This API is currently only called from the debug server,
+  // typically when the model has paused in a `HART_ACTIVE` state
+  // after a complete step.  In such cases, updating just `PC`
+  // suffices, and it will be used for the next instruction fetch
+  // (which will advance `nextPC`).
+  //
+  // However, this is insufficient if the model has paused in the
+  // `HART_WAITING` state during the execution of WFI/WRS.  At this
+  // point, `nextPC` has been advanced, but not `PC`; `PC` will be
+  // re-synchronized to `nextPC` on re-entry into `HART_ACTIVE`.  To
+  // ensure the re-synchronization doesn't lose the debugger's update
+  // to the `PC`, we must update both here.
   zPC.bits = val;
+  znextPC.bits = val;
 }
 
 void ModelImpl::set_fcsr(uint64_t val) {

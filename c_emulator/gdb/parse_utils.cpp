@@ -14,16 +14,18 @@ std::optional<uint64_t> string_to_opt_uint64t(const std::string &str) {
   return std::nullopt;
 }
 
-std::optional<uint64_t> string_to_opt_uint64t_regdata(const std::string &str) {
-  // The string should have two digits for each byte.
-  if (str.size() % 2 != 0) {
+std::optional<uint64_t> string_to_opt_uint64t_regdata(const std::string &str, int64_t xlen) {
+  // The string should have two digits for each byte; since trailing
+  // bytes become leading bytes after endian-reversal, reject strings
+  // with excess bytes.
+  if (str.size() % 2 != 0 || str.size() > (2 * xlen / 8)) {
     return std::nullopt;
   }
   // The string has bytes in little-endian order.
   // TODO: handle big-endian RISC-V.
   std::deque<char> dq;
   auto it = str.cbegin();
-  while (it != str.end()) {
+  while (it != str.cend()) {
     auto hi = *it++;
     auto lo = *it++;
     dq.push_front(lo);

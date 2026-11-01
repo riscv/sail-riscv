@@ -7,4 +7,4 @@
 std::optional<uint64_t> string_to_opt_uint64t(const std::string &str);
 
 // Convert register data.
-std::optional<uint64_t> string_to_opt_uint64t_regdata(const std::string &str);
+std::optional<uint64_t> string_to_opt_uint64t_regdata(const std::string &str, int64_t xlen);
