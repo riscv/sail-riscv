@@ -47,7 +47,7 @@ private function require_Sv32(ext_name : string) -> bool = {
 
 private function check_mutable_misa_for_extension(ext : string, mutable_ext_misa : bool) -> bool = {
   if mutable_ext_misa then {
-    print_endline("`base.misa_implemented` is set to false, but `extensions." ^ ext ^ ".mutable_misa` is set to true; `mutable_misa` for an extension cannot be set if `misa` is not implemented.");
+    print_endline("`base.misa.implemented` is set to false, but `extensions." ^ ext ^ ".mutable_misa` is set to true; `mutable_misa` for an extension cannot be set if `misa` is not implemented.");
     return false;
   };
   true
@@ -56,7 +56,7 @@ private function check_mutable_misa_for_extension(ext : string, mutable_ext_misa
 private function check_mutable_misa() -> bool = {
   var valid : bool = true;
 
-  if not(config base.misa_implemented : bool) then {
+  if not(config base.misa.implemented : bool) then {
     valid = valid & check_mutable_misa_for_extension("A", (config extensions.A.mutable_misa : bool));
     valid = valid & check_mutable_misa_for_extension("B", (config extensions.B.mutable_misa : bool));
     valid = valid & check_mutable_misa_for_extension("C", (config extensions.C.mutable_misa : bool));
