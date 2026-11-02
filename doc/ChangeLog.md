@@ -4,6 +4,9 @@
   - Shlcofideleg
 
 - Updates to the [configuration file](../config/config.json.in):
+  - The WARL behavior of a reserved or unimplemented encoding written to `mstatus.MPP`
+    can now map to the least-privileged implemented mode or keep the previous
+    legal value; see `base.reserved_behavior.illegal_privilege`.
   - Whether xRET clears any outstanding LR reservation can now be specified;
     see `platform.reservation.invalidate_on_xret`.
   - Whether the `misa` CSR is implemented can now be specified; see

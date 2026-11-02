@@ -287,6 +287,13 @@ enum XtvecModeReservedBehavior = {
   Xtvec_Ignore,
 }
 
+// WARL policy for an unsupported privilege encoding written to mstatus.MPP
+// (Reserved, or a mode the hart does not implement).
+enum IllegalPrivilegeReservedBehavior = {
+  IllegalPriv_Lowest,  // Map to the least-privileged implemented mode.
+  IllegalPriv_Ignore,  // Keep the previous field value if it is still legal.
+}
+
 enum RV32ZdinxOddRegisterReservedBehavior = {
   Zdinx_Fatal,
   Zdinx_Illegal,
@@ -308,6 +315,7 @@ let fcsr_rm_reserved_behavior : FcsrRmReservedBehavior = config base.reserved_be
 let pmp_write_only_reserved_behavior : PmpWriteOnlyReservedBehavior = config base.reserved_behavior.pmpcfg_write_only
 let xenvcfg_cbie_reserved_behavior : XenvcfgCbieReservedBehavior = config base.reserved_behavior.xenvcfg_cbie
 let xtvec_mode_reserved_behavior : XtvecModeReservedBehavior = config base.reserved_behavior.xtvec_mode
+let illegal_privilege_reserved_behavior : IllegalPrivilegeReservedBehavior = config base.reserved_behavior.illegal_privilege
 let rv32zdinx_odd_register_reserved_behavior : RV32ZdinxOddRegisterReservedBehavior = config base.reserved_behavior.rv32zdinx_odd_register
 let illegal_vtype_reserved_behavior : IllegalVtypeReservedBehavior = config extensions.V.reserved_behavior.illegal_vtype
 let vstart_reserved_behavior : OOBVstartReservedBehavior = config extensions.V.reserved_behavior.vstart_out_of_bounds
