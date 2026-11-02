@@ -18,18 +18,20 @@ enum IregType = { Mireg, Sireg, Vsireg }
 function legalize_iselect(v : xlenbits, len : range(0, xlen)) -> xlenbits =
   if len == 0 then zeros() else zero_extend(v[len - 1 .. 0])
 
+// Dependent extensions add clauses for their selects in their own files.
+// The defaults are in postlude/csr_end.sail.
+
 // True when sel maps to a register reachable via *ireg*.
-// NOTE: No dependent extension uses the window yet, so this is always false.
-function indirect_reg_implemented(_ireg : IregType, _sel : xlenbits, _i : range(1, 6)) -> bool =
-  false
+val indirect_reg_implemented : (IregType, xlenbits, range(1, 6)) -> bool
+scattered function indirect_reg_implemented
 
-// Access the selected register, dispatched on sel. Unreachable until a select
-// is implemented. set_ireg returns Err(()) for an illegal access.
-function get_ireg(_ireg : IregType, _sel : xlenbits, _i : range(1, 6)) -> xlenbits =
-  zeros()
+// Access the selected register, dispatched on sel.
+// set_ireg returns Err(()) for an illegal access.
+val get_ireg : (IregType, xlenbits, range(1, 6)) -> xlenbits
+scattered function get_ireg
 
-function set_ireg(_ireg : IregType, _sel : xlenbits, _i : range(1, 6), _value : xlenbits) -> result(xlenbits, unit) =
-  Err(())
+val set_ireg : (IregType, xlenbits, range(1, 6), xlenbits) -> result(xlenbits, unit)
+scattered function set_ireg
 
 function read_siselect() -> xlenbits = if inVirtualPrivilege() then vsiselect else siselect
 

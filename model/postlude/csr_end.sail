@@ -30,3 +30,13 @@ end write_CSR
 // CSRs that deviate from this rule have explicit clauses defined.
 function clause is_CSR_exception_virtual(csr, _, access_type) = check_CSR(csr, Supervisor, access_type)
 end is_CSR_exception_virtual
+
+// Smcsrind/Sscsrind defaults for selects that no extension implements.
+function clause indirect_reg_implemented(_, _, _) = false
+end indirect_reg_implemented
+
+function clause get_ireg(_, _, _) = zeros()
+end get_ireg
+
+function clause set_ireg(_, _, _, _) = Err(())
+end set_ireg
