@@ -31,3 +31,20 @@ scattered function write_CSR
 // returns whether a virtual instruction exception has occurred
 val is_CSR_exception_virtual : (csreg, Privilege, CSRAccessType) -> bool
 scattered function is_CSR_exception_virtual
+
+// The following definitions enable CSR access for the S{m,s}csrind extensions.
+
+// True when *select maps to a register reachable via the corresponding *ireg*.
+// in the address space given by IregType.
+val indirect_reg_implemented : (IregType, xlenbits, range(1, 6)) -> bool
+scattered function indirect_reg_implemented
+
+// Read/write access to the register determined by the value of
+// *select in the address space given by IregType.
+
+val get_ireg : (IregType, xlenbits, range(1, 6)) -> xlenbits
+scattered function get_ireg
+
+// set_ireg returns Err(()) for an illegal access.
+val set_ireg : (IregType, xlenbits, range(1, 6), xlenbits) -> result(xlenbits, unit)
+scattered function set_ireg

@@ -7,7 +7,7 @@ prelude {
 }
 
 core {
-  requires prelude, A_types, Zicbop_types, Zicbom_types, PM_types
+  requires prelude, A_types, Zicbop_types, Zicbom_types, PM_types, Csrind_types
 
   files
     core/isa_version.sail,
@@ -371,8 +371,13 @@ extensions {
   }
 
   Csrind {
-    requires core, Stateen
-    files extensions/Csrind/csrind_regs.sail
+    Csrind_types {
+      files extensions/Csrind/csrind_types.sail
+    }
+    Csrind_regs {
+      requires Csrind_types, core, Stateen
+      files extensions/Csrind/csrind_regs.sail
+    }
   }
 
   Sdtrig {
@@ -603,7 +608,7 @@ mops {
 postlude {
   after extensions, mops, core
 
-  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts, Sdtrig, I_insts, FD_instructions, Zaamo, Zalrsc, H_insts, FD_core, A_types, H_types, Zicbom_insts, Zicbom_types, Zicboz, PM_utils, Csrind
+  requires prelude, core, sys, exceptions, Smcntrpmf, pmp, Zicfilp_regs, Zicfilp_insts, Sdtrig, I_insts, FD_instructions, Zaamo, Zalrsc, H_insts, FD_core, A_types, H_types, Zicbom_insts, Zicbom_types, Zicboz, PM_utils
 
   files
     postlude/insts_end.sail,
