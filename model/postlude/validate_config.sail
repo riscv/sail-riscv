@@ -945,9 +945,33 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssdbltrp extension is enabled but S is disabled: supporting Ssdbltrp requires S.");
   };
-  if (config extensions.Sscsrind.supported : bool) & not(config extensions.S.supported : bool) then {
-    valid = false;
-    print_endline("The Sscsrind extension is enabled but S is disabled: supporting Sscsrind requires S.");
+  if (config extensions.Sscsrind.supported : bool) then {
+    if not(config extensions.Zicsr.supported : bool) then {
+      valid = false;
+      print_endline("The Sscsrind extension is enabled but Zicsr is disabled: supporting Sscsrind requires Zicsr.");
+    };
+    if not(config extensions.S.supported : bool) then {
+      valid = false;
+      print_endline("The Sscsrind extension is enabled but S is disabled: supporting Sscsrind requires S.");
+    }
+  };
+  if (config extensions.Smcsrind.supported : bool) then {
+    if not(config extensions.Zicsr.supported : bool) then {
+      valid = false;
+      print_endline("The Smcsrind extension is enabled but Zicsr is disabled: supporting Smcsrind requires Zicsr.");
+    };
+    let miselectlen_nat : nat = miselectlen;
+    if miselectlen_nat > xlen then {
+      valid = false;
+      print_endline("`extensions.Smcsrind.miselectlen` is " ^ dec_str(miselectlen) ^ " but cannot be greater than " ^ dec_str(xlen) ^ ".");
+    }
+  };
+  if (config extensions.Sscsrind.supported : bool) | (config extensions.Smcsrind.supported : bool) then {
+    let siselectlen_nat : nat = siselectlen;
+    if siselectlen_nat < 12 | siselectlen_nat > xlen then {
+      valid = false;
+      print_endline("`extensions.Sscsrind.siselectlen` is " ^ dec_str(siselectlen) ^ " but cannot be greater than " ^ dec_str(xlen) ^ " nor less than 12.");
+    }
   };
   if (config extensions.Sdtrig.supported : bool) then {
     if num_triggers == 0 then {

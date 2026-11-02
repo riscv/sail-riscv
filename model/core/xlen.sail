@@ -47,6 +47,17 @@ constraint 0 <= asidlen & asidlen <= asidmax
 type vmidlen : Int = config memory.vmidlen
 constraint 0 <= vmidlen & vmidlen <= vmidmax
 
+// The number of implemented `miselect` bits, bits above are read-only zero.
+type miselectlen : Int = config extensions.Smcsrind.miselectlen
+constraint 0 <= miselectlen & miselectlen <= xlen
+let miselectlen = sizeof(miselectlen)
+
+// The number of implemented `siselect` and `vsiselect` bits, bits above are
+// read-only zero. The spec requires at least the range 0..0xFFF.
+type siselectlen : Int = config extensions.Sscsrind.siselectlen
+constraint 12 <= siselectlen & siselectlen <= xlen
+let siselectlen = sizeof(siselectlen)
+
 // Variable versions of the above types. Variables and types
 // are disjoint in Sail so they are allowed to have the same name.
 // This saves typing `sizeof()` everywhere.

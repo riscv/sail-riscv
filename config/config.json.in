@@ -1322,10 +1322,14 @@
       "supported": true
     },
     "Sscsrind": {
-      "supported": true
+      "supported": true,
+      // Number of writable siselect and vsiselect bits, at least 12, maximum XLEN.
+      "siselectlen": 12
     },
     "Smcsrind": {
-      "supported": true
+      "supported": true,
+      // Number of writable miselect bits, maximum XLEN.
+      "miselectlen": 12
     }
   }
 }

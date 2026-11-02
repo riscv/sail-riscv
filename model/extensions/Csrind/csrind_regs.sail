@@ -9,37 +9,34 @@
 function clause currentlyEnabled(Ext_Smcsrind) = hartSupports(Ext_Smcsrind) & currentlyEnabled(Ext_Zicsr)
 function clause currentlyEnabled(Ext_Sscsrind) = (hartSupports(Ext_Sscsrind) | currentlyEnabled(Ext_Smcsrind)) & currentlyEnabled(Ext_Zicsr) & currentlyEnabled(Ext_S)
 
-bitfield Iselect : xlenbits = {
-  value : 11 .. 0,
-}
-
-register miselect  : Iselect
-register siselect  : Iselect
-register vsiselect : Iselect
+register miselect  : xlenbits
+register siselect  : xlenbits
+register vsiselect : xlenbits
 
 enum IregType = { Mireg, Sireg, Vsireg }
 
-function legalize_iselect(v : xlenbits) -> Iselect = Mk_Iselect(zero_extend(v[11 .. 0]))
+function legalize_iselect(v : xlenbits, len : range(0, xlen)) -> xlenbits =
+  if len == 0 then zeros() else zero_extend(v[len - 1 .. 0])
 
 // True when sel maps to a register reachable via *ireg*.
 // NOTE: No dependent extension uses the window yet, so this is always false.
-function indirect_reg_implemented(_ireg : IregType, _sel : Iselect, _i : range(1, 6)) -> bool =
+function indirect_reg_implemented(_ireg : IregType, _sel : xlenbits, _i : range(1, 6)) -> bool =
   false
 
 // Access the selected register, dispatched on sel. Unreachable until a select
 // is implemented. set_ireg returns Err(()) for an illegal access.
-function get_ireg(_ireg : IregType, _sel : Iselect, _i : range(1, 6)) -> xlenbits =
+function get_ireg(_ireg : IregType, _sel : xlenbits, _i : range(1, 6)) -> xlenbits =
   zeros()
 
-function set_ireg(_ireg : IregType, _sel : Iselect, _i : range(1, 6), _value : xlenbits) -> result(xlenbits, unit) =
+function set_ireg(_ireg : IregType, _sel : xlenbits, _i : range(1, 6), _value : xlenbits) -> result(xlenbits, unit) =
   Err(())
 
-function read_siselect() -> xlenbits = if inVirtualPrivilege() then vsiselect.bits else siselect.bits
+function read_siselect() -> xlenbits = if inVirtualPrivilege() then vsiselect else siselect
 
 function write_siselect(value : xlenbits) -> result(xlenbits, unit) =
   if inVirtualPrivilege()
-  then { vsiselect = legalize_iselect(value); Ok(vsiselect.bits) }
-  else { siselect  = legalize_iselect(value); Ok(siselect.bits) }
+  then { vsiselect = legalize_iselect(value, siselectlen); Ok(vsiselect) }
+  else { siselect  = legalize_iselect(value, siselectlen); Ok(siselect) }
 
 function read_sireg(i : range(1, 6)) -> xlenbits =
   if inVirtualPrivilege()
@@ -146,7 +143,7 @@ function clause is_CSR_exception_virtual(0x255, _, _) = is_csrind_enabled_by_mst
 function clause is_CSR_exception_virtual(0x256, _, _) = is_csrind_enabled_by_mstateen0()
 function clause is_CSR_exception_virtual(0x257, _, _) = is_csrind_enabled_by_mstateen0()
 
-function clause read_CSR(0x350) = miselect.bits
+function clause read_CSR(0x350) = miselect
 function clause read_CSR(0x351) = get_ireg(Mireg, miselect, 1)
 function clause read_CSR(0x352) = get_ireg(Mireg, miselect, 2)
 function clause read_CSR(0x353) = get_ireg(Mireg, miselect, 3)
@@ -162,7 +159,7 @@ function clause read_CSR(0x155) = read_sireg(4)
 function clause read_CSR(0x156) = read_sireg(5)
 function clause read_CSR(0x157) = read_sireg(6)
 
-function clause read_CSR(0x250) = vsiselect.bits
+function clause read_CSR(0x250) = vsiselect
 function clause read_CSR(0x251) = get_ireg(Vsireg, vsiselect, 1)
 function clause read_CSR(0x252) = get_ireg(Vsireg, vsiselect, 2)
 function clause read_CSR(0x253) = get_ireg(Vsireg, vsiselect, 3)
@@ -170,7 +167,7 @@ function clause read_CSR(0x255) = get_ireg(Vsireg, vsiselect, 4)
 function clause read_CSR(0x256) = get_ireg(Vsireg, vsiselect, 5)
 function clause read_CSR(0x257) = get_ireg(Vsireg, vsiselect, 6)
 
-function clause write_CSR(0x350, value) = { miselect = legalize_iselect(value); Ok(miselect.bits) }
+function clause write_CSR(0x350, value) = { miselect = legalize_iselect(value, miselectlen); Ok(miselect) }
 function clause write_CSR(0x351, value) = set_ireg(Mireg, miselect, 1, value)
 function clause write_CSR(0x352, value) = set_ireg(Mireg, miselect, 2, value)
 function clause write_CSR(0x353, value) = set_ireg(Mireg, miselect, 3, value)
@@ -186,7 +183,7 @@ function clause write_CSR(0x155, value) = write_sireg(4, value)
 function clause write_CSR(0x156, value) = write_sireg(5, value)
 function clause write_CSR(0x157, value) = write_sireg(6, value)
 
-function clause write_CSR(0x250, value) = { vsiselect = legalize_iselect(value); Ok(vsiselect.bits) }
+function clause write_CSR(0x250, value) = { vsiselect = legalize_iselect(value, siselectlen); Ok(vsiselect) }
 function clause write_CSR(0x251, value) = set_ireg(Vsireg, vsiselect, 1, value)
 function clause write_CSR(0x252, value) = set_ireg(Vsireg, vsiselect, 2, value)
 function clause write_CSR(0x253, value) = set_ireg(Vsireg, vsiselect, 3, value)
