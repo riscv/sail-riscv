@@ -287,8 +287,7 @@ enum XtvecModeReservedBehavior = {
   Xtvec_Ignore,
 }
 
-// WARL policy for an unsupported privilege encoding written to mstatus.MPP
-// (Reserved, or a mode the hart does not implement).
+// WARL policy for an unsupported privilege encoding (i.e. a reserved encoding or an encoding for a privilege that the hart does not implement) written to `mstatus.MPP`.
 enum IllegalPrivilegeReservedBehavior = {
   IllegalPriv_Lowest,  // Map to the least-privileged implemented mode.
   IllegalPriv_Ignore,  // Keep the previous field value if it is still legal.
