@@ -525,6 +525,9 @@ function reset_misa() -> unit = {
   misa[D]   = if   flen >= 64
               then bool_to_bit(hartSupports(Ext_D))  // double-precision
               else 0b0;
+
+  // Set `X` as configured.
+  misa[X]   = bool_to_bit(plat_has_non_standard_extensions);
   csr_write_callback("misa", misa.bits);
 }
 
