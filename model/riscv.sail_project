@@ -7,7 +7,7 @@ prelude {
 }
 
 core {
-  requires prelude, A_types, Zicbop_types, Zicbom_types, PM_types
+  requires prelude, A_types, Zicbop_types, Zicbom_types, PM_types, Csrind_types
 
   files
     core/isa_version.sail,
@@ -368,6 +368,16 @@ extensions {
   Sstc {
     requires core, sys
     files extensions/Sstc/sstc.sail
+  }
+
+  Csrind {
+    Csrind_types {
+      files extensions/Csrind/csrind_types.sail
+    }
+    Csrind_regs {
+      requires Csrind_types, core, Stateen
+      files extensions/Csrind/csrind_regs.sail
+    }
   }
 
   Sdtrig {

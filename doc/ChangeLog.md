@@ -2,6 +2,8 @@
 
 - The following extensions have been added:
   - Shlcofideleg
+  - Smcsrind
+  - Sscsrind
 
 - Updates to the [configuration file](../config/config.json.in):
   - Whether xRET clears any outstanding LR reservation can now be specified;
@@ -28,6 +30,10 @@
   - Whether the `tcontrol` CSR is supported can now be specified. Previously,
     this was controlled implicitly by the use of the `Use_tcontrol` reentrancy
     option; now it can be specified directly; see `extensions.Sdtrig.tcontrol.supported`.
+  - The number of implemented bits in `miselect` can be specified; see
+    `extensions.Smcsrind.miselectlen`.
+  - The number of implemented bits in `siselect` and `vsiselect` can be
+    specified; see `extensions.Sscsrind.siselectlen`.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
