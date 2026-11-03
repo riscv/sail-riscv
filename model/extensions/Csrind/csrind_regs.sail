@@ -21,10 +21,11 @@ function legalize_iselect(v : xlenbits, len : range(0, xlen)) -> xlenbits =
 
 function read_siselect() -> xlenbits = if inVirtualPrivilege() then vsiselect else siselect
 
-function write_siselect(value : xlenbits) -> result(xlenbits, unit) =
-  if inVirtualPrivilege()
-  then { vsiselect = legalize_iselect(value, siselectlen); Ok(vsiselect) }
-  else { siselect  = legalize_iselect(value, siselectlen); Ok(siselect) }
+function write_siselect(value : xlenbits) -> result(xlenbits, unit) = {
+  let legal_value = legalize_iselect(value, siselectlen);
+  if inVirtualPrivilege() then vsiselect = legal_value else siselect = legal_value;
+  Ok(legal_value)
+}
 
 function read_sireg(i : range(1, 6)) -> xlenbits =
   if inVirtualPrivilege()
