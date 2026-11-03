@@ -1,6 +1,16 @@
 name: CI
 
-on: [push, pull_request, workflow_dispatch, merge_group]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+  merge_group:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: true
 
 jobs:
   define-matrix:

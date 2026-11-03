@@ -1,5 +1,37 @@
 # Release notes for the next version
 
+- The following extensions have been added:
+  - Shlcofideleg
+
+- Updates to the [configuration file](../config/config.json.in):
+  - Whether xRET clears any outstanding LR reservation can now be specified;
+    see `platform.reservation.invalidate_on_xret`.
+  - Whether the `misa` CSR is implemented can now be specified; see
+    `base.misa.implemented`.
+  - The read-only value of the `misa.X` bit can now be configured; see
+    `base.misa.has_non_standard_extensions`.
+  - Whether bit 0 of `hedeleg` (instruction address misaligned exceptions)
+    is writable can now be specified; see `extensions.H.hedeleg_zero_writable`.
+  - Bits of `mideleg` for lower-level interrupts can now be configured
+    as read-only one (i.e. always delegated); see
+    `base.mideleg.read_only_one_bits`.
+  - When GEILEN is 0, `mideleg.SGEI` can now be configured as writable via
+    `base.mideleg.delegatable_bits` or read-only one via
+    `base.mideleg.read_only_one_bits`.
+  - The sizes supported by the `mcontrol6` trigger in the Sdtrig
+    extension can now be specified; see
+    `extensions.Sdtrig.mcontrol6.supported_{address,data}_access_sizes`.
+  - The number of implemented bits of `scontext` and `hcontext`
+    (i.e. the `hcontext` field of `mcontext`) can now be specified,
+    see `extensions.Sdtrig.hcontext.width` and
+    `extensions.Sdtrig.scontext.width`.
+  - Whether the `tcontrol` CSR is supported can now be specified. Previously,
+    this was controlled implicitly by the use of the `Use_tcontrol` reentrancy
+    option; now it can be specified directly; see `extensions.Sdtrig.tcontrol.supported`.
+
+- Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
+
 # Release notes for version 0.16
 
 The highlight of this release is the essential completion of the

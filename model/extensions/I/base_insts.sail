@@ -647,6 +647,8 @@ function clause execute MRET() = {
     if   get_config_print_exception()
     then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
 
+    if plat_reservation_invalidate_on_xret then cancel_reservation();
+
     set_next_pc(prepare_xret_target(Machine));
     xret_callback(true);
     RETIRE_SUCCESS
@@ -718,6 +720,8 @@ function clause execute SRET() = {
 
     if   get_config_print_exception()
     then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
+
+    if plat_reservation_invalidate_on_xret then cancel_reservation();
 
     set_next_pc(prepare_xret_target(ret));
     xret_callback(false);

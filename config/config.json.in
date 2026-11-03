@@ -16,6 +16,16 @@
     // x16-31 is reserved and in this implementation will
     // raise an illegal instruction exception.
     "E": false,
+    "misa": {
+      // Whether the `misa` CSR is implemented.  If not implemented,
+      // reads of `misa` always return 0.  Note that if `misa` is not
+      // implemented, then `mutable_misa` cannot be set to `true`
+      // in the extensions with this field below.
+      "implemented": true,
+      // Whether non-standard extensions are supported.  This affects
+      // the value of the `misa.X` bit, which is currently read-only.
+      "has_non_standard_extensions": false
+    },
     "writable_fiom": true,
     // The top 29 bits in this value control whether the corresponding
     // HPM counters (hpmcounter31 .. hpmcounter3) are supported
@@ -153,16 +163,32 @@
     },
     "mideleg": {
       // A bit set to 1 in this value specifies that the corresponding
-      // bit of `mideleg` can be set to 1. It represents the subset of
-      // delegatable interrupts of the implementation. Bits should not
-      // be set for interrupts that cannot be delegated as per the
-      // specification, and delegation of reserved interrupts is not
-      // supported. Bits set for interrupts designated for platform
-      // use are ignored. This value is ignored when the `mideleg` CSR
-      // does not exist.
+      // bit of `mideleg` can be set to 1, unless the bit is also set in
+      // `read_only_one_bits` below, in which case it is read-only one.
+      // It represents the subset of delegatable interrupts of the
+      // implementation. Bits should not be set for interrupts that cannot
+      // be delegated as per the specification, and delegation of reserved
+      // interrupts is not supported. Bits set for interrupts designated
+      // for platform use are ignored. This value is ignored when the
+      // `mideleg` CSR does not exist.
       "delegatable_bits": {
         "len": "xlen",
         "value": "@CONFIG_MIDELEG_DELEGATABLE_BITS_VALUE@"
+      },
+      // A bit set to 1 in this value specifies that the corresponding
+      // bit of `mideleg` is read-only one, i.e. the corresponding
+      // interrupt is always delegated. These bits are implicitly
+      // delegatable and do not need to be set in `delegatable_bits`.
+      // The specification does not allow bits for machine-level
+      // interrupts to be read-only one, and delegation of reserved
+      // interrupts is not supported. Bit 13 (LCOFI) may only be set
+      // when Sscofpmf is supported. The read-only-one bits for VS-level
+      // interrupts that are mandated by the H extension are handled
+      // separately and must not be set here. This value is ignored when
+      // the `mideleg` CSR does not exist.
+      "read_only_one_bits": {
+        "len": "xlen",
+        "value": "@CONFIG_MIDELEG_READ_ONLY_ONE_BITS_VALUE@"
       }
     },
     // These settings control whether the specified exceptions
@@ -514,7 +540,9 @@
       // reservation on stores from the same hart.  If this is set to `true`, the
       // model invalidates the reservation if a store from the same hart lies within
       // the reservation set.
-      "invalidate_on_same_hart_store": false
+      "invalidate_on_same_hart_store": false,
+      // Whether xRET clears any outstanding LR reservation.
+      "invalidate_on_xret": false
     },
     "interrupts": {
       "machine": {
@@ -730,6 +758,9 @@
       "mutable_misa": true,
       // GEILEN, the number of guest external interrupts. The maximum is XLEN-1.
       "geilen": @CONFIG__H__GEILEN@,
+      // Whether hedeleg[0] (the bit corresponding to instruction address misaligned exceptions)
+      // is writable. Must be true if compressed instructions are not supported.
+      "hedeleg_zero_writable": true,
       // Whether an implicit access to a VS-stage PTE sets the D bit of a writable G-stage PTE
       "implicit_vs_pte_access_sets_gstage_d": false,
       // Whether a trap into M or HS mode caused by the specified exception
@@ -1012,19 +1043,30 @@
       // model does not support more than 16 triggers.
       "num_triggers": 16,
       // `breakpoint_reentrancy` must be one of the below strings:
-      // . `Use_tcontrol`: use the `mte` and `mpte` bits in the `tcontrol` CSR (this also makes the `tcontrol` CSR available)
+      // . `Use_tcontrol`: use the `mte` and `mpte` bits in the `tcontrol` CSR (requires tcontrol.supported to be set to true.)
       // . `Use_interrupt_enables`: use `mstatus.MIE` and the `SIE` bits in `sstatus` and `vsstatus`
       // . `No_reentrancy_support`: no specific support for reentrancy
       "breakpoint_reentrancy": "Use_interrupt_enables",
       // CSRs
+      "tcontrol": {
+        "supported": false
+      },
       "mcontext": {
         "supported": true
       },
       "hcontext": {
-        "supported": true
+        "supported": true,
+        // The implemented width in bits, upto a max of 14. A valid
+        // value must be provided in this range even if `hcontext` is
+        // not supported.
+        "width": @CONFIG_SDTRIG_HCONTEXT_WIDTH@
       },
       "scontext": {
-        "supported": true
+        "supported": true,
+        // The implemented width in bits, upto a max of 32. A valid
+        // value must be provided in this range even if `scontext` is
+        // not supported.
+        "width": @CONFIG_SDTRIG_SCONTEXT_WIDTH@
       },
       // Triggers
       "icount": {
@@ -1066,7 +1108,23 @@
         "address_select_matches_all_addresses" : true,
         // Maximum length of a chain. This cannot exceed the number of
         // triggers.  A value of 0 implies chains are not supported.
-        "max_chain_length": 4
+        "max_chain_length": 4,
+        "supported_address_access_sizes": {
+          "bits8": true,
+          "bits16": true,
+          "bits32": true,
+          "bits48": true,
+          "bits64": true,
+          "bits128": true
+        },
+        // Data access widths greater than XLEN cannot be supported.
+        "supported_data_access_sizes": {
+          "bits8": true,
+          "bits16": true,
+          "bits32": true,
+          "bits48": @CONFIG_XLEN_IS_64@,
+          "bits64": @CONFIG_XLEN_IS_64@
+        }
       },
       "textra": {
         // Which context matches are supported. Writes of unsupported
@@ -1128,6 +1186,9 @@
     // Enabling Shgatpa requires an `hgatp` SvNNx4 mode (under
     // `extensions.H.hgatp_modes`) for every SvNN mode supported in `satp`.
     "Shgatpa": {
+      "supported": true
+    },
+    "Shlcofideleg": {
       "supported": true
     },
     "Shtvala": {

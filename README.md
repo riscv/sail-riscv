@@ -225,6 +225,7 @@ An experimental emulator in the Lean language is available, see its
 - Sha extension for Augmented Hypervisor, v1.0
 - Shcounterenw extension for writable `hcounteren` enables for any supported counter, v1.0
 - Shgatpa extension for `hgatp` mode support matching `satp`, v1.0
+- Shlcofideleg extension for delegating local counter-overflow interrupts to VS-mode, v1.0
 - Shtvala extension for Trap Value Reporting, v1.0
 - Shvsatpa extension for Translation Mode Support, v1.0
 - Shvstvala extension for Trap Value Reporting, v1.0

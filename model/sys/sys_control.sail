@@ -115,9 +115,10 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
 //
 // This is used when the hart is in the Active state.
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
-  // If supervisor mode is not currently enabled then ignore mideleg
-  // (it does not exist).
+  // If S-mode is not currently enabled then ignore mideleg.
   let mideleg_bits = if currentlyEnabled(Ext_S) then mideleg.bits else zeros();
+  // If HS-mode is not currently enabled then ignore hideleg.
+  let hideleg_bits = if currentlyEnabled(Ext_H) then hideleg.bits else zeros();
 
   // Read mip with the external platform interrupts ORed in.
   let pending    = read_mip(IncludePlatformInterrupts).bits & mie.bits;
@@ -126,8 +127,8 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   // `core/interrupt_regs.sail:legalize_mideleg()`), but those
   // interrupts are not known in `findPendingInterrupt()` above.
   let pending_m  = pending & ~(mideleg_bits);
-  let pending_s  = pending &   mideleg_bits  & ~(hideleg.bits);
-  let pending_vs = pending &   mideleg_bits  &   hideleg.bits;
+  let pending_s  = pending &   mideleg_bits  & ~(hideleg_bits);
+  let pending_vs = pending &   mideleg_bits  &   hideleg_bits;
 
   let mIE  = (priv == Machine           & mstatus[MIE] == 0b1)  | priv != Machine;
   let sIE  = (priv == Supervisor        & mstatus[SIE] == 0b1)  | priv == User | priv == VirtualSupervisor | priv == VirtualUser;
@@ -524,6 +525,9 @@ function reset_misa() -> unit = {
   misa[D]   = if   flen >= 64
               then bool_to_bit(hartSupports(Ext_D))  // double-precision
               else 0b0;
+
+  // Set `X` as configured.
+  misa[X]   = bool_to_bit(plat_has_non_standard_extensions);
   csr_write_callback("misa", misa.bits);
 }
 
@@ -562,6 +566,9 @@ function reset_sys() -> unit = {
 
   // "The misa register is reset to enable the maximal set of supported extensions"
   reset_misa();
+
+  // An implementation may fix some mideleg bits to one.
+  reset_mideleg();
 
   // "For implementations with the "A" standard extension, there is no valid load reservation."
   cancel_reservation();

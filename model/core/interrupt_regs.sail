@@ -120,7 +120,10 @@ private function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
 }
 
 private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts = {
-  let v = Mk_Minterrupts(v & plat_mideleg_delegatable_bits);
+  // Bits in `plat_mideleg_read_only_one_bits` are read-only one. Config
+  // validation ensures that they are only set for supported lower-level (i.e.
+  // not machine-level or reserved) interrupts.
+  let v = Mk_Minterrupts((v & plat_mideleg_delegatable_bits) | plat_mideleg_read_only_one_bits);
   // Using `v` allows bits to be set for interrupts designated for
   // platform use. This is useful for bit-matching test frameworks
   // like ACT, but these bits do not affect the model as those
@@ -142,7 +145,7 @@ private function legalize_mideleg(_o : Minterrupts, v : xlenbits) -> Minterrupts
     VSSI = if currentlyEnabled(Ext_H) then 0b1 else 0b0,
     // "if any guest external interrupts are implemented (GEILEN is nonzero),
     //  bit 12 of mideleg ... is also read-only one."
-    SGEI = if currentlyEnabled(Ext_H) & geilen > 0 then 0b1 else 0b0,
+    SGEI = if not(currentlyEnabled(Ext_H)) then 0b0 else if geilen > 0 then 0b1 else v[SGEI],
   ]
 }
 
@@ -317,6 +320,15 @@ function clause write_CSR((0x302, value) if xlen == 32) = { medeleg = legalize_m
 function clause write_CSR((0x312, value) if xlen == 32) = { medeleg = legalize_medeleg(medeleg, value @ medeleg.bits[31 .. 0]); Ok(medeleg.bits[63 .. 32]) }
 function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, value); Ok(mideleg.bits) }
 
+// mideleg is not reset, but its configured read-only-one bits must
+// read as one at startup.
+function reset_mideleg() -> unit = {
+  if hartSupports(Ext_S) then {
+    mideleg = legalize_mideleg(mideleg, mideleg.bits);
+    csr_write_callback("mideleg", mideleg.bits);
+  }
+}
+
 private function legalize_hvip(h : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [h with
@@ -396,9 +408,10 @@ function clause write_CSR(0x644, value) = { mip = legalize_hip(mip, value); Ok(l
 // hedeleg is writable only for the synchronous exceptions that may be
 // delegated to VS-mode. Codes 0-8, 12, 13, 15, 18 (only from priv 1.13 or
 // with Zicfilp/Zicfiss), 19 (only from priv 1.13), everything else is
-// read-only zero.
+// read-only zero. 0 may be read-only-zero when IALIGN != 32.
 function hedeleg_writable_mask() -> bits(64) =
   [Mk_Medeleg(0x00000000000CB1FF) with
+    Fetch_Addr_Align = if plat_hedeleg_zero_writable then 0b1 else 0b0,
     Software_Check = if priv_isa_version >= Privileged_ISA_1_13 | hartSupports(Ext_Zicfiss) | hartSupports(Ext_Zicfilp) then 0b1 else 0b0,
     Hardware_Error = if priv_isa_version >= Privileged_ISA_1_13 then 0b1 else 0b0
   ].bits
@@ -409,9 +422,10 @@ private function legalize_hedeleg(_m : Medeleg, v : bits(64)) -> Medeleg =
 private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   [m with
-    VSEI = v[VSEI],
-    VSTI = v[VSTI],
-    VSSI = v[VSSI],
+    VSEI  = v[VSEI],
+    VSTI  = v[VSTI],
+    VSSI  = v[VSSI],
+    LCOFI = if currentlyEnabled(Ext_Shlcofideleg) then v[LCOFI] else 0b0,
   ]
 }
 
@@ -484,9 +498,10 @@ private function lower_mie(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
 // hip if delegated by hideleg
 private function lower_mip_to_vsip(m : Minterrupts, d : Minterrupts) -> Sinterrupts = {
   [Mk_Sinterrupts(zeros()) with
-    SEI = m[VSEI] & d[VSEI],
-    STI = m[VSTI] & d[VSTI],
-    SSI = m[VSSI] & d[VSSI],
+    SEI   = m[VSEI] & d[VSEI],
+    STI   = m[VSTI] & d[VSTI],
+    SSI   = m[VSSI] & d[VSSI],
+    LCOFI = lower_mip(m, mideleg)[LCOFI] & d[LCOFI],
   ]
 }
 
@@ -496,9 +511,10 @@ private function lower_mie_to_vsie(m : Minterrupts, d : Minterrupts) -> Minterru
   // Standard S-mode bits in vsie are aliases of corresponding VS-mode bits in
   // hie if delegated by hideleg
   [vs with
-    SEI = m[VSEI] & d[VSEI],
-    STI = m[VSTI] & d[VSTI],
-    SSI = m[VSSI] & d[VSSI],
+    SEI   = m[VSEI] & d[VSEI],
+    STI   = m[VSTI] & d[VSTI],
+    SSI   = m[VSSI] & d[VSSI],
+    LCOFI = lower_mie(m, mideleg)[LCOFI] & d[LCOFI],
   ]
 }
 
@@ -518,7 +534,10 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 // Returns new mip from previous mip (m) and the written vsip (v) as delegated by hideleg (d)
 private function legalize_vsip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
-  supported_interrupts_mask([m with VSSI = v[SSI] & d[VSSI]])
+  supported_interrupts_mask([m with
+    VSSI  = v[SSI] & d[VSSI],
+    LCOFI = if d[LCOFI] == 0b1 then lift_sip(m, mideleg, Mk_Sinterrupts(v.bits))[LCOFI] else m[LCOFI],
+  ])
 }
 
 function read_sip(read_type : XipReadType) -> Sinterrupts = {
@@ -560,9 +579,10 @@ private function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 private function legalize_vsie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   supported_interrupts_mask([m with
-    VSEI = v[SEI] & d[VSEI],
-    VSTI = v[STI] & d[VSTI],
-    VSSI = v[SSI] & d[VSSI],
+    VSEI  = v[SEI] & d[VSEI],
+    VSTI  = v[STI] & d[VSTI],
+    VSSI  = v[SSI] & d[VSSI],
+    LCOFI = if d[LCOFI] == 0b1 then lift_sie(m, mideleg, Mk_Sinterrupts(v.bits))[LCOFI] else m[LCOFI],
   ])
 }
 

@@ -42,5 +42,7 @@ let elen_exp = sizeof(elen_exp)
 type vlen : Int = 2 ^ vlen_exp
 type elen : Int = 2 ^ elen_exp
 
+type velemidx = range(0, vlen - 1)
+
 let vlen = sizeof(vlen)
 let elen = sizeof(elen)

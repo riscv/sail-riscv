@@ -8,6 +8,11 @@
 
 // Platform-specific configuration parameters.
 
+// Whether the `misa` CSR is implemented
+let plat_implements_misa : bool = config base.misa.implemented
+// Whether non-standard extensions are present.
+let plat_has_non_standard_extensions : bool = config base.misa.has_non_standard_extensions
+
 // Configuration for `mcountinhibit`.
 let plat_have_mcountinhibit : bool = config base.mcountinhibit.supported
 let plat_mcountinhibit_writable_bits : bits(32) = config base.mcountinhibit.writable_bits
@@ -33,6 +38,13 @@ let plat_vstvec_vectored_base_alignment_exp : tvec_alignment = config base.vstve
 let plat_medeleg_delegatable_bits : bits(64) = config base.medeleg.delegatable_bits
 let plat_mideleg_delegatable_bits : xlenbits = config base.mideleg.delegatable_bits
 
+// Read-only-one bits of `mideleg`, i.e. interrupts that are always delegated.
+let plat_mideleg_read_only_one_bits : xlenbits = config base.mideleg.read_only_one_bits
+
+// Whether hedeleg[0] (the bit corresponding to instruction address misaligned exceptions)
+// is writable.
+let plat_hedeleg_zero_writable : bool = config extensions.H.hedeleg_zero_writable
+
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.
@@ -50,6 +62,9 @@ let plat_cache_block_size_exp : range(0, 12) = config platform.cache_block_size_
 // Reservation sets are also naturally aligned. Reservation sets need to subsume
 // their LR operands (4 bytes for LR.W, 8 bytes for LR.D).
 let plat_reservation_set_size_exp : range(2, 12) = config platform.reservation.reservation_set_size_exp
+
+// Whether xRET clears any outstanding LR reservation.
+let plat_reservation_invalidate_on_xret : bool = config platform.reservation.invalidate_on_xret
 
 // The following reservation options are used for reservation state
 // management by the external harness; they are not used within the Sail code.
@@ -243,7 +258,7 @@ enum Sdtrig_breakpoint_reentrancy = {
 let sdtrig_breakpoint_reentrancy : Sdtrig_breakpoint_reentrancy = config extensions.Sdtrig.breakpoint_reentrancy
 
 // tcontrol only exists for tcontrol-based reentrancy
-let sdtrig_has_tcontrol : bool = sdtrig_breakpoint_reentrancy == Use_tcontrol
+let sdtrig_has_tcontrol : bool = config extensions.Sdtrig.tcontrol.supported
 
 // Define the policy for handling reserved behaviors.
 

@@ -1,0 +1,10 @@
+{
+  "base": {
+    "mideleg": {
+      "read_only_one_bits": {
+        "len": "xlen",
+        "value": "0x2222"
+      }
+    }
+  }
+}

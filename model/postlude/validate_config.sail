@@ -45,8 +45,32 @@ private function require_Sv32(ext_name : string) -> bool = {
 }
 
 
+private function check_mutable_misa_for_extension(ext : string, mutable_ext_misa : bool) -> bool = {
+  if mutable_ext_misa then {
+    print_endline("`base.misa.implemented` is set to false, but `extensions." ^ ext ^ ".mutable_misa` is set to true; `mutable_misa` for an extension cannot be set if `misa` is not implemented.");
+    return false;
+  };
+  true
+}
+
 private function check_mutable_misa() -> bool = {
   var valid : bool = true;
+
+  if not(config base.misa.implemented : bool) then {
+    valid = valid & check_mutable_misa_for_extension("A", (config extensions.A.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("B", (config extensions.B.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("C", (config extensions.C.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("D", (config extensions.D.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("F", (config extensions.F.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("H", (config extensions.H.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("M", (config extensions.M.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("S", (config extensions.S.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("U", (config extensions.U.mutable_misa : bool));
+    valid = valid & check_mutable_misa_for_extension("V", (config extensions.V.mutable_misa : bool));
+
+    return valid
+  };
+
   if (config extensions.F.mutable_misa : bool) &
      ((hartSupports(Ext_D) & not(config extensions.D.mutable_misa : bool)) |
       (hartSupports(Ext_V) & not(config extensions.V.mutable_misa : bool)))
@@ -60,13 +84,13 @@ private function check_mutable_misa() -> bool = {
     print_endline("`extensions.D.mutable_misa` is true but `extensions.V.mutable_misa` is false: mutable D requires mutable V if V is supported.");
   };
   if (config extensions.U.mutable_misa : bool) &
-     ((hartSupports(Ext_S) & not(config extensions.S.mutable_misa : bool)) |
-      (hartSupports(Ext_H) & not(config extensions.H.mutable_misa : bool)))
+     (((config extensions.S.supported : bool) & not(config extensions.S.mutable_misa : bool)) |
+      ((config extensions.H.supported : bool) & not(config extensions.H.mutable_misa : bool)))
   then {
     valid = false;
     print_endline("`extensions.U.mutable_misa` is true but `extensions.S.mutable_misa` and/or `extensions.H.mutable_misa` is false: mutable U requires mutable S and H when they are supported.");
   };
-  if (config extensions.S.mutable_misa : bool) & hartSupports(Ext_H) & not(config extensions.H.mutable_misa : bool)
+  if (config extensions.S.mutable_misa : bool) & (config extensions.H.supported : bool) & not(config extensions.H.mutable_misa : bool)
   then {
     valid = false;
     print_endline("`extensions.S.mutable_misa` is true but `extensions.H.mutable_misa` is false: mutable S requires mutable H if H is supported.");
@@ -860,6 +884,16 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = valid & check_shgatpa_mode("Sv48", (config extensions.Sv48.supported : bool), sys_hgatp_sv48x4_supported);
     valid = valid & check_shgatpa_mode("Sv57", (config extensions.Sv57.supported : bool), sys_hgatp_sv57x4_supported);
   };
+  if (config extensions.Shlcofideleg.supported : bool) then {
+    if not(config extensions.H.supported : bool) then {
+      valid = false;
+      print_endline("The Shlcofideleg extension is enabled but the H extension is disabled: supporting Shlcofideleg requires H.");
+    };
+    if not(config extensions.Sscofpmf.supported : bool) then {
+      valid = false;
+      print_endline("The Shlcofideleg extension is enabled but the Sscofpmf extension is disabled: supporting Shlcofideleg requires Sscofpmf.");
+    };
+  };
   // "`htval` must be written with the faulting guest physical address in all
   //  circumstances permitted by the ISA."
   if (config extensions.Shtvala.supported : bool) then {
@@ -942,6 +976,10 @@ private function check_misc_extension_dependencies() -> bool = {
         valid = false;
         print_endline("Bit 3 (Breakpoint) in `base.medeleg.delegatable_bits` is set, but `extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol`: `tcontrol`-based reentrancy control hardwires this bit to 0.");
       };
+      if not(config extensions.Sdtrig.tcontrol.supported : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol` but `extensions.Sdtrig.tcontrol.supported` is false: tcontrol-based reentrancy control requires the `tcontrol` CSR.");
+      };
     };
     if (config extensions.Sdtrig.textra.mhselect.mcontext_match : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
       valid = false;
@@ -980,6 +1018,16 @@ private function check_misc_extension_dependencies() -> bool = {
       if max_chain_length > num_triggers then {
         valid = false;
         print_endline("`extensions.Sdtrig.mcontrol6.max_chain_length` is set to " ^ dec_str(max_chain_length) ^ " which exceeds the number of triggers (" ^ dec_str(num_triggers) ^ ".");
+      };
+      if xlen == 32 then {
+        if (config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits48 : bool) then {
+          valid = false;
+          print_endline("`extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits48` is enabled on RV32, but data triggers cannot match accesses wider than XLEN (= 32).");
+        };
+        if (config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits64 : bool) then {
+          valid = false;
+          print_endline("`extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits64` is enabled on RV32, but data triggers cannot match accesses wider than XLEN (= 32).");
+        };
       };
     };
   };
@@ -1034,10 +1082,29 @@ private function check_extension_param_constraints() -> bool = {
 
     let midelegation = Mk_Minterrupts(config base.mideleg.delegatable_bits);
     // Ignore bits set for interrupts designated for platform use.
-    let reserved_interrupt_mask : xlenbits = zero_extend(0xD555);
+    let reserved_interrupt_mask : xlenbits = zero_extend(0xC555);
     if (midelegation.bits & reserved_interrupt_mask) != zeros() then {
       valid = false;
       print_endline("Bits for reserved interrupts are set in `base.mideleg.delegatable_bits`.");
+    };
+
+    let mideleg_ro_one = Mk_Minterrupts(config base.mideleg.read_only_one_bits);
+    // "an implementation shall not fix as read-only one any bits of mideleg
+    // corresponding to machine-level interrupts (but may do so for
+    // lower-level interrupts)."
+    if mideleg_ro_one[MEI] != 0b0 | mideleg_ro_one[MTI] != 0b0 | mideleg_ro_one[MSI] != 0b0 then {
+      valid = false;
+      print_endline("Bits for machine-level interrupts are set in `base.mideleg.read_only_one_bits`; these bits cannot be read-only one.");
+    };
+    // The reserved interrupt mask also covers the VS-level interrupt
+    // bits, whose read-only-one behaviour is governed by the H extension.
+    if (mideleg_ro_one.bits & reserved_interrupt_mask) != zeros() then {
+      valid = false;
+      print_endline("Bits for reserved or VS-level interrupts are set in `base.mideleg.read_only_one_bits`.");
+    };
+    if mideleg_ro_one[LCOFI] != 0b0 & not(config extensions.Sscofpmf.supported : bool) then {
+      valid = false;
+      print_endline("Bit 13 (LCOFI) in `base.mideleg.read_only_one_bits` is set, but the Sscofpmf extension is not supported.");
     };
 
     // Sstc implies supervisor timer interrupts should be supported.
@@ -1068,6 +1135,10 @@ private function check_extension_param_constraints() -> bool = {
       valid = false;
       print_endline("`base.writable_fiom` is false but Sv32 is supported: FIOM may only be read-only zero when satp.MODE is always Bare.");
     }
+  };
+  if not(config extensions.H.hedeleg_zero_writable : bool) & (config extensions.H.supported : bool) & not(config extensions.Zca.supported : bool) then {
+    valid = false;
+    print_endline("extensions.H.hedeleg_zero_writable is false but IALIGN=32 (Zca is disabled): hedeleg[0] must be writable when IALIGN=32.")
   };
 
   valid

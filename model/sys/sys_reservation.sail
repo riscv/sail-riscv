@@ -12,9 +12,10 @@
 // reservation behavior is platform-specific anyway and maintaining
 // this state outside the model simplifies the concurrency analysis.
 //
-// These are externs are defined here in the system module since
-// we currently perform reservation cancellation on privilege level
-// transition.  Ideally, the platform should get more visibility into
+// These externs are defined here in the system module since
+// reservation cancellation can happen on xRET if the corresponding
+// config option is enabled (see `platform.reservation.invalidate_on_xret`).
+// Ideally, the platform should get more visibility into
 // where cancellation can be performed.
 
 val load_reservation = impure {interpreter: "Platform.load_reservation", cpp: "load_reservation", c: "load_reservation", lem: "load_reservation"} : forall 'n, 0 < 'n < max_mem_access . (/* addr */ physaddrbits, /* width */ int('n)) -> unit

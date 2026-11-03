@@ -279,18 +279,31 @@ private function match_mcontrol6(
   let chain_info : string = if t.chain then "in-chain" else "chain-terminating";
 
   match payload {
+    // This is matched on the PC before an instruction is actually
+    // fetched, so the width of the access is unknown.  Match this
+    // only if the `size` is `any` (i.e. 0).
     TriggerFetchAddr(addr) =>
-      if t.execute & t.select == Compare_Address &
-         (compare_access_size(t.size, 2) | compare_access_size(t.size, 4)) &
-         compare_value_xlen(t.t_match, addr, t.tdata2)
+      if t.execute & t.select == Compare_Address & t.size == 0 & compare_value_xlen(t.t_match, addr, t.tdata2)
       then {
         if get_config_print_trigger()
         then print_log("Matched " ^ chain_info ^ " memory execute address trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
         trigger_match_callback(idx);
         Some(addr)
       } else None(),
+
+    // Since at this point both the PC and the instruction and its
+    // width are known, match execute address compares against the
+    // known width as well as execute data compares. Address compares
+    // with `size` of `any` should have already matched above.
     TriggerFetchInstr(addr, inst, width) =>
-      if t.execute & t.select == Compare_Data & compare_value(t.t_match, t.size, inst, width, t.tdata2) then {
+      if t.execute & t.select == Compare_Address & compare_access_size(t.size, width) & compare_value_xlen(t.t_match, addr, t.tdata2)
+      then {
+        if get_config_print_trigger()
+        then print_log("Matched " ^ chain_info ^ " memory execute address trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
+
+        trigger_match_callback(idx);
+        Some(addr)
+      } else if t.execute & t.select == Compare_Data & compare_value(t.t_match, t.size, inst, width, t.tdata2) then {
         if get_config_print_trigger()
         then print_log("Matched " ^ chain_info ^ " memory execute data trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
         trigger_match_callback(idx);
