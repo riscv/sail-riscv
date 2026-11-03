@@ -190,7 +190,6 @@ function inVirtualPrivilege() -> bool = privLevel_is_virtual(cur_privilege)
 termination_measure virtual_memory_supported(_) = 3
 
 //
-// Illegal values legalized to least privileged mode supported.
 // Note: the only valid combinations of supported modes are M, M+U, M+S+U.
 function lowest_supported_privLevel() -> Privilege =
   if currentlyEnabled(Ext_U) then User else Machine
@@ -201,6 +200,17 @@ function have_nominal_privLevel(priv : nom_priv_bits) -> bool =
     0b01 => currentlyEnabled(Ext_S),
     0b10 => false,
     0b11 => true,
+  }
+
+// WARL for mstatus.MPP (and later mnstatus.MNPP): keep a legal write, else either
+// map to the least-privileged implemented mode or retain the previous legal value.
+function legalize_nominal_privLevel(requested : nom_priv_bits, previous : nom_priv_bits) -> nom_priv_bits =
+  if have_nominal_privLevel(requested) then requested
+  else match illegal_privilege_reserved_behavior {
+    IllegalPriv_Lowest => privLevel_to_bits(lowest_supported_privLevel()),
+    IllegalPriv_Ignore =>
+      if have_nominal_privLevel(previous) then previous
+      else privLevel_to_bits(lowest_supported_privLevel()),
   }
 
 bitfield Mstatus : bits(64) = {
@@ -274,7 +284,7 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     FS = legalize_extStatus(plat_mstatus_legal_fs, v[FS]),
     VS = legalize_extStatus(plat_mstatus_legal_vs, v[VS]),
 
-    MPP = if have_nominal_privLevel(v[MPP]) then v[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
+    MPP = legalize_nominal_privLevel(v[MPP], o[MPP]),
     SPP = if currentlyEnabled(Ext_S) then v[SPP] else 0b0,
     MPIE = v[MPIE],
     SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,

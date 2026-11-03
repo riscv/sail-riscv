@@ -244,6 +244,14 @@
       // "Xtvec_Fatal"  – raise a Sail exception, stopping execution.
       // "Xtvec_Ignore" – use old Mode of xtvec.
       "xtvec_mode": "Xtvec_Ignore",
+      // WARL policy for an unsupported privilege encoding written to `mstatus.MPP`
+      // (Reserved, or a mode the hart does not implement).
+      // "IllegalPriv_Lowest" – map to the least-privileged implemented mode (U if U is
+      //                        present, else M).
+      // "IllegalPriv_Ignore" – keep the previous field value if it is still a supported
+      //                        mode. Fall back to lowest if the previous
+      //                        value is not legal.
+      "illegal_privilege": "IllegalPriv_Lowest",
       // This option determines how to handle the reserved behavior: Odd-numbered registers for RV32Zdinx.
       // "Zdinx_Fatal"  – raise a Sail exception, stopping execution.
       // "Zdinx_Illegal" – treat it as an illegal instruction.
