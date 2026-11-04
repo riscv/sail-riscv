@@ -114,23 +114,19 @@ function clause is_CSR_accessible(0x255, _, _) = currentlyEnabled(Ext_Sscsrind) 
 function clause is_CSR_accessible(0x256, _, _) = currentlyEnabled(Ext_Sscsrind) & currentlyEnabled(Ext_H) & vsireg_accessible(5)
 function clause is_CSR_accessible(0x257, _, _) = currentlyEnabled(Ext_Sscsrind) & currentlyEnabled(Ext_H) & vsireg_accessible(6)
 
+// Only *iselect and *ireg (alias 1) exist unless an extension implements
+// alias 2-6. The csrind VS/VU virtual-instruction override therefore
+// applies to those CSRs only; *ireg2-*ireg6 fall through to the default
+// HS-qualified check, which is illegal while indirect_reg_implemented
+// is false.
 function clause is_CSR_exception_virtual(0x150, priv, _) = is_sireg_exception_virtual(priv)
 function clause is_CSR_exception_virtual(0x151, priv, _) = is_sireg_exception_virtual(priv)
-function clause is_CSR_exception_virtual(0x152, priv, _) = is_sireg_exception_virtual(priv)
-function clause is_CSR_exception_virtual(0x153, priv, _) = is_sireg_exception_virtual(priv)
-function clause is_CSR_exception_virtual(0x155, priv, _) = is_sireg_exception_virtual(priv)
-function clause is_CSR_exception_virtual(0x156, priv, _) = is_sireg_exception_virtual(priv)
-function clause is_CSR_exception_virtual(0x157, priv, _) = is_sireg_exception_virtual(priv)
 
 // NOTE: "if mstateen0[60] = 1, a virtual-instruction exception is raised ... for
 // all attempts from VS-mode or VU-mode to directly access vsiselect or vsireg*".
+// vsireg* here is the implemented alias (vsireg); vsireg2+ are absent.
 function clause is_CSR_exception_virtual(0x250, _, _) = is_csrind_enabled_by_mstateen0()
 function clause is_CSR_exception_virtual(0x251, _, _) = is_csrind_enabled_by_mstateen0()
-function clause is_CSR_exception_virtual(0x252, _, _) = is_csrind_enabled_by_mstateen0()
-function clause is_CSR_exception_virtual(0x253, _, _) = is_csrind_enabled_by_mstateen0()
-function clause is_CSR_exception_virtual(0x255, _, _) = is_csrind_enabled_by_mstateen0()
-function clause is_CSR_exception_virtual(0x256, _, _) = is_csrind_enabled_by_mstateen0()
-function clause is_CSR_exception_virtual(0x257, _, _) = is_csrind_enabled_by_mstateen0()
 
 function clause read_CSR(0x350) = miselect
 function clause read_CSR(0x351) = get_ireg(Mireg, miselect, 1)
