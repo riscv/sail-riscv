@@ -41,7 +41,10 @@ function isla_footprint_no_init(opcode) = {
     } else {
       ext_decode(opcode)
     };
-    let _ = execute(instr);
+    let _ : ExecutionResult = match execute(instr) {
+      ExecuteAs(other_inst) => execute(other_inst),
+      result => result,
+    };
     true
   } catch {
     _ => false
