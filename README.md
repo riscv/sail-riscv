@@ -200,6 +200,7 @@ An experimental emulator in the Lean language is available, see its
 - Machine, Supervisor, and User modes
 - Sdtrig extension for debug triggers, v1.0
 - Smdbltrp/Ssdbltrp extensions for Double Trap, v1.0
+- Smcdeleg and Ssccfg extensions for counter delegation, v1.0.
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
 - Smcsrind/Sscsrind extensions for indirect CSR access, v1.0
 - Smstateen/Ssstateen extensions for fine-grained privileged state access control, v1.0

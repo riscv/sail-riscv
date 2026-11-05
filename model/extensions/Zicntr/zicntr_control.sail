@@ -28,3 +28,13 @@ function clause read_CSR(0xC02) = minstret[(xlen - 1) .. 0]
 function clause read_CSR(0xC80 if xlen == 32) = mcycle[63 .. 32]
 function clause read_CSR(0xC81 if xlen == 32) = (get_mtime() + (if inVirtualPrivilege() then htimedelta else zeros()))[63 .. 32]
 function clause read_CSR(0xC82 if xlen == 32) = minstret[63 .. 32]
+
+function clause get_ireg((Sireg, sel, 1) if unsigned(sel) == unsigned(0x40)) = mcycle[(xlen - 1) .. 0]
+function clause get_ireg((Sireg, sel, 4) if xlen == 32 & unsigned(sel) == unsigned(0x40)) = mcycle[63 .. 32]
+function clause get_ireg((Sireg, sel, 1) if unsigned(sel) == unsigned(0x42)) = minstret[(xlen - 1) .. 0]
+function clause get_ireg((Sireg, sel, 4) if xlen == 32 & unsigned(sel) == unsigned(0x42)) = minstret[63 .. 32]
+
+function clause set_ireg((Sireg, sel, 1, value) if unsigned(sel) == unsigned(0x40)) = { mcycle[(xlen - 1) .. 0] = value; Ok(value) }
+function clause set_ireg((Sireg, sel, 4, value) if xlen == 32 & unsigned(sel) == unsigned(0x40)) = { mcycle[63 .. 32] = value; Ok(value) }
+function clause set_ireg((Sireg, sel, 1, value) if unsigned(sel) == unsigned(0x42)) = { minstret[(xlen - 1) .. 0] = value; minstret_increment = false; Ok(value) }
+function clause set_ireg((Sireg, sel, 4, value) if xlen == 32 & unsigned(sel) == unsigned(0x42)) = { minstret[63 .. 32] = value; minstret_increment = false; Ok(value) }

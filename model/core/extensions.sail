@@ -502,6 +502,10 @@ function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 enum clause extension = Ext_Ssccptr
 mapping clause extensionName = Ext_Ssccptr <-> "ssccptr"
 function clause hartSupports(Ext_Ssccptr) = config extensions.Ssccptr.supported
+// Supervisor Counter Configuration
+enum clause extension = Ext_Ssccfg
+mapping clause extensionName = Ext_Ssccfg <-> "ssccfg"
+function clause hartSupports(Ext_Ssccfg) = config extensions.Ssccfg.supported
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf
 mapping clause extensionName = Ext_Sscofpmf <-> "sscofpmf"
@@ -626,6 +630,10 @@ enum clause extension = Ext_Svvptc
 mapping clause extensionName = Ext_Svvptc <-> "svvptc"
 function clause hartSupports(Ext_Svvptc) = config extensions.Svvptc.supported
 
+// Machine Counter Delegation
+enum clause extension = Ext_Smcdeleg
+mapping clause extensionName = Ext_Smcdeleg <-> "smcdeleg"
+function clause hartSupports(Ext_Smcdeleg) = config extensions.Smcdeleg.supported
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
 mapping clause extensionName = Ext_Smcntrpmf <-> "smcntrpmf"
@@ -763,6 +771,8 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zvfbfwma => 4, // > Zvfbfmin
     Ext_Zvfh => 4, // > Zfhmin
 
+    Ext_Ssccfg => 5, // > Sscsrind
+    Ext_Smcdeleg => 5, // > Sscsrind
     Ext_Shcounterenw => 5, // > H
     Ext_Shgatpa => 5, // > H
     Ext_Shlcofideleg => 5, // > H
@@ -921,6 +931,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
+  Ext_Ssccfg,
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
@@ -956,6 +967,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Shvstvecd,
 
   // Machine mode extensions, ordered alphabetically.
+  Ext_Smcdeleg,
   Ext_Smcntrpmf,
   Ext_Smcsrind,
   Ext_Smdbltrp,

@@ -45,6 +45,24 @@ function clause write_CSR((0x322, value) if xlen == 64) = { minstretcfg = legali
 function clause write_CSR((0x322, value) if xlen == 32) = { minstretcfg = legalize_smcntrpmf(minstretcfg, minstretcfg.bits[63 .. 32] @ value); Ok(minstretcfg.bits[xlen - 1 .. 0]) }
 function clause write_CSR((0x722, value) if xlen == 32) = { minstretcfg = legalize_smcntrpmf(minstretcfg, value @ minstretcfg.bits[31 .. 0]); Ok(minstretcfg.bits[63 .. 32]) }
 
+// MINH is read-only 0 through sireg*
+function read_sireg_cfg(c : CountSmcntrpmf) -> bits(64) = [c with MINH = 0b0].bits
+function write_sireg_cfg(c : CountSmcntrpmf, v : bits(64)) -> CountSmcntrpmf =
+  legalize_smcntrpmf(c, [Mk_CountSmcntrpmf(v) with MINH = c[MINH]].bits)
+
+// sireg* aliases for Smcdeleg
+function clause get_ireg((Sireg, sel, 2) if unsigned(sel) == unsigned(0x40)) = read_sireg_cfg(mcyclecfg)[xlen - 1 .. 0]
+function clause get_ireg((Sireg, sel, 5) if xlen == 32 & unsigned(sel) == unsigned(0x40)) = read_sireg_cfg(mcyclecfg)[63 .. 32]
+function clause get_ireg((Sireg, sel, 2) if unsigned(sel) == unsigned(0x42)) = read_sireg_cfg(minstretcfg)[xlen - 1 .. 0]
+function clause get_ireg((Sireg, sel, 5) if xlen == 32 & unsigned(sel) == unsigned(0x42)) = read_sireg_cfg(minstretcfg)[63 .. 32]
+
+function clause set_ireg((Sireg, sel, 2, value) if xlen == 64 & unsigned(sel) == unsigned(0x40)) = { mcyclecfg = write_sireg_cfg(mcyclecfg, value); Ok(read_sireg_cfg(mcyclecfg)[xlen - 1 .. 0]) }
+function clause set_ireg((Sireg, sel, 2, value) if xlen == 32 & unsigned(sel) == unsigned(0x40)) = { mcyclecfg = write_sireg_cfg(mcyclecfg, mcyclecfg.bits[63 .. 32] @ value); Ok(read_sireg_cfg(mcyclecfg)[xlen - 1 .. 0]) }
+function clause set_ireg((Sireg, sel, 5, value) if xlen == 32 & unsigned(sel) == unsigned(0x40)) = { mcyclecfg = write_sireg_cfg(mcyclecfg, value @ mcyclecfg.bits[31 .. 0]); Ok(read_sireg_cfg(mcyclecfg)[63 .. 32]) }
+function clause set_ireg((Sireg, sel, 2, value) if xlen == 64 & unsigned(sel) == unsigned(0x42)) = { minstretcfg = write_sireg_cfg(minstretcfg, value); Ok(read_sireg_cfg(minstretcfg)[xlen - 1 .. 0]) }
+function clause set_ireg((Sireg, sel, 2, value) if xlen == 32 & unsigned(sel) == unsigned(0x42)) = { minstretcfg = write_sireg_cfg(minstretcfg, minstretcfg.bits[63 .. 32] @ value); Ok(read_sireg_cfg(minstretcfg)[xlen - 1 .. 0]) }
+function clause set_ireg((Sireg, sel, 5, value) if xlen == 32 & unsigned(sel) == unsigned(0x42)) = { minstretcfg = write_sireg_cfg(minstretcfg, value @ minstretcfg.bits[31 .. 0]); Ok(read_sireg_cfg(minstretcfg)[63 .. 32]) }
+
 function counter_priv_filter_bit(reg : CountSmcntrpmf, priv : Privilege) -> bits(1) =
   // When all xINH bits are zero, event counting is enabled in all modes.
   match priv {
