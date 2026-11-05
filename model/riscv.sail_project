@@ -351,17 +351,22 @@ extensions {
   }
 
   Zihpm {
-    requires core
+    requires core, Csrind_types
     files extensions/Zihpm/zihpm.sail
   }
 
   Smcntrpmf {
-    requires core
+    requires core, Csrind_types
     files extensions/Smcntrpmf/smcntrpmf.sail
   }
 
+  Smcdeleg {
+    requires core, Csrind_types
+    files extensions/Smcdeleg/smcdeleg.sail
+  }
+
   Sscofpmf {
-    requires core
+    requires core, Csrind_types, Zihpm
     files extensions/Sscofpmf/sscofpmf.sail
   }
 
@@ -430,7 +435,7 @@ extensions {
   }
 
   Zicntr {
-    requires core
+    requires core, Csrind_types
     files extensions/Zicntr/zicntr_control.sail
   }
 

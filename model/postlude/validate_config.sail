@@ -978,6 +978,18 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("`extensions.Sscsrind.siselectlen` is " ^ dec_str(siselectlen) ^ " but cannot be greater than " ^ dec_str(xlen) ^ " nor less than 12.");
     }
   };
+  if (config extensions.Smcdeleg.supported : bool) & not(config extensions.Ssccfg.supported : bool) then {
+    valid = false;
+    print_endline("The Smcdeleg extension is enabled but Ssccfg is disabled: Smcdeleg and Ssccfg must be supported together.");
+  };
+  if (config extensions.Ssccfg.supported : bool) & not(config extensions.Smcdeleg.supported : bool) then {
+    valid = false;
+    print_endline("The Ssccfg extension is enabled but Smcdeleg is disabled: Smcdeleg and Ssccfg must be supported together.");
+  };
+  if (config extensions.Smcdeleg.supported : bool) & not((config extensions.Sscsrind.supported : bool) | (config extensions.Smcsrind.supported : bool)) then {
+    valid = false;
+    print_endline("The Smcdeleg extension is enabled but Sscsrind is disabled: supporting Smcdeleg requires Sscsrind.");
+  };
   if (config extensions.Sdtrig.supported : bool) then {
     if num_triggers == 0 then {
       valid = false;

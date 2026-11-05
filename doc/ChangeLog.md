@@ -6,6 +6,8 @@
   - Sscsrind
   - Ss1p13
   - Ss1p12
+  - Smcdeleg
+  - Ssccfg
 
 - Updates to the [configuration file](../config/config.json.in):
   - The WARL behavior of a reserved or unimplemented encoding written to `mstatus.MPP`

@@ -450,6 +450,8 @@ bitfield MEnvcfg : bits(64) = {
   PBMTE  : 62,
   // Svadu
   ADUE   : 61,
+  // Smcdeleg
+  CDE    : 60,
   // Double Trap
   DTE    : 59,
   // Pointer Masking Extension
@@ -526,6 +528,7 @@ private function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
     PMM = if currentlyEnabled(Ext_Smnpm) & is_supported_pmm(PM_SMNPM, pmm_mode(v[PMM])) then v[PMM] else o[PMM],
     DTE = if hartSupports(Ext_Ssdbltrp) then v[DTE] else 0b0,
     ADUE = if currentlyEnabled(Ext_Svadu) then v[ADUE] else 0b0,
+    CDE = if currentlyEnabled(Ext_Smcdeleg) then v[CDE] else 0b0,
     PBMTE = if currentlyEnabled(Ext_Svpbmt) then v[PBMTE] else 0b0,
     // Other extensions are not implemented yet so all other fields are read only zero.
   ]
@@ -865,6 +868,17 @@ mapping clause csr_name_map = 0x320  <-> "mcountinhibit"
 function clause is_CSR_accessible(0x320, _, _) = plat_have_mcountinhibit // mcountinhibit
 function clause read_CSR(0x320) = zero_extend(mcountinhibit.bits)
 function clause write_CSR(0x320, value) = { mcountinhibit = legalize_mcountinhibit(mcountinhibit, value); Ok(zero_extend(mcountinhibit.bits)) }
+
+// scountinhibit, masked alias of mcountinhibit for delegated counters
+mapping clause csr_name_map = 0x120  <-> "scountinhibit"
+function clause is_CSR_accessible(0x120, priv, _) =
+  currentlyEnabled(Ext_Ssccfg) & menvcfg[CDE] == 0b1 & priv != VirtualSupervisor
+function clause read_CSR(0x120) = zero_extend(mcountinhibit.bits & mcounteren.bits)
+function clause write_CSR(0x120, value) = {
+  let mask = mcounteren.bits;
+  mcountinhibit = legalize_mcountinhibit(mcountinhibit, zero_extend((mcountinhibit.bits & ~(mask)) | (value[31 .. 0] & mask)));
+  Ok(zero_extend(mcountinhibit.bits & mask))
+}
 
 register mcycle : bits(64)
 
