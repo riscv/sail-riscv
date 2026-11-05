@@ -121,7 +121,7 @@ void protocol_handler::process_raw_request(std::string req) {
 
   std::optional<response_handler_ptr> resp;
   for (const auto &parser : m_parsers) {
-    resp = parser->parse(req, m_run_info);
+    resp = parser->parse(*this, req, m_run_info);
     if (resp.has_value()) {
       break;
     }

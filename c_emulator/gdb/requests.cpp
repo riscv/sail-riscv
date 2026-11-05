@@ -1,6 +1,7 @@
 #include "requests.h"
 #include "gdb_run_info.h"
 #include "parse_utils.h"
+#include "protocol_handler.h"
 
 #include <cassert>
 #include <cstdint>
@@ -15,7 +16,7 @@ public:
   qsupported() = default;
 
   // qSupported [:gdbfeature [;gdbfeature]… ]
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+  std::optional<response_handler_ptr> parse(protocol_handler &, const std::string &cmd, gdb_run_info &) const override {
     std::vector<std::string> features;
     std::string tag{"qSupported"};
     auto idx = cmd.find(tag);
@@ -51,7 +52,7 @@ class empty_responses : public request::request_parser {
 public:
   empty_responses() = default;
 
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+  std::optional<response_handler_ptr> parse(protocol_handler &, const std::string &cmd, gdb_run_info &) const override {
     static const std::vector<std::string> prefixes = {
       "vMustReplyEmpty",
       // We don't have threads or processes.
@@ -93,7 +94,7 @@ class simple : public request::request_parser {
 public:
   simple() = default;
 
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+  std::optional<response_handler_ptr> parse(protocol_handler &, const std::string &cmd, gdb_run_info &) const override {
     // H op thread-id
     // "Set thread for subsequent operations (‘m’, ‘M’, ‘g’, ‘G’, et.al.)."
     if (cmd.find("H") == 0) {
@@ -150,7 +151,7 @@ public:
   qXfer_features_read() = default;
 
   // qXfer:features:read:annex:offset,length
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+  std::optional<response_handler_ptr> parse(protocol_handler &, const std::string &cmd, gdb_run_info &) const override {
     std::string tag{"qXfer:features:read:"};
     auto idx = cmd.find(tag);
     if (idx != 0) {
@@ -209,7 +210,7 @@ public:
   read_register() = default;
 
   // p n
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+  std::optional<response_handler_ptr> parse(protocol_handler &, const std::string &cmd, gdb_run_info &) const override {
     std::string tag{"p"};
     auto idx = cmd.find(tag);
     if (idx != 0) {
@@ -246,7 +247,11 @@ public:
   write_register() = default;
 
   // p n=r
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+  std::optional<response_handler_ptr> parse(
+    protocol_handler &proto_handler,
+    const std::string &cmd,
+    gdb_run_info &
+  ) const override {
     std::string tag{"P"};
     auto idx = cmd.find(tag);
     if (idx != 0) {
@@ -284,8 +289,9 @@ public:
     }
     uint64_t regval{};
     {
+      int64_t xlen = proto_handler.get_model().xlen();
       auto val_str = cmd.substr(last_idx, idx - last_idx);
-      auto opt_val = string_to_opt_uint64t(val_str);
+      auto opt_val = string_to_opt_uint64t_regdata(val_str, xlen);
       if (!opt_val.has_value()) {
         return std::nullopt;
       }
@@ -301,7 +307,7 @@ public:
   read_memory() = default;
 
   // m addr,length
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+  std::optional<response_handler_ptr> parse(protocol_handler &, const std::string &cmd, gdb_run_info &) const override {
     std::string tag{"m"};
     auto idx = cmd.find(tag);
     if (idx != 0) {
@@ -348,7 +354,11 @@ public:
   single_step() = default;
 
   // s [addr]
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &info) const override {
+  std::optional<response_handler_ptr> parse(
+    protocol_handler &,
+    const std::string &cmd,
+    gdb_run_info &info
+  ) const override {
     std::string tag{"s"};
     auto idx = cmd.find(tag);
     if (idx != 0) {
@@ -378,7 +388,11 @@ public:
   forward_continue() = default;
 
   // c [addr]
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &info) const override {
+  std::optional<response_handler_ptr> parse(
+    protocol_handler &,
+    const std::string &cmd,
+    gdb_run_info &info
+  ) const override {
     std::string tag{"c"};
     auto idx = cmd.find(tag);
     if (idx != 0) {
@@ -409,7 +423,11 @@ public:
   // X addr,length:XX...
   // `length` is in units of bytes (in `addressable memory units` really, but this is the same as bytes here).
   // `XX...` is binary data.
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &info) const override {
+  std::optional<response_handler_ptr> parse(
+    protocol_handler &,
+    const std::string &cmd,
+    gdb_run_info &info
+  ) const override {
     std::string tag{"X"};
     auto idx = cmd.find(tag);
     if (idx != 0) {
@@ -476,7 +494,7 @@ public:
   vkill() = default;
 
   // vKill;pid
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &) const override {
+  std::optional<response_handler_ptr> parse(protocol_handler &, const std::string &cmd, gdb_run_info &) const override {
     std::string tag{"vKill;"};
     auto idx = cmd.find(tag);
     if (idx != 0) {
@@ -507,7 +525,11 @@ public:
   // type : {0,1,2,3,4}
   // kind is architecture specific for types 0 and 1 (breakpoints),
   // and specifies bytes to watch for types 2,3 and 4 (watchpoints).
-  std::optional<response_handler_ptr> parse(const std::string &cmd, gdb_run_info &info) const override {
+  std::optional<response_handler_ptr> parse(
+    protocol_handler &,
+    const std::string &cmd,
+    gdb_run_info &info
+  ) const override {
     std::string add_tag{"Z"};
     std::string remove_tag{"z"};
     auto add_idx = cmd.find(add_tag);

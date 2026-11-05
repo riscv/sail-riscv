@@ -1,5 +1,4 @@
 #include "target_regs.h"
-#include "config_utils.h"
 #include "protocol_handler.h"
 #include "riscv_model_impl.h"
 
