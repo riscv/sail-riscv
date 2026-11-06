@@ -39,6 +39,7 @@
     specified; see `extensions.Sscsrind.siselectlen`.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/2081 : `HLVX*` instructions should page-fault on VS-stage shadow stack pages.
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
 
 # Release notes for version 0.16
