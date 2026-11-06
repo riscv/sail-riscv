@@ -74,11 +74,3 @@ function clause is_CSR_accessible(0xDA0, p, _) =
 
 function clause read_CSR(0xDA0) = zero_extend(get_scountovf(cur_privilege))
 // scountovf is read-only.
-
-function clause get_ireg((Sireg, sel, 5) if xlen == 32 & is_hpm_sel(sel)) = read_sireg_hpmevent(hpmidx_from_bits(sel[4 .. 0]))[63 .. 32]
-
-function clause set_ireg((Sireg, sel, 5, value) if xlen == 32 & is_hpm_sel(sel)) = {
-  let index = hpmidx_from_bits(sel[4 .. 0]);
-  write_sireg_hpmevent(index, value @ mhpmevent[index][31 .. 0]);
-  Ok(read_sireg_hpmevent(index)[63 .. 32])
-}
