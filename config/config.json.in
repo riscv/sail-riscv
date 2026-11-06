@@ -272,7 +272,7 @@
     // supported value for this field is:
     // - `"Privileged_ISA_1_12"`
     // - `"Privileged_ISA_1_11"`
-    // Note that currently, not all functionality for these versions
+    // Note that currently, not all functionality for `"Privileged_ISA_1_11"`
     // is available currently, and not all versions of the privileged
     // ISA can be specified.
     "privileged_isa_version": "Privileged_ISA_1_13"
