@@ -24,6 +24,8 @@ public:
 
   using Privilege = hart::zPrivilege;
   using MemoryAccessType = hart::zMemoryAccessTypezIEmem_payloadz5zK;
+  using ExceptionType = hart::zExceptionType;
+  using ExceptionContext = hart::zExceptionContext;
   using PTW_Error = hart::zPTW_Error;
   using TranslationStage = hart::zTranslationStage;
   using TLB = hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
@@ -58,6 +60,7 @@ public:
 
   void set_config_rvfi(bool on);
   void set_config_use_abi_names(bool on);
+  void set_config_use_no_tlb(bool on);
 
   void set_initramfs_location(uint64_t ramfs_start, uint64_t ramfs_size);
   void set_elf_symbols(std::map<uint64_t, std::string> symbols);
@@ -78,6 +81,18 @@ public:
   std::string privilege_to_string(Privilege privilege);
   std::string ptw_error_to_string(PTW_Error error_type);
   std::string translation_stage_to_string(TranslationStage stage);
+
+  // other conversions
+  uint64_t privilege_as_bits(ModelImpl::Privilege privilege);
+
+  // other utilities
+  bool is_fetch(MemoryAccessType access);
+  bool is_store_conditional(MemoryAccessType access);
+  bool is_implicit_access(MemoryAccessType access);
+  bool is_pte_access(MemoryAccessType access);
+  static bool is_virtual_privilege(Privilege privilege);
+  bool is_memory_exception(const ExceptionContext &ctx);
+  bool is_fetch_exception(const ExceptionContext &ctx);
 
   // access to model configuration
 
@@ -110,6 +125,7 @@ public:
   int64_t vlen() const;
   int64_t physaddrbits_len() const;
 
+  Privilege cur_privilege() const;
   uint64_t mepc() const;
   uint64_t sepc() const;
   uint64_t htif_exit_code() const;
@@ -117,6 +133,12 @@ public:
   bool had_exception() const;
   uint64_t pc() const;
   uint64_t fcsr() const;
+
+  // Whether the last store-conditional (SC) matched the reservation.
+  // This helps decide whether an SC accessed memory: if the last
+  // reservation did not match, a just executed SC did not access
+  // memory.
+  bool last_reservation_match() const;
 
   // These state accessors are not const due to the generated read
   // accessors not being marked const in hart::Model.
@@ -143,21 +165,35 @@ private:
 
   // These functions are called by the Sail code.
 
-  unit fetch_callback(sbits opcode) override;
-  unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
-  unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
+  unit fetch_callback(sbits pc, sbits opcode) override;
+  unit mem_write_callback(
+    Privilege privilege,
+    MemoryAccessType access_type,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
+  unit mem_read_callback(
+    Privilege privilege,
+    MemoryAccessType access_type,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
   unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
-  unit freg_write_callback(unsigned reg, sbits value) override;
+  unit freg_write_callback(uint64_t reg, sbits value) override;
   // `full` indicates that the name and index of the CSR are provided.
   // 64 bit CSRs use a long_csr_write_callback Sail function that automatically
   // makes two csr_full_write_callback calls on RV32.
-  unit csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value) override;
-  unit csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value) override;
-  unit vreg_write_callback(unsigned reg, lbits value) override;
+  unit csr_full_write_callback(const_sail_string csr_name, uint64_t reg, sbits value) override;
+  unit csr_full_read_callback(const_sail_string csr_name, uint64_t reg, sbits value) override;
+  unit vreg_write_callback(uint64_t reg, lbits value) override;
   unit pc_write_callback(sbits new_pc) override;
+  unit trigger_tdata_write_callback(sbits tselect, int64_t tdata_num, sbits data) override;
   unit redirect_callback(sbits new_pc) override;
-  unit trap_callback(bool is_interrupt, fbits cause) override;
+  unit interrupt_callback(fbits cause) override;
+  unit exception_callback(fbits cause, ExceptionContext ctx) override;
   unit xret_callback(bool is_mret) override;
   unit instret_callback(unit) override;
   unit trigger_match_callback(sail_int index) override;
@@ -174,10 +210,21 @@ private:
   unit ptw_step_callback(TranslationStage stage, int64_t level, sbits pte_addr, uint64_t pte) override;
   unit ptw_success_callback(TranslationStage stage, int64_t level, uint64_t final_ppn) override;
   unit ptw_fail_callback(TranslationStage stage, int64_t level, PTW_Error error_type, sbits pte_addr) override;
+
+  unit address_translation_start_callback(
+    TranslationStage stage,
+    Privilege privilege,
+    sbits vaddr,
+    MemoryAccessType access
+  ) override;
+  unit address_translated_callback(TranslationStage stage, sbits vaddr, sbits paddr, MemoryAccessType access) override;
+
   unit tlb_add_callback(TLB tlb, uint64_t index) override;
   unit tlb_flush_begin_callback(unit) override;
   unit tlb_flush_callback(uint64_t index) override;
   unit tlb_flush_end_callback(TLB tlb) override;
+  unit tlb_hit_callback(TranslationStage stage, int64_t level, sbits pte_addr, uint64_t pte, int64_t index) override;
+
   // Provides entropy for the scalar cryptography extension.
   mach_bits plat_get_16_random_bits(unit) override;
 
@@ -214,6 +261,7 @@ private:
   bool get_config_print_pmp(unit) override;
   bool get_config_rvfi(unit) override;
   bool get_config_use_abi_names(unit) override;
+  bool get_config_use_no_tlb(unit) override;
 
   mach_bits get_initramfs_base(unit) override;
   mach_bits get_initramfs_size(unit) override;
@@ -228,6 +276,7 @@ private:
   bool m_config_print_pmp = false;
   bool m_config_rvfi = false;
   bool m_config_use_abi_names = false;
+  bool m_config_use_no_tlb = false;
 
   bool m_config_print_step = false;
 
@@ -249,6 +298,7 @@ private:
   uint64_t m_reservation = 0;
   uint64_t m_reservation_addr = 0;
   bool m_reservation_valid = false;
+  bool m_last_reservation_match = false;
 
   uint64_t m_reservation_set_addr_mask = 0;
   bool m_reservation_require_exact_addr = false;

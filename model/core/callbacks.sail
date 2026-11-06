@@ -8,15 +8,15 @@
 
 // Callbacks for state-changing events
 
-/// Called upon successful instruction fetch with the opcode.
-/// If there is a fetch error then this is not called (but trap_callback() will be).
-val fetch_callback = pure {cpp: "fetch_callback"} : forall 'n, 'n in {16, 32}. (bits('n)) -> unit
+/// Called upon successful instruction fetch with the PC and instruction opcode.
+/// If there is a fetch error then this is not called (but one of {interrupt,exception}_callback() will be).
+val fetch_callback = pure {cpp: "fetch_callback"} : forall 'n, 'n in {16, 32}. (/* pc */ xlenbits, bits('n)) -> unit
 function fetch_callback(_) = ()
 
-val mem_write_callback = pure {cpp: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+val mem_write_callback = pure {cpp: "mem_write_callback"} : forall 'n, 0 < 'n <= max_mem_access . (Privilege, MemoryAccessType(mem_payload), /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_write_callback(_) = ()
 
-val mem_read_callback = pure {cpp: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+val mem_read_callback = pure {cpp: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (Privilege, MemoryAccessType(mem_payload), /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
 function mem_read_callback(_) = ()
 
 val mem_exception_callback = pure {cpp: "mem_exception_callback"} : (/* addr */ physaddrbits, /* exception code */ exc_code) -> unit
@@ -51,10 +51,11 @@ function csr_full_read_callback(_) = ()
 val redirect_callback = pure {cpp: "redirect_callback"} : (/* new_pc */ xlenbits) -> unit
 function redirect_callback(_) = ()
 
-/// Called on interrupts and exceptions. The exc_code does not include the 'interrupt' bit which is
-/// in a separate bool.
-val trap_callback = pure {cpp: "trap_callback"} : (/* is_interrupt */ bool, /* interrupt/exception cause */ exc_code) -> unit
-function trap_callback(_) = ()
+/// Called on interrupts and exceptions _after_ they have been handled.
+val interrupt_callback = pure {cpp: "interrupt_callback"} : (/* interrupt cause */ exc_code) -> unit
+function interrupt_callback(_) = ()
+val exception_callback = pure {cpp: "exception_callback"} : (/* exception cause */ exc_code, ExceptionContext) -> unit
+function exception_callback(_) = ()
 
 /// Called on xrets (mret <=> true, sret <=> false).
 val xret_callback = pure {cpp: "xret_callback"} : (/* is_mret */ bool) -> unit
@@ -92,3 +93,8 @@ function long_csr_write_callback(name : string, name_high : string, value : bits
   if xlen == 32
   then csr_write_callback(name_high, value[63 .. 32]);
 }
+
+// Specialized callbacks for trigger registers.
+
+val trigger_tdata_write_callback = pure {cpp: "trigger_tdata_write_callback"} : (/* tselect */ xlenbits, /* tdata num */ range(1, 3), /* data */ xlenbits) -> unit
+function trigger_tdata_write_callback(_) = ()

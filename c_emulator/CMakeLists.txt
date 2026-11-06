@@ -89,6 +89,8 @@ add_executable(sail_riscv_sim
     riscv_callbacks_log.h
     riscv_callbacks_rvfi.cpp
     riscv_callbacks_rvfi.h
+    riscv_callbacks_rvvi_text.cpp
+    riscv_callbacks_rvvi_text.h
     traploop_detector.cpp
     traploop_detector.h
     gdb/gdb_run_info.h

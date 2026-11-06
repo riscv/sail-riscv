@@ -288,7 +288,11 @@ void protocol_handler::end_continue() {
 
 // Callbacks.
 
-void protocol_handler::trap_callback(ModelImpl &, bool, fbits) {
+void protocol_handler::interrupt_callback(ModelImpl &, fbits) {
+  m_has_trapped = true;
+}
+
+void protocol_handler::exception_callback(ModelImpl &, fbits, const ModelImpl::ExceptionContext &) {
   m_has_trapped = true;
 }
 
@@ -306,13 +310,27 @@ inline uint64_t zero_hi(sbits s) {
 // When checking triggers below, make sure to not reset `m_triggered`
 // if it was already set.
 
-void protocol_handler::mem_write_callback(ModelImpl &, const char *, sbits paddr, int64_t width, lbits) {
+void protocol_handler::mem_write_callback(
+  ModelImpl &,
+  ModelImpl::Privilege,
+  ModelImpl::MemoryAccessType,
+  sbits paddr,
+  int64_t width,
+  lbits
+) {
   if (m_triggers.at_watchpoint(AccessType::Write, zero_hi(paddr), width)) {
     m_triggered = true;
   }
 }
 
-void protocol_handler::mem_read_callback(ModelImpl &, const char *, sbits paddr, int64_t width, lbits) {
+void protocol_handler::mem_read_callback(
+  ModelImpl &,
+  ModelImpl::Privilege,
+  ModelImpl::MemoryAccessType,
+  sbits paddr,
+  int64_t width,
+  lbits
+) {
   if (m_triggers.at_watchpoint(AccessType::Read, zero_hi(paddr), width)) {
     m_triggered = true;
   }
