@@ -498,6 +498,16 @@ mapping clause extensionName = Ext_Zvksg <-> "zvksg"
 function clause hartSupports(Ext_Zvksg) = hartSupports(Ext_Zvks) & hartSupports(Ext_Zvkg)
 function clause currentlyEnabled(Ext_Zvksg) = hartSupports(Ext_Zvksg)
 
+// Privileged architecture version 1.12.
+enum clause extension = Ext_Ss1p12
+mapping clause extensionName = Ext_Ss1p12 <-> "ss1p12"
+function clause hartSupports(Ext_Ss1p12) = priv_isa_version >= Privileged_ISA_1_12
+function clause currentlyEnabled(Ext_Ss1p12) = hartSupports(Ext_Ss1p12)
+// Supervisor architecture version 1.13.
+enum clause extension = Ext_Ss1p13
+mapping clause extensionName = Ext_Ss1p13 <-> "ss1p13"
+function clause hartSupports(Ext_Ss1p13) = priv_isa_version >= Privileged_ISA_1_13
+function clause currentlyEnabled(Ext_Ss1p13) = hartSupports(Ext_Ss1p13)
 // Main memory supports page table reads
 enum clause extension = Ext_Ssccptr
 mapping clause extensionName = Ext_Ssccptr <-> "ssccptr"
@@ -921,6 +931,8 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl1024b,
 
   // Supervisor extensions, ordered alphabetically.
+  Ext_Ss1p12,
+  Ext_Ss1p13,
   Ext_Ssccptr,
   Ext_Sscofpmf,
   Ext_Sscounterenw,
