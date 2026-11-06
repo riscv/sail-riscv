@@ -1158,6 +1158,9 @@
         "svalue_len": @CONFIG__SDTRIG__SVALUE__LEN@
       }
     },
+    "Ssccfg": {
+      "supported": true
+    },
     "Sscofpmf": {
       "supported": true
     },
@@ -1244,6 +1247,9 @@
       "supported": @CONFIG_XLEN_IS_64@,
       "supported_pmlen_7": true,
       "supported_pmlen_16": true
+    },
+    "Smcdeleg": {
+      "supported": true
     },
     "Smcntrpmf": {
       "supported": true

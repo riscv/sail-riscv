@@ -360,6 +360,11 @@ extensions {
     files extensions/Smcntrpmf/smcntrpmf.sail
   }
 
+  Smcdeleg {
+    requires core, Csrind_types, Smcntrpmf
+    files extensions/Smcdeleg/smcdeleg.sail
+  }
+
   Sscofpmf {
     requires core
     files extensions/Sscofpmf/sscofpmf.sail
