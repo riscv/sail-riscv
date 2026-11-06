@@ -535,7 +535,7 @@ private function legalize_sip(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 private function legalize_vsip(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   supported_interrupts_mask([m with
-    VSSI  = v[SSI] & d[VSSI],
+    VSSI  = if d[VSSI] == 0b1 then v[SSI] else m[VSSI],
     LCOFI = if d[LCOFI] == 0b1 then lift_sip(m, mideleg, Mk_Sinterrupts(v.bits))[LCOFI] else m[LCOFI],
   ])
 }
@@ -579,9 +579,9 @@ private function legalize_sie(m : Minterrupts, d : Minterrupts, v : xlenbits) ->
 private function legalize_vsie(m : Minterrupts, d : Minterrupts, v : xlenbits) -> Minterrupts = {
   let v = Mk_Minterrupts(v);
   supported_interrupts_mask([m with
-    VSEI  = v[SEI] & d[VSEI],
-    VSTI  = v[STI] & d[VSTI],
-    VSSI  = v[SSI] & d[VSSI],
+    VSEI  = if d[VSEI] == 0b1 then v[SEI] else m[VSEI],
+    VSTI  = if d[VSTI] == 0b1 then v[STI] else m[VSTI],
+    VSSI  = if d[VSSI] == 0b1 then v[SSI] else m[VSSI],
     LCOFI = if d[LCOFI] == 0b1 then lift_sie(m, mideleg, Mk_Sinterrupts(v.bits))[LCOFI] else m[LCOFI],
   ])
 }
