@@ -198,6 +198,7 @@ An experimental emulator in the Lean language is available, see its
 - Zvksh extension for vector cryptography ShangMi Suite: SM3 Secure Hash, v1.0
 - Zvkt extension for vector data independent execution latency, v1.0 (no impact on model)
 - Machine, Supervisor, and User modes
+- S extension for Supervisor-Level ISA, v1.12 (Ss1p12) and v1.13 (Ss1p13)
 - Sdtrig extension for debug triggers, v1.0
 - Smdbltrp/Ssdbltrp extensions for Double Trap, v1.0
 - Smcntrpmf extension for cycle and instret privilege mode filtering, v1.0
@@ -209,8 +210,6 @@ An experimental emulator in the Lean language is available, see its
 - Ssqosid extension for Quality-of-Service (QoS) Identifiers, v1.0
 - Sstc extension for Supervisor-mode Timer Interrupts, v1.0
 - Ssstrict extension for Extension Conformance, v1.0
-- Ss1p12 extension for Privileged architecture version 1.12.
-- Ss1p13 extension for Supervisor architecture version 1.13.
 - Sstvala extension for `stval` provides all needed values, v1.0
 - Sstvecd extension for Direct Trap Vectoring, v1.0
 - Ssu64xl extension to ensure `sstatus.UXL` is capable of supporting UXLEN=64, v1.0
