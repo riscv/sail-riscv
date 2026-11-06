@@ -66,6 +66,10 @@ jobs:
         if: ${{ matrix.run_all_steps }}
         run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
 
+      - name: Check formal backend configuration rules
+        if: ${{ matrix.run_all_steps }}
+        run: python3 test/formal_config/check.py
+
       - name: Get tests version
         run: |
           echo "SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)" >> $GITHUB_ENV
