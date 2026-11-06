@@ -22,34 +22,13 @@ function zvk_valid_reg_overlap(rs : vregidx, rd : vregidx, emul_pow : int) -> bo
 //   scalar EMUL_pow = max(log2(EGW) - vlen_exp, 0)
 // When VLEN >= EGW this evaluates to 0 (EMUL=1, a single register) and the
 // operand is not required to be aligned to LMUL.
+//
+// Alignment and overlap of the operands are checked with the generic
+// valid_disjoint_reg_groups() helper, and the scalar group is read with
+// read_vreg(4, 32, scalar_emul_pow, vs2).
 // ---------------------------------------------------------------------------
 
 function zvk_scalar_emul_pow(EGW_exp : int) -> int = max(EGW_exp - vlen_exp, 0)
-
-// Register count for a register group given its EMUL_pow (fractional -> 1).
-function zvk_reg_count(emul_pow : int) -> int = if emul_pow > 0 then 2 ^ emul_pow else 1
-
-// Overlap check for a .vs instruction: vs2 is a scalar element group
-// (scalar EMUL) while vd is a vector register group (LMUL). The two sizes
-// differ in general, so they must be tracked separately.
-function zvk_scalar_vs_overlap(vs2 : vregidx, vd : vregidx,
-                               scalar_emul_pow : int, lmul_pow : int) -> bool = {
-  let vs2_size = zvk_reg_count(scalar_emul_pow);
-  let vd_size  = zvk_reg_count(lmul_pow);
-  let vs2_int  = unsigned(vregidx_bits(vs2));
-  let vd_int   = unsigned(vregidx_bits(vd));
-  (vs2_int + vs2_size <= vd_int) | (vd_int + vd_size <= vs2_int)
-}
-
-// Read the scalar element group (a 128-bit group) held by vs2, assembling
-// its four SEW=32 elements.  Only the first element group is read.
-function zvk_read_scalar_quad(vs2 : vregidx) -> bits(128) = {
-  let e0 = read_single_element(32, 0, vs2);
-  let e1 = read_single_element(32, 1, vs2);
-  let e2 = read_single_element(32, 2, vs2);
-  let e3 = read_single_element(32, 3, vs2);
-  e3 @ e2 @ e1 @ e0
-}
 
 function zvk_check_encdec(EGW : nat, EGS : nat1) -> bool = {
   let LMUL_pow = get_lmul_pow();

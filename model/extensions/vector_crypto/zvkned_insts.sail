@@ -18,19 +18,19 @@ mapping encdec_vaesdf : zvk_vaesdf_funct6 <-> bits(6) = {
 $[wavedrom "VAESDF.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESDF(funct6, vs2, vd)
   <-> encdec_vaesdf(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b00001 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESDF_VV |
-  zvk_scalar_vs_overlap(vs2, vd, zvk_scalar_emul_pow(7), get_lmul_pow()))
+  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
 function clause execute VAESDF(funct6, vs2, vd) = {
-  let SEW            = get_sew();
-  let LMUL_pow       = get_lmul_pow();
-  let num_elem       = get_num_elem(LMUL_pow, SEW);
+  let SEW             = get_sew();
+  let LMUL_pow        = get_lmul_pow();
+  let num_elem        = get_num_elem(LMUL_pow, SEW);
   let scalar_emul_pow = zvk_scalar_emul_pow(7);  // EGW=128 -> 2^7
 
-  // vd is always a vector group (LMUL).  For .vs, vs2 is a scalar element
-  // group (EMUL=ceil(EGW/VLEN)) and is not required to align to LMUL.
-  if not(valid_reg_group(vd, LMUL_pow)) |
-     not(valid_reg_group(vs2, if funct6 == ZVK_VAESDF_VS then scalar_emul_pow else LMUL_pow))
+  // For .vs, vs2 is a scalar element group (EMUL=ceil(EGW/VLEN)); for .vv,
+  // it is a vector group (LMUL). valid_disjoint_reg_groups also checks the
+  // alignment of both groups and that they do not overlap.
+  let vs2_emul_pow = if funct6 == ZVK_VAESDF_VS then scalar_emul_pow else LMUL_pow;
+  if not(valid_disjoint_reg_groups(vs2, vd, vs2_emul_pow, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW == 32);
@@ -46,7 +46,7 @@ function clause execute VAESDF(funct6, vs2, vd) = {
     let state = get_velem_quad(vd_val, i);
     let rkey : bits(128) = match funct6 {
       ZVK_VAESDF_VV => get_velem_quad(read_vreg(num_elem, SEW, LMUL_pow, vs2), i),
-      ZVK_VAESDF_VS => zvk_read_scalar_quad(vs2),
+      ZVK_VAESDF_VS => get_velem_quad(read_vreg(4, 32, scalar_emul_pow, vs2), 0),
     };
     let sr  = aes_shift_rows_inv(state);
     let sb  = aes_subbytes_inv(sr);
@@ -77,17 +77,16 @@ mapping encdec_vaesdm : zvk_vaesdm_funct6 <-> bits(6) = {
 $[wavedrom "VAESDM.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESDM(funct6, vs2, vd)
   <-> encdec_vaesdm(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b00000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESDM_VV |
-  zvk_scalar_vs_overlap(vs2, vd, zvk_scalar_emul_pow(7), get_lmul_pow()))
+  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
 function clause execute VAESDM(funct6, vs2, vd) = {
-  let SEW            = get_sew();
-  let LMUL_pow       = get_lmul_pow();
-  let num_elem       = get_num_elem(LMUL_pow, SEW);
+  let SEW             = get_sew();
+  let LMUL_pow        = get_lmul_pow();
+  let num_elem        = get_num_elem(LMUL_pow, SEW);
   let scalar_emul_pow = zvk_scalar_emul_pow(7);
 
-  if not(valid_reg_group(vd, LMUL_pow)) |
-     not(valid_reg_group(vs2, if funct6 == ZVK_VAESDM_VS then scalar_emul_pow else LMUL_pow))
+  let vs2_emul_pow = if funct6 == ZVK_VAESDM_VS then scalar_emul_pow else LMUL_pow;
+  if not(valid_disjoint_reg_groups(vs2, vd, vs2_emul_pow, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW == 32);
@@ -103,7 +102,7 @@ function clause execute VAESDM(funct6, vs2, vd) = {
     let state = get_velem_quad(vd_val, i);
     let rkey : bits(128) = match funct6 {
       ZVK_VAESDM_VV => get_velem_quad(read_vreg(num_elem, SEW, LMUL_pow, vs2), i),
-      ZVK_VAESDM_VS => zvk_read_scalar_quad(vs2),
+      ZVK_VAESDM_VS => get_velem_quad(read_vreg(4, 32, scalar_emul_pow, vs2), 0),
     };
     let sr    = aes_shift_rows_inv(state);
     let sb    = aes_subbytes_inv(sr);
@@ -135,17 +134,16 @@ mapping encdec_vaesef : zvk_vaesef_funct6 <-> bits(6) = {
 $[wavedrom "VAESEF.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESEF(funct6, vs2, vd)
   <-> encdec_vaesef(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b00011 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESEF_VV |
-  zvk_scalar_vs_overlap(vs2, vd, zvk_scalar_emul_pow(7), get_lmul_pow()))
+  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
 function clause execute VAESEF(funct6, vs2, vd) = {
-  let SEW            = get_sew();
-  let LMUL_pow       = get_lmul_pow();
-  let num_elem       = get_num_elem(LMUL_pow, SEW);
+  let SEW             = get_sew();
+  let LMUL_pow        = get_lmul_pow();
+  let num_elem        = get_num_elem(LMUL_pow, SEW);
   let scalar_emul_pow = zvk_scalar_emul_pow(7);
 
-  if not(valid_reg_group(vd, LMUL_pow)) |
-     not(valid_reg_group(vs2, if funct6 == ZVK_VAESEF_VS then scalar_emul_pow else LMUL_pow))
+  let vs2_emul_pow = if funct6 == ZVK_VAESEF_VS then scalar_emul_pow else LMUL_pow;
+  if not(valid_disjoint_reg_groups(vs2, vd, vs2_emul_pow, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW == 32);
@@ -161,7 +159,7 @@ function clause execute VAESEF(funct6, vs2, vd) = {
     let state = get_velem_quad(vd_val, i);
     let rkey : bits(128) = match funct6 {
       ZVK_VAESEF_VV => get_velem_quad(read_vreg(num_elem, SEW, LMUL_pow, vs2), i),
-      ZVK_VAESEF_VS => zvk_read_scalar_quad(vs2),
+      ZVK_VAESEF_VS => get_velem_quad(read_vreg(4, 32, scalar_emul_pow, vs2), 0),
     };
     let sb    = aes_subbytes_fwd(state);
     let sr    = aes_shift_rows_fwd(sb);
@@ -192,17 +190,16 @@ mapping encdec_vaesem : zvk_vaesem_funct6 <-> bits(6) = {
 $[wavedrom "VAESEM.OP _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESEM(funct6, vs2, vd)
   <-> encdec_vaesem(funct6) @ 0b1 @ encdec_vreg(vs2) @ 0b00010 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) & (funct6 == ZVK_VAESEM_VV |
-  zvk_scalar_vs_overlap(vs2, vd, zvk_scalar_emul_pow(7), get_lmul_pow()))
+  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
 function clause execute VAESEM(funct6, vs2, vd) = {
-  let SEW            = get_sew();
-  let LMUL_pow       = get_lmul_pow();
-  let num_elem       = get_num_elem(LMUL_pow, SEW);
+  let SEW             = get_sew();
+  let LMUL_pow        = get_lmul_pow();
+  let num_elem        = get_num_elem(LMUL_pow, SEW);
   let scalar_emul_pow = zvk_scalar_emul_pow(7);
 
-  if not(valid_reg_group(vd, LMUL_pow)) |
-     not(valid_reg_group(vs2, if funct6 == ZVK_VAESEM_VS then scalar_emul_pow else LMUL_pow))
+  let vs2_emul_pow = if funct6 == ZVK_VAESEM_VS then scalar_emul_pow else LMUL_pow;
+  if not(valid_disjoint_reg_groups(vs2, vd, vs2_emul_pow, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW == 32);
@@ -218,7 +215,7 @@ function clause execute VAESEM(funct6, vs2, vd) = {
     let state = get_velem_quad(vd_val, i);
     let rkey : bits(128) = match funct6 {
       ZVK_VAESEM_VV => get_velem_quad(read_vreg(num_elem, SEW, LMUL_pow, vs2), i),
-      ZVK_VAESEM_VS => zvk_read_scalar_quad(vs2),
+      ZVK_VAESEM_VS => get_velem_quad(read_vreg(4, 32, scalar_emul_pow, vs2), 0),
     };
     let sb    = aes_subbytes_fwd(state);
     let sr    = aes_shift_rows_fwd(sb);
@@ -354,18 +351,16 @@ union clause instruction = VAESZ_VS : (vregidx, vregidx)
 $[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = VAESZ_VS(vs2, vd)
   <-> 0b101001 @ 0b1 @ encdec_vreg(vs2) @ 0b00111 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4) &
-  zvk_scalar_vs_overlap(vs2, vd, zvk_scalar_emul_pow(7), get_lmul_pow())
+  when currentlyEnabled(Ext_Zvkned) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
 function clause execute VAESZ_VS(vs2, vd) = {
-  let SEW            = get_sew();
-  let LMUL_pow       = get_lmul_pow();
-  let num_elem       = get_num_elem(LMUL_pow, SEW);
+  let SEW             = get_sew();
+  let LMUL_pow        = get_lmul_pow();
+  let num_elem        = get_num_elem(LMUL_pow, SEW);
   let scalar_emul_pow = zvk_scalar_emul_pow(7);
 
   // vd is a vector group (LMUL); vs2 is a scalar element group (EMUL).
-  if not(valid_reg_group(vd, LMUL_pow)) |
-     not(valid_reg_group(vs2, scalar_emul_pow))
+  if not(valid_disjoint_reg_groups(vs2, vd, scalar_emul_pow, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW == 32);
@@ -379,7 +374,7 @@ function clause execute VAESZ_VS(vs2, vd) = {
     assert(i * 4 + 3 < num_elem);
 
     let state = get_velem_quad(vd_val, i);
-    let rkey  = zvk_read_scalar_quad(vs2);
+    let rkey  = get_velem_quad(read_vreg(4, 32, scalar_emul_pow, vs2), 0);
     let ark   = state ^ rkey;
 
     write_velem_quad(vd, SEW, ark, i)
