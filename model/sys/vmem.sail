@@ -389,6 +389,11 @@ private function translate_TLB_hit forall 'v, is_sv_or_svx4_mode('v) . (
   let pte       = tlb_get_pte(pte_size, ent);  // Step 2 of VATP.
   let ext_pte   = ext_bits_of_PTE(pte);
   let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
+
+  // NOTE: menvcfg/henvcfg.SSE can change at runtime without a fence. If software
+  // changes this bit from 1 to 0, we must reject stale TLB entries.
+  if pte_is_invalid(pte_flags, ext_pte, stage) then return Err(PTW_Invalid_PTE(), ext_ptw);
+
   let pte_check = check_PTE_permission(access, priv, stage, mxr, do_sum, pte_flags,
                                        ext_pte, ext_ptw);
   match pte_check {
