@@ -180,7 +180,7 @@ private function get_sstateen(idx : range(0, 3)) -> bits(64) =
 
 termination_measure get_sstateen(_) = 3 // > is_sstateen_accessible
 
-function get_sstateen_mask(idx : range(0, 3)) -> bits(64) = get_mstateen(idx) & get_hstateen(idx)
+function get_sstateen_mask(idx : range(0, 3)) -> bits(64) = get_mstateen(idx) & (if inVirtualPrivilege() then get_hstateen(idx) else ones())
 
 function legalize_sstateen0(s : Sstateen0, v : bits(32)) -> Sstateen0 = {
   let v = Mk_Sstateen0(v);
