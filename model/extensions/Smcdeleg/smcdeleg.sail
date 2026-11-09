@@ -16,19 +16,19 @@ function clause currentlyEnabled(Ext_Ssccfg) = hartSupports(Ext_Ssccfg) & curren
 function clause indirect_reg_implemented((Sireg, sel, i) if unsigned(0x40) <= unsigned(sel) & unsigned(sel) <= unsigned(0x5F)) = {
   // Indirect HPM State Mappings table
   let state_exists : bool = match (sel[7 .. 0], i) {
-    (0x40, 1) => currentlyEnabled(Ext_Zicntr),                 // mcycle
-    (0x40, 2) => currentlyEnabled(Ext_Smcntrpmf),              // mcyclecfg
-    (0x40, 4) => xlen == 32 & currentlyEnabled(Ext_Zicntr),    // mcycleh
-    (0x40, 5) => xlen == 32 & currentlyEnabled(Ext_Smcntrpmf), // mcyclecfgh
-    (0x41, _) => false,                                        // mtime
-    (0x42, 1) => currentlyEnabled(Ext_Zicntr),                 // minstret
-    (0x42, 2) => currentlyEnabled(Ext_Smcntrpmf),              // minstretcfg
-    (0x42, 4) => xlen == 32 & currentlyEnabled(Ext_Zicntr),    // minstreth
-    (0x42, 5) => xlen == 32 & currentlyEnabled(Ext_Smcntrpmf), // minstretcfgh
-    (_, 1)    => currentlyEnabled(Ext_Zihpm),                  // mhpmcounterN
-    (_, 2)    => currentlyEnabled(Ext_Zihpm),                  // mhpmeventN
-    (_, 4)    => xlen == 32 & currentlyEnabled(Ext_Zihpm),     // mhpmcounterNh
-    (_, 5)    => xlen == 32 & currentlyEnabled(Ext_Sscofpmf),  // mhpmeventNh
+    (0x40, 1) => currentlyEnabled(Ext_Zicntr),                 // cycle
+    (0x40, 2) => currentlyEnabled(Ext_Smcntrpmf),              // cyclecfg
+    (0x40, 4) => xlen == 32 & currentlyEnabled(Ext_Zicntr),    // cycleh
+    (0x40, 5) => xlen == 32 & currentlyEnabled(Ext_Smcntrpmf), // cyclecfgh
+    (0x41, _) => false,                                        // time
+    (0x42, 1) => currentlyEnabled(Ext_Zicntr),                 // instret
+    (0x42, 2) => currentlyEnabled(Ext_Smcntrpmf),              // instretcfg
+    (0x42, 4) => xlen == 32 & currentlyEnabled(Ext_Zicntr),    // instreth
+    (0x42, 5) => xlen == 32 & currentlyEnabled(Ext_Smcntrpmf), // instretcfgh
+    (_, 1)    => currentlyEnabled(Ext_Zihpm),                  // hpmcounterN
+    (_, 2)    => currentlyEnabled(Ext_Zihpm),                  // hpmeventN
+    (_, 4)    => xlen == 32 & currentlyEnabled(Ext_Zihpm),     // hpmcounterNh
+    (_, 5)    => xlen == 32 & currentlyEnabled(Ext_Sscofpmf),  // hpmeventNh
     _         => false,                                        // sireg3, sireg6
   };
   currentlyEnabled(Ext_Ssccfg) & menvcfg[CDE] == 0b1 & mcounteren.bits[unsigned(sel[4 .. 0])] == 0b1 & state_exists
@@ -82,10 +82,6 @@ function write_sireg_hpmevent(index : hpmidx, value : bits(64)) -> unit =
 function clause get_ireg((Sireg, sel, 1) if is_hpm_sel(sel)) = read_mhpmcounter(hpmidx_from_bits(sel[4 .. 0]))
 function clause get_ireg((Sireg, sel, 2) if is_hpm_sel(sel)) = read_sireg_hpmevent(hpmidx_from_bits(sel[4 .. 0]))[xlen - 1 .. 0]
 function clause get_ireg((Sireg, sel, 4) if xlen == 32 & is_hpm_sel(sel)) = read_mhpmcounterh(hpmidx_from_bits(sel[4 .. 0]))
-
-// REVIEWER NOTE: The set_ireg* functions defined in this file are essentially
-// identical to write_CSR in counters.sail. In theory, we could refactor them
-// to use a shared function.
 
 function clause set_ireg((Sireg, sel, 1, value) if is_hpm_sel(sel)) = {
   let index = hpmidx_from_bits(sel[4 .. 0]);

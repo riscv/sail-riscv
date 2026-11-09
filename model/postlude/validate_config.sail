@@ -792,7 +792,6 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("The Shcounterenw extension is enabled but `hcounteren` is not writable (via `base.hcounteren_writable_bits`) for some supported HPM counters (specified in `base.writable_hpm_counters`).");
     };
   };
-  // When Smcdeleg/Ssccfg are supported, `mcountinhibit` will be required.
   if (config base.mcountinhibit.supported : bool) then {
     let inhibitable_counters : bits(32) = config base.mcountinhibit.writable_bits;
     if inhibitable_counters[1] == 0b1 then {
@@ -986,9 +985,13 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssccfg extension is enabled but Smcdeleg is disabled: Smcdeleg and Ssccfg must be supported together.");
   };
-  if (config extensions.Smcdeleg.supported : bool) & not((config extensions.Sscsrind.supported : bool) | (config extensions.Smcsrind.supported : bool)) then {
+  if (config extensions.Smcdeleg.supported : bool) & not(config extensions.Sscsrind.supported : bool) then {
     valid = false;
     print_endline("The Smcdeleg extension is enabled but Sscsrind is disabled: supporting Smcdeleg requires Sscsrind.");
+  };
+  if (config extensions.Smcdeleg.supported : bool) & not(config base.mcountinhibit.supported : bool) then {
+    valid = false;
+    print_endline("The Smcdeleg extension is enabled but `mcountinhibit` is disabled: supporting Smcdeleg requires `base.mcountinhibit.supported`.");
   };
   if (config extensions.Sdtrig.supported : bool) then {
     if num_triggers == 0 then {
