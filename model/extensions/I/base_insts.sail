@@ -629,7 +629,7 @@ function clause execute MRET() = {
     mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
     mstatus[MPV]  = 0b0;
 
-    if   cur_privilege != Machine
+    if   cur_privilege != Machine & xret_clears_mstatus_mprv
     then mstatus[MPRV] = 0b0;
 
     xret_clear_dbltrp(prev_priv, cur_privilege);
@@ -701,7 +701,7 @@ function clause execute SRET() = {
         mstatus[SPP]  = 0b0;
         mstatus[SIE]  = mstatus[SPIE];
         mstatus[SPIE] = 0b1;
-        if new_priv != Machine
+        if new_priv != Machine & xret_clears_mstatus_mprv
         then mstatus[MPRV] = 0b0;
         cur_privilege = new_priv;
         Supervisor

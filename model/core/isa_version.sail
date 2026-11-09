@@ -54,6 +54,7 @@ let priv_isa_version : Privileged_ISA_Version = config base.privileged_isa_versi
 // In this version, a new requirement was added that reserved bits
 // in PTEs must be zero otherwise the PTE is invalid.
 let pte_reserved_bits_must_be_zero = priv_isa_version >= Privileged_ISA_1_12
+let xret_clears_mstatus_mprv = priv_isa_version >= Privileged_ISA_1_12
 
 
 // CSRs added in version 1.12. These CSRs are not
