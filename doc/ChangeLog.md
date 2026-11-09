@@ -42,6 +42,7 @@
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
   - https://github.com/riscv/sail-riscv/issues/2080 : `vsip`/`vsie` writes should not change `hip`/`hie` when not delegated by `hideleg`
   - https://github.com/riscv/sail-riscv/issues/2083 : `xSSE` changes should take effect immediately, even for cached shadow stack PTEs
+  - https://github.com/riscv/sail-riscv/pull/2093 : `hstateen` should only mask `sstateen` in VS-mode or VU-mode
 
 # Release notes for version 0.16
 
