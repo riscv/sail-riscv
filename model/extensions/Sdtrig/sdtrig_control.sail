@@ -227,6 +227,32 @@ private function compare_value_xlen(t_match : Trig_Match, value : xlenbits, tdat
   }
 }
 
+// The compiler does not allow this to be a mapping since the types
+// are the same on both sides.
+private function negate_match(t_match : Trig_Match) -> Trig_Match =
+  match t_match {
+   TM_EQ          => TM_NEQ,
+   TM_NAPOT       => TM_NOT_NAPOT,
+   TM_GE          => TM_LT,
+   TM_LT          => TM_GE,
+   TM_MASK_LO     => TM_NOT_MASK_LO,
+   TM_MASK_HI     => TM_NOT_MASK_HI,
+   TM_NEQ         => TM_EQ,
+   TM_NOT_NAPOT   => TM_NAPOT,
+   TM_NOT_MASK_LO => TM_MASK_LO,
+   TM_NOT_MASK_HI => TM_MASK_HI,
+ }
+
+private function is_negative_match(t_match : Trig_Match) -> bool =
+  match t_match {
+    TM_NEQ         => true,
+    TM_NOT_NAPOT   => true,
+    TM_NOT_MASK_LO => true,
+    TM_NOT_MASK_HI => true,
+
+    _              => false,
+  }
+
 let address_select_matches_all : bool = config extensions.Sdtrig.mcontrol6.address_select_matches_all_addresses
 
 private function compare_address forall 'width, 0 < 'width <= max_mem_access. (
@@ -237,13 +263,23 @@ private function compare_address forall 'width, 0 < 'width <= max_mem_access. (
 ) -> option(xlenbits) = {
   let span = if address_select_matches_all then width - 1 else 0;
 
+  let is_negative = is_negative_match(t_match);
+  let t_match = if is_negative then negate_match(t_match) else t_match;
+  var match_val : option(xlenbits) = None();
+
   foreach (i from 0 to span) {
     let match_addr = addr + i;
-    if compare_value_xlen(t_match, match_addr, tdata2)
-    then return Some(match_addr);
+    if compare_value_xlen(t_match, match_addr, tdata2) then {
+      // For direct matches, return the first match in the span.
+      if not(is_negative) then return Some(match_addr)
+      else match_val = Some(match_addr);
+    }
   };
+  if not(is_negative) then return None();
 
-  None();
+  // For negative matches, if no address in the span matched the negated match
+  // then the base address matches.
+  if is_none(match_val) then Some(addr) else None()
 }
 
 private function compare_value forall 'width, is_mem_width_wide('width) . (
