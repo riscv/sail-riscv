@@ -625,10 +625,9 @@ private function new_chain_state(s : MControl6) -> loop_chain_state = {
 }
 
 function update_triggers() -> unit = {
-  if not(currentlyEnabled(Ext_Sdtrig)) then {
-    assert(is_none(written_trigger_index));
-    return ();
-  };
+  // Disabled triggers must not inspect trigger bookkeeping. This also permits
+  // formal clients to leave state belonging to unsupported extensions arbitrary.
+  if not(currentlyEnabled(Ext_Sdtrig)) then return ();
 
   match written_trigger_index {
     None()    => (),
