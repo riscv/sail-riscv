@@ -56,70 +56,6 @@ jobs:
           # Git history is needed for `git describe` in the build to work.
           fetch-depth: 0
 
-      - name: Common setup
-        uses: ./.github/actions/sail-setup
-        with:
-          cmake-version: "${{ matrix.cmake_version }}"
-          install-clang: "true"
-
-      - name: Ensure pre-commit checks pass
-        if: ${{ matrix.run_all_steps }}
-        run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
-
-      - name: Get tests version
-        run: |
-          echo "SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)" >> $GITHUB_ENV
-
-      - name: Restore cached tests
-        uses: actions/cache/restore@v6
-        id: sail-riscv-tests-cache-restore
-        with:
-          path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
-          key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
-
-      - name: Build simulator and first party tests
-        run: |
-          # CLANG_VERSION is set by the sail-setup action when install-clang is enabled.
-          CLANG_FLAG=""
-          if [ -n "$CLANG_VERSION" ]; then
-            CLANG_FLAG="-DCLANG_BIN=/usr/bin/clang-$CLANG_VERSION"
-          fi
-          # Ninja is used because the CMake Makefile generator doesn't
-          # build top-level targets in parallel unfortunately.
-          # First party tests cannot be built in the Rocky container due to lack of a suitable toolchain.
-          cmake -S . -B build -GNinja \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DWARNINGS_AS_ERRORS=TRUE \
-            -DFIRST_PARTY_TESTS=${{ matrix.first_party_tests }} \
-            -DENABLE_RISCV_TESTS=TRUE \
-            -DENABLE_RISCV_ARCH_TESTS=TRUE \
-            -DENABLE_DAMO_TESTS=TRUE \
-            -DENABLE_RISCV_VECTOR_TESTS_V64_E64=TRUE \
-            -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE \
-            -DENABLE_LTO=TRUE \
-            -DENABLE_CLANG_TIDY=${{ matrix.clang_tidy }} \
-            $CLANG_FLAG
-          ninja -C build all generated_sail_riscv_docs generated_smt_rv64d generated_smt_rv32d
-
-      - name: Cache downloaded tests
-        uses: actions/cache/save@v6
-        # Update cache only on the master branch, and from only one of the jobs in the matrix.
-        if: ${{ matrix.run_all_steps && steps.sail-riscv-tests-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master' }}
-        with:
-          path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
-          key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
-
-      - name: Run build-time tests
-        # This currently comprises first-party tests and tests that
-        # need the Sail compiler (e.g. the SMT property tests).  Both
-        # types are gated on `first_party_tests`, to workaround the
-        # `ctest` limitation that only one test grouping can be
-        # specified at a time (i.e. `-R smt -R first_party` does not
-        # work).
-        if: ${{ matrix.first_party_tests }}
-        run: |
-          ctest --test-dir build -L TestAtBuildTime --output-on-failure
-
       - name: Name build artifact
         id: name_build
         # Github won't let us use the container name since it contains
@@ -130,11 +66,14 @@ jobs:
         run: |
           echo build_name="build-os-${{ matrix.os }}${{ matrix.container && '-container' || '' }}-cmake-${{ matrix.cmake_version }}" >> "$GITHUB_OUTPUT"
 
-      - name: Upload built simulator
-        uses: actions/upload-artifact@v7
+      - name: Build
+        uses: ./.github/actions/build
         with:
-          name: ${{ steps.name_build.outputs.build_name }}
-          path: build/c_emulator
+          cmake_version: "${{ matrix.cmake_version }}"
+          run_all_steps: ${{ matrix.run_all_steps }}
+          first_party_steps: ${{ matrix.first_party_steps }}
+          clang_tidy: ${{ matrix.clang_tidy }}
+          build_name: ${{ steps.name_build.outputs.build_name }}
 
       - name: Upload event payload
         if: ${{ matrix.run_all_steps }}
@@ -157,67 +96,18 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v7
 
-      - name: Common setup
-        uses: ./.github/actions/sail-setup
-        with:
-          cmake-version: "${{ matrix.cmake_version }}"
-          install-clang: "false"
-
       - name: Name build artifact
         id: name_build
         # See comment for the same step above.
         run: |
           echo build_name="build-os-${{ matrix.os }}${{ matrix.container && '-container' || '' }}-cmake-${{ matrix.cmake_version }}" >> "$GITHUB_OUTPUT"
 
-      - name: Download build
-        uses: actions/download-artifact@v8
+      - name: Run tests
+        uses: ./.github/actions/run-tests
         with:
-          name: ${{ steps.name_build.outputs.build_name }}
-          path: built_c_emulator
-
-      - name: Make downloaded simulator executable
-        # This is a workaround for a still-open Github bug from 2019
-        # https://github.com/actions/download-artifact/issues/14
-        # where permissions are lost by downloaded artifacts.
-        # Sanity check that the simulator can execute on this platform.
-        run: |
-          chmod +rx ./built_c_emulator/sail_riscv_sim
-          ./built_c_emulator/sail_riscv_sim --help
-
-      - name: Get tests version
-        run: |
-          SAIL_RISCV_TESTS_VERSION=$(cat test/sail_riscv_tests_version.txt)
-          echo "SAIL_RISCV_TESTS_VERSION=$SAIL_RISCV_TESTS_VERSION" >> $GITHUB_ENV
-
-      - name: Restore cached tests
-        uses: actions/cache/restore@v6
-        id: sail-riscv-tests-cache-restore
-        # On the master branch, we could set `fail-on-cache-miss:` to
-        # 'true', but while the PR with this workflow is not merged
-        # into master, the cache won't get created, so don't set it.
-        # Similarly, the same issue will arise for the PR that updates
-        # the version of the tests.
-        with:
-          path: build/test/${{ env.SAIL_RISCV_TESTS_VERSION }}
-          key: ci-sail-riscv-tests-${{ env.SAIL_RISCV_TESTS_VERSION }}
-
-      - name: Configure ${{ matrix.label }} suite
-        # Specify the pre-built simulator for the tests.  This only
-        # sets up the tests; the simulator is not actually built, so
-        # only the minimal required flags are specified.
-        run: |
-          cmake -S . -B build -GNinja \
-            -DSAIL_RISCV_SIM=built_c_emulator/sail_riscv_sim \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DENABLE_RISCV_TESTS=TRUE \
-            -DENABLE_RISCV_ARCH_TESTS=TRUE \
-            -DENABLE_DAMO_TESTS=TRUE \
-            -DENABLE_RISCV_VECTOR_TESTS_V64_E64=TRUE \
-            -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE
-
-      - name: Run ${{ matrix.label }} suite
-        run: |
-          ctest --test-dir build -L ${{ matrix.label }} --output-on-failure
+          cmake_version: "${{ matrix.cmake_version }}"
+          build_name: ${{ steps.name_build.outputs.build_name }}
+          test_label: ${{ matrix.label }}
 
   linux:
     name: "Linux boot"
@@ -229,40 +119,8 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v7
 
-      - name: Common setup
-        uses: ./.github/actions/sail-setup
-
-      - name: Build simulator
-        run: |
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LTO=TRUE
-          ninja -C build
-
-      - name: Restore cache (linux image)
-        uses: actions/cache/restore@v6
-        id: linux-cache-restore
-        with:
-          path: os-boot/build/fw_payload_linux.elf
-          key: linux-image-${{ hashFiles('os-boot/linux.url', 'os-boot/opensbi.url', 'os-boot/gcc.url', 'os-boot/Makefile') }}
-
-      - name: Build Linux image
-        if: steps.linux-cache-restore.outputs.cache-hit != 'true'
-        run: make -C os-boot linux --jobs=$(nproc)
-
-      - name: Cache Linux image
-        # Update cache only on the master branch
-        if: steps.linux-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master'
-        uses: actions/cache/save@v6
-        with:
-          path: os-boot/build/fw_payload_linux.elf
-          key: ${{ steps.linux-cache-restore.outputs.cache-primary-key }}
-
-      - name: Linux boot
-        run: |
-          make -C os-boot build/sail.dtb
-          # The Makefile target to boot Linux on the simulator cannot be used with caching in CI due to the dependency chain
-          ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 20000000 --device-tree-blob os-boot/build/sail.dtb os-boot/build/fw_payload_linux.elf 2>&1 | tee linux-boot.log
-          grep "Initmem setup node" linux-boot.log
-          grep "Instructions:     20000000" linux-boot.log
+      - name: Run Linux boot test
+        uses: ./.github/actions/test-linux-boot
 
   xvisor:
     name: "Xvisor boot"
@@ -274,40 +132,8 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v7
 
-      - name: Common setup
-        uses: ./.github/actions/sail-setup
-
-      - name: Build simulator
-        run: |
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LTO=TRUE
-          ninja -C build
-
-      - name: Restore cache (xvisor image)
-        uses: actions/cache/restore@v6
-        id: xvisor-cache-restore
-        with:
-          path: os-boot/build/fw_payload_xvisor.elf
-          key: xvisor-image-${{ hashFiles('os-boot/xvisor.url', 'os-boot/opensbi.url', 'os-boot/gcc.url', 'os-boot/Makefile') }}
-
-      - name: Build Xvisor image
-        if: steps.xvisor-cache-restore.outputs.cache-hit != 'true'
-        run: make -C os-boot xvisor --jobs=$(nproc)
-
-      - name: Cache Xvisor image
-        # Update cache only on the master branch
-        if: steps.xvisor-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master'
-        uses: actions/cache/save@v6
-        with:
-          path: os-boot/build/fw_payload_xvisor.elf
-          key: ${{ steps.xvisor-cache-restore.outputs.cache-primary-key }}
-
-      - name: Xvisor boot
-        run: |
-          make -C os-boot build/sail.dtb
-          # The Makefile target to boot Xvisor on the simulator cannot be used with caching in CI due to the dependency chain
-          ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 21000000 --device-tree-blob os-boot/build/sail.dtb os-boot/build/fw_payload_xvisor.elf 2>&1 | tee xvisor-boot.log
-          grep "XVisor#" xvisor-boot.log
-          grep "Instructions:     21000000" xvisor-boot.log
+      - name: Run Xvisor boot test
+        uses: ./.github/actions/test-xvisor-boot
 
   # This is here so that the "Status checks that are required" Github
   # option doesn't need to list all of the matrix jobs (it doesn't seem
