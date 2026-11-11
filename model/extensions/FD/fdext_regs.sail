@@ -288,7 +288,7 @@ function rF_or_X_S(i : fregidx) -> bits(32) = {
 }
 
 function rF_or_X_D(i : fregidx) -> bits(64) = {
-  assert(flen >= 64);
+  assert(flen >= 64 | hartSupports(Ext_Zdinx));
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
   then F_D(i)
@@ -318,7 +318,7 @@ function wF_or_X_S(i : fregidx, data : bits(32)) -> unit = {
 }
 
 function wF_or_X_D(i : fregidx, data : bits(64)) -> unit = {
-  assert (flen >= 64);
+  assert (flen >= 64 | hartSupports(Ext_Zdinx));
   assert(hartSupports(Ext_F) != hartSupports(Ext_Zfinx));
   if   hartSupports(Ext_F)
   then F_D(i) = data
