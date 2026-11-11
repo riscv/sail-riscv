@@ -88,6 +88,32 @@ struct PMAMisalignedExceptions = {
   lrsc       : misaligned_exception,
 }
 
+struct SvpbmtOverrides = {
+  coherent   : bool,
+  executable : bool,
+  readable   : bool,
+  writable   : bool,
+  // Misaligned handling for various accesses.
+  misaligned_exceptions : PMAMisalignedExceptions,
+  atomic_support : AtomicSupport,
+  reservability  : Reservability,
+  // Flags whether this memory supports CBO.zero. Note that main memory regions must
+  // have this set.
+  supports_cbo_zero : bool,
+  // Flags whether this memory supports hardware page table reads.
+  supports_pte_read : bool,
+  // Flags whether this memory supports hardware page table writes.
+  supports_pte_write : bool,
+  // The size of the optional misaligned atomicity granule is 2^misaligned_atomicity_granule_exp.
+  // The value of 0 is used to indicate the attribute is absent.
+  misaligned_atomicity_granule_size_exp : mag_size_exp,
+  // The same as above but for vector accesses.
+  vector_misaligned_atomicity_granule_size_exp : mag_size_exp,
+}
+
+let svpbmt_nc_overrides : option(SvpbmtOverrides) = config extensions.Svpbmt.nc_overrides
+let svpbmt_io_overrides : option(SvpbmtOverrides) = config extensions.Svpbmt.io_overrides
+
 // Physical Memory Attributes for a region.
 struct PMA = {
   mem_type         : MemoryRegionType,
@@ -123,21 +149,41 @@ struct PMA = {
   // TODO: Memory Ordering PMA
 }
 
+function svpbmt_override(pma : PMA, overrides : option(SvpbmtOverrides)) -> PMA = {
+  if currentlyEnabled(Ext_Svpbmt) then match overrides {
+    None() =>
+      pma,
+    Some(struct { coherent, executable, readable, writable,
+                  misaligned_exceptions, atomic_support, reservability,
+                  supports_cbo_zero, supports_pte_read, supports_pte_write,
+                  misaligned_atomicity_granule_size_exp, vector_misaligned_atomicity_granule_size_exp } ) =>
+      {pma with
+        coherent, executable, readable, writable,
+        misaligned_exceptions, atomic_support, reservability,
+        supports_cbo_zero, supports_pte_read, supports_pte_write,
+        misaligned_atomicity_granule_size_exp, vector_misaligned_atomicity_granule_size_exp },
+  } else pma
+}
+
 // A PMA can be overridden by page-based memory types.
 // TODO: specify alignment for IO regions.
 function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
   match pbmt {
     PBMT_PMA => pma,
     // TODO: return a weakly-ordered PMA
-    PBMT_NC  => {pma with mem_type = MainMemory,
+    PBMT_NC  => svpbmt_override(
+                  {pma with mem_type = MainMemory,
                           cacheable = false,
                           read_idempotent = true,
                           write_idempotent = true},
+                  svpbmt_nc_overrides),
     // TODO: return a strongly ordered PMA
-    PBMT_IO  => {pma with mem_type = IOMemory,
+    PBMT_IO  => svpbmt_override(
+                  {pma with mem_type = IOMemory,
                           cacheable = false,
                           read_idempotent = false,
                           write_idempotent = false},
+                  svpbmt_io_overrides),
   }
 
 // Provide the misaligned treatment for a misaligned access.

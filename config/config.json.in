@@ -1329,7 +1329,19 @@
       "mcid_length": 12
     },
     "Svpbmt": {
-      "supported": @CONFIG_XLEN_IS_64@
+      "supported": @CONFIG_XLEN_IS_64@,
+      // Optional PMA overrides can be specified for `PBMT=NC` in
+      // `nc_overrides` and `PBMT=IO` in `io_overrides`.  If an
+      // override is used, all PMA fields under the `attributes` of a
+      // memory region (in `memory.regions`) must be specified in
+      // these overrides except `mem_type`, `cacheable`, and
+      // `{read,write}_idempotent`.
+      "nc_overrides": {
+        "None": null
+      },
+      "io_overrides": {
+        "None": null
+      }
     },
     "Svvptc": {
       "supported": true
