@@ -985,6 +985,10 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Ssccfg extension is enabled but Smcdeleg is disabled: Smcdeleg and Ssccfg must be supported together.");
   };
+  if (config extensions.Ssccfg.supported : bool) & not(config extensions.S.supported : bool) then {
+    valid = false;
+    print_endline("The Ssccfg extension is enabled but S is disabled: supporting Ssccfg requires S.");
+  };
   if (config extensions.Smcdeleg.supported : bool) & not(config extensions.Sscsrind.supported : bool) then {
     valid = false;
     print_endline("The Smcdeleg extension is enabled but Sscsrind is disabled: supporting Smcdeleg requires Sscsrind.");
