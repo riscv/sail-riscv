@@ -31,6 +31,9 @@ private struct TLB_Entry = {
   ppn        : bits(tlb_ppn_bits), // Physical Page Number, 22 (Sv32), or 44 (Sv39+) bits.
   pte        : bits(64),           // PTE. This is only 32 bits for Sv32 so we zero extend.
   pteAddr    : physaddr,           // Physical address of PTE, for writing dirty/accessed bits.
+  pbmt       : page_based_mem_type,// Effective memory type override for the PMA containing the physical address
+                                   // This may differ from the corresponding bits in the `pte` field
+                                   // if Svpbmt is not enabled for the stage.
 }
 
 // PTE access functions, for reading flags, and for modifying the dirty and
@@ -65,14 +68,8 @@ function tlb_get_ppn forall 'v, is_sv_or_svx4_mode('v) . (
   trunc(ppn | (vpn & levelMask))
 }
 
-function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type = {
-  // For RV32, this relies on the RV32 PTE being zero-extended
-  // and the default PBMT_PMA being encoded as zeros.  This is slower
-  // than storing the PBMT enum directly as a field, but less
-  // redundant.
-  let pte_ext = ext_bits_of_PTE(ent.pte);
-  page_based_mem_type(pte_ext[PBMT])
-}
+function tlb_get_pbmt(ent : TLB_Entry) -> page_based_mem_type =
+  ent.pbmt
 
 // 64 entries is based on benchmarks of Linux boots and is where
 // you stop seeing performance improvements.
@@ -193,6 +190,7 @@ function add_to_TLB forall 'v, is_sv_or_svx4_mode('v) . (
   ppn      : ppn_bits('v),
   pte      : pte_bits('v),
   pteAddr  : physaddr,
+  pbmt     : page_based_mem_type,
   level    : level_range('v),
   global   : bool,
   stage   : TranslationStage
@@ -213,6 +211,7 @@ function add_to_TLB forall 'v, is_sv_or_svx4_mode('v) . (
                                  global    = global,
                                  pte       = zero_extend(pte),
                                  pteAddr   = pteAddr,
+                                 pbmt      = pbmt,
                                  levelMask = zero_extend(levelMask),
                                  // Zero-extend unsigned G-stage GPAs, sign-extend canonical VS/S-stage VA's.
                                  vpn       = if stage == G_Stage then zero_extend(vpn) else sign_extend(vpn),
