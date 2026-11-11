@@ -117,37 +117,6 @@ union MemoryAccessType ('a : Type) = {
   CacheAccess      : cacheop
 }
 
-// Some useful predicates on the kind of memory access
-function is_load_store forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
-  match access {
-    Load(_)             => true,
-    Store(_)            => true,
-    LoadReserved(_)     => true,
-    LoadExecute(_)      => true,
-    StoreConditional(_) => true,
-    Atomic(_)           => true,
-    InstructionFetch(_) => false,
-    CacheAccess(_)      => true,
-  }
-
-function is_prefetch_access forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
-  match access {
-    CacheAccess(CB_prefetch(_)) => true,
-    _ => false,
-  }
-
-function is_load_reserved forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
-  match access {
-    LoadReserved(_) => true,
-    _ => false,
-  }
-
-function is_store_conditional forall ('a : Type) . (access : MemoryAccessType('a)) -> bool =
-  match access {
-    StoreConditional(_) => true,
-    _ => false,
-  }
-
 // CSR access types
 enum CSRAccessType = { CSRRead, CSRWrite, CSRReadWrite }
 
@@ -373,6 +342,49 @@ function is_guest_page_fault(e : ExceptionType) -> bool =
     E_Load_GPage_Fault()  => true,
     E_SAMO_GPage_Fault()  => true,
     _                     => false,
+  }
+
+function is_memory_exception(e : ExceptionType) -> bool =
+  match e {
+    E_Fetch_Addr_Align()   => true,
+    E_Fetch_Access_Fault() => true,
+    E_Illegal_Instr()      => false,
+    E_Load_Addr_Align()    => true,
+    E_Load_Access_Fault()  => true,
+    E_SAMO_Addr_Align()    => true,
+    E_SAMO_Access_Fault()  => true,
+    E_U_EnvCall()          => false,
+    E_S_EnvCall()          => false,
+    E_VS_EnvCall()         => false,
+    E_M_EnvCall()          => false,
+    E_Fetch_Page_Fault()   => true,
+    E_Load_Page_Fault()    => true,
+    E_Reserved_14()        => false,
+    E_SAMO_Page_Fault()    => true,
+    E_Double_Trap()        => false,
+    E_Reserved_17()        => false,
+    E_Software_Check()     => false,
+    E_Hardware_Error()     => false,
+    E_Fetch_GPage_Fault()  => true,
+    E_Load_GPage_Fault()   => true,
+    E_Virtual_Instr()      => false,
+    E_SAMO_GPage_Fault()   => true,
+
+    // breakpoints
+    E_Breakpoint(Brk_Software) => false,
+    E_Breakpoint(Brk_Hardware) => false,
+
+    // extensions
+    E_Extension(_)         => false,
+  }
+
+function is_fetch_exception(e : ExceptionType) -> bool =
+  match e {
+    E_Fetch_Addr_Align()   => true,
+    E_Fetch_Access_Fault() => true,
+    E_Fetch_Page_Fault()   => true,
+    E_Fetch_GPage_Fault()  => true,
+    _                      => false,
   }
 
 // SW check exception codes

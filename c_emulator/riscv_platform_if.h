@@ -11,6 +11,7 @@ class Model;
 struct zMemoryAccessTypezIEmem_payloadz5zK;
 struct zPTW_Error;
 struct zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9;
+struct zExceptionContext;
 
 enum zPrivilege : int;
 enum zTranslationStage : int;
@@ -29,29 +30,45 @@ enum zEvent : int;
 
 class PlatformInterface {
 public:
-  virtual unit fetch_callback(sbits opcode);
+  virtual unit fetch_callback(sbits pc, sbits opcode);
 
-  virtual unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value);
+  virtual unit mem_write_callback(
+    hart::zPrivilege privilege,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
 
-  virtual unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value);
+  virtual unit mem_read_callback(
+    hart::zPrivilege privilege,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
 
   virtual unit mem_exception_callback(sbits paddr, uint64_t num_of_exception);
 
   virtual unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value);
 
-  virtual unit freg_write_callback(unsigned reg, sbits value);
+  virtual unit freg_write_callback(uint64_t reg, sbits value);
 
-  virtual unit csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value);
+  virtual unit csr_full_write_callback(const_sail_string csr_name, uint64_t reg, sbits value);
 
-  virtual unit csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value);
+  virtual unit csr_full_read_callback(const_sail_string csr_name, uint64_t reg, sbits value);
 
-  virtual unit vreg_write_callback(unsigned reg, lbits value);
+  virtual unit vreg_write_callback(uint64_t reg, lbits value);
 
   virtual unit pc_write_callback(sbits new_pc);
 
+  virtual unit trigger_tdata_write_callback(sbits tselect, int64_t tdata_num, sbits data);
+
   virtual unit redirect_callback(sbits new_pc);
 
-  virtual unit trap_callback(bool is_interrupt, fbits cause);
+  virtual unit interrupt_callback(fbits cause);
+  virtual unit exception_callback(fbits cause, hart::zExceptionContext ctx);
+
   virtual unit xret_callback(bool is_mret);
   virtual unit instret_callback(unit);
 
@@ -75,10 +92,31 @@ public:
     sbits pte_addr
   );
 
+  virtual unit address_translation_start_callback(
+    hart::zTranslationStage stage,
+    hart::zPrivilege privilege,
+    sbits vaddr,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access
+  );
+
+  virtual unit address_translated_callback(
+    hart::zTranslationStage stage,
+    sbits vaddr,
+    sbits paddr,
+    hart::zMemoryAccessTypezIEmem_payloadz5zK access
+  );
+
   virtual unit tlb_add_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb, uint64_t index);
   virtual unit tlb_flush_begin_callback(unit);
   virtual unit tlb_flush_callback(uint64_t index);
   virtual unit tlb_flush_end_callback(hart::zz5vecz8z5unionz0zzoptionzzIRTLB_EntryzzKz9 tlb);
+  virtual unit tlb_hit_callback(
+    hart::zTranslationStage stage,
+    int64_t level,
+    sbits pte_addr,
+    uint64_t pte,
+    int64_t index
+  );
 
   // Events
   virtual bool validate_event_selectors(unit);
@@ -114,6 +152,7 @@ public:
   virtual bool get_config_print_pmp(unit);
   virtual bool get_config_rvfi(unit);
   virtual bool get_config_use_abi_names(unit);
+  virtual bool get_config_use_no_tlb(unit);
 
   virtual mach_bits get_initramfs_base(unit);
   virtual mach_bits get_initramfs_size(unit);
