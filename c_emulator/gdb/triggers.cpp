@@ -46,7 +46,7 @@ void triggers::remove_breakpoint(uint64_t addr) {
 }
 
 bool triggers::at_breakpoint(uint64_t addr) {
-  if (m_breakpoints.find(addr) == m_breakpoints.end()) {
+  if (!m_breakpoints.contains(addr)) {
     return false;
   }
   if (m_run_info.enable_trace) {
