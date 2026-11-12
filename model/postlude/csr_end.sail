@@ -32,6 +32,9 @@ function clause is_CSR_exception_virtual(csr, _, access_type) = check_CSR(csr, S
 end is_CSR_exception_virtual
 
 // Smcsrind/Sscsrind defaults for selects that no extension implements.
+// TODO: Accessing *ireg* with an unimplemented select is unspecified.
+// We raise illegal for now, but this could be made configurable.
+// If so, Smcdeleg selects 0x40 to 0x5F must still raise illegal.
 function clause indirect_reg_implemented(_, _, _) = false
 end indirect_reg_implemented
 

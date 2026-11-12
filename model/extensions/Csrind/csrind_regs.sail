@@ -52,15 +52,17 @@ function vsireg_accessible(i : range(1, 6)) -> bool =
 // a virtual-instruction exception (based on whether an instruction
 // is HS-qualified) are not applicable" here.
 //
-// TODO: VS access should also be virtual when vsiselect "holds a
-// value that is implemented at HS level but not at VS level".
-// Unreachable for now as no select is implemented at either level.
-function is_sireg_exception_virtual(priv : Privilege) -> bool =
+// VS access is also virtual when vsiselect "holds a value that is
+// implemented at HS level but not at VS level".
+function is_sireg_exception_virtual(priv : Privilege) -> bool = {
+  // Smcdeleg with menvcfg.CDE = 1, selects 0x40 to 0x5F work in HS-mode but not in VS-mode
+  let hs_only = menvcfg[CDE] == 0b1 & unsigned(0x40) <= unsigned(vsiselect) & unsigned(vsiselect) <= unsigned(0x5F);
   match priv {
     VirtualUser       => is_csrind_enabled_by_mstateen0(),
-    VirtualSupervisor => is_csrind_enabled_by_mstateen0() & not(is_csrind_enabled_by_hstateen0()),
+    VirtualSupervisor => is_csrind_enabled_by_mstateen0() & (not(is_csrind_enabled_by_hstateen0()) | hs_only),
     _                 => false,
   }
+}
 
 // Machine indirect register select and alias CSRs
 mapping clause csr_name_map = 0x350  <-> "miselect"
