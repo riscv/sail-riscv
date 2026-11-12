@@ -381,6 +381,22 @@ Sail aims to support the generation of idiomatic theorem prover
 definitions across multiple tools. At present it supports Isabelle,
 Rocq, and Lean.
 
+By default, formal backends use the generated RV32D and RV64D configurations.
+To replace one architecture's configuration while retaining its target names,
+Lean package name and module namespace, set `SAIL_FORMAL_CONFIG_RV32D` or
+`SAIL_FORMAL_CONFIG_RV64D` to an absolute JSON file path. For example:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+  -DSAIL_FORMAL_CONFIG_RV64D=/absolute/path/to/platform.json
+cmake --build build --target generated_lean_rv64d
+```
+
+This applies to that architecture's SMT, rmem, Rocq, Lean and Lem generators;
+it leaves the other architecture and the runtime-configured C++ simulator unchanged.
+Editing the selected JSON file triggers regeneration. Preserving names does not
+establish that downstream proofs remain valid under the changed configuration.
+
 These theorem-prover translations can target multiple monads for
 different purposes. The first is a state monad with nondeterminism and
 exceptions, suitable for reasoning in a sequential setting, assuming
