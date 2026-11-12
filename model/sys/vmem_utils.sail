@@ -30,6 +30,19 @@
 // do not cross a page boundary are passed down intact to `mem.sail`,
 // where PMA checks are done.
 
+// Debug spec 1.0, 5.1.5.2 "Combined Accesses" recommends that a vector
+// access matches mcontrol6 load/store triggers as if each element were
+// accessed individually. Implementations that do not match vector
+// accesses set `vector_accesses_match` to false.
+let sdtrig_vector_accesses_match : bool = config extensions.Sdtrig.mcontrol6.vector_accesses_match
+
+function memory_triggers_apply(access : MemoryAccessType(mem_payload)) -> bool =
+  match access {
+    Load(Vector)  => sdtrig_vector_accesses_match,
+    Store(Vector) => sdtrig_vector_accesses_match,
+    _             => true,
+  }
+
 function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res : bool) -> option(misaligned_exception) = {
   if is_amo_access(access) then plat_misaligned_access.amo
   else if res then plat_misaligned_access.lrsc
@@ -191,9 +204,11 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // misaligned exceptions and data memory protection faults. Trigger
   // matching is done on the current privilege and not on the
   // effective privilege of the access.
-  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Load, bits_of(vaddr), width)) {
-    Some(pti) => return Err(PendingTrigger(pti)),
-    None()    => (),
+  if memory_triggers_apply(access) then {
+    match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Load, bits_of(vaddr), width)) {
+      Some(pti) => return Err(PendingTrigger(pti)),
+      None()    => (),
+    }
   };
 
   let eff_priv = access_info.eff_privilege;
@@ -261,7 +276,9 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // implementation _does_ match in this case.  Trigger matching is
   // done for the current privilege, and not the effective privilege
   // of the access.
-  match_memory_trigger_after(cur_privilege, TriggerLoadData(bits_of(vaddr), data, width));
+  if memory_triggers_apply(access) then {
+    match_memory_trigger_after(cur_privilege, TriggerLoadData(bits_of(vaddr), data, width))
+  };
 
   Ok(data)
 }
@@ -311,9 +328,11 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
 
   // Trigger address and data matches have higher priority than Load/SAMO
   // misaligned exceptions and data memory protection faults.
-  match match_memory_trigger_before(cur_privilege, TriggerStore(bits_of(vaddr), data, width)) {
-    Some(pti) => return Err(PendingTrigger(pti)),
-    None()    => (),
+  if memory_triggers_apply(access) then {
+    match match_memory_trigger_before(cur_privilege, TriggerStore(bits_of(vaddr), data, width)) {
+      Some(pti) => return Err(PendingTrigger(pti)),
+      None()    => (),
+    }
   };
 
   let eff_priv = access_info.eff_privilege;
