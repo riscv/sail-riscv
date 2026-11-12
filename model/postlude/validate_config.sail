@@ -628,6 +628,11 @@ private function check_misc_extension_dependencies() -> bool = {
     valid = false;
     print_endline("The Zcf extension is enabled: Zcf is not supported on RV64.");
   };
+  // `config extensions.D.supported` is a type.
+  if constraint(ext_d_supported) & not(config extensions.F.supported : bool) then {
+    valid = false;
+    print_endline("The D extension is enabled but F is disabled: supporting D requires F.");
+  };
   if (config extensions.F.supported : bool) & (config extensions.Zfinx.supported : bool) then {
     valid = false;
     print_endline("The F and Zfinx extensions are mutually exclusive and cannot be supported simultaneously.");
