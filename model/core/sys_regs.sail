@@ -273,8 +273,8 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     SPELP = if hartSupports(Ext_Zicfilp) & currentlyEnabled(Ext_S) then v[SPELP] else 0b0,
     TSR = if currentlyEnabled(Ext_S) then v[TSR] else 0b0,
     TW = if currentlyEnabled(Ext_U) then v[TW] else 0b0,
-    TVM = if currentlyEnabled(Ext_S) then v[TVM] else 0b0,
-    MXR = if currentlyEnabled(Ext_S) then v[MXR] else 0b0,
+    TVM = if virtual_memory_supported() then v[TVM] else 0b0,
+    MXR = if virtual_memory_supported() then v[MXR] else 0b0,
     SUM = if virtual_memory_supported() then v[SUM] else 0b0,
     MPRV = if currentlyEnabled(Ext_U) then v[MPRV] else 0b0,
 
