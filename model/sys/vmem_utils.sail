@@ -139,7 +139,7 @@ function transform_effective_address(vaddr : virtaddr, access_info : AccessInfo)
 }
 
 // Whether a data access is effectively to a guest VA (VS/VU mode, or M-mode MPRV+MPV, or HS/U-mode doing HLV/HSV).
-private function access_is_gva(access_info : AccessInfo) -> bool =
+function access_is_gva(access_info : AccessInfo) -> bool =
   privLevel_is_virtual(access_info.eff_privilege) | access_info.as_guest
 
 private function mem_exception_context(e : ExceptionType, excinfo : xlenbits, access_info : AccessInfo) -> ExceptionContext =
@@ -191,7 +191,7 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // misaligned exceptions and data memory protection faults. Trigger
   // matching is done on the current privilege and not on the
   // effective privilege of the access.
-  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Load, bits_of(vaddr), width)) {
+  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Load, bits_of(vaddr), width), access_is_gva(access_info)) {
     Some(pti) => return Err(PendingTrigger(pti)),
     None()    => (),
   };
@@ -261,7 +261,7 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // implementation _does_ match in this case.  Trigger matching is
   // done for the current privilege, and not the effective privilege
   // of the access.
-  match_memory_trigger_after(cur_privilege, TriggerLoadData(bits_of(vaddr), data, width));
+  match_memory_trigger_after(cur_privilege, TriggerLoadData(bits_of(vaddr), data, width), access_is_gva(access_info));
 
   Ok(data)
 }
@@ -311,7 +311,7 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
 
   // Trigger address and data matches have higher priority than Load/SAMO
   // misaligned exceptions and data memory protection faults.
-  match match_memory_trigger_before(cur_privilege, TriggerStore(bits_of(vaddr), data, width)) {
+  match match_memory_trigger_before(cur_privilege, TriggerStore(bits_of(vaddr), data, width), access_is_gva(access_info)) {
     Some(pti) => return Err(PendingTrigger(pti)),
     None()    => (),
   };

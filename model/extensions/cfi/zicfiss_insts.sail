@@ -186,7 +186,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   // See `zaamo_insts.sail` for an explanation of the current implementation of
   // trigger handling for AMOs.
-  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_AMO, bits_of(vaddr), width)) {
+  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_AMO, bits_of(vaddr), width), access_is_gva(access_info)) {
     Some(pti) => return PendingTrigger(pti),
     None()    => (),
   };
@@ -253,7 +253,7 @@ function clause execute SSAMOSWAP(aq, rl, rs2, rs1, width, rd) = {
 
   // See `zaamo_insts.sail` for an explanation of the current implementation of
   // trigger handling for AMOs.
-  match_memory_trigger_after(cur_privilege, TriggerAMOData(bits_of(vaddr), mem_val, write_val, width));
+  match_memory_trigger_after(cur_privilege, TriggerAMOData(bits_of(vaddr), mem_val, write_val, width), access_is_gva(access_info));
 
   RETIRE_SUCCESS
 }
