@@ -49,7 +49,7 @@
   - https://github.com/riscv/sail-riscv/issues/2081 : `HLVX*` instructions should page-fault on VS-stage shadow stack pages
   - https://github.com/riscv/sail-riscv/issues/2083 : `xSSE` changes should take effect immediately, even for cached shadow stack PTEs
   - https://github.com/riscv/sail-riscv/pull/2093 : `hstateen` should only mask `sstateen` in VS-mode or VU-mode
-  - TODO : GVA was set from the current privilege mode for trigger breakpoints, instead of whether `tval` holds a guest virtual address
+  - https://github.com/riscv/sail-riscv/pull/2111 : GVA was set from the current privilege mode for trigger breakpoints, instead of whether `tval` holds a guest virtual address
 
 # Release notes for version 0.16
 
