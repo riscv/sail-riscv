@@ -379,6 +379,24 @@ function clause hartSupports(Ext_Zvl512b) = sizeof(vlen_exp) >= 9
 enum clause extension = Ext_Zvl1024b
 mapping clause extensionName = Ext_Zvl1024b <-> "zvl1024b"
 function clause hartSupports(Ext_Zvl1024b) = sizeof(vlen_exp) >= 10
+enum clause extension = Ext_Zvl2048b
+mapping clause extensionName = Ext_Zvl2048b <-> "zvl2048b"
+function clause hartSupports(Ext_Zvl2048b) = sizeof(vlen_exp) >= 11
+enum clause extension = Ext_Zvl4096b
+mapping clause extensionName = Ext_Zvl4096b <-> "zvl4096b"
+function clause hartSupports(Ext_Zvl4096b) = sizeof(vlen_exp) >= 12
+enum clause extension = Ext_Zvl8192b
+mapping clause extensionName = Ext_Zvl8192b <-> "zvl8192b"
+function clause hartSupports(Ext_Zvl8192b) = sizeof(vlen_exp) >= 13
+enum clause extension = Ext_Zvl16384b
+mapping clause extensionName = Ext_Zvl16384b <-> "zvl16384b"
+function clause hartSupports(Ext_Zvl16384b) = sizeof(vlen_exp) >= 14
+enum clause extension = Ext_Zvl32768b
+mapping clause extensionName = Ext_Zvl32768b <-> "zvl32768b"
+function clause hartSupports(Ext_Zvl32768b) = sizeof(vlen_exp) >= 15
+enum clause extension = Ext_Zvl65536b
+mapping clause extensionName = Ext_Zvl65536b <-> "zvl65536b"
+function clause hartSupports(Ext_Zvl65536b) = sizeof(vlen_exp) >= 16
 // Vector Extensions for Embedded Processors
 enum clause extension = Ext_Zve32f
 mapping clause extensionName = Ext_Zve32f <-> "zve32f"
@@ -943,6 +961,12 @@ let extensions_ordered_for_isa_string = [
   Ext_Zvl256b,
   Ext_Zvl512b,
   Ext_Zvl1024b,
+  Ext_Zvl2048b,
+  Ext_Zvl4096b,
+  Ext_Zvl8192b,
+  Ext_Zvl16384b,
+  Ext_Zvl32768b,
+  Ext_Zvl65536b,
 
   // Supervisor extensions, ordered alphabetically.
   Ext_Ss1p12,

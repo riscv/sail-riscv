@@ -12,6 +12,12 @@ function clause currentlyEnabled(Ext_Zvl128b) = hartSupports(Ext_Zvl128b)
 function clause currentlyEnabled(Ext_Zvl256b) = hartSupports(Ext_Zvl256b)
 function clause currentlyEnabled(Ext_Zvl512b) = hartSupports(Ext_Zvl512b)
 function clause currentlyEnabled(Ext_Zvl1024b) = hartSupports(Ext_Zvl1024b)
+function clause currentlyEnabled(Ext_Zvl2048b) = hartSupports(Ext_Zvl2048b)
+function clause currentlyEnabled(Ext_Zvl4096b) = hartSupports(Ext_Zvl4096b)
+function clause currentlyEnabled(Ext_Zvl8192b) = hartSupports(Ext_Zvl8192b)
+function clause currentlyEnabled(Ext_Zvl16384b) = hartSupports(Ext_Zvl16384b)
+function clause currentlyEnabled(Ext_Zvl32768b) = hartSupports(Ext_Zvl32768b)
+function clause currentlyEnabled(Ext_Zvl65536b) = hartSupports(Ext_Zvl65536b)
 
 // TODO: the interaction of Ext_Zve32x with a writable misa.V when misa.V == 0 needs settling.
 function clause currentlyEnabled(Ext_Zve32x) = hartSupports(Ext_Zve32x) & currentlyEnabled(Ext_Zvl32b) & currentlyEnabled(Ext_Zicsr) &

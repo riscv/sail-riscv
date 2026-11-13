@@ -178,7 +178,7 @@ An experimental emulator in the Lean language is available, see its
 - Zkt extension for data independent execution latency, v1.0 (no impact on model)
 - V extension for vector operations, v1.0
 - Zve32x, Zve32f, Zve64x, Zve64f, and Zve64d extensions for vector operations on embedded processors, v1.0
-- Zvl32b, Zvl64b, Zvl128b, Zvl256b, Zvl512b, and Zvl1024b extensions for minimum vector length, v1.0
+- Zvl32b, Zvl64b, Zvl128b, Zvl256b, Zvl512b, Zvl1024b, Zvl2048b, Zvl4096b, Zvl8192b, Zvl16384b, Zvl32768b, and Zvl65536b extensions for minimum vector length, v1.0
 - Zvfbfmin extension for vector BF16 Converts, v1.0
 - Zvfbfwma extension for Vector BF16 widening mul-add, v1.0
 - Zvfh and Zvfhmin extensions for vector half-precision floating-point operations, v1.0
