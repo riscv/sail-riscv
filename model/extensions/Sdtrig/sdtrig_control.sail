@@ -399,7 +399,7 @@ private function match_memory_triggers(
         let match_result = if   is_none(t.match_info) & chain_state != InChainWithoutMatch
                            then match match_mcontrol6(i, t, priv, payload) {
                              None()     => None(),
-                             Some(tval) => Some(tval, hit, is_gva),
+                             Some(tval) => Some(tval, is_gva, hit),
                            } else t.match_info;
         triggers[i] = T_mcontrol6({t with match_info = match_result});
         match chain_state {
@@ -408,7 +408,7 @@ private function match_memory_triggers(
               chain_state = if is_some(match_result) then InChainWithMatch else InChainWithoutMatch;
             } else match match_result {
               None()                => (),
-              Some(tval, _, is_gva) => matched_info = Some(t.action, i, tval, is_gva),
+              Some(tval, is_gva, _) => matched_info = Some(t.action, i, tval, is_gva),
             },
           InChainWithoutMatch => {
             // This trigger should not have matched yet.
@@ -423,7 +423,7 @@ private function match_memory_triggers(
               // The chain ended.
               match match_result {
                 None()                => (),
-                Some(tval, _, is_gva) => matched_info = Some(t.action, i, tval, is_gva),
+                Some(tval, is_gva, _) => matched_info = Some(t.action, i, tval, is_gva),
               }
             }
         }
@@ -468,7 +468,7 @@ function fire_pending_before_triggers(_pti : pending_trigger_info) -> unit = {
     match triggers[i] {
       T_mcontrol6(s) => match s.match_info {
         None()          => (),
-        Some(_, hit, _) => {
+        Some(_, _, hit) => {
           // Set hit only on triggers that terminate a chain since they are the ones
           // that fire; the action on the other triggers is ignored.
           let s = if not(s.chain) & hit == Hit_before then {
@@ -500,7 +500,7 @@ private function fire_trigger_after(idx : trigger_index) -> bool = {
       (T_etrigger({t with pending = false}), t.action, true)
     },
     T_mcontrol6(t) => match t.match_info {
-      Some(_, hit, _) => {
+      Some(_, _, hit) => {
         // We could have chains with mixed `before` and `after`
         // timing; these can only fire `after`.  For partially matched
         // `before` triggers, this resets their match state; for
@@ -599,7 +599,7 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
         },
       T_mcontrol6(t) => {
         match t.match_info {
-          Some(tval, _, is_gva) => {
+          Some(tval, is_gva, _) => {
             // Since these triggers matched, their reentrancy condition
             // should not have changed. For `before` triggers, the
             // instruction did not execute, so there should be no change;
