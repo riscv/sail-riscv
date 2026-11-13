@@ -46,8 +46,13 @@ are recommended. Small self-contained PRs may be merged at earlier
 stages (e.g. Stabilization), while merging more intrusive PRs may
 be deferred until Ratification-Ready or later.
 
-We _require_ any and all use of generative AI tools, e.g. for writing
-code, comments, documentation, or PR text, to be disclosed.
+We _require_ any and all use of generative AI tools for submitted content to be
+disclosed.
+Use of generative AI tools for communication&emdash;e.g. commit messages, PR
+summaries, issues, and PR/issue comments&emdash;is forbidden.
+This does not preclude use of generative AI tools for activities such as
+automated bug discovery, but all such issues must be understood and written up
+by a human.
 
 The repository now enforces a Developer Certificate of Origin (DCO)
 check that requires commits to be signed. See
