@@ -41,6 +41,9 @@
     `extensions.Smcsrind.miselectlen`.
   - The number of implemented bits in `siselect` and `vsiselect` can be
     specified; see `extensions.Sscsrind.siselectlen`.
+  - The PMAs of a memory region can be optionally overridden for Svpbmt
+    using `nc_overrides` (for `PBMT=NC`) and
+    `io_overrides` (for `PBMT=IO`); see `extensions.Svpbmt`.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
