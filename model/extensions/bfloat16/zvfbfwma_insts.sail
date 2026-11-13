@@ -80,8 +80,6 @@ function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   let SEW_widen      = SEW * 2;
   let LMUL_pow_widen = LMUL_pow + 1;
 
-  assert(LMUL_pow_widen <= 3);
-
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
@@ -91,6 +89,7 @@ function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   then return Illegal_Instruction();
 
   assert(SEW == 16);
+  assert(LMUL_pow_widen <= 3);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -103,11 +102,9 @@ function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
-  let rs1_val = bf16_to_f32_set_flags(F_BF16(rs1));
-
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then {
-      result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), rs1_val, vd_val[i]);
+      result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), bf16_to_f32_set_flags(F_BF16(rs1)), vd_val[i]);
     }
   };
 
