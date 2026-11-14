@@ -209,6 +209,7 @@ jobs:
           cmake -S . -B build -GNinja \
             -DSAIL_RISCV_SIM=built_c_emulator/sail_riscv_sim \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DDOWNLOAD_DEPENDENCIES=FALSE \
             -DENABLE_RISCV_TESTS=TRUE \
             -DENABLE_RISCV_ARCH_TESTS=TRUE \
             -DENABLE_DAMO_TESTS=TRUE \
