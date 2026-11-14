@@ -9,8 +9,8 @@ include(FetchContent)
 
 FetchContent_Declare(
   elfio
-  URL https://github.com/serge1/ELFIO/releases/download/Release_3.12/elfio-3.12.tar.gz
-  URL_HASH SHA256=caf49f3bf55a9c99c98ebea4b05c79281875783802e892729eea0415505f68c4
+  GIT_REPOSITORY https://github.com/serge1/ELFIO.git
+  GIT_TAG 9814eaaa7623e05b1e2dd11794eb6404afac9040 # fix for clang-tidy; this announces version 3.14 but there is no such release, and there was no version 3.13 :/
 )
 
 FetchContent_MakeAvailable(elfio)
