@@ -13,6 +13,23 @@ function zvk_valid_reg_overlap(rs : vregidx, rd : vregidx, emul_pow : int) -> bo
   (rs_int + reg_group_size <= rd_int) | (rd_int + reg_group_size <= rs_int)
 }
 
+// ---------------------------------------------------------------------------
+// Scalar element group support for vector/scalar (.vs) instructions.
+//
+// The scalar element group operand (vs2) has EMUL = ceil(EGW / VLEN), which
+// is independent of the LMUL in vtype.  EGW and VLEN are both powers of two,
+// so, with EGW_exp = log2(EGW) (e.g. EGW=128 -> EGW_exp=7):
+//   scalar EMUL_pow = max(log2(EGW) - vlen_exp, 0)
+// When VLEN >= EGW this evaluates to 0 (EMUL=1, a single register) and the
+// operand is not required to be aligned to LMUL.
+//
+// Alignment and overlap of the operands are checked with the generic
+// valid_disjoint_reg_groups() helper, and the scalar group is read with
+// read_vreg(4, 32, scalar_emul_pow, vs2).
+// ---------------------------------------------------------------------------
+
+function zvk_scalar_emul_pow(EGW_exp : int) -> int = max(EGW_exp - vlen_exp, 0)
+
 function zvk_check_encdec(EGW : nat, EGS : nat1) -> bool = {
   let LMUL_pow = get_lmul_pow();
   let LMUL_times_VLEN = if LMUL_pow < 0 then vlen / (2 ^ abs_int(LMUL_pow)) else (2 ^ LMUL_pow) * vlen;

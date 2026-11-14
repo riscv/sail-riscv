@@ -76,21 +76,24 @@ mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4R_VV, vs2, vd)
 $[wavedrom "_ _ _ _ OPMVV _ OP-VE"]
 mapping clause encdec = ZVKSM4RTYPE(ZVK_VSM4R_VS, vs2, vd)
   <-> 0b101001 @ 0b1 @ encdec_vreg(vs2) @ 0b10000 @ 0b010 @ encdec_vreg(vd) @ 0b1110111
-  when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4) & zvk_valid_reg_overlap(vs2, vd, get_lmul_pow())
+  when currentlyEnabled(Ext_Zvksed) & get_sew() == 32 & zvk_check_encdec(128, 4)
 
 function clause execute ZVKSM4RTYPE(funct6, vs2, vd) = {
-  let SEW      = get_sew();
-  let LMUL_pow = get_lmul_pow();
-  let num_elem = get_num_elem(LMUL_pow, SEW);
+  let SEW             = get_sew();
+  let LMUL_pow        = get_lmul_pow();
+  let num_elem        = get_num_elem(LMUL_pow, SEW);
+  let scalar_emul_pow = zvk_scalar_emul_pow(7);
 
-  if not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_reg_group(vd, LMUL_pow))
+  // For .vs, vs2 is a scalar element group (EMUL=ceil(EGW/VLEN)); for .vv,
+  // it is a vector group (LMUL). valid_disjoint_reg_groups also checks the
+  // alignment of both groups and that they do not overlap.
+  let vs2_emul_pow = if funct6 == ZVK_VSM4R_VS then scalar_emul_pow else LMUL_pow;
+  if not(valid_disjoint_reg_groups(vs2, vd, vs2_emul_pow, LMUL_pow))
   then return Illegal_Instruction();
 
   assert(SEW == 32);
 
-  let vs2_val = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  let vd_val  = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vd_val = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let eg_len   = (unsigned(vl) / 4);
   let eg_start = (unsigned(vstart) / 4);
@@ -98,9 +101,10 @@ function clause execute ZVKSM4RTYPE(funct6, vs2, vd) = {
   foreach (i from eg_start to (eg_len - 1)) {
     assert(i * 4 + 3 < num_elem);
 
-    let rk_in = if funct6 == ZVK_VSM4R_VV
-                then get_velem_quad_vec(vs2_val, i)
-                else get_velem_quad_vec(vs2_val, 0);
+    let rk_in : vector(4, bits(32)) = match funct6 {
+      ZVK_VSM4R_VV => get_velem_quad_vec(read_vreg(num_elem, SEW, LMUL_pow, vs2), i),
+      ZVK_VSM4R_VS => get_velem_quad_vec(read_vreg(4, 32, scalar_emul_pow, vs2), 0),
+    };
 
     let x_in  = get_velem_quad_vec(vd_val, i);
 
