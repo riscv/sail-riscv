@@ -1,7 +1,7 @@
 # Allow downloads to be turned off (in particular, for targets that don't need it).
 option(DOWNLOAD_CLI11 "Download CLI11" ON)
 
-if(NOT DOWNLOAD_CLI11)
+if((NOT DOWNLOAD_DEPENDENCIES) OR (NOT DOWNLOAD_CLI11))
   return()
 endif()
 

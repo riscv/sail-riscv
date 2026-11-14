@@ -1,7 +1,7 @@
 # Allow downloads to be turned off (in particular, for targets that don't need it).
 option(DOWNLOAD_ELFIO "Download elfio" ON)
 
-if (NOT DOWNLOAD_ELFIO)
+if ((NOT DOWNLOAD_DEPENDENCIES) OR (NOT DOWNLOAD_ELFIO))
   return()
 endif()
 
