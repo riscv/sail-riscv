@@ -331,7 +331,7 @@ union MemoryTriggerPayload = {
   TriggerAMOData     : {('width : Int), is_mem_width_wide('width).    (xlenbits, /*load*/ bits(8 * 'width), /*store*/ bits(8 * 'width), int('width))},
 }
 
-type pending_trigger_info = (Trig_Action, trigger_index, xlenbits)
+type pending_trigger_info = (Trig_Action, trigger_index, /* tval */ xlenbits, /* is_gva */ bool)
 
 // Trigger types and their layouts.
 //
@@ -381,7 +381,7 @@ struct MControl6 = {
   tdata2      : xlenbits,
   textra      : TExtra,
   // Set when this trigger matches.
-  match_info  : option((xlenbits, Hit)),
+  match_info  : option((/* tval */ xlenbits, /* is_gva */ bool, Hit)),
 }
 
 bitfield MControl6_bits : xlenbits = {

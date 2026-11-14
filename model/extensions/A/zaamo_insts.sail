@@ -87,7 +87,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   // matches have higher priority than Load/SAMO misaligned exceptions
   // and data memory protection faults. An AMO is considered as both a
   // load and a store for address purposes.
-  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_AMO, bits_of(vaddr), width)) {
+  match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_AMO, bits_of(vaddr), width), access_is_gva(access_info)) {
     Some(pti) => return PendingTrigger(pti),
     None()    => (),
   };
@@ -178,7 +178,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   // triggers for AMOs as `after` triggers to retain AMO atomicity.
 
   if res == RETIRE_SUCCESS then {
-    match_memory_trigger_after(cur_privilege, TriggerAMOData(bits_of(vaddr), loaded, stored, width));
+    match_memory_trigger_after(cur_privilege, TriggerAMOData(bits_of(vaddr), loaded, stored, width), access_is_gva(access_info));
   };
 
   res

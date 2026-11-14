@@ -43,7 +43,7 @@ function clause execute ZICBOZ(rs1) = {
     Ext_DataAddr_OK(vaddr) => {
 
       // Triggers match on the addresses in the whole cache block.
-      match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Store, bits_of(vaddr), cache_block_size)) {
+      match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Store, bits_of(vaddr), cache_block_size), access_is_gva(access_info)) {
         Some(pti) => return PendingTrigger(pti),
         None()    => (),
       };

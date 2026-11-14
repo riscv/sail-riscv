@@ -132,7 +132,7 @@ private function run_hart_active(step_no: nat) -> Step = {
     None() => (),
   };
 
-  match match_memory_trigger_before(cur_privilege, TriggerFetchAddr(PC)) {
+  match match_memory_trigger_before(cur_privilege, TriggerFetchAddr(PC), inVirtualPrivilege()) {
     Some(pti) => return Step_Fetch_Trigger(pti),
     None()    => (),
   };
@@ -155,7 +155,7 @@ private function run_hart_active(step_no: nat) -> Step = {
       sail_instr_announce(h);
       fetch_callback(h);
 
-      match match_memory_trigger_before(cur_privilege, TriggerFetchInstr(PC, h, 2)) {
+      match match_memory_trigger_before(cur_privilege, TriggerFetchInstr(PC, h, 2), inVirtualPrivilege()) {
         Some(pti) => return Step_Fetch_Trigger(pti),
         None()    => (),
       };
@@ -193,7 +193,7 @@ private function run_hart_active(step_no: nat) -> Step = {
       sail_instr_announce(w);
       fetch_callback(w);
 
-      match match_memory_trigger_before(cur_privilege, TriggerFetchInstr(PC, w, 4)) {
+      match match_memory_trigger_before(cur_privilege, TriggerFetchInstr(PC, w, 4), inVirtualPrivilege()) {
         Some(pti) => return Step_Fetch_Trigger(pti),
         None()    => (),
       };
@@ -225,10 +225,10 @@ private function run_hart_active(step_no: nat) -> Step = {
   }
 }
 
-private function handle_pending_trigger((action, _, trigger_tval) : pending_trigger_info) -> unit = {
+private function handle_pending_trigger((action, _, trigger_tval, is_gva) : pending_trigger_info) -> unit = {
   match action {
     TA_Breakpoint =>
-      handle_exception(exception_context(E_Breakpoint(Brk_Hardware), trigger_tval)),
+      handle_exception(make_exception_context(E_Breakpoint(Brk_Hardware), trigger_tval, is_gva, None())),
     _ =>
       internal_error(__FILE__, __LINE__, "Trigger action " ^ trigger_action_name(action) ^ " not supported."),
   }
@@ -288,7 +288,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
   match step_val {
     Step_Pending_Trigger(pti) => {
       if get_config_print_trigger() then {
-        let (_, idx, _) = pti;
+        let (_, idx, _, _) = pti;
         print_log("Handling trigger at index #" ^ dec_str(idx));
       };
       handle_pending_trigger(pti);
@@ -300,7 +300,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     },
     Step_Fetch_Trigger(pti) => {
       if get_config_print_trigger() then {
-        let (_, idx, _) = pti;
+        let (_, idx, _, _) = pti;
         print_log("Handling trigger at index #" ^ dec_str(idx));
       };
       // Highest priority `before` trigger.
@@ -343,7 +343,7 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
     // Handle lower priority `before` triggers.
     Step_Execute(PendingTrigger(pti), _) => {
       if get_config_print_trigger() then {
-        let (_, idx, _) = pti;
+        let (_, idx, _, _) = pti;
         print_log("Handling trigger at index #" ^ dec_str(idx));
       };
       fire_pending_before_triggers(pti);

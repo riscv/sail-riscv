@@ -93,7 +93,7 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
       // equal to rs1, but pointer masking can change that.
       let vaddr_for_error = vaddr - negative_offset;
 
-      match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Store, bits_of(vaddr), cache_block_size)) {
+      match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Store, bits_of(vaddr), cache_block_size), access_is_gva(access_info)) {
         Some(pti) => return PendingTrigger(pti),
         None()    => (),
       };

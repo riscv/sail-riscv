@@ -416,7 +416,8 @@ overload to_str = {loop_chain_state_name}
 private function match_memory_triggers(
   priv    : Privilege,
   payload : MemoryTriggerPayload,
-  hit     : Hit
+  hit     : Hit,
+  is_gva  : bool
 ) -> option(pending_trigger_info) = {
   assert(num_triggers > 0);
 
@@ -434,7 +435,7 @@ private function match_memory_triggers(
         let match_result = if   is_none(t.match_info) & chain_state != InChainWithoutMatch
                            then match match_mcontrol6(i, t, priv, payload) {
                              None()     => None(),
-                             Some(tval) => Some(tval, hit),
+                             Some(tval) => Some(tval, is_gva, hit),
                            } else t.match_info;
         triggers[i] = T_mcontrol6({t with match_info = match_result});
         match chain_state {
@@ -442,8 +443,8 @@ private function match_memory_triggers(
             if t.chain then {
               chain_state = if is_some(match_result) then InChainWithMatch else InChainWithoutMatch;
             } else match match_result {
-              None()        => (),
-              Some(tval, _) => matched_info = Some(t.action, i, tval),
+              None()                => (),
+              Some(tval, is_gva, _) => matched_info = Some(t.action, i, tval, is_gva),
             },
           InChainWithoutMatch => {
             // This trigger should not have matched yet.
@@ -457,8 +458,8 @@ private function match_memory_triggers(
               chain_state = NotInChain;
               // The chain ended.
               match match_result {
-                None()        => (),
-                Some(tval, _) => matched_info = Some(t.action, i, tval),
+                None()                => (),
+                Some(tval, is_gva, _) => matched_info = Some(t.action, i, tval, is_gva),
               }
             }
         }
@@ -472,18 +473,18 @@ private function match_memory_triggers(
 
 // This function can be called multiple times during the execution of
 // an instruction, for progressively lower priority `before` triggers.
-function match_memory_trigger_before(priv : Privilege, payload : MemoryTriggerPayload) -> option(pending_trigger_info) = {
+function match_memory_trigger_before(priv : Privilege, payload : MemoryTriggerPayload, is_gva : bool) -> option(pending_trigger_info) = {
   if not(currentlyEnabled(Ext_Sdtrig)) then return None();
 
-  match_memory_triggers(priv, payload, Hit_before)
+  match_memory_triggers(priv, payload, Hit_before, is_gva)
 }
 
-function match_memory_trigger_after(priv : Privilege, payload : MemoryTriggerPayload) -> unit = {
+function match_memory_trigger_after(priv : Privilege, payload : MemoryTriggerPayload, is_gva : bool) -> unit = {
   if not(currentlyEnabled(Ext_Sdtrig)) then return ();
 
   // Update the trigger internal state for where
   // `find_highest_priority_pending_trigger` can find it.
-  let _ = match_memory_triggers(priv, payload, Hit_imm_after);
+  let _ = match_memory_triggers(priv, payload, Hit_imm_after, is_gva);
 }
 
 // firing
@@ -502,8 +503,8 @@ function fire_pending_before_triggers(_pti : pending_trigger_info) -> unit = {
     let t = triggers[i];
     match triggers[i] {
       T_mcontrol6(s) => match s.match_info {
-        None()       => (),
-        Some(_, hit) => {
+        None()          => (),
+        Some(_, _, hit) => {
           // Set hit only on triggers that terminate a chain since they are the ones
           // that fire; the action on the other triggers is ignored.
           let s = if not(s.chain) & hit == Hit_before then {
@@ -535,7 +536,7 @@ private function fire_trigger_after(idx : trigger_index) -> bool = {
       (T_etrigger({t with pending = false}), t.action, true)
     },
     T_mcontrol6(t) => match t.match_info {
-      Some(_, hit) => {
+      Some(_, _, hit) => {
         // We could have chains with mixed `before` and `after`
         // timing; these can only fire `after`.  For partially matched
         // `before` triggers, this resets their match state; for
@@ -548,7 +549,7 @@ private function fire_trigger_after(idx : trigger_index) -> bool = {
          }), t.action, fire)
       },
       // Shouldn't really get this case, since it is handled in the caller.
-      None()       => (T_mcontrol6(t), t.action, false),
+      None()          => (T_mcontrol6(t), t.action, false),
     },
     T_disabled(_) => internal_error(__FILE__, __LINE__, "Disabled triggers cannot fire."),
   };
@@ -588,6 +589,7 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
   var pending_index : trigger_index = 0;
   var pending_action : Trig_Action = TA_Breakpoint;
   var pending_tval : xlenbits = zeros();
+  var pending_is_gva : bool = false;
 
   foreach (i from 0 to num_triggers - 1) {
     match triggers[i] {
@@ -599,7 +601,10 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
           found_pending = true;
           pending_index  = i;
           pending_action = t.action;
-          if pending_action == TA_Breakpoint then pending_tval = zeros();
+          if pending_action == TA_Breakpoint then {
+            pending_tval   = zeros();
+            pending_is_gva = false;
+          };
           let fired = fire_trigger_after(i);
           assert(fired);
         }
@@ -609,7 +614,10 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
           found_pending = true;
           pending_index  = i;
           pending_action = t.action;
-          if pending_action == TA_Breakpoint then pending_tval = zeros();
+          if pending_action == TA_Breakpoint then {
+            pending_tval   = zeros();
+            pending_is_gva = false;
+          };
           let fired = fire_trigger_after(i);
           assert(fired);
         },
@@ -618,13 +626,16 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
           found_pending = true;
           pending_index  = i;
           pending_action = t.action;
-          if pending_action == TA_Breakpoint then pending_tval = zeros();
+          if pending_action == TA_Breakpoint then {
+            pending_tval   = zeros();
+            pending_is_gva = false;
+          };
           let fired = fire_trigger_after(i);
           assert(fired);
         },
       T_mcontrol6(t) => {
         match t.match_info {
-          Some(tval, _) => {
+          Some(tval, is_gva, _) => {
             // Since these triggers matched, their reentrancy condition
             // should not have changed. For `before` triggers, the
             // instruction did not execute, so there should be no change;
@@ -639,7 +650,10 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
               found_pending = true;
               pending_index  = i;
               pending_action = t.action;
-              if pending_action == TA_Breakpoint then pending_tval = tval;
+              if pending_action == TA_Breakpoint then {
+                pending_tval   = tval;
+                pending_is_gva = is_gva;
+              };
             };
           },
           None()  => (),
@@ -648,7 +662,7 @@ function find_highest_priority_pending_trigger(priv : Privilege) -> option(pendi
     }
   };
 
-  if found_pending then Some(pending_action, pending_index, pending_tval)
+  if found_pending then Some(pending_action, pending_index, pending_tval, pending_is_gva)
   else None()
 }
 
