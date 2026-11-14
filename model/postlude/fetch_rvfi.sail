@@ -23,7 +23,7 @@ private function rvfi_fetch() -> FetchResult = {
   then return F_Error(exception_context(E_Fetch_Addr_Align(), PC));
 
   let access : MemoryAccessType(mem_payload) = InstructionFetch();
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let eff_priv = effectivePrivilege(access, read_mstatus(), cur_privilege);
 
   match translateAddr(Virtaddr(PC), access, eff_priv) {
     Err(e, _)   => return F_Error(e),

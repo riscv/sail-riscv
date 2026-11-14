@@ -231,17 +231,24 @@ enum XipReadType = {
   ExcludePlatformInterrupts,
 }
 
-function read_mip(read_type : XipReadType) -> Minterrupts =
+function read_mip(read_type : XipReadType) -> Minterrupts = {
+  // Since `misa` might have changed since the last time `mip` was legalized,
+  // (in particular, `misa.{S,H}`), legalize this again here.
+  let cur_mip = legalize_mip(mip, mip.bits);
   match read_type {
     IncludePlatformInterrupts => {
+      // TODO: currently, `misa.{S,H}` checks are done within the
+      // external interrupt controllers.  Those checks need to be
+      // moved to within the hart.
       let platform_interrupts =
         supported_interrupts_mask([external_interrupts_pending(hgeie) with
           SSI = if currentlyEnabled(Ext_S) then supervisor_software_interrupt_pending() else 0b0,
         ]);
-      Mk_Minterrupts(mip.bits | platform_interrupts.bits)
+      Mk_Minterrupts(cur_mip.bits | platform_interrupts.bits)
     },
-    ExcludePlatformInterrupts => mip,
+    ExcludePlatformInterrupts => cur_mip,
   }
+}
 
 // This should be called once at the start of instruction execution.
 // It updates the bits in `mip` that are written by platform-specific
@@ -307,11 +314,12 @@ function write_mip(value : xlenbits) -> unit = {
   mip = legalize_mip(mip, value);
 }
 
-function clause read_CSR(0x304) = mie.bits
+// Since `misa` could have changed in the interim, legalize values before returning them for CSR reads.
+function clause read_CSR(0x304) = legalize_mie(mie, mie.bits).bits
 function clause read_CSR(0x344) = read_mip(ExcludePlatformInterrupts).bits
-function clause read_CSR(0x302) = medeleg.bits[xlen - 1 .. 0]
-function clause read_CSR(0x312 if xlen == 32) = medeleg.bits[63 .. 32]
-function clause read_CSR(0x303) = mideleg.bits
+function clause read_CSR(0x302) = legalize_medeleg(medeleg, medeleg.bits).bits[xlen - 1 .. 0]
+function clause read_CSR(0x312 if xlen == 32) = legalize_medeleg(medeleg, medeleg.bits).bits[63 .. 32]
+function clause read_CSR(0x303) = legalize_mideleg(mideleg, mideleg.bits).bits
 
 function clause write_CSR(0x304, value) = { mie = legalize_mie(mie, value); Ok(mie.bits) }
 function clause write_CSR(0x344, value) = { write_mip(value); Ok(read_mip(IncludePlatformInterrupts).bits) }

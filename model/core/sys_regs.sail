@@ -280,6 +280,7 @@ private function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
 
     // We don't have any extension context yet.
     XS = extStatus_map(Off),
+    // TODO: handle dynamically changing misa.S.
     // Validate FS and VS against their allowed set.
     FS = legalize_extStatus(plat_mstatus_legal_fs, v[FS]),
     VS = legalize_extStatus(plat_mstatus_legal_vs, v[VS]),
@@ -325,11 +326,39 @@ mapping clause csr_name_map = 0x310  <-> "mstatush"
 function clause is_CSR_accessible(0x300, _, _) = true // mstatus
 function clause is_CSR_accessible(0x310, _, _) = mstatush_is_defined & xlen == 32 // mstatush
 
-// menvcfg[DTE] can be cleared while mstatus[SDT] is set, so the zeroing
-// cannot be left to legalize_mstatus. Any read of mstatus must go through
-// this function instead of using mstatus.bits directly
+// If `menvcfg[DTE]` is cleared while `mstatus[SDT]` is set, `mstatus[SDT]`
+// should read as 0.  Similarly, clearing `misa[{U,S,H}]` can affect
+// `mstatus[{MPP,MPV}` and other fields. Any read of `mstatus` must go
+// through this function instead of using `mstatus` directly, unless
+// the read will result in a legalized write to `mstatus`.
 function read_mstatus() -> Mstatus =
-  [mstatus with SDT = if currentlyEnabled(Ext_Ssdbltrp) then mstatus[SDT] else 0b0]
+  [mstatus with
+    MPV   = if currentlyEnabled(Ext_H) then mstatus[MPV] else 0b0,
+    GVA   = if currentlyEnabled(Ext_H) then mstatus[GVA] else 0b0,
+
+    UXL   = if currentlyEnabled(Ext_U) then mstatus[UXL] else 0b00,
+    SXL   = if currentlyEnabled(Ext_S) then mstatus[SXL] else 0b00,
+
+    SDT   = if currentlyEnabled(Ext_Ssdbltrp) then mstatus[SDT] else 0b0,
+    SPELP = if hartSupports(Ext_Zicfilp) & currentlyEnabled(Ext_S) then mstatus[SPELP] else 0b0,
+    TSR   = if currentlyEnabled(Ext_S) then mstatus[TSR] else 0b0,
+    TW    = if currentlyEnabled(Ext_U) then mstatus[TW] else 0b0,
+    TVM   = if virtual_memory_supported() then mstatus[TVM] else 0b0,
+    MXR   = if virtual_memory_supported() then mstatus[MXR] else 0b0,
+    SUM   = if virtual_memory_supported() then mstatus[SUM] else 0b0,
+    MPRV  = if currentlyEnabled(Ext_U) then mstatus[MPRV] else 0b0,
+
+    // If misa.S is cleared while MPP == 01 (i.e. S) and misa.U == 1,
+    // this will make MPP read as 00 (i.e. U).  The reasoning here is
+    // the following line of the spec:
+    //   "Setting xPP to the least-privileged supported mode on an
+    //   xRET helps identify software bugs in the management of the
+    //   two-level privilege-mode stack."
+    MPP   = if have_nominal_privLevel(mstatus[MPP]) then mstatus[MPP] else privLevel_to_bits(lowest_supported_privLevel()),
+    SPP   = if currentlyEnabled(Ext_S) then mstatus[SPP] else 0b0,
+    SPIE  = if currentlyEnabled(Ext_S) then mstatus[SPIE] else 0b0,
+    SIE   = if currentlyEnabled(Ext_S) then mstatus[SIE] else 0b0,
+  ]
 
 function clause read_CSR(0x300) = read_mstatus().bits[xlen - 1 .. 0]
 function clause read_CSR(0x310 if xlen == 32) = read_mstatus().bits[63 .. 32]
@@ -1059,7 +1088,7 @@ function clause is_CSR_accessible(0x100, _, _) = currentlyEnabled(Ext_S) // ssta
 function clause read_CSR(0x100) =
   (if inVirtualPrivilege()
    then lower_mstatus(vsstatus, true)
-   else lower_mstatus(mstatus, false)).bits[xlen - 1 .. 0]
+   else lower_mstatus(read_mstatus(), false)).bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) =
   if inVirtualPrivilege()
   then { vsstatus = legalize_sstatus(vsstatus, value, true); Ok(lower_mstatus(vsstatus, true).bits[xlen - 1 .. 0]) }

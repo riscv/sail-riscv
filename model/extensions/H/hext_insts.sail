@@ -134,7 +134,7 @@ function clause execute HFENCE_GVMA(rs1, rs2) = {
   then return Virtual_Instruction()
   else if cur_privilege == User
   then return Illegal_Instruction()
-  else if cur_privilege == Supervisor & mstatus[TVM] == 0b1
+  else if cur_privilege == Supervisor & read_mstatus()[TVM] == 0b1
   then return Illegal_Instruction();
 
   // Software provides the guest physical address in rs1 right-shifted by 2 bits,

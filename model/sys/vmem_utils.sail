@@ -113,7 +113,7 @@ function exception_vaddr(
 }
 
 function default_access_info(access : MemoryAccessType(mem_payload)) -> AccessInfo = {
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let eff_priv = effectivePrivilege(access, read_mstatus(), cur_privilege);
 
   struct {
     eff_privilege = eff_priv,
