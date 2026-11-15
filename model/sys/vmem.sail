@@ -710,6 +710,15 @@ function translateAddr(
   // HS or M mode but emulate a virtual-mode memory access.
   let is_virtual_access = p == VirtualSupervisor | p == VirtualUser;
 
+  // RISC-V Worlds: all accesses, including the implicit page-table
+  // accesses, are tagged with the WID of the effective privilege mode.
+  // An unauthorized WID raises a software-check exception, which has
+  // priority over any other exception the access could raise.
+  match worlds_access_check(p) {
+    Some(e) => return Err(e, init_ext_ptw),
+    None()  => (),
+  };
+
   let mode = if is_virtual_access then vsatp_mode() else satp_mode(p);
 
   // "If satp.MODE (or vsatp.MODE when V=1) is set to Bare and the

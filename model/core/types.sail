@@ -376,11 +376,12 @@ function is_guest_page_fault(e : ExceptionType) -> bool =
   }
 
 // SW check exception codes
-enum SWCheckCodes = {LANDING_PAD_FAULT}
+enum SWCheckCodes = {LANDING_PAD_FAULT, ILLEGAL_WORLD_FAULT}
 
 function sw_check_code_to_bits (c : SWCheckCodes) -> xlenbits =
   match (c) {
-    LANDING_PAD_FAULT  => zero_extend(0b010),
+    LANDING_PAD_FAULT   => zero_extend(0b010),
+    ILLEGAL_WORLD_FAULT => zero_extend(0b100),
   }
 
 // Sync Exception

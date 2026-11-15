@@ -607,6 +607,58 @@ private function check_pmp() -> bool = {
   valid
 }
 
+private function check_worlds() -> bool = {
+  var valid : bool = true;
+  let nworlds = config platform.worlds.nworlds : int;
+  let pmwid = config platform.worlds.pmwid : int;
+  let smwid = config extensions.Smwid.supported : bool;
+  let smlwid = config extensions.Smlwid.supported : bool;
+  let smlwidlist = config extensions.Smlwidlist.supported : bool;
+  let smwiddeleg = config extensions.Smwiddeleg.supported : bool;
+  if nworlds < 1 | nworlds > xlen then {
+    valid = false;
+    print_endline("`platform.worlds.nworlds` must be in the range [1, XLEN].");
+  };
+  if pmwid < 0 | pmwid >= nworlds then {
+    valid = false;
+    print_endline("`platform.worlds.pmwid` must be less than `platform.worlds.nworlds`.");
+  } else {
+    let pmwidlist = config platform.worlds.pmwidlist : bits(64);
+    if (pmwidlist >> pmwid)[0] == bitzero then {
+      valid = false;
+      print_endline("`platform.worlds.pmwid` must be included in `platform.worlds.pmwidlist`.");
+    };
+  };
+  if smlwid then {
+    let mlwid_reset_value = config extensions.Smlwid.mlwid_reset_value : int;
+    if mlwid_reset_value < 0 | mlwid_reset_value >= nworlds then {
+      valid = false;
+      print_endline("`extensions.Smlwid.mlwid_reset_value` must be less than `platform.worlds.nworlds`.");
+    };
+    if not(config extensions.S.supported : bool) & not(config extensions.U.supported : bool) then {
+      valid = false;
+      print_endline("The Smlwid extension is enabled but neither S nor U is: supporting Smlwid requires at least two privilege modes.");
+    };
+  };
+  if (smwid | smlwid | smlwidlist | smwiddeleg) & not(config extensions.Zicsr.supported : bool) then {
+    valid = false;
+    print_endline("A RISC-V Worlds extension (Smwid, Smlwid, Smlwidlist or Smwiddeleg) is enabled but Zicsr is disabled: supporting these extensions requires Zicsr.");
+  };
+  if smlwidlist & not(smwid & smlwid) then {
+    valid = false;
+    print_endline("The Smlwidlist extension is enabled but Smwid or Smlwid is disabled: supporting Smlwidlist requires Smwid and Smlwid.");
+  };
+  if smwiddeleg & not(smlwid) then {
+    valid = false;
+    print_endline("The Smwiddeleg extension is enabled but Smlwid is disabled: supporting Smwiddeleg requires Smlwid.");
+  };
+  if smwiddeleg & not(config extensions.S.supported : bool) then {
+    valid = false;
+    print_endline("The Smwiddeleg extension is enabled but S is disabled: supporting Smwiddeleg requires S.");
+  };
+  valid
+}
+
 private function check_required_xtval_option(ext_name : string, name : string, value : bool) -> bool = {
   if not(value) then {
     print_endline("The " ^ ext_name ^ " extension is enabled but " ^ name ^ " have not been configured (under `base.xtval_nonzero`) to write xtval.");
@@ -1119,9 +1171,9 @@ private function check_extension_param_constraints() -> bool = {
       valid = false;
       print_endline("Bit 11 (Environment call from M-mode) in `base.medeleg.delegatable_bits` is set; this environment call cannot be delegated.");
     };
-    if medelegation[Software_Check] != 0b0 & priv_isa_version < Privileged_ISA_1_13 & not(config extensions.Zicfiss.supported : bool) & not(config extensions.Zicfilp.supported : bool) then {
+    if medelegation[Software_Check] != 0b0 & priv_isa_version < Privileged_ISA_1_13 & not(config extensions.Zicfiss.supported : bool) & not(config extensions.Zicfilp.supported : bool) & not(config extensions.Smwid.supported : bool) & not(config extensions.Smlwid.supported : bool) then {
       valid = false;
-      print_endline("Bit 18 (Software Check) in `base.medeleg.delegatable_bits` is set, but the software-check exception requires privileged ISA version 1.13 or later, or Zicfilp or Zicfiss support.");
+      print_endline("Bit 18 (Software Check) in `base.medeleg.delegatable_bits` is set, but the software-check exception requires privileged ISA version 1.13 or later, or Zicfilp, Zicfiss, Smwid or Smlwid support.");
     };
     if medelegation[Hardware_Error] != 0b0 & priv_isa_version < Privileged_ISA_1_13 then {
       valid = false;
@@ -1364,6 +1416,7 @@ function config_is_valid() -> bool = {
   & check_vlen_elen()
   & check_vext_config()
   & check_pmp()
+  & check_worlds()
   & check_misc_extension_dependencies()
   & check_extension_param_constraints()
   & check_version_constraints()

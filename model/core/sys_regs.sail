@@ -733,7 +733,7 @@ function legalize_cause(o : Mcause, v : xlenbits, is_scause : bool) -> Mcause = 
     if is_reserved_or_custom_exception(exc) then return o;
     if exc == E_Double_Trap() & not(hartSupports(Ext_Ssdbltrp))
     then return o;
-    if exc == E_Software_Check() & not(hartSupports(Ext_Zicfilp) | hartSupports(Ext_Zicfiss))
+    if exc == E_Software_Check() & not(hartSupports(Ext_Zicfilp) | hartSupports(Ext_Zicfiss) | hartSupports(Ext_Smwid) | hartSupports(Ext_Smlwid))
     then return o;
     // The hardware-error exception code was introduced in version 1.13.
     if exc == E_Hardware_Error() & (priv_isa_version < Privileged_ISA_1_13)
