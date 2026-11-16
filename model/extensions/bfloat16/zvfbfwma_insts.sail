@@ -102,9 +102,19 @@ function clause execute VFWMACCBF16_VF(vm, vs2, rs1, vd) = {
   let (initial_result, mask) : (vector('n, bits('o)), bits('n)) = init_masked_result(num_elem, SEW_widen, LMUL_pow_widen, vd_val, vm_val);
   var result = initial_result;
 
+  var rs1_val : option(bits(32)) = None();
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == 0b1 then {
-      result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), bf16_to_f32_set_flags(F_BF16(rs1)), vd_val[i]);
+      match rs1_val {
+        None() => {
+          let op2 = bf16_to_f32_set_flags(F_BF16(rs1));
+          result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), op2, vd_val[i]);
+          rs1_val = Some(op2);
+        },
+        Some(op2) => {
+          result[i] = fp_muladd(rm_3b, bf16_to_f32_set_flags(vs2_val[i]), op2, vd_val[i]);
+        },
+      }
     }
   };
 
