@@ -1,0 +1,3 @@
+benchmarks:
+  - name: "Linux boot"
+    exec: ./build/c_emulator/sail_riscv_sim --inst-limit 2000000 --device-tree-blob os-boot/build/sail.dtb os-boot/build/fw_payload_linux.elf

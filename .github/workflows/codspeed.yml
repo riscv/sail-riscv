@@ -1,0 +1,54 @@
+name: CodSpeed
+
+on:
+  push:
+    branches:
+      - add-codspeed
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  benchmarks:
+    name: "Linux boot (benchmarked)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install packages
+        run: sudo apt-get install -y --no-install-recommends device-tree-compiler
+
+      - name: Check out repository code
+        uses: actions/checkout@v7
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LTO=TRUE
+          ninja -C build sail_riscv_sim
+
+      - name: Restore cache (linux image)
+        uses: actions/cache/restore@v6
+        id: linux-cache-restore
+        with:
+          path: os-boot/build/fw_payload_linux.elf
+          key: linux-image-${{ hashFiles('os-boot/linux.url', 'os-boot/opensbi.url', 'os-boot/gcc.url', 'os-boot/Makefile') }}
+
+      - name: Build Linux image
+        if: steps.linux-cache-restore.outputs.cache-hit != 'true'
+        run: make -C os-boot linux --jobs=$(nproc)
+
+      - name: Build dtb
+        run: make -C os-boot build/sail.dtb
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v5
+        with:
+          mode: simulation
