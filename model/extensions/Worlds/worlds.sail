@@ -118,7 +118,7 @@ function legalize_mwid(o : xlenbits, v : xlenbits) -> xlenbits =
 function legalize_lower_wid(v : xlenbits) -> xlenbits = v & worlds_wid_mask()
 
 // "The mlwidlist mask is WARL such that any attempts to enable a WID in the
-// mask that is not enabled in the platform's pmlwidlist will be overriden."
+// mask that is not enabled in the platform's pmlwidlist will be overridden."
 // "The mlwidlist CSR is locked (read-only) whenever mwid is locked."
 function legalize_mlwidlist(o : xlenbits, v : xlenbits) -> xlenbits =
   if mwid_is_locked() then o else v & worlds_pmlwidlist & worlds_list_mask()
