@@ -149,21 +149,25 @@ struct PMA = {
   // TODO: Memory Ordering PMA
 }
 
-function svpbmt_override(pma : PMA, overrides : option(SvpbmtOverrides)) -> PMA = {
+function svpbmt_override(pma : PMA, overrides : option(SvpbmtOverrides)) -> PMA =
   if currentlyEnabled(Ext_Svpbmt) then match overrides {
-    None() =>
-      pma,
-    Some(struct { coherent, executable, readable, writable,
-                  misaligned_exceptions, atomic_support, reservability,
-                  supports_cbo_zero, supports_pte_read, supports_pte_write,
-                  misaligned_atomicity_granule_size_exp, vector_misaligned_atomicity_granule_size_exp } ) =>
-      {pma with
-        coherent, executable, readable, writable,
-        misaligned_exceptions, atomic_support, reservability,
-        supports_cbo_zero, supports_pte_read, supports_pte_write,
-        misaligned_atomicity_granule_size_exp, vector_misaligned_atomicity_granule_size_exp },
+    None()  => pma,
+    Some(o) => {pma with
+      coherent                = o.coherent,
+      executable              = o.executable,
+      readable                = o.readable,
+      writable                = o.writable,
+      misaligned_exceptions   = o.misaligned_exceptions,
+      atomic_support          = o.atomic_support,
+      reservability           = o.reservability,
+      supports_cbo_zero       = o.supports_cbo_zero,
+      supports_pte_read       = o.supports_pte_read,
+      supports_pte_write      = o.supports_pte_write,
+
+      misaligned_atomicity_granule_size_exp        = o.misaligned_atomicity_granule_size_exp,
+      vector_misaligned_atomicity_granule_size_exp = o.vector_misaligned_atomicity_granule_size_exp,
+    },
   } else pma
-}
 
 // A PMA can be overridden by page-based memory types.
 // TODO: specify alignment for IO regions.
@@ -171,19 +175,17 @@ function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
   match pbmt {
     PBMT_PMA => pma,
     // TODO: return a weakly-ordered PMA
-    PBMT_NC  => svpbmt_override(
-                  {pma with mem_type = MainMemory,
-                          cacheable = false,
-                          read_idempotent = true,
-                          write_idempotent = true},
-                  svpbmt_nc_overrides),
+    PBMT_NC  => {svpbmt_override(pma, svpbmt_nc_overrides) with
+                  mem_type         = MainMemory,
+                  cacheable        = false,
+                  read_idempotent  = true,
+                  write_idempotent = true},
     // TODO: return a strongly ordered PMA
-    PBMT_IO  => svpbmt_override(
-                  {pma with mem_type = IOMemory,
-                          cacheable = false,
-                          read_idempotent = false,
-                          write_idempotent = false},
-                  svpbmt_io_overrides),
+    PBMT_IO  => {svpbmt_override(pma, svpbmt_io_overrides) with
+                  mem_type         = IOMemory,
+                  cacheable        = false,
+                  read_idempotent  = false,
+                  write_idempotent = false},
   }
 
 // Provide the misaligned treatment for a misaligned access.
