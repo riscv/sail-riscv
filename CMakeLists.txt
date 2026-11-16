@@ -122,6 +122,8 @@ endif()
 # To prevent download of all dependencies, disable this option.
 option(DOWNLOAD_CPP_DEPENDENCIES "Download C++ build dependencies." ON)
 
+# Don't use `REQUIRED` so that we can print custom help messages.
+option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
 # These are the main requirements.
 if (DOWNLOAD_CPP_DEPENDENCIES AND DOWNLOAD_GMP)
     include(ExternalProject)
