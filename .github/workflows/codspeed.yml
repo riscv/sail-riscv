@@ -31,8 +31,12 @@ jobs:
 
       - name: Build simulator
         run: |
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LTO=TRUE
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LTO=TRUE \
+          -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_ARCH_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E64=TRUE
           ninja -C build sail_riscv_sim
+
+      - name: Link test ELFs
+        run: ln -s "$PWD/build/test/$(cat test/sail_riscv_tests_version.txt)" test-elfs
 
       - name: Restore cache (linux image)
         uses: actions/cache/restore@v6
