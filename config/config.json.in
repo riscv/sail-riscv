@@ -682,6 +682,10 @@
       // marked as supported based on Zca, Zcf, and Zcd
       "mutable_misa": true
     },
+    "Q": {
+      "supported": true,
+      "mutable_misa": true
+    },
     "V": {
       // `support_level` must be one of the below strings:
       // . "Disabled" for no vector extension support

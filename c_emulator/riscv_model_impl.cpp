@@ -84,7 +84,7 @@ unit ModelImpl::xreg_full_write_callback(const_sail_string abi_name, sbits reg, 
   return UNIT;
 }
 
-unit ModelImpl::freg_write_callback(unsigned reg, sbits value) {
+unit ModelImpl::freg_write_callback(unsigned reg, lbits value) {
   for (auto c : m_callbacks) {
     c->freg_write_callback(*this, reg, value);
   }
@@ -763,8 +763,14 @@ uint64_t ModelImpl::freg(int64_t reg) {
   assert(0 <= reg && reg < 32);
   assert(m_has_float_registers);
 
-  const sbits val = zrF(reg);
-  return val.bits;
+  // This does not support getting 128-bits out of sail yet
+  uint64_t val;
+  if (zflen >= 64) {
+    val = zrF_D(reg);
+  } else {
+    val = zrF_S(reg);
+  }
+  return val;
 }
 
 void ModelImpl::set_xreg(int64_t reg, uint64_t val) {
@@ -781,10 +787,12 @@ void ModelImpl::set_freg(int64_t reg, uint64_t val) {
   assert(0 <= reg && reg < 32);
   assert(m_has_float_registers);
 
-  sbits sail_val;
-  sail_val.len = zflen;
-  sail_val.bits = val;
-  (void)zwF(reg, sail_val);
+  // This does not support putting 128 bits into sail yet
+  if (zflen >= 64) {
+    (void)zwF_D(reg, val);
+  } else {
+    (void)zwF_S(reg, val);
+  }
 }
 
 void ModelImpl::set_pc(uint64_t val) {

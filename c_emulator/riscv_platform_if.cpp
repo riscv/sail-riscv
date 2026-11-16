@@ -45,7 +45,7 @@ unit PlatformInterface::xreg_full_write_callback(
   return UNIT;
 }
 
-unit PlatformInterface::freg_write_callback([[maybe_unused]] unsigned reg, [[maybe_unused]] sbits value) {
+unit PlatformInterface::freg_write_callback([[maybe_unused]] unsigned reg, [[maybe_unused]] lbits value) {
   return UNIT;
 }
 

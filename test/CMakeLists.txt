@@ -274,6 +274,12 @@ function(filter_arch_tests test_elfs elfs_to_use_varname)
     # no support for Sdtrig with hcontext and/or scontext.
     list(FILTER test_elfs EXCLUDE REGEX ".*/sail-rv64-max/.*/Smstateen-00\\.elf$")
 
+    # These tests fail because the Q-extension adds support for new instructions,
+    # which were illegal in this build of ACT4
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictS_IllegalInstr-0[02].elf")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictSm_IllegalInstr-0[02].elf")
+    list(FILTER test_elfs EXCLUDE REGEX ".*/SsstrictU_IllegalInstr-0[023].elf")
+
     set(${elfs_to_use_varname} "${test_elfs}" PARENT_SCOPE)
 endfunction()
 

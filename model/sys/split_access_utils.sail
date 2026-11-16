@@ -99,7 +99,7 @@ function misaligned_order(n) = {
   }
 }
 
-val split_on_page_boundary : forall 'n 'width, 13 <= 'n <= 64 & is_mem_width('width).
+val split_on_page_boundary : forall 'n 'width, 13 <= 'n <= 64 & is_mem_width_wide('width).
   (bits('n), int('width)) -> {'p 'q, 0 < 'p <= 'width & 'width == 'p + 'q. (int('p), int('q))}
 
 function split_on_page_boundary(addr, width) = {
