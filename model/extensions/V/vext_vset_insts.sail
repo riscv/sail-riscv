@@ -119,8 +119,7 @@ private function execute_vsetvl_type(
   if altfmt == 0b1 then {
     let sew_pow = unsigned(sew) + 3;
     if not(currentlyEnabled(Ext_Zvfbfa)) | (sew_pow != 3 & sew_pow != 4) then {
-      handle_illegal_vtype(rd);
-      return RETIRE_SUCCESS;
+      return handle_illegal_vtype(rd);
     }
   };
 

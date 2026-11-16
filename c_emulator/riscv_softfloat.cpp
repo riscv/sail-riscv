@@ -63,7 +63,7 @@ bv5_bv16 softfloat_f16div(uint64_t rm, uint64_t v1, uint64_t v2) {
 }
 
 bv5_bv16 softfloat_bf16add(uint64_t rm, uint64_t v1, uint64_t v2) {
-  SOFTFLOAT_PRELUDE(rm);
+  softfloat_init(rm);
 
   bfloat16_t a, b, res;
   float32_t a32, b32, res32;
@@ -78,7 +78,7 @@ bv5_bv16 softfloat_bf16add(uint64_t rm, uint64_t v1, uint64_t v2) {
 }
 
 bv5_bv16 softfloat_bf16sub(uint64_t rm, uint64_t v1, uint64_t v2) {
-  SOFTFLOAT_PRELUDE(rm);
+  softfloat_init(rm);
 
   bfloat16_t a, b, res;
   float32_t a32, b32, res32;
@@ -93,7 +93,7 @@ bv5_bv16 softfloat_bf16sub(uint64_t rm, uint64_t v1, uint64_t v2) {
 }
 
 bv5_bv16 softfloat_bf16mul(uint64_t rm, uint64_t v1, uint64_t v2) {
-  SOFTFLOAT_PRELUDE(rm);
+  softfloat_init(rm);
 
   bfloat16_t a, b, res;
   float32_t a32, b32, res32;
@@ -108,7 +108,7 @@ bv5_bv16 softfloat_bf16mul(uint64_t rm, uint64_t v1, uint64_t v2) {
 }
 
 bv5_bv16 softfloat_bf16div(uint64_t rm, uint64_t v1, uint64_t v2) {
-  SOFTFLOAT_PRELUDE(rm);
+  softfloat_init(rm);
 
   bfloat16_t a, b, res;
   float32_t a32, b32, res32;
@@ -223,7 +223,7 @@ bv5_bv16 softfloat_f16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3)
 }
 
 bv5_bv16 softfloat_bf16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3) {
-  SOFTFLOAT_PRELUDE(rm);
+  softfloat_init(rm);
 
   bfloat16_t a, b, c, res;
   float32_t a32, b32, c32, res32;
