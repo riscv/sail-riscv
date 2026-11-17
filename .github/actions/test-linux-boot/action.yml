@@ -1,0 +1,43 @@
+name: "test Linux boot"
+description: "Test booting Linux on the Sail RISC-V Model"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Common setup
+      uses: ./.github/actions/sail-setup
+
+    - name: Build simulator
+      shell: bash
+      run: |
+        cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LTO=TRUE
+        ninja -C build
+
+    - name: Restore cache (linux image)
+      uses: actions/cache/restore@v6
+      id: linux-cache-restore
+      with:
+        path: os-boot/build/fw_payload_linux.elf
+        key: linux-image-${{ hashFiles('os-boot/linux.url', 'os-boot/opensbi.url', 'os-boot/gcc.url', 'os-boot/Makefile') }}
+
+    - name: Build Linux image
+      if: steps.linux-cache-restore.outputs.cache-hit != 'true'
+      shell: bash
+      run: make -C os-boot linux --jobs=$(nproc)
+
+    - name: Cache Linux image
+      # Update cache only on the master branch
+      if: steps.linux-cache-restore.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master'
+      uses: actions/cache/save@v6
+      with:
+        path: os-boot/build/fw_payload_linux.elf
+        key: ${{ steps.linux-cache-restore.outputs.cache-primary-key }}
+
+    - name: Linux boot
+      shell: bash
+      run: |
+        make -C os-boot build/sail.dtb
+        # The Makefile target to boot Linux on the simulator cannot be used with caching in CI due to the dependency chain
+        ./build/c_emulator/sail_riscv_sim --show-times --inst-limit 20000000 --device-tree-blob os-boot/build/sail.dtb os-boot/build/fw_payload_linux.elf 2>&1 | tee linux-boot.log
+        grep "Initmem setup node" linux-boot.log
+        grep "Instructions:     20000000" linux-boot.log

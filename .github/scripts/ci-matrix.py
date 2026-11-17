@@ -6,10 +6,24 @@ import json
 import os
 import pathlib
 import sys
+from typing import NotRequired, TypedDict, cast
 
 
-def define_build_matrix_entries() -> list[dict]:
-    entries: list[dict] = []
+class Build(TypedDict):
+    os: str
+    cmake_version: str
+    first_party_tests: bool
+    container: NotRequired[str]
+    run_all_steps: NotRequired[bool]
+    clang_tidy: NotRequired[bool]
+
+
+class Test(Build):
+    label: str
+
+
+def define_build_matrix_entries() -> list[Build]:
+    entries: list[Build] = []
 
     entries.append(
         {
@@ -76,35 +90,37 @@ def define_build_matrix_entries() -> list[dict]:
 
 
 # The test matrix tries to equalize the CI runtimes across the
-# parallel test runs for each platform.  It is not always optimal to
-# put each test suite into a different runner for each build: since
-# there are currently 8 build variants (i.e. entries in the build
-# matrix above), and 5 test suites in the default build
-# ('riscv-tests', riscv-arch-tests', 'damo-tests' and 2
-# 'riscv-vector-tests'), there would be 40 runners needed for the test
-# matrix.  The smaller runtime for each suite is often neutralized by
-# the time waiting for more runners to be available.
-#
+# parallel test runs for each platform.  Since each test suite
+# may be of a different size, it is not always optimal to
+# put each test suite into a different runner for each build.
 # Instead, tests are grouped using labels (see test/CMakeLists.txt),
 # and a test runner is used per label per build.
-
+# Each test suite is run only once per platform build (regardless of
+# the CMake version).
 
 sail_riscv_test_labels: list[str] = ["GeneralTest", "VectorTest", "HypervisorTest"]
 
 
-def define_test_matrix_entries(builds: list[dict]) -> list[dict]:
-    entries: list[dict] = []
+def define_test_matrix_entries(builds: list[Build]) -> list[Test]:
+    entries: list[Test] = []
+    seen_platforms: set[tuple[str, str | None]] = set()
 
     for e in builds:
+        os, container = e["os"], e.get("container", None)
+        if (os, container) in seen_platforms:
+            continue
+        seen_platforms.add((os, container))
+
         for l in sail_riscv_test_labels:
-            t_ent = copy.deepcopy(e)
+            t_ent = cast(Test, copy.deepcopy(e))
             t_ent["label"] = l
             entries.append(t_ent)
 
+    print(len(entries))
     return entries
 
 
-def gen_output(tag: str, entries: list[dict]):
+def gen_output(tag: str, entries: list[Build] | list[Test]):
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         # eliminate whitespace in json
