@@ -389,8 +389,12 @@ extensions {
     requires core
 
     files
+      extensions/Sdtrig/sdtrig_base_types.sail,
       extensions/Sdtrig/sdtrig_type_utils.sail,
+      extensions/Sdtrig/sdtrig_config_types.sail,
+      extensions/Sdtrig/sdtrig_config_utils.sail,
       extensions/Sdtrig/sdtrig_types.sail,
+      extensions/Sdtrig/sdtrig_config.sail,
       extensions/Sdtrig/sdtrig_regs.sail,
       extensions/Sdtrig/sdtrig_utils.sail,
       extensions/Sdtrig/sdtrig_control.sail,
