@@ -119,7 +119,8 @@ if (STATIC)
 endif()
 
 # Global option for downloading C++ library dependencies.
-# To prevent download of all dependencies, disable this option.
+# To prevent download of all dependencies (except GMP below), disable this option.
+# (GMP is not yet included since it is needed for the `sail_runtime` target.)
 option(DOWNLOAD_CPP_DEPENDENCIES "Download C++ build dependencies." ON)
 
 # Don't use `REQUIRED` so that we can print custom help messages.
