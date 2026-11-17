@@ -276,7 +276,21 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
   match translateAddr(vaddr, access, eff_priv) {
     Err(e, _) => Err(trap(e)),
 
-    Ok(paddr, pbmt, _) => match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq, rl, res) {
+    Ok(paddr, pbmt, _) => if res & not(match_reservation(bits_of(paddr))) then {
+      // Check PMA and PMP access controls before reporting the
+      // cancelled reservation.
+      // "Attempting to execute a store, store-conditional, or AMO
+      // instruction which accesses a physical address within a
+      // PMP region without write permissions raises a store
+      // access-fault exception."
+      match phys_access_check(access, pbmt, eff_priv, paddr, width, true) {
+        Err(e) => {
+          let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, paddr);
+          Err(memory_exception(e, exc_vaddr, access_info))
+        },
+        Ok(_)  => Ok(false),
+      }
+    } else match mem_write_ea(paddr, width, eff_priv, access, pbmt, aq, rl, res) {
       Err(exc_paddr, e) => {
         let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_paddr);
         Err(memory_exception(e, exc_vaddr, access_info))
@@ -342,59 +356,26 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
 
   let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res);
+  let next_page_addr = Virtaddr(vaddr_bits + in_page_bytes);
 
   if sys_misaligned_order_decreasing & do_split_access then {
-    let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, access_info, aq, rl, res) {
+    match translate_and_write_value(next_page_addr, next_page_bytes, write_value, access, access_info, aq, rl, res) {
       Err(e) => return Err(e),
       Ok(s)  => write_success = write_success & s,
     }
   };
 
+  // SC is never split, so the reservation is only checked on the whole access.
   let access_width = if do_split_access then in_page_bytes else width;
-  match translateAddr(vaddr, access, eff_priv) {
-    Err(e, _) => return Err(trap(e)),
-
-    Ok(paddr, pbmt, _) => {
-      if res & not(match_reservation(bits_of(paddr))) then {
-        // Check PMA and PMP access controls before reporting the
-        // cancelled reservation.
-        // "Attempting to execute a store, store-conditional, or AMO
-        // instruction which accesses a physical address within a
-        // PMP region without write permissions raises a store
-        // access-fault exception."
-        match phys_access_check(access, pbmt, eff_priv, paddr, access_width, true) {
-          Err(e) => {
-            let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, paddr);
-            return Err(memory_exception(e, exc_vaddr, access_info))
-          },
-          Ok(_)  => write_success = false,
-        }
-      } else match mem_write_ea(paddr, access_width, eff_priv, access, pbmt, aq, rl, res) {
-        Err(exc_paddr, e) => {
-          let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_paddr);
-          return Err(memory_exception(e, exc_vaddr, access_info))
-        },
-
-        Ok(()) => {
-          let write_value = data[8 * access_width - 1 .. 0];
-          match mem_write_value(paddr, access_width, write_value, eff_priv, access, pbmt, aq, rl, res) {
-            Err(exc_paddr, e) => {
-              let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, exc_paddr);
-              return Err(memory_exception(e, exc_vaddr, access_info))
-            },
-            Ok(s)  => write_success = write_success & s,
-          }
-        },
-      }
-    },
+  match translate_and_write_value(vaddr, access_width, data[8 * access_width - 1 .. 0], access, access_info, aq, rl, res) {
+    Err(e) => return Err(e),
+    Ok(s)  => write_success = write_success & s,
   };
 
   if not(sys_misaligned_order_decreasing) & do_split_access then {
-    let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
     let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(access_addr, next_page_bytes, write_value, access, access_info, aq, rl, res) {
+    match translate_and_write_value(next_page_addr, next_page_bytes, write_value, access, access_info, aq, rl, res) {
       Err(e) => return Err(e),
       Ok(s)  => write_success = write_success & s,
     }
