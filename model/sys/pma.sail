@@ -150,7 +150,7 @@ struct PMA = {
 }
 
 function svpbmt_override(pma : PMA, overrides : option(SvpbmtOverrides)) -> PMA =
-  if currentlyEnabled(Ext_Svpbmt) then match overrides {
+  match overrides {
     None()  => pma,
     Some(o) => {pma with
       coherent                = o.coherent,
@@ -167,7 +167,7 @@ function svpbmt_override(pma : PMA, overrides : option(SvpbmtOverrides)) -> PMA 
       misaligned_atomicity_granule_size_exp        = o.misaligned_atomicity_granule_size_exp,
       vector_misaligned_atomicity_granule_size_exp = o.vector_misaligned_atomicity_granule_size_exp,
     },
-  } else pma
+  }
 
 // A PMA can be overridden by page-based memory types.
 // TODO: specify alignment for IO regions.
