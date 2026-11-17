@@ -15,6 +15,7 @@ def define_build_matrix_entries() -> list[dict]:
         {
             "os": "ubuntu-22.04",
             "cmake_version": "3.20.0",
+            "compiler": "gcc",
             "first_party_tests": True,
         }
     )
@@ -22,6 +23,7 @@ def define_build_matrix_entries() -> list[dict]:
         {
             "os": "ubuntu-22.04",
             "cmake_version": "4.1.2",
+            "compiler": "clang",
             "first_party_tests": True,
             "run_all_steps": True,
         }
@@ -30,6 +32,7 @@ def define_build_matrix_entries() -> list[dict]:
         {
             "os": "ubuntu-24.04-arm",
             "cmake_version": "3.20.0",
+            "compiler": "gcc",
             "first_party_tests": True,
         }
     )
@@ -37,6 +40,7 @@ def define_build_matrix_entries() -> list[dict]:
         {
             "os": "ubuntu-24.04-arm",
             "cmake_version": "4.1.2",
+            "compiler": "clang",
             "first_party_tests": True,
             "clang_tidy": True,
         }
@@ -60,6 +64,7 @@ def define_build_matrix_entries() -> list[dict]:
             "os": "ubuntu-latest",
             "container": "rockylinux:8.9.20231119",
             "cmake_version": "3.20.0",
+            "compiler": "clang",
             "first_party_tests": False,
         }
     )
@@ -68,6 +73,7 @@ def define_build_matrix_entries() -> list[dict]:
             "os": "ubuntu-24.04-arm",
             "container": "rockylinux:8.9.20231119",
             "cmake_version": "3.20.0",
+            "compiler": "clang",
             "first_party_tests": False,
         }
     )

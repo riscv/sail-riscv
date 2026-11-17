@@ -33,7 +33,7 @@ jobs:
         run: .github/scripts/ci-matrix.py --test
 
   build:
-    name: "Build model and run build-time tests (OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }})"
+    name: "Build model and run build-time tests (OS: ${{ matrix.os }}${{ matrix.container && format(', container: {0}', matrix.container) || '' }}, CMake Version: ${{ matrix.cmake_version }}${{ matrix.compiler && format(', Compiler: {0}', matrix.compiler) || '' }})"
     needs: define-matrix
     strategy:
       matrix:
@@ -61,6 +61,7 @@ jobs:
         with:
           cmake-version: "${{ matrix.cmake_version }}"
           install-clang: "true"
+          model-compiler: "${{ matrix.compiler }}"
 
       - name: Ensure pre-commit checks pass
         if: ${{ matrix.run_all_steps }}

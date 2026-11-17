@@ -12,6 +12,10 @@ inputs:
     description: "Install latest Clang"
     required: false
     default: "false"
+  model-compiler:
+    description: 'Compiler for the model on Linux ("gcc" or "clang"). macOS always uses Apple Clang.'
+    required: false
+    default: "clang"
 
 # The 'default' Sail version below is the one specified in `cmake/sail_required_version.txt`.
 # This is the current CI Platform/Target support matrix:
@@ -43,11 +47,11 @@ inputs:
 #                          |                              |                |                 |           |                |
 # rockylinux:8.9           | Sail:  default               |                |                 |           |                |
 # runner: ubuntu-latest    | CMake: 3.20.0                |       x        |                 |           |                |
-#                          | Clang: -                     |                |                 |           |                |
+#                          | Clang: Rocky AppStream       |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # rockylinux:8.9           | Sail:  default               |                |                 |           |                |
 # runner: ubuntu-24.04-arm | CMake: 3.20.0                |       x        |                 |           |                |
-#                          | Clang: -                     |                |                 |           |                |
+#                          | Clang: Rocky AppStream       |                |                 |           |                |
 
 runs:
   using: "composite"
@@ -67,7 +71,7 @@ runs:
         dnf install -y --enablerepo=devel libstdc++-static make gcc gcc-c++ pkg-config gmp-static ninja-build sudo
 
     - name: Install latest Clang (Linux runner)
-      if: runner.os == 'Linux' && inputs.install-clang == 'true' && job.container == null
+      if: runner.os == 'Linux' && (inputs.install-clang == 'true' || inputs.model-compiler == 'clang') && job.container == null
       shell: bash
       run: |
         # Install newer clang manually because current Ubuntu runners don't have
@@ -77,6 +81,26 @@ runs:
         CLANG_VERSION=21
         sudo ./llvm.sh $CLANG_VERSION
         echo "CLANG_VERSION=$CLANG_VERSION" >> $GITHUB_ENV
+
+    - name: Install Clang (Linux container)
+      if: runner.os == 'Linux' && inputs.model-compiler == 'clang' && job.container != null
+      shell: bash
+      run: |
+        dnf install -y clang lld llvm
+
+    - name: Use Clang for the model (Linux)
+      if: runner.os == 'Linux' && inputs.model-compiler == 'clang'
+      shell: bash
+      # Use lld so that LTO does not need the gold plugin.
+      run: |
+        if [ -n "$CLANG_VERSION" ]; then
+          # llvm.sh does not install llvm-ar, which LTO needs for static libraries.
+          sudo apt install -y --no-install-recommends llvm-$CLANG_VERSION
+          SUFFIX="-$CLANG_VERSION"
+        fi
+        echo "CC=clang$SUFFIX" >> $GITHUB_ENV
+        echo "CXX=clang++$SUFFIX" >> $GITHUB_ENV
+        echo "LDFLAGS=-fuse-ld=lld" >> $GITHUB_ENV
 
     - name: Install packages (macOS)
       if: runner.os == 'macOS'
