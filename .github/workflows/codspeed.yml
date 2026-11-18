@@ -1,0 +1,59 @@
+name: CodSpeed
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  benchmarks:
+    name: "Sail RISC-V (Benchmark)"
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Install packages
+      #   run: sudo apt-get install -y --no-install-recommends device-tree-compiler
+
+      - name: Check out repository code
+        uses: actions/checkout@v7
+
+      - name: Common setup
+        uses: ./.github/actions/sail-setup
+
+      - name: Build simulator
+        run: |
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LTO=TRUE \
+          -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_ARCH_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E64=TRUE
+          ninja -C build sail_riscv_sim
+
+      # Link the current test release folder so codspeed.yml paths don't need the date
+      - name: Link test ELFs
+        run: ln -s "$PWD/build/test/$(cat test/sail_riscv_tests_version.txt)" test-elfs
+
+      # - name: Restore cache (linux image)
+      #   uses: actions/cache/restore@v6
+      #   id: linux-cache-restore
+      #   with:
+      #     path: os-boot/build/fw_payload_linux.elf
+      #     key: linux-image-${{ hashFiles('os-boot/linux.url', 'os-boot/opensbi.url', 'os-boot/gcc.url', 'os-boot/Makefile') }}
+
+      # - name: Build Linux image
+      #   if: steps.linux-cache-restore.outputs.cache-hit != 'true'
+      #   run: make -C os-boot linux --jobs=$(nproc)
+
+      # - name: Build dtb
+      #   run: make -C os-boot build/sail.dtb
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v5
+        with:
+          mode: simulation
