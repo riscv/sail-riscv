@@ -16,6 +16,7 @@
 
 #include "rvfi_dii.h"
 #include "sail.h"
+#include "sail_lbits_mpz.h"
 
 rvfi_handler::rvfi_handler(int port, ModelImpl &model) : dii_port(port), m_model(model) {
   fprintf(stderr, "using %d as RVFI port.\n", port);
@@ -103,7 +104,8 @@ void rvfi_handler::get_and_send_packet(packet_reader_fn reader, bool config_prin
   }
   /* mpz_export might not write all of the null bytes */
   std::vector<unsigned char> bytes(send_size, 0);
-  mpz_export(bytes.data(), nullptr, -1, 1, 0, 0, *(packet.bits));
+  lbits_mpz_view packet_view;
+  mpz_export(bytes.data(), nullptr, -1, 1, 0, 0, lbits_mpz(packet_view, packet));
   /* Ensure that we can send a full packet */
   if (write(dii_sock, bytes.data(), send_size) != send_size) {
     fprintf(stderr, "Writing RVFI DII trace failed: %s\n", strerror(errno));
