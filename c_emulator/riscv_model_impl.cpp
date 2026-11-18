@@ -47,25 +47,37 @@ void ModelImpl::set_reservation_invalidate_on_same_hart_store(bool invalidate_on
   m_reservation_invalidate_on_same_hart_store = invalidate_on_same_hart_store;
 }
 
-unit ModelImpl::fetch_callback(sbits opcode) {
+unit ModelImpl::fetch_callback(sbits pc, sbits opcode) {
   for (auto c : m_callbacks) {
-    c->fetch_callback(*this, opcode);
+    c->fetch_callback(*this, pc, opcode);
   }
   return UNIT;
 }
 
-unit ModelImpl::mem_write_callback(ModelImpl::MemoryAccessType type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_write_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_write_callback(*this, type, paddr, width, value);
+    c->mem_write_callback(*this, privilege, access, paddr, width, value);
   }
   if (m_reservation_invalidate_on_same_hart_store && match_reservation(paddr)) {
     cancel_reservation(UNIT);
   };
   return UNIT;
 }
-unit ModelImpl::mem_read_callback(ModelImpl::MemoryAccessType type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_read_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_read_callback(*this, type, paddr, width, value);
+    c->mem_read_callback(*this, privilege, access, paddr, width, value);
   }
   return UNIT;
 }
@@ -84,28 +96,28 @@ unit ModelImpl::xreg_write_callback(sbits reg, sbits value) {
   return UNIT;
 }
 
-unit ModelImpl::freg_write_callback(unsigned reg, sbits value) {
+unit ModelImpl::freg_write_callback(uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
     c->freg_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::csr_write_callback(unsigned reg, sbits value) {
+unit ModelImpl::csr_write_callback(uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
     c->csr_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::csr_read_callback(unsigned reg, sbits value) {
+unit ModelImpl::csr_read_callback(uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
     c->csr_read_callback(*this, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::vreg_write_callback(unsigned reg, lbits value) {
+unit ModelImpl::vreg_write_callback(uint64_t reg, lbits value) {
   for (auto c : m_callbacks) {
     c->vreg_write_callback(*this, reg, value);
   }

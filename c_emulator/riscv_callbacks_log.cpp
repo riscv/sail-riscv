@@ -31,7 +31,8 @@ log_callbacks::log_callbacks(
 
 void log_callbacks::mem_write_callback(
   ModelImpl &model,
-  ModelImpl::MemoryAccessType access_type,
+  ModelImpl::Privilege,
+  ModelImpl::MemoryAccessType access,
   sbits paddr,
   int64_t width,
   lbits value
@@ -42,7 +43,7 @@ void log_callbacks::mem_write_callback(
     fprintf(
       trace_log,
       "mem[%s,0x%0*" PRIX64 "] <- ",
-      model.memory_access_type_to_string(access_type).c_str(),
+      model.memory_access_type_to_string(access).c_str(),
       static_cast<int>((model.physaddrbits_len() + 3) / 4),
       paddr.bits
     );
@@ -52,7 +53,8 @@ void log_callbacks::mem_write_callback(
 
 void log_callbacks::mem_read_callback(
   ModelImpl &model,
-  ModelImpl::MemoryAccessType access_type,
+  ModelImpl::Privilege,
+  ModelImpl::MemoryAccessType access,
   sbits paddr,
   int64_t width,
   lbits value
@@ -63,7 +65,7 @@ void log_callbacks::mem_read_callback(
     fprintf(
       trace_log,
       "mem[%s,0x%0*" PRIX64 "] -> ",
-      model.memory_access_type_to_string(access_type).c_str(),
+      model.memory_access_type_to_string(access).c_str(),
       static_cast<int>((model.physaddrbits_len() + 3) / 4),
       paddr.bits
     );
@@ -87,20 +89,20 @@ void log_callbacks::xreg_write_callback(ModelImpl &model, sbits reg, sbits value
   }
 }
 
-void log_callbacks::freg_write_callback(ModelImpl &, unsigned reg, sbits value) {
+void log_callbacks::freg_write_callback(ModelImpl &, uint64_t reg, sbits value) {
   // TODO: will only print bits; should we print in floating point format?
   if (trace_log != nullptr && config_print_fpr) {
     // TODO: Might need to change from PRIX64 to PRIX128 once the "Q"
     // extension is supported
-    fprintf(trace_log, "f%d <- 0x%0*" PRIX64 "\n", reg, static_cast<int>(value.len / 4), value.bits);
+    fprintf(trace_log, "f%" PRIu64 " <- 0x%0*" PRIX64 "\n", reg, static_cast<int>(value.len / 4), value.bits);
   }
 }
 
-void log_callbacks::csr_write_callback(ModelImpl &model, unsigned reg, sbits value) {
+void log_callbacks::csr_write_callback(ModelImpl &model, uint64_t reg, sbits value) {
   if (trace_log != nullptr && config_print_csr) {
     fprintf(
       trace_log,
-      "CSR %s (0x%03X) <- 0x%0*" PRIX64 "\n",
+      "CSR %s (0x%03" PRIX64 ") <- 0x%0*" PRIX64 "\n",
       model.csr_index_to_string(reg).c_str(),
       reg,
       static_cast<int>(value.len / 4),
@@ -109,11 +111,11 @@ void log_callbacks::csr_write_callback(ModelImpl &model, unsigned reg, sbits val
   }
 }
 
-void log_callbacks::csr_read_callback(ModelImpl &model, unsigned reg, sbits value) {
+void log_callbacks::csr_read_callback(ModelImpl &model, uint64_t reg, sbits value) {
   if (trace_log != nullptr && config_print_csr) {
     fprintf(
       trace_log,
-      "CSR %s (0x%03X) -> 0x%0*" PRIX64 "\n",
+      "CSR %s (0x%03" PRIX64 ") -> 0x%0*" PRIX64 "\n",
       model.csr_index_to_string(reg).c_str(),
       reg,
       static_cast<int>(value.len / 4),
@@ -122,9 +124,9 @@ void log_callbacks::csr_read_callback(ModelImpl &model, unsigned reg, sbits valu
   }
 }
 
-void log_callbacks::vreg_write_callback(ModelImpl &, unsigned reg, lbits value) {
+void log_callbacks::vreg_write_callback(ModelImpl &, uint64_t reg, lbits value) {
   if (trace_log != nullptr && config_print_vreg) {
-    fprintf(trace_log, "v%d <- ", reg);
+    fprintf(trace_log, "v%" PRIu64 " <- ", reg);
     gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
   }
 }

@@ -9,6 +9,7 @@
 
 void rvfi_callbacks::mem_write_callback(
   ModelImpl &model,
+  ModelImpl::Privilege,
   ModelImpl::MemoryAccessType,
   sbits paddr,
   int64_t width,
@@ -19,6 +20,7 @@ void rvfi_callbacks::mem_write_callback(
 
 void rvfi_callbacks::mem_read_callback(
   ModelImpl &model,
+  ModelImpl::Privilege,
   ModelImpl::MemoryAccessType,
   sbits paddr,
   int64_t width,

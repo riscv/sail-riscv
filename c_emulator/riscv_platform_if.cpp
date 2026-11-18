@@ -8,12 +8,13 @@
 // A better solution is to allow passing in `hart::Model&` to `model_test()`.
 // See https://github.com/rems-project/sail/issues/1556
 
-unit PlatformInterface::fetch_callback([[maybe_unused]] sbits opcode) {
+unit PlatformInterface::fetch_callback([[maybe_unused]] sbits pc, [[maybe_unused]] sbits opcode) {
   return UNIT;
 }
 
 unit PlatformInterface::mem_write_callback(
-  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
+  [[maybe_unused]] hart::zPrivilege privilege,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -22,7 +23,8 @@ unit PlatformInterface::mem_write_callback(
 }
 
 unit PlatformInterface::mem_read_callback(
-  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access_type,
+  [[maybe_unused]] hart::zPrivilege privilege,
+  [[maybe_unused]] hart::zMemoryAccessTypezIEmem_payloadz5zK access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -41,19 +43,19 @@ unit PlatformInterface::xreg_write_callback([[maybe_unused]] sbits reg, [[maybe_
   return UNIT;
 }
 
-unit PlatformInterface::freg_write_callback([[maybe_unused]] unsigned reg, [[maybe_unused]] sbits value) {
+unit PlatformInterface::freg_write_callback([[maybe_unused]] uint64_t reg, [[maybe_unused]] sbits value) {
   return UNIT;
 }
 
-unit PlatformInterface::csr_write_callback([[maybe_unused]] unsigned reg, [[maybe_unused]] sbits value) {
+unit PlatformInterface::csr_write_callback([[maybe_unused]] uint64_t reg, [[maybe_unused]] sbits value) {
   return UNIT;
 }
 
-unit PlatformInterface::csr_read_callback([[maybe_unused]] unsigned reg, [[maybe_unused]] sbits value) {
+unit PlatformInterface::csr_read_callback([[maybe_unused]] uint64_t reg, [[maybe_unused]] sbits value) {
   return UNIT;
 }
 
-unit PlatformInterface::vreg_write_callback([[maybe_unused]] unsigned reg, [[maybe_unused]] lbits value) {
+unit PlatformInterface::vreg_write_callback([[maybe_unused]] uint64_t reg, [[maybe_unused]] lbits value) {
   return UNIT;
 }
 

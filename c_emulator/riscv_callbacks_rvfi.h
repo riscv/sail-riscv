@@ -8,14 +8,16 @@ public:
   // callbacks_if
   void mem_write_callback(
     ModelImpl &model,
-    ModelImpl::MemoryAccessType,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
     sbits paddr,
     int64_t width,
     lbits value
   ) override;
   void mem_read_callback(
     ModelImpl &model,
-    ModelImpl::MemoryAccessType,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
     sbits paddr,
     int64_t width,
     lbits value
