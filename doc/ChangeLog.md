@@ -42,6 +42,9 @@
     `extensions.Smcsrind.miselectlen`.
   - The number of implemented bits in `siselect` and `vsiselect` can be
     specified; see `extensions.Sscsrind.siselectlen`.
+  - The PMAs of a memory region can be optionally overridden for Svpbmt
+    using `nc_overrides` (for `PBMT=NC`) and
+    `io_overrides` (for `PBMT=IO`); see `extensions.Svpbmt`.
 
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
@@ -52,6 +55,7 @@
   - https://github.com/riscv/sail-riscv/issues/2090 : negated Sdtrig matches fired incorrectly on multibyte accesses
   - https://github.com/riscv/sail-riscv/pull/2093 : `hstateen` should only mask `sstateen` in VS-mode or VU-mode
   - https://github.com/riscv/sail-riscv/pull/2111 : GVA was set from the current privilege mode for trigger breakpoints, instead of whether `tval` holds a guest virtual address
+  - https://github.com/riscv/sail-riscv/pull/2124 : Accessing a shadow-stack page with a reserved Svnapot encoding raised an access fault instead of a page fault.
 
 # Release notes for version 0.16
 
