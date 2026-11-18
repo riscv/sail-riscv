@@ -31,3 +31,8 @@ let sselect_asid_match : bool = config extensions.Sdtrig.textra.sselect.asid_mat
 
 let icount_count_is_hardwired_one : bool = config extensions.Sdtrig.icount.count_hardwired_one
 let icount_self_write_sets_pending : bool = config extensions.Sdtrig.icount.self_write_sets_pending
+
+// This cannot have the `maskmax` type since the Sail compiler cannot generate
+// the corresponding schema: https://github.com/rems-project/sail/issues/1392
+// `validate_config` ensures that it will fit into the `maskmax` type.
+let sdtrig_mcontrol6_maskmax : nat = config extensions.Sdtrig.mcontrol6.maskmax6

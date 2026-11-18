@@ -187,13 +187,13 @@ private function compare_access_size forall 'n, 0 < 'n <= max_mem_access. (
 ) -> bool =
   (t_size == 0) | (t_size == 8 * width)
 
-private function compare_value_napot(value : xlenbits, tdata2 : xlenbits) -> bool = {
+private function compare_value_napot(maskmax : maskmax, value : xlenbits, tdata2 : xlenbits) -> bool = {
   let lsz : range(0, xlen - 1) = match least_significant_zero(tdata2) {
     None()  => internal_error(__FILE__, __LINE__, "Invalid tdata2 for NAPOT match: " ^ bits_str(tdata2)),
     Some(i) => i,
   };
-  // `tdata2` should have been validated.
-  assert(lsz < sdtrig_mcontrol6_maskmax);
+  // `tdata2` should have been validated in `trigger_write_tdata2()`.
+  assert(lsz < maskmax);
   let M = xlen - 1 - lsz;
   assert(M > 0);
   value[xlen - 1 .. xlen - M] == tdata2[xlen - 1 .. xlen - M]
@@ -211,17 +211,17 @@ private function compare_value_mask(value : xlenbits, tdata2 : xlenbits, mask_ty
   (test_val & mask) == check_val
 }
 
-private function compare_value_xlen(t_match : Trig_Match, value : xlenbits, tdata2 : xlenbits) -> bool = {
+private function compare_value_xlen(t_match : Trig_Match, maskmax : maskmax, value : xlenbits, tdata2 : xlenbits) -> bool = {
   match t_match {
     TM_EQ          => value == tdata2,
-    TM_NAPOT       => compare_value_napot(value, tdata2),
+    TM_NAPOT       => compare_value_napot(maskmax, value, tdata2),
     TM_GE          => value >=_u tdata2,
     TM_LT          => value <_u tdata2,
     TM_MASK_LO     => compare_value_mask(value, tdata2, MASK_LO),
     TM_MASK_HI     => compare_value_mask(value, tdata2, MASK_HI),
 
     TM_NEQ         => value != tdata2,
-    TM_NOT_NAPOT   => not(compare_value_napot(value, tdata2)),
+    TM_NOT_NAPOT   => not(compare_value_napot(maskmax, value, tdata2)),
     TM_NOT_MASK_LO => not(compare_value_mask(value, tdata2, MASK_LO)),
     TM_NOT_MASK_HI => not(compare_value_mask(value, tdata2, MASK_HI)),
   }
@@ -256,12 +256,14 @@ private function is_negative_match(t_match : Trig_Match) -> bool =
 let address_select_matches_all : bool = config extensions.Sdtrig.mcontrol6.address_select_matches_all_addresses
 
 private function compare_address forall 'width, 0 < 'width <= max_mem_access. (
-  t_match : Trig_Match,
-  addr    : xlenbits,
-  width   : int('width),
-  tdata2  : xlenbits,
+  t_match   : Trig_Match,
+  maskmax   : maskmax,
+  match_all : bool,
+  addr      : xlenbits,
+  width     : int('width),
+  tdata2    : xlenbits,
 ) -> option(xlenbits) = {
-  let span = if address_select_matches_all then width - 1 else 0;
+  let span = if match_all then width - 1 else 0;
 
   let is_negative = is_negative_match(t_match);
   let t_match = if is_negative then negate_match(t_match) else t_match;
@@ -269,7 +271,7 @@ private function compare_address forall 'width, 0 < 'width <= max_mem_access. (
 
   foreach (i from 0 to span) {
     let match_addr = addr + i;
-    if compare_value_xlen(t_match, match_addr, tdata2) then {
+    if compare_value_xlen(t_match, maskmax, match_addr, tdata2) then {
       // For direct matches, return the first match in the span.
       if not(is_negative) then return Some(match_addr)
       else match_val = Some(match_addr);
@@ -285,13 +287,14 @@ private function compare_address forall 'width, 0 < 'width <= max_mem_access. (
 private function compare_value forall 'width, is_mem_width_wide('width) . (
   t_match : Trig_Match,
   t_size  : Trig_Match_Size,
+  maskmax : maskmax,
   value   : bits(8 * 'width),
   width   : int('width),
   tdata2  : xlenbits,
 ) -> bool = {
   // `tdata2` is of size XLEN, and accesses of larger size are not supported.
   if   width <= xlen_bytes & compare_access_size(t_size, width)
-  then compare_value_xlen(t_match, zero_extend(value), tdata2)
+  then compare_value_xlen(t_match, maskmax, zero_extend(value), tdata2)
   else false
 }
 
@@ -314,12 +317,17 @@ private function match_mcontrol6(
 
   let chain_info : string = if t.chain then "in-chain" else "chain-terminating";
 
+  let match_all = address_select_matches_all;
+  // This is validated in `validate_config()`.
+  let maskmax = sdtrig_mcontrol6_maskmax;
+  assert(0 < maskmax & maskmax < xlen);
+
   match payload {
     // This is matched on the PC before an instruction is actually
     // fetched, so the width of the access is unknown.  Match this
     // only if the `size` is `any` (i.e. 0).
     TriggerFetchAddr(addr) =>
-      if t.execute & t.select == Compare_Address & t.size == 0 & compare_value_xlen(t.t_match, addr, t.tdata2)
+      if t.execute & t.select == Compare_Address & t.size == 0 & compare_value_xlen(t.t_match, maskmax, addr, t.tdata2)
       then {
         if get_config_print_trigger()
         then print_log("Matched " ^ chain_info ^ " memory execute address trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
@@ -332,14 +340,14 @@ private function match_mcontrol6(
     // known width as well as execute data compares. Address compares
     // with `size` of `any` should have already matched above.
     TriggerFetchInstr(addr, inst, width) =>
-      if t.execute & t.select == Compare_Address & compare_access_size(t.size, width) & compare_value_xlen(t.t_match, addr, t.tdata2)
+      if t.execute & t.select == Compare_Address & compare_access_size(t.size, width) & compare_value_xlen(t.t_match, maskmax, addr, t.tdata2)
       then {
         if get_config_print_trigger()
         then print_log("Matched " ^ chain_info ^ " memory execute address trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
 
         trigger_match_callback(idx);
         Some(addr)
-      } else if t.execute & t.select == Compare_Data & compare_value(t.t_match, t.size, inst, width, t.tdata2) then {
+      } else if t.execute & t.select == Compare_Data & compare_value(t.t_match, t.size, maskmax, inst, width, t.tdata2) then {
         if get_config_print_trigger()
         then print_log("Matched " ^ chain_info ^ " memory execute data trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
         trigger_match_callback(idx);
@@ -353,7 +361,7 @@ private function match_mcontrol6(
       };
       let size_match : bool = compare_access_size(t.size, width);
       if addr_type_match & size_match & t.select == Compare_Address then {
-        let compare_result = compare_address(t.t_match, addr, width, t.tdata2);
+        let compare_result = compare_address(t.t_match, maskmax, match_all, addr, width, t.tdata2);
         if is_some(compare_result) then {
           if get_config_print_trigger()
           then print_log("Matched " ^ chain_info ^ " memory address trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
@@ -364,21 +372,21 @@ private function match_mcontrol6(
     },
     TriggerStore(addr, data, width) =>
       if t.store & t.select == Compare_Address & compare_access_size(t.size, width) then {
-        let compare_result = compare_address(t.t_match, addr, width, t.tdata2);
+        let compare_result = compare_address(t.t_match, maskmax, match_all, addr, width, t.tdata2);
         if is_some(compare_result) then {
           if get_config_print_trigger()
           then print_log("Matched " ^ chain_info ^ " memory store address trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
           trigger_match_callback(idx);
         };
         compare_result
-      } else if t.store & t.select == Compare_Data & compare_value(t.t_match, t.size, data, width, t.tdata2) then {
+      } else if t.store & t.select == Compare_Data & compare_value(t.t_match, t.size, maskmax, data, width, t.tdata2) then {
         if get_config_print_trigger()
         then print_log("Matched " ^ chain_info ^ " memory store data trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
         trigger_match_callback(idx);
         Some(addr)
       } else None(),
     TriggerLoadData(addr, data, width) =>
-      if t.load & t.select == Compare_Data & compare_value(t.t_match, t.size, data, width, t.tdata2) then {
+      if t.load & t.select == Compare_Data & compare_value(t.t_match, t.size, maskmax, data, width, t.tdata2) then {
         if get_config_print_trigger()
         then print_log("Matched " ^ chain_info ^ " memory load data trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
         trigger_match_callback(idx);
@@ -387,8 +395,8 @@ private function match_mcontrol6(
     TriggerAMOData(addr, loaded, stored, width) => {
       if not((t.load | t.store) & t.select == Compare_Data) then return None();
 
-      let load_matched  = t.load  & compare_value(t.t_match, t.size, loaded, width, t.tdata2);
-      let store_matched = t.store & compare_value(t.t_match, t.size, stored, width, t.tdata2);
+      let load_matched  = t.load  & compare_value(t.t_match, t.size, maskmax, loaded, width, t.tdata2);
+      let store_matched = t.store & compare_value(t.t_match, t.size, maskmax, stored, width, t.tdata2);
       if load_matched | store_matched then {
         if get_config_print_trigger()
         then print_log("Matched " ^ chain_info ^ " memory data trigger at index #" ^ dec_str(idx) ^ " with action " ^ trigger_action_name(t.action));
