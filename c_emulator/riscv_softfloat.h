@@ -8,6 +8,7 @@
 using bv5_bv16 = hart::ztuple_z8z5bv5zCz0z5bv16z9;
 using bv5_bv32 = hart::ztuple_z8z5bv5zCz0z5bv32z9;
 using bv5_bv64 = hart::ztuple_z8z5bv5zCz0z5bv64z9;
+using bv5_bv64_bv64 = hart::ztuple_z8z5bv5zCz0z5bv64zCz0z5bv64z9;
 using bv5_bool = hart::ztuple_z8z5bv5zCz0z5boolz9;
 
 bv5_bv16 softfloat_f16add(uint64_t rm, uint64_t v1, uint64_t v2);
@@ -25,13 +26,28 @@ bv5_bv64 softfloat_f64sub(uint64_t rm, uint64_t v1, uint64_t v2);
 bv5_bv64 softfloat_f64mul(uint64_t rm, uint64_t v1, uint64_t v2);
 bv5_bv64 softfloat_f64div(uint64_t rm, uint64_t v1, uint64_t v2);
 
+bv5_bv64_bv64 softfloat_f128add(uint64_t rm, uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
+bv5_bv64_bv64 softfloat_f128sub(uint64_t rm, uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
+bv5_bv64_bv64 softfloat_f128mul(uint64_t rm, uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
+bv5_bv64_bv64 softfloat_f128div(uint64_t rm, uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
+
 bv5_bv16 softfloat_f16muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3);
 bv5_bv32 softfloat_f32muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3);
 bv5_bv64 softfloat_f64muladd(uint64_t rm, uint64_t v1, uint64_t v2, uint64_t v3);
+bv5_bv64_bv64 softfloat_f128muladd(
+  uint64_t rm,
+  uint64_t v1_low,
+  uint64_t v1_high,
+  uint64_t v2_low,
+  uint64_t v2_high,
+  uint64_t v3_low,
+  uint64_t v3_high
+);
 
 bv5_bv16 softfloat_f16sqrt(uint64_t rm, uint64_t v);
 bv5_bv32 softfloat_f32sqrt(uint64_t rm, uint64_t v);
 bv5_bv64 softfloat_f64sqrt(uint64_t rm, uint64_t v);
+bv5_bv64_bv64 softfloat_f128sqrt(uint64_t rm, uint64_t v_low, uint64_t v_high);
 
 bv5_bv32 softfloat_f16toi32(uint64_t rm, uint64_t v);
 bv5_bv32 softfloat_f16toui32(uint64_t rm, uint64_t v);
@@ -48,6 +64,11 @@ bv5_bv32 softfloat_f64toui32(uint64_t rm, uint64_t v);
 bv5_bv64 softfloat_f64toi64(uint64_t rm, uint64_t v);
 bv5_bv64 softfloat_f64toui64(uint64_t rm, uint64_t v);
 
+bv5_bv32 softfloat_f128toi32(uint64_t rm, uint64_t v_low, uint64_t v_high);
+bv5_bv32 softfloat_f128toui32(uint64_t rm, uint64_t v_low, uint64_t v_high);
+bv5_bv64 softfloat_f128toi64(uint64_t rm, uint64_t v_low, uint64_t v_high);
+bv5_bv64 softfloat_f128toui64(uint64_t rm, uint64_t v_low, uint64_t v_high);
+
 bv5_bv16 softfloat_i32tof16(uint64_t rm, uint64_t v);
 bv5_bv16 softfloat_ui32tof16(uint64_t rm, uint64_t v);
 bv5_bv16 softfloat_i64tof16(uint64_t rm, uint64_t v);
@@ -63,13 +84,24 @@ bv5_bv64 softfloat_ui32tof64(uint64_t rm, uint64_t v);
 bv5_bv64 softfloat_i64tof64(uint64_t rm, uint64_t v);
 bv5_bv64 softfloat_ui64tof64(uint64_t rm, uint64_t v);
 
+bv5_bv64_bv64 softfloat_i32tof128(uint64_t rm, uint64_t v);
+bv5_bv64_bv64 softfloat_ui32tof128(uint64_t rm, uint64_t v);
+bv5_bv64_bv64 softfloat_i64tof128(uint64_t rm, uint64_t v);
+bv5_bv64_bv64 softfloat_ui64tof128(uint64_t rm, uint64_t v);
+
 bv5_bv32 softfloat_f16tof32(uint64_t rm, uint64_t v);
 bv5_bv64 softfloat_f16tof64(uint64_t rm, uint64_t v);
+bv5_bv64_bv64 softfloat_f16tof128(uint64_t rm, uint64_t v);
 bv5_bv64 softfloat_f32tof64(uint64_t rm, uint64_t v);
+bv5_bv64_bv64 softfloat_f32tof128(uint64_t rm, uint64_t v);
+bv5_bv64_bv64 softfloat_f64tof128(uint64_t rm, uint64_t v);
 
 bv5_bv16 softfloat_f32tof16(uint64_t rm, uint64_t v);
 bv5_bv16 softfloat_f64tof16(uint64_t rm, uint64_t v);
 bv5_bv32 softfloat_f64tof32(uint64_t rm, uint64_t v);
+bv5_bv16 softfloat_f128tof16(uint64_t rm, uint64_t v_low, uint64_t v_high);
+bv5_bv32 softfloat_f128tof32(uint64_t rm, uint64_t v_low, uint64_t v_high);
+bv5_bv64 softfloat_f128tof64(uint64_t rm, uint64_t v_low, uint64_t v_high);
 
 bv5_bv16 softfloat_f32tobf16(uint64_t rm, uint64_t v);
 
@@ -88,7 +120,13 @@ bv5_bool softfloat_f64lt_quiet(uint64_t v1, uint64_t v2);
 bv5_bool softfloat_f64le(uint64_t v1, uint64_t v2);
 bv5_bool softfloat_f64le_quiet(uint64_t v1, uint64_t v2);
 bv5_bool softfloat_f64eq(uint64_t v1, uint64_t v2);
+bv5_bool softfloat_f128lt(uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
+bv5_bool softfloat_f128lt_quiet(uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
+bv5_bool softfloat_f128le(uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
+bv5_bool softfloat_f128le_quiet(uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
+bv5_bool softfloat_f128eq(uint64_t v1_low, uint64_t v1_high, uint64_t v2_low, uint64_t v2_high);
 
 bv5_bv16 softfloat_f16roundToInt(uint64_t rm, uint64_t v, bool exact);
 bv5_bv32 softfloat_f32roundToInt(uint64_t rm, uint64_t v, bool exact);
 bv5_bv64 softfloat_f64roundToInt(uint64_t rm, uint64_t v, bool exact);
+bv5_bv64_bv64 softfloat_f128roundToInt(uint64_t rm, uint64_t v_low, uint64_t v_high, bool exact);

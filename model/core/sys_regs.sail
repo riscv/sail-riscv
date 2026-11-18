@@ -140,7 +140,7 @@ private function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   let M = if hartSupports(Ext_M) then { if config extensions.M.mutable_misa then v[M] else m[M] } else 0b0;
   let F = if hartSupports(Ext_F) then { if config extensions.F.mutable_misa then v[F] else m[F] } else 0b0;
   let D = if hartSupports(Ext_D) & F == 0b1 then { if config extensions.D.mutable_misa then v[D] else m[D] } else 0b0;
-  // let Q = if hartSupports(Ext_Q) & F == 0b1 & D == 0b1 then { if config extensions.Q.mutable_misa then v[Q] else m[Q] } else 0b0;
+  let Q = if hartSupports(Ext_Q) & F == 0b1 & D == 0b1 then { if config extensions.Q.mutable_misa then v[Q] else m[Q] } else 0b0;
   let V = if hartSupports(Ext_V) & F == 0b1 & D == 0b1 then { if config extensions.V.mutable_misa then v[V] else m[V] } else 0b0;
   let U = if hartSupports(Ext_U) then { if config extensions.U.mutable_misa then v[U] else m[U] } else 0b0;
   let S = if hartSupports(Ext_S) & U == 0b1 then { if config extensions.S.mutable_misa then v[S] else m[S] } else 0b0;
@@ -1331,4 +1331,8 @@ function architecture(priv : Privilege) -> Architecture = {
 
 function in32BitMode() -> bool = {
   architecture(cur_privilege) == RV32
+}
+
+function in64BitMode() -> bool = {
+  architecture(cur_privilege) == RV64
 }

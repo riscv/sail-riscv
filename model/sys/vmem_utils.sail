@@ -179,7 +179,7 @@ private function translate_and_read_value forall 'width, 0 < 'width <= max_mem_a
   }
 }
 
-val vmem_read_addr : forall 'width, is_mem_width('width).
+val vmem_read_addr : forall 'width, is_mem_width_wide('width).
   (virtaddr, int('width), MemoryAccessType(mem_payload), AccessInfo, bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
@@ -294,7 +294,7 @@ private function translate_and_write_value forall 'width, 0 < 'width <= max_mem_
   }
 }
 
-val vmem_write_addr : forall 'width, is_mem_width('width).
+val vmem_write_addr : forall 'width, is_mem_width_wide('width).
   (virtaddr, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), AccessInfo, bool, bool, bool)
   -> result(bool, ExecutionResult)
 
@@ -416,7 +416,7 @@ function get_transformed_data_addr(base : regidx, offset : xlenbits, access : Me
   }
 }
 
-val vmem_read_explicit : forall 'width, is_mem_width('width).
+val vmem_read_explicit : forall 'width, is_mem_width_wide('width).
   (regidx, xlenbits, int('width), MemoryAccessType(mem_payload), AccessInfo, bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
@@ -434,7 +434,7 @@ function vmem_read_explicit(rs, offset, width, access, access_info, aq, rl, res)
   }
 }
 
-val vmem_read : forall 'width, is_mem_width('width).
+val vmem_read : forall 'width, is_mem_width_wide('width).
   (regidx, xlenbits, int('width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bits(8 * 'width), ExecutionResult)
 
@@ -442,7 +442,7 @@ function vmem_read(rs, offset, width, access, aq, rl, res) =
   vmem_read_explicit(rs, offset, width, access, default_access_info(access), aq, rl, res)
 
 
-val vmem_write_explicit : forall 'width, is_mem_width('width).
+val vmem_write_explicit : forall 'width, is_mem_width_wide('width).
   (regidx, xlenbits, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), AccessInfo, bool, bool, bool)
   -> result(bool, ExecutionResult)
 
@@ -460,7 +460,7 @@ function vmem_write_explicit(rs_addr, offset, width, data, access, access_info, 
   }
 }
 
-val vmem_write : forall 'width, is_mem_width('width).
+val vmem_write : forall 'width, is_mem_width_wide('width).
   (regidx, xlenbits, int('width), bits(8 * 'width), MemoryAccessType(mem_payload), bool, bool, bool)
   -> result(bool, ExecutionResult)
 

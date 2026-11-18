@@ -23,7 +23,7 @@ public:
 
   virtual void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value);
 
-  virtual void freg_write_callback(ModelImpl &model, unsigned reg, sbits value);
+  virtual void freg_write_callback(ModelImpl &model, unsigned reg, lbits value);
 
   virtual void csr_full_write_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value);
 

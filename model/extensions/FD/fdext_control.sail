@@ -6,18 +6,19 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // =======================================================================================
 
-// ***************************************************************
-// Floating point register file and accessors for F, D extensions
+// *****************************************************************
+// Floating point register file and accessors for F, D, Q extensions
 // Floating point CSR and accessors
-// ***************************************************************
+// *****************************************************************
 
 // Original version written by Rishiyur S. Nikhil, Sept-Oct 2019
 
-// ***************************************************************
+// *****************************************************************
 
 function clause currentlyEnabled(Ext_F) = hartSupports(Ext_F) & misa[F] == 0b1 & currentlyEnabled(Ext_Zicsr) &
   mstatus[FS] != 0b00 & (if inVirtualPrivilege() then vsstatus[FS] != 0b00 else true)
 function clause currentlyEnabled(Ext_D) = hartSupports(Ext_D) & misa[D] == 0b1 & flen >= 64 & currentlyEnabled(Ext_F)
+function clause currentlyEnabled(Ext_Q) = hartSupports(Ext_Q) & misa[Q] == 0b1 & flen >= 128 & currentlyEnabled(Ext_F)
 function clause currentlyEnabled(Ext_Zfinx) = hartSupports(Ext_Zfinx) & currentlyEnabled(Ext_Zicsr) & is_zfinx_enabled_by_stateen()
 
 // Floating Point CSRs
