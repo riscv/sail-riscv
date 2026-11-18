@@ -45,7 +45,7 @@ function clause execute SSPUSH(rs2) = {
 
   match vmem_write_addr(vaddr, width, X(rs2), access, access_info, false, false, false) {
     Ok(_)  => { ssp = vaddr_bits;
-                csr_write_callback("ssp", ssp);
+                csr_write_callback(csr_name_map("ssp"), ssp);
                 RETIRE_SUCCESS },
     Err(e) => e,
   }
@@ -100,7 +100,7 @@ function clause execute SSPOPCHK(rs1) = {
         trap(make_shadow_stack_exception())
       } else {
         ssp = ssp + width;
-        csr_write_callback("ssp", ssp);
+        csr_write_callback(csr_name_map("ssp"), ssp);
         RETIRE_SUCCESS
       }
     },

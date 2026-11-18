@@ -138,13 +138,13 @@ function dirty_v_context() -> unit = {
   assert(hartSupports(Ext_Zve32x));
   mstatus[VS] = extStatus_map(Dirty);
   mstatus[SD] = 0b1;
-  long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
+  long_csr_write_callback(csr_name_map("mstatus"), csr_name_map("mstatush"), read_mstatus().bits);
   // When V=1 both vsstatus.VS and mstatus.VS are in effect, and modifying
   // vector state must set both to Dirty.
   if inVirtualPrivilege() then {
     vsstatus[VS] = extStatus_map(Dirty);
     vsstatus[SD] = 0b1;
-    csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0]);
+    csr_write_callback(csr_name_map("vsstatus"), vsstatus.bits[xlen - 1 .. 0]);
   }
 }
 
@@ -355,7 +355,7 @@ function clause read_CSR(0xC22) = VLENB
 function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
   vstart = value[(vlen_exp - 1) .. 0];
-  csr_write_callback("vstart", zero_extend(vstart));
+  csr_write_callback(csr_name_map("vstart"), zero_extend(vstart));
 }
 
 private function write_vcsr(vxrm_val : bits(2), vxsat_val : bits(1)) -> unit = {
@@ -369,8 +369,8 @@ function write_vxsat(vxsat_val: bits(1)) -> unit = {
     vcsr[vxsat] = vxsat_val;
     dirty_v_context();
   };
-  csr_write_callback("vxsat", zero_extend(vcsr[vxsat]));
-  csr_write_callback("vcsr", zero_extend(vcsr.bits));
+  csr_write_callback(csr_name_map("vxsat"), zero_extend(vcsr[vxsat]));
+  csr_write_callback(csr_name_map("vcsr"), zero_extend(vcsr.bits));
 }
 
 function clause write_CSR(0x008, value) = { set_vstart(value[15 .. 0]); Ok(zero_extend(vstart)) }

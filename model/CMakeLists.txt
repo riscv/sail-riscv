@@ -137,8 +137,12 @@ add_custom_command(
         --c-preserve rvfi_wX
         --c-preserve rvfi_trap
         # Preserve to_str functions.
+        --c-preserve accessType_to_str
+        --c-preserve privLevel_to_str
         --c-preserve ptw_error_to_str
         --c-preserve translationStage_to_str
+        --c-preserve csr_name_map_forwards
+        --c-preserve reg_name_forwards
         # Input files.
         ${SAIL_MODULES}
         ${project_file}

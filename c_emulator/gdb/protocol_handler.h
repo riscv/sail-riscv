@@ -95,8 +95,20 @@ public:
 
   // Callbacks
   void trap_callback(ModelImpl &, bool is_interrupt, fbits cause) override;
-  void mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) override;
-  void mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value) override;
+  void mem_write_callback(
+    ModelImpl &model,
+    ModelImpl::MemoryAccessType type,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
+  void mem_read_callback(
+    ModelImpl &model,
+    ModelImpl::MemoryAccessType type,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  ) override;
 
   // Triggers
   class triggers &triggers() {

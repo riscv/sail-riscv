@@ -108,12 +108,12 @@ function clause write_CSR(0x7a5, value) = {
 
 function tcontrol_trap_into_mmode() -> unit = {
   tcontrol = [tcontrol with mpte = tcontrol[mte], mte = 0b0];
-  csr_write_callback("tcontrol", tcontrol.bits);
+  csr_write_callback(csr_name_map("tcontrol"), tcontrol.bits);
 }
 
 function tcontrol_mret_from_mmode() -> unit = {
   tcontrol = [tcontrol with mte = tcontrol[mpte]];
-  csr_write_callback("tcontrol", tcontrol.bits);
+  csr_write_callback(csr_name_map("tcontrol"), tcontrol.bits);
 }
 
 let sdtrig_scontext_width : range(0, 32) = config extensions.Sdtrig.scontext.width

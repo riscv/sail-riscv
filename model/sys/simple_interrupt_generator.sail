@@ -53,7 +53,7 @@ function sig_store(addr, width, data) = {
       if data[MSI] == 0b1 then sig_msip = value;
       if data[SSI] == 0b1 then sig_ssip = value;
 
-      csr_write_callback("mip", read_mip(IncludePlatformInterrupts).bits);
+      csr_write_callback(csr_name_map("mip"), read_mip(IncludePlatformInterrupts).bits);
 
       Ok(true)
     } else if paddr == plat_sig_base + SIG_GUEST_OFFSET & currentlyEnabled(Ext_H)
@@ -74,8 +74,8 @@ function sig_store(addr, width, data) = {
 
       // mip.SGEIP and hip.VSEIP both follow from hgeip, but they are derived on
       // read (see external_interrupts_pending()) so there is nothing to update.
-      csr_write_callback("hgeip", read_hgeip());
-      csr_write_callback("mip", read_mip(IncludePlatformInterrupts).bits);
+      csr_write_callback(csr_name_map("hgeip"), read_hgeip());
+      csr_write_callback(csr_name_map("mip"), read_mip(IncludePlatformInterrupts).bits);
 
       Ok(true)
     } else Err(addr, E_SAMO_Access_Fault())

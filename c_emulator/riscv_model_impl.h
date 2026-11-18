@@ -78,6 +78,8 @@ public:
   std::string privilege_to_string(Privilege privilege);
   std::string ptw_error_to_string(PTW_Error error_type);
   std::string translation_stage_to_string(TranslationStage stage);
+  std::string csr_index_to_string(uint64_t csr_index);
+  std::string reg_index_to_abi_string(sbits reg_index);
 
   // access to model configuration
 
@@ -144,16 +146,15 @@ private:
   // These functions are called by the Sail code.
 
   unit fetch_callback(sbits opcode) override;
-  unit mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
-  unit mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) override;
+  unit mem_write_callback(ModelImpl::MemoryAccessType access_type, sbits paddr, int64_t width, lbits value) override;
+  unit mem_read_callback(ModelImpl::MemoryAccessType access_type, sbits paddr, int64_t width, lbits value) override;
   unit mem_exception_callback(sbits paddr, uint64_t num_of_exception) override;
-  unit xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) override;
+  unit xreg_write_callback(sbits reg, sbits value) override;
   unit freg_write_callback(unsigned reg, sbits value) override;
-  // `full` indicates that the name and index of the CSR are provided.
   // 64 bit CSRs use a long_csr_write_callback Sail function that automatically
-  // makes two csr_full_write_callback calls on RV32.
-  unit csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value) override;
-  unit csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value) override;
+  // makes two csr_write_callback calls on RV32.
+  unit csr_write_callback(unsigned reg, sbits value) override;
+  unit csr_read_callback(unsigned reg, sbits value) override;
   unit vreg_write_callback(unsigned reg, lbits value) override;
   unit pc_write_callback(sbits new_pc) override;
   unit redirect_callback(sbits new_pc) override;

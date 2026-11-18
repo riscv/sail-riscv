@@ -152,7 +152,7 @@ function clause execute VLSEGFFTYPE(nf, vm, rs1, width, vd) = {
             Err(e)   => if i == 0 then return e
                         else {
                           vl = to_bits(i);
-                          csr_write_callback("vl", zero_extend(vl));
+                          csr_write_callback(csr_name_map("vl"), zero_extend(vl));
                           trimmed = true
                         },
           }

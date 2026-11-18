@@ -299,7 +299,7 @@ function update_mip() -> unit = {
   mip = supported_interrupts_mask(new_mip);
 
   if old_mip != mip.bits then {
-    csr_write_callback("mip", read_mip(IncludePlatformInterrupts).bits);
+    csr_write_callback(csr_name_map("mip"), read_mip(IncludePlatformInterrupts).bits);
   }
 }
 
@@ -325,7 +325,7 @@ function clause write_CSR(0x303, value) = { mideleg = legalize_mideleg(mideleg, 
 function reset_mideleg() -> unit = {
   if hartSupports(Ext_S) then {
     mideleg = legalize_mideleg(mideleg, mideleg.bits);
-    csr_write_callback("mideleg", mideleg.bits);
+    csr_write_callback(csr_name_map("mideleg"), mideleg.bits);
   }
 }
 

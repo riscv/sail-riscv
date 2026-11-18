@@ -640,9 +640,9 @@ function clause execute MRET() = {
     if hartSupports(Ext_Sdtrig)
     then tcontrol_mret_from_mmode();
 
-    long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
+    long_csr_write_callback(csr_name_map("mstatus"), csr_name_map("mstatush"), read_mstatus().bits);
     if   xret_modifies_vsstatus(prev_priv, cur_privilege)
-    then csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0]);
+    then csr_write_callback(csr_name_map("vsstatus"), vsstatus.bits[xlen - 1 .. 0]);
 
     if   get_config_print_exception()
     then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
@@ -712,11 +712,11 @@ function clause execute SRET() = {
     if   hartSupports(Ext_Zicfilp)
     then zicfilp_restore_elp_on_xret(sRET, prev_priv, cur_privilege);
 
-    long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
+    long_csr_write_callback(csr_name_map("mstatus"), csr_name_map("mstatush"), read_mstatus().bits);
     if   privLevel_is_virtual(prev_priv) | xret_modifies_vsstatus(prev_priv, cur_privilege)
-    then csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0])
+    then csr_write_callback(csr_name_map("vsstatus"), vsstatus.bits[xlen - 1 .. 0])
     else if currentlyEnabled(Ext_H)
-    then csr_write_callback("hstatus", hstatus.bits[xlen - 1 .. 0]);
+    then csr_write_callback(csr_name_map("hstatus"), hstatus.bits[xlen - 1 .. 0]);
 
     if   get_config_print_exception()
     then print_log("ret-ing from " ^ to_str(prev_priv) ^ " to " ^ to_str(cur_privilege));
