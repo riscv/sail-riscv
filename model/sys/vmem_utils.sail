@@ -225,6 +225,10 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   let lo_bytes = if do_split_access then in_page_bytes else width;
   let hi_bytes = width - lo_bytes;
 
+  // Bytes of data handled in the first iteration and second iteration:
+  // Increasing split access: 1. lo_bytes .. 0       2. width .. lo_bytes
+  // Decreasing split access: 1. width .. lo_bytes   2. lo_bytes .. 0
+  // Unsplit access:          width .. 0
   foreach (i from 0 to 1) {
     let next_page    = if sys_misaligned_order_decreasing then i == 0 else i == 1;
     let offset       = if next_page then lo_bytes else 0;
