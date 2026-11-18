@@ -14,7 +14,7 @@ public:
   uint64_t sepc() const;
 
   // callbacks_if
-  void trap_callback(ModelImpl &model, bool is_interrupt, fbits cause) override;
+  void exception_callback(ModelImpl &model, fbits cause, const ModelImpl::ExceptionContext &ctx) override;
   void xret_callback(ModelImpl &model, bool is_mret) override;
   void instret_callback(ModelImpl &model) override;
 

@@ -1,0 +1,7 @@
+{
+  "window": "main",
+  "events": [
+    { "match": "c.sw", "mem_d": [4] },
+    { "match": "c.lw", "mem_d": [4], "x_rd": true }
+  ]
+}
