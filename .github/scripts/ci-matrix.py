@@ -65,7 +65,7 @@ def define_build_matrix_entries() -> list[dict]:
             "container": "rockylinux:8.9.20231119",
             "cmake_version": "3.20.0",
             "compiler": "clang",
-            "first_party_tests": False,
+            "first_party_tests": True,
         }
     )
     entries.append(
@@ -74,7 +74,7 @@ def define_build_matrix_entries() -> list[dict]:
             "container": "rockylinux:8.9.20231119",
             "cmake_version": "3.20.0",
             "compiler": "clang",
-            "first_party_tests": False,
+            "first_party_tests": True,
         }
     )
 
