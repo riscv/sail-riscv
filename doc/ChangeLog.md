@@ -55,6 +55,7 @@
   - https://github.com/riscv/sail-riscv/issues/2090 : negated Sdtrig matches fired incorrectly on multibyte accesses
   - https://github.com/riscv/sail-riscv/pull/2093 : `hstateen` should only mask `sstateen` in VS-mode or VU-mode
   - https://github.com/riscv/sail-riscv/pull/2111 : GVA was set from the current privilege mode for trigger breakpoints, instead of whether `tval` holds a guest virtual address
+  - https://github.com/riscv/sail-riscv/pull/2124 : Accessing a shadow-stack page with a reserved Svnapot encoding raised an access fault instead of a page fault.
 
 # Release notes for version 0.16
 
