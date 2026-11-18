@@ -1,0 +1,23 @@
+benchmarks:
+  # - name: "Linux boot"
+  #   exec: ./build/c_emulator/sail_riscv_sim --inst-limit 2000000 --device-tree-blob os-boot/build/sail.dtb os-boot/build/fw_payload_linux.elf
+  - name: "startup: rv64ui-p-simple"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/rv64ui-p-simple
+  - name: "riscv-tests: rv64ui-v-ld_st"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/rv64ui-v-ld_st
+  - name: "riscv-tests: rv64ua-v-lrsc"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/rv64ua-v-lrsc
+  - name: "riscv-tests: rv64uc-v-rvc"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/rv64uc-v-rvc
+  - name: "riscv-tests: rv64ud-v-fcvt_w"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/rv64ud-v-fcvt_w
+  - name: "vector: vfadd.vf"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v128_e64.json test-elfs/riscv-vector-tests-v128x64/rv64vfadd_vf-11
+  - name: "vector: vaadd.vx"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v128_e64.json test-elfs/riscv-vector-tests-v128x64/rv64vaadd_vx-14
+  - name: "act: pmps_csr_access"
+    exec: ./build/c_emulator/sail_riscv_sim --config-override build/test/arch_test_override.json test-elfs/riscv-arch-tests/sail-rv64-max/elfs/priv/pmp/pmp64/PMPS/pmps_csr_access.elf
+  - name: "act: sv39_exceptions_Umode"
+    exec: ./build/c_emulator/sail_riscv_sim --config-override build/test/arch_test_override.json test-elfs/riscv-arch-tests/sail-rv64-max/elfs/priv/ExceptionsSv/sv39_exceptions_Umode.elf
+  - name: "act: Zfh-fmadd.h-04"
+    exec: ./build/c_emulator/sail_riscv_sim --config-override build/test/arch_test_override.json test-elfs/riscv-arch-tests/sail-rv64-max/elfs/rv64i/Zfh/Zfh-fmadd.h-04.elf

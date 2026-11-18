@@ -189,15 +189,21 @@ function pt_walk(
 
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
       let pte_ext   = ext_bits_of_PTE(pte);
+      let ppn       = PPN_of_PTE(pte); // 22 or 44.
+      // NAPOT PTEs are currently reserved for level > 0, and only 64K NAPOT PTEs are valid.
+      let pte_napot_bits = 4;
+      let napot_reserved =
+        pte_ext[N] == 0b1 & (if level > 0
+                             then pte_reserved_bits_must_be_zero
+                             else currentlyEnabled(Ext_Svnapot) & ppn[pte_napot_bits - 1 .. 0] != 0b1000);
 
-      if pte_is_invalid(pte_flags, pte_ext, stage) then {
+      if pte_is_invalid(pte_flags, pte_ext, stage) | napot_reserved then {
         // Step 3 of VATP.
         ptw_fail_callback(stage, level, PTW_Invalid_PTE(), bits_of(pte_addr));
         Err(PTW_Invalid_PTE(), ext_ptw)
       }
       else {
         // Step 4 of VATP.
-        let ppn = PPN_of_PTE(pte); // 22 or 44.
         // The G bit is not used in G-stage PTEs and must be ignored by hardware.
         let global = global | (stage != G_Stage & pte_flags[G] == 0b1);
         if pte_is_non_leaf(pte_flags) then {
@@ -229,19 +235,10 @@ function pt_walk(
             },
             PTE_Check_Success(ext_ptw) => {
               let ppn = if level > 0 then {
-                // NAPOT PTEs are currently reserved for level > 0.
-                if pte_ext[N] == 0b1 & pte_reserved_bits_must_be_zero
-                then return Err(PTW_Invalid_PTE(), ext_ptw);
-
                 // Compose final PA in superpage:
                 // Superpage PPN @ lower VPNs @ page-offset
                 ppn[length(ppn) - 1 .. low_bits] @ vpn[low_bits - 1 .. 0]
               } else if currentlyEnabled(Ext_Svnapot) & pte_ext[N] == 0b1 then {
-                // Only 64K NAPOT PTEs are valid.
-                let pte_napot_bits = 4;
-                if ppn[pte_napot_bits - 1 .. 0] != 0b1000
-                then return Err(PTW_Invalid_PTE(), ext_ptw);
-
                 [ppn with (pte_napot_bits - 1) .. 0 = vpn[pte_napot_bits - 1 .. 0]]
               } else {
                 ppn
