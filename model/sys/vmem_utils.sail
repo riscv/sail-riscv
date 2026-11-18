@@ -356,28 +356,20 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
 
   let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res);
-  let next_page_addr = Virtaddr(vaddr_bits + in_page_bytes);
-
-  if sys_misaligned_order_decreasing & do_split_access then {
-    let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(next_page_addr, next_page_bytes, write_value, access, access_info, aq, rl, res) {
-      Err(e) => return Err(e),
-      Ok(s)  => write_success = write_success & s,
-    }
-  };
+  let lo_bytes = if do_split_access then in_page_bytes else width;
+  let hi_bytes = width - lo_bytes;
 
   // SC is never split, so the reservation is only checked on the whole access.
-  let access_width = if do_split_access then in_page_bytes else width;
-  match translate_and_write_value(vaddr, access_width, data[8 * access_width - 1 .. 0], access, access_info, aq, rl, res) {
-    Err(e) => return Err(e),
-    Ok(s)  => write_success = write_success & s,
-  };
-
-  if not(sys_misaligned_order_decreasing) & do_split_access then {
-    let write_value = data[8 * width - 1 .. 8 * in_page_bytes];
-    match translate_and_write_value(next_page_addr, next_page_bytes, write_value, access, access_info, aq, rl, res) {
-      Err(e) => return Err(e),
-      Ok(s)  => write_success = write_success & s,
+  foreach (i from 0 to 1) {
+    let next_page    = if sys_misaligned_order_decreasing then i == 0 else i == 1;
+    let offset       = if next_page then lo_bytes else 0;
+    let access_width = if next_page then hi_bytes else lo_bytes;
+    if access_width > 0 then {
+      let addr = Virtaddr(vaddr_bits + offset);
+      match translate_and_write_value(addr, access_width, data[8 * (offset + access_width) - 1 .. 8 * offset], access, access_info, aq, rl, res) {
+        Err(e) => return Err(e),
+        Ok(s)  => write_success = write_success & s,
+      }
     }
   };
 
