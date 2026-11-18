@@ -118,11 +118,15 @@ if (STATIC)
     endif()
 endif()
 
+# Global option for downloading C++ library dependencies.
+# To prevent download of all dependencies (except GMP below), disable this option.
+# (GMP is not yet included since it is needed for the `sail_runtime` target.)
+option(DOWNLOAD_CPP_DEPENDENCIES "Download C++ build dependencies." ON)
 
-# These are the main requirements.
 # Don't use `REQUIRED` so that we can print custom help messages.
 option(DOWNLOAD_GMP "Download libgmp and build the library locally instead of using a system installation" OFF)
-if (DOWNLOAD_GMP)
+# These are the main requirements.
+if (DOWNLOAD_CPP_DEPENDENCIES AND DOWNLOAD_GMP)
     include(ExternalProject)
     # Build GMP with LTO when ENABLE_LTO is on, using the same toolchain and
     # IPO flags as the main project so the LTO bytecode is compatible.
