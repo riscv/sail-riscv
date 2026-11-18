@@ -222,37 +222,26 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // virtual memory is in effect, and (b) it crosses a page boundary.
   // If we do split, perform the split access in the configured order.
   let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res);
+  let lo_bytes = if do_split_access then in_page_bytes else width;
+  let hi_bytes = width - lo_bytes;
 
-  if sys_misaligned_order_decreasing & do_split_access then {
-    // Do next page access first.
-    let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translate_and_read_value(access_addr, next_page_bytes, access, access_info, aq, rl, res) {
-      Err(e)   => return Err(e),
-      Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
-    }
-  };
-
-  // If the access was split, only the in-page bytes should be
-  // accessed, otherwise all bytes should be accessed.
-  let access_width = if do_split_access then in_page_bytes else width;
-  match translate_and_read_value(vaddr, access_width, access, access_info, aq, rl, res) {
-    Err(e)       => return Err(e),
-    Ok(paddr, v) => {
-      if res then {
-        // LR is not split.
-        assert(width == access_width);
-        load_reservation(bits_of(paddr), width);
-      };
-      data[8 * access_width - 1 .. 0] = v
-    },
-  };
-
-  if not(sys_misaligned_order_decreasing) & do_split_access then {
-    // Do next page access next.
-    let access_addr = Virtaddr(vaddr_bits + in_page_bytes);
-    match translate_and_read_value(access_addr, next_page_bytes, access, access_info, aq, rl, res) {
-      Err(e)   => return Err(e),
-      Ok(_, v) => data[8 * width - 1 .. 8 * in_page_bytes] = v,
+  foreach (i from 0 to 1) {
+    let next_page    = if sys_misaligned_order_decreasing then i == 0 else i == 1;
+    let offset       = if next_page then lo_bytes else 0;
+    let access_width = if next_page then hi_bytes else lo_bytes;
+    if access_width > 0 then {
+      let addr = Virtaddr(vaddr_bits + offset);
+      match translate_and_read_value(addr, access_width, access, access_info, aq, rl, res) {
+        Err(e)       => return Err(e),
+        Ok(paddr, v) => {
+          if res then {
+            // LR is not split.
+            assert(access_width == width);
+            load_reservation(bits_of(paddr), width);
+          };
+          data[8 * (offset + access_width) - 1 .. 8 * offset] = v
+        },
+      }
     }
   };
 
