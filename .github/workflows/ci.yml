@@ -15,7 +15,7 @@ concurrency:
 jobs:
   define-matrix:
     name: Define CI matrix
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       build_include: ${{ steps.define_build_matrix.outputs.build_include }}
       test_include: ${{ steps.define_test_matrix.outputs.test_include }}
@@ -60,7 +60,7 @@ jobs:
         uses: ./.github/actions/sail-setup
         with:
           cmake-version: "${{ matrix.cmake_version }}"
-          install-clang: "true"
+          install-clang: "${{ matrix.first_party_tests }}"
           model-compiler: "${{ matrix.compiler }}"
 
       - name: Ensure pre-commit checks pass
@@ -80,14 +80,13 @@ jobs:
 
       - name: Build simulator and first party tests
         run: |
-          # CLANG_VERSION is set by the sail-setup action when install-clang is enabled.
+          # CLANG_VERSION is set by the sail-setup action when it installs Clang on an Ubuntu runner.
           CLANG_FLAG=""
           if [ -n "$CLANG_VERSION" ]; then
             CLANG_FLAG="-DCLANG_BIN=/usr/bin/clang-$CLANG_VERSION"
           fi
           # Ninja is used because the CMake Makefile generator doesn't
           # build top-level targets in parallel unfortunately.
-          # First party tests cannot be built in the Rocky container due to lack of a suitable toolchain.
           cmake -S . -B build -GNinja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DWARNINGS_AS_ERRORS=TRUE \
@@ -163,6 +162,7 @@ jobs:
         with:
           cmake-version: "${{ matrix.cmake_version }}"
           install-clang: "false"
+          model-compiler: "${{ matrix.compiler }}"
 
       - name: Name build artifact
         id: name_build
@@ -223,7 +223,7 @@ jobs:
 
   linux:
     name: "Linux boot"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Install packages
         run: sudo apt-get install -y --no-install-recommends device-tree-compiler
@@ -268,7 +268,7 @@ jobs:
 
   xvisor:
     name: "Xvisor boot"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Install packages
         run: sudo apt-get install -y --no-install-recommends device-tree-compiler
@@ -317,7 +317,7 @@ jobs:
   # A skipped job is considered passing by GitHub, so this job needs to
   # always run and then checks the results of all of the jobs it depends on.
   ci_pass:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: [define-matrix, build, run_tests, linux, xvisor]
     if: "${{ always() }}"
     steps:

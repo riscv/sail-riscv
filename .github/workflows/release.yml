@@ -43,12 +43,12 @@ jobs:
       matrix:
         include:
           - name: Linux-x86_64
-            os: ubuntu-latest
-            container: rockylinux:8.9.20231119
+            os: ubuntu-26.04
+            container: rockylinux:8.10.20240528
 
           - name: Linux-aarch64
-            os: ubuntu-24.04-arm
-            container: rockylinux:8.9.20231119
+            os: ubuntu-26.04-arm
+            container: rockylinux:8.10.20240528
 
           - name: Mac-arm64
             os: macos-latest
@@ -125,7 +125,7 @@ jobs:
   release:
     needs: build
     if: github.event_name != 'schedule' || github.repository == 'riscv/sail-riscv'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       # Required to create a release.
       contents: write
