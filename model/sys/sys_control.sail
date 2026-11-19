@@ -193,34 +193,34 @@ function tval(excinfo : option(xlenbits)) -> xlenbits = {
 }
 
 function track_trap(p : Privilege, is_interrupt : bool, cause : exc_code) -> unit = {
-  long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
+  long_csr_write_callback(csr_name_map("mstatus"), csr_name_map("mstatush"), read_mstatus().bits);
   match (p) {
     Machine => {
-      csr_write_callback("mcause", mcause.bits);
-      csr_write_callback("mtval", mtval);
-      csr_write_callback("mepc", mepc);
+      csr_write_callback(csr_name_map("mcause"), mcause.bits);
+      csr_write_callback(csr_name_map("mtval"), mtval);
+      csr_write_callback(csr_name_map("mepc"), mepc);
       if currentlyEnabled(Ext_H) then {
-        csr_write_callback("mtval2", mtval2);
-        csr_write_callback("mtinst", mtinst);
+        csr_write_callback(csr_name_map("mtval2"), mtval2);
+        csr_write_callback(csr_name_map("mtinst"), mtinst);
       };
     },
     Supervisor => {
-      csr_write_callback("scause", scause.bits);
-      csr_write_callback("stval", stval);
-      csr_write_callback("sepc", sepc);
+      csr_write_callback(csr_name_map("scause"), scause.bits);
+      csr_write_callback(csr_name_map("stval"), stval);
+      csr_write_callback(csr_name_map("sepc"), sepc);
       if currentlyEnabled(Ext_H) then {
-        csr_write_callback("hstatus", hstatus.bits[xlen - 1 .. 0]);
-        csr_write_callback("htval", htval);
-        csr_write_callback("htinst", htinst);
+        csr_write_callback(csr_name_map("hstatus"), hstatus.bits[xlen - 1 .. 0]);
+        csr_write_callback(csr_name_map("htval"), htval);
+        csr_write_callback(csr_name_map("htinst"), htinst);
       };
     },
     User              => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
     VirtualUser       => internal_error(__FILE__, __LINE__, "Invalid privilege level"),
     VirtualSupervisor => {
-      csr_write_callback("vscause", vscause.bits);
-      csr_write_callback("vstval", vstval);
-      csr_write_callback("vsepc", vsepc);
-      csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0]);
+      csr_write_callback(csr_name_map("vscause"), vscause.bits);
+      csr_write_callback(csr_name_map("vstval"), vstval);
+      csr_write_callback(csr_name_map("vsepc"), vsepc);
+      csr_write_callback(csr_name_map("vsstatus"), vsstatus.bits[xlen - 1 .. 0]);
     },
   };
 
@@ -528,7 +528,7 @@ function reset_misa() -> unit = {
 
   // Set `X` as configured.
   misa[X]   = bool_to_bit(plat_has_non_standard_extensions);
-  csr_write_callback("misa", misa.bits);
+  csr_write_callback(csr_name_map("misa"), misa.bits);
 }
 
 // Address to reset PC to on reset.
@@ -562,7 +562,7 @@ function reset_sys() -> unit = {
   // See https://github.com/riscv/sail-riscv/issues/639
   // mstatus[MBE] = 0b0;
 
-  long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
+  long_csr_write_callback(csr_name_map("mstatus"), csr_name_map("mstatush"), read_mstatus().bits);
 
   // "The misa register is reset to enable the maximal set of supported extensions"
   reset_misa();
@@ -582,7 +582,7 @@ function reset_sys() -> unit = {
   // but the value 0 should be returned on implementations that do not
   // distinguish different reset conditions."
   mcause.bits = zeros();
-  csr_write_callback("mcause", mcause.bits);
+  csr_write_callback(csr_name_map("mcause"), mcause.bits);
 
   // "Writable PMP registers’ A and L fields are set to 0, unless the platform
   // mandates a different reset value for some PMP registers’ A and L fields."

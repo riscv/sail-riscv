@@ -10,12 +10,17 @@ void callbacks_if::pre_step_callback([[maybe_unused]] ModelImpl &model, [[maybe_
 void callbacks_if::post_step_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] bool is_waiting) {
 }
 
-void callbacks_if::fetch_callback([[maybe_unused]] ModelImpl &model, [[maybe_unused]] sbits opcode) {
+void callbacks_if::fetch_callback(
+  [[maybe_unused]] ModelImpl &model,
+  [[maybe_unused]] sbits pc,
+  [[maybe_unused]] sbits opcode
+) {
 }
 
 void callbacks_if::mem_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -24,7 +29,8 @@ void callbacks_if::mem_write_callback(
 
 void callbacks_if::mem_read_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const char *type,
+  [[maybe_unused]] ModelImpl::Privilege privilege,
+  [[maybe_unused]] ModelImpl::MemoryAccessType access,
   [[maybe_unused]] sbits paddr,
   [[maybe_unused]] int64_t width,
   [[maybe_unused]] lbits value
@@ -38,9 +44,8 @@ void callbacks_if::mem_exception_callback(
 ) {
 }
 
-void callbacks_if::xreg_full_write_callback(
+void callbacks_if::xreg_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const_sail_string abi_name,
   [[maybe_unused]] sbits reg,
   [[maybe_unused]] sbits value
 ) {
@@ -48,30 +53,28 @@ void callbacks_if::xreg_full_write_callback(
 
 void callbacks_if::freg_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] sbits value
 ) {
 }
 
-void callbacks_if::csr_full_write_callback(
+void callbacks_if::csr_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const_sail_string csr_name,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] sbits value
 ) {
 }
 
-void callbacks_if::csr_full_read_callback(
+void callbacks_if::csr_read_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] const_sail_string csr_name,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] sbits value
 ) {
 }
 
 void callbacks_if::vreg_write_callback(
   [[maybe_unused]] ModelImpl &model,
-  [[maybe_unused]] unsigned reg,
+  [[maybe_unused]] uint64_t reg,
   [[maybe_unused]] lbits value
 ) {
 }

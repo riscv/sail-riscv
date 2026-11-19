@@ -13,23 +13,37 @@ public:
   // Callback invoked after each step
   virtual void post_step_callback(ModelImpl &model, bool is_waiting);
 
-  virtual void fetch_callback(ModelImpl &model, sbits opcode);
+  virtual void fetch_callback(ModelImpl &model, sbits pc, sbits opcode);
 
-  virtual void mem_write_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value);
+  virtual void mem_write_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
 
-  virtual void mem_read_callback(ModelImpl &model, const char *type, sbits paddr, int64_t width, lbits value);
+  virtual void mem_read_callback(
+    ModelImpl &model,
+    ModelImpl::Privilege privilege,
+    ModelImpl::MemoryAccessType access,
+    sbits paddr,
+    int64_t width,
+    lbits value
+  );
 
   virtual void mem_exception_callback(ModelImpl &model, sbits paddr, uint64_t num_of_exception);
 
-  virtual void xreg_full_write_callback(ModelImpl &model, const_sail_string abi_name, sbits reg, sbits value);
+  virtual void xreg_write_callback(ModelImpl &model, sbits reg, sbits value);
 
-  virtual void freg_write_callback(ModelImpl &model, unsigned reg, sbits value);
+  virtual void freg_write_callback(ModelImpl &model, uint64_t reg, sbits value);
 
-  virtual void csr_full_write_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value);
+  virtual void csr_write_callback(ModelImpl &model, uint64_t reg, sbits value);
 
-  virtual void csr_full_read_callback(ModelImpl &model, const_sail_string csr_name, unsigned reg, sbits value);
+  virtual void csr_read_callback(ModelImpl &model, uint64_t reg, sbits value);
 
-  virtual void vreg_write_callback(ModelImpl &model, unsigned reg, lbits value);
+  virtual void vreg_write_callback(ModelImpl &model, uint64_t reg, lbits value);
 
   virtual void pc_write_callback(ModelImpl &model, sbits new_pc);
 

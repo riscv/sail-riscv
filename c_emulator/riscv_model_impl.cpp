@@ -47,25 +47,37 @@ void ModelImpl::set_reservation_invalidate_on_same_hart_store(bool invalidate_on
   m_reservation_invalidate_on_same_hart_store = invalidate_on_same_hart_store;
 }
 
-unit ModelImpl::fetch_callback(sbits opcode) {
+unit ModelImpl::fetch_callback(sbits pc, sbits opcode) {
   for (auto c : m_callbacks) {
-    c->fetch_callback(*this, opcode);
+    c->fetch_callback(*this, pc, opcode);
   }
   return UNIT;
 }
 
-unit ModelImpl::mem_write_callback(const char *type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_write_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_write_callback(*this, type, paddr, width, value);
+    c->mem_write_callback(*this, privilege, access, paddr, width, value);
   }
   if (m_reservation_invalidate_on_same_hart_store && match_reservation(paddr)) {
     cancel_reservation(UNIT);
   };
   return UNIT;
 }
-unit ModelImpl::mem_read_callback(const char *type, sbits paddr, int64_t width, lbits value) {
+unit ModelImpl::mem_read_callback(
+  Privilege privilege,
+  MemoryAccessType access,
+  sbits paddr,
+  int64_t width,
+  lbits value
+) {
   for (auto c : m_callbacks) {
-    c->mem_read_callback(*this, type, paddr, width, value);
+    c->mem_read_callback(*this, privilege, access, paddr, width, value);
   }
   return UNIT;
 }
@@ -77,35 +89,35 @@ unit ModelImpl::mem_exception_callback(sbits paddr, uint64_t num_of_exception) {
   return UNIT;
 }
 
-unit ModelImpl::xreg_full_write_callback(const_sail_string abi_name, sbits reg, sbits value) {
+unit ModelImpl::xreg_write_callback(sbits reg, sbits value) {
   for (auto c : m_callbacks) {
-    c->xreg_full_write_callback(*this, abi_name, reg, value);
+    c->xreg_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::freg_write_callback(unsigned reg, sbits value) {
+unit ModelImpl::freg_write_callback(uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
     c->freg_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::csr_full_write_callback(const_sail_string csr_name, unsigned reg, sbits value) {
+unit ModelImpl::csr_write_callback(uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
-    c->csr_full_write_callback(*this, csr_name, reg, value);
+    c->csr_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::csr_full_read_callback(const_sail_string csr_name, unsigned reg, sbits value) {
+unit ModelImpl::csr_read_callback(uint64_t reg, sbits value) {
   for (auto c : m_callbacks) {
-    c->csr_full_read_callback(*this, csr_name, reg, value);
+    c->csr_read_callback(*this, reg, value);
   }
   return UNIT;
 }
 
-unit ModelImpl::vreg_write_callback(unsigned reg, lbits value) {
+unit ModelImpl::vreg_write_callback(uint64_t reg, lbits value) {
   for (auto c : m_callbacks) {
     c->vreg_write_callback(*this, reg, value);
   }
@@ -682,6 +694,24 @@ std::string ModelImpl::translation_stage_to_string(TranslationStage stage) {
   sail_string sstr = nullptr;
   CREATE(sail_string)(&sstr);
   ztranslationStage_to_str(&sstr, stage);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
+std::string ModelImpl::csr_index_to_string(uint64_t csr_index) {
+  sail_string sstr = nullptr;
+  CREATE(sail_string)(&sstr);
+  zcsr_name_map_forwards(&sstr, csr_index);
+  std::string str(sstr);
+  KILL(sail_string)(&sstr);
+  return str;
+}
+
+std::string ModelImpl::reg_index_to_abi_string(sbits reg_index) {
+  sail_string sstr = nullptr;
+  CREATE(sail_string)(&sstr);
+  zreg_name_forwards(&sstr, reg_index);
   std::string str(sstr);
   KILL(sail_string)(&sstr);
   return str;

@@ -111,13 +111,13 @@ function dirty_fd_context() -> unit = {
   assert(hartSupports(Ext_F));
   mstatus[FS] = extStatus_map(Dirty);
   mstatus[SD] = 0b1;
-  long_csr_write_callback("mstatus", "mstatush", read_mstatus().bits);
+  long_csr_write_callback(csr_name_map("mstatus"), csr_name_map("mstatush"), read_mstatus().bits);
   // When V=1 both vsstatus.FS and mstatus.FS are in effect, and modifying
   // floating-point state must set both to Dirty.
   if inVirtualPrivilege() then {
     vsstatus[FS] = extStatus_map(Dirty);
     vsstatus[SD] = 0b1;
-    csr_write_callback("vsstatus", vsstatus.bits[xlen - 1 .. 0]);
+    csr_write_callback(csr_name_map("vsstatus"), vsstatus.bits[xlen - 1 .. 0]);
   }
 }
 
@@ -458,6 +458,6 @@ function accrue_fflags(flags : bits(5)) -> unit = {
 
   if set_dirty then dirty_fd_context_if_present();
 
-  csr_write_callback("fflags", zero_extend(fcsr[FFLAGS]));
-  csr_write_callback("fcsr", zero_extend(fcsr.bits));
+  csr_write_callback(csr_name_map("fflags"), zero_extend(fcsr[FFLAGS]));
+  csr_write_callback(csr_name_map("fcsr"), zero_extend(fcsr.bits));
 }

@@ -66,8 +66,8 @@ private function handle_illegal_vtype(rd : regidx) -> ExecutionResult = {
 
   vtype.bits = 0b1 @ zeros(xlen - 1); // set vtype.vill
   vl = zeros();
-  csr_write_callback("vtype", vtype.bits);
-  csr_write_callback("vl", zero_extend(vl));
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), zero_extend(vl));
   set_vstart(zeros());
 
   // "The vset{i}vl{i} instructions set the vtype and vl CSRs based on their arguments,
@@ -139,9 +139,9 @@ private function execute_vsetvl_type(
   // reset vstart to 0
   set_vstart(zeros());
 
-  csr_write_callback("vtype", vtype.bits);
-  csr_write_callback("vl", zero_extend(vl));
-  csr_write_callback("vstart", zero_extend(vstart));
+  csr_write_callback(csr_name_map("vtype"), vtype.bits);
+  csr_write_callback(csr_name_map("vl"), zero_extend(vl));
+  csr_write_callback(csr_name_map("vstart"), zero_extend(vstart));
 
   RETIRE_SUCCESS
 }
