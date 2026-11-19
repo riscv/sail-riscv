@@ -8,10 +8,16 @@ inputs:
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
     required: false
+  # install-clang installs Clang on the runner but leaves the default compiler detected
+  # by CMake unchanged. On Linux, this is usually GCC. It may be necessary to install
+  # clang even for a GCC build of the model to compile the first-party tests.
   install-clang:
-    description: "Install latest Clang"
+    description: "Install Clang"
     required: false
     default: "false"
+  # model-compiler specifies the compiler to use for building the sail model on Linux (gcc or clang).
+  # It will also install clang if needed.
+  # It has no effect on macOS, which always uses Apple Clang.
   model-compiler:
     description: 'Compiler for the model on Linux ("gcc" or "clang"). macOS always uses Apple Clang.'
     required: false
@@ -78,7 +84,11 @@ runs:
       run: |
         dnf install -y --enablerepo=devel libstdc++-static make gcc gcc-c++ pkg-config gmp-static ninja-build sudo
 
-    - name: Install latest Clang (Linux runner)
+    # Clang 22 is used for both Ubuntu and Rocky Linux runners. Clang 22 is the only version available in the Rocky
+    # dnf repository (though it fails to install if named clang-22 explicitly) and is also available on Ubuntu 26.04
+    # via apt. It is new enough to compile all of our first-party RISC-V tests. If we add first-part tests that need
+    # a newer compiler, we may need to update this version.
+    - name: Install Clang (Linux runner)
       if: runner.os == 'Linux' && (inputs.install-clang == 'true' || inputs.model-compiler == 'clang')
       shell: bash
       run: |
