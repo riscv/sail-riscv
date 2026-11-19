@@ -61,6 +61,9 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
 
   let vs1_emul_pow = if funct6 == VV_VRGATHEREI16 then 4 + LMUL_pow - SEW_pow else LMUL_pow;
 
+  // With VV_VRGATHEREI16 for SEW=8/LMUL=8, we can get an illegal EMUL of 16.
+  let valid_vs1_emul = vs1_emul_pow <= 3;
+
   // Check for source destination overlaps for vrgather instructions.
   let src_dst_overlap : bool = if funct6 == VV_VRGATHER
                                then vs1 == vd | vs2 == vd
@@ -79,6 +82,7 @@ function clause execute VVTYPE(funct6, vm, vs2, vs1, vd) = {
      illegal_normal(vd, vm) |
      not(valid_reg_overlap(vs1, vd, vs1_emul_pow, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_vs1_emul) |
      src_dst_overlap |
      src_src_overlap |
      src_mask_overlap
