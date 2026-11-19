@@ -31,9 +31,10 @@ jobs:
 
       - name: Build simulator
         run: |
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LTO=TRUE \
-          -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_ARCH_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E64=TRUE
-          ninja -C build sail_riscv_sim
+          DOWNLOAD_GMP=FALSE ./build_simulator_pgo.sh -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          # Download the vector tests that the benchmarks use. This is after the
+          # PGO build, so that they are not in the training set.
+          cmake -B build -DENABLE_RISCV_VECTOR_TESTS_V128_E64=TRUE
 
       # Link the current test release folder so codspeed.yml paths don't need the date
       - name: Link test ELFs

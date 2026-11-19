@@ -70,6 +70,40 @@ if (ENABLE_LTO)
     endif()
 endif()
 
+# Profile-guided optimization (PGO).
+# Build once with PGO_GENERATE, run typical workloads for profiling,
+# then build again with PGO_PROFILE.
+# build_simulator_pgo.sh does all of these steps.
+option(PGO_GENERATE "Build with instrumentation that collects a PGO profile" OFF)
+set(PGO_PROFILE_DIR "${CMAKE_BINARY_DIR}/pgo-profile" CACHE PATH "Output directory for PGO_GENERATE profiles")
+set(PGO_PROFILE "" CACHE PATH "PGO profile to use (a .profdata file for Clang, a profile directory for GCC)")
+if (PGO_GENERATE AND PGO_PROFILE)
+    message(FATAL_ERROR "PGO_GENERATE and PGO_PROFILE cannot be used together")
+endif()
+if (PGO_GENERATE)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(pgo_flags "-fprofile-instr-generate=${PGO_PROFILE_DIR}/%m.profraw")
+    else()
+        set(pgo_flags "-fprofile-generate=${PGO_PROFILE_DIR}")
+    endif()
+    add_compile_options(${pgo_flags})
+    add_link_options(${pgo_flags})
+    message(STATUS "PGO instrumentation enabled, profiles go to ${PGO_PROFILE_DIR}")
+elseif (PGO_PROFILE)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        add_compile_options("-fprofile-instr-use=${PGO_PROFILE}")
+    else()
+        add_compile_options("-fprofile-use=${PGO_PROFILE}")
+        # GCC 10 and later. Without it, code that training did not run is overly optimized for size at the expense of performance.
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag(-fprofile-partial-training HAVE_PROFILE_PARTIAL_TRAINING)
+        if (HAVE_PROFILE_PARTIAL_TRAINING)
+            add_compile_options(-fprofile-partial-training)
+        endif()
+    endif()
+    message(STATUS "PGO enabled with profile ${PGO_PROFILE}")
+endif()
+
 # Don't allow undefined symbols. This is generally a pain.
 include(CheckLinkerFlag)
 

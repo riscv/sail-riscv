@@ -82,7 +82,7 @@ jobs:
       - name: Build simulator
         run: |
           git config --global --add safe.directory '*'
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DSTATIC=TRUE -DENABLE_RISCV_TESTS=TRUE -DENABLE_RISCV_ARCH_TESTS=TRUE -DENABLE_RISCV_VECTOR_TESTS_V128_E32=TRUE -DFIRST_PARTY_TESTS=TRUE -DENABLE_LTO=TRUE
+          DOWNLOAD_GMP=FALSE ./build_simulator_pgo.sh -GNinja -DSTATIC=TRUE
           cd build
           ninja all
           ctest --parallel "$(getconf _NPROCESSORS_ONLN)"
