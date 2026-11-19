@@ -18,7 +18,7 @@ permissions:
 jobs:
   benchmarks:
     name: "Sail RISC-V (Benchmark)"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       # - name: Install packages
       #   run: sudo apt-get install -y --no-install-recommends device-tree-compiler

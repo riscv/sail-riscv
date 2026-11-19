@@ -13,15 +13,17 @@ def define_build_matrix_entries() -> list[dict]:
 
     entries.append(
         {
-            "os": "ubuntu-22.04",
+            "os": "ubuntu-24.04",
             "cmake_version": "3.20.0",
-            "first_party_tests": True,
+            "compiler": "gcc",
+            "first_party_tests": False,
         }
     )
     entries.append(
         {
-            "os": "ubuntu-22.04",
+            "os": "ubuntu-26.04",
             "cmake_version": "4.1.2",
+            "compiler": "clang",
             "first_party_tests": True,
             "run_all_steps": True,
         }
@@ -30,13 +32,15 @@ def define_build_matrix_entries() -> list[dict]:
         {
             "os": "ubuntu-24.04-arm",
             "cmake_version": "3.20.0",
-            "first_party_tests": True,
+            "compiler": "gcc",
+            "first_party_tests": False,
         }
     )
     entries.append(
         {
-            "os": "ubuntu-24.04-arm",
+            "os": "ubuntu-26.04-arm",
             "cmake_version": "4.1.2",
+            "compiler": "clang",
             "first_party_tests": True,
             "clang_tidy": True,
         }
@@ -57,18 +61,20 @@ def define_build_matrix_entries() -> list[dict]:
     )
     entries.append(
         {
-            "os": "ubuntu-latest",
-            "container": "rockylinux:8.9.20231119",
+            "os": "ubuntu-26.04",
+            "container": "rockylinux:8.10.20240528",
             "cmake_version": "3.20.0",
-            "first_party_tests": False,
+            "compiler": "clang",
+            "first_party_tests": True,
         }
     )
     entries.append(
         {
-            "os": "ubuntu-24.04-arm",
-            "container": "rockylinux:8.9.20231119",
+            "os": "ubuntu-26.04-arm",
+            "container": "rockylinux:8.10.20240528",
             "cmake_version": "3.20.0",
-            "first_party_tests": False,
+            "compiler": "clang",
+            "first_party_tests": True,
         }
     )
 

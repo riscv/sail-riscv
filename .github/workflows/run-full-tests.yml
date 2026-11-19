@@ -21,7 +21,7 @@ jobs:
   run-full-tests:
     # If triggered by a PR event, only run if the 'run-full-tests' label is present
     if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-full-tests') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:

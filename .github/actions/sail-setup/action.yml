@@ -8,46 +8,64 @@ inputs:
   sail-version:
     description: 'Sail version to install (use "latest" to build from source)'
     required: false
+  # install-clang installs Clang on the runner but leaves the default compiler detected
+  # by CMake unchanged. On Linux, this is usually GCC. It may be necessary to install
+  # clang even for a GCC build of the model to compile the first-party tests.
   install-clang:
-    description: "Install latest Clang"
+    description: "Install Clang"
     required: false
     default: "false"
+  # model-compiler specifies the compiler to use for building the sail model on Linux (gcc or clang).
+  # It will also install clang if needed.
+  # It has no effect on macOS, which always uses Apple Clang.
+  model-compiler:
+    description: 'Compiler for the model on Linux ("gcc" or "clang"). macOS always uses Apple Clang.'
+    required: false
+    default: "clang"
 
 # The 'default' Sail version below is the one specified in `cmake/sail_required_version.txt`.
 # This is the current CI Platform/Target support matrix:
 #
 #                          | RISC-V Model                 |sail-riscv-tests|first-party-tests|   Rocq    |    Lean        | Linux boot
 #--------------------------------------------------------------------------------------------------------------------------------------
-# ubuntu-22.04 (x86_64):   | Sail:  default (binary)      |                |                 |           |                |
-#                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
-#                          | Clang: latest (apt.llvm.org) |                |                 |           |                |
+# ubuntu-24.04 (x86_64):   | Sail:  default (binary)      |                |                 |           |                |
+# (GCC model)              | CMake: 3.20.0                |       x        |                 |           |                |
+#                          | Clang: -                     |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # ubuntu-24.04-arm:        | Sail:  default (binary)      |                |                 |           |                |
-#                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
-#                          | Clang: latest (apt.llvm.org) |                |                 |           |                |
+# (GCC model)              | CMake: 3.20.0                |       x        |                 |           |                |
+#                          | Clang: -                     |                |                 |           |                |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# ubuntu-26.04 (x86_64):   | Sail:  default (binary)      |                |                 |           |                |
+# (Clang model)            | CMake: 4.1.2                 |       x        |       x         |           |                |
+#                          | Clang: 22 (Ubuntu repos)     |                |                 |           |                |
+#--------------------------------------------------------------------------------------------------------------------------------------
+# ubuntu-26.04-arm:        | Sail:  default (binary)      |                |                 |           |                |
+# (Clang model)            | CMake: 4.1.2                 |       x        |       x         |           |                |
+#                          | Clang: 22 (Ubuntu repos)     |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # macos-latest:            | Sail:  default (opam)        |                |                 |           |                |
 #                          | CMake: 4.1.2 + 3.20.0        |       x        |       x         |           |                |
 #                          | Clang: brew versions         |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# ubuntu-latest:           | Sail:  default (binary)      |                |                 |           | Sail: latest   |
+# ubuntu-26.04:            | Sail:  default (binary)      |                |                 |           | Sail: latest   |
 #                          | CMake: (4.1.2)               |       x        |       x         |           | CMake: (4.1.2) |    x
-#                          | Clang: latest (apt.llvm.org) |                |                 |           | Clang: -       |
+#                          | Clang: 22 (Ubuntu repos)     |                |                 |           | Clang: -       |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# ubuntu-24.04:            | Sail:  (default)             |                |                 |           |                |
+# ubuntu-26.04:            | Sail:  (default)             |                |                 |           |                |
 #                          | CMake: (4.1.2)               |                |                 | rocq 9.1.1|                |
 #                          | Clang: -                     |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
 # (Container builds)       |                              |                |                 |           |                |
 # ------------------       |                              |                |                 |           |                |
 #                          |                              |                |                 |           |                |
-# rockylinux:8.9           | Sail:  default               |                |                 |           |                |
-# runner: ubuntu-latest    | CMake: 3.20.0                |       x        |                 |           |                |
-#                          | Clang: -                     |                |                 |           |                |
+# rockylinux:8.10          | Sail:  default               |                |                 |           |                |
+# runner: ubuntu-26.04     | CMake: 3.20.0                |       x        |       x         |           |                |
+#                          | Clang: Rocky AppStream       |                |                 |           |                |
 #--------------------------------------------------------------------------------------------------------------------------------------
-# rockylinux:8.9           | Sail:  default               |                |                 |           |                |
-# runner: ubuntu-24.04-arm | CMake: 3.20.0                |       x        |                 |           |                |
-#                          | Clang: -                     |                |                 |           |                |
+# rockylinux:8.10          | Sail:  default               |                |                 |           |                |
+# runner: ubuntu-26.04-arm | CMake: 3.20.0                |       x        |       x         |           |                |
+#                          | Clang: Rocky AppStream       |                |                 |           |                |
 
 runs:
   using: "composite"
@@ -66,17 +84,33 @@ runs:
       run: |
         dnf install -y --enablerepo=devel libstdc++-static make gcc gcc-c++ pkg-config gmp-static ninja-build sudo
 
-    - name: Install latest Clang (Linux runner)
-      if: runner.os == 'Linux' && inputs.install-clang == 'true' && job.container == null
+    # Clang 22 is used for both Ubuntu and Rocky Linux runners. Clang 22 is the only version available in the Rocky
+    # dnf repository (though it fails to install if named clang-22 explicitly) and is also available on Ubuntu 26.04
+    # via apt. It is new enough to compile all of our first-party RISC-V tests. If we add first-part tests that need
+    # a newer compiler, we may need to update this version.
+    - name: Install Clang (Linux runner)
+      if: runner.os == 'Linux' && (inputs.install-clang == 'true' || inputs.model-compiler == 'clang')
       shell: bash
       run: |
-        # Install newer clang manually because current Ubuntu runners don't have
-        # a clang version that supports newer RISC-V extensions.
-        curl -O https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        CLANG_VERSION=21
-        sudo ./llvm.sh $CLANG_VERSION
-        echo "CLANG_VERSION=$CLANG_VERSION" >> $GITHUB_ENV
+        if [ -z "${{ job.container }}" ]; then
+          CLANG_VERSION=22
+          echo "CLANG_VERSION=$CLANG_VERSION" >> $GITHUB_ENV
+          sudo apt install -y --no-install-recommends clang-$CLANG_VERSION lld-$CLANG_VERSION llvm-$CLANG_VERSION
+        else
+          sudo dnf install -y clang lld llvm
+        fi
+
+    - name: Use Clang for the model (Linux)
+      if: runner.os == 'Linux' && inputs.model-compiler == 'clang'
+      shell: bash
+      # Use lld so that LTO does not need the gold plugin.
+      run: |
+        if [ -n "$CLANG_VERSION" ]; then
+          SUFFIX="-$CLANG_VERSION"
+        fi
+        echo "CC=clang$SUFFIX" >> $GITHUB_ENV
+        echo "CXX=clang++$SUFFIX" >> $GITHUB_ENV
+        echo "LDFLAGS=-fuse-ld=lld" >> $GITHUB_ENV
 
     - name: Install packages (macOS)
       if: runner.os == 'macOS'
