@@ -118,7 +118,7 @@ jobs:
         # work).
         if: ${{ matrix.first_party_tests }}
         run: |
-          ctest --test-dir build -L TestAtBuildTime --output-on-failure
+          ctest --test-dir build -L TestAtBuildTime --output-on-failure --parallel "$(getconf _NPROCESSORS_ONLN)"
 
       - name: Name build artifact
         id: name_build
@@ -218,7 +218,7 @@ jobs:
 
       - name: Run ${{ matrix.label }} suite
         run: |
-          ctest --test-dir build -L ${{ matrix.label }} --output-on-failure
+          ctest --test-dir build -L ${{ matrix.label }} --output-on-failure --parallel "$(getconf _NPROCESSORS_ONLN)"
 
   linux:
     name: "Linux boot"

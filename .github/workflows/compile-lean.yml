@@ -100,4 +100,4 @@ jobs:
         run: |
           eval $(opam config env)
           cmake --build build --target build_lean_emulator
-          ctest --test-dir build -R lean_emulator
+          ctest --test-dir build -R lean_emulator --parallel "$(getconf _NPROCESSORS_ONLN)"
