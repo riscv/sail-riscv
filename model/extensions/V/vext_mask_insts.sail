@@ -280,8 +280,7 @@ function clause execute VIOTA_M(vm, vs2, vd) = {
 
   if illegal_vstart(VSTART_MANDATORY, num_elem, LMUL_pow) |
      illegal_normal(vd, vm) |
-     not(valid_disjoint_reg_groups(vs2, vd, 0, LMUL_pow)) |
-     (vm == 0b0 & vd == zvreg)
+     not(valid_disjoint_reg_groups(vs2, vd, 0, LMUL_pow))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
