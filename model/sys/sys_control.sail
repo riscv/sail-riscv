@@ -115,6 +115,8 @@ function findPendingInterrupt(ip : xlenbits) -> option(InterruptType) = {
 //
 // This is used when the hart is in the Active state.
 function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
+  // If no interrupts are enabled, the pending set will be empty.
+  if mie.bits == zeros() then return None();
   // If S-mode is not currently enabled then ignore mideleg.
   let mideleg_bits = if currentlyEnabled(Ext_S) then mideleg.bits else zeros();
   // If HS-mode is not currently enabled then ignore hideleg.
