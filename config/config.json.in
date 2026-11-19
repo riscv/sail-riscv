@@ -1067,8 +1067,10 @@
       "supported": true,
       // The number of supported triggers.  This has to be
       // non-negative, and greater than 0 if Sdtrig is supported.  The
-      // model does not support more than 16 triggers.
-      "num_triggers": 16,
+      // model does not support more than 128 triggers.
+      // Each index in the `tselects` field in each trigger in `"triggers"`
+      // needs to range from 0 to `num_triggers - 1` inclusive.
+      "num_triggers": 8,
       // `breakpoint_reentrancy` must be one of the below strings:
       // . `Use_tcontrol`: use the `mte` and `mpte` bits in the `tcontrol` CSR (requires tcontrol.supported to be set to true.)
       // . `Use_interrupt_enables`: use `mstatus.MIE` and the `SIE` bits in `sstatus` and `vsstatus`
@@ -1096,80 +1098,168 @@
         "width": @CONFIG_SDTRIG_SCONTEXT_WIDTH@
       },
       // Triggers
-      "icount": {
-        "supported": true,
-        "count_hardwired_one": false,
-        // Whether a `tdata1` write to an `icount` trigger with `count`=1 also makes it
-        // pending when that write's instruction matches the trigger.
-        "self_write_sets_pending": true
-      },
-      "etrigger": {
-        "supported": true,
-        // A bit set to 1 in this value specifies that the
-        // corresponding exception is supported by the trigger.
-        // Triggers for reserved exceptions are not supported.  This
-        // value is ignored when `etrigger` is not supported.
-        "supported_exceptions": {
-          "len": "xlen",
-          "value": "@CONFIG_SDTRIG_SUPPORTED_ETRIGGERS_VALUE@"
+      "triggers": [
+        {
+          "mcontrol6": {
+            // If `mcontrol6` is supported, this value needs to be in the range
+            // 0 < `maskmax6` < XLEN.
+            "maskmax6": @CONFIG_XLEN_MINUS_ONE@,
+            // Whether an address selection matches all the accessed addresses.
+            // If set to `false`, it matches only the lowest address.
+            "address_select_matches_all_addresses" : true,
+            "supported_address_access_sizes": {
+              "bits8": true,
+              "bits16": true,
+              "bits32": true,
+              "bits48": true,
+              "bits64": true,
+              "bits128": true
+            },
+            // Data access widths greater than XLEN cannot be supported.
+            "supported_data_access_sizes": {
+              "bits8": true,
+              "bits16": true,
+              "bits32": true,
+              "bits48": @CONFIG_XLEN_IS_64@,
+              "bits64": @CONFIG_XLEN_IS_64@
+            },
+            // Configuration for `textra`: if `textra` is not used,
+            // this can be set to `{"None": null}`.
+            "textra_cfg": {
+              "Some": {
+                // Which context matches are supported. Writes of unsupported
+                // `mhselect` and `sselect` values are legalized to 0 (ignore).
+                "mhselect": {
+                  // Values 1, 4 and 5, match on `mcontext`. Requires the
+                  // `mcontext` CSR. Values 1 and 5 also require H.
+                  "mcontext_match": true,
+                  // Values 2 and 6, match on the VMID in `hgatp`. Requires H.
+                  "vmid_match": true
+                },
+                "sselect": {
+                  // Value 1, match on `scontext`. Requires S and the `scontext`
+                  // CSR.
+                  "scontext_match": true,
+                  // Value 2, match on the ASID in `satp` or `vsatp`. Requires S.
+                  "asid_match": true
+                }
+              }
+            },
+            "tselects": [0, 1, 2, 3, 4, 5, 6, 7]
+          }
+        },
+        {
+          "icount": {
+            "count_is_hardwired_one": false,
+            // Whether a `tdata1` write to an `icount` trigger with `count`=1 also makes it
+            // pending when that write's instruction matches the trigger.
+            "self_write_sets_pending": true,
+            // Configuration for `textra`: if `textra` is not used,
+            // this can be set to `{"None": null}`.
+            "textra_cfg": {
+              "Some": {
+                // Which context matches are supported. Writes of unsupported
+                // `mhselect` and `sselect` values are legalized to 0 (ignore).
+                "mhselect": {
+                  // Values 1, 4 and 5, match on `mcontext`. Requires the
+                  // `mcontext` CSR. Values 1 and 5 also require H.
+                  "mcontext_match": true,
+                  // Values 2 and 6, match on the VMID in `hgatp`. Requires H.
+                  "vmid_match": true
+                },
+                "sselect": {
+                  // Value 1, match on `scontext`. Requires S and the `scontext`
+                  // CSR.
+                  "scontext_match": true,
+                  // Value 2, match on the ASID in `satp` or `vsatp`. Requires S.
+                  "asid_match": true
+                }
+              }
+            },
+            "tselects": [0, 1, 2, 3, 4, 5, 6, 7]
+          }
+        },
+        {
+          "itrigger": {
+            // A bit set to 1 in this value specifies that the
+            // corresponding interrupt is supported by the trigger.
+            // Triggers for reserved interrupts are not supported.  This
+            // value is ignored when `itrigger` is not supported.
+            "supported_interrupts": {
+              "len": "xlen",
+              "value": "@CONFIG_SDTRIG_SUPPORTED_ITRIGGERS_VALUE@"
+            },
+            // Configuration for `textra`: if `textra` is not used,
+            // this can be set to `{"None": null}`.
+            "textra_cfg": {
+              "Some": {
+                // Which context matches are supported. Writes of unsupported
+                // `mhselect` and `sselect` values are legalized to 0 (ignore).
+                "mhselect": {
+                  // Values 1, 4 and 5, match on `mcontext`. Requires the
+                  // `mcontext` CSR. Values 1 and 5 also require H.
+                  "mcontext_match": true,
+                  // Values 2 and 6, match on the VMID in `hgatp`. Requires H.
+                  "vmid_match": true
+                },
+                "sselect": {
+                  // Value 1, match on `scontext`. Requires S and the `scontext`
+                  // CSR.
+                  "scontext_match": true,
+                  // Value 2, match on the ASID in `satp` or `vsatp`. Requires S.
+                  "asid_match": true
+                }
+              }
+            },
+            "tselects": [0, 1, 2, 3, 4, 5, 6, 7]
+          }
+        },
+        {
+          "etrigger": {
+            // A bit set to 1 in this value specifies that the
+            // corresponding exception is supported by the trigger.
+            // Triggers for reserved exceptions are not supported.  This
+            // value is ignored when `etrigger` is not supported.
+            "supported_exceptions": {
+              "len": "xlen",
+              "value": "@CONFIG_SDTRIG_SUPPORTED_ETRIGGERS_VALUE@"
+            },
+            // Configuration for `textra`: if `textra` is not used,
+            // this can be set to `{"None": null}`.
+            "textra_cfg": {
+              "Some": {
+                // Which context matches are supported. Writes of unsupported
+                // `mhselect` and `sselect` values are legalized to 0 (ignore).
+                "mhselect": {
+                  // Values 1, 4 and 5, match on `mcontext`. Requires the
+                  // `mcontext` CSR. Values 1 and 5 also require H.
+                  "mcontext_match": true,
+                  // Values 2 and 6, match on the VMID in `hgatp`. Requires H.
+                  "vmid_match": true
+                },
+                "sselect": {
+                  // Value 1, match on `scontext`. Requires S and the `scontext`
+                  // CSR.
+                  "scontext_match": true,
+                  // Value 2, match on the ASID in `satp` or `vsatp`. Requires S.
+                  "asid_match": true
+                }
+              }
+            },
+            "tselects": [0, 1, 2, 3, 4, 5, 6, 7]
+          }
         }
-      },
-      "itrigger": {
-        "supported": true,
-        // A bit set to 1 in this value specifies that the
-        // corresponding interrupt is supported by the trigger.
-        // Triggers for reserved interrupts are not supported.  This
-        // value is ignored when `itrigger` is not supported.
-        "supported_interrupts": {
-          "len": "xlen",
-          "value": "@CONFIG_SDTRIG_SUPPORTED_ITRIGGERS_VALUE@"
-        }
-      },
+      ],
       "mcontrol6": {
-        "supported": true,
-        // If `mcontrol6` is supported, this value needs to be in the range
-        // 0 < `maskmax6` < XLEN.
-        "maskmax6": @CONFIG_XLEN_MINUS_ONE@,
-        // Whether an address selection matches all the accessed addresses.
-        // If set to `false`, it matches only the lowest address.
-        "address_select_matches_all_addresses" : true,
         // Maximum length of a chain. This cannot exceed the number of
         // triggers.  A value of 0 implies chains are not supported.
-        "max_chain_length": 4,
-        "supported_address_access_sizes": {
-          "bits8": true,
-          "bits16": true,
-          "bits32": true,
-          "bits48": true,
-          "bits64": true,
-          "bits128": true
-        },
-        // Data access widths greater than XLEN cannot be supported.
-        "supported_data_access_sizes": {
-          "bits8": true,
-          "bits16": true,
-          "bits32": true,
-          "bits48": @CONFIG_XLEN_IS_64@,
-          "bits64": @CONFIG_XLEN_IS_64@
-        }
+        // This is ignored if no `mcontrol6` triggers are specified.
+        "max_chain_length": 4
       },
       "textra": {
-        // Which context matches are supported. Writes of unsupported
-        // `mhselect` and `sselect` values are legalized to 0 (ignore).
-        "mhselect": {
-          // Values 1, 4 and 5, match on `mcontext`. Requires the
-          // `mcontext` CSR. Values 1 and 5 also require H.
-          "mcontext_match": true,
-          // Values 2 and 6, match on the VMID in `hgatp`. Requires H.
-          "vmid_match": true
-        },
-        "sselect": {
-          // Value 1, match on `scontext`. Requires S and the `scontext`
-          // CSR.
-          "scontext_match": true,
-          // Value 2, match on the ASID in `satp` or `vsatp`. Requires S.
-          "asid_match": true
-        },
+        // This must be true if any of the triggers has `uses_textra`
+        // enabled.  If this is false, the other settings are ignored.
+        "supported": true,
         // The number of implemented `mhvalue` and `svalue` bits. Bits
         // above these are read only zero. At most 6 and 16 on RV32,
         // 13 and 32 on RV64.

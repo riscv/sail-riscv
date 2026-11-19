@@ -176,6 +176,10 @@ unit PlatformInterface::dispatch_events(unit) {
   return UNIT;
 }
 
+bool PlatformInterface::validate_triggers_layout(int64_t) {
+  return true;
+}
+
 unit PlatformInterface::plat_term_write(mach_bits) {
   return UNIT;
 }

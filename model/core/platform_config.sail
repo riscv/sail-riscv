@@ -245,10 +245,6 @@ function mtval_is_readonly_zero() -> bool =
       software_check_exception_writes_xtval | hardware_error_exception_writes_xtval | reserved_exceptions_write_xtval)
 
 // Sdtrig configuration
-let sdtrig_has_icount    : bool = config extensions.Sdtrig.icount.supported
-let sdtrig_has_etrigger  : bool = config extensions.Sdtrig.etrigger.supported
-let sdtrig_has_itrigger  : bool = config extensions.Sdtrig.itrigger.supported
-let sdtrig_has_mcontrol6 : bool = config extensions.Sdtrig.mcontrol6.supported
 
 let sdtrig_max_chain_limit : nat = config extensions.Sdtrig.mcontrol6.max_chain_length
 
@@ -256,6 +252,7 @@ let sdtrig_max_chain_limit : nat = config extensions.Sdtrig.mcontrol6.max_chain_
 let sdtrig_has_mcontext : bool = config extensions.Sdtrig.mcontext.supported
 let sdtrig_has_hcontext : bool = config extensions.Sdtrig.hcontext.supported
 let sdtrig_has_scontext : bool = config extensions.Sdtrig.scontext.supported
+let sdtrig_has_textra   : bool = config extensions.Sdtrig.textra.supported
 
 type num_triggers : Int = config extensions.Sdtrig.num_triggers
 // The number of bits to index the triggers needs to fit into `tselect`,

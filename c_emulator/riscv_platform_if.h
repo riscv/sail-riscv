@@ -98,6 +98,9 @@ public:
   virtual unit event_csr_write_callback(int64_t index, uint64_t old_selector, uint64_t new_selector);
   virtual unit dispatch_events(unit);
 
+  // Triggers
+  virtual bool validate_triggers_layout(int64_t num_triggers);
+
   // Provides entropy for the scalar cryptography extension.
   virtual mach_bits plat_get_16_random_bits(unit);
 
