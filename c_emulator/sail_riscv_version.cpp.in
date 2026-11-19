@@ -3,7 +3,11 @@
 namespace version_info {
 
 std::string_view release_version() {
+#ifdef BUILD_RELEASE
   return "@sail_riscv_release_version@";
+#else
+  return git_version();
+#endif
 }
 
 std::string_view git_version() {

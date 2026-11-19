@@ -6,11 +6,12 @@ find_package(Git)
 
 if (Git_FOUND)
   # --tags     Search for lightweight tags as well as annotated ones.
+  # --match    Only consider tags matching the given pattern.
   # --always   If there are no tags use the git hash instead of failing.
   # --dirty    Append '-dirty' if the working tree has local modifications.
   # --broken   Append '-broken' if the repo is corrupt instead of failing.
   execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty --broken
+    COMMAND ${GIT_EXECUTABLE} describe --tags --match "[0-9]*.[0-9]*" --always --dirty --broken
     RESULT_VARIABLE git_error
     OUTPUT_VARIABLE git_describe
     OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -21,7 +22,7 @@ endif()
 
 if (git_error)
   message(STATUS "Failed to run git describe: ${git_error}")
-  set(sail_riscv_git_version   "unknown commit")
+  set(sail_riscv_git_version   "${sail_riscv_release_version}-unknown")
 else()
   set(sail_riscv_git_version   ${git_describe})
 endif()

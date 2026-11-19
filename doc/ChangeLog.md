@@ -50,6 +50,11 @@
     `base.envcfg.senvcfg_legal_cbie` and `base.envcfg.henvcfg_legal_cbie`.
     Writes of unsupported encodings now leave the field unchanged.
 
+- The command line interface has been updated:
+  - The `--version` command-line option now shows the `git` version
+    for a non-release build. The output of this option from released
+    builds are not affected.
+
 - Important issues addressed and bugs fixed:
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
   - https://github.com/riscv/sail-riscv/issues/2075 : `xret` cleared `mstatus.MPRV` for version 1.11 of the privileged ISA

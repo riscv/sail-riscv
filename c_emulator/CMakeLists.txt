@@ -63,6 +63,13 @@ target_include_directories(riscv_model
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
+# Release builds
+if (BUILD_RELEASE)
+    target_compile_definitions(riscv_model
+        PRIVATE "BUILD_RELEASE"
+    )
+endif()
+
 target_link_libraries(riscv_model
     PUBLIC elfio softfloat sail_runtime jsoncons default_config
 )
