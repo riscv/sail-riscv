@@ -58,4 +58,4 @@ jobs:
 
       - name: Run tests
         run: |
-          ctest --test-dir build --output-on-failure
+          ctest --test-dir build --output-on-failure --parallel "$(getconf _NPROCESSORS_ONLN)"
