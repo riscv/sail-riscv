@@ -127,13 +127,17 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
       let act = v[action];
       let select = compare_select_bits(v[select]);
 
+      // This is validated in `validate_config()`.
+      let maskmax = sdtrig_mcontrol6_maskmax;
+      assert(0 < maskmax & maskmax < xlen);
+
       let is_size_supported      = is_supported_match_size(v[size], select);
       let is_action_supported    = is_supported_action(zero_extend(act));
       let is_match_supported     = is_supported_match_val(v[t_match]);
       let is_compare_value_valid =
         is_match_supported &
         ((trig_match_val(v[t_match]) != TM_NAPOT & trig_match_val(v[t_match]) != TM_NOT_NAPOT)
-         | is_valid_napot_compare_value(tdata2));
+         | is_valid_napot_compare_value(tdata2, maskmax));
 
       let allow_chain = if bool_bit(v[chain]) then allow_chain_at(idx) else false;
 
@@ -250,8 +254,12 @@ function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbit
       T_disabled({s with tdata2 = tdata2})
     },
     T_mcontrol6(s) => {
+      // This is validated in `validate_config()`.
+      let maskmax = sdtrig_mcontrol6_maskmax;
+      assert(0 < maskmax & maskmax < xlen);
+
       let legalized = if s.t_match == TM_NAPOT | s.t_match == TM_NOT_NAPOT
-                      then legalize_napot_compare_value(tdata2)
+                      then legalize_napot_compare_value(tdata2, maskmax)
                       else tdata2;
       if get_config_print_trigger()
       then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(legalized) ^ " (write=" ^ bits_str(tdata2) ^ ")");

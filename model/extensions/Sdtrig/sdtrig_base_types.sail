@@ -172,5 +172,8 @@ function is_supported_match_val(m : bits(4)) -> bool =
   // TODO: config options
   trig_match_val_forwards_matches(m)
 
+// Once validated, the corresponding `mcontrol6` parameter will have this type.
+type maskmax = range(1, xlen - 1)
+
 // If `num_triggers` is zero, there is no valid index.
 type trigger_index = range(0, num_triggers - 1)
