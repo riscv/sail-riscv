@@ -1,5 +1,6 @@
 #include "riscv_callbacks_log.h"
 #include "riscv_model_impl.h"
+#include "sail_lbits_mpz.h"
 #include <algorithm>
 #include <inttypes.h>
 #include <vector>
@@ -47,7 +48,8 @@ void log_callbacks::mem_write_callback(
       static_cast<int>((model.physaddrbits_len() + 3) / 4),
       paddr.bits
     );
-    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
+    lbits_mpz_view view;
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, lbits_mpz(view, value));
   }
 }
 
@@ -69,7 +71,8 @@ void log_callbacks::mem_read_callback(
       static_cast<int>((model.physaddrbits_len() + 3) / 4),
       paddr.bits
     );
-    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
+    lbits_mpz_view view;
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, lbits_mpz(view, value));
   }
 }
 
@@ -127,7 +130,8 @@ void log_callbacks::csr_read_callback(ModelImpl &model, uint64_t reg, sbits valu
 void log_callbacks::vreg_write_callback(ModelImpl &, uint64_t reg, lbits value) {
   if (trace_log != nullptr && config_print_vreg) {
     fprintf(trace_log, "v%" PRIu64 " <- ", reg);
-    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, *value.bits);
+    lbits_mpz_view view;
+    gmp_fprintf(trace_log, "0x%0*ZX\n", value.len / 4, lbits_mpz(view, value));
   }
 }
 
