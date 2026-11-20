@@ -623,7 +623,7 @@ void init_logs(const CLIOptions &opts, run_info &run_info) {
   }
 
   if (!opts.trace_log_path.empty()) {
-    run_info.trace_log = fopen(opts.trace_log_path.c_str(), "w+");
+    run_info.trace_log = fopen(opts.trace_log_path.c_str(), "w");
     if (run_info.trace_log == nullptr) {
       fprintf(stderr, "Cannot create trace log '%s': %s\n", opts.trace_log_path.c_str(), strerror(errno));
       exit(EXIT_FAILURE);
