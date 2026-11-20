@@ -19,7 +19,6 @@ mapping clause encdec = VSHA2MS_VV(vs2, vs1, vd)
     ((currentlyEnabled(Ext_Zvknha) & SEW == 32) |
      (currentlyEnabled(Ext_Zvknhb) & (SEW == 32 | SEW == 64)))
     & zvknhab_check_encdec(vs2, vs1, vd)
-    & zvk_check_encdec(if SEW == 32 then 128 else 256, 4)
   }
 
 mapping clause assembly = VSHA2MS_VV(vs2, vs1, vd)
@@ -93,7 +92,6 @@ mapping clause encdec = ZVKSHA2TYPE(funct6, vs2, vs1, vd)
     ((currentlyEnabled(Ext_Zvknha) & SEW == 32) |
      (currentlyEnabled(Ext_Zvknhb) & (SEW == 32 | SEW == 64)))
     & zvknhab_check_encdec(vs2, vs1, vd)
-    & zvk_check_encdec(if SEW == 32 then 128 else 256, 4)
   }
 
 mapping vsha2_mnemonic : zvk_vsha2_funct6 <-> string = {
