@@ -7,9 +7,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Only cancel old runs on PRs. On master, run every commit in order.
 concurrency:
   group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  queue: ${{ github.event_name == 'pull_request' && 'single' || 'max' }}
 
 permissions:
   contents: read
