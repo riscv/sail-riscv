@@ -306,13 +306,13 @@ bool ModelImpl::validate_event_selectors(unit) {
           << " which does not fit in " << std::dec << selector_width << " bits." << std::endl;
       print_endline(msg.str().c_str());
     }
-    if (selectors.find(sel) != selectors.end()) {
+    if (selectors.contains(sel)) {
       valid = false;
       msg << "The selector 0x" << std::hex << sel << " for " << event_buf.str()
           << " in `platform.event_selectors` is repeated; event selectors need to be unique." << std::endl;
       print_endline(msg.str().c_str());
     }
-    if (event_map.find(event) != event_map.end()) {
+    if (event_map.contains(event)) {
       valid = false;
       msg << "The " << event_buf.str() << " in `platform.event_selectors` repeats an event; events need to be unique."
           << std::endl;

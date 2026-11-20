@@ -36,7 +36,7 @@ void qsupported::dispatch(protocol_handler &proto_handler, gdb_run_info &) {
   std::string resp;
   bool added_first = false;
   for (const auto &f : stub_features) {
-    if (m_gdb_features.find(f) == m_gdb_features.end()) {
+    if (!m_gdb_features.contains(f)) {
       continue;
     }
     if (added_first) {
