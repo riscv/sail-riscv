@@ -16,6 +16,8 @@ function reset() -> unit = {
 
   reset_elp(); // initialize Zicfilp expected landing pad
 
+  reset_triggers(); // initialize tinfos
+
   // To allow model extensions (code outside this repo) to perform additional reset.
   ext_reset();
 }

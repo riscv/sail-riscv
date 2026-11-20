@@ -87,7 +87,7 @@ function match_icount_triggers(priv : Privilege, reentrance : bool) -> unit = {
           // (`write_sets_pending` as false) be set.  If that write
           // updated `pending`, that value may be overridden.
           let set_pending : bool = match written_trigger_index {
-            Some(idx, TDATA1) => idx != i | icount_self_write_sets_pending,
+            Some(idx, TDATA1) => idx != i | t.cfg.self_write_sets_pending,
             Some(_, _)        => true,
             None()            => true,
           };
@@ -98,7 +98,7 @@ function match_icount_triggers(priv : Privilege, reentrance : bool) -> unit = {
             // When count is 0, it stays at 0 until explicitly written.
             0 => t,
             1 => {t with
-                   count = if icount_count_is_hardwired_one then t.count else zeros(),
+                   count = if t.cfg.count_is_hardwired_one then t.count else zeros(),
                    pending = set_pending},
             _ => {t with count = t.count - 1},
           };
@@ -253,8 +253,6 @@ private function is_negative_match(t_match : Trig_Match) -> bool =
     _              => false,
   }
 
-let address_select_matches_all : bool = config extensions.Sdtrig.mcontrol6.address_select_matches_all_addresses
-
 private function compare_address forall 'width, 0 < 'width <= max_mem_access. (
   t_match   : Trig_Match,
   maskmax   : maskmax,
@@ -317,9 +315,9 @@ private function match_mcontrol6(
 
   let chain_info : string = if t.chain then "in-chain" else "chain-terminating";
 
-  let match_all = address_select_matches_all;
+  let match_all = t.cfg.address_select_matches_all_addresses;
   // This is validated in `validate_config()`.
-  let maskmax = sdtrig_mcontrol6_maskmax;
+  let maskmax = t.cfg.maskmax6;
   assert(0 < maskmax & maskmax < xlen);
 
   match payload {
@@ -532,7 +530,7 @@ function fire_pending_before_triggers(_pti : pending_trigger_info) -> unit = {
 private function fire_trigger_after(idx : trigger_index) -> bool = {
   let (t, action, fired) : (Trigger, Trig_Action, bool) = match triggers[idx] {
     T_icount(t) => {
-      let t = if icount_count_is_hardwired_one
+      let t = if t.cfg.count_is_hardwired_one
               then {t with m = false, s = false, u = false, vs = false, vu = false}
               else t;
       (T_icount({t with pending = false, hit = true}), t.action, true)
