@@ -60,6 +60,8 @@ target_compile_options(softfloat PRIVATE
     -Werror=implicit-function-declaration
     -Wno-unused-parameter
     $<$<BOOL:${HAVE_WIMPLICIT_FALLTHROUGH}>:-Wno-implicit-fallthrough>
+    # With GCC PGO, files that the simulator does not link have no profile.
+    $<$<C_COMPILER_ID:GNU>:-Wno-missing-profile>
 )
 
 # Taken from build/Linux-x86_64-GCC/Makefile
