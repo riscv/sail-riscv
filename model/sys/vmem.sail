@@ -266,7 +266,7 @@ termination_measure pt_walk(_,_,_,_,_,_,_,level,_,_, _) = level
 // Architectural HGATP CSR
 mapping clause csr_name_map = 0x680 <-> "hgatp"
 
-function clause is_CSR_accessible(0x680, priv, _) = currentlyEnabled(Ext_H) & (priv == Machine | (priv == Supervisor & mstatus[TVM] == 0b0))
+function clause is_CSR_accessible(0x680, priv, _) = currentlyEnabled(Ext_H) & (priv == Machine | (priv == Supervisor & read_mstatus()[TVM] == 0b0))
 function clause is_CSR_exception_virtual(0x680, _, _) = true
 function clause read_CSR(0x680) = hgatp
 function clause write_CSR(0x680, value) = { hgatp = legalize_hgatp(architecture(cur_privilege), hgatp, value); Ok(hgatp) }
@@ -282,7 +282,7 @@ function clause write_CSR(0x280, value) = { vsatp = legalize_satp(architecture(c
 private function is_satp_accessible(priv : Privilege) -> bool =
   match priv {
     Machine           => hartSupports(Ext_S),
-    Supervisor        => mstatus[TVM]  == 0b0,
+    Supervisor        => read_mstatus()[TVM]  == 0b0,
     VirtualSupervisor => hstatus[VTVM] == 0b0,
     User              => false,
     VirtualUser       => false,
@@ -497,11 +497,13 @@ private function translate forall 'v, is_sv_or_svx4_mode('v) . (
   }
 }
 
-private function get_mxr(stage : TranslationStage) -> bool =
-  if stage == VS_Stage then mstatus[MXR] == 0b1 | vsstatus[MXR] == 0b1 else mstatus[MXR] == 0b1
+private function get_mxr(stage : TranslationStage) -> bool = {
+  let cur_mstatus = read_mstatus();
+  if stage == VS_Stage then cur_mstatus[MXR] == 0b1 | vsstatus[MXR] == 0b1 else cur_mstatus[MXR] == 0b1
+}
 
 private function get_sum(stage : TranslationStage) -> bool =
-  if stage == VS_Stage then vsstatus[SUM] == 0b1 else mstatus[SUM]  == 0b1
+  if stage == VS_Stage then vsstatus[SUM] == 0b1 else read_mstatus()[SUM]  == 0b1
 
 private val translate_validate_address : forall 'n 'v, is_sv_or_svx4_mode('v) & 'n >= 'v. (bits('n), int('v), TranslationStage) -> result(bits('v), PTW_Error)
 function translate_validate_address(addr, sv_width, stage) = {

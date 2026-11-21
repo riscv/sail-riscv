@@ -13,6 +13,10 @@ private register sig_seip : bits(1) = 0b0
 private register sig_ssip : bits(1) = 0b0
 private register sig_hgeip : xlenbits = zeros()
 
+// TODO: move the `currentlyEnabled()` checks out of the SIG. This information is
+// only known to the hart, and cannot be known to this platform component.
+// Similarly, `hgeie` is hart-local state, and ideally should not be communicated
+// to the interrupt controller.
 function sig_external_interrupts_pending(hgeie_val : xlenbits) -> Minterrupts =
   [Mk_Minterrupts(zeros()) with
     MEI = sig_meip,

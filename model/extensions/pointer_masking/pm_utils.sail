@@ -34,9 +34,9 @@ private function get_pmm(eff_privilege : Privilege) -> PointerMaskingMode = matc
 private function is_pmm_applicable(access : MemoryAccessType(mem_payload), eff_privilege : Privilege) -> bool = {
   let mxr_in_effect : bool = match eff_privilege {
     Machine           => false,
-    VirtualSupervisor => mstatus[MXR] == 0b1 | vsstatus[MXR] == 0b1,
-    VirtualUser       => mstatus[MXR] == 0b1 | vsstatus[MXR] == 0b1,
-    _                 => mstatus[MXR] == 0b1,
+    VirtualSupervisor => read_mstatus()[MXR] == 0b1 | vsstatus[MXR] == 0b1,
+    VirtualUser       => read_mstatus()[MXR] == 0b1 | vsstatus[MXR] == 0b1,
+    _                 => read_mstatus()[MXR] == 0b1,
   };
   access != InstructionFetch() & access != LoadExecute(Data) &
   access != Load(PageTableEntry) & access != Store(PageTableEntry) &

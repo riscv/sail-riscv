@@ -38,7 +38,7 @@ private function fetch_bytes forall 'n, 'n in {2, 4} . (fetch_start : xlenbits, 
   };
 
   let access : MemoryAccessType(mem_payload) = InstructionFetch();
-  let eff_priv = effectivePrivilege(access, mstatus, cur_privilege);
+  let eff_priv = effectivePrivilege(access, read_mstatus(), cur_privilege);
 
   let (paddr, pbmt) : (physaddr, page_based_mem_type) = match translateAddr(Virtaddr(granule_start), access, eff_priv) {
     Err(e, _)    => return FetchBytes_Exception(e),
