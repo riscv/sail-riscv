@@ -33,7 +33,7 @@ enum zvk_vsha2_funct6 = {ZVK_VSHA2CH_VV, ZVK_VSHA2CL_VV}
 function zvknhab_check_encdec(vs2 : vregidx, vs1 : vregidx, vd: vregidx) -> bool = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  zvk_check_encdec(SEW, 4) & zvk_valid_reg_overlap(vs1, vd, LMUL_pow) & zvk_valid_reg_overlap(vs2, vd, LMUL_pow);
+  zvk_check_encdec(if SEW == 32 then 128 else 256, 4) & zvk_valid_reg_overlap(vs1, vd, LMUL_pow) & zvk_valid_reg_overlap(vs2, vd, LMUL_pow);
 }
 
 val zvk_sig0 : forall 'n, 'n in {32, 64} . (bits('n), int('n)) -> bits('n)
