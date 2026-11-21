@@ -695,6 +695,24 @@ enum clause extension = Ext_Ssqosid
 mapping clause extensionName = Ext_Ssqosid <-> "ssqosid"
 function clause hartSupports(Ext_Ssqosid) = config extensions.Ssqosid.supported
 
+// RISC-V Worlds (World-ID) extensions
+// Machine-mode WID
+enum clause extension = Ext_Smwid
+mapping clause extensionName = Ext_Smwid <-> "smwid"
+function clause hartSupports(Ext_Smwid) = sys_enable_experimental_extensions() & config extensions.Smwid.supported
+// WID of lower-privilege modes
+enum clause extension = Ext_Smlwid
+mapping clause extensionName = Ext_Smlwid <-> "smlwid"
+function clause hartSupports(Ext_Smlwid) = sys_enable_experimental_extensions() & config extensions.Smlwid.supported
+// Machine-mode restriction of the WIDs of lower-privilege modes
+enum clause extension = Ext_Smlwidlist
+mapping clause extensionName = Ext_Smlwidlist <-> "smlwidlist"
+function clause hartSupports(Ext_Smlwidlist) = sys_enable_experimental_extensions() & config extensions.Smlwidlist.supported
+// Delegation of WID assignment to S-mode
+enum clause extension = Ext_Smwiddeleg
+mapping clause extensionName = Ext_Smwiddeleg <-> "smwiddeleg"
+function clause hartSupports(Ext_Smwiddeleg) = sys_enable_experimental_extensions() & config extensions.Smwiddeleg.supported
+
 // Environment extensions
 // These extensions are not configurable via the config file
 // To avoid ordering issues, they are placed at the bottom
@@ -704,6 +722,12 @@ enum clause extension = Ext_Sspm
 mapping clause extensionName = Ext_Sspm <-> "sspm"
 function clause hartSupports(Ext_Sspm) = hartSupports(Ext_Smnpm) & hartSupports(Ext_S)
 function clause currentlyEnabled(Ext_Sspm) = hartSupports(Ext_Sspm) & currentlyEnabled(Ext_S)
+// Supervisor-mode WID of lower-privilege modes.  Sswid is provided by the
+// Smwiddeleg extension and is enabled while mwiddeleg is non-zero.
+enum clause extension = Ext_Sswid
+mapping clause extensionName = Ext_Sswid <-> "sswid"
+function clause hartSupports(Ext_Sswid) = hartSupports(Ext_Smwiddeleg)
+
 // Indicates whether pointer masking support is available in user mode
 enum clause extension = Ext_Supm
 mapping clause extensionName = Ext_Supm <-> "supm"
@@ -722,6 +746,7 @@ function hartSupports_measure(ext : extension) -> int =
     Ext_Zvks => 1, // > Zvksed
     Ext_Sspm => 1, // > S
     Ext_Supm => 1, // > S
+    Ext_Sswid => 1, // > Smwiddeleg
     Ext_Ss1p12 => 1, // > S
     Ext_Ss1p13 => 1, // > S
 
@@ -780,6 +805,10 @@ function currentlyEnabled_measure(ext : extension) -> int =
     Ext_Zve64x => 2, // > Zve32x
     Ext_Zcmop => 2, // > Zca
     Ext_Zicfiss => 2, // > Zaamo
+
+    Ext_Smlwidlist => 3, // > Smwid, Smlwid
+    Ext_Smwiddeleg => 3, // > Smlwid
+    Ext_Sswid => 4, // > Smwiddeleg
 
     Ext_Ssccptr => 3, // > Sv39
     Ext_Sscsrind => 3, // > Smcsrind
@@ -986,6 +1015,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Sstvala,
   Ext_Sstvecd,
   Ext_Ssu64xl,
+  Ext_Sswid,
   Ext_Supm,
   Ext_Svade,
   Ext_Svadu,
@@ -1011,9 +1041,13 @@ let extensions_ordered_for_isa_string = [
   Ext_Smcntrpmf,
   Ext_Smcsrind,
   Ext_Smdbltrp,
+  Ext_Smlwid,
+  Ext_Smlwidlist,
   Ext_Smmpm,
   Ext_Smnpm,
   Ext_Smstateen,
+  Ext_Smwid,
+  Ext_Smwiddeleg,
 
   // Debug extensions
   Ext_Sdtrig,

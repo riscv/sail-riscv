@@ -1,0 +1,36 @@
+{
+  "platform": {
+    "worlds": {
+      "nworlds": 4,
+      "pmwid": 0,
+      "pmwidlist": {
+        "len": 64,
+        "value": "0xF"
+      },
+      "pmlwidlist": {
+        "len": 64,
+        "value": "0x7"
+      },
+      "delegatable_wids": {
+        "len": 64,
+        "value": "0xF"
+      }
+    }
+  },
+  "extensions": {
+    "Smwid": {
+      "supported": true,
+      "mwid_locked_on_reset": false
+    },
+    "Smlwid": {
+      "supported": true,
+      "mlwid_reset_value": 0
+    },
+    "Smlwidlist": {
+      "supported": true
+    },
+    "Smwiddeleg": {
+      "supported": true
+    }
+  }
+}

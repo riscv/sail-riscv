@@ -9,8 +9,14 @@
   - Smcdeleg
   - Ssccfg
   - Zvl2048b, Zvl4096b, Zvl8192b, Zvl16384b, Zvl32768b, and Zvl65536b
+  - Smwid, Smlwid, Smlwidlist, Smwiddeleg and Sswid (RISC-V Worlds, experimental)
 
 - Updates to the [configuration file](../config/config.json.in):
+  - The RISC-V Worlds platform parameters (the number of worlds, the WID
+    of M-mode and the sets of WIDs usable by `mwid`, `mlwid` and
+    `mwiddeleg`) can now be specified; see `platform.worlds`.  Whether
+    `mwid` is locked out of reset and the reset value of `mlwid` can be
+    specified under `extensions.Smwid` and `extensions.Smlwid`.
   - The WARL behavior of a reserved or unimplemented encoding written to `mstatus.MPP`
     can now map to the least-privileged implemented mode or keep the previous
     legal value; see `base.reserved_behavior.illegal_privilege`.

@@ -64,7 +64,7 @@ pmp {
 }
 
 sys {
-  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_types, PM_utils, Sdtrig
+  requires prelude, core, exceptions, pmp, V_core, Smcntrpmf, Zicfilp_regs, A_types, Stateen, Zicbop_types, PM_types, PM_utils, Sdtrig, Worlds
 
   files
     sys/sys_reservation.sail,
@@ -522,6 +522,12 @@ extensions {
   Ssqosid {
     requires core
     files extensions/Ssqosid/ssqosid.sail
+  }
+
+  // RISC-V Worlds (Smwid, Smlwid, Smlwidlist, Smwiddeleg, Sswid)
+  Worlds {
+    requires core, exceptions
+    files extensions/Worlds/worlds.sail
   }
 
   CFI {
