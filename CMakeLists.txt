@@ -21,6 +21,8 @@ project(sail-riscv
   HOMEPAGE_URL "https://github.com/riscv/sail-riscv"
 )
 
+option(BUILD_RELEASE "Make a release build." OFF)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 include(cmake/sail_required_version.cmake)
