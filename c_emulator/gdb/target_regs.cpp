@@ -1,5 +1,5 @@
 #include "target_regs.h"
-#include "config_utils.h"
+#include "parse_utils.h"
 #include "protocol_handler.h"
 #include "riscv_model_impl.h"
 
@@ -174,10 +174,41 @@ std::string get_register(protocol_handler &proto_handler, uint64_t regidx) {
   return buf.str();
 }
 
-std::string set_register(protocol_handler &proto_handler, uint64_t regidx, uint64_t val) {
+namespace {
+
+std::optional<int64_t> get_register_bitlen(const protocol_handler &proto_handler, uint64_t regidx) {
+  int64_t idx = static_cast<int64_t>(regidx);
+  const register_map &map = proto_handler.get_register_map();
+  const ModelImpl &model = proto_handler.get_model();
+
+  if (0 <= idx && idx <= map.pc_offset) {
+    return model.xlen();
+  };
+  if (model.has_float_registers() && map.fpr_offset <= idx && idx <= map.fcsr_offset) {
+    return (idx == map.fcsr_offset) ? 32 : model.flen();
+  };
+
+  return std::nullopt;
+}
+
+} // namespace
+
+std::string set_register(protocol_handler &proto_handler, uint64_t regidx, const std::string &str_val) {
   int64_t reg = static_cast<int64_t>(regidx);
-  const register_map map = proto_handler.get_register_map();
+  const register_map &map = proto_handler.get_register_map();
   ModelImpl &model = proto_handler.get_model();
+
+  // TODO: vector registers will need to be handled separately.
+
+  auto opt_reg_bitlen = get_register_bitlen(proto_handler, regidx);
+  if (!opt_reg_bitlen.has_value()) {
+    return "E.invalid_register_idx";
+  }
+  auto opt_val = string_to_opt_uint64t_regdata(str_val, opt_reg_bitlen.value());
+  if (!opt_val.has_value()) {
+    return "E.invalid_register_val";
+  }
+  auto val = opt_val.value();
 
   if (0 <= reg && reg < map.pc_offset) {
     model.set_xreg(reg, val);
@@ -191,7 +222,8 @@ std::string set_register(protocol_handler &proto_handler, uint64_t regidx, uint6
       model.set_freg(reg, val);
     }
   } else {
-    return "E.invalid_register_idx";
+    // Should be consistent with get_register_bitlen().
+    assert(false);
   }
 
   return "OK";

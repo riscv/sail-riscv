@@ -56,6 +56,8 @@
     builds are not affected.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/2061 : gdbserver used incorrect byte order for `P` packets
+  - https://github.com/riscv/sail-riscv/issues/2062 : gdbserver did not update PC correctly for the `P` packet
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
   - https://github.com/riscv/sail-riscv/issues/2075 : `xret` cleared `mstatus.MPRV` for version 1.11 of the privileged ISA
   - https://github.com/riscv/sail-riscv/issues/2080 : `vsip`/`vsie` writes should not change `hip`/`hie` when not delegated by `hideleg`
