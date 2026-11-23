@@ -56,15 +56,27 @@
     builds are not affected.
 
 - Important issues addressed and bugs fixed:
+  - https://github.com/riscv/sail-riscv/issues/2033 : execute address triggers ignored the instruction size
   - https://github.com/riscv/sail-riscv/issues/2065 : `xstatus.MXR` should only be applied to explicit memory accesses
   - https://github.com/riscv/sail-riscv/issues/2075 : `xret` cleared `mstatus.MPRV` for version 1.11 of the privileged ISA
   - https://github.com/riscv/sail-riscv/issues/2080 : `vsip`/`vsie` writes should not change `hip`/`hie` when not delegated by `hideleg`
   - https://github.com/riscv/sail-riscv/issues/2081 : `HLVX*` instructions should page-fault on VS-stage shadow stack pages
   - https://github.com/riscv/sail-riscv/issues/2083 : `xSSE` changes should take effect immediately, even for cached shadow stack PTEs
+  - https://github.com/riscv/sail-riscv/issues/2088 : `vsha2ch`, `vsha2cl`, `vsha2ms` did not trap when `LMUL*VLEN < EGW`
+  - https://github.com/riscv/sail-riscv/issues/2089 : `fcsr` access blocked by `{h,s}stateen0.FCSR` should raise virtual instruction instead of illegal instruction exception
   - https://github.com/riscv/sail-riscv/issues/2090 : negated Sdtrig matches fired incorrectly on multibyte accesses
   - https://github.com/riscv/sail-riscv/pull/2093 : `hstateen` should only mask `sstateen` in VS-mode or VU-mode
+  - https://github.com/riscv/sail-riscv/issues/2100 : incorrect TLB handling for PTEs with PBMT bits set for Privileged ISA version 1.11 without Svpbmt
+  - https://github.com/riscv/sail-riscv/pull/2102 : `fli.h` should not depend on an enabled vector unit when Zvfh is supported.
+  - https://github.com/riscv/sail-riscv/pull/2103 : landing pad state was set incorrectly for indirect jumps that trapped
+  - https://github.com/riscv/sail-riscv/pull/2105 : `mstatus.{MXR,TVM}` should be read-only 0 when `satp.MODE` is read-only 0
+  - https://github.com/riscv/sail-riscv/pull/2108 : accessing double registers for Zdinx caused asserts
   - https://github.com/riscv/sail-riscv/pull/2111 : GVA was set from the current privilege mode for trigger breakpoints, instead of whether `tval` holds a guest virtual address
+  - https://github.com/riscv/sail-riscv/pull/2115 : fix `vfwmaccbf16.vf` EMUL check and setting of invalid flag when no element is active
+  - https://github.com/riscv/sail-riscv/issues/2122 : `xtval` should always get a 32-bit "instruction" when Zca is disabled
   - https://github.com/riscv/sail-riscv/pull/2124 : Accessing a shadow-stack page with a reserved Svnapot encoding raised an access fault instead of a page fault.
+  - https://github.com/riscv/sail-riscv/pull/2133 : fix handling of illegal LMUL for `vrgatherei16.vv`
+  - https://github.com/riscv/sail-riscv/pull/2135 : fix source/dest register group overlap checks for `viota.m`
 
 # Release notes for version 0.16
 
