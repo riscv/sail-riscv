@@ -81,7 +81,9 @@ int inner_main(int argc, char **argv) {
     opts.config_use_abi_names,
     run_info.trace_log
   );
-  model.register_callback(log_cbs);
+  if (log_cbs->enabled()) {
+    model.register_callback(log_cbs);
+  }
 
   if (opts.gdb_server_port != 0) {
     gdb_run_info info = {

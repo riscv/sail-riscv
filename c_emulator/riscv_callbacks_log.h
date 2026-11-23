@@ -18,6 +18,9 @@ public:
     FILE *trace_log = nullptr
   );
 
+  // True if any callback prints something
+  bool enabled() const;
+
   // callbacks_if
   void mem_write_callback(
     ModelImpl &model,
