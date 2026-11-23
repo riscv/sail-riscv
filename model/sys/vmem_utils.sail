@@ -234,7 +234,10 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
     let offset       = if next_page then lo_bytes else 0;
     let access_width = if next_page then hi_bytes else lo_bytes;
     if access_width > 0 then {
-      let addr = Virtaddr(vaddr_bits + offset);
+      // vaddr is already masked, only the next page part (in case of a split access) needs masking again.
+      let addr = if next_page
+                 then transform_effective_address(Virtaddr(vaddr_bits + offset), access_info)
+                 else vaddr;
       match translate_and_read_value(addr, access_width, access, access_info, aq, rl, res) {
         Err(e)       => return Err(e),
         Ok(paddr, v) => {
@@ -358,7 +361,9 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
     let offset       = if next_page then lo_bytes else 0;
     let access_width = if next_page then hi_bytes else lo_bytes;
     if access_width > 0 then {
-      let addr = Virtaddr(vaddr_bits + offset);
+      let addr = if next_page
+                 then transform_effective_address(Virtaddr(vaddr_bits + offset), access_info)
+                 else vaddr;
       match translate_and_write_value(addr, access_width, data[8 * (offset + access_width) - 1 .. 8 * offset], access, access_info, aq, rl, res) {
         Err(e) => return Err(e),
         Ok(s)  => write_success = write_success & s,
