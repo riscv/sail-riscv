@@ -37,7 +37,9 @@ function clause execute VVMTYPE(funct6, vs2, vs1, vd) = {
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_vm_src_overlap(0b0, vs1, SEW)) |
-     not(valid_vm_src_overlap(0b0, vs2, SEW))
+     not(valid_vm_src_overlap(0b0, vs2, SEW)) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, min(LMUL_pow, 0))) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -98,7 +100,9 @@ function clause execute VVMCTYPE(funct6, vs2, vs1, vd) = {
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_vd_unmasked()  |
      not(valid_reg_group(vs1, LMUL_pow)) |
-     not(valid_reg_group(vs2, LMUL_pow))
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, min(LMUL_pow, 0))) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -228,7 +232,9 @@ function clause execute VVCMPTYPE(funct6, vm, vs2, vs1, vd) = {
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_vm_src_overlap(vm, vs1, SEW)) |
-     not(valid_vm_src_overlap(vm, vs2, SEW))
+     not(valid_vm_src_overlap(vm, vs2, SEW)) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, min(LMUL_pow, 0))) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -297,7 +303,8 @@ function clause execute VXMTYPE(funct6, vs2, rs1, vd) = {
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_vd_unmasked() |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_vm_src_overlap(0b0, vs2, SEW))
+     not(valid_vm_src_overlap(0b0, vs2, SEW)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -355,7 +362,10 @@ function clause execute VXMCTYPE(funct6, vs2, rs1, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) | illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_vd_unmasked() |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -483,7 +493,8 @@ function clause execute VXCMPTYPE(funct6, vm, vs2, rs1, vd) = {
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_vd_unmasked() |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_vm_src_overlap(vm, vs2, SEW))
+     not(valid_vm_src_overlap(vm, vs2, SEW)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -555,7 +566,8 @@ function clause execute VIMTYPE(funct6, vs2, simm, vd) = {
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_vd_unmasked() |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_vm_src_overlap(0b0, vs2, SEW))
+     not(valid_vm_src_overlap(0b0, vs2, SEW)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -610,7 +622,10 @@ function clause execute VIMCTYPE(funct6, vs2, simm, vd) = {
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
-  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) | illegal_vd_unmasked() | not(valid_reg_group(vs2, LMUL_pow))
+  if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
+     illegal_vd_unmasked() |
+     not(valid_reg_group(vs2, LMUL_pow)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
@@ -731,7 +746,8 @@ function clause execute VICMPTYPE(funct6, vm, vs2, simm, vd) = {
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_vd_unmasked() |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_vm_src_overlap(vm, vs2, SEW))
+     not(valid_vm_src_overlap(vm, vs2, SEW)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   let 'n = num_elem;
