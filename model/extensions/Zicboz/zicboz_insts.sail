@@ -40,10 +40,10 @@ function clause execute ZICBOZ(rs1) = {
 
   match get_transformed_data_addr(rs1, negative_offset, access, access_info, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
+    Ext_DataAddr_OK(block_vaddr) => {
 
       // Triggers match on the addresses in the whole cache block.
-      match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Store, bits_of(vaddr), cache_block_size), access_is_gva(access_info)) {
+      match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Store, bits_of(block_vaddr), cache_block_size), access_is_gva(access_info)) {
         Some(pti) => return PendingTrigger(pti),
         None()    => (),
       };
@@ -52,38 +52,35 @@ function clause execute ZICBOZ(rs1) = {
       //  and atomicity, including individual bytes."
       //
       // This implementation does a single atomic write.
-      let vaddr_for_error = vaddr - negative_offset;
+
+      // block_vaddr is the aligned address, but errors report the address that
+      // was encoded in the instruction. We subtract the negative offset
+      // (add the positive offset) to get it. Normally this will be
+      // equal to rs1, but pointer masking can change that.
+      let vaddr = block_vaddr - negative_offset;
       match translateAddr(vaddr, access, eff_priv) {
-        // vaddr is the aligned address, but errors report the address that
-        // was encoded in the instruction. We subtract the negative offset
-        // (add the positive offset) to get it. Normally this will be
-        // equal to rs1, but pointer masking can change that.
-        Err(e, _) => trap({ e with excinfo = bits_of(vaddr_for_error) }),
+        Err(e, _) => trap(e),
         Ok(paddr, pbmt, _) => {
+          let block_paddr = Physaddr(bits_of(paddr) & ~(zero_extend(ones(plat_cache_block_size_exp))));
 
-          // `exception_vaddr()` is expecting the physical addresses
-          // corresponding to the faulting virtual address, so they
-          // need to be offset like the virtual address was done for
-          // the `trap()` above.
-          let paddr_for_error = paddr - negative_offset;
-
-          match mem_write_ea(paddr, cache_block_size, eff_priv, access, pbmt, false, false, false) {
+          match mem_write_ea(block_paddr, cache_block_size, eff_priv, access, pbmt, false, false, false) {
             Err(exc_addr, e) => {
               // Cache accesses should not get split.
-              assert(exc_addr == paddr);
-              // See above.
-              let exc_vaddr = exception_vaddr(access_info, vaddr_for_error, paddr_for_error, paddr_for_error);
+              assert(exc_addr == block_paddr);
+              // `exception_vaddr()` is expecting the physical addresses
+              // corresponding to the faulting virtual address (i.e. `vaddr`).
+              let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, paddr);
               memory_exception(e, exc_vaddr, access_info)
             },
             Ok(_)  => {
-              match mem_write_value(paddr, cache_block_size, zeros(), eff_priv, access, pbmt, false, false, false) {
+              match mem_write_value(block_paddr, cache_block_size, zeros(), eff_priv, access, pbmt, false, false, false) {
                 Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                 Err(exc_addr, e) => {
                   // Cache accesses should not get split.
-                  assert(exc_addr == paddr);
+                  assert(exc_addr == block_paddr);
                   // See above.
-                  let exc_vaddr = exception_vaddr(access_info, vaddr_for_error, paddr_for_error, paddr_for_error);
+                  let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, paddr);
                   memory_exception(e, exc_vaddr, access_info)
                 },
               }

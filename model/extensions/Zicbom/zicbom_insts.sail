@@ -86,29 +86,28 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
   // are in bounds. We will need to add a new function, parameter or access type.
   match get_transformed_data_addr(rs1, negative_offset, access, access_info, cache_block_size) {
     Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
-      // vaddr is the aligned address, but errors report the address that
+    Ext_DataAddr_OK(block_vaddr) => {
+      // block_vaddr is the aligned address, but errors report the address that
       // was encoded in the instruction. We subtract the negative offset
       // (add the positive offset) to get it. Normally this will be
       // equal to rs1, but pointer masking can change that.
-      let vaddr_for_error = vaddr - negative_offset;
+      let vaddr = block_vaddr - negative_offset;
 
-      match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Store, bits_of(vaddr), cache_block_size), access_is_gva(access_info)) {
+      match match_memory_trigger_before(cur_privilege, TriggerAddress(TriggerAddress_Store, bits_of(block_vaddr), cache_block_size), access_is_gva(access_info)) {
         Some(pti) => return PendingTrigger(pti),
         None()    => (),
       };
 
-      // TODO/NOTE: This is weird, we should not translateAddr a different address than specified and report it
       match translateAddr(vaddr, access, eff_priv) {
         Ok(paddr, pbmt, _) => {
           // Check PMA and PMP access controls.
-          match phys_access_check(access, pbmt, eff_priv, paddr, cache_block_size, false) {
+          let block_paddr = Physaddr(bits_of(paddr) & ~(zero_extend(ones(plat_cache_block_size_exp))));
+          match phys_access_check(access, pbmt, eff_priv, block_paddr, cache_block_size, false) {
             Err(e)  => {
               // `exception_vaddr()` is expecting the physical
               // addresses corresponding to the faulting virtual
-              // address (i.e. `vaddr_for_error`).
-              let paddr_for_error = paddr - negative_offset;
-              let exc_vaddr = exception_vaddr(access_info, vaddr_for_error, paddr_for_error, paddr_for_error);
+              // address (i.e. `vaddr`).
+              let exc_vaddr = exception_vaddr(access_info, vaddr, paddr, paddr);
               memory_exception(e, exc_vaddr, access_info)
             },
             // If there is no error, the model has no caches so there's no
@@ -116,7 +115,7 @@ private function process_clean_inval(rs1 : regidx, cbop : cbop_zicbom) -> Execut
             Ok(_)   => RETIRE_SUCCESS
           }
         },
-        Err(e, _) =>  trap({ e with excinfo = bits_of(vaddr_for_error) }),
+        Err(e, _) => trap(e),
       }
     }
   }
