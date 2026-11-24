@@ -77,6 +77,7 @@
   - https://github.com/riscv/sail-riscv/pull/2124 : Accessing a shadow-stack page with a reserved Svnapot encoding raised an access fault instead of a page fault.
   - https://github.com/riscv/sail-riscv/pull/2133 : fix handling of illegal LMUL for `vrgatherei16.vv`
   - https://github.com/riscv/sail-riscv/pull/2135 : fix source/dest register group overlap checks for `viota.m`
+  - TODO : fix handling of illegal overlapping groups if the EEWs differ for `vfwmacc.vf`, `vfwnmacc.vf`, `vfwmsac.vf`, `vfwnmsac.vf`.
 
 # Release notes for version 0.16
 
