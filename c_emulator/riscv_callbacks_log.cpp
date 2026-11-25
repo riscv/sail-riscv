@@ -27,6 +27,11 @@ log_callbacks::log_callbacks(
     trace_log(trace_log) {
 }
 
+bool log_callbacks::enabled() const {
+  return trace_log != nullptr && (config_print_gpr || config_print_fpr || config_print_vreg || config_print_csr ||
+                                  config_print_mem_access || config_print_ptw || config_print_tlb);
+}
+
 // Implementations of default callbacks for trace printing.
 // The model assumes that these functions do not change the state of the model.
 

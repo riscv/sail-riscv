@@ -20,13 +20,13 @@ void ModelImpl::remove_callback(std::shared_ptr<callbacks_if> cb) {
 }
 
 void ModelImpl::call_pre_step_callbacks(bool is_waiting) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->pre_step_callback(*this, is_waiting);
   }
 }
 
 void ModelImpl::call_post_step_callbacks(bool is_waiting) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->post_step_callback(*this, is_waiting);
   }
 }
@@ -48,7 +48,7 @@ void ModelImpl::set_reservation_invalidate_on_same_hart_store(bool invalidate_on
 }
 
 unit ModelImpl::fetch_callback(sbits pc, sbits opcode) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->fetch_callback(*this, pc, opcode);
   }
   return UNIT;
@@ -61,7 +61,7 @@ unit ModelImpl::mem_write_callback(
   int64_t width,
   lbits value
 ) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->mem_write_callback(*this, privilege, access, paddr, width, value);
   }
   if (m_reservation_invalidate_on_same_hart_store && match_reservation(paddr)) {
@@ -76,98 +76,98 @@ unit ModelImpl::mem_read_callback(
   int64_t width,
   lbits value
 ) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->mem_read_callback(*this, privilege, access, paddr, width, value);
   }
   return UNIT;
 }
 
 unit ModelImpl::mem_exception_callback(sbits paddr, uint64_t num_of_exception) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->mem_exception_callback(*this, paddr, num_of_exception);
   }
   return UNIT;
 }
 
 unit ModelImpl::xreg_write_callback(sbits reg, sbits value) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->xreg_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
 unit ModelImpl::freg_write_callback(uint64_t reg, sbits value) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->freg_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
 unit ModelImpl::csr_write_callback(uint64_t reg, sbits value) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->csr_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
 unit ModelImpl::csr_read_callback(uint64_t reg, sbits value) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->csr_read_callback(*this, reg, value);
   }
   return UNIT;
 }
 
 unit ModelImpl::vreg_write_callback(uint64_t reg, lbits value) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->vreg_write_callback(*this, reg, value);
   }
   return UNIT;
 }
 
 unit ModelImpl::pc_write_callback(sbits new_pc) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->pc_write_callback(*this, new_pc);
   }
   return UNIT;
 }
 
 unit ModelImpl::redirect_callback(sbits new_pc) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->redirect_callback(*this, new_pc);
   }
   return UNIT;
 }
 
 unit ModelImpl::trap_callback(bool is_interrupt, fbits cause) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->trap_callback(*this, is_interrupt, cause);
   }
   return UNIT;
 }
 
 unit ModelImpl::xret_callback(bool is_mret) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->xret_callback(*this, is_mret);
   }
   return UNIT;
 }
 
 unit ModelImpl::instret_callback(unit) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->instret_callback(*this);
   }
   return UNIT;
 }
 
 unit ModelImpl::trigger_match_callback(sail_int index) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->trigger_match_callback(*this, index);
   }
   return UNIT;
 }
 
 unit ModelImpl::trigger_fire_callback(sail_int index) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->trigger_fire_callback(*this, index);
   }
   return UNIT;
@@ -180,56 +180,56 @@ unit ModelImpl::ptw_start_callback(
   MemoryAccessType access_type,
   Privilege privilege
 ) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->ptw_start_callback(*this, stage, level, vpn, access_type, privilege);
   }
   return UNIT;
 }
 
 unit ModelImpl::ptw_step_callback(TranslationStage stage, int64_t level, sbits pte_addr, uint64_t pte) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->ptw_step_callback(*this, stage, level, pte_addr, pte);
   }
   return UNIT;
 }
 
 unit ModelImpl::ptw_success_callback(TranslationStage stage, int64_t level, uint64_t final_ppn) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->ptw_success_callback(*this, stage, level, final_ppn);
   }
   return UNIT;
 }
 
 unit ModelImpl::ptw_fail_callback(TranslationStage stage, int64_t level, PTW_Error error_type, sbits pte_addr) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->ptw_fail_callback(*this, stage, level, error_type, pte_addr);
   }
   return UNIT;
 }
 
 unit ModelImpl::tlb_add_callback(TLB tlb, uint64_t index) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->tlb_add_callback(*this, tlb, index);
   }
   return UNIT;
 }
 
 unit ModelImpl::tlb_flush_begin_callback(unit) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->tlb_flush_begin_callback(*this);
   }
   return UNIT;
 }
 
 unit ModelImpl::tlb_flush_callback(uint64_t index) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->tlb_flush_callback(*this, index);
   }
   return UNIT;
 }
 
 unit ModelImpl::tlb_flush_end_callback(TLB tlb) {
-  for (auto c : m_callbacks) {
+  for (const auto &c : m_callbacks) {
     c->tlb_flush_end_callback(*this, tlb);
   }
   return UNIT;
