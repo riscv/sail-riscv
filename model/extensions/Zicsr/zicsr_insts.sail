@@ -71,9 +71,27 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_
           0x144 => read_sip(IncludePlatformInterrupts).bits,
           _ => read_val,
         };
+        // Report the virtualized CSR, but keep the encoded CSR for access semantics.
+       let callback_csr : csreg =
+         if inVirtualPrivilege() then
+           match csr {
+             0x100 => 0x200, // sstatus  -> vsstatus
+             0x104 => 0x204, // sie      -> vsie
+             0x105 => 0x205, // stvec    -> vstvec
+             0x140 => 0x240, // sscratch -> vsscratch
+             0x141 => 0x241, // sepc     -> vsepc
+             0x142 => 0x242, // scause   -> vscause
+             0x143 => 0x243, // stval    -> vstval
+             0x144 => 0x244, // sip      -> vsip
+             0x14D => 0x24D, // stimecmp -> vstimecmp
+             0x15D => 0x25D, // stimecmph -> vstimecmph (RV32)
+             0x180 => 0x280, // satp     -> vsatp
+             _ => csr,
+           }
+         else csr;
 
         if access_type == CSRRead then {
-          csr_read_callback(csr, dest_val);
+          csr_read_callback(callback_csr, dest_val);
           X(rd) = dest_val;
           RETIRE_SUCCESS
         } else {
@@ -85,7 +103,7 @@ function doCSR(csr : csreg, rs1_val : xlenbits, rd : regidx, op : csrop, access_
           match write_CSR(csr, write_val) {
             Ok(final_val) => {
               X(rd) = dest_val;
-              csr_write_callback(csr, final_val);
+              csr_write_callback(callback_csr, final_val);
               RETIRE_SUCCESS
             },
             Err(()) => Illegal_Instruction(),
