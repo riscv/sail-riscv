@@ -602,6 +602,32 @@
       // as 0.
       "base": 201326592
     },
+    // RISC-V Worlds (World-ID) platform parameters.  These apply to the
+    // Smwid, Smlwid, Smlwidlist and Smwiddeleg extensions (under
+    // `extensions` below).  The bit vectors have a bit set for each
+    // WID; bits at or above `nworlds` are ignored.
+    "worlds": {
+      // NWorlds, the number of World Identifiers (WIDs).  Must be in [1, XLEN].
+      "nworlds": 4,
+      // pmwid, the platform-defined WID of M-mode (and the reset value
+      // of `mwid`).  Must be less than `nworlds` and included in `pmwidlist`.
+      "pmwid": 0,
+      // pmwidlist, the WIDs that may be used with `mwid`.
+      "pmwidlist": {
+        "len": 64,
+        "value": "0xF"
+      },
+      // pmlwidlist, the WIDs that may be used with `mlwid`.
+      "pmlwidlist": {
+        "len": 64,
+        "value": "0xF"
+      },
+      // The WIDs that may be delegated to S-mode via `mwiddeleg`.
+      "delegatable_wids": {
+        "len": 64,
+        "value": "0xF"
+      }
+    },
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
     "wfi_is_nop": false,
@@ -1271,6 +1297,29 @@
       "supported": true
     },
     "Smcntrpmf": {
+      "supported": true
+    },
+    // The RISC-V Worlds (World-ID) extensions.  The platform parameters
+    // (NWorlds, pmwid, pmwidlist, pmlwidlist and the delegatable WIDs)
+    // are under `platform.worlds`.
+    "Smwid": {
+      "supported": true,
+      // Whether `mwid` is locked out of reset.
+      "mwid_locked_on_reset": false
+    },
+    "Smlwid": {
+      "supported": true,
+      // The reset value of `mlwid`, which is not specified by the
+      // specification.  Must be less than `platform.worlds.nworlds`.
+      "mlwid_reset_value": 0
+    },
+    // Requires Smwid and Smlwid.
+    "Smlwidlist": {
+      "supported": true
+    },
+    // Requires Smlwid and S.  Provides the Sswid extension, which is
+    // enabled while `mwiddeleg` is non-zero.
+    "Smwiddeleg": {
       "supported": true
     },
     // The double trap extensions are not enabled by default because
