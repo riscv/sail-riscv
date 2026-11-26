@@ -121,9 +121,10 @@ private function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : PTE_Ext, stage 
 // Check access permissions in PTE
 
 union pte_check_failure = {
-  PTE_No_Permission : unit,
-  PTE_No_Access     : unit,
-  PTE_Ext_Failure   : ext_ptw_fail
+  PTE_No_Permission  : unit,
+  PTE_No_Access      : unit,
+  PTE_SSMP_Violation : unit,
+  PTE_Ext_Failure    : ext_ptw_fail
 }
 
 // For (non-standard) extensions: this function gets the extension-available bits
@@ -223,7 +224,7 @@ private function check_PTE_permission(
       Atomic(_, _, _, rp, wp)        => internal_error(__FILE__, __LINE__, "Invalid payloads (" ^ mem_payload_name(rp) ^ ", " ^ mem_payload_name(wp) ^ ") for Atomic."),
 
     };
-    if not(shadow_stack_ok) then return PTE_Check_Failure((), PTE_No_Access());
+    if not(shadow_stack_ok) then return PTE_Check_Failure((), PTE_SSMP_Violation());
 
     match access {
       // The `X` check for `HLVX.*` instructions was deferred above.
@@ -243,7 +244,7 @@ private function check_PTE_permission(
     // being accessed by a shadow stack instruction is a read-only page, a
     // store/AMO page-fault exception will be triggered."
     let is_read_only = pte_R & not(pte_W) & not(pte_X);
-    return PTE_Check_Failure((), if is_read_only then PTE_No_Permission() else PTE_No_Access());
+    return PTE_Check_Failure((), if is_read_only then PTE_No_Permission() else PTE_SSMP_Violation());
   };
 
   // Step 8 of VATP (see vmem.sail).
