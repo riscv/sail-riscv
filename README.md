@@ -242,6 +242,7 @@ The following unratified extensions are supported and can be enabled using the `
 - Zilx extension for indexed integer load instructions, v0.1
 - Svukte extension for Address-Independent Latency of User-Mode Faults to Supervisor Addresses, v0.8
 - Zvabd extension for vector absolute difference, v0.9
+- Zvfbfa extension for additional BF16 vector compute support, v0.1
 
 **For a list of unsupported extensions and features, see the [Extension Roadmap](https://github.com/riscv/sail-riscv/wiki/Extension-Roadmap).**
 

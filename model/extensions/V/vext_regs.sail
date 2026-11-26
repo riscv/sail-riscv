@@ -253,7 +253,8 @@ let VLENB : xlenbits = to_bits(vlen / 8)
 
 bitfield Vtype  : xlenbits = {
   vill      : xlen - 1,
-  reserved  : xlen - 2 .. 8,
+  reserved  : xlen - 2 .. 9,
+  altfmt    : 8,
   vma       : 7,
   vta       : 6,
   vsew      : 5 .. 3,
@@ -297,6 +298,11 @@ function get_lmul_pow() -> LMUL_pow = {
   assert(lmul_pow > -4, "Reserved LMUL stored in vtype register. This should be impossible.");
   lmul_pow
 }
+
+// Whether in BF16 replacement mode (Zvfbfa enabled and altfmt=1)
+function get_altfmt() -> bool =
+  currentlyEnabled(Ext_Zvfbfa) & vtype[altfmt] == 0b1
+
 
 enum agtype = { UNDISTURBED, AGNOSTIC }
 
