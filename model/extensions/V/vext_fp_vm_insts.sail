@@ -39,7 +39,9 @@ function clause execute FVVMTYPE(funct6, vm, vs2, vs1, vd) = {
      not(valid_reg_group(vs1, LMUL_pow)) |
      not(valid_reg_group(vs2, LMUL_pow)) |
      not(valid_vm_src_overlap(vm, vs1, SEW)) |
-     not(valid_vm_src_overlap(vm, vs2, SEW))
+     not(valid_vm_src_overlap(vm, vs2, SEW)) |
+     not(valid_reg_overlap(vs1, vd, LMUL_pow, min(LMUL_pow, 0))) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   assert(SEW != 8);
@@ -110,7 +112,8 @@ function clause execute FVFMTYPE(funct6, vm, vs2, rs1, vd) = {
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_fp_vd_unmasked(SEW, rm_3b) |
      not(valid_reg_group(vs2, LMUL_pow)) |
-     not(valid_vm_src_overlap(vm, vs2, SEW))
+     not(valid_vm_src_overlap(vm, vs2, SEW)) |
+     not(valid_reg_overlap(vs2, vd, LMUL_pow, min(LMUL_pow, 0)))
   then return Illegal_Instruction();
 
   assert(SEW != 8);

@@ -107,7 +107,9 @@ function valid_whole_register(r : vregidx, nf : nfields_pow2) -> bool = {
   unsigned(vregidx_bits(r)) % nf == 0
 }
 
-// Check for valid register overlap in vector widening/narrowing instructions:
+// Check for valid register overlap in vector widening, narrowing and compare
+// instructions, including vmadc/vmsbc:
+//
 // In a widening instruction, the overlap is valid only in the highest-numbered part
 // of the destination register group, and the source EMUL is at least 1.
 // In a narrowing instruction, the overlap is valid only in the lowest-numbered part
