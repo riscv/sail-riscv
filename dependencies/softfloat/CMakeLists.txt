@@ -6,8 +6,8 @@ include(FetchContent)
 
 FetchContent_Declare(
     berkeley_softfloat
-    URL https://github.com/ucb-bar/berkeley-softfloat-3/archive/0a5ad290c6b287f6605bb99a35ad0842c1e61aa5.tar.gz
-    URL_HASH SHA256=b646bbef1883c8b50920ec3414307327a599818a4f72c5fc36629f9d6c9052bd
+    URL https://github.com/ucb-bar/berkeley-softfloat-3/archive/afdc157e71f0d97508301ac0965defead49c679b.tar.gz
+    URL_HASH SHA256=fe5b8f89b44a706c16d1b780dbc8ea119f6e341c3b8d3b3e0952e0e98ba5a829
 )
 
 FetchContent_MakeAvailable(berkeley_softfloat)
