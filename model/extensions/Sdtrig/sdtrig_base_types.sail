@@ -175,5 +175,6 @@ function is_supported_match_val(m : bits(4)) -> bool =
 // Once validated, the corresponding `mcontrol6` parameter will have this type.
 type maskmax = range(1, xlen - 1)
 
-// If `num_triggers` is zero, there is no valid index.
-type trigger_index = range(0, num_triggers - 1)
+// Keep the range non-empty (0..0) when `num_triggers` is zero so static
+// compile-time `--config` checks (e.g. Lean/Rocq/SMT) can typecheck.
+type trigger_index = range(0, if num_triggers == 0 then 0 else num_triggers - 1)

@@ -530,6 +530,7 @@ function fire_pending_before_triggers(_pti : pending_trigger_info) -> unit = {
 }
 
 private function fire_trigger_after(idx : trigger_index) -> bool = {
+  assert(num_triggers > 0);
   let (t, action, fired) : (Trigger, Trig_Action, bool) = match triggers[idx] {
     T_icount(t) => {
       let t = if icount_count_is_hardwired_one
@@ -687,6 +688,8 @@ function update_triggers() -> unit = {
     assert(is_none(written_trigger_index));
     return ();
   };
+
+  assert(num_triggers > 0);
 
   match written_trigger_index {
     None()    => (),
