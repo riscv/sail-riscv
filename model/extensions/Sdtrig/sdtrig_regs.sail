@@ -9,6 +9,8 @@
 function clause currentlyEnabled(Ext_Sdtrig) = hartSupports(Ext_Sdtrig)
 
 register triggers : vector(num_triggers, Trigger) = vector_init(trig_reset_val)
+// This will be initialized on `reset()` by `reset_triggers()` below.
+register tinfos   : vector(num_triggers, TInfo)   = vector_init(Mk_TInfo(zeros()))
 
 register tselect : xlenbits = zeros()
 mapping clause csr_name_map = 0x7a0  <-> "tselect"
@@ -63,7 +65,7 @@ function clause write_CSR(0x7a2, value) = {
 }
 
 mapping clause csr_name_map = 0x7a3  <-> "tdata3"
-function clause is_CSR_accessible(0x7a3, _, _) = currentlyEnabled(Ext_Sdtrig)
+function clause is_CSR_accessible(0x7a3, _, _) = currentlyEnabled(Ext_Sdtrig) & sdtrig_has_textra
 function clause read_CSR(0x7a3) = {
   let idx = unsigned(tselect);
   assert(idx < num_triggers, "read(tdata3): out-of-range tselect: " ^ bits_str(tselect));
@@ -83,13 +85,13 @@ function clause is_CSR_accessible(0x7a4, _, _) = currentlyEnabled(Ext_Sdtrig)
 function clause read_CSR(0x7a4) = {
   let idx = unsigned(tselect);
   assert(idx < num_triggers, "read(tinfo): out-of-range tselect: " ^ bits_str(tselect));
-  tinfo_of_trigger(triggers[idx]).bits
+  tinfos[idx].bits
 }
 function clause write_CSR(0x7a4, _value) = {
   let idx = unsigned(tselect);
   assert(idx < num_triggers, "write(tinfo): out-of-range tselect: " ^ bits_str(tselect));
   // Writing the tinfo CSR has no effect.
-  Ok(tinfo_of_trigger(triggers[idx]).bits)
+  Ok(tinfos[idx].bits)
 }
 
 register tcontrol : TControl = Mk_TControl(zeros())
@@ -149,4 +151,10 @@ function clause write_CSR(0x6a8, value) = {
   let v = Mk_MContext(value);
   mcontext = [mcontext with hcontext = v[hcontext] & hcontext_mask];
   Ok(mcontext.bits)
+}
+
+function reset_triggers() -> unit = {
+ foreach (i from 0 to num_triggers - 1) {
+    tinfos[i] = tinfo_at_idx(i)
+  }
 }

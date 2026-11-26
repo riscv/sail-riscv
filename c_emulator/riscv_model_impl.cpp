@@ -390,6 +390,114 @@ unit ModelImpl::dispatch_events(unit) {
   return UNIT;
 }
 
+// Triggers
+
+namespace {
+
+// This can only be used for integer lists where the elements are
+// known to fit into `mach_int`s.  This is true for lists of trigger
+// indices due to their `config_trigger_index` type, which is enforced
+// by the config schema.
+std::vector<mach_int> indices_of_list(const hart::zz5listz8z5iz9 &list) {
+  std::vector<mach_int> indices;
+  const auto *node = list;
+  while (node != nullptr) {
+    mach_int idx = CONVERT_OF(mach_int, sail_int)(node->hd);
+    indices.push_back(idx);
+    node = node->tl;
+  }
+  return indices;
+}
+
+std::vector<mach_int> indices_of_trigger(const hart::ztrigger_config &trig) {
+  switch (trig.kind) {
+  case hart::Kind_zmcontrol6:
+    return indices_of_list(trig.variants.zmcontrol6.ztselects);
+  case hart::Kind_zicount:
+    return indices_of_list(trig.variants.zicount.ztselects);
+    break;
+  case hart::Kind_zitrigger:
+    return indices_of_list(trig.variants.zitrigger.ztselects);
+    break;
+  case hart::Kind_zetrigger:
+    return indices_of_list(trig.variants.zetrigger.ztselects);
+    break;
+  }
+  // The switch should have handled all the cases.
+  assert(false);
+}
+
+} // namespace
+
+bool ModelImpl::validate_triggers_layout(int64_t num_triggers) {
+  // Validation invariants:
+  // . `tselects` should not have duplicate indices (a) or out-of-range indices (b).
+  // . there cannot be multiple trigger objects of the same type at an index (c).
+  // . every index needs to be covered by at least one trigger (d).
+
+  bool valid = true;
+  std::map<mach_int, std::set<Trig_Type>> idx_to_trig_types;
+  const auto *trig = zconfigured_triggers;
+  int n = 0;
+
+  while (trig != nullptr) {
+    const auto &trig_config = trig->hd;
+    auto trig_type = ztrigger_type_of_config(trig_config);
+    auto indices = indices_of_trigger(trig_config);
+
+    std::ostringstream trig_buf;
+    trig_buf << "Trigger object #" << n << " in `extensions.Sdtrig.triggers`";
+
+    std::set<mach_int> set;
+    for (const auto &i : indices) {
+      // Check (a).
+      if (set.contains(i)) {
+        valid = false;
+        std::ostringstream msg;
+        msg << trig_buf.str() << " has a duplicate index " << i << " in its `tselects`." << std::endl;
+        print_endline(msg.str().c_str());
+      } else {
+        // Check (b).
+        if (i >= num_triggers) {
+          valid = false;
+          std::ostringstream msg;
+          msg << trig_buf.str() << " has an out-of-range index " << i << " (>= `num_triggers`=" << num_triggers
+              << ") in its `tselects`." << std::endl;
+          print_endline(msg.str().c_str());
+        }
+        set.insert(i);
+      }
+
+      // Check (c).
+      auto &trig_types = idx_to_trig_types[i];
+      if (trig_types.contains(trig_type)) {
+        valid = false;
+        std::ostringstream msg;
+        msg << trig_buf.str() << " results in multiple triggers of type " << name_of_trigger_type(trig_type)
+            << " at index " << i << "." << std::endl;
+        print_endline(msg.str().c_str());
+      } else {
+        trig_types.insert(trig_type);
+      }
+    }
+
+    trig = trig->tl;
+    ++n;
+  }
+
+  // Check (d).
+  for (int64_t i = 0; i < num_triggers; i++) {
+    if (!idx_to_trig_types.contains(i)) {
+      valid = false;
+      std::ostringstream msg;
+      msg << "`extensions.Sdtrig.triggers` does not specify any trigger at index " << i << "." << std::endl;
+      print_endline(msg.str().c_str());
+    }
+  }
+
+  return valid;
+}
+
 unit ModelImpl::plat_term_write(mach_bits s) {
   char c = static_cast<char>(s);
   if (write(m_term_fd, &c, sizeof(c)) < 0) {
@@ -643,6 +751,15 @@ std::string ModelImpl::name_of_event(Event ev) {
   sail_string str = nullptr;
   CREATE(sail_string)(&str);
   zname_of_event(&str, ev);
+  std::string name(str);
+  KILL(sail_string)(&str);
+  return name;
+}
+
+std::string ModelImpl::name_of_trigger_type(Trig_Type t) {
+  sail_string str = nullptr;
+  CREATE(sail_string)(&str);
+  ztrig_type_name_forwards(&str, t);
   std::string name(str);
   KILL(sail_string)(&str);
   return name;

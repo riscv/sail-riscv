@@ -28,9 +28,11 @@
   - When GEILEN is 0, `mideleg.SGEI` can now be configured as writable via
     `base.mideleg.delegatable_bits` or read-only one via
     `base.mideleg.read_only_one_bits`.
-  - The sizes supported by the `mcontrol6` trigger in the Sdtrig
-    extension can now be specified; see
-    `extensions.Sdtrig.mcontrol6.supported_{address,data}_access_sizes`.
+  - The configuration for the Sdtrig extension has been changed to enable
+    per-trigger configuration, and enable different trigger variant combinations
+    to be available at different `tselect` indices; see `extension.Sdtrig.triggers`.
+    As a result, the `extensions.Sdtrig.{icount,itrigger,etrigger}` fields
+    have been removed.
   - The number of implemented bits of `scontext` and `hcontext`
     (i.e. the `hcontext` field of `mcontext`) can now be specified,
     see `extensions.Sdtrig.hcontext.width` and

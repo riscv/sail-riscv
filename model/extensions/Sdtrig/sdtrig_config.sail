@@ -13,29 +13,63 @@ function make_disabled_trigger(tdata1 : TData1, tdata2 : xlenbits, textra : TExt
                       tdata2 = tdata2,
                       textra })
 
-let supported_etrigger_mask : xlenbits = config extensions.Sdtrig.etrigger.supported_exceptions
-let supported_itrigger_mask : xlenbits = config extensions.Sdtrig.itrigger.supported_interrupts
-
 // Forward declaration.
 val allow_chain_at : (trigger_index) -> bool
+
+function is_supported_textra(opt_cfg : option(textra_config), textra : TExtra) -> bool =
+  match opt_cfg {
+    // For now, triggers that do not use `textra` need `tdata3` to be zeroed.
+    None()    => TExtra_to_bits(textra) == zeros(),
+    Some(cfg) => (cfg.mhselect.mcontext_match | cfg.mhselect.vmid_match | textra.mhselect == zeros()) &
+                 (cfg.sselect.scontext_match | cfg.sselect.asid_match | textra.sselect == zeros()) &
+                 (cfg.sselect.scontext_match | textra.sbytemask == zeros()),
+  }
 
 // TODO: support enabling tdata1.dmode when Debug Mode is supported with Sdext.
 function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, textra : TExtra) -> Trigger = {
   let tt = tdata1[trig_type];
-  if   not(is_supported_trigger_type(tt))
-  then {
+  if not(is_legal_trigger_type(tt)) then {
     if get_config_print_trigger()
     then print_log("Cannot create unsupported trigger type " ^ bits_str(tt) ^ ".");
     return make_disabled_trigger(tdata1, tdata2, textra)
   };
+
   let tt = trig_type_bits(tt);
+  if tt == TT_disabled then {
+    if get_config_print_trigger()
+    then print_log("Disabling trigger at index " ^ dec_str(idx) ^ ".");
+    return make_disabled_trigger(tdata1, tdata2, textra)
+  };
+
+  let cfg : trigger_config = match find_trigger_config_at(tt, idx, configured_triggers) {
+    None() => {
+      if get_config_print_trigger()
+      then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ "at index " ^ dec_str(idx) ^ ".");
+      return make_disabled_trigger(tdata1, tdata2, textra)
+    },
+    Some(cfg) => cfg,
+  };
+
+  let textra_bits = TExtra_to_bits(textra);
+
   match tt {
     TT_icount => {
+      let cfg : icount_config = match get_icount_config(cfg) {
+        Some(cfg) => cfg,
+        None()    => internal_error(__FILE__, __LINE__, "unexpected trigger config found for icount"),
+      };
+
       let v = Mk_ICount_bits(tdata1.bits);
       let act = v[action];
-      let count = if icount_count_is_hardwired_one then zero_extend(0x1) else v[count];
-      if is_supported_action(act) then {
+      let count = if cfg.count_is_hardwired_one then zero_extend(0x1) else v[count];
+
+      let is_action_supported = is_supported_action(act);
+      let is_textra_supported = is_supported_textra(cfg.textra_cfg, textra);
+      let is_valid_config     = is_action_supported & is_textra_supported;
+
+      if is_valid_config then {
         T_icount(struct {
+          cfg,
           dmode = false,
           vs = if currentlyEnabled(Ext_H) then bool_bit(v[vs]) else false,
           vu = if currentlyEnabled(Ext_H) then bool_bit(v[vu]) else false,
@@ -52,21 +86,31 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           textra,
         })
       } else {
-        if get_config_print_trigger()
-        then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported action " ^ bits_str(act) ^ ".");
+        if get_config_print_trigger() then {
+          if not(is_action_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " due to unsupported action " ^ bits_str(act) ^ ".");
+          if not(is_textra_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " due to unsupported textra.");
+        };
         make_disabled_trigger(tdata1, tdata2, textra)
       }
     },
     TT_itrigger => {
+      let cfg : itrigger_config = match get_itrigger_config(cfg) {
+        Some(cfg) => cfg,
+        None()    => internal_error(__FILE__, __LINE__, "unexpected trigger config found for itrigger"),
+      };
       let v = Mk_IETrigger_bits(tdata1.bits);
       let act = v[action];
 
       let is_action_supported     = is_supported_action(act);
-      let is_interrupts_supported = (tdata2 & supported_itrigger_mask) == tdata2;
-      let is_valid_config         = is_action_supported & is_interrupts_supported;
+      let is_interrupts_supported = (tdata2 & cfg.supported_interrupts) == tdata2;
+      let is_textra_supported     = is_supported_textra(cfg.textra_cfg, textra);
+      let is_valid_config         = is_action_supported & is_interrupts_supported & is_textra_supported;
 
       if is_valid_config then {
         T_itrigger(struct {
+          cfg,
           dmode = false,
           hit = bool_bit(v[hit]),
           vs = if currentlyEnabled(Ext_H) then bool_bit(v[vs]) else false,
@@ -76,7 +120,7 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           s = if currentlyEnabled(Ext_S) then bool_bit(v[s]) else false,
           u = if currentlyEnabled(Ext_U) then bool_bit(v[u]) else false,
           action = trig_action(act),
-          tdata2 = tdata2 & supported_itrigger_mask,
+          tdata2 = tdata2,
           textra,
           pending = false,
         })
@@ -85,21 +129,29 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           if not(is_action_supported)
           then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported action " ^ bits_str(act) ^ ".");
           if not(is_interrupts_supported)
-          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported interrupts " ^ bits_str(tdata2) ^ " (supported = " ^ bits_str(supported_itrigger_mask) ^ ").");
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported interrupts " ^ bits_str(tdata2) ^ " (supported = " ^ bits_str(cfg.supported_interrupts) ^ ").");
+          if not(is_textra_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " due to unsupported textra.");
         };
         make_disabled_trigger(tdata1, tdata2, textra)
       }
     },
     TT_etrigger => {
+      let cfg : etrigger_config = match get_etrigger_config(cfg) {
+        Some(cfg) => cfg,
+        None()    => internal_error(__FILE__, __LINE__, "unexpected trigger config found for etrigger"),
+      };
       let v = Mk_IETrigger_bits(tdata1.bits);
       let act = v[action];
 
       let is_action_supported     = is_supported_action(act);
-      let is_exceptions_supported = (tdata2 & supported_etrigger_mask) == tdata2;
-      let is_valid_config         = is_action_supported & is_exceptions_supported;
+      let is_exceptions_supported = (tdata2 & cfg.supported_exceptions) == tdata2;
+      let is_textra_supported     = is_supported_textra(cfg.textra_cfg, textra);
+      let is_valid_config         = is_action_supported & is_exceptions_supported & is_textra_supported;
 
       if is_valid_config then {
         T_etrigger(struct {
+          cfg,
           dmode = false,
           hit = bool_bit(v[hit]),
           vs = if currentlyEnabled(Ext_H) then bool_bit(v[vs]) else false,
@@ -108,7 +160,7 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           s = if currentlyEnabled(Ext_S) then bool_bit(v[s]) else false,
           u = if currentlyEnabled(Ext_U) then bool_bit(v[u]) else false,
           action = trig_action(act),
-          tdata2 = tdata2 & supported_etrigger_mask,
+          tdata2 = tdata2,
           textra,
           pending = false,
         })
@@ -117,35 +169,45 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           if not(is_action_supported)
           then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported action " ^ bits_str(act) ^ ".");
           if not(is_exceptions_supported)
-          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported exceptions " ^ bits_str(tdata2) ^ " (supported = " ^ bits_str(supported_etrigger_mask) ^ ").");
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported exceptions " ^ bits_str(tdata2) ^ " (supported = " ^ bits_str(cfg.supported_exceptions) ^ ").");
+          if not(is_textra_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " due to unsupported textra.");
         };
         make_disabled_trigger(tdata1, tdata2, textra)
       }
     },
     TT_mcontrol6 => {
+      let cfg : mcontrol6_config = match get_mcontrol6_config(cfg) {
+        Some(cfg) => cfg,
+        None()    => internal_error(__FILE__, __LINE__, "unexpected trigger config found for mcontrol6"),
+      };
+
+      let maskmax = cfg.maskmax6;
+      // This is validated in `validate_config`.
+      assert(0 < maskmax & maskmax < xlen);
+
       let v = Mk_MControl6_bits(tdata1.bits);
       let act = v[action];
       let select = compare_select_bits(v[select]);
 
-      // This is validated in `validate_config()`.
-      let maskmax = sdtrig_mcontrol6_maskmax;
-      assert(0 < maskmax & maskmax < xlen);
-
-      let is_size_supported      = is_supported_match_size(v[size], select);
+      let is_size_supported      = is_supported_match_size(cfg.supported_address_access_sizes, cfg.supported_data_access_sizes, v[size], select);
       let is_action_supported    = is_supported_action(zero_extend(act));
-      let is_match_supported     = is_supported_match_val(v[t_match]);
+      // For now, support all legal matches
+      let is_match_supported     = is_legal_match_val(v[t_match]);
       let is_compare_value_valid =
         is_match_supported &
         ((trig_match_val(v[t_match]) != TM_NAPOT & trig_match_val(v[t_match]) != TM_NOT_NAPOT)
          | is_valid_napot_compare_value(tdata2, maskmax));
+      let is_textra_supported    = is_supported_textra(cfg.textra_cfg, textra);
 
       let allow_chain = if bool_bit(v[chain]) then allow_chain_at(idx) else false;
 
       let is_valid_config = is_size_supported & is_action_supported &
-                            is_match_supported & is_compare_value_valid;
+                            is_match_supported & is_compare_value_valid & is_textra_supported;
 
       if is_valid_config then {
         T_mcontrol6(struct {
+          cfg,
           dmode = false,
           // Always match perfectly.
           uncertain = false,
@@ -180,6 +242,8 @@ function make_trigger(idx : trigger_index, tdata1 : TData1, tdata2 : xlenbits, t
           then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with unsupported match " ^ bits_str(v[t_match]) ^ ".");
           if is_match_supported & not(is_size_supported)
           then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " with invalid NAPOT compare value " ^ bits_str(tdata2) ^ ".");
+          if not(is_textra_supported)
+          then print_log("Cannot create trigger type " ^ trig_type_name(tt) ^ " due to unsupported textra.");
         };
         make_disabled_trigger(tdata1, tdata2, textra)
       }
@@ -216,7 +280,7 @@ function trigger_write_tdata1(idx : trigger_index, t : Trigger, tdata1 : xlenbit
       let data = Mk_ICount_bits(tdata1);
       let hit = data[hit];
       let pending = data[pending];
-      let count = if icount_count_is_hardwired_one then zero_extend(0x1) else data[count];
+      let count = if s.cfg.count_is_hardwired_one then zero_extend(0x1) else data[count];
       if get_config_print_trigger()
       then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": hit <- " ^ bits_str(hit) ^ ", count <- " ^ bits_str(count));
       T_icount({s with hit = bool_bit(hit), pending = bool_bit(pending), new_count = Some(count)})
@@ -254,8 +318,8 @@ function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbit
       T_disabled({s with tdata2 = tdata2})
     },
     T_mcontrol6(s) => {
+      let maskmax = s.cfg.maskmax6;
       // This is validated in `validate_config()`.
-      let maskmax = sdtrig_mcontrol6_maskmax;
       assert(0 < maskmax & maskmax < xlen);
 
       let legalized = if s.t_match == TM_NAPOT | s.t_match == TM_NOT_NAPOT
@@ -266,13 +330,13 @@ function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbit
       T_mcontrol6({s with tdata2 = legalized})
     },
     T_itrigger(s) => {
-      let legalized = tdata2 & supported_itrigger_mask;
+      let legalized = tdata2 & s.cfg.supported_interrupts;
       if get_config_print_trigger()
       then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(legalized) ^ " (write=" ^ bits_str(tdata2) ^ ")");
       T_itrigger({s with tdata2 = legalized})
     },
     T_etrigger(s) => {
-      let legalized = tdata2 & supported_etrigger_mask;
+      let legalized = tdata2 & s.cfg.supported_exceptions;
       if get_config_print_trigger()
       then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata2 <- " ^ bits_str(legalized) ^ " (write=" ^ bits_str(tdata2) ^ ")");
       T_etrigger({s with tdata2 = legalized})
@@ -284,15 +348,45 @@ function trigger_write_tdata2(idx : trigger_index, t : Trigger, tdata2 : xlenbit
     },
   }
 
+function update_textra(opt_cfg : option(textra_config), original : TExtra, tdata3 : xlenbits) -> TExtra =
+  match opt_cfg {
+    // For now, this will not let `tdata3` be modified for triggers that don't use `textra`.  This might
+    // need to be made configurable later.
+    None()    => original,
+    Some(cfg) => make_trigger_textra(cfg, tdata3)
+  }
+
 function trigger_write_tdata3(idx : trigger_index, t : Trigger, tdata3 : xlenbits) -> Trigger = {
-  let textra = make_textra(tdata3);
-  if get_config_print_trigger()
-  then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(TExtra_to_bits(textra)) ^ " (write=" ^ bits_str(tdata3) ^ ")");
-  match t {
-    T_disabled(s)  => T_disabled({s with textra}),
-    T_icount(s)    => T_icount({s with textra}),
-    T_itrigger(s)  => T_itrigger({s with textra}),
-    T_etrigger(s)  => T_etrigger({s with textra}),
-    T_mcontrol6(s) => T_mcontrol6({s with textra}),
+match t {
+    T_disabled(s)  => {
+      let textra = make_trigger_textra(disabled_textra_config, tdata3);
+      if get_config_print_trigger()
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(TExtra_to_bits(textra)) ^ " (write=" ^ bits_str(tdata3) ^ ")");
+      T_disabled({s with textra})
+    },
+    T_icount(s)    => {
+      let textra = update_textra(s.cfg.textra_cfg, s.textra, tdata3);
+      if get_config_print_trigger()
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(TExtra_to_bits(textra)) ^ " (write=" ^ bits_str(tdata3) ^ ")");
+      T_icount({s with textra})
+    },
+    T_itrigger(s)  => {
+      let textra = update_textra(s.cfg.textra_cfg, s.textra, tdata3);
+      if get_config_print_trigger()
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(TExtra_to_bits(textra)) ^ " (write=" ^ bits_str(tdata3) ^ ")");
+      T_itrigger({s with textra})
+    },
+    T_etrigger(s)  => {
+      let textra = update_textra(s.cfg.textra_cfg, s.textra, tdata3);
+      if get_config_print_trigger()
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(TExtra_to_bits(textra)) ^ " (write=" ^ bits_str(tdata3) ^ ")");
+      T_etrigger({s with textra})
+    },
+    T_mcontrol6(s) => {
+      let textra = update_textra(s.cfg.textra_cfg, s.textra, tdata3);
+      if get_config_print_trigger()
+      then print_log(trigger_name(t) ^ " trigger #" ^ dec_str(idx) ^ ": tdata3 <- " ^ bits_str(TExtra_to_bits(textra)) ^ " (write=" ^ bits_str(tdata3) ^ ")");
+      T_mcontrol6({s with textra})
+    },
   }
 }

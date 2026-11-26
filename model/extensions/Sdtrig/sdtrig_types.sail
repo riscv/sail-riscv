@@ -57,48 +57,61 @@ function TExtra_to_bits(t : TExtra) -> xlenbits = {
   }
 }
 
-function legalize_mhselect(mhselect : bits(3)) -> bits(3) = {
+function legalize_mhselect(cfg : mhselect_config, mhselect : bits(3)) -> bits(3) = {
   match mhselect {
     0b000 => mhselect,                                                                  // 0
-    0b001 => if hartSupports(Ext_H) & mhselect_mcontext_match then mhselect else 0b000, // 1
-    0b010 => if mhselect_vmid_match then mhselect else 0b000,                           // 2
+    0b001 => if hartSupports(Ext_H) & cfg.mcontext_match then mhselect else 0b000,      // 1
+    0b010 => if cfg.vmid_match then mhselect else 0b000,                                // 2
     0b011 => 0b000,                                                                     // 3
-    0b100 => if mhselect_mcontext_match then mhselect else 0b000,                       // 4
-    0b101 => if hartSupports(Ext_H) & mhselect_mcontext_match then mhselect else 0b000, // 5
-    0b110 => if mhselect_vmid_match then mhselect else 0b000,                           // 6
+    0b100 => if cfg.mcontext_match then mhselect else 0b000,                            // 4
+    0b101 => if hartSupports(Ext_H) & cfg.mcontext_match then mhselect else 0b000,      // 5
+    0b110 => if cfg.vmid_match then mhselect else 0b000,                                // 6
     0b111 => 0b000,                                                                     // 7
   }
 }
 
-function legalize_sselect(sselect : bits(2)) -> bits(2) = {
+function legalize_sselect(cfg : sselect_config, sselect : bits(2)) -> bits(2) = {
   match sselect {
     0b00 => sselect,                                          // 0
-    0b01 => if sselect_scontext_match then sselect else 0b00, // 1
-    0b10 => if sselect_asid_match then sselect else 0b00,     // 2
+    0b01 => if cfg.scontext_match then sselect else 0b00,     // 1
+    0b10 => if cfg.asid_match then sselect else 0b00,         // 2
     0b11 => 0b00,                                             // 3
   }
 }
 
-function make_textra(v : xlenbits) -> TExtra = {
+function make_trigger_textra(cfg : textra_config, v : xlenbits) -> TExtra = {
   if xlen == 32 then {
     let data = Mk_Trigger_Extra_RV32(v);
     struct {
       mhvalue   = zero_extend(data[mhvalue]) & mhvalue_mask,
-      mhselect  = legalize_mhselect(data[mhselect]),
-      sbytemask = if sselect_scontext_match then zero_extend(data[sbytemask]) else zeros(),
+      mhselect  = legalize_mhselect(cfg.mhselect, data[mhselect]),
+      sbytemask = if cfg.sselect.scontext_match then zero_extend(data[sbytemask]) else zeros(),
       svalue    = if hartSupports(Ext_S) then zero_extend(data[svalue]) & svalue_mask else zeros(),
-      sselect   = legalize_sselect(data[sselect]),
+      sselect   = legalize_sselect(cfg.sselect, data[sselect]),
     }
   } else {
     let data = Mk_Trigger_Extra_RV64(v);
     struct {
       mhvalue   = data[mhvalue] & mhvalue_mask,
-      mhselect  = legalize_mhselect(data[mhselect]),
-      sbytemask = if sselect_scontext_match then data[sbytemask] else zeros(),
+      mhselect  = legalize_mhselect(cfg.mhselect, data[mhselect]),
+      sbytemask = if cfg.sselect.scontext_match then data[sbytemask] else zeros(),
       svalue    = if hartSupports(Ext_S) then data[svalue] & svalue_mask else zeros(),
-      sselect   = legalize_sselect(data[sselect]),
+      sselect   = legalize_sselect(cfg.sselect, data[sselect]),
     }
   }
+}
+
+// The underlying trigger for which this applies is not known, so accept the maximal
+// value.
+let disabled_textra_config : textra_config = struct {
+  mhselect = struct {
+    mcontext_match = true,
+    vmid_match     = true,
+  },
+  sselect = struct {
+    scontext_match  = true,
+    asid_match      = true,
+  },
 }
 
 // Internal types.
@@ -144,6 +157,7 @@ function TDisabled_to_bits(t : TDisabled) -> TDisabled_bits =
   ]
 
 struct MControl6 = {
+  cfg         : mcontrol6_config,
   dmode       : bool,
   uncertain   : bool,
   hit         : Hit,
@@ -214,6 +228,7 @@ function MControl6_to_bits(t : MControl6) -> MControl6_bits =
   ]
 
 struct ICount = {
+  cfg        : icount_config,
   dmode      : bool,
   vs         : bool,
   vu         : bool,
@@ -269,6 +284,7 @@ function ICount_to_bits(t : ICount) -> ICount_bits =
   ]
 
 struct ITrigger = {
+  cfg        : itrigger_config,
   dmode      : bool,
   hit        : bool,
   vs         : bool,
@@ -284,6 +300,7 @@ struct ITrigger = {
 }
 
 struct ETrigger = {
+  cfg        : etrigger_config,
   dmode      : bool,
   hit        : bool,
   vs         : bool,
@@ -357,7 +374,7 @@ function trigger_name(t : Trigger) -> string =
   }
 
 let trig_reset_val : Trigger =
-  T_disabled(struct { dmode = false, data = zeros(), tdata2 = zeros(), textra = make_textra(zeros()) })
+  T_disabled(struct { dmode = false, data = zeros(), tdata2 = zeros(), textra = make_trigger_textra(disabled_textra_config, zeros()) })
 
 function tdata1_of_trigger(t : Trigger) -> xlenbits =
   match t {
@@ -395,19 +412,15 @@ function trigger_is_in_chain(t : Trigger) -> bool =
     _              => false,
   }
 
-// For now, every trigger supports each supported type.
-function info_of_trigger(_t : Trigger) -> bits(16) =
-  supported_triggers_info()
-
 bitfield TInfo : xlenbits = {
   version : 31 .. 24,
   info    : 15 .. 0,
 }
 
-function tinfo_of_trigger(t : Trigger) -> TInfo =
+function tinfo_at_idx(idx : trigger_index) -> TInfo =
   [Mk_TInfo(zeros()) with
     version = 0x01, // Only support ratified version 1.0 for now.
-    info = info_of_trigger(t)]
+    info = info_at_index(idx, configured_triggers)]
 
 // Other register layouts
 

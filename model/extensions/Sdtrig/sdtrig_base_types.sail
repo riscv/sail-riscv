@@ -55,30 +55,9 @@ mapping trig_type_name : Trig_Type <-> string = {
   TT_reserved     <-> "reserved",
 }
 
-function is_supported_trigger_type(tt : bits(4)) -> bool = {
-  if not(trig_type_bits_forwards_matches(tt)) then return false;
-  let typ = trig_type_bits(tt);
-  (typ == TT_none) | (typ == TT_disabled) |
-  (typ == TT_icount & sdtrig_has_icount) |
-  (typ == TT_etrigger & sdtrig_has_etrigger) |
-  (typ == TT_itrigger & sdtrig_has_itrigger) |
-  (typ == TT_mcontrol6 & sdtrig_has_mcontrol6)
-}
+function is_legal_trigger_type(tt : bits(4)) -> bool =
+  trig_type_bits_forwards_matches(tt)
 
-function supported_triggers_info() -> bits(16) = {
-  let flag = zero_extend(16, 0b1);
-  // the model disables triggers via type 15, so it is always supported
-  var info : bits(16) = flag << unsigned(trig_type_bits(TT_disabled));
-  if sdtrig_has_icount
-  then info = info | (flag << unsigned(trig_type_bits(TT_icount)));
-  if sdtrig_has_etrigger
-  then info = info | (flag << unsigned(trig_type_bits(TT_etrigger)));
-  if sdtrig_has_itrigger
-  then info = info | (flag << unsigned(trig_type_bits(TT_itrigger)));
-  if sdtrig_has_mcontrol6
-  then info = info | (flag << unsigned(trig_type_bits(TT_mcontrol6)));
-  info
-}
 
 enum Trig_Action = {
   TA_Breakpoint, TA_Enter_Debug, TA_Trace_On, TA_Trace_Off,
@@ -168,8 +147,7 @@ mapping trig_match_val : bits(4) <-> Trig_Match = {
   0b1101 <-> TM_NOT_MASK_HI,
 }
 
-function is_supported_match_val(m : bits(4)) -> bool =
-  // TODO: config options
+function is_legal_match_val(m : bits(4)) -> bool =
   trig_match_val_forwards_matches(m)
 
 // Once validated, the corresponding `mcontrol6` parameter will have this type.

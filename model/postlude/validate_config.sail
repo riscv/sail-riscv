@@ -622,6 +622,108 @@ private function reserved_exception_mask() -> bits(64) =
   then zero_extend(0x0_FFFF_0002_4000)
   else zero_extend(0x0_FFFF_00F2_4400)
 
+private function check_textra_config(idx : nat, opt_cfg : option(textra_config)) -> bool = {
+  var valid : bool = true;
+
+  match opt_cfg {
+    None() => (),
+
+    Some(cfg) => {
+      if (cfg.mhselect.mcontext_match : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].textra_cfg.mhselect.mcontext_match` is enabled but the `mcontext` CSR is not supported: mcontext matching requires `mcontext`.");
+      };
+      if (cfg.mhselect.vmid_match : bool) & not(config extensions.H.supported : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].textra_cfg.mhselect.vmid_match` is enabled but the H extension is not supported: VMID matching requires H.");
+      };
+      if (cfg.sselect.scontext_match : bool)
+        & (not(config extensions.S.supported : bool) | not(config extensions.Sdtrig.scontext.supported : bool)) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].textra_cfg.sselect.scontext_match` is enabled but S or the `scontext` CSR is not supported: scontext matching requires both.");
+      };
+      if (cfg.sselect.asid_match : bool) & not(config extensions.S.supported : bool) then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].textra_cfg.sselect.asid_match` is enabled but the S extension is not supported: ASID matching requires S.");
+      };
+    },
+  };
+
+  valid
+}
+
+private function check_trigger_config(idx : nat, cfg : trigger_config, reserved_interrupt_mask : xlenbits) -> bool = {
+  var valid : bool = true;
+
+  match cfg {
+    mcontrol6(c) => {
+      let maskmax = c.maskmax6;
+      if maskmax <= 0 | maskmax >= xlen then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].maskmax6` is set to " ^ dec_str(maskmax) ^ ", but needs to be between 1 and `xlen` - 1 (" ^ dec_str(xlen - 1) ^ "), inclusive.");
+      };
+      if xlen == 32 then {
+        if c.supported_data_access_sizes.bits48 then {
+          valid = false;
+          print_endline("`extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].supported_data_access_sizes.bits48` is enabled on RV32, but data triggers cannot match accesses wider than XLEN (= 32).");
+        };
+        if c.supported_data_access_sizes.bits64 then {
+          valid = false;
+          print_endline("`extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].supported_data_access_sizes.bits64` is enabled on RV32, but data triggers cannot match accesses wider than XLEN (= 32).");
+        };
+      };
+
+      valid = check_textra_config(idx, c.textra_cfg) & valid;
+    },
+
+    icount(c) => {
+      valid = check_textra_config(idx, c.textra_cfg) & valid;
+    },
+
+    itrigger(c) => {
+      if (c.supported_interrupts & reserved_interrupt_mask) != zeros() then {
+        valid = false;
+        print_endline("Bits for reserved interrupts are set in `extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].supported_interrupts`.");
+      };
+      valid = check_textra_config(idx, c.textra_cfg) & valid;
+    },
+
+    etrigger(c) => {
+      if (c.supported_exceptions & reserved_exception_mask()[xlen - 1 .. 0]) != zeros() then {
+        valid = false;
+        print_endline("Bits for reserved exceptions are set in `extensions.Sdtrig.trigger[" ^ dec_str(idx) ^ "].supported_exceptions`.");
+      };
+      valid = check_textra_config(idx, c.textra_cfg) & valid;
+    },
+  };
+
+  valid
+}
+
+private function check_trigger_configs(idx : nat, cfgs : list(trigger_config), reserved_interrupt_mask : xlenbits) -> bool =
+  match cfgs {
+    [||] => true,
+    cfg :: rest => check_trigger_config(idx, cfg, reserved_interrupt_mask) & check_trigger_configs(idx + 1, rest, reserved_interrupt_mask),
+  }
+
+private function triggers_have_mcontrol6(cfgs : list(trigger_config)) -> bool =
+  match cfgs {
+    [||] => false,
+    mcontrol6(_) :: _ => true,
+    _ :: rest => triggers_have_mcontrol6(rest)
+  }
+
+private function triggers_use_textra(cfgs : list(trigger_config)) -> bool =
+  match cfgs {
+    [||] => false,
+    cfg :: rest => trigger_config_uses_textra(cfg) | triggers_use_textra(rest)
+  }
+
+// Checks for trigger layout validity are done in C++ for efficiency
+val validate_triggers_layout = pure {cpp: "validate_triggers_layout"} : (/* num_triggers */ range(0, num_triggers)) -> bool
+// Ignore on other targets.
+function validate_triggers_layout(_) = true
+
 private function check_misc_extension_dependencies() -> bool = {
   var valid : bool = true;
   if (config extensions.Zcf.supported : bool) & xlen == 64 then {
@@ -1001,7 +1103,11 @@ private function check_misc_extension_dependencies() -> bool = {
     if num_triggers == 0 then {
       valid = false;
       print_endline("The Sdtrig extension is supported but `num_triggers` is 0: supporting Sdtrig requires at least 1 trigger.");
+    } else if num_triggers > max_num_triggers then {
+      valid = false;
+      print_endline("This model does not support more than " ^ dec_str(max_num_triggers) ^ " for Sdtrig.");
     };
+
     if (config extensions.Sdtrig.hcontext.supported : bool) & not(config extensions.H.supported : bool) then {
       valid = false;
       print_endline("The `hcontext` CSR is supported but the H extension is not: `hcontext` requires H to be supported.");
@@ -1011,17 +1117,6 @@ private function check_misc_extension_dependencies() -> bool = {
       print_endline("The `hcontext` CSR is supported but the `mcontext` CSR is not: `hcontext` requires `mcontext` to be supported.");
     };
 
-    if (config extensions.Sdtrig.etrigger.supported : bool)
-      & ((config extensions.Sdtrig.etrigger.supported_exceptions : xlenbits & reserved_exception_mask()[xlen - 1 .. 0]) != zeros()) then {
-      valid = false;
-      print_endline("Bits for reserved exceptions are set in `extensions.Sdtrig.etrigger.supported_exceptions`.");
-    };
-    let reserved_interrupt_mask : xlenbits = zero_extend(0xc111);
-    if (config extensions.Sdtrig.itrigger.supported : bool)
-      & ((config extensions.Sdtrig.itrigger.supported_interrupts : xlenbits & reserved_interrupt_mask) != zeros()) then {
-      valid = false;
-      print_endline("Bits for reserved interrupts are set in `extensions.Sdtrig.itrigger.supported_interrupts`.");
-    };
     if (config extensions.Sdtrig.breakpoint_reentrancy : Sdtrig_breakpoint_reentrancy == Use_tcontrol) then {
       let medelegation = Mk_Medeleg(config base.medeleg.delegatable_bits);
       if medelegation[Breakpoint] != 0b0 then {
@@ -1033,56 +1128,39 @@ private function check_misc_extension_dependencies() -> bool = {
         print_endline("`extensions.Sdtrig.breakpoint_reentrancy` is set to `Use_tcontrol` but `extensions.Sdtrig.tcontrol.supported` is false: tcontrol-based reentrancy control requires the `tcontrol` CSR.");
       };
     };
-    if (config extensions.Sdtrig.textra.mhselect.mcontext_match : bool) & not(config extensions.Sdtrig.mcontext.supported : bool) then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.mhselect.mcontext_match` is enabled but the `mcontext` CSR is not supported: mcontext matching requires `mcontext`.");
-    };
-    if (config extensions.Sdtrig.textra.mhselect.vmid_match : bool) & not(config extensions.H.supported : bool) then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.mhselect.vmid_match` is enabled but the H extension is not supported: VMID matching requires H.");
-    };
-    if (config extensions.Sdtrig.textra.sselect.scontext_match : bool)
-      & (not(config extensions.S.supported : bool) | not(config extensions.Sdtrig.scontext.supported : bool)) then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.sselect.scontext_match` is enabled but S or the `scontext` CSR is not supported: scontext matching requires both.");
-    };
-    if (config extensions.Sdtrig.textra.sselect.asid_match : bool) & not(config extensions.S.supported : bool) then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.sselect.asid_match` is enabled but the S extension is not supported: ASID matching requires S.");
-    };
-    let mhvalue_max : nat = if xlen == 32 then 6 else 13;
-    if sdtrig_mhvalue_len > mhvalue_max then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.mhvalue_len` is " ^ dec_str(sdtrig_mhvalue_len) ^ " but cannot be greater than " ^ dec_str(mhvalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
-    };
-    let svalue_max : nat = if xlen == 32 then 16 else 32;
-    if sdtrig_svalue_len > svalue_max then {
-      valid = false;
-      print_endline("`extensions.Sdtrig.textra.svalue_len` is " ^ dec_str(sdtrig_svalue_len) ^ " but cannot be greater than " ^ dec_str(svalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
-    };
-    if (config extensions.Sdtrig.mcontrol6.supported : bool) then {
-      let maskmax : nat = sdtrig_mcontrol6_maskmax;
-      if maskmax <= 0 | maskmax >= xlen then {
+
+    if not(config extensions.Sdtrig.textra.supported : bool) then {
+      if triggers_use_textra(configured_triggers) then {
         valid = false;
-        print_endline("`extensions.Sdtrig.mcontrol6.maskmax6` is set to " ^ dec_str(maskmax) ^ ", but needs to be between 1 and `xlen` - 1 (" ^ dec_str(xlen - 1) ^ "), inclusive.");
+        print_endline("`extensions.Sdtrig.textra` is disabled but at least one of the triggers in `extensions.Sdtrig.triggers` uses `textra`.");
+      }
+    } else {
+      let mhvalue_max : nat = if xlen == 32 then 6 else 13;
+      if sdtrig_mhvalue_len > mhvalue_max then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.mhvalue_len` is " ^ dec_str(sdtrig_mhvalue_len) ^ " but cannot be greater than " ^ dec_str(mhvalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
       };
+      let svalue_max : nat = if xlen == 32 then 16 else 32;
+      if sdtrig_svalue_len > svalue_max then {
+        valid = false;
+        print_endline("`extensions.Sdtrig.textra.svalue_len` is " ^ dec_str(sdtrig_svalue_len) ^ " but cannot be greater than " ^ dec_str(svalue_max) ^ " on " ^ (if xlen == 32 then "RV32." else "RV64."));
+      };
+    };
+
+    let reserved_interrupt_mask : xlenbits = zero_extend(0xc111);
+    valid = valid & check_trigger_configs(0, configured_triggers, reserved_interrupt_mask);
+
+    if triggers_have_mcontrol6(configured_triggers) then {
       let max_chain_length = config extensions.Sdtrig.mcontrol6.max_chain_length : nat;
       if max_chain_length > num_triggers then {
         valid = false;
         print_endline("`extensions.Sdtrig.mcontrol6.max_chain_length` is set to " ^ dec_str(max_chain_length) ^ " which exceeds the number of triggers (" ^ dec_str(num_triggers) ^ ".");
       };
-      if xlen == 32 then {
-        if (config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits48 : bool) then {
-          valid = false;
-          print_endline("`extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits48` is enabled on RV32, but data triggers cannot match accesses wider than XLEN (= 32).");
-        };
-        if (config extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits64 : bool) then {
-          valid = false;
-          print_endline("`extensions.Sdtrig.mcontrol6.supported_data_access_sizes.bits64` is enabled on RV32, but data triggers cannot match accesses wider than XLEN (= 32).");
-        };
-      };
     };
+
+    valid = valid & validate_triggers_layout(num_triggers);
   };
+
   valid
 }
 

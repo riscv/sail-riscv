@@ -30,6 +30,7 @@ public:
   using Event = hart::zEvent;
   using EventSelector = uint64_t;
   using HpmIdx = int64_t;
+  using Trig_Type = hart::zTrig_Type;
 
   // callbacks
 
@@ -206,6 +207,10 @@ private:
   unit event_callback(Event ev, Privilege priv) override;
   unit event_csr_write_callback(HpmIdx index, EventSelector old_selector, EventSelector new_selector) override;
   unit dispatch_events(unit) override;
+
+  // Triggers
+  std::string name_of_trigger_type(Trig_Type t);
+  bool validate_triggers_layout(int64_t num_triggers) override;
 
   unit plat_term_write(mach_bits) override;
 
