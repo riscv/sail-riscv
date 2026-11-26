@@ -620,11 +620,12 @@ function clause execute MRET() = {
   then Ext_XRET_Priv_Failure()
   else {
     let prev_priv = cur_privilege;
+    let cur_mstatus = read_mstatus();
 
-    mstatus[MIE]  = mstatus[MPIE];
+    mstatus[MIE]  = cur_mstatus[MPIE];
     mstatus[MPIE] = 0b1;
     // MPV is ignored when MPP=3, as there is no virtual machine mode
-    cur_privilege = privLevel_bits((mstatus[MPP], if mstatus[MPP] == 0b11 then 0b0 else mstatus[MPV]));
+    cur_privilege = privLevel_bits((cur_mstatus[MPP], if cur_mstatus[MPP] == 0b11 then 0b0 else cur_mstatus[MPV]));
 
     mstatus[MPP]  = privLevel_to_bits(if currentlyEnabled(Ext_U) then User else Machine);
     mstatus[MPV]  = 0b0;
@@ -664,9 +665,10 @@ mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
+  let cur_mstatus = read_mstatus();
   let sret_illegal : bool = match cur_privilege {
     User              => true,
-    Supervisor        => not(currentlyEnabled(Ext_S)) | mstatus[TSR] == 0b1,
+    Supervisor        => not(currentlyEnabled(Ext_S)) | cur_mstatus[TSR] == 0b1,
     Machine           => not(currentlyEnabled(Ext_S)),
     VirtualUser       => false,
     VirtualSupervisor => false,
@@ -696,10 +698,10 @@ function clause execute SRET() = {
       } else {
         // SRET in HS-mode or M-mode
         // SPV is only meaningful when H is enabled, otherwise treat as 0
-        let new_priv = privLevel_bits((0b0 @ mstatus[SPP], hstatus[SPV] & bool_to_bit(currentlyEnabled(Ext_H))));
+        let new_priv = privLevel_bits((0b0 @ cur_mstatus[SPP], hstatus[SPV] & bool_to_bit(currentlyEnabled(Ext_H))));
         hstatus[SPV]  = 0b0;
         mstatus[SPP]  = 0b0;
-        mstatus[SIE]  = mstatus[SPIE];
+        mstatus[SIE]  = cur_mstatus[SPIE];
         mstatus[SPIE] = 0b1;
         if new_priv != Machine & xret_clears_mstatus_mprv
         then mstatus[MPRV] = 0b0;
@@ -756,12 +758,12 @@ function clause execute WFI() =
     Supervisor        => Enter_Wait(WAIT_WFI),
     User              => if plat_wfi_available_to_usermode then Enter_Wait(WAIT_WFI) else Illegal_Instruction(),
     // VU never waits. Raises virtual immediately when TW=0, illegal when TW=1
-    VirtualUser       => if mstatus[TW] == 0b1
+    VirtualUser       => if read_mstatus()[TW] == 0b1
                          then Illegal_Instruction()
                          else Virtual_Instruction(),
     // VS raises illegal immediately when TW=1
     // when TW=0, enters wait, VTW checked on timeout in run_hart_waiting()
-    VirtualSupervisor => if mstatus[TW] == 0b1
+    VirtualSupervisor => if read_mstatus()[TW] == 0b1
                          then Illegal_Instruction()
                          else Enter_Wait(WAIT_WFI),
   }
@@ -784,7 +786,7 @@ function clause execute SFENCE_VMA(rs1, rs2) = {
   let vmid = if cur_privilege == VirtualSupervisor then Some(get_vmid(VS_Stage)) else None();
   match cur_privilege {
     User              => Illegal_Instruction(),
-    Supervisor        => match mstatus[TVM] {
+    Supervisor        => match read_mstatus()[TVM] {
                            0b1 => Illegal_Instruction(),
                            0b0 => { flush_TLB(asid, vmid, addr, S_Stage); RETIRE_SUCCESS },
                          },

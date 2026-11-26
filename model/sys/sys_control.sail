@@ -132,9 +132,10 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
   let pending_s  = pending &   mideleg_bits  & ~(hideleg_bits);
   let pending_vs = pending &   mideleg_bits  &   hideleg_bits;
 
-  let mIE  = (priv == Machine           & mstatus[MIE] == 0b1)  | priv != Machine;
-  let sIE  = (priv == Supervisor        & mstatus[SIE] == 0b1)  | priv == User | priv == VirtualSupervisor | priv == VirtualUser;
-  let vsIE = (priv == VirtualSupervisor & vsstatus[SIE] == 0b1) | priv == VirtualUser;
+  let cur_mstatus = read_mstatus();
+  let mIE  = (priv == Machine           & cur_mstatus[MIE] == 0b1)  | priv != Machine;
+  let sIE  = (priv == Supervisor        & cur_mstatus[SIE] == 0b1)  | priv == User | priv == VirtualSupervisor | priv == VirtualUser;
+  let vsIE = (priv == VirtualSupervisor & vsstatus[SIE] == 0b1)     | priv == VirtualUser;
 
   if      mIE  & (pending_m  != zeros()) then Some((pending_m, Machine))
   else if sIE  & (pending_s  != zeros()) then Some((pending_s, Supervisor))
@@ -328,9 +329,9 @@ function trap_handler_inner(
       scause[IsInterrupt] = bool_to_bit(is_interrupt);
       scause[Cause]       = zero_extend(cause);
 
-      mstatus[SPIE] = mstatus[SIE];
+      mstatus[SPIE] = read_mstatus()[SIE];
       mstatus[SIE]  = 0b0;
-      mstatus[SPP] = match cur_privilege {
+      mstatus[SPP]  = match cur_privilege {
         User              => 0b0,
         VirtualUser       => 0b0,
         Supervisor        => 0b1,
@@ -339,7 +340,7 @@ function trap_handler_inner(
       };
 
       hstatus[SPV]  = bool_to_bit(inVirtualPrivilege());
-      hstatus[SPVP] = if inVirtualPrivilege() then mstatus[SPP] else hstatus[SPVP];
+      hstatus[SPVP] = if inVirtualPrivilege() then read_mstatus()[SPP] else hstatus[SPVP];
       hstatus[GVA]  = bool_to_bit(excinfo_is_gva);
 
       stval           = tval(excinfo);

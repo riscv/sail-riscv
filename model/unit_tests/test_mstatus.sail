@@ -1,6 +1,9 @@
 // Verify that the reset sxl and uxl are correct.
 $[test]
 function test_mstatus_sxl_uxl_reset_values() -> unit = {
+  // mstatus depends on an initialized misa
+  reset_misa();
+
   let mstatush_val : bits(32) = match xlen {
     32 => read_CSR(0x310),
     64 => read_CSR(0x300)[63 .. 32],

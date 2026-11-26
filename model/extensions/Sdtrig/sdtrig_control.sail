@@ -17,8 +17,8 @@ function prevent_reentrance(act: Trig_Action, priv : Privilege) -> bool = {
   match sdtrig_breakpoint_reentrancy {
     Use_tcontrol          => priv == Machine & tcontrol[mte] == 0b0,
     Use_interrupt_enables => match priv {
-      Machine             => mstatus[MIE] == 0b0,
-      Supervisor          => medeleg[Breakpoint] == 0b1 & mstatus[SIE] == 0b0,
+      Machine             => read_mstatus()[MIE] == 0b0,
+      Supervisor          => medeleg[Breakpoint] == 0b1 & read_mstatus()[SIE] == 0b0,
       VirtualSupervisor   => medeleg[Breakpoint] == 0b1 & hedeleg[Breakpoint] == 0b1 & vsstatus[SIE] == 0b0,
       VirtualUser         => false,
       User                => false,

@@ -85,7 +85,7 @@ function zicfilp_preserve_elp_on_trap(x : Privilege) -> unit = {
 function zicfilp_restore_elp_on_xret(xret : xRET_type, x : Privilege, y : Privilege) -> unit = {
   let pelp : bits(1) = match xret {
     mRET => {
-      let pelp = mstatus[MPELP];
+      let pelp = read_mstatus()[MPELP];
       mstatus[MPELP] = landing_pad_bits(NO_LP_EXPECTED);
       pelp
     },
@@ -97,7 +97,7 @@ function zicfilp_restore_elp_on_xret(xret : xRET_type, x : Privilege, y : Privil
         vsstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
         pelp
       } else {
-        let pelp = mstatus[SPELP];
+        let pelp = read_mstatus()[SPELP];
         mstatus[SPELP] = landing_pad_bits(NO_LP_EXPECTED);
         pelp
       }

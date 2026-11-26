@@ -66,13 +66,13 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instr_info : i
       // caught in execute as an immediate illegal instruction.
       match cur_privilege {
         Machine           => Step_Execute(Retire_Success(), instr_info),
-        User              => if   mstatus[TW] == 0b1 | currentlyEnabled(Ext_S)
+        User              => if   read_mstatus()[TW] == 0b1 | currentlyEnabled(Ext_S)
                              then Step_Execute(Illegal_Instruction(), instr_info)
                              else Step_Execute(Retire_Success(), instr_info),
         VirtualSupervisor => if   hstatus[VTW] == 0b1
                              then Step_Execute(Virtual_Instruction(), instr_info)
                              else Step_Execute(Retire_Success(), instr_info),
-        _                 => if   mstatus[TW] == 0b1
+        _                 => if   read_mstatus()[TW] == 0b1
                              then Step_Execute(Illegal_Instruction(), instr_info)
                              else Step_Execute(Retire_Success(), instr_info),
       }
@@ -97,8 +97,8 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instr_info : i
       // the TW bit in mstatus is clear, and the WRS.NTO does not complete
       // within an implementation-specific bounded time limit, the WRS.NTO
       // instruction will cause a virtual-instruction exception."
-      if      cur_privilege == Machine then Step_Execute(Retire_Success(), instr_info)
-      else if mstatus[TW] == 0b1       then Step_Execute(Illegal_Instruction(), instr_info)
+      if      cur_privilege == Machine  then Step_Execute(Retire_Success(), instr_info)
+      else if read_mstatus()[TW] == 0b1 then Step_Execute(Illegal_Instruction(), instr_info)
       else if inVirtualPrivilege() & hstatus[VTW] == 0b1
                                        then Step_Execute(Virtual_Instruction(), instr_info)
       else Step_Execute(Retire_Success(), instr_info)
