@@ -425,7 +425,7 @@ private function legalize_hideleg(m : Minterrupts, v : xlenbits) -> Minterrupts 
     VSEI  = v[VSEI],
     VSTI  = v[VSTI],
     VSSI  = v[VSSI],
-    LCOFI = if currentlyEnabled(Ext_Shlcofideleg) then v[LCOFI] else 0b0,
+    LCOFI = if currentlyEnabled(Ext_Shlcofideleg) & mideleg[LCOFI] == 0b1 then v[LCOFI] else 0b0,
   ]
 }
 
@@ -442,7 +442,7 @@ function clause is_CSR_accessible(0x603, _, _) = currentlyEnabled(Ext_H) // hide
 
 function clause read_CSR(0x602) = hedeleg.bits[xlen - 1 .. 0]
 function clause read_CSR(0x612 if xlen == 32) = hedeleg.bits[63 .. 32]
-function clause read_CSR(0x603) = hideleg.bits[xlen - 1 .. 0]
+function clause read_CSR(0x603) = hideleg.bits[xlen - 1 .. 0] & mideleg.bits
 
 function clause write_CSR((0x602, value) if xlen == 64) = { hedeleg = legalize_hedeleg(hedeleg, value); Ok(hedeleg.bits) }
 function clause write_CSR((0x602, value) if xlen == 32) = { hedeleg = legalize_hedeleg(hedeleg, hedeleg.bits[63 .. 32] @ value); Ok(hedeleg.bits[31 .. 0]) }
