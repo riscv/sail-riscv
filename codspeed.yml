@@ -11,6 +11,13 @@ benchmarks:
     exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/rv64uc-v-rvc
   - name: "riscv-tests: rv64ud-v-fcvt_w"
     exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/rv64ud-v-fcvt_w
+  # The Hypervisor Tests from RISC-V Test are RV64 only
+  - name: "riscv-tests: hypervisor-p-2-stage_translation"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/hypervisor-p-2-stage_translation
+  - name: "riscv-tests: hypervisor-p-2-stage_translation_implicit_load_error_hs"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/hypervisor-p-2-stage_translation_implicit_load_error_hs
+  - name: "riscv-tests: hypervisor-svadu-p-2-stage_translation_implicit_store_error_hs"
+    exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v256_e64.json test-elfs/riscv-tests/hypervisor-svadu-p-2-stage_translation_implicit_store_error_hs
   - name: "vector: vfadd.vf"
     exec: ./build/c_emulator/sail_riscv_sim --config build/config/rv64d_v128_e64.json test-elfs/riscv-vector-tests-v128x64/rv64vfadd_vf-11
   - name: "vector: vaadd.vx"

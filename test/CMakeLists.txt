@@ -169,6 +169,12 @@ if(ENABLE_RISCV_TESTS)
         file(GLOB elf_list CONFIGURE_DEPENDS LIST_DIRECTORIES false
            "${DOWNLOAD_PATH}/${TARBALL_NAME}/rv${xlen}*"
         )
+        if(xlen EQUAL 64)
+          file(GLOB hypervisor_elf_list CONFIGURE_DEPENDS LIST_DIRECTORIES false
+             "${DOWNLOAD_PATH}/${TARBALL_NAME}/hypervisor*"
+          )
+          list(APPEND elf_list ${hypervisor_elf_list})
+        endif()
         foreach(elf IN LISTS elf_list)
             file(RELATIVE_PATH elf_name "${CMAKE_CURRENT_BINARY_DIR}" ${elf})
             add_test(
