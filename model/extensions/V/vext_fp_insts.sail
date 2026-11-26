@@ -1207,6 +1207,7 @@ function clause execute FWVFMATYPE(funct6, vm, rs1, vs2, vd) = {
   if illegal_vstart(VSTART_ARITH, num_elem, LMUL_pow) |
      illegal_fp_variable_width(vd, vm, SEW, rm_3b, SEW_widen, LMUL_pow_widen) |
      not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen)) |
+     not(valid_src_overlap(vs2, SEW, LMUL_pow, vd, SEW_widen, LMUL_pow_widen)) |
      not(valid_vm_src_overlap(vm, vs2, SEW))
   then return Illegal_Instruction();
 
