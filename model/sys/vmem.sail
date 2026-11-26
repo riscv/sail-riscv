@@ -606,7 +606,7 @@ private function build_exception_context(
         excinfo_is_gva = false,
         excinfo  = zero_extend(bits_of(gva)),
         excinfo2 = None(),
-        excinst  = None(),
+        excinst  = if ptw_error == PTW_No_Access() then Some(zeros()) else None(),
         excinst_offset = zeros(),
         ext      = None(),
       }
@@ -640,7 +640,9 @@ private function build_exception_context(
                       then Some(if xlen == 32
                                 then if is_write then zero_extend(0x00002020) else zero_extend(0x00002000)
                                 else if is_write then zero_extend(0x00003020) else zero_extend(0x00003000))
-                      else None(),
+                      // TODO: revisit once https://github.com/riscv/riscv-isa-manual/issues/3577 is
+                      // resolved, the spec is unclear whether the pseudoinstruction is also allowed here
+                      else Some(zeros()),
             excinst_offset = zeros(),
             ext = None(),
           }
@@ -652,7 +654,7 @@ private function build_exception_context(
             excinfo_is_gva = true,
             excinfo  = zero_extend(bits_of(gva)),
             excinfo2 = Some(zeros()),
-            excinst  = None(),
+            excinst  = if ptw_error == PTW_No_Access() then Some(zeros()) else None(),
             excinst_offset = zeros(),
             ext      = None(),
           }
@@ -666,7 +668,7 @@ private function build_exception_context(
         excinfo_is_gva = true,
         excinfo  = zero_extend(bits_of(gva)),
         excinfo2 = Some(g_stage_tval2_exception_value(trap, gpa)),
-        excinst  = None(),
+        excinst  = if ptw_error == PTW_No_Access() then Some(zeros()) else None(),
         excinst_offset = zeros(),
         ext      = None(),
       }

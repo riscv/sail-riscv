@@ -15,11 +15,12 @@
 // Failure modes for address-translation/page-table-walks
 private union PTW_Error = {
   PTW_Invalid_Addr     : unit,          // invalid source address
-  PTW_No_Access        : unit,          // physical memory access error for a PTE
+  PTW_No_Access        : unit,          // physical memory access error while reading or updating a PTE
   PTW_Invalid_PTE      : unit,
   PTW_No_Permission    : unit,
   PTW_Misaligned       : unit,          // misaligned superpage
   PTW_PTE_Needs_Update : unit,          // PTE update needed but not enabled
+  PTW_SSMP_Violation   : unit,          // shadow stack memory protection violation
   PTW_Implicit_Error   : (ExceptionType, gpabits, MemoryAccessType(mem_payload)), // fault during PTE access in VS-stage when translating the PTE address
   PTW_Ext_Error        : ext_ptw_error  // parameterized for errors from extensions
 }
@@ -32,6 +33,7 @@ private function ptw_error_to_str(e : PTW_Error) -> string = {
     PTW_No_Permission()    => "no-permission",
     PTW_Misaligned()       => "misaligned-superpage",
     PTW_PTE_Needs_Update() => "pte-update-needed",
+    PTW_SSMP_Violation()   => "shadow-stack-memory-protection-violation",
     PTW_Implicit_Error(_)  => "implicit-pte-vs-stage-fault",
     PTW_Ext_Error(_)       => "extension-error"
   }
@@ -45,9 +47,10 @@ overload to_str = {ptw_error_to_str}
 
 private function ext_get_ptw_error(failure : pte_check_failure) -> PTW_Error =
   match failure {
-    PTE_No_Permission() => PTW_No_Permission(),
-    PTE_No_Access()     => PTW_No_Access(),
-    PTE_Ext_Failure(_)  => PTW_No_Permission(),
+    PTE_No_Permission()  => PTW_No_Permission(),
+    PTE_No_Access()      => PTW_No_Access(),
+    PTE_SSMP_Violation() => PTW_SSMP_Violation(),
+    PTE_Ext_Failure(_)   => PTW_No_Permission(),
   }
 
 // In G-stage, only page faults (not access faults) become guest-page faults.
@@ -72,57 +75,74 @@ function translationException(access : MemoryAccessType(mem_payload),
                              -> ExceptionType = {
   match (access, err) {
     (_, PTW_Ext_Error(e))                          => E_Extension(ext_translate_exception(e)),
-    (Atomic(_, _, _, Data, Data), PTW_No_Access()) => E_SAMO_Access_Fault(),
-    (Atomic(_, _, _, Data, Data), _)               => E_SAMO_Page_Fault(),
+    (Atomic(_, _, _, Data, Data), PTW_No_Access())      => E_SAMO_Access_Fault(),
+    (Atomic(_, _, _, Data, Data), PTW_SSMP_Violation()) => E_SAMO_Access_Fault(),
+    (Atomic(_, _, _, Data, Data), _)                    => E_SAMO_Page_Fault(),
 
-    (Load(Data), PTW_No_Access())                => E_Load_Access_Fault(),
-    (Load(Data), _)                              => E_Load_Page_Fault(),
-    (Load(Vector), PTW_No_Access())              => E_Load_Access_Fault(),
-    (Load(Vector), _)                            => E_Load_Page_Fault(),
-    (Load(PageTableEntry), PTW_No_Access())      => E_Load_Access_Fault(),
-    (Load(PageTableEntry), _)                    => E_Load_Page_Fault(),
+    (Load(Data), PTW_No_Access())                 => E_Load_Access_Fault(),
+    (Load(Data), _)                               => E_Load_Page_Fault(),
+    (Load(Vector), PTW_No_Access())               => E_Load_Access_Fault(),
+    (Load(Vector), _)                             => E_Load_Page_Fault(),
+    (Load(PageTableEntry), PTW_No_Access())       => E_Load_Access_Fault(),
+    (Load(PageTableEntry), PTW_SSMP_Violation())  => E_Load_Access_Fault(),
+    (Load(PageTableEntry), _)                     => E_Load_Page_Fault(),
 
-    (LoadExecute(Data), PTW_No_Access())         => E_Load_Access_Fault(),
-    (LoadExecute(Data), _)                       => E_Load_Page_Fault(),
+    (LoadExecute(Data), PTW_No_Access())          => E_Load_Access_Fault(),
+    (LoadExecute(Data), _)                        => E_Load_Page_Fault(),
 
-    (LoadReserved(_, _, Data), PTW_No_Access())  => E_Load_Access_Fault(),
-    (LoadReserved(_, _, Data), _)                => E_Load_Page_Fault(),
+    (LoadReserved(_, _, Data), PTW_No_Access())   => E_Load_Access_Fault(),
+    (LoadReserved(_, _, Data), _)                 => E_Load_Page_Fault(),
 
-    (Store(Data), PTW_No_Access())               => E_SAMO_Access_Fault(),
-    (Store(Data), _)                             => E_SAMO_Page_Fault(),
-    (Store(Vector), PTW_No_Access())             => E_SAMO_Access_Fault(),
-    (Store(Vector), _)                           => E_SAMO_Page_Fault(),
-    (Store(PageTableEntry), PTW_No_Access())     => E_SAMO_Access_Fault(),
-    (Store(PageTableEntry), _)                   => E_SAMO_Page_Fault(),
+    (Store(Data), PTW_No_Access())                => E_SAMO_Access_Fault(),
+    (Store(Data), PTW_SSMP_Violation())           => E_SAMO_Access_Fault(),
+    (Store(Data), _)                              => E_SAMO_Page_Fault(),
+    (Store(Vector), PTW_No_Access())              => E_SAMO_Access_Fault(),
+    (Store(Vector), PTW_SSMP_Violation())         => E_SAMO_Access_Fault(),
+    (Store(Vector), _)                            => E_SAMO_Page_Fault(),
+    (Store(PageTableEntry), PTW_No_Access())      => E_SAMO_Access_Fault(),
+    (Store(PageTableEntry), PTW_SSMP_Violation()) => E_SAMO_Access_Fault(),
+    (Store(PageTableEntry), _)                    => E_SAMO_Page_Fault(),
 
-    (StoreConditional(_, _, Data), PTW_No_Access()) => E_SAMO_Access_Fault(),
-    (StoreConditional(_, _, Data), _)               => E_SAMO_Page_Fault(),
+    (StoreConditional(_, _, Data), PTW_No_Access())      => E_SAMO_Access_Fault(),
+    (StoreConditional(_, _, Data), PTW_SSMP_Violation()) => E_SAMO_Access_Fault(),
+    (StoreConditional(_, _, Data), _)                    => E_SAMO_Page_Fault(),
 
     // "For shadow stack instructions, the reported instruction type is
     // always as though it were a store or AMO, even for instructions
     // SSPOPCHK and C.SSPOPCHK that only read from memory and do not
     // write to it."
-    (Atomic(_, _, _, ShadowStack, ShadowStack), PTW_No_Access()) => E_SAMO_Access_Fault(),
-    (Atomic(_, _, _, ShadowStack, ShadowStack), _)               => E_SAMO_Page_Fault(),
+    (Atomic(_, _, _, ShadowStack, ShadowStack), PTW_No_Access())      => E_SAMO_Access_Fault(),
+    (Atomic(_, _, _, ShadowStack, ShadowStack), PTW_SSMP_Violation()) => E_SAMO_Access_Fault(),
+    (Atomic(_, _, _, ShadowStack, ShadowStack), _)                    => E_SAMO_Page_Fault(),
 
     (Load(ShadowStack), PTW_No_Access())         => E_SAMO_Access_Fault(),
+    (Load(ShadowStack), PTW_SSMP_Violation())    => E_SAMO_Access_Fault(),
     (Load(ShadowStack), _)                       => E_SAMO_Page_Fault(),
 
     (Store(ShadowStack), PTW_No_Access())        => E_SAMO_Access_Fault(),
+    (Store(ShadowStack), PTW_SSMP_Violation())   => E_SAMO_Access_Fault(),
     (Store(ShadowStack), _)                      => E_SAMO_Page_Fault(),
 
     (InstructionFetch(), PTW_No_Access())        => E_Fetch_Access_Fault(),
+    (InstructionFetch(), PTW_SSMP_Violation())   => E_Fetch_Access_Fault(),
     (InstructionFetch(), _)                      => E_Fetch_Page_Fault(),
 
-    (CacheAccess(CB_manage(_)), PTW_No_Access()) => E_SAMO_Access_Fault(),
-    (CacheAccess(CB_manage(_)), _)               => E_SAMO_Page_Fault(),
-    (CacheAccess(CB_zero()), PTW_No_Access())    => E_SAMO_Access_Fault(),
-    (CacheAccess(CB_zero()), _)                  => E_SAMO_Page_Fault(),
+    (CacheAccess(CB_manage(_)), PTW_No_Access())      => E_SAMO_Access_Fault(),
+    (CacheAccess(CB_manage(_)), PTW_SSMP_Violation()) => E_SAMO_Access_Fault(),
+    (CacheAccess(CB_manage(_)), _)                    => E_SAMO_Page_Fault(),
+    (CacheAccess(CB_zero()), PTW_No_Access())         => E_SAMO_Access_Fault(),
+    (CacheAccess(CB_zero()), PTW_SSMP_Violation())    => E_SAMO_Access_Fault(),
+    (CacheAccess(CB_zero()), _)                       => E_SAMO_Page_Fault(),
     // Though prefetches don't raise exceptions, we return a nominal
     // exception here to propagate the failed address translation to
     // the execute of the calling instruction so that it can decide
     // whether to actually proceed with a prefetch.
     (CacheAccess(CB_prefetch(p)), PTW_No_Access()) => match p {
+      PREFETCH_R => E_Load_Access_Fault(),
+      PREFETCH_W => E_SAMO_Access_Fault(),
+      PREFETCH_I => E_Fetch_Access_Fault(),
+    },
+    (CacheAccess(CB_prefetch(p)), PTW_SSMP_Violation()) => match p {
       PREFETCH_R => E_Load_Access_Fault(),
       PREFETCH_W => E_SAMO_Access_Fault(),
       PREFETCH_I => E_Fetch_Access_Fault(),
