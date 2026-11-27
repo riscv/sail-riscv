@@ -137,6 +137,8 @@ add_first_party_test("test_misaligned_page_straddle_hlv_hsv_g_stage.S")
 add_first_party_test("test_misaligned_page_straddle_hlv_hsv_vs_stage.S")
 add_first_party_test("test_indexed_segment_store_eew_overlap.S")
 add_first_party_test("test_illegal_instr_xtval_no_zca.S")
+add_first_party_test("test_zalasr.S")
+add_first_party_test("test_zalasr_mag.S")
 
 add_first_party_override_test("test_sew_elen_bound.S" "elen_32.json")
 add_first_party_override_test("test_satp_physaddr_bits.S" "satp_physaddr_bits.json")
@@ -148,6 +150,7 @@ add_first_party_override_test("test_event_counter.S" "misaligned_event.json")
 add_first_party_override_test("test_vs_ebreak_xtval_zero_gva.S" "software_breakpoint_xtval_zero.json")
 add_first_party_override_test("test_vs_ebreak_double_trap_xtval_zero_gva.S" "ssdbltrp_software_breakpoint_xtval_zero.json")
 add_first_party_override_test("test_mideleg_read_only_one.S" "mideleg_read_only_one.json")
+add_first_party_override_test("test_zalasr_misaligned.S" "zalasr_misaligned.json")
 
 add_first_party_experimental_test("test_zilx.S")
 

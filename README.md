@@ -163,6 +163,7 @@ An experimental emulator in the Lean language is available, see its
 - Zawrs extension for Wait-on-Reservation-Set instructions, v1.01
 - Zabha extension for byte and halfword atomic memory operations, v1.0
 - Zacas extension atomic Compare-and-Swap (CAS) instructions, v1.0.0
+- Zalasr extension for atomic load-acquire and store-release instructions, v1.0
 - F and D extensions for single and double-precision floating-point, v2.2
 - Zfh and Zfhmin extensions for half-precision floating-point, v1.0
 - Zfa extension for additional floating-point instructions, v1.0

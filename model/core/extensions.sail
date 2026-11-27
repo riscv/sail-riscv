@@ -192,6 +192,10 @@ function clause hartSupports(Ext_Zabha) = config extensions.Zabha.supported
 enum clause extension = Ext_Zacas
 mapping clause extensionName = Ext_Zacas <-> "zacas"
 function clause hartSupports(Ext_Zacas) = config extensions.Zacas.supported
+// Atomic Load-Acquire and Store-Release Instructions
+enum clause extension = Ext_Zalasr
+mapping clause extensionName = Ext_Zalasr <-> "zalasr"
+function clause hartSupports(Ext_Zalasr) = config extensions.Zalasr.supported
 // Load-Reserved/Store-Conditional Instructions
 enum clause extension = Ext_Zalrsc
 mapping clause extensionName = Ext_Zalrsc <-> "zalrsc"
@@ -877,6 +881,7 @@ let extensions_ordered_for_isa_string = [
   Ext_Zaamo,
   Ext_Zabha,
   Ext_Zacas,
+  Ext_Zalasr,
   Ext_Zalrsc,
   Ext_Zama16b,
   Ext_Zawrs,

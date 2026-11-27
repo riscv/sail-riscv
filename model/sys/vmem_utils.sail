@@ -30,9 +30,13 @@
 // do not cross a page boundary are passed down intact to `mem.sail`,
 // where PMA checks are done.
 
-function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res : bool) -> option(misaligned_exception) = {
+// `aq_or_rl` is true for accesses with acquire/release annotations.  It
+// is checked after `res`, so it only affects standalone loads/stores,
+// i.e. Zalasr, which are treated like AMOs for misalignment.
+function plat_misaligned_exception(access : MemoryAccessType(mem_payload), res : bool, aq_or_rl : bool) -> option(misaligned_exception) = {
   if is_amo_access(access) then plat_misaligned_access.amo
   else if res then plat_misaligned_access.lrsc
+  else if aq_or_rl then plat_misaligned_access.amo
   else if is_vector_access(access) then plat_misaligned_access.vector
   else plat_misaligned_access.load_store
 }
@@ -201,7 +205,7 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // "LR faults like a normal load, even though it's in the AMO major opcode space."
   // - Andrew Waterman, isa-dev, 10 Jul 2018.
   if not(is_aligned_addr(vaddr, width)) then {
-    match plat_misaligned_exception(access, res) {
+    match plat_misaligned_exception(access, res, aq | rl) {
       Some(AccessFault)        => return Err(memory_exception(E_Load_Access_Fault(), bits_of(vaddr), access_info)),
       Some(AlignmentException) => return Err(memory_exception(E_Load_Addr_Align(), bits_of(vaddr), access_info)),
       // Even if the CPU does support misaligned accesses, it might be
@@ -221,7 +225,8 @@ function vmem_read_addr(vaddr, width, access, access_info, aq, rl, res) = {
   // We should only split the access before address translation if (a)
   // virtual memory is in effect, and (b) it crosses a page boundary.
   // If we do split, perform the split access in the configured order.
-  let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res);
+  // LR/SC and Zalasr (aq/rl) accesses are never split.
+  let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res | aq | rl);
   let lo_bytes = if do_split_access then in_page_bytes else width;
   let hi_bytes = width - lo_bytes;
 
@@ -327,7 +332,7 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
 
   // See comments in vmem_read_addr for an explanation of this check.
   if not(is_aligned_addr(vaddr, width)) then {
-    match plat_misaligned_exception(access, res) {
+    match plat_misaligned_exception(access, res, aq | rl) {
       Some(AccessFault)        => return Err(memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access_info)),
       Some(AlignmentException) => return Err(memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access_info)),
       None()                   => (),
@@ -348,7 +353,8 @@ function vmem_write_addr(vaddr, width, data, access, access_info, aq, rl, res) =
 
   let (in_page_bytes, next_page_bytes) = split_on_page_boundary(vaddr_bits, width);
 
-  let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res);
+  // LR/SC and Zalasr (aq/rl) accesses are never split.
+  let do_split_access = is_vmem_active(eff_priv) & next_page_bytes > 0 & not(res | aq | rl);
   let lo_bytes = if do_split_access then in_page_bytes else width;
   let hi_bytes = width - lo_bytes;
 

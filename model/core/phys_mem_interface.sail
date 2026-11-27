@@ -18,9 +18,6 @@ $include <concurrency_interface.sail>
 
 enum write_kind = {
   Write_plain,
-  // Note: Write_RISCV_release and Write_RISCV_strong_release are currently
-  // unused but removing them may break Isla, and they might be used in future
-  // by Zalasr.
   Write_RISCV_release,
   Write_RISCV_strong_release,
   Write_RISCV_conditional,
@@ -31,9 +28,6 @@ enum write_kind = {
 enum read_kind = {
   Read_plain,
   Read_ifetch,
-  // Note: Read_RISCV_acquire and Read_RISCV_strong_acquire are currently
-  // unused but removing them may break Isla, and they might be used in future
-  // by Zalasr.
   Read_RISCV_acquire,
   Read_RISCV_strong_acquire,
   Read_RISCV_reserved,
@@ -142,11 +136,7 @@ val write_ram : forall 'n, 0 < 'n <= max_mem_access.
 
 function write_ram(wk, access, Physaddr(addr), width, data, meta) = {
   let request : Mem_request('n, 0, physaddrbits_len, unit, access_kind) = struct {
-    access_kind = match wk {
-      Write_RISCV_release => internal_error(__FILE__, __LINE__, "Write_RISCV_release is unused"),
-      Write_RISCV_strong_release => internal_error(__FILE__, __LINE__, "Write_RISCV_strong_release is unused"),
-      _ => AK_Write(wk, access),
-    },
+    access_kind = AK_Write(wk, access),
     address = addr,
     address_space = (),
     size = width,
@@ -179,11 +169,7 @@ val write_ram_ea : forall 'n, 0 < 'n <= max_mem_access.
   (write_kind, MemoryAccessType(mem_payload), physaddr, int('n)) -> unit
 function write_ram_ea(wk, access, Physaddr(addr), width) = {
   let request : Mem_request('n, 0, physaddrbits_len, unit, access_kind) = struct {
-    access_kind = match wk {
-      Write_RISCV_release => internal_error(__FILE__, __LINE__, "Write_RISCV_release is unused"),
-      Write_RISCV_strong_release => internal_error(__FILE__, __LINE__, "Write_RISCV_strong_release is unused"),
-      _ => AK_Write(wk, access),
-    },
+    access_kind = AK_Write(wk, access),
     address = addr,
     address_space = (),
     size = width,
@@ -215,11 +201,7 @@ val read_ram : forall 'n, 0 < 'n <= max_mem_access.
 function read_ram(rk, access, Physaddr(addr), width, read_meta) = {
   let meta = if read_meta then __ReadRAM_Meta(addr, width) else default_meta;
   let request : Mem_request('n, 0, physaddrbits_len, unit, access_kind) = struct {
-    access_kind = match rk {
-      Read_RISCV_acquire => internal_error(__FILE__, __LINE__, "Read_RISCV_acquire is unused"),
-      Read_RISCV_strong_acquire => internal_error(__FILE__, __LINE__, "Read_RISCV_strong_acquire is unused"),
-      _ => AK_Read(rk, access),
-    },
+    access_kind = AK_Read(rk, access),
     address = addr,
     address_space = (),
     size = width,
