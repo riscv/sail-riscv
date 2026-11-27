@@ -95,7 +95,7 @@ function clause execute AMO(op, aq, rl, rs2, rs1, width, rd) = {
   if not(is_aligned_addr(vaddr, width)) then {
     // Check if the model is configured to raise an exception based on
     // the misaligned virtual address.
-    match plat_misaligned_exception(access, false) {
+    match plat_misaligned_exception(access, false, false) {
       Some(AccessFault)        => return memory_exception(E_SAMO_Access_Fault(), bits_of(vaddr), access_info),
       Some(AlignmentException) => return memory_exception(E_SAMO_Addr_Align(), bits_of(vaddr), access_info),
       // No exception yet, but we may still get one based on the

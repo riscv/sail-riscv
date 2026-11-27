@@ -904,6 +904,9 @@
     "Zacas": {
       "supported": true
     },
+    "Zalasr": {
+      "supported": true
+    },
     "Zalrsc": {
       "supported": false
     },

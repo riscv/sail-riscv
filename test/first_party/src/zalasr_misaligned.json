@@ -1,0 +1,14 @@
+{
+  "memory": {
+    "misaligned": {
+      "exceptions": {
+        "load_store": {
+          "None": null
+        },
+        "amo": {
+          "Some": "AlignmentException"
+        }
+      }
+    }
+  }
+}

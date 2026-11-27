@@ -35,8 +35,9 @@
 private function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> read_kind =
   match (aq, rl, res) {
     (false, false, false) => Read_plain,
-    (true, false, false)  => internal_error(__FILE__, __LINE__, "Unreserved load with acquire semantics should be unreachable"),
-    (true, true, false)   => internal_error(__FILE__, __LINE__, "Unreserved load with acquire-release semantics should be unreachable"),
+    // Zalasr load-acquire.
+    (true, false, false)  => Read_RISCV_acquire,
+    (true, true, false)   => Read_RISCV_strong_acquire,
     (false, false, true)  => Read_RISCV_reserved,
     (true, false, true)   => Read_RISCV_reserved_acquire,
     (true, true, true)    => Read_RISCV_reserved_strong_acquire,
@@ -48,10 +49,11 @@ private function read_kind_of_flags (aq : bool, rl : bool, res : bool) -> read_k
 function write_kind_of_flags (aq : bool, rl : bool, con : bool) -> write_kind =
   match (aq, rl, con) {
     (false, false, false) => Write_plain,
-    (false, true,  false) => internal_error(__FILE__, __LINE__, "Unconditional store with release semantics should be unreachable"),
+    // Zalasr store-release.
+    (false, true,  false) => Write_RISCV_release,
+    (true,  true,  false) => Write_RISCV_strong_release,
     (false, false, true)  => Write_RISCV_conditional,
     (false, true , true)  => Write_RISCV_conditional_release,
-    (true,  true,  false) => internal_error(__FILE__, __LINE__, "Unconditional store with acquire-release semantics should be unreachable"),
     (true,  true , true)  => Write_RISCV_conditional_strong_release,
     // This is never called with aq=true and rl=false.
     (true,  false, false) => internal_error(__FILE__, __LINE__, "Unconditional store with acquire semantics should be unreachable"),
@@ -79,6 +81,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
   access     : MemoryAccessType(mem_payload),
   pbmt       : page_based_mem_type,
   res_or_con : bool,
+  aq_or_rl   : bool,
 )  -> result(Phys_Mem_Access_Info, ExceptionType) = {
 
   let attributes : PMA = match matching_pma_region(pma_regions, paddr, width) {
@@ -172,7 +175,7 @@ private function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
 
   // Check if we need to raise an exception for misalignment.
 
-  match mag_pma_check(attributes, access, paddr, width) {
+  match mag_pma_check(attributes, access, paddr, width, aq_or_rl) {
     Ok((splittable, granule_size_exp)) => Ok(struct { splittable, granule_size_exp }),
 
     Err(e) => {
@@ -206,7 +209,8 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
 
   match pmpCheck(paddr, width, access, priv) {
     Some(e) => Err(e),
-    None()  => pmaCheck(paddr, width, access, pbmt, res_or_con)
+    // No Zalasr accesses here (SC with lost reservation, CBOs)
+    None()  => pmaCheck(paddr, width, access, pbmt, res_or_con, false)
   }
 }
 
@@ -238,8 +242,9 @@ private function check_pma_with_pmp_priority forall 'n, 0 < 'n <= max_mem_access
   paddr      : physaddr,
   width      : int('n),
   res_or_con : bool,
+  aq_or_rl   : bool,
 ) -> result(Phys_Mem_Access_Info, ExceptionType) =
-  match pmaCheck(paddr, width, access, pbmt, res_or_con) {
+  match pmaCheck(paddr, width, access, pbmt, res_or_con, aq_or_rl) {
     // PMP checks are done later per-split, and might still fail.
     Ok(access_info) => Ok(access_info),
 
@@ -263,7 +268,7 @@ private function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   meta : bool,
 ) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
 
-  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, res) {
+  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, res, aq | rl) {
     Ok(access_info) => access_info,
     Err(e)          => return Err(paddr, e),
   };
@@ -367,7 +372,7 @@ function mem_write_ea(paddr, width, priv, access, pbmt, aq, rl, con) = {
   // model is extended for MMIO, but until then, this should suffice
   // for concurrency of RAM accesses.
 
-  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, con) {
+  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, con, aq | rl) {
     Ok(access_info) => access_info,
     Err(e)          => return Err(paddr, e),
   };
@@ -423,7 +428,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   con : bool,
 ) -> MemoryOpResult(bool) = {
 
-  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, con) {
+  let access_info : Phys_Mem_Access_Info = match check_pma_with_pmp_priority(access, pbmt, priv, paddr, width, con, aq | rl) {
     Ok(access_info) => access_info,
     Err(e)          => return Err(paddr, e),
   };

@@ -9,6 +9,7 @@
   - Smcdeleg
   - Ssccfg
   - Zvl2048b, Zvl4096b, Zvl8192b, Zvl16384b, Zvl32768b, and Zvl65536b
+  - Zalasr
 
 - Updates to the [configuration file](../config/config.json.in):
   - The WARL behavior of a reserved or unimplemented encoding written to `mstatus.MPP`

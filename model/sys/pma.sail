@@ -189,12 +189,17 @@ function override_PMA(pma : PMA, pbmt : page_based_mem_type) -> PMA =
   }
 
 // Provide the misaligned treatment for a misaligned access.
-function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_payload)) -> option(misaligned_exception) = {
+// `aq_or_rl` is true for accesses with acquire/release annotations.  It
+// only affects `Load(Data)` / `Store(Data)`, i.e. Zalasr (LR/SC and AMOs
+// use their own access types).  Like AMOs, these must be performed
+// atomically, so a misaligned access outside the MAG always raises an
+// exception.
+function pma_misaligned_exception(pma : PMA, access : MemoryAccessType(mem_payload), aq_or_rl : bool) -> option(misaligned_exception) = {
   let exceptions = pma.misaligned_exceptions;
   match access {
-    Load(Data)             => exceptions.load_store,
+    Load(Data)             => if aq_or_rl then Some(exceptions.amo) else exceptions.load_store,
     LoadExecute(Data)      => exceptions.load_store,
-    Store(Data)            => exceptions.load_store,
+    Store(Data)            => if aq_or_rl then Some(exceptions.amo) else exceptions.load_store,
     Load(Vector)           => exceptions.vector,
     Store(Vector)          => exceptions.vector,
     Atomic(_)              => Some(exceptions.amo),
@@ -269,10 +274,11 @@ function within_pma_mag forall 'n, 0 < 'n <= max_mem_access. (pma : PMA, Physadd
 // This function implements the check for the MAG PMA.
 function mag_pma_check forall 'n, 0 < 'n <= max_mem_access.
 (
-  pma     : PMA,
-  access  : MemoryAccessType(mem_payload),
-  paddr   : physaddr,
-  width   : int('n)
+  pma      : PMA,
+  access   : MemoryAccessType(mem_payload),
+  paddr    : physaddr,
+  width    : int('n),
+  aq_or_rl : bool,
 ) -> result((Splittability, mag_size_exp), misaligned_exception) = {
 
   let is_mag_applicable = is_mag_applicable_access(access, width);
@@ -290,7 +296,7 @@ function mag_pma_check forall 'n, 0 < 'n <= max_mem_access.
   // to the misaligned access, e.g. for wide (> XLEN bits) F/D/Q
   // loads/stores, the access is handled according to the misaligned
   // exception for the PMA.
-  match pma_misaligned_exception(pma, access) {
+  match pma_misaligned_exception(pma, access, aq_or_rl) {
     Some(e) => Err(e),
 
     // If there is no misaligned exception, then the misaligned access
