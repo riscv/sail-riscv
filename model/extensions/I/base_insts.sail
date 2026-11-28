@@ -755,15 +755,12 @@ function clause execute WFI() =
     // `run_hart_waiting()`.
     Supervisor        => Enter_Wait(WAIT_WFI),
     User              => if plat_wfi_available_to_usermode then Enter_Wait(WAIT_WFI) else Illegal_Instruction(),
-    // VU never waits. Raises virtual immediately when TW=0, illegal when TW=1
     VirtualUser       => if mstatus[TW] == 0b1
-                         then Illegal_Instruction()
+                         then if plat_wfi_available_to_usermode then Enter_Wait(WAIT_WFI) else Illegal_Instruction()
                          else Virtual_Instruction(),
-    // VS raises illegal immediately when TW=1
-    // when TW=0, enters wait, VTW checked on timeout in run_hart_waiting()
-    VirtualSupervisor => if mstatus[TW] == 0b1
-                         then Illegal_Instruction()
-                         else Enter_Wait(WAIT_WFI),
+    // mstatus[TW]/hstatus[VTW] is checked when the wait times out in
+    // `run_hart_waiting()`. For VS-mode, TW takes priority over VTW.
+    VirtualSupervisor => Enter_Wait(WAIT_WFI),
   }
 
 mapping clause assembly = WFI() <-> "wfi"

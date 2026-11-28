@@ -62,14 +62,14 @@ private function run_hart_waiting(_step_no : nat, wr: WaitReason, instr_info : i
       // value of the TW bit, unless the instruction completes within
       // an implementation-specific, bounded time limit."
 
-      // For VS-mode, VTW is checked instead since a set TW was already
-      // caught in execute as an immediate illegal instruction.
       match cur_privilege {
         Machine           => Step_Execute(Retire_Success(), instr_info),
         User              => if   mstatus[TW] == 0b1 | currentlyEnabled(Ext_S)
                              then Step_Execute(Illegal_Instruction(), instr_info)
                              else Step_Execute(Retire_Success(), instr_info),
-        VirtualSupervisor => if   hstatus[VTW] == 0b1
+        VirtualSupervisor => if mstatus[TW] == 0b1
+                             then Step_Execute(Illegal_Instruction(), instr_info)
+                             else if hstatus[VTW] == 0b1
                              then Step_Execute(Virtual_Instruction(), instr_info)
                              else Step_Execute(Retire_Success(), instr_info),
         _                 => if   mstatus[TW] == 0b1

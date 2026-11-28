@@ -49,6 +49,9 @@
     specified, see `base.envcfg.menvcfg_legal_cbie`,
     `base.envcfg.senvcfg_legal_cbie` and `base.envcfg.henvcfg_legal_cbie`.
     Writes of unsupported encodings now leave the field unchanged.
+  - `platform.wfi_available_to_user_mode` now also applies to VU-mode, and
+    `platform.wfi_is_nop` now also applies to VS-mode and VU-mode when
+    `mstatus.TW`=1.
 
 - The command line interface has been updated:
   - The `--version` command-line option now shows the `git` version
@@ -77,6 +80,7 @@
   - https://github.com/riscv/sail-riscv/pull/2124 : Accessing a shadow-stack page with a reserved Svnapot encoding raised an access fault instead of a page fault.
   - https://github.com/riscv/sail-riscv/pull/2133 : fix handling of illegal LMUL for `vrgatherei16.vv`
   - https://github.com/riscv/sail-riscv/pull/2135 : fix source/dest register group overlap checks for `viota.m`
+  - https://github.com/riscv/sail-riscv/issues/2157 : `platform.wfi_is_nop` was ignored in VS-mode and VU-mode when `mstatus.TW`=1
 
 # Release notes for version 0.16
 
